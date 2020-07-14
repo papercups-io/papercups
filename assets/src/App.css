@@ -1,0 +1,28 @@
+@import '~antd/dist/antd.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: 'Open Sans', 'Helvetica Neue', Arial, san-serif;
+  font-weight: 400;
+  margin: 0;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Add custom styles here */
+.TextArea--transparent,
+.TextArea--transparent:hover,
+.TextArea--transparent:focus,
+.TextArea--transparent:active {
+  border: none;
+  box-shadow: none;
+  resize: none;
+}
