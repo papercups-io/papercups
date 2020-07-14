@@ -11,7 +11,7 @@ defmodule ChatApiWeb.Endpoint do
   ]
 
   socket("/socket", ChatApiWeb.UserSocket,
-    websocket: true,
+    websocket: [timeout: 45_000],
     longpoll: false
   )
 
