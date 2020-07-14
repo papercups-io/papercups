@@ -51,7 +51,7 @@ defmodule ChatApiWeb.Endpoint do
   plug(Plug.Session, @session_options)
 
   plug(Corsica,
-    origins: "http://localhost:3000",
+    origins: ["http://localhost:3000", "https://taro-chat-v1.herokuapp.com"],
     allow_credentials: true,
     allow_headers: ["Content-Type", "Authorization"],
     log: [rejected: :error, invalid: :warn, accepted: :debug]
