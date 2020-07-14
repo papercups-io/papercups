@@ -13,6 +13,10 @@ defmodule ChatApiWeb.ConversationChannel do
   end
 
   def join("conversation:" <> private_conversation_id, payload, socket) do
+    IO.puts("Checking permission for conversation!")
+    IO.inspect(payload)
+    IO.inspect(private_conversation_id)
+
     if authorized?(payload, private_conversation_id) do
       {:ok, socket}
     else
@@ -44,6 +48,10 @@ defmodule ChatApiWeb.ConversationChannel do
   end
 
   defp authorized?(_payload, conversation_id) do
+    IO.puts("Invoking `authorized?` method!")
+    IO.inspect(conversation_id)
+    IO.inspect(Conversations.get_conversation(conversation_id))
+
     case Conversations.get_conversation(conversation_id) do
       %Conversations.Conversation{} -> true
       _ -> false

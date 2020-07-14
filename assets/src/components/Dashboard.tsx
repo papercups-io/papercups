@@ -108,7 +108,7 @@ class Dashboard extends React.Component<Props, State> {
                 id: conv.id,
                 customer: `${name}`,
                 date: '1d',
-                preview: recent.body ? recent.body : '...',
+                preview: recent && recent.body ? recent.body : '...',
                 messages: messages,
               };
             }),
