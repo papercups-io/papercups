@@ -5,7 +5,8 @@ import {Result, Button, Input} from './common';
 import {SmileOutlined} from './icons';
 import EmbeddableWidget from './EmbeddableWidget';
 
-const socket = new Socket('ws://localhost:4000/socket');
+// const socket = new Socket('ws://localhost:4000/socket');
+const socket = new Socket('/socket');
 
 type Props = {};
 type State = {

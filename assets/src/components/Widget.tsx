@@ -1,13 +1,14 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {Socket, Channel} from 'phoenix';
-import {colors, Button, Text, TextArea, Title} from './common';
-import {SendOutlined, SmileTwoTone} from './icons';
+import {colors, Button, TextArea, Title} from './common';
+import {SendOutlined} from './icons';
 import ChatMessage from './ChatMessage';
 import * as API from '../api';
 import {getCustomerId, setCustomerId} from '../storage';
 
-const socket = new Socket('ws://localhost:4000/socket');
+// const socket = new Socket('ws://localhost:4000/socket');
+const socket = new Socket('/socket');
 
 // TODO:
 type Message = {

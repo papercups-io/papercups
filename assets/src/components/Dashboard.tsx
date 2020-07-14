@@ -17,7 +17,8 @@ import {SmileTwoTone} from './icons';
 import ChatMessage from './ChatMessage';
 
 // TODO: don't hardcode this
-const socket = new Socket('ws://localhost:4000/socket');
+// const socket = new Socket('ws://localhost:4000/socket');
+const socket = new Socket('/socket');
 
 // NB: actual message records will look slightly different
 type Message = {
