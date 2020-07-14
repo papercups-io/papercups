@@ -1,9 +1,7 @@
 import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
-import request from 'superagent';
 import {Box, Flex} from 'theme-ui';
-import {Result, Button, Input, Title} from './common';
-import {SmileOutlined} from './icons';
+import {Button, Input, Title} from './common';
 import {useAuth} from './AuthProvider';
 
 type Props = RouteComponentProps & {

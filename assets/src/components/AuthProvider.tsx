@@ -34,7 +34,7 @@ export const AuthProvider = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [tokens, setTokens] = useState(t);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // const [error, setError] = useState(null);
 
   const handleAuthSuccess = (tokens: any) => {
     setAuthTokens(tokens);
@@ -63,6 +63,7 @@ export const AuthProvider = ({
       .then((tokens) => handleAuthSuccess(tokens))
       .catch((err) => console.log('Error renewing session!', err))
       .then(() => setLoading(false));
+    // eslint-disable-next-line
   }, []);
 
   const register = async (params: API.RegisterParams): Promise<void> => {

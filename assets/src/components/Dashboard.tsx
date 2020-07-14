@@ -94,10 +94,10 @@ class Dashboard extends React.Component<Props, State> {
                   +new Date(a.created_at) - +new Date(b.created_at)
               ),
             conversations: conversations.map((conv: any) => {
-              const i = Math.floor(Math.random() * 3);
+              // const i = Math.floor(Math.random() * 3);
               // const name = ['Alex', 'Kam', 'Emily'][i];
+              // const location = ['New York', 'San Francisco', 'New York'][i];
               const name = 'Anonymous User';
-              const location = ['New York', 'San Francisco', 'New York'][i];
 
               const messages = conv.messages.sort(
                 (a: any, b: any) =>

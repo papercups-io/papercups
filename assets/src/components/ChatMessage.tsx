@@ -2,8 +2,8 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {colors, Button, Text, TextArea, Title} from './common';
-import {SendOutlined, SmileTwoTone} from './icons';
+import {colors, Text} from './common';
+import {SmileTwoTone} from './icons';
 
 dayjs.extend(utc);
 

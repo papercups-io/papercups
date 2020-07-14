@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Button, colors} from './common';
-import {SmileOutlined, DownOutlined, UpOutlined} from './icons';
+import {colors} from './common';
+import {DownOutlined, UpOutlined} from './icons';
 import Widget from './Widget';
 
 type Props = {};
