@@ -69,16 +69,14 @@ class Dashboard extends React.Component<Props, State> {
   componentDidMount() {
     socket.connect();
 
-    API.me().then(console.log).catch(console.log);
+    API.me().then(console.log).catch(console.log); // TODO: do in AuthProvider
 
-    // TODO: update API to fetch only conversations by account
     API.fetchConversations()
       .then((conversations) => {
         if (!conversations || !conversations.length) {
           return; // TODO: handle empty state
         }
 
-        // const {id: selectedConversationId, messages = []} = first;
         const conversationsById = conversations.reduce(
           (acc: any, conv: any) => {
             return {...acc, [conv.id]: conv};
