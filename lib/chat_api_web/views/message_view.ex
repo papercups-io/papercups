@@ -16,6 +16,7 @@ defmodule ChatApiWeb.MessageView do
       body: message.body,
       created_at: message.inserted_at,
       customer_id: message.customer_id,
+      conversation_id: message.conversation_id,
       user_id: message.user_id
     }
   end
