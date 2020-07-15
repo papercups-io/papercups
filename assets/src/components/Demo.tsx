@@ -2,7 +2,9 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {Result} from './common';
 import {SmileOutlined} from './icons';
-import EmbeddableWidget from './EmbeddableWidget';
+// Testing widget in separate package
+import ChatWidget from '@papercups-io/chat-widget';
+import '@papercups-io/chat-widget/dist/index.css';
 
 type Props = {};
 type State = {};
@@ -32,7 +34,7 @@ class Demo extends React.Component<Props, State> {
           />
         </Box>
 
-        <EmbeddableWidget />
+        <ChatWidget accountId="eb504736-0f20-4978-98ff-1a82ae60b266" />
       </Flex>
     );
   }
