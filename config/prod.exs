@@ -11,7 +11,7 @@ use Mix.Config
 # before starting your production server.
 config :chat_api, ChatApiWeb.Endpoint,
   http: [port: {:system, "PORT"}],
-  url: [scheme: "https", host: "taro-chat-v1.herokuapp.com", port: 443],
+  url: [scheme: "https", host: "www.papercups.io", port: 443],
   force_ssl: [rewrite_on: [:x_forwarded_proto]]
 
 # Do not print debug messages in production
