@@ -128,6 +128,23 @@ export const fetchConversations = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const updateConversation = async (
+  conversationId: string,
+  updates: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`${API_BASE_URL}/api/conversations/${conversationId}`)
+    .set('Authorization', token)
+    .send(updates)
+    .then((res) => res.body.data);
+};
+
+// TODO: deprecate, messages should only be fetched by conversation
 export const fetchMessages = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');

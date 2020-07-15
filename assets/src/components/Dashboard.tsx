@@ -13,8 +13,15 @@ import {
   Text,
   TextArea,
   Title,
+  Tooltip,
 } from './common';
-import {SmileTwoTone} from './icons';
+import {
+  CheckOutlined,
+  SmileTwoTone,
+  StarOutlined,
+  StarFilled,
+  UploadOutlined,
+} from './icons';
 import ChatMessage from './ChatMessage';
 import {socket} from '../socket';
 import {formatRelativeTime} from '../utils';
@@ -47,6 +54,7 @@ type State = {
   conversationIds: Array<string>;
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
+  isUpdatingConversation: boolean;
 };
 
 class Dashboard extends React.Component<Props, State> {
@@ -64,6 +72,7 @@ class Dashboard extends React.Component<Props, State> {
     conversationIds: [],
     conversationsById: {},
     messagesByConversation: {},
+    isUpdatingConversation: false,
   };
 
   componentDidMount() {
@@ -227,8 +236,7 @@ class Dashboard extends React.Component<Props, State> {
     const date = formatRelativeTime(created);
 
     return {
-      id: conversation.id,
-      timestamp: conversation.created_at,
+      ...conversation,
       customer: 'Anonymous User',
       date: date || '1d', // TODO
       preview: recent && recent.body ? recent.body : '...',
@@ -236,17 +244,68 @@ class Dashboard extends React.Component<Props, State> {
     };
   };
 
+  handleUpdateConversation = async (conversationId: string, params: any) => {
+    this.setState({isUpdatingConversation: true});
+
+    const {conversationsById} = this.state;
+    const existing = conversationsById[conversationId];
+
+    // Optimistic update
+    this.setState({
+      conversationsById: {
+        ...conversationsById,
+        [conversationId]: {...existing, ...params},
+      },
+    });
+
+    try {
+      await API.updateConversation(conversationId, {
+        conversation: params,
+      });
+    } catch (err) {
+      // Revert
+      this.setState({
+        conversationsById: conversationsById,
+      });
+    }
+
+    this.setState({isUpdatingConversation: false});
+  };
+
+  handleCloseConversation = (conversationId: string) => {
+    this.handleUpdateConversation(conversationId, {status: 'closed'});
+  };
+
+  handleReopenConversation = (conversationId: string) => {
+    this.handleUpdateConversation(conversationId, {status: 'open'});
+  };
+
+  handleMarkPriority = (conversationId: string) => {
+    this.handleUpdateConversation(conversationId, {priority: 'priority'});
+  };
+
+  handleMarkUnpriority = (conversationId: string) => {
+    this.handleUpdateConversation(conversationId, {priority: 'not_priority'});
+  };
+
   render() {
     const {
       message,
       selectedConversationId,
+      isUpdatingConversation,
       conversationIds = [],
       conversationsById = {},
       messagesByConversation = {},
     } = this.state;
+
+    // TODO: add loading state
+
     const messages = selectedConversationId
       ? messagesByConversation[selectedConversationId]
       : [];
+    const selectedConversation = selectedConversationId
+      ? conversationsById[selectedConversationId]
+      : null;
 
     return (
       <Layout>
@@ -271,9 +330,11 @@ class Dashboard extends React.Component<Props, State> {
               const conversation = conversationsById[conversationId];
               const messages = messagesByConversation[conversationId];
               const formatted = this.formatConversation(conversation, messages);
-              const {id, customer, date, preview} = formatted;
+              const {id, priority, status, customer, date, preview} = formatted;
+              const isPriority = priority === 'priority';
+              const isClosed = status === 'closed';
               const isHighlighted = id === selectedConversationId;
-              const {primary, gold, red, green, gray} = colors;
+              const {gold, red, green, gray} = colors;
               const color = [gold, red, green, gray[0]][idx % 4];
 
               // TODO: move into separate component
@@ -282,6 +343,7 @@ class Dashboard extends React.Component<Props, State> {
                   key={id}
                   p={3}
                   sx={{
+                    opacity: isClosed ? 0.8 : 1,
                     borderBottom: '1px solid #f0f0f0',
                     borderLeft: isHighlighted
                       ? `2px solid ${colors.primary}`
@@ -294,10 +356,16 @@ class Dashboard extends React.Component<Props, State> {
                   <Flex mb={2} sx={{justifyContent: 'space-between'}}>
                     <Flex sx={{alignItems: 'center'}}>
                       <Box mr={2}>
-                        <SmileTwoTone
-                          style={{fontSize: 16}}
-                          twoToneColor={color}
-                        />
+                        {isPriority ? (
+                          <StarFilled
+                            style={{fontSize: 16, color: colors.gold}}
+                          />
+                        ) : (
+                          <SmileTwoTone
+                            style={{fontSize: 16}}
+                            twoToneColor={color}
+                          />
+                        )}
                       </Box>
                       <Text strong>{customer}</Text>
                     </Flex>
@@ -318,15 +386,87 @@ class Dashboard extends React.Component<Props, State> {
           </Box>
         </Sider>
         <Layout style={{marginLeft: 280}}>
+          {/* TODO: move to separate component? */}
           <header
-            style={{boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 2rem', zIndex: 1}}
+            style={{
+              boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 2rem',
+              zIndex: 1,
+              opacity:
+                selectedConversation && selectedConversation.status === 'closed'
+                  ? 0.8
+                  : 1,
+            }}
           >
-            <Flex py={3} px={4} backgroundColor={colors.white}>
+            <Flex
+              py={3}
+              px={4}
+              backgroundColor={colors.white}
+              sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
+            >
               <Title level={4} style={{marginBottom: 0, marginTop: 4}}>
                 Anonymous User
               </Title>
+
+              {selectedConversationId && (
+                <Flex mx={-1}>
+                  <Box mx={1}>
+                    {selectedConversation &&
+                    selectedConversation.priority === 'priority' ? (
+                      <Tooltip title="Remove priority" placement="bottomRight">
+                        <Button
+                          icon={<StarFilled style={{color: colors.gold}} />}
+                          onClick={() =>
+                            this.handleMarkUnpriority(selectedConversationId)
+                          }
+                        />
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Mark as priority" placement="bottomRight">
+                        <Button
+                          icon={<StarOutlined />}
+                          onClick={() =>
+                            this.handleMarkPriority(selectedConversationId)
+                          }
+                        />
+                      </Tooltip>
+                    )}
+                  </Box>
+
+                  <Box mx={1}>
+                    {selectedConversation &&
+                    selectedConversation.status === 'closed' ? (
+                      <Tooltip
+                        title="Reopen conversation"
+                        placement="bottomRight"
+                      >
+                        <Button
+                          icon={<UploadOutlined />}
+                          onClick={() =>
+                            this.handleReopenConversation(
+                              selectedConversationId
+                            )
+                          }
+                        />
+                      </Tooltip>
+                    ) : (
+                      <Tooltip
+                        title="Close conversation"
+                        placement="bottomRight"
+                      >
+                        <Button
+                          icon={<CheckOutlined />}
+                          onClick={() =>
+                            this.handleCloseConversation(selectedConversationId)
+                          }
+                        />
+                      </Tooltip>
+                    )}
+                  </Box>
+                </Flex>
+              )}
             </Flex>
           </header>
+
           <Content style={{overflowY: 'scroll'}}>
             <Box p={4} backgroundColor={colors.white} sx={{minHeight: '100%'}}>
               {messages.map((message: any, key: number) => {
