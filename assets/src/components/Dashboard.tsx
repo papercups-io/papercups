@@ -10,21 +10,12 @@ import {
   Content,
   Footer,
   Layout,
-  Select,
   Sider,
   Text,
   TextArea,
   Title,
-  Tooltip,
 } from './common';
-import {
-  CheckOutlined,
-  SmileTwoTone,
-  StarOutlined,
-  StarFilled,
-  UploadOutlined,
-  UserOutlined,
-} from './icons';
+import {SmileTwoTone, StarFilled} from './icons';
 import ChatMessage from './ChatMessage';
 import {socket} from '../socket';
 import {formatRelativeTime} from '../utils';
