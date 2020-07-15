@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {colors, Text} from './common';
 import {SmileTwoTone} from './icons';
+import {formatRelativeTime} from '../utils';
 
 dayjs.extend(utc);
 
@@ -13,25 +14,6 @@ type Message = {
   body: string;
   created_at: string;
   customer_id: string;
-};
-
-const formatRelativeTime = (date: dayjs.Dayjs) => {
-  const ms = dayjs().diff(date, 'second');
-  const mins = Math.floor(ms / 60);
-  const hrs = Math.floor(mins / 60);
-  const days = Math.floor(hrs / 24);
-
-  if (ms < 10) {
-    return 'just now';
-  } else if (ms < 60) {
-    return `${ms} seconds ago`;
-  } else if (mins <= 60) {
-    return `${mins} minute${mins === 1 ? '' : 's'} ago`;
-  } else if (hrs <= 24) {
-    return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
-  } else {
-    return `${days} days${days === 1 ? '' : 's'} ago`;
-  }
 };
 
 type Props = {

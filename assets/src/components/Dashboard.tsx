@@ -1,5 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
+import dayjs from 'dayjs';
 import {Channel} from 'phoenix';
 import * as API from '../api';
 import {
@@ -16,6 +17,7 @@ import {
 import {SmileTwoTone} from './icons';
 import ChatMessage from './ChatMessage';
 import {socket} from '../socket';
+import {formatRelativeTime} from '../utils';
 
 // NB: actual message records will look slightly different
 type Message = {
@@ -23,6 +25,7 @@ type Message = {
   body: string;
   created_at: string;
   customer_id: string;
+  conversation_id: string;
 };
 // NB: actual conversation records will look different
 type Conversation = {
@@ -41,6 +44,9 @@ type State = {
   userId: string;
   conversations: Array<Conversation>;
   selectedConversationId?: string | null;
+  conversationIds: Array<string>;
+  conversationsById: {[key: string]: any};
+  messagesByConversation: {[key: string]: any};
 };
 
 class Dashboard extends React.Component<Props, State> {
@@ -55,80 +61,85 @@ class Dashboard extends React.Component<Props, State> {
     conversations: [],
     messages: [],
     selectedConversationId: null,
+    conversationIds: [],
+    conversationsById: {},
+    messagesByConversation: {},
   };
 
   componentDidMount() {
     socket.connect();
 
-    API.me().then(console.log).catch(console.log);
+    API.me().then(console.log).catch(console.log); // TODO: do in AuthProvider
 
-    // TODO: update API to fetch only conversations by account
     API.fetchConversations()
       .then((conversations) => {
-        console.log('Conversations!', conversations);
-
         if (!conversations || !conversations.length) {
           return; // TODO: handle empty state
         }
 
-        const [first = {} as Conversation] = conversations;
-        const {id: selectedConversationId, messages = []} = first;
-
-        this.setState(
-          {
-            selectedConversationId,
-            messages: messages
-              .map((msg: any) => {
-                return {
-                  sender: 'customer',
-                  body: msg.body,
-                  created_at: msg.created_at,
-                  customer_id: msg.customer_id,
-                };
-              })
-              .sort(
+        const conversationsById = conversations.reduce(
+          (acc: any, conv: any) => {
+            return {...acc, [conv.id]: conv};
+          },
+          {}
+        );
+        const messagesByConversation = conversations.reduce(
+          (acc: any, conv: any) => {
+            return {
+              ...acc,
+              [conv.id]: conv.messages.sort(
                 (a: any, b: any) =>
                   +new Date(a.created_at) - +new Date(b.created_at)
               ),
-            conversations: conversations.map((conv: any) => {
-              // const i = Math.floor(Math.random() * 3);
-              // const name = ['Alex', 'Kam', 'Emily'][i];
-              // const location = ['New York', 'San Francisco', 'New York'][i];
-              const name = 'Anonymous User';
+            };
+          },
+          {}
+        );
+        const conversationIds = Object.keys(conversationsById).sort(
+          (a: string, b: string) => {
+            const messagesA = messagesByConversation[a];
+            const messagesB = messagesByConversation[b];
+            const x = messagesA[messagesA.length - 1];
+            const y = messagesB[messagesB.length - 1];
 
-              const messages = conv.messages.sort(
-                (a: any, b: any) =>
-                  +new Date(a.created_at) - +new Date(b.created_at)
-              );
-              const recent = messages[messages.length - 1];
+            return +new Date(y?.created_at) - +new Date(x?.created_at);
+          }
+        );
+        const [selectedConversationId] = conversationIds;
 
-              return {
-                id: conv.id,
-                customer: `${name}`,
-                date: '1d',
-                preview: recent && recent.body ? recent.body : '...',
-                messages: messages,
-              };
-            }),
+        this.setState(
+          {
+            conversationsById,
+            messagesByConversation,
+            conversationIds,
+            selectedConversationId,
           },
           () => this.scrollToEl.scrollIntoView()
         );
 
-        this.joinConversationChannel(selectedConversationId);
+        const {accountId} = this.state;
+
+        this.joinNotificationChannel(
+          accountId,
+          conversations.map((conv: any) => conv.id)
+        );
       })
       .catch((err) => console.log('Error fetching conversations:', err));
   }
 
-  joinConversationChannel = (conversationId: string) => {
+  joinNotificationChannel = (
+    accountId: string,
+    conversationIds: Array<string>
+  ) => {
     if (this.channel && this.channel.leave) {
       this.channel.leave(); // TODO: what's the best practice here?
     }
 
-    // TODO: connect to latest conversation
-    // TODO: should this be on this.state?
-    // If no conversations exist, join lobby?? (which is just an open chat room???)
+    // TODO: If no conversations exist, join lobby?? (which is just an open chat room???)
     // (this could be a fun little feature... lobby is where you can chat with... us??)
-    this.channel = socket.channel(`conversation:${conversationId}`, {});
+    this.channel = socket.channel(`notification:${accountId}`, {
+      ids: conversationIds,
+    });
 
     this.channel.on('shout', (message) => {
       this.handleNewMessage(message);
@@ -145,34 +156,35 @@ class Dashboard extends React.Component<Props, State> {
   };
 
   handleSelectConversation = (id: string) => {
-    const {conversations = []} = this.state;
-    const conversation = conversations.find((conv) => conv.id === id);
-    const messages = (conversation && conversation.messages) || [];
-
-    this.setState(
-      {
-        selectedConversationId: id,
-        messages: messages
-          .map((msg: any) => {
-            return {
-              sender: msg.customer_id ? 'customer' : 'agent',
-              body: msg.body,
-              created_at: msg.created_at,
-              customer_id: msg.customer_id,
-            };
-          })
-          .sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at)),
-      },
-      () => this.scrollToEl.scrollIntoView()
+    this.setState({selectedConversationId: id}, () =>
+      this.scrollToEl.scrollIntoView()
     );
-
-    this.joinConversationChannel(id);
   };
 
   handleNewMessage = (message: Message) => {
-    this.setState({messages: [...this.state.messages, message]}, () => {
-      this.scrollToEl.scrollIntoView();
-    });
+    console.log('New message!', message);
+
+    const {messagesByConversation, conversationIds} = this.state;
+    const {conversation_id: conversationId} = message;
+    const existing = messagesByConversation[conversationId];
+    const update = {
+      ...messagesByConversation,
+      [conversationId]: [...existing, message],
+    };
+    const updatedConversationIds = [
+      conversationId,
+      ...conversationIds.filter((id) => id !== conversationId),
+    ];
+
+    this.setState(
+      {
+        messagesByConversation: update,
+        conversationIds: updatedConversationIds,
+      },
+      () => {
+        this.scrollToEl.scrollIntoView();
+      }
+    );
   };
 
   handleMessageChange = (e: any) => {
@@ -200,13 +212,41 @@ class Dashboard extends React.Component<Props, State> {
     this.setState({message: ''});
   };
 
+  formatMessage = (message: any) => {
+    return {
+      sender: message.customer_id ? 'customer' : 'agent',
+      body: message.body,
+      created_at: message.created_at,
+      customer_id: message.customer_id,
+    };
+  };
+
+  formatConversation = (conversation: any, messages: Array<any>) => {
+    const recent = messages[messages.length - 1];
+    const created = dayjs(conversation.created_at);
+    const date = formatRelativeTime(created);
+
+    return {
+      id: conversation.id,
+      timestamp: conversation.created_at,
+      customer: 'Anonymous User',
+      date: date || '1d', // TODO
+      preview: recent && recent.body ? recent.body : '...',
+      messages: messages,
+    };
+  };
+
   render() {
     const {
       message,
-      messages = [],
-      conversations = [],
       selectedConversationId,
+      conversationIds = [],
+      conversationsById = {},
+      messagesByConversation = {},
     } = this.state;
+    const messages = selectedConversationId
+      ? messagesByConversation[selectedConversationId]
+      : [];
 
     return (
       <Layout>
@@ -227,12 +267,16 @@ class Dashboard extends React.Component<Props, State> {
             </Title>
           </Box>
           <Box>
-            {conversations.map((conversation, idx) => {
-              const {id, customer, date, preview} = conversation;
+            {conversationIds.map((conversationId, idx) => {
+              const conversation = conversationsById[conversationId];
+              const messages = messagesByConversation[conversationId];
+              const formatted = this.formatConversation(conversation, messages);
+              const {id, customer, date, preview} = formatted;
               const isHighlighted = id === selectedConversationId;
-              const {primary, red, green, gray} = colors;
-              const color = [primary, red, green, gray[0]][idx % 4];
+              const {primary, gold, red, green, gray} = colors;
+              const color = [gold, red, green, gray[0]][idx % 4];
 
+              // TODO: move into separate component
               return (
                 <Box
                   key={id}
@@ -285,8 +329,9 @@ class Dashboard extends React.Component<Props, State> {
           </header>
           <Content style={{overflowY: 'scroll'}}>
             <Box p={4} backgroundColor={colors.white} sx={{minHeight: '100%'}}>
-              {messages.map((msg, key) => {
+              {messages.map((message: any, key: number) => {
                 // Slight hack
+                const msg = this.formatMessage(message);
                 const next = messages[key + 1];
                 const isLastInGroup = next
                   ? msg.customer_id !== next.customer_id
