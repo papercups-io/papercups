@@ -21,6 +21,11 @@ defmodule ChatApi.Conversations do
     Conversation |> Repo.all() |> Repo.preload([:customer, :messages])
   end
 
+  def list_conversations_by_account(nil) do
+    # TODO: raise an exception if nil account is passed in?
+    []
+  end
+
   def list_conversations_by_account(account_id) do
     query =
       from(c in Conversation,
@@ -60,7 +65,7 @@ defmodule ChatApi.Conversations do
 
   """
   def get_conversation!(id) do
-    Conversation |> Repo.get!(id) |> Repo.preload(:messages)
+    Conversation |> Repo.get!(id) |> Repo.preload([:messages, :customer])
   end
 
   def get_conversation(id) do
