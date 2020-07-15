@@ -1,6 +1,6 @@
 defmodule ChatApiWeb.AccountView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.AccountView
+  alias ChatApiWeb.{AccountView, UserView}
 
   def render("index.json", %{accounts: accounts}) do
     %{data: render_many(accounts, AccountView, "account.json")}
@@ -10,7 +10,22 @@ defmodule ChatApiWeb.AccountView do
     %{data: render_one(account, AccountView, "account.json")}
   end
 
+  def render("create.json", %{account: account}) do
+    %{data: render_one(account, AccountView, "basic.json")}
+  end
+
+  def render("basic.json", %{account: account}) do
+    %{
+      id: account.id,
+      company_name: account.company_name
+    }
+  end
+
   def render("account.json", %{account: account}) do
-    %{id: account.id, company_name: account.company_name}
+    %{
+      id: account.id,
+      company_name: account.company_name,
+      users: render_many(account.users, UserView, "user.json")
+    }
   end
 end

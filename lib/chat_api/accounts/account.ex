@@ -5,6 +5,7 @@ defmodule ChatApi.Accounts.Account do
   alias ChatApi.Customers.Customer
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Chat.Message
+  alias ChatApi.Users.User
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -13,6 +14,7 @@ defmodule ChatApi.Accounts.Account do
     has_many(:customers, Customer)
     has_many(:conversations, Conversation)
     has_many(:messages, Message)
+    has_many(:users, User)
 
     timestamps()
   end

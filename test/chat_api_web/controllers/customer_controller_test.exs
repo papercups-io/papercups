@@ -30,26 +30,31 @@ defmodule ChatApiWeb.CustomerControllerTest do
   end
 
   setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
+    user = %ChatApi.Users.User{email: "test@example.com"}
+    conn = put_req_header(conn, "accept", "application/json")
+    authed_conn = Pow.Plug.assign_current_user(conn, user, [])
+
+    {:ok, conn: conn, authed_conn: authed_conn}
   end
 
   describe "index" do
-    test "lists all customers", %{conn: conn} do
-      conn = get(conn, Routes.customer_path(conn, :index))
-      assert json_response(conn, 200)["data"] == []
+    test "lists all customers", %{authed_conn: authed_conn} do
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :index))
+      assert json_response(resp, 200)["data"] == []
     end
   end
 
   describe "create customer" do
-    test "renders customer when data is valid", %{conn: conn} do
-      conn = post(conn, Routes.customer_path(conn, :create), customer: valid_create_attrs())
-      assert %{"id" => id} = json_response(conn, 201)["data"]
+    test "renders customer when data is valid", %{conn: conn, authed_conn: authed_conn} do
+      resp = post(conn, Routes.customer_path(conn, :create), customer: valid_create_attrs())
 
-      conn = get(conn, Routes.customer_path(conn, :show, id))
+      assert %{"id" => id} = json_response(resp, 201)["data"]
+
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :show, id))
 
       assert %{
                "id" => id
-             } = json_response(conn, 200)["data"]
+             } = json_response(resp, 200)["data"]
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
@@ -62,34 +67,42 @@ defmodule ChatApiWeb.CustomerControllerTest do
     setup [:create_customer]
 
     test "renders customer when data is valid", %{
-      conn: conn,
+      authed_conn: authed_conn,
       customer: %Customer{id: id} = customer
     } do
-      conn = put(conn, Routes.customer_path(conn, :update, customer), customer: @update_attrs)
-      assert %{"id" => ^id} = json_response(conn, 200)["data"]
+      resp =
+        put(authed_conn, Routes.customer_path(authed_conn, :update, customer),
+          customer: @update_attrs
+        )
 
-      conn = get(conn, Routes.customer_path(conn, :show, id))
+      assert %{"id" => ^id} = json_response(resp, 200)["data"]
+
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :show, id))
 
       assert %{
                "id" => id
-             } = json_response(conn, 200)["data"]
+             } = json_response(resp, 200)["data"]
     end
 
-    test "renders errors when data is invalid", %{conn: conn, customer: customer} do
-      conn = put(conn, Routes.customer_path(conn, :update, customer), customer: @invalid_attrs)
-      assert json_response(conn, 422)["errors"] != %{}
+    test "renders errors when data is invalid", %{authed_conn: authed_conn, customer: customer} do
+      resp =
+        put(authed_conn, Routes.customer_path(authed_conn, :update, customer),
+          customer: @invalid_attrs
+        )
+
+      assert json_response(resp, 422)["errors"] != %{}
     end
   end
 
   describe "delete customer" do
     setup [:create_customer]
 
-    test "deletes chosen customer", %{conn: conn, customer: customer} do
-      conn = delete(conn, Routes.customer_path(conn, :delete, customer))
-      assert response(conn, 204)
+    test "deletes chosen customer", %{authed_conn: authed_conn, customer: customer} do
+      resp = delete(authed_conn, Routes.customer_path(authed_conn, :delete, customer))
+      assert response(resp, 204)
 
       assert_error_sent(404, fn ->
-        get(conn, Routes.customer_path(conn, :show, customer))
+        get(authed_conn, Routes.customer_path(authed_conn, :show, customer))
       end)
     end
   end

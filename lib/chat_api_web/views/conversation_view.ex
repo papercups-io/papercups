@@ -33,6 +33,7 @@ defmodule ChatApiWeb.ConversationView do
       created_at: conversation.inserted_at,
       status: conversation.status,
       priority: conversation.priority,
+      assignee_id: conversation.assignee_id,
       customer: render_one(conversation.customer, CustomerView, "customer.json"),
       messages: render_many(conversation.messages, MessageView, "message.json")
     }

@@ -10,6 +10,7 @@ import {
   Content,
   Footer,
   Layout,
+  Select,
   Sider,
   Text,
   TextArea,
@@ -22,10 +23,12 @@ import {
   StarOutlined,
   StarFilled,
   UploadOutlined,
+  UserOutlined,
 } from './icons';
 import ChatMessage from './ChatMessage';
 import {socket} from '../socket';
 import {formatRelativeTime} from '../utils';
+import ConversationHeader from './ConversationHeader';
 
 dayjs.extend(utc);
 
@@ -51,7 +54,9 @@ type State = {
   message: string;
   messages: Array<Message>;
   accountId: string;
+  account: any;
   userId: string;
+  currentUser: any;
   conversations: Array<Conversation>;
   selectedConversationId?: string | null;
   conversationIds: Array<string>;
@@ -68,7 +73,9 @@ class Dashboard extends React.Component<Props, State> {
   state: State = {
     message: '',
     accountId: 'EB504736-0F20-4978-98FF-1A82AE60B266', // TODO: get from auth provider
+    account: null,
     userId: '1', // TODO: get from auth provider
+    currentUser: null,
     conversations: [],
     messages: [],
     selectedConversationId: null,
@@ -81,7 +88,15 @@ class Dashboard extends React.Component<Props, State> {
   componentDidMount() {
     socket.connect();
 
-    API.me().then(console.log).catch(console.log); // TODO: do in AuthProvider
+    // TODO: do in AuthProvider
+    API.me()
+      .then((user) => this.setState({currentUser: user}))
+      .catch((err) => console.log('Error fetching current user:', err));
+
+    // TODO: handle in a different context?
+    API.fetchAccountInfo()
+      .then((account) => this.setState({account}))
+      .catch((err) => console.log('Error fetching account info:', err));
 
     API.fetchConversations()
       .then((conversations) => {
@@ -291,11 +306,15 @@ class Dashboard extends React.Component<Props, State> {
     this.handleUpdateConversation(conversationId, {priority: 'not_priority'});
   };
 
+  handleAssignUser = (conversationId: string, userId: string) => {
+    this.handleUpdateConversation(conversationId, {assignee_id: userId});
+  };
+
   render() {
     const {
       message,
+      account,
       selectedConversationId,
-      isUpdatingConversation,
       conversationIds = [],
       conversationsById = {},
       messagesByConversation = {},
@@ -309,6 +328,10 @@ class Dashboard extends React.Component<Props, State> {
     const selectedConversation = selectedConversationId
       ? conversationsById[selectedConversationId]
       : null;
+
+    const users = (account && account.users) || [];
+
+    console.log({selectedConversation});
 
     return (
       <Layout>
@@ -389,86 +412,15 @@ class Dashboard extends React.Component<Props, State> {
           </Box>
         </Sider>
         <Layout style={{marginLeft: 280}}>
-          {/* TODO: move to separate component? */}
-          <header
-            style={{
-              boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 2rem',
-              zIndex: 1,
-              opacity:
-                selectedConversation && selectedConversation.status === 'closed'
-                  ? 0.8
-                  : 1,
-            }}
-          >
-            <Flex
-              py={3}
-              px={4}
-              backgroundColor={colors.white}
-              sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
-            >
-              <Title level={4} style={{marginBottom: 0, marginTop: 4}}>
-                Anonymous User
-              </Title>
-
-              {selectedConversationId && (
-                <Flex mx={-1}>
-                  <Box mx={1}>
-                    {selectedConversation &&
-                    selectedConversation.priority === 'priority' ? (
-                      <Tooltip title="Remove priority" placement="bottomRight">
-                        <Button
-                          icon={<StarFilled style={{color: colors.gold}} />}
-                          onClick={() =>
-                            this.handleMarkUnpriority(selectedConversationId)
-                          }
-                        />
-                      </Tooltip>
-                    ) : (
-                      <Tooltip title="Mark as priority" placement="bottomRight">
-                        <Button
-                          icon={<StarOutlined />}
-                          onClick={() =>
-                            this.handleMarkPriority(selectedConversationId)
-                          }
-                        />
-                      </Tooltip>
-                    )}
-                  </Box>
-
-                  <Box mx={1}>
-                    {selectedConversation &&
-                    selectedConversation.status === 'closed' ? (
-                      <Tooltip
-                        title="Reopen conversation"
-                        placement="bottomRight"
-                      >
-                        <Button
-                          icon={<UploadOutlined />}
-                          onClick={() =>
-                            this.handleReopenConversation(
-                              selectedConversationId
-                            )
-                          }
-                        />
-                      </Tooltip>
-                    ) : (
-                      <Tooltip
-                        title="Close conversation"
-                        placement="bottomRight"
-                      >
-                        <Button
-                          icon={<CheckOutlined />}
-                          onClick={() =>
-                            this.handleCloseConversation(selectedConversationId)
-                          }
-                        />
-                      </Tooltip>
-                    )}
-                  </Box>
-                </Flex>
-              )}
-            </Flex>
-          </header>
+          <ConversationHeader
+            conversation={selectedConversation}
+            users={users}
+            onAssignUser={this.handleAssignUser}
+            onMarkPriority={this.handleMarkPriority}
+            onRemovePriority={this.handleMarkUnpriority}
+            onCloseConversation={this.handleCloseConversation}
+            onReopenConversation={this.handleReopenConversation}
+          />
 
           <Content style={{overflowY: 'scroll'}}>
             <Box p={4} backgroundColor={colors.white} sx={{minHeight: '100%'}}>

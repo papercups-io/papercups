@@ -117,6 +117,17 @@ export const createNewConversation = async (
     .then((res) => res.body.data);
 };
 
+export const fetchAccountInfo = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/accounts/me`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchConversations = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
