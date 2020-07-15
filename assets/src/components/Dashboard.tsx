@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Socket, Channel} from 'phoenix';
+import {Channel} from 'phoenix';
 import * as API from '../api';
 import {
   colors,
@@ -15,10 +15,7 @@ import {
 } from './common';
 import {SmileTwoTone} from './icons';
 import ChatMessage from './ChatMessage';
-
-// TODO: don't hardcode this
-// const socket = new Socket('ws://localhost:4000/socket');
-const socket = new Socket('/socket');
+import {socket} from '../socket';
 
 // NB: actual message records will look slightly different
 type Message = {
