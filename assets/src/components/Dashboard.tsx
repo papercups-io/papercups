@@ -1,6 +1,7 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import {Channel} from 'phoenix';
 import * as API from '../api';
 import {
@@ -25,6 +26,8 @@ import {
 import ChatMessage from './ChatMessage';
 import {socket} from '../socket';
 import {formatRelativeTime} from '../utils';
+
+dayjs.extend(utc);
 
 // NB: actual message records will look slightly different
 type Message = {
@@ -232,7 +235,7 @@ class Dashboard extends React.Component<Props, State> {
 
   formatConversation = (conversation: any, messages: Array<any>) => {
     const recent = messages[messages.length - 1];
-    const created = dayjs(conversation.created_at);
+    const created = dayjs.utc(recent.created_at);
     const date = formatRelativeTime(created);
 
     return {
