@@ -86,15 +86,6 @@ const ConversationHeader = ({
                 onAssignUser(conversationId, String(userId))
               }
             >
-              {/*
-              <Select.Option key="" value="">
-                <Flex sx={{alignItems: 'center'}}>
-                  <UserOutlined style={{marginRight: 8, fontSize: 12}} />
-                  <Box>No assignee</Box>
-                </Flex>
-              </Select.Option>
-              */}
-
               {users.map((user: any) => {
                 return (
                   <Select.Option key={user.id} value={user.id}>
