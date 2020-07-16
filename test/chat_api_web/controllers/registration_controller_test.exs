@@ -6,13 +6,14 @@ defmodule ChatApiWeb.RegistrationControllerTest do
   describe "create/2" do
     @valid_params %{
       "user" => %{
+        "company_name" => "Papercups",
         "email" => "test@example.com",
         "password" => @password,
         "password_confirmation" => @password
       }
     }
     @invalid_params %{
-      "user" => %{"email" => "invalid", "password" => @password, "password_confirmation" => ""}
+      "user" => %{"email" => "invalid", "password" => @password, "password_confirmation" => "", "company_name" => "test"}
     }
 
     test "with valid params", %{conn: conn} do

@@ -8,17 +8,22 @@ type Props = RouteComponentProps & {
   onSubmit: (params: any) => Promise<void>;
 };
 type State = {
+  companyName: string;
   email: string;
   password: string;
   passwordConfirmation: string;
 };
 
 class Register extends React.Component<Props, State> {
-  state: State = {email: '', password: '', passwordConfirmation: ''};
+  state: State = {companyName: '', email: '', password: '', passwordConfirmation: ''};
 
   componentDidMount() {
     //
   }
+
+  handleChangeCompanyName = (e: any) => {
+    this.setState({companyName: e.target.value});
+  };
 
   handleChangeEmail = (e: any) => {
     this.setState({email: e.target.value});
@@ -35,16 +40,16 @@ class Register extends React.Component<Props, State> {
   handleSubmit = (e: any) => {
     e.preventDefault();
 
-    const {email, password, passwordConfirmation} = this.state;
+    const {companyName, email, password, passwordConfirmation} = this.state;
 
     this.props
-      .onSubmit({email, password, passwordConfirmation})
+      .onSubmit({companyName, email, password, passwordConfirmation})
       .then(() => this.props.history.push('/conversations'))
       .catch((err) => console.log('Error!', err));
   };
 
   render() {
-    const {email, password, passwordConfirmation} = this.state;
+    const {companyName, email, password, passwordConfirmation} = this.state;
 
     return (
       <Flex
@@ -60,6 +65,18 @@ class Register extends React.Component<Props, State> {
           <Title level={1}>Get started</Title>
 
           <form onSubmit={this.handleSubmit}>
+            <Box mb={2}>
+              <label htmlFor="companyName">Company Name</label>
+              <Input
+                id="companyName"
+                size="large"
+                type="companyName"
+                autoComplete="company-name"
+                value={companyName}
+                onChange={this.handleChangeCompanyName}
+              />
+            </Box>
+
             <Box mb={2}>
               <label htmlFor="email">Email</label>
               <Input
