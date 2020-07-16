@@ -26,61 +26,35 @@ defmodule ChatApi.Conversations do
     []
   end
 
+  def list_conversations_by_account(account_id, params) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(params))
+    |> order_by(desc: :inserted_at)
+    |> preload([:customer, :messages])
+    |> Repo.all()
+  end
+
   def list_conversations_by_account(account_id) do
-    query =
-      from(c in Conversation,
-        where: c.account_id == ^account_id,
-        select: c,
-        order_by: [desc: :inserted_at],
-        preload: [:customer, :messages]
-      )
-
-    Repo.all(query)
+    list_conversations_by_account(account_id, %{})
   end
 
-  # TODO: there's got to be a way to DRY all this up, but I'm not sure how to do it in Elixir yet :P
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  def filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"status", value}, dynamic ->
+        dynamic([p], ^dynamic and p.status == ^value)
 
-  def list_conversations_by_account(account_id, %{"status" => status}) do
-    query =
-      from(c in Conversation,
-        where: c.account_id == ^account_id,
-        where: c.status == ^status,
-        select: c,
-        order_by: [desc: :inserted_at],
-        preload: [:customer, :messages]
-      )
+      {"priority", value}, dynamic ->
+        dynamic([p], ^dynamic and p.priority == ^value)
 
-    Repo.all(query)
-  end
+      {"assignee_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.assignee_id == ^value)
 
-  def list_conversations_by_account(account_id, %{"assignee_id" => assignee_id}) do
-    query =
-      from(c in Conversation,
-        where: c.account_id == ^account_id,
-        where: c.assignee_id == ^assignee_id,
-        select: c,
-        order_by: [desc: :inserted_at],
-        preload: [:customer, :messages]
-      )
-
-    Repo.all(query)
-  end
-
-  def list_conversations_by_account(account_id, %{"priority" => priority}) do
-    query =
-      from(c in Conversation,
-        where: c.account_id == ^account_id,
-        where: c.priority == ^priority,
-        select: c,
-        order_by: [desc: :inserted_at],
-        preload: [:customer, :messages]
-      )
-
-    Repo.all(query)
-  end
-
-  def list_conversations_by_account(account_id, _) do
-    list_conversations_by_account(account_id)
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 
   def find_by_customer(customer_id, account_id) do
