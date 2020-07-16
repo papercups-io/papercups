@@ -83,6 +83,7 @@ class ConversationsContainer extends React.Component<Props, State> {
   }
 
   refreshConversationsData = async () => {
+    const {selectedConversationId} = this.state;
     const conversations = await this.props.fetch();
 
     if (!conversations || !conversations.length) {
@@ -127,14 +128,18 @@ class ConversationsContainer extends React.Component<Props, State> {
         return +new Date(y?.created_at) - +new Date(x?.created_at);
       }
     );
-    const [selectedConversationId] = conversationIds;
+    const [recentConversationId] = conversationIds;
+    const updatedSelectedId =
+      selectedConversationId && conversationsById[selectedConversationId]
+        ? selectedConversationId
+        : recentConversationId;
 
     this.setState(
       {
         conversationsById,
         messagesByConversation,
         conversationIds,
-        selectedConversationId,
+        selectedConversationId: updatedSelectedId,
       },
       () => this.scrollToEl.scrollIntoView()
     );

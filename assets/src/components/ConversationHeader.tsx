@@ -50,12 +50,8 @@ const ConversationHeader = ({
     );
   }
 
-  const {
-    id: conversationId,
-    assignee_id: assigneeId,
-    status,
-    priority,
-  } = conversation;
+  const {id: conversationId, assignee_id, status, priority} = conversation;
+  const assigneeId = assignee_id ? String(assignee_id) : undefined;
 
   return (
     <header
@@ -80,15 +76,16 @@ const ConversationHeader = ({
             <Select
               style={{minWidth: 240}}
               placeholder="No assignee"
-              value={assigneeId}
-              onChange={(...args) => console.log('Changed!', args)}
+              value={assigneeId ? String(assigneeId) : undefined}
               onSelect={(userId) =>
                 onAssignUser(conversationId, String(userId))
               }
             >
               {users.map((user: any) => {
+                const value = String(user.id);
+
                 return (
-                  <Select.Option key={user.id} value={user.id}>
+                  <Select.Option key={value} value={value}>
                     <Flex sx={{alignItems: 'center'}}>
                       <UserOutlined style={{marginRight: 8, fontSize: 12}} />
                       <Box>{user.name || user.email}</Box>
