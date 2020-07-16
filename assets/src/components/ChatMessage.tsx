@@ -39,6 +39,8 @@ const ChatMessage = ({
         <Flex sx={{justifyContent: 'flex-end'}}>
           <Box
             p={3}
+            pt={2}
+            pb={2}
             sx={{
               color: colors.white,
               background: colors.primary,
@@ -66,6 +68,8 @@ const ChatMessage = ({
         </Box>
         <Box
           p={3}
+          pt={2}
+          pb={2}
           sx={{
             color: colors.black,
             background: 'rgb(245, 245, 245)',
