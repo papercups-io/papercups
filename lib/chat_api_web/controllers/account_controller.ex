@@ -11,6 +11,7 @@ defmodule ChatApiWeb.AccountController do
     render(conn, "index.json", accounts: accounts)
   end
 
+  @spec create(any, map) :: any
   def create(conn, %{"account" => account_params}) do
     with {:ok, %Account{} = account} <- Accounts.create_account(account_params) do
       conn
