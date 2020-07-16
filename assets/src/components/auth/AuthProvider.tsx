@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
-import {getAuthTokens, setAuthTokens, removeAuthTokens} from '../storage';
-import * as API from '../api';
+import {getAuthTokens, setAuthTokens, removeAuthTokens} from '../../storage';
+import * as API from '../../api';
 
 const defaultRedirectCallback = () =>
   window.history.replaceState({}, document.title, window.location.pathname);

@@ -1,7 +1,7 @@
 import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
-import * as API from '../api';
-import {Conversation} from '../types';
+import * as API from '../../api';
+import {Conversation} from '../../types';
 import ConversationsContainer from './ConversationsContainer';
 
 type Props = RouteComponentProps & {};
@@ -12,7 +12,7 @@ type State = {
   loading: boolean;
 };
 
-class PriorityConversations extends React.Component<Props, State> {
+class AllConversations extends React.Component<Props, State> {
   state: any = {
     account: null,
     currentUser: null,
@@ -37,7 +37,7 @@ class PriorityConversations extends React.Component<Props, State> {
   }
 
   handleFetchConversations = () => {
-    return API.fetchPriorityConversations();
+    return API.fetchAllConversations();
   };
 
   render() {
@@ -50,7 +50,7 @@ class PriorityConversations extends React.Component<Props, State> {
 
     return (
       <ConversationsContainer
-        title="Prioritized"
+        title="All conversations"
         account={account}
         currentUser={currentUser}
         conversations={conversations}
@@ -60,4 +60,4 @@ class PriorityConversations extends React.Component<Props, State> {
   }
 }
 
-export default PriorityConversations;
+export default AllConversations;

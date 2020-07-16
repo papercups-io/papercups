@@ -2,9 +2,9 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {colors, Text} from './common';
-import {SmileTwoTone} from './icons';
-import {formatRelativeTime} from '../utils';
+import {colors, Text} from '../common';
+import {SmileTwoTone} from '../icons';
+import {formatRelativeTime} from '../../utils';
 
 dayjs.extend(utc);
 

@@ -3,7 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Channel} from 'phoenix';
-import * as API from '../api';
+import * as API from '../../api';
 import {
   colors,
   Button,
@@ -14,12 +14,14 @@ import {
   Text,
   TextArea,
   Title,
-} from './common';
-import {SmileTwoTone, StarFilled, UserOutlined} from './icons';
+} from '../common';
+import {SmileTwoTone, StarFilled} from '../icons';
 import ChatMessage from './ChatMessage';
-import {socket} from '../socket';
-import {formatRelativeTime} from '../utils';
+import {socket} from '../../socket';
+import {formatRelativeTime} from '../../utils';
 import ConversationHeader from './ConversationHeader';
+import ConversationItem from './ConversationItem';
+import ConversationFooter from './ConversationFooter';
 
 dayjs.extend(utc);
 
@@ -216,7 +218,27 @@ class ConversationsContainer extends React.Component<Props, State> {
     this.setState({message: e.target.value});
   };
 
-  handleSendMessage = (e?: any) => {
+  handleSendMessage = (message: string) => {
+    const {account, currentUser} = this.props;
+    const {selectedConversationId} = this.state;
+    const {id: accountId} = account;
+    const {id: userId} = currentUser;
+
+    if (!this.channel || !message || message.trim().length === 0) {
+      return;
+    }
+
+    this.channel.push('shout', {
+      body: message,
+      sender: 'agent',
+      // created_at: new Date(),
+      conversation_id: selectedConversationId,
+      account_id: accountId,
+      user_id: userId,
+    });
+  };
+
+  _handleSendMessage = (e?: any) => {
     e && e.preventDefault();
 
     const {account, currentUser} = this.props;
@@ -357,58 +379,20 @@ class ConversationsContainer extends React.Component<Props, State> {
             {conversationIds.map((conversationId, idx) => {
               const conversation = conversationsById[conversationId];
               const messages = messagesByConversation[conversationId];
-              const formatted = this.formatConversation(conversation, messages);
-              const {id, priority, status, customer, date, preview} = formatted;
-              const isPriority = priority === 'priority';
-              const isClosed = status === 'closed';
-              const isHighlighted = id === selectedConversationId;
+              const isHighlighted = conversationId === selectedConversationId;
               const {gold, red, green, gray} = colors;
+              // TODO: come up with a better way to make colors/avatars consistent
               const color = [gold, red, green, gray[0]][idx % 4];
 
-              // TODO: move into separate component
               return (
-                <Box
-                  key={id}
-                  p={3}
-                  sx={{
-                    opacity: isClosed ? 0.8 : 1,
-                    borderBottom: '1px solid #f0f0f0',
-                    borderLeft: isHighlighted
-                      ? `2px solid ${colors.primary}`
-                      : null,
-                    background: isHighlighted ? colors.blue[0] : null,
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => this.handleSelectConversation(id)}
-                >
-                  <Flex mb={2} sx={{justifyContent: 'space-between'}}>
-                    <Flex sx={{alignItems: 'center'}}>
-                      <Box mr={2}>
-                        {isPriority ? (
-                          <StarFilled
-                            style={{fontSize: 16, color: colors.gold}}
-                          />
-                        ) : (
-                          <SmileTwoTone
-                            style={{fontSize: 16}}
-                            twoToneColor={color}
-                          />
-                        )}
-                      </Box>
-                      <Text strong>{customer}</Text>
-                    </Flex>
-                    <Text type="secondary">{date}</Text>
-                  </Flex>
-                  <Box
-                    style={{
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {preview}
-                  </Box>
-                </Box>
+                <ConversationItem
+                  key={conversationId}
+                  conversation={conversation}
+                  messages={messages}
+                  isHighlighted={isHighlighted}
+                  color={color}
+                  onSelectConversation={this.handleSelectConversation}
+                />
               );
             })}
           </Box>
@@ -448,33 +432,10 @@ class ConversationsContainer extends React.Component<Props, State> {
               <div ref={(el) => (this.scrollToEl = el)} />
             </Box>
           </Content>
-          <Footer style={{padding: 0}}>
-            <Box px={4} pt={0} pb={4} backgroundColor={colors.white}>
-              <Box
-                p={2}
-                sx={{
-                  border: '1px solid #f5f5f5',
-                  borderRadius: 4,
-                  boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
-                }}
-              >
-                <Box mb={2}>
-                  <TextArea
-                    className="TextArea--transparent"
-                    placeholder="Type your message here!"
-                    autoSize={{minRows: 1, maxRows: 4}}
-                    value={message}
-                    onChange={this.handleMessageChange}
-                  />
-                </Box>
-                <Flex sx={{justifyContent: 'flex-end'}}>
-                  <Button type="primary" onClick={this.handleSendMessage}>
-                    Send
-                  </Button>
-                </Flex>
-              </Box>
-            </Box>
-          </Footer>
+
+          {selectedConversation && (
+            <ConversationFooter onSendMessage={this.handleSendMessage} />
+          )}
         </Layout>
       </Layout>
     );

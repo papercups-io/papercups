@@ -1,13 +1,13 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Select, Title, Tooltip} from './common';
+import {colors, Button, Select, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
   StarOutlined,
   StarFilled,
   UploadOutlined,
   UserOutlined,
-} from './icons';
+} from '../icons';
 
 const ConversationHeader = ({
   conversation,
@@ -27,27 +27,8 @@ const ConversationHeader = ({
   onReopenConversation: (conversationId: string) => void;
 }) => {
   if (!conversation) {
-    return (
-      <header
-        style={{
-          boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 2rem',
-          zIndex: 1,
-          opacity: 0.8,
-          minHeight: 68,
-        }}
-      >
-        <Flex
-          py={3}
-          px={4}
-          backgroundColor={colors.white}
-          sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
-        >
-          <Title level={4} style={{marginBottom: 0, marginTop: 4}}>
-            &nbsp;
-          </Title>
-        </Flex>
-      </header>
-    );
+    // No point in showing the header if no conversation exists
+    return null;
   }
 
   const {id: conversationId, assignee_id, status, priority} = conversation;

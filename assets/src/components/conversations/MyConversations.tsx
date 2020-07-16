@@ -1,7 +1,7 @@
 import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
-import * as API from '../api';
-import {Conversation} from '../types';
+import * as API from '../../api';
+import {Conversation} from '../../types';
 import ConversationsContainer from './ConversationsContainer';
 
 type Props = RouteComponentProps & {};
@@ -12,7 +12,7 @@ type State = {
   loading: boolean;
 };
 
-class AllConversations extends React.Component<Props, State> {
+class MyConversations extends React.Component<Props, State> {
   state: any = {
     account: null,
     currentUser: null,
@@ -20,24 +20,28 @@ class AllConversations extends React.Component<Props, State> {
     loading: true,
   };
 
-  componentDidMount() {
-    const promises = [
-      // TODO: do in AuthProvider
-      API.me()
-        .then((user) => this.setState({currentUser: user}))
-        .catch((err) => console.log('Error fetching current user:', err)),
+  async componentDidMount() {
+    try {
+      const user = await API.me();
+      const account = await API.fetchAccountInfo();
 
-      // TODO: handle in a different context?
-      API.fetchAccountInfo()
-        .then((account) => this.setState({account}))
-        .catch((err) => console.log('Error fetching account info:', err)),
-    ];
+      this.setState({
+        account,
+        currentUser: user,
+        loading: false,
+      });
+    } catch (err) {
+      console.log('Error loading my conversations!', err);
 
-    Promise.all(promises).then(() => this.setState({loading: false}));
+      this.setState({loading: false});
+    }
   }
 
   handleFetchConversations = () => {
-    return API.fetchAllConversations();
+    const {currentUser} = this.state;
+    const {id: userId} = currentUser;
+
+    return API.fetchMyConversations(userId);
   };
 
   render() {
@@ -50,7 +54,7 @@ class AllConversations extends React.Component<Props, State> {
 
     return (
       <ConversationsContainer
-        title="All conversations"
+        title="Assigned to me"
         account={account}
         currentUser={currentUser}
         conversations={conversations}
@@ -60,4 +64,4 @@ class AllConversations extends React.Component<Props, State> {
   }
 }
 
-export default AllConversations;
+export default MyConversations;

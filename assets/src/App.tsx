@@ -5,12 +5,12 @@ import {
   Route,
   Redirect,
 } from 'react-router-dom';
-import {useAuth} from './components/AuthProvider';
-import Login from './components/Login';
-import Register from './components/Register';
-import Demo from './components/Demo';
+import {useAuth} from './components/auth/AuthProvider';
+import Login from './components/auth/Login';
+import Register from './components/auth/Register';
+import Demo from './components/demo/Demo';
 import Dashboard from './components/Dashboard';
-import Widget from './components/Widget';
+import Widget from './components/demo/Widget';
 import './App.css';
 
 const App = () => {

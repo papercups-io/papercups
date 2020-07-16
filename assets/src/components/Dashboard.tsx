@@ -3,11 +3,11 @@ import {Switch, Route, Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {colors, Layout, Menu, Sider} from './common';
 import {MailOutlined, UserOutlined, SettingOutlined} from './icons';
-import {useAuth} from './AuthProvider';
-import AllConversations from './AllConversations';
-import MyConversations from './MyConversations';
-import PriorityConversations from './PriorityConversations';
-import ClosedConversations from './ClosedConversations';
+import {useAuth} from './auth/AuthProvider';
+import AllConversations from './conversations/AllConversations';
+import MyConversations from './conversations/MyConversations';
+import PriorityConversations from './conversations/PriorityConversations';
+import ClosedConversations from './conversations/ClosedConversations';
 
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();

@@ -1,7 +1,7 @@
 import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
-import * as API from '../api';
-import {Conversation} from '../types';
+import * as API from '../../api';
+import {Conversation} from '../../types';
 import ConversationsContainer from './ConversationsContainer';
 
 type Props = RouteComponentProps & {};
