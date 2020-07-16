@@ -12,6 +12,10 @@ To start your server:
 
 This will automatically start up the React frontend in watch mode on `localhost:3000`, with the API running on `localhost:4000`.
 
+### To start client side 
+
+see: [README](assets/README.md)
+
 ## Running tests
 
 Create postgres test database named: `chat_api_test`

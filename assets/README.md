@@ -2,6 +2,10 @@
 
 The React frontend for Papercups
 
+## Node Version:
+
+The node version that is used in the project is 14.5.0
+
 ## Available Scripts
 
 In the project directory, you can run:

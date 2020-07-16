@@ -32,7 +32,7 @@ const App = () => {
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
           <Route path="/widget" component={Widget} />
-          <Route path="*" render={() => <Redirect to="login" />} />
+          <Route path="*" render={() => <Redirect to="/login" />} />
         </Switch>
       </Router>
     );
@@ -53,6 +53,7 @@ const App = () => {
           component={PriorityConversations}
         />
         <Route path="/conversations" component={AllConversations} />
+        <Route path="*" render={() => <Redirect to="/login" />} />
       </Switch>
     </Router>
   );
