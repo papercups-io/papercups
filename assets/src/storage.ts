@@ -19,7 +19,7 @@ const set = (key: string, value: any) => {
 };
 
 const remove = (key: string) => {
-  localStorage.removeItem(key);
+  localStorage.removeItem(`${PREFIX}${key}`);
 };
 
 // TODO: improve these names
