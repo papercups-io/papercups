@@ -3,7 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Channel} from 'phoenix';
-import * as API from '../api';
+import * as API from '../../api';
 import {
   colors,
   Button,
@@ -14,11 +14,11 @@ import {
   Text,
   TextArea,
   Title,
-} from './common';
-import {SmileTwoTone, StarFilled, UserOutlined} from './icons';
+} from '../common';
+import {SmileTwoTone, StarFilled} from '../icons';
 import ChatMessage from './ChatMessage';
-import {socket} from '../socket';
-import {formatRelativeTime} from '../utils';
+import {socket} from '../../socket';
+import {formatRelativeTime} from '../../utils';
 import ConversationHeader from './ConversationHeader';
 
 dayjs.extend(utc);

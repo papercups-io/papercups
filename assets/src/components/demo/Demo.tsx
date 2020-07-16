@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Result} from './common';
-import {SmileOutlined} from './icons';
+import {Result} from '../common';
+import {SmileOutlined} from '../icons';
 // Testing widget in separate package
 import ChatWidget from '@papercups-io/chat-widget';
 import '@papercups-io/chat-widget/dist/index.css';

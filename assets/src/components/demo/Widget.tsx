@@ -1,12 +1,12 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {Channel} from 'phoenix';
-import {colors, Button, TextArea, Title} from './common';
-import {SendOutlined} from './icons';
-import ChatMessage from './ChatMessage';
-import * as API from '../api';
-import {getCustomerId, setCustomerId} from '../storage';
-import {socket} from '../socket';
+import {colors, Button, TextArea, Title} from '../common';
+import {SendOutlined} from '../icons';
+import ChatMessage from '../conversations/ChatMessage';
+import * as API from '../../api';
+import {getCustomerId, setCustomerId} from '../../storage';
+import {socket} from '../../socket';
 
 // TODO:
 type Message = {

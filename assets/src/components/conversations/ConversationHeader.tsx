@@ -1,13 +1,13 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Select, Title, Tooltip} from './common';
+import {colors, Button, Select, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
   StarOutlined,
   StarFilled,
   UploadOutlined,
   UserOutlined,
-} from './icons';
+} from '../icons';
 
 const ConversationHeader = ({
   conversation,
