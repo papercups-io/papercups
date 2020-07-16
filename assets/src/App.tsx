@@ -53,6 +53,7 @@ const App = () => {
           component={PriorityConversations}
         />
         <Route path="/conversations" component={AllConversations} />
+        <Route path="*" render={() => <Redirect to="/login" />} />
       </Switch>
     </Router>
   );
