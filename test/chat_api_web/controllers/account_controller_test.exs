@@ -17,28 +17,32 @@ defmodule ChatApiWeb.AccountControllerTest do
     account
   end
 
-  setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
+  def update_current_user_account(conn, account_id) do
+    user = %ChatApi.Users.User{email: "test@example.com", account_id: account_id}
+    # conn = put_req_header(conn, "accept", "application/json")
+    authed_conn = Pow.Plug.assign_current_user(conn, user, [])
+
+    authed_conn
   end
 
-  describe "index" do
-    test "lists all accounts", %{conn: conn} do
-      conn = get(conn, Routes.account_path(conn, :index))
-      assert json_response(conn, 200)["data"] == []
-    end
+  setup %{conn: conn} do
+    conn = put_req_header(conn, "accept", "application/json")
+
+    {:ok, conn: conn}
   end
 
   describe "create account" do
     test "renders account when data is valid", %{conn: conn} do
-      conn = post(conn, Routes.account_path(conn, :create), account: @create_attrs)
-      assert %{"id" => id} = json_response(conn, 201)["data"]
+      resp = post(conn, Routes.account_path(conn, :create), account: @create_attrs)
+      assert %{"id" => id} = json_response(resp, 201)["data"]
 
-      conn = get(conn, Routes.account_path(conn, :show, id))
+      authed_conn = update_current_user_account(conn, id)
+      resp = get(authed_conn, Routes.account_path(authed_conn, :me))
 
       assert %{
                "id" => id,
                "company_name" => "some company_name"
-             } = json_response(conn, 200)["data"]
+             } = json_response(resp, 200)["data"]
     end
 
     test "renders errors when data is invalid", %{conn: conn} do
@@ -50,11 +54,20 @@ defmodule ChatApiWeb.AccountControllerTest do
   describe "update account" do
     setup [:create_account]
 
-    test "renders account when data is valid", %{conn: conn, account: %Account{id: id} = account} do
-      conn = put(conn, Routes.account_path(conn, :update, account), account: @update_attrs)
+    test "renders account when data is valid", %{
+      conn: conn,
+      account: %Account{id: id} = account
+    } do
+      authed_conn = update_current_user_account(conn, account.id)
+
+      conn =
+        put(authed_conn, Routes.account_path(authed_conn, :update, account),
+          account: @update_attrs
+        )
+
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
-      conn = get(conn, Routes.account_path(conn, :show, id))
+      conn = get(authed_conn, Routes.account_path(authed_conn, :me))
 
       assert %{
                "id" => id,
@@ -62,8 +75,17 @@ defmodule ChatApiWeb.AccountControllerTest do
              } = json_response(conn, 200)["data"]
     end
 
-    test "renders errors when data is invalid", %{conn: conn, account: account} do
-      conn = put(conn, Routes.account_path(conn, :update, account), account: @invalid_attrs)
+    test "renders errors when data is invalid", %{
+      conn: conn,
+      account: account
+    } do
+      authed_conn = update_current_user_account(conn, account.id)
+
+      conn =
+        put(authed_conn, Routes.account_path(authed_conn, :update, account),
+          account: @invalid_attrs
+        )
+
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
@@ -72,11 +94,12 @@ defmodule ChatApiWeb.AccountControllerTest do
     setup [:create_account]
 
     test "deletes chosen account", %{conn: conn, account: account} do
-      conn = delete(conn, Routes.account_path(conn, :delete, account))
+      authed_conn = update_current_user_account(conn, account.id)
+      conn = delete(authed_conn, Routes.account_path(authed_conn, :delete, account))
       assert response(conn, 204)
 
       assert_error_sent 404, fn ->
-        get(conn, Routes.account_path(conn, :show, account))
+        get(authed_conn, Routes.account_path(authed_conn, :me))
       end
     end
   end

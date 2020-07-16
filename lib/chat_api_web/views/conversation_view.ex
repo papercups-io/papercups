@@ -21,7 +21,9 @@ defmodule ChatApiWeb.ConversationView do
   def render("basic.json", %{conversation: conversation}) do
     %{
       id: conversation.id,
-      status: conversation.status
+      created_at: conversation.inserted_at,
+      status: conversation.status,
+      priority: conversation.priority
     }
   end
 
@@ -30,6 +32,8 @@ defmodule ChatApiWeb.ConversationView do
       id: conversation.id,
       created_at: conversation.inserted_at,
       status: conversation.status,
+      priority: conversation.priority,
+      assignee_id: conversation.assignee_id,
       customer: render_one(conversation.customer, CustomerView, "customer.json"),
       messages: render_many(conversation.messages, MessageView, "message.json")
     }

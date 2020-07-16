@@ -26,13 +26,12 @@ defmodule ChatApiWeb.Router do
     resources("/session", SessionController, singleton: true, only: [:create, :delete])
     post("/session/renew", SessionController, :renew)
 
+    post("/accounts", AccountController, :create)
+    post("/conversations", ConversationController, :create)
+    post("/customers", CustomerController, :create)
+
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)
-    post("/conversations", ConversationController, :create)
-
-    # TODO: these should not be public
-    resources("/accounts", AccountController, except: [:new, :edit])
-    resources("/customers", CustomerController, except: [:new, :edit])
   end
 
   # Protected routes
@@ -40,15 +39,12 @@ defmodule ChatApiWeb.Router do
     pipe_through([:api, :api_protected])
 
     get("/me", SessionController, :me)
+    get("/accounts/me", AccountController, :me)
+
+    resources("/accounts", AccountController, only: [:update, :delete])
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
-  end
-
-  scope "/", ChatApiWeb do
-    pipe_through :browser
-
-    get "/", PageController, :index
-    get "/*path", PageController, :index
+    resources("/customers", CustomerController, except: [:new, :edit, :create])
   end
 
   # Enables LiveDashboard only for development
@@ -65,5 +61,12 @@ defmodule ChatApiWeb.Router do
       pipe_through([:fetch_session, :protect_from_forgery])
       live_dashboard("/dashboard", metrics: ChatApiWeb.Telemetry)
     end
+  end
+
+  scope "/", ChatApiWeb do
+    pipe_through :browser
+
+    get "/", PageController, :index
+    get "/*path", PageController, :index
   end
 end

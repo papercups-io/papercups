@@ -117,17 +117,85 @@ export const createNewConversation = async (
     .then((res) => res.body.data);
 };
 
-export const fetchConversations = async (token = getAccessToken()) => {
+export const fetchAccountInfo = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/accounts/me`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchAllConversations = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`${API_BASE_URL}/api/conversations`)
+    .query({status: 'open'})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
 
+export const fetchMyConversations = async (
+  userId: number,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/conversations`)
+    .query({assignee_id: userId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchPriorityConversations = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/conversations`)
+    .query({priority: 'priority'})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchClosedConversations = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/conversations`)
+    .query({status: 'closed'})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateConversation = async (
+  conversationId: string,
+  updates: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`${API_BASE_URL}/api/conversations/${conversationId}`)
+    .set('Authorization', token)
+    .send(updates)
+    .then((res) => res.body.data);
+};
+
+// TODO: deprecate, messages should only be fetched by conversation
 export const fetchMessages = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');

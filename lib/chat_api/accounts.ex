@@ -35,7 +35,9 @@ defmodule ChatApi.Accounts do
       ** (Ecto.NoResultsError)
 
   """
-  def get_account!(id), do: Repo.get!(Account, id)
+  def get_account!(id) do
+    Account |> Repo.get!(id) |> Repo.preload(:users)
+  end
 
   @doc """
   Creates a account.

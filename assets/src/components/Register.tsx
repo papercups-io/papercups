@@ -39,7 +39,7 @@ class Register extends React.Component<Props, State> {
 
     this.props
       .onSubmit({email, password, passwordConfirmation})
-      .then(() => this.props.history.push('/dashboard'))
+      .then(() => this.props.history.push('/conversations'))
       .catch((err) => console.log('Error!', err));
   };
 

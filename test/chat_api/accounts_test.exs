@@ -19,13 +19,19 @@ defmodule ChatApi.AccountsTest do
       account
     end
 
+    def account_with_users_fixture(attrs \\ %{}) do
+      account = account_fixture(attrs)
+
+      Accounts.get_account!(account.id)
+    end
+
     test "list_accounts/0 returns all accounts" do
       account = account_fixture()
       assert Accounts.list_accounts() == [account]
     end
 
     test "get_account!/1 returns the account with given id" do
-      account = account_fixture()
+      account = account_with_users_fixture()
       assert Accounts.get_account!(account.id) == account
     end
 
@@ -45,7 +51,7 @@ defmodule ChatApi.AccountsTest do
     end
 
     test "update_account/2 with invalid data returns error changeset" do
-      account = account_fixture()
+      account = account_with_users_fixture()
       assert {:error, %Ecto.Changeset{}} = Accounts.update_account(account, @invalid_attrs)
       assert account == Accounts.get_account!(account.id)
     end

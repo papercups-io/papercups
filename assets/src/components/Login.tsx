@@ -35,7 +35,7 @@ class Login extends React.Component<Props, State> {
     // TODO: handle login through API
     this.props
       .onSubmit({email, password})
-      .then(() => this.props.history.push('/dashboard'))
+      .then(() => this.props.history.push('/conversations'))
       .catch((err) => console.log('Error!', err));
   };
 

@@ -1,7 +1,25 @@
+import CheckOutlined from '@ant-design/icons/CheckOutlined';
+import DownOutlined from '@ant-design/icons/DownOutlined';
+import MailOutlined from '@ant-design/icons/MailOutlined';
 import SendOutlined from '@ant-design/icons/SendOutlined';
 import SmileOutlined from '@ant-design/icons/SmileOutlined';
 import SmileTwoTone from '@ant-design/icons/SmileTwoTone';
-import DownOutlined from '@ant-design/icons/DownOutlined';
+import StarFilled from '@ant-design/icons/StarFilled';
+import StarOutlined from '@ant-design/icons/StarOutlined';
+import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
+import UserOutlined from '@ant-design/icons/UserOutlined';
 
-export {SendOutlined, SmileOutlined, SmileTwoTone, DownOutlined, UpOutlined};
+export {
+  CheckOutlined,
+  DownOutlined,
+  MailOutlined,
+  SendOutlined,
+  SmileOutlined,
+  SmileTwoTone,
+  StarFilled,
+  StarOutlined,
+  UploadOutlined,
+  UpOutlined,
+  UserOutlined,
+};

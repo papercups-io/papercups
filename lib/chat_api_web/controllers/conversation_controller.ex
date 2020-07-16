@@ -7,9 +7,9 @@ defmodule ChatApiWeb.ConversationController do
   action_fallback(ChatApiWeb.FallbackController)
 
   @spec index(Plug.Conn.t(), any) :: Plug.Conn.t()
-  def index(conn, _params) do
+  def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      conversations = Conversations.list_conversations_by_account(account_id)
+      conversations = Conversations.list_conversations_by_account(account_id, params)
 
       render(conn, "index.json", conversations: conversations)
     end
