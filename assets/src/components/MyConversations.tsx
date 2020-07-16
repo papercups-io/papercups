@@ -24,12 +24,9 @@ class MyConversations extends React.Component<Props, State> {
     try {
       const user = await API.me();
       const account = await API.fetchAccountInfo();
-      const {id: userId} = user;
-      const conversations = await API.fetchMyConversations(userId);
 
       this.setState({
         account,
-        conversations,
         currentUser: user,
         loading: false,
       });
@@ -39,6 +36,13 @@ class MyConversations extends React.Component<Props, State> {
       this.setState({loading: false});
     }
   }
+
+  handleFetchConversations = () => {
+    const {currentUser} = this.state;
+    const {id: userId} = currentUser;
+
+    return API.fetchMyConversations(userId);
+  };
 
   render() {
     const {account, currentUser, conversations, loading} = this.state;
@@ -54,6 +58,7 @@ class MyConversations extends React.Component<Props, State> {
         account={account}
         currentUser={currentUser}
         conversations={conversations}
+        fetch={this.handleFetchConversations}
       />
     );
   }

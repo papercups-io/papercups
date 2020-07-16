@@ -31,14 +31,14 @@ class PriorityConversations extends React.Component<Props, State> {
       API.fetchAccountInfo()
         .then((account) => this.setState({account}))
         .catch((err) => console.log('Error fetching account info:', err)),
-
-      API.fetchPriorityConversations()
-        .then((conversations) => this.setState({conversations}))
-        .catch((err) => console.log('Error fetching conversations:', err)),
     ];
 
     Promise.all(promises).then(() => this.setState({loading: false}));
   }
+
+  handleFetchConversations = () => {
+    return API.fetchPriorityConversations();
+  };
 
   render() {
     const {account, currentUser, conversations, loading} = this.state;
@@ -54,6 +54,7 @@ class PriorityConversations extends React.Component<Props, State> {
         account={account}
         currentUser={currentUser}
         conversations={conversations}
+        fetch={this.handleFetchConversations}
       />
     );
   }

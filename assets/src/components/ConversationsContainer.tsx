@@ -1,5 +1,4 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -11,13 +10,12 @@ import {
   Content,
   Footer,
   Layout,
-  Menu,
   Sider,
   Text,
   TextArea,
   Title,
 } from './common';
-import {MailOutlined, SmileTwoTone, StarFilled, UserOutlined} from './icons';
+import {SmileTwoTone, StarFilled, UserOutlined} from './icons';
 import ChatMessage from './ChatMessage';
 import {socket} from '../socket';
 import {formatRelativeTime} from '../utils';
@@ -47,12 +45,11 @@ type Props = {
   conversations: Array<Conversation>;
   account: any;
   currentUser: any;
+  fetch: () => Promise<Array<Conversation>>;
   onRefresh?: () => void;
 };
 type State = {
-  inbox: 'all' | 'me' | 'priority' | 'closed';
   message: string;
-  messages: Array<Message>;
   selectedConversationId?: string | null;
   conversationIds: Array<string>;
   conversationsById: {[key: string]: any};
@@ -66,9 +63,7 @@ class ConversationsContainer extends React.Component<Props, State> {
   channel: Channel | null = null;
 
   state: State = {
-    inbox: 'all',
     message: '',
-    messages: [],
     selectedConversationId: null,
     conversationIds: [],
     conversationsById: {},
@@ -76,14 +71,36 @@ class ConversationsContainer extends React.Component<Props, State> {
     isUpdatingConversation: false,
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     socket.connect();
 
-    const {conversations, account} = this.props;
+    const {conversationIds = []} = await this.refreshConversationsData();
+
+    const {account} = this.props;
     const {id: accountId} = account;
 
+    this.joinNotificationChannel(accountId, conversationIds);
+  }
+
+  refreshConversationsData = async () => {
+    const {selectedConversationId} = this.state;
+    const conversations = await this.props.fetch();
+
     if (!conversations || !conversations.length) {
-      return; // TODO: handle empty state
+      // TODO: handle empty state better
+      this.setState({
+        conversationsById: {},
+        messagesByConversation: {},
+        conversationIds: [],
+        selectedConversationId: null,
+      });
+
+      return {
+        conversationsById: {},
+        messagesByConversation: {},
+        conversationIds: [],
+        selectedConversationId: null,
+      };
     }
 
     const conversationsById = conversations.reduce((acc: any, conv: any) => {
@@ -111,23 +128,29 @@ class ConversationsContainer extends React.Component<Props, State> {
         return +new Date(y?.created_at) - +new Date(x?.created_at);
       }
     );
-    const [selectedConversationId] = conversationIds;
+    const [recentConversationId] = conversationIds;
+    const updatedSelectedId =
+      selectedConversationId && conversationsById[selectedConversationId]
+        ? selectedConversationId
+        : recentConversationId;
 
     this.setState(
       {
         conversationsById,
         messagesByConversation,
         conversationIds,
-        selectedConversationId,
+        selectedConversationId: updatedSelectedId,
       },
       () => this.scrollToEl.scrollIntoView()
     );
 
-    this.joinNotificationChannel(
-      accountId,
-      conversations.map((conv: any) => conv.id)
-    );
-  }
+    return {
+      conversationsById,
+      messagesByConversation,
+      conversationIds,
+      selectedConversationId,
+    };
+  };
 
   joinNotificationChannel = (
     accountId: string,
@@ -258,6 +281,8 @@ class ConversationsContainer extends React.Component<Props, State> {
       await API.updateConversation(conversationId, {
         conversation: params,
       });
+
+      await this.refreshConversationsData();
     } catch (err) {
       // Revert
       this.setState({
@@ -311,41 +336,7 @@ class ConversationsContainer extends React.Component<Props, State> {
     console.log({selectedConversation});
 
     return (
-      <Layout>
-        <Sider
-          width={80}
-          collapsed
-          style={{
-            overflow: 'auto',
-            height: '100vh',
-            position: 'fixed',
-            left: 0,
-            color: colors.white,
-          }}
-        >
-          <Box py={3}>
-            <Menu defaultSelectedKeys={['all']} mode="inline" theme="dark">
-              <Menu.Item key="account" icon={<UserOutlined />}>
-                Account
-              </Menu.Item>
-              <Menu.SubMenu key="inbox" icon={<MailOutlined />} title="Inbox">
-                <Menu.Item key="all">
-                  <Link to="/conversations/all">All conversations</Link>
-                </Menu.Item>
-                <Menu.Item key="me">
-                  <Link to="/conversations/me">Assigned to me</Link>
-                </Menu.Item>
-                <Menu.Item key="prioritized">
-                  <Link to="/conversations/priority">Prioritized</Link>
-                </Menu.Item>
-                <Menu.Item key="closed">
-                  <Link to="/conversations/closed">Closed</Link>
-                </Menu.Item>
-              </Menu.SubMenu>
-            </Menu>
-          </Box>
-        </Sider>
-
+      <Layout style={{background: colors.white}}>
         <Sider
           theme="light"
           width={280}
@@ -422,7 +413,7 @@ class ConversationsContainer extends React.Component<Props, State> {
             })}
           </Box>
         </Sider>
-        <Layout style={{marginLeft: 360}}>
+        <Layout style={{marginLeft: 280, background: colors.white}}>
           <ConversationHeader
             conversation={selectedConversation}
             users={users}
