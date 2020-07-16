@@ -323,7 +323,6 @@ class ConversationsContainer extends React.Component<Props, State> {
       conversationsById = {},
       messagesByConversation = {},
     } = this.state;
-    console.log(this.state);
 
     // TODO: add loading state
 
