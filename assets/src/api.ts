@@ -24,6 +24,7 @@ export type LoginParams = {
 };
 
 export type RegisterParams = LoginParams & {
+  companyName: string;
   passwordConfirmation: string;
 };
 
@@ -62,6 +63,7 @@ export const logout = async () => {
 };
 
 export const register = async ({
+  companyName,
   email,
   password,
   passwordConfirmation,
@@ -70,6 +72,7 @@ export const register = async ({
     .post(`${API_BASE_URL}/api/registration`)
     .send({
       user: {
+        company_name: companyName,
         email,
         password,
         password_confirmation: passwordConfirmation,
