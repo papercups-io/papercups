@@ -128,13 +128,53 @@ export const fetchAccountInfo = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const fetchConversations = async (token = getAccessToken()) => {
+export const fetchAllConversations = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`${API_BASE_URL}/api/conversations`)
+    .query({status: 'open'})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchMyConversations = async (
+  userId: number,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/conversations`)
+    .query({assignee_id: userId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchPriorityConversations = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/conversations`)
+    .query({priority: 'priority'})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchClosedConversations = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/conversations`)
+    .query({status: 'closed'})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

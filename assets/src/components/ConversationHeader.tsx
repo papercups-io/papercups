@@ -59,12 +59,22 @@ const ConversationHeader = ({
           <Box mx={1}>
             <Select
               style={{minWidth: 240}}
-              defaultValue={assigneeId}
+              placeholder="No assignee"
+              value={assigneeId}
               onChange={(...args) => console.log('Changed!', args)}
               onSelect={(userId) =>
                 onAssignUser(conversationId, String(userId))
               }
             >
+              {/*
+              <Select.Option key="" value="">
+                <Flex sx={{alignItems: 'center'}}>
+                  <UserOutlined style={{marginRight: 8, fontSize: 12}} />
+                  <Box>No assignee</Box>
+                </Flex>
+              </Select.Option>
+              */}
+
               {users.map((user: any) => {
                 return (
                   <Select.Option key={user.id} value={user.id}>

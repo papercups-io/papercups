@@ -21,7 +21,7 @@ defmodule ChatApi.Conversations do
     Conversation |> Repo.all() |> Repo.preload([:customer, :messages])
   end
 
-  def list_conversations_by_account(nil) do
+  def list_conversations_by_account(nil, _) do
     # TODO: raise an exception if nil account is passed in?
     []
   end
@@ -36,6 +36,51 @@ defmodule ChatApi.Conversations do
       )
 
     Repo.all(query)
+  end
+
+  # TODO: there's got to be a way to DRY all this up, but I'm not sure how to do it in Elixir yet :P
+
+  def list_conversations_by_account(account_id, %{"status" => status}) do
+    query =
+      from(c in Conversation,
+        where: c.account_id == ^account_id,
+        where: c.status == ^status,
+        select: c,
+        order_by: [desc: :inserted_at],
+        preload: [:customer, :messages]
+      )
+
+    Repo.all(query)
+  end
+
+  def list_conversations_by_account(account_id, %{"assignee_id" => assignee_id}) do
+    query =
+      from(c in Conversation,
+        where: c.account_id == ^account_id,
+        where: c.assignee_id == ^assignee_id,
+        select: c,
+        order_by: [desc: :inserted_at],
+        preload: [:customer, :messages]
+      )
+
+    Repo.all(query)
+  end
+
+  def list_conversations_by_account(account_id, %{"priority" => priority}) do
+    query =
+      from(c in Conversation,
+        where: c.account_id == ^account_id,
+        where: c.priority == ^priority,
+        select: c,
+        order_by: [desc: :inserted_at],
+        preload: [:customer, :messages]
+      )
+
+    Repo.all(query)
+  end
+
+  def list_conversations_by_account(account_id, _) do
+    list_conversations_by_account(account_id)
   end
 
   def find_by_customer(customer_id, account_id) do

@@ -1,4 +1,5 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -21,7 +22,6 @@ import ChatMessage from './ChatMessage';
 import {socket} from '../socket';
 import {formatRelativeTime} from '../utils';
 import ConversationHeader from './ConversationHeader';
-import ConversationsContainer from './ConversationsContainer';
 
 dayjs.extend(utc);
 
@@ -42,16 +42,17 @@ type Conversation = {
   messages?: Array<Message>;
 };
 
-type Props = {};
+type Props = {
+  title?: string;
+  conversations: Array<Conversation>;
+  account: any;
+  currentUser: any;
+  onRefresh?: () => void;
+};
 type State = {
   inbox: 'all' | 'me' | 'priority' | 'closed';
   message: string;
   messages: Array<Message>;
-  accountId: string;
-  account: any;
-  userId: string;
-  currentUser: any;
-  conversations: Array<Conversation>;
   selectedConversationId?: string | null;
   conversationIds: Array<string>;
   conversationsById: {[key: string]: any};
@@ -59,7 +60,7 @@ type State = {
   isUpdatingConversation: boolean;
 };
 
-class Dashboard extends React.Component<Props, State> {
+class ConversationsContainer extends React.Component<Props, State> {
   scrollToEl: any = null;
 
   channel: Channel | null = null;
@@ -67,11 +68,6 @@ class Dashboard extends React.Component<Props, State> {
   state: State = {
     inbox: 'all',
     message: '',
-    accountId: 'EB504736-0F20-4978-98FF-1A82AE60B266', // TODO: get from auth provider
-    account: null,
-    userId: '1', // TODO: get from auth provider
-    currentUser: null,
-    conversations: [],
     messages: [],
     selectedConversationId: null,
     conversationIds: [],
@@ -83,70 +79,54 @@ class Dashboard extends React.Component<Props, State> {
   componentDidMount() {
     socket.connect();
 
-    // TODO: do in AuthProvider
-    API.me()
-      .then((user) => this.setState({currentUser: user}))
-      .catch((err) => console.log('Error fetching current user:', err));
+    const {conversations, account} = this.props;
+    const {id: accountId} = account;
 
-    // TODO: handle in a different context?
-    API.fetchAccountInfo()
-      .then((account) => this.setState({account}))
-      .catch((err) => console.log('Error fetching account info:', err));
+    if (!conversations || !conversations.length) {
+      return; // TODO: handle empty state
+    }
 
-    API.fetchAllConversations()
-      .then((conversations) => {
-        if (!conversations || !conversations.length) {
-          return; // TODO: handle empty state
-        }
+    const conversationsById = conversations.reduce((acc: any, conv: any) => {
+      return {...acc, [conv.id]: conv};
+    }, {});
+    const messagesByConversation = conversations.reduce(
+      (acc: any, conv: any) => {
+        return {
+          ...acc,
+          [conv.id]: conv.messages.sort(
+            (a: any, b: any) =>
+              +new Date(a.created_at) - +new Date(b.created_at)
+          ),
+        };
+      },
+      {}
+    );
+    const conversationIds = Object.keys(conversationsById).sort(
+      (a: string, b: string) => {
+        const messagesA = messagesByConversation[a];
+        const messagesB = messagesByConversation[b];
+        const x = messagesA[messagesA.length - 1];
+        const y = messagesB[messagesB.length - 1];
 
-        const conversationsById = conversations.reduce(
-          (acc: any, conv: any) => {
-            return {...acc, [conv.id]: conv};
-          },
-          {}
-        );
-        const messagesByConversation = conversations.reduce(
-          (acc: any, conv: any) => {
-            return {
-              ...acc,
-              [conv.id]: conv.messages.sort(
-                (a: any, b: any) =>
-                  +new Date(a.created_at) - +new Date(b.created_at)
-              ),
-            };
-          },
-          {}
-        );
-        const conversationIds = Object.keys(conversationsById).sort(
-          (a: string, b: string) => {
-            const messagesA = messagesByConversation[a];
-            const messagesB = messagesByConversation[b];
-            const x = messagesA[messagesA.length - 1];
-            const y = messagesB[messagesB.length - 1];
+        return +new Date(y?.created_at) - +new Date(x?.created_at);
+      }
+    );
+    const [selectedConversationId] = conversationIds;
 
-            return +new Date(y?.created_at) - +new Date(x?.created_at);
-          }
-        );
-        const [selectedConversationId] = conversationIds;
+    this.setState(
+      {
+        conversationsById,
+        messagesByConversation,
+        conversationIds,
+        selectedConversationId,
+      },
+      () => this.scrollToEl.scrollIntoView()
+    );
 
-        this.setState(
-          {
-            conversationsById,
-            messagesByConversation,
-            conversationIds,
-            selectedConversationId,
-          },
-          () => this.scrollToEl.scrollIntoView()
-        );
-
-        const {accountId} = this.state;
-
-        this.joinNotificationChannel(
-          accountId,
-          conversations.map((conv: any) => conv.id)
-        );
-      })
-      .catch((err) => console.log('Error fetching conversations:', err));
+    this.joinNotificationChannel(
+      accountId,
+      conversations.map((conv: any) => conv.id)
+    );
   }
 
   joinNotificationChannel = (
@@ -216,7 +196,10 @@ class Dashboard extends React.Component<Props, State> {
   handleSendMessage = (e?: any) => {
     e && e.preventDefault();
 
-    const {message, accountId, userId, selectedConversationId} = this.state;
+    const {account, currentUser} = this.props;
+    const {message, selectedConversationId} = this.state;
+    const {id: accountId} = account;
+    const {id: userId} = currentUser;
 
     if (!this.channel || !message || message.trim().length === 0) {
       return;
@@ -306,9 +289,10 @@ class Dashboard extends React.Component<Props, State> {
   };
 
   render() {
+    const {account} = this.props;
+    const users = (account && account.users) || [];
     const {
       message,
-      account,
       selectedConversationId,
       conversationIds = [],
       conversationsById = {},
@@ -323,8 +307,6 @@ class Dashboard extends React.Component<Props, State> {
     const selectedConversation = selectedConversationId
       ? conversationsById[selectedConversationId]
       : null;
-
-    const users = (account && account.users) || [];
 
     console.log({selectedConversation});
 
@@ -347,10 +329,18 @@ class Dashboard extends React.Component<Props, State> {
                 Account
               </Menu.Item>
               <Menu.SubMenu key="inbox" icon={<MailOutlined />} title="Inbox">
-                <Menu.Item key="all">All conversations</Menu.Item>
-                <Menu.Item key="me">Assigned to me</Menu.Item>
-                <Menu.Item key="prioritized">Prioritized</Menu.Item>
-                <Menu.Item key="closed">Closed</Menu.Item>
+                <Menu.Item key="all">
+                  <Link to="/conversations/all">All conversations</Link>
+                </Menu.Item>
+                <Menu.Item key="me">
+                  <Link to="/conversations/me">Assigned to me</Link>
+                </Menu.Item>
+                <Menu.Item key="prioritized">
+                  <Link to="/conversations/priority">Prioritized</Link>
+                </Menu.Item>
+                <Menu.Item key="closed">
+                  <Link to="/conversations/closed">Closed</Link>
+                </Menu.Item>
               </Menu.SubMenu>
             </Menu>
           </Box>
@@ -369,7 +359,7 @@ class Dashboard extends React.Component<Props, State> {
         >
           <Box p={3} sx={{borderBottom: '1px solid #f0f0f0'}}>
             <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
-              All conversations
+              {this.props.title || 'Conversations'}
             </Title>
           </Box>
           <Box>
@@ -500,52 +490,4 @@ class Dashboard extends React.Component<Props, State> {
   }
 }
 
-class DashboardV2 extends React.Component<any, any> {
-  state: any = {
-    inbox: 'all',
-    account: null,
-    currentUser: null,
-    conversations: [],
-    loading: true,
-  };
-
-  componentDidMount() {
-    socket.connect();
-
-    const promises = [
-      // TODO: do in AuthProvider
-      API.me()
-        .then((user) => this.setState({currentUser: user}))
-        .catch((err) => console.log('Error fetching current user:', err)),
-
-      // TODO: handle in a different context?
-      API.fetchAccountInfo()
-        .then((account) => this.setState({account}))
-        .catch((err) => console.log('Error fetching account info:', err)),
-
-      API.fetchAllConversations()
-        .then((conversations) => this.setState({conversations}))
-        .catch((err) => console.log('Error fetching conversations:', err)),
-    ];
-
-    Promise.all(promises).then(() => this.setState({loading: false}));
-  }
-
-  render() {
-    const {account, currentUser, conversations, loading} = this.state;
-
-    if (loading || !account || !currentUser) {
-      return null;
-    }
-
-    return (
-      <ConversationsContainer
-        account={account}
-        currentUser={currentUser}
-        conversations={conversations}
-      />
-    );
-  }
-}
-
-export default DashboardV2;
+export default ConversationsContainer;
