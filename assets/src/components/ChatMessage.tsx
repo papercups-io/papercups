@@ -38,9 +38,8 @@ const ChatMessage = ({
       <Box pr={0} pl={4} pb={isLastInGroup ? 3 : 2}>
         <Flex sx={{justifyContent: 'flex-end'}}>
           <Box
-            p={3}
-            pt={2}
-            pb={2}
+            px={3}
+            py={2}
             sx={{
               color: colors.white,
               background: colors.primary,
@@ -67,9 +66,8 @@ const ChatMessage = ({
           <SmileTwoTone style={{fontSize: 20}} twoToneColor={colors.gold} />
         </Box>
         <Box
-          p={3}
-          pt={2}
-          pb={2}
+          px={3}
+          py={2}
           sx={{
             color: colors.black,
             background: 'rgb(245, 245, 245)',
