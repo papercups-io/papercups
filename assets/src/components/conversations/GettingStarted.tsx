@@ -28,7 +28,10 @@ const ExamplePage = () => {
       <Paragraph>
         <Text>
           Before you can start receiving messages here in your dashboard, you'll
-          need to install the chat widget into your website. 😊
+          need to install the chat widget into your website.{' '}
+          <span role="img" aria-label=":)">
+            😊
+          </span>
         </Text>
       </Paragraph>
       <Paragraph>
