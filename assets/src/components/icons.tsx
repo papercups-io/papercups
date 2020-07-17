@@ -1,5 +1,6 @@
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
+import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
 import SendOutlined from '@ant-design/icons/SendOutlined';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
@@ -14,6 +15,7 @@ import UserOutlined from '@ant-design/icons/UserOutlined';
 export {
   CheckOutlined,
   DownOutlined,
+  LoadingOutlined,
   MailOutlined,
   SendOutlined,
   SettingOutlined,

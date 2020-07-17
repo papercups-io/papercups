@@ -210,6 +210,17 @@ export const fetchMessages = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const countMessages = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`${API_BASE_URL}/api/messages/count`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchCustomerConversations = async (
   customerId: string,
   accountId: string
