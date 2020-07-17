@@ -4,26 +4,29 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Channel} from 'phoenix';
 import * as API from '../../api';
-import {
-  colors,
-  Button,
-  Content,
-  Footer,
-  Layout,
-  Sider,
-  Text,
-  TextArea,
-  Title,
-} from '../common';
-import {SmileTwoTone, StarFilled} from '../icons';
-import ChatMessage from './ChatMessage';
+import {colors, Content, Layout, Result, Sider, Text, Title} from '../common';
 import {socket} from '../../socket';
 import {formatRelativeTime} from '../../utils';
+import Spinner from '../Spinner';
+import ChatMessage from './ChatMessage';
+import GettingStarted from './GettingStarted';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationFooter from './ConversationFooter';
 
 dayjs.extend(utc);
+
+const EmptyMessagesPlaceholder = () => {
+  return (
+    <Box my={4}>
+      <Result
+        status="success"
+        title="No messages"
+        subTitle="Nothing to show here! Take a well-earned break 😊"
+      />
+    </Box>
+  );
+};
 
 // NB: actual message records will look slightly different
 type Message = {
@@ -51,7 +54,8 @@ type Props = {
   onRefresh?: () => void;
 };
 type State = {
-  message: string;
+  loading: boolean;
+  showGetStarted: boolean;
   selectedConversationId?: string | null;
   conversationIds: Array<string>;
   conversationsById: {[key: string]: any};
@@ -65,7 +69,8 @@ class ConversationsContainer extends React.Component<Props, State> {
   channel: Channel | null = null;
 
   state: State = {
-    message: '',
+    loading: true,
+    showGetStarted: false,
     selectedConversationId: null,
     conversationIds: [],
     conversationsById: {},
@@ -85,16 +90,22 @@ class ConversationsContainer extends React.Component<Props, State> {
   }
 
   refreshConversationsData = async () => {
+    this.setState({loading: true});
+
     const {selectedConversationId} = this.state;
     const conversations = await this.props.fetch();
 
     if (!conversations || !conversations.length) {
-      // TODO: handle empty state better
+      const {count: numAccountMessages} = await API.countMessages();
+      const hasNoMessagesYet = numAccountMessages === 0;
+
       this.setState({
+        showGetStarted: hasNoMessagesYet,
         conversationsById: {},
         messagesByConversation: {},
         conversationIds: [],
         selectedConversationId: null,
+        loading: false,
       });
 
       return {
@@ -142,6 +153,7 @@ class ConversationsContainer extends React.Component<Props, State> {
         messagesByConversation,
         conversationIds,
         selectedConversationId: updatedSelectedId,
+        loading: false,
       },
       () => this.scrollToEl.scrollIntoView()
     );
@@ -214,10 +226,6 @@ class ConversationsContainer extends React.Component<Props, State> {
     );
   };
 
-  handleMessageChange = (e: any) => {
-    this.setState({message: e.target.value});
-  };
-
   handleSendMessage = (message: string) => {
     const {account, currentUser} = this.props;
     const {selectedConversationId} = this.state;
@@ -236,30 +244,6 @@ class ConversationsContainer extends React.Component<Props, State> {
       account_id: accountId,
       user_id: userId,
     });
-  };
-
-  _handleSendMessage = (e?: any) => {
-    e && e.preventDefault();
-
-    const {account, currentUser} = this.props;
-    const {message, selectedConversationId} = this.state;
-    const {id: accountId} = account;
-    const {id: userId} = currentUser;
-
-    if (!this.channel || !message || message.trim().length === 0) {
-      return;
-    }
-
-    this.channel.push('shout', {
-      body: message,
-      sender: 'agent',
-      // created_at: new Date(),
-      conversation_id: selectedConversationId,
-      account_id: accountId,
-      user_id: userId,
-    });
-
-    this.setState({message: ''});
   };
 
   formatMessage = (message: any) => {
@@ -339,7 +323,8 @@ class ConversationsContainer extends React.Component<Props, State> {
     const {account} = this.props;
     const users = (account && account.users) || [];
     const {
-      message,
+      loading,
+      showGetStarted,
       selectedConversationId,
       conversationIds = [],
       conversationsById = {},
@@ -354,8 +339,6 @@ class ConversationsContainer extends React.Component<Props, State> {
     const selectedConversation = selectedConversationId
       ? conversationsById[selectedConversationId]
       : null;
-
-    console.log({selectedConversation});
 
     return (
       <Layout style={{background: colors.white}}>
@@ -375,26 +358,35 @@ class ConversationsContainer extends React.Component<Props, State> {
               {this.props.title || 'Conversations'}
             </Title>
           </Box>
-          <Box>
-            {conversationIds.map((conversationId, idx) => {
-              const conversation = conversationsById[conversationId];
-              const messages = messagesByConversation[conversationId];
-              const isHighlighted = conversationId === selectedConversationId;
-              const {gold, red, green, gray} = colors;
-              // TODO: come up with a better way to make colors/avatars consistent
-              const color = [gold, red, green, gray[0]][idx % 4];
 
-              return (
-                <ConversationItem
-                  key={conversationId}
-                  conversation={conversation}
-                  messages={messages}
-                  isHighlighted={isHighlighted}
-                  color={color}
-                  onSelectConversation={this.handleSelectConversation}
-                />
-              );
-            })}
+          <Box>
+            {conversationIds.length ? (
+              conversationIds.map((conversationId, idx) => {
+                const conversation = conversationsById[conversationId];
+                const messages = messagesByConversation[conversationId];
+                const isHighlighted = conversationId === selectedConversationId;
+                const {gold, red, green, gray} = colors;
+                // TODO: come up with a better way to make colors/avatars consistent
+                const color = [gold, red, green, gray[0]][idx % 4];
+
+                return (
+                  <ConversationItem
+                    key={conversationId}
+                    conversation={conversation}
+                    messages={messages}
+                    isHighlighted={isHighlighted}
+                    color={color}
+                    onSelectConversation={this.handleSelectConversation}
+                  />
+                );
+              })
+            ) : (
+              <Box p={3}>
+                <Text type="secondary">
+                  {loading ? 'Loading...' : 'No conversations'}
+                </Text>
+              </Box>
+            )}
           </Box>
         </Sider>
         <Layout style={{marginLeft: 280, background: colors.white}}>
@@ -409,28 +401,51 @@ class ConversationsContainer extends React.Component<Props, State> {
           />
 
           <Content style={{overflowY: 'scroll'}}>
-            <Box p={4} backgroundColor={colors.white} sx={{minHeight: '100%'}}>
-              {messages.map((message: any, key: number) => {
-                // Slight hack
-                const msg = this.formatMessage(message);
-                const next = messages[key + 1];
-                const isLastInGroup = next
-                  ? msg.customer_id !== next.customer_id
-                  : true;
+            {loading ? (
+              <Flex
+                sx={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
+                }}
+              >
+                <Spinner size={40} />
+              </Flex>
+            ) : (
+              <Box
+                p={4}
+                backgroundColor={colors.white}
+                sx={{minHeight: '100%'}}
+              >
+                {messages.length ? (
+                  messages.map((message: any, key: number) => {
+                    // Slight hack
+                    const msg = this.formatMessage(message);
+                    const next = messages[key + 1];
+                    const isLastInGroup = next
+                      ? msg.customer_id !== next.customer_id
+                      : true;
 
-                // TODO: fix `isMe` logic for multiple agents
-                return (
-                  <ChatMessage
-                    key={key}
-                    message={msg}
-                    isMe={!msg.customer_id}
-                    isLastInGroup={isLastInGroup}
-                    shouldDisplayTimestamp={isLastInGroup}
-                  />
-                );
-              })}
-              <div ref={(el) => (this.scrollToEl = el)} />
-            </Box>
+                    // TODO: fix `isMe` logic for multiple agents
+                    return (
+                      <ChatMessage
+                        key={key}
+                        message={msg}
+                        isMe={!msg.customer_id}
+                        isLastInGroup={isLastInGroup}
+                        shouldDisplayTimestamp={isLastInGroup}
+                      />
+                    );
+                  })
+                ) : showGetStarted ? (
+                  <GettingStarted accountId={account.id} />
+                ) : (
+                  <EmptyMessagesPlaceholder />
+                )}
+                <div ref={(el) => (this.scrollToEl = el)} />
+              </Box>
+            )}
           </Content>
 
           {selectedConversation && (

@@ -21,6 +21,16 @@ defmodule ChatApi.Chat do
     Message |> Repo.all() |> Repo.preload(:conversation)
   end
 
+  def count_messages_by_account(account_id) do
+    query =
+      from(m in Message,
+        where: m.account_id == ^account_id,
+        select: count("*")
+      )
+
+    Repo.one(query)
+  end
+
   @doc """
   Gets a single message.
 

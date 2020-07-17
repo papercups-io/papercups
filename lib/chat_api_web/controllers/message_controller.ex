@@ -11,6 +11,14 @@ defmodule ChatApiWeb.MessageController do
     render(conn, "index.json", messages: messages)
   end
 
+  def count(conn, _params) do
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      count = Chat.count_messages_by_account(account_id)
+
+      json(conn, %{data: %{count: count}})
+    end
+  end
+
   def create(conn, %{"message" => message_params}) do
     with {:ok, %Message{} = message} <- Chat.create_message(message_params) do
       conn
