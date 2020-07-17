@@ -1,10 +1,10 @@
 import React from 'react';
-import {RouteComponentProps, Link} from 'react-router-dom';
-import {Box, Flex} from 'theme-ui';
-import {Button, Input, Title} from '../common';
-import {useAuth} from './AuthProvider';
+import { RouteComponentProps, Link } from 'react-router-dom';
+import { Box, Flex } from 'theme-ui';
+import { Button, Input, Title } from '../common';
+import { useAuth } from './AuthProvider';
 
-type Props = RouteComponentProps & {
+type Props = RouteComponentProps<{invite?: string}> & {
   onSubmit: (params: any) => Promise<void>;
 };
 type State = {
@@ -12,6 +12,7 @@ type State = {
   email: string;
   password: string;
   passwordConfirmation: string;
+  inviteToken?: string;
 };
 
 class Register extends React.Component<Props, State> {
@@ -20,41 +21,43 @@ class Register extends React.Component<Props, State> {
     email: '',
     password: '',
     passwordConfirmation: '',
+    inviteToken: '',
   };
 
   componentDidMount() {
-    //
+    const inviteToken = this.props.match.params['invite'];
+    this.setState({ inviteToken })
   }
 
   handleChangeCompanyName = (e: any) => {
-    this.setState({companyName: e.target.value});
+    this.setState({ companyName: e.target.value });
   };
 
   handleChangeEmail = (e: any) => {
-    this.setState({email: e.target.value});
+    this.setState({ email: e.target.value });
   };
 
   handleChangePassword = (e: any) => {
-    this.setState({password: e.target.value});
+    this.setState({ password: e.target.value });
   };
 
   handleChangePasswordConfirmation = (e: any) => {
-    this.setState({passwordConfirmation: e.target.value});
+    this.setState({ passwordConfirmation: e.target.value });
   };
 
   handleSubmit = (e: any) => {
     e.preventDefault();
 
-    const {companyName, email, password, passwordConfirmation} = this.state;
+    const { companyName, inviteToken, email, password, passwordConfirmation } = this.state;
 
     this.props
-      .onSubmit({companyName, email, password, passwordConfirmation})
+      .onSubmit({ companyName, inviteToken, email, password, passwordConfirmation })
       .then(() => this.props.history.push('/conversations'))
       .catch((err) => console.log('Error!', err));
   };
 
   render() {
-    const {companyName, email, password, passwordConfirmation} = this.state;
+    const { companyName, inviteToken, email, password, passwordConfirmation } = this.state;
 
     return (
       <Flex
@@ -66,21 +69,23 @@ class Register extends React.Component<Props, State> {
           alignItems: 'center',
         }}
       >
-        <Box sx={{width: '100%', maxWidth: 320}}>
+        <Box sx={{ width: '100%', maxWidth: 320 }}>
           <Title level={1}>Get started</Title>
 
           <form onSubmit={this.handleSubmit}>
-            <Box mb={2}>
-              <label htmlFor="companyName">Company Name</label>
-              <Input
-                id="companyName"
-                size="large"
-                type="companyName"
-                autoComplete="company-name"
-                value={companyName}
-                onChange={this.handleChangeCompanyName}
-              />
-            </Box>
+            {!inviteToken &&
+              <Box mb={2}>
+                <label htmlFor="companyName">Company Name</label>
+                <Input
+                  id="companyName"
+                  size="large"
+                  type="companyName"
+                  autoComplete="company-name"
+                  value={companyName}
+                  onChange={this.handleChangeCompanyName}
+                />
+              </Box>
+            }
 
             <Box mb={2}>
               <label htmlFor="email">Email</label>

@@ -26,6 +26,7 @@ const App = () => {
         <Switch>
           <Route path="/demo" component={Demo} />
           <Route path="/login" component={Login} />
+          <Route path="/register/:invite" component={Register} />
           <Route path="/register" component={Register} />
           <Route path="/widget" component={Widget} />
           <Route path="*" render={() => <Redirect to="/login" />} />

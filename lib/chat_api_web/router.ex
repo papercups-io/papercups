@@ -42,6 +42,7 @@ defmodule ChatApiWeb.Router do
     get("/accounts/me", AccountController, :me)
     get("/messages/count", MessageController, :count)
 
+    resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/accounts", AccountController, only: [:update, :delete])
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
