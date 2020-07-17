@@ -1,5 +1,6 @@
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
+import PlusOutlined from '@ant-design/icons/PlusOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
 import SendOutlined from '@ant-design/icons/SendOutlined';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
@@ -15,6 +16,7 @@ export {
   CheckOutlined,
   DownOutlined,
   MailOutlined,
+  PlusOutlined,
   SendOutlined,
   SettingOutlined,
   SmileOutlined,

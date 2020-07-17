@@ -24,7 +24,8 @@ export type LoginParams = {
 };
 
 export type RegisterParams = LoginParams & {
-  companyName: string;
+  companyName?: string;
+  inviteToken?: string;
   passwordConfirmation: string;
 };
 

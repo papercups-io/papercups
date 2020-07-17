@@ -2,7 +2,7 @@ import React from 'react';
 import {Switch, Route, Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {colors, Layout, Menu, Sider} from './common';
-import {MailOutlined, UserOutlined, SettingOutlined} from './icons';
+import {PlusOutlined, MailOutlined, UserOutlined, SettingOutlined} from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AllConversations from './conversations/AllConversations';
 import MyConversations from './conversations/MyConversations';
@@ -49,8 +49,12 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/conversations/closed">Closed</Link>
                 </Menu.Item>
               </Menu.SubMenu>
+              <Menu.Item key="invite" icon={<PlusOutlined />}>
+                  <Link to="/conversations/closed">Closed</Link>
+              </Menu.Item>
             </Menu>
           </Box>
+
 
           <Box py={3}>
             <Menu mode="inline" theme="dark">
