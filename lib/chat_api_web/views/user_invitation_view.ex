@@ -12,7 +12,7 @@ defmodule ChatApiWeb.UserInvitationView do
 
   def render("user_invitation.json", %{user_invitation: user_invitation}) do
     %{id: user_invitation.id,
-      token: user_invitation.token,
+      invite_token: user_invitation.invite_token,
       account_id: user_invitation.account_id,
       expires_at: user_invitation.expires_at}
   end

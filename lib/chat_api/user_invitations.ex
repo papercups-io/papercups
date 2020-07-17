@@ -55,6 +55,10 @@ defmodule ChatApi.UserInvitations do
     |> Repo.insert()
   end
 
+  @spec update_user_invitation(
+          ChatApi.UserInvitations.UserInvitation.t(),
+          :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}
+        ) :: any
   @doc """
   Updates a user_invitation.
 

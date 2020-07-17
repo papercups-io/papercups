@@ -5,15 +5,7 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
   alias ChatApi.UserInvitations.UserInvitation
   alias ChatApi.Accounts
 
-  @create_attrs %{
-    expires_at: ~D[2010-04-17],
-    token: "some token"
-  }
-  @update_attrs %{
-    expires_at: ~D[2011-05-18],
-    token: "some updated token"
-  }
-  @invalid_attrs %{account_id: nil, expires_at: nil, token: nil}
+  @invalid_attrs %{account_id: nil, expires_at: nil, invite_token: nil}
 
   def fixture(:account) do
     {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
@@ -22,8 +14,7 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
 
   def fixture(:user_invitation) do
     account = fixture(:account)
-    attrs = Map.put(@create_attrs, :account_id, account.id)
-    {:ok, user_invitation} = UserInvitations.create_user_invitation(attrs)
+    {:ok, user_invitation} = UserInvitations.create_user_invitation(%{account_id: account.id})
     user_invitation
   end
 
@@ -46,8 +37,7 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
   describe "create user_invitation" do
     test "renders user_invitation when data is valid", %{authed_conn: authed_conn, account: account} do
       account_id = account.id
-      attrs = Enum.into(@create_attrs, %{account_id: account_id})
-      conn = post(authed_conn, Routes.user_invitation_path(authed_conn, :create), user_invitation: attrs)
+      conn = post(authed_conn, Routes.user_invitation_path(authed_conn, :create), user_invitation: %{account_id: account_id})
 
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
@@ -56,8 +46,8 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
       assert %{
                "id" => id,
                "account_id" => account_id,
-               "expires_at" => "2010-04-17",
-               "token" => "some token"
+              #  "expires_at" => "2010-04-17",
+              #  "token" => "some token"
              } = json_response(conn, 200)["data"]
     end
 
@@ -73,8 +63,7 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
     test "renders user_invitation when data is valid", %{authed_conn: authed_conn, user_invitation: %UserInvitation{id: id} = user_invitation} do
       account_id = fixture(:account).id
 
-      attrs = Map.put(@update_attrs, :account_id, account_id)
-      conn = put(authed_conn, Routes.user_invitation_path(authed_conn, :update, user_invitation), user_invitation: attrs)
+      conn = put(authed_conn, Routes.user_invitation_path(authed_conn, :update, user_invitation), user_invitation: %{account_id: account_id})
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = get(authed_conn, Routes.user_invitation_path(authed_conn, :show, id))
@@ -82,8 +71,8 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
       assert %{
                "id" => id,
                "account_id" => account_id,
-               "expires_at" => "2011-05-18",
-               "token" => "some updated token"
+              #  "expires_at" => "2011-05-18",
+              #  "token" => "some updated token"
              } = json_response(conn, 200)["data"]
     end
 

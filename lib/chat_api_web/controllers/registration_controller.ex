@@ -9,7 +9,11 @@ defmodule ChatApiWeb.RegistrationController do
   def create(conn, %{"user" => user_params}) do
     # TODO: for now we just create a new account for every new signup
     # In the future we'll want to be able to invite users to existing accounts
-    {:ok, account} = ChatApi.Accounts.create_account(%{company_name: user_params["company_name"]})
+    ChatApi.UserInvitations.get_user_invitation!()
+
+    ChatApi.Accounts.get_account!()
+
+    {:ok, account} = ChatApi.Accounts.create_account(%{company_name: user_params["company_name"], invite_token: user_params["invite_token"]})
     params = Enum.into(user_params, %{"account_id" => account.id})
 
     conn

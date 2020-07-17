@@ -26,7 +26,17 @@ defmodule ChatApi.Accounts.Account do
   @doc false
   def changeset(account, attrs) do
     account
+    |> check_invite_token()
     |> cast(attrs, [:company_name])
     |> validate_required([:company_name])
+  end
+
+  defp check_invite_token(attr) do
+    invite_token = attr["invite_token"]
+    if(invite_token) do
+      User.Invite
+
+    end
+    attr
   end
 end
