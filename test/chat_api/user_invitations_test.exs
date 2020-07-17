@@ -42,7 +42,6 @@ defmodule ChatApi.UserInvitationsTest do
     test "generates dates and token", %{account: account} do
       user_invitation = user_invitation_fixture(%{account_id: account.id})
       assert user_invitation.expires_at != nil
-      assert user_invitation.token != nil
     end
   end
 end

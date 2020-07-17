@@ -19,10 +19,10 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
   end
 
   setup %{conn: conn} do
-    user = %ChatApi.Users.User{email: "test@example.com"}
+    account = fixture(:account)
+    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
-    account = fixture(:account)
 
     {:ok, conn: conn, authed_conn: authed_conn, account: account}
   end
@@ -35,9 +35,8 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
   end
 
   describe "create user_invitation" do
-    test "renders user_invitation when data is valid", %{authed_conn: authed_conn, account: account} do
-      account_id = account.id
-      conn = post(authed_conn, Routes.user_invitation_path(authed_conn, :create), user_invitation: %{account_id: account_id})
+    test "renders user_invitation when data is valid", %{authed_conn: authed_conn} do
+      conn = post(authed_conn, Routes.user_invitation_path(authed_conn, :create), user_invitation: %{})
 
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
@@ -50,20 +49,13 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
               #  "token" => "some token"
              } = json_response(conn, 200)["data"]
     end
-
-    test "renders errors when data is invalid", %{authed_conn: authed_conn} do
-      conn = post(authed_conn, Routes.user_invitation_path(authed_conn, :create), user_invitation: @invalid_attrs)
-      assert json_response(conn, 422)["errors"] != %{}
-    end
   end
 
   describe "update user_invitation" do
     setup [:create_user_invitation]
 
     test "renders user_invitation when data is valid", %{authed_conn: authed_conn, user_invitation: %UserInvitation{id: id} = user_invitation} do
-      account_id = fixture(:account).id
-
-      conn = put(authed_conn, Routes.user_invitation_path(authed_conn, :update, user_invitation), user_invitation: %{account_id: account_id})
+      conn = put(authed_conn, Routes.user_invitation_path(authed_conn, :update, user_invitation), user_invitation: %{})
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = get(authed_conn, Routes.user_invitation_path(authed_conn, :show, id))
