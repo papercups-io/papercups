@@ -1,63 +1,95 @@
 import React from 'react';
-import { RouteComponentProps, Link } from 'react-router-dom';
-import { Box, Flex } from 'theme-ui';
-import { Button, Input, Title } from '../common';
-import { useAuth } from './AuthProvider';
+import {RouteComponentProps, Link} from 'react-router-dom';
+import {Box, Flex} from 'theme-ui';
+import {Button, Input, Text, Title} from '../common';
+import {useAuth} from './AuthProvider';
 
 type Props = RouteComponentProps<{invite?: string}> & {
   onSubmit: (params: any) => Promise<void>;
 };
 type State = {
+  loading: boolean;
   companyName: string;
   email: string;
   password: string;
   passwordConfirmation: string;
   inviteToken?: string;
+  error: any;
 };
 
 class Register extends React.Component<Props, State> {
   state: State = {
+    loading: false,
     companyName: '',
     email: '',
     password: '',
     passwordConfirmation: '',
     inviteToken: '',
+    error: null,
   };
 
   componentDidMount() {
-    const inviteToken = this.props.match.params['invite'];
-    this.setState({ inviteToken })
+    const {invite: inviteToken} = this.props.match.params;
+    this.setState({inviteToken});
   }
 
   handleChangeCompanyName = (e: any) => {
-    this.setState({ companyName: e.target.value });
+    this.setState({companyName: e.target.value});
   };
 
   handleChangeEmail = (e: any) => {
-    this.setState({ email: e.target.value });
+    this.setState({email: e.target.value});
   };
 
   handleChangePassword = (e: any) => {
-    this.setState({ password: e.target.value });
+    this.setState({password: e.target.value});
   };
 
   handleChangePasswordConfirmation = (e: any) => {
-    this.setState({ passwordConfirmation: e.target.value });
+    this.setState({passwordConfirmation: e.target.value});
   };
 
   handleSubmit = (e: any) => {
     e.preventDefault();
 
-    const { companyName, inviteToken, email, password, passwordConfirmation } = this.state;
+    this.setState({loading: true, error: null});
+    const {
+      companyName,
+      inviteToken,
+      email,
+      password,
+      passwordConfirmation,
+    } = this.state;
 
     this.props
-      .onSubmit({ companyName, inviteToken, email, password, passwordConfirmation })
+      .onSubmit({
+        companyName,
+        inviteToken,
+        email,
+        password,
+        passwordConfirmation,
+      })
       .then(() => this.props.history.push('/conversations'))
-      .catch((err) => console.log('Error!', err));
+      .catch((err) => {
+        console.log('Error!', err);
+        // TODO: provide more granular error messages?
+        const error =
+          err.response?.body?.error?.message || 'Invalid credentials';
+
+        this.setState({error, loading: false});
+      });
   };
 
   render() {
-    const { companyName, inviteToken, email, password, passwordConfirmation } = this.state;
+    const {
+      loading,
+      inviteToken,
+      companyName,
+      email,
+      password,
+      passwordConfirmation,
+      error,
+    } = this.state;
 
     return (
       <Flex
@@ -69,11 +101,11 @@ class Register extends React.Component<Props, State> {
           alignItems: 'center',
         }}
       >
-        <Box sx={{ width: '100%', maxWidth: 320 }}>
+        <Box sx={{width: '100%', maxWidth: 320}}>
           <Title level={1}>Get started</Title>
 
           <form onSubmit={this.handleSubmit}>
-            {!inviteToken &&
+            {!inviteToken && (
               <Box mb={2}>
                 <label htmlFor="companyName">Company Name</label>
                 <Input
@@ -85,7 +117,7 @@ class Register extends React.Component<Props, State> {
                   onChange={this.handleChangeCompanyName}
                 />
               </Box>
-            }
+            )}
 
             <Box mb={2}>
               <label htmlFor="email">Email</label>
@@ -124,12 +156,24 @@ class Register extends React.Component<Props, State> {
             </Box>
 
             <Box mt={3}>
-              <Button block size="large" type="primary" htmlType="submit">
+              <Button
+                block
+                size="large"
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+              >
                 Register
               </Button>
             </Box>
 
-            <Box mt={4}>
+            {error && (
+              <Box mt={2}>
+                <Text type="danger">{error}</Text>
+              </Box>
+            )}
+
+            <Box mt={error ? 3 : 4}>
               Already have an account? <Link to="login">Log in!</Link>
             </Box>
           </form>
