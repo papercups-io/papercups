@@ -1,17 +1,9 @@
 defmodule ChatApi.UserInvitationsTest do
   use ChatApi.DataCase
 
-  alias ChatApi.UserInvitations
-  alias ChatApi.Accounts
+  alias ChatApi.{Accounts, UserInvitations}
 
   describe "user_invitations" do
-    alias ChatApi.UserInvitations.UserInvitation
-
-    # @valid_attrs %{expires_at: ~D[2010-04-17]}
-    # @update_attrs %{
-    #   expires_at: ~D[2011-05-18],
-    # }
-    # @invalid_attrs %{account_id: nil, expires_at: nil, token: nil}
 
     def fixture(:account) do
       {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
@@ -31,7 +23,6 @@ defmodule ChatApi.UserInvitationsTest do
     def user_invitation_fixture(attrs \\ %{}) do
       {:ok, user_invitation} =
         attrs
-        # |> Enum.into(@valid_attrs)
         |> UserInvitations.create_user_invitation()
 
       user_invitation

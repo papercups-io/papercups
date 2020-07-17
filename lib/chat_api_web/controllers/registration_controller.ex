@@ -5,16 +5,13 @@ defmodule ChatApiWeb.RegistrationController do
   alias Plug.Conn
   alias ChatApiWeb.ErrorHelpers
 
-  alias ChatApi.Repo
-
   @spec create(Conn.t(), map()) :: Conn.t()
   def create(conn, %{"user" => user_params}) do
     invite_token = user_params["invite_token"]
 
     account =
       if(invite_token) do
-        invitation = ChatApi.UserInvitations.get_user_invitation!(user_params["invite_token"])
-        Repo.preload(invitation, :account).account
+        ChatApi.UserInvitations.get_user_invitation!(user_params["invite_token"]).account
       else
         {:ok, account} =
           ChatApi.Accounts.create_account(%{company_name: user_params["company_name"]})

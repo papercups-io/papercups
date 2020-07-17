@@ -1,11 +1,7 @@
 defmodule ChatApiWeb.RegistrationControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.Repo
-  alias ChatApi.Accounts
-  alias ChatApi.Users.User
-  alias ChatApi.UserInvitations
-  alias ChatApi.UserInvitations.UserInvitation
+  alias ChatApi.{Accounts, Repo, UserInvitations}
 
   @password "secret1234"
 
@@ -48,6 +44,7 @@ defmodule ChatApiWeb.RegistrationControllerTest do
   end
 
   describe("registering with invitation token") do
+
     def fixture(:account) do
       {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
       account
@@ -68,30 +65,30 @@ defmodule ChatApiWeb.RegistrationControllerTest do
       {:ok, authed_conn: authed_conn, account: account, user: existing_user}
     end
 
-    test "create with existing user", %{conn: conn, authed_conn: authed_conn, account: account, user: user} do
-      # existing_user
+    test "create with existing user", %{conn: conn, authed_conn: authed_conn, account: account} do
       existing_conn =
         post(authed_conn, Routes.user_invitation_path(authed_conn, :create),
           user_invitation: %{account_id: account.id}
         )
 
       invite_token = json_response(existing_conn, 201)["data"]["id"]
+
+      random_number = :rand.uniform(1000000000) |> Integer.to_string()
+      registration_email = random_number <> "anotheremail@example.com"
+
       params = %{
         "user" => %{
           "invite_token" => invite_token,
-          "email" => "anotherEmail@example.com",
+          "email" => registration_email,
           "password" => @password,
           "password_confirmation" => @password
         }
       }
 
-      conn = post(conn, Routes.registration_path(conn, :create, params))
-
+      post(conn, Routes.registration_path(conn, :create, params))
       account = Accounts.get_account!(account.id) |> Repo.preload([:users])
-    end
-  end
 
-  def get_user!(id) do
-    User |> Repo.get!(id) |> Repo.preload([:account])
+      assert(Enum.any?(account.users, fn u -> u.email == registration_email end))
+    end
   end
 end

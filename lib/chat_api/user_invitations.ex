@@ -35,7 +35,9 @@ defmodule ChatApi.UserInvitations do
       ** (Ecto.NoResultsError)
 
   """
-  def get_user_invitation!(id), do: Repo.get!(UserInvitation, id)
+  def get_user_invitation!(id) do
+    Repo.get!(UserInvitation, id) |> Repo.preload(:account)
+  end
 
   @doc """
   Creates a user_invitation.
