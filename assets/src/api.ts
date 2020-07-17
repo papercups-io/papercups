@@ -65,6 +65,7 @@ export const logout = async () => {
 
 export const register = async ({
   companyName,
+  inviteToken,
   email,
   password,
   passwordConfirmation,
@@ -74,6 +75,7 @@ export const register = async ({
     .send({
       user: {
         company_name: companyName,
+        invite_token: inviteToken,
         email,
         password,
         password_confirmation: passwordConfirmation,
