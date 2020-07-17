@@ -8,9 +8,11 @@ import {formatRelativeTime} from '../../utils';
 
 dayjs.extend(utc);
 
-const formatConversation = (conversation: any, messages: Array<any>) => {
+// TODO: add types!
+const formatConversation = (conversation: any, messages: Array<any> = []) => {
   const recent = messages[messages.length - 1];
-  const created = dayjs.utc(recent.created_at);
+  const ts = recent ? recent.created_at : conversation.created_at;
+  const created = dayjs.utc(ts);
   const date = formatRelativeTime(created);
 
   return {
