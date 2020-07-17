@@ -1,7 +1,9 @@
 defmodule ChatApiWeb.RegistrationControllerTest do
   use ChatApiWeb.ConnCase
 
+  alias ChatApi.Repo
   alias ChatApi.Accounts
+  alias ChatApi.Users.User
   alias ChatApi.UserInvitations
   alias ChatApi.UserInvitations.UserInvitation
 
@@ -46,14 +48,6 @@ defmodule ChatApiWeb.RegistrationControllerTest do
   end
 
   describe("registering with invitation token") do
-    # @valid_params %{
-    #   "user" => %{
-    #     "email" => "test@example.com",
-    #     "password" => @password,
-    #     "password_confirmation" => @password
-    #   }
-    # }
-
     def fixture(:account) do
       {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
       account
@@ -67,32 +61,37 @@ defmodule ChatApiWeb.RegistrationControllerTest do
 
     setup %{conn: conn} do
       account = fixture(:account)
-      user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
-      conn = put_req_header(conn, "accept", "application/json")
-      authed_conn = Pow.Plug.assign_current_user(conn, user, [])
-      # IO.inspect(user)
+      existing_user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
+      # conn = put_req_header(conn, "accept", "application/json")
+      authed_conn = Pow.Plug.assign_current_user(conn, existing_user, [])
 
-      {:ok, conn: conn, authed_conn: authed_conn, account: account}
+      {:ok, authed_conn: authed_conn, account: account, user: existing_user}
     end
 
-    test "create with existing user", %{authed_conn: authed_conn, account: account} do
-      conn =
+    test "create with existing user", %{conn: conn, authed_conn: authed_conn, account: account, user: user} do
+      # existing_user
+      existing_conn =
         post(authed_conn, Routes.user_invitation_path(authed_conn, :create),
           user_invitation: %{account_id: account.id}
         )
 
-      invite_token = json_response(conn, 201)["data"]["invite_token"]
+      invite_token = json_response(existing_conn, 201)["data"]["id"]
       params = %{
         "user" => %{
           "invite_token" => invite_token,
-          "email" => "test@example.com",
+          "email" => "anotherEmail@example.com",
           "password" => @password,
           "password_confirmation" => @password
         }
       }
-      assert(invite_token != nil)
+
       conn = post(conn, Routes.registration_path(conn, :create, params))
-      IO.inspect(json_response(conn, 201)["data"])
+
+      account = Accounts.get_account!(account.id) |> Repo.preload([:users])
     end
+  end
+
+  def get_user!(id) do
+    User |> Repo.get!(id) |> Repo.preload([:account])
   end
 end

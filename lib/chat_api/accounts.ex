@@ -21,6 +21,7 @@ defmodule ChatApi.Accounts do
     Repo.all(Account)
   end
 
+  @spec get_account!(any) :: nil | [%{optional(atom) => any}] | %{optional(atom) => any}
   @doc """
   Gets a single account.
 

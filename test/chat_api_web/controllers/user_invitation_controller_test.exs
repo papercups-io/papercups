@@ -5,7 +5,7 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
   alias ChatApi.UserInvitations.UserInvitation
   alias ChatApi.Accounts
 
-  @invalid_attrs %{account_id: nil, expires_at: nil, invite_token: nil}
+  @invalid_attrs %{account_id: nil, expires_at: nil}
 
   def fixture(:account) do
     {:ok, account} = Accounts.create_account(%{company_name: "Taro"})

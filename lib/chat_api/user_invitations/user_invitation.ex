@@ -12,7 +12,6 @@ defmodule ChatApi.UserInvitations.UserInvitation do
   #Id is the invite token
   schema "user_invitations" do
     field(:expires_at, :utc_datetime)
-    field(:invite_token, :string)
     belongs_to(:account, Account)
 
     timestamps()
@@ -22,19 +21,8 @@ defmodule ChatApi.UserInvitations.UserInvitation do
   def changeset(user_invitation, attrs) do
     user_invitation
     |> cast(attrs, [:account_id, :expires_at])
-    # |> generate_token()
     |> set_expires_at()
     |> validate_required([:account_id, :expires_at])
-  end
-
-  # defp generate_token(changeset) do
-  #   changeset
-  #   |> put_change(:invite_token, generate_token())
-  # end
-
-  defp generate_token() do
-    uuid = Ecto.UUID.generate()
-    uuid
   end
 
   defp set_expires_at(changeset) do

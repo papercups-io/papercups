@@ -5,15 +5,22 @@ defmodule ChatApiWeb.RegistrationController do
   alias Plug.Conn
   alias ChatApiWeb.ErrorHelpers
 
+  alias ChatApi.Repo
+
   @spec create(Conn.t(), map()) :: Conn.t()
   def create(conn, %{"user" => user_params}) do
-    # TODO: for now we just create a new account for every new signup
-    # In the future we'll want to be able to invite users to existing accounts
-    ChatApi.UserInvitations.get_user_invitation!()
+    invite_token = user_params["invite_token"]
 
-    ChatApi.Accounts.get_account!()
+    account =
+      if(invite_token) do
+        invitation = ChatApi.UserInvitations.get_user_invitation!(user_params["invite_token"])
+        Repo.preload(invitation, :account).account
+      else
+        {:ok, account} =
+          ChatApi.Accounts.create_account(%{company_name: user_params["company_name"]})
+        account
+      end
 
-    {:ok, account} = ChatApi.Accounts.create_account(%{company_name: user_params["company_name"], invite_token: user_params["invite_token"]})
     params = Enum.into(user_params, %{"account_id" => account.id})
 
     conn
