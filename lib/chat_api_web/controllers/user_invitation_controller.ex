@@ -1,0 +1,43 @@
+defmodule ChatApiWeb.UserInvitationController do
+  use ChatApiWeb, :controller
+
+  alias ChatApi.UserInvitations
+  alias ChatApi.UserInvitations.UserInvitation
+
+  action_fallback ChatApiWeb.FallbackController
+
+  def index(conn, _params) do
+    user_invitations = UserInvitations.list_user_invitations()
+    render(conn, "index.json", user_invitations: user_invitations)
+  end
+
+  def create(conn, %{"user_invitation" => user_invitation_params}) do
+    with {:ok, %UserInvitation{} = user_invitation} <- UserInvitations.create_user_invitation(user_invitation_params) do
+      conn
+      |> put_status(:created)
+      |> put_resp_header("location", Routes.user_invitation_path(conn, :show, user_invitation))
+      |> render("show.json", user_invitation: user_invitation)
+    end
+  end
+
+  def show(conn, %{"id" => id}) do
+    user_invitation = UserInvitations.get_user_invitation!(id)
+    render(conn, "show.json", user_invitation: user_invitation)
+  end
+
+  def update(conn, %{"id" => id, "user_invitation" => user_invitation_params}) do
+    user_invitation = UserInvitations.get_user_invitation!(id)
+
+    with {:ok, %UserInvitation{} = user_invitation} <- UserInvitations.update_user_invitation(user_invitation, user_invitation_params) do
+      render(conn, "show.json", user_invitation: user_invitation)
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    user_invitation = UserInvitations.get_user_invitation!(id)
+
+    with {:ok, %UserInvitation{}} <- UserInvitations.delete_user_invitation(user_invitation) do
+      send_resp(conn, :no_content, "")
+    end
+  end
+end
