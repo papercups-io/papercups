@@ -1,7 +1,6 @@
 defmodule ChatApiWeb.UserInvitationController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.Repo
   alias ChatApi.UserInvitations
   alias ChatApi.UserInvitations.UserInvitation
 

@@ -4,7 +4,7 @@ import { Box, Flex } from 'theme-ui';
 import { Button, Input, Title } from '../common';
 import { useAuth } from './AuthProvider';
 
-type Props = RouteComponentProps & {
+type Props = RouteComponentProps<{invite?: string}> & {
   onSubmit: (params: any) => Promise<void>;
 };
 type State = {
@@ -12,7 +12,7 @@ type State = {
   email: string;
   password: string;
   passwordConfirmation: string;
-  inviteToken: string;
+  inviteToken?: string;
 };
 
 class Register extends React.Component<Props, State> {
@@ -25,7 +25,7 @@ class Register extends React.Component<Props, State> {
   };
 
   componentDidMount() {
-    const inviteToken = (this.props.match.params as any)['invite'];
+    const inviteToken = this.props.match.params['invite'];
     this.setState({ inviteToken })
   }
 
