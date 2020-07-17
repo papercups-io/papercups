@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Result} from '../common';
+import {colors, Result} from '../common';
 import {SmileOutlined} from '../icons';
 // Testing widget in separate package
 import ChatWidget from '@papercups-io/chat-widget';
@@ -11,10 +11,6 @@ type State = {};
 
 class Demo extends React.Component<Props, State> {
   state: State = {};
-
-  componentDidMount() {
-    //
-  }
 
   render() {
     return (
@@ -34,7 +30,12 @@ class Demo extends React.Component<Props, State> {
           />
         </Box>
 
-        <ChatWidget accountId="eb504736-0f20-4978-98ff-1a82ae60b266" />
+        <ChatWidget
+          title="Welcome to Papercups!"
+          subtitle="Ask us anything in the chat window below 😊"
+          primaryColor={colors.primary}
+          accountId="eb504736-0f20-4978-98ff-1a82ae60b266"
+        />
       </Flex>
     );
   }
