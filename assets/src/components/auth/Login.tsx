@@ -1,19 +1,26 @@
 import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Input, Title} from '../common';
+import {Button, Input, Text, Title} from '../common';
 import {useAuth} from './AuthProvider';
 
 type Props = RouteComponentProps & {
   onSubmit: (params: any) => Promise<void>;
 };
 type State = {
+  loading: boolean;
   email: string;
   password: string;
+  error: any;
 };
 
 class Login extends React.Component<Props, State> {
-  state: State = {email: '', password: ''};
+  state: State = {
+    loading: false,
+    email: '',
+    password: '',
+    error: null,
+  };
 
   componentDidMount() {
     //
@@ -30,17 +37,24 @@ class Login extends React.Component<Props, State> {
   handleSubmit = (e: any) => {
     e.preventDefault();
 
+    this.setState({loading: true, error: null});
     const {email, password} = this.state;
 
     // TODO: handle login through API
     this.props
       .onSubmit({email, password})
       .then(() => this.props.history.push('/conversations'))
-      .catch((err) => console.log('Error!', err));
+      .catch((err) => {
+        console.log('Error!', err);
+        const error =
+          err.response?.body?.error?.message || 'Invalid credentials';
+
+        this.setState({error, loading: false});
+      });
   };
 
   render() {
-    const {email, password} = this.state;
+    const {loading, email, password, error} = this.state;
 
     return (
       <Flex
@@ -81,12 +95,24 @@ class Login extends React.Component<Props, State> {
             </Box>
 
             <Box mt={3}>
-              <Button block size="large" type="primary" htmlType="submit">
+              <Button
+                block
+                size="large"
+                type="primary"
+                htmlType="submit"
+                loading={loading}
+              >
                 Log in
               </Button>
             </Box>
 
-            <Box mt={4}>
+            {error && (
+              <Box mt={2}>
+                <Text type="danger">{error}</Text>
+              </Box>
+            )}
+
+            <Box mt={error ? 3 : 4}>
               Don't have an account? <Link to="register">Sign up!</Link>
             </Box>
           </form>
