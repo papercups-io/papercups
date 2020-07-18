@@ -2,9 +2,9 @@
 
 The code behind papercups.io
 
-# One click heroku deployment
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/papercups-io/papercups)
+# One click Heroku deployment
 
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/papercups-io/papercups)
 
 ## Getting started
 
@@ -16,9 +16,9 @@ To start your server:
 
 This will automatically start up the React frontend in watch mode on `localhost:3000`, with the API running on `localhost:4000`.
 
-### To start client side 
+### To start client side
 
-see: [README](assets/README.md)
+The frontend code will start up automatically when you run `mix phx.server`, but for more information see: [README](assets/README.md)
 
 ## Running tests
 

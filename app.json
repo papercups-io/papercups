@@ -1,27 +1,21 @@
 {
-    "name": "Papercups",
-    "description": "An open source customer chat messaging service",
-    "repository": "https://github.com/papercups-io/papercups",
-    "keywords": [
-        "elixir",
-        "phoenix",
-        "chat"
-    ],
-    "env": {
-        "SECRET_KEY_BASE": {
-            "description": "A secret key for verifying the integrity of signed cookies.",
-            "generator": "secret"
-        }
+  "name": "Papercups",
+  "description": "An open source customer chat messaging service",
+  "repository": "https://github.com/papercups-io/papercups",
+  "keywords": ["elixir", "phoenix", "chat"],
+  "env": {
+    "SECRET_KEY_BASE": {
+      "description": "A secret key for verifying the integrity of signed cookies.",
+      "generator": "secret"
+    }
+  },
+  "addons": ["heroku-postgresql"],
+  "buildpacks": [
+    {
+      "url": "https://buildpack-registry.s3.amazonaws.com/buildpacks/hashnuke/elixir.tgz"
     },
-    "addons": [
-        "heroku-postgresql"
-    ],
-    "buildpacks": [
-        {
-            "url": "https://buildpack-registry.s3.amazonaws.com/buildpacks/hashnuke/elixir.tgz"
-        },
-        {
-            "url": "https://github.com/gjaldon/heroku-buildpack-phoenix-static"
-        }
-    ]
+    {
+      "url": "https://github.com/gjaldon/heroku-buildpack-phoenix-static"
+    }
+  ]
 }
