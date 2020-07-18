@@ -24,6 +24,12 @@ defmodule ChatApiWeb.ConversationController do
   def create(conn, %{"conversation" => conversation_params}) do
     with {:ok, %Conversation{} = conversation} <-
            Conversations.create_conversation(conversation_params) do
+      %{id: conversation_id, account_id: account_id} = conversation
+
+      ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation", %{
+        "id" => conversation_id
+      })
+
       conn
       |> put_status(:created)
       |> put_resp_header("location", Routes.conversation_path(conn, :show, conversation))
