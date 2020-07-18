@@ -2,6 +2,9 @@
 
 The code behind papercups.io
 
+# One click heroku deployment
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
 ## Getting started
 
 To start your server:
