@@ -11,10 +11,11 @@ defmodule ChatApiWeb.UserInvitationController do
     render(conn, "index.json", user_invitations: user_invitations)
   end
 
-  def create(conn, %{"user_invitation" => user_invitation_params} = _) do
+  def create(conn, %{"user_invitation" => _user_invitation_params} = _) do
     current_user = Pow.Plug.current_user(conn)
 
-    with {:ok, %UserInvitation{} = user_invitation} <- UserInvitations.create_user_invitation(%{account_id: current_user.account_id}) do
+    with {:ok, %UserInvitation{} = user_invitation} <-
+           UserInvitations.create_user_invitation(%{account_id: current_user.account_id}) do
       conn
       |> put_status(:created)
       |> put_resp_header("location", Routes.user_invitation_path(conn, :show, user_invitation))
@@ -31,7 +32,8 @@ defmodule ChatApiWeb.UserInvitationController do
   def update(conn, %{"id" => id, "user_invitation" => user_invitation_params}) do
     user_invitation = UserInvitations.get_user_invitation!(id)
 
-    with {:ok, %UserInvitation{} = user_invitation} <- UserInvitations.update_user_invitation(user_invitation, user_invitation_params) do
+    with {:ok, %UserInvitation{} = user_invitation} <-
+           UserInvitations.update_user_invitation(user_invitation, user_invitation_params) do
       render(conn, "show.json", user_invitation: user_invitation)
     end
   end
