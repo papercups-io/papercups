@@ -40,8 +40,6 @@ defmodule ChatApiWeb.ConversationChannel do
   def handle_in("shout", payload, socket) do
     account = Accounts.get_account!(payload["account_id"])
 
-    Emails.send_email_alerts(account.users, payload["body"], payload["conversation_id"])
-
     case socket.assigns do
       %{conversation: conversation} ->
         %{id: conversation_id, account_id: account_id} = conversation
@@ -51,6 +49,7 @@ defmodule ChatApiWeb.ConversationChannel do
 
         {:ok, message} = Chat.create_message(msg)
         result = ChatApiWeb.MessageView.render("message.json", message: message)
+        Emails.send_email_alerts(account.users, payload["body"], payload["conversation_id"])
 
         broadcast(socket, "shout", result)
 
