@@ -3,10 +3,9 @@ import {Box} from 'theme-ui';
 import {colors, Paragraph, Text, Title} from '../common';
 
 const GettingStarted = ({accountId}: {accountId: string}) => {
-  const code = `
+  const REACT_CODE = `
 import React from 'react';
 import ChatWidget from '@papercups-io/chat-widget';
-import '@papercups-io/chat-widget/dist/index.css';
 
 const ExamplePage = () => {
   return (
@@ -16,10 +15,34 @@ const ExamplePage = () => {
         like to render the widget on, or in your root/router component
         if you would like it to render on every page
       */}
-      <ChatWidget accountId='${accountId}' />;
+      <ChatWidget
+        title='Welcome to Papercups!'
+        subtitle='Ask us anything in the chat window below 😊'
+        primaryColor='#13c2c2'
+        accountId='${accountId}'
+      />
     </>
   );
 };
+  `.trim();
+
+  const HTML_CODE = `
+<script>
+  window.Papercups = {
+    config: {
+      accountId: '${accountId}',
+      title: 'Welcome to Papercups!',
+      subtitle: 'Ask us anything in the chat window below 😊',
+      primaryColor: '#13c2c2',
+    },
+  };
+</script>
+<script
+  type="text/javascript"
+  async
+  defer
+  src="https://www.papercups.io/widget.js"
+></script>
   `.trim();
 
   return (
@@ -34,13 +57,14 @@ const ExamplePage = () => {
           </span>
         </Text>
       </Paragraph>
+
+      <Title level={3}>Usage in React</Title>
       <Paragraph>
-        <Text strong mark>
-          NB: For now, the code below will only work in React apps, but general
-          support is coming soon!
+        <Text>
+          First, install the <Text code>@papercups-io/chat-widget</Text>{' '}
+          package:
         </Text>
       </Paragraph>
-      <Title level={3}>Install</Title>
       <Paragraph>
         <pre
           style={{
@@ -52,7 +76,6 @@ const ExamplePage = () => {
           <Box p={3}>npm install --save @papercups-io/chat-widget</Box>
         </pre>
       </Paragraph>
-      <Title level={3}>Usage</Title>
       <Paragraph>
         <Text>
           Your account token has been prefilled in the code below. Simply copy
@@ -68,9 +91,30 @@ const ExamplePage = () => {
             fontSize: 12,
           }}
         >
-          <Box p={3}>{code}</Box>
+          <Box p={3}>{REACT_CODE}</Box>
         </pre>
       </Paragraph>
+
+      <Title level={3}>Usage in HTML</Title>
+      <Paragraph>
+        <Text>
+          Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
+          <Text code>{'</head>'}</Text> tags:
+        </Text>
+      </Paragraph>
+      <Paragraph>
+        <pre
+          style={{
+            backgroundColor: '#f6f8fa',
+            color: colors.black,
+            fontSize: 12,
+          }}
+        >
+          <Box p={3}>{HTML_CODE}</Box>
+        </pre>
+      </Paragraph>
+
+      <Title level={3}>Learn more</Title>
       <Paragraph>
         <Text>
           See the code and learn more in our{' '}

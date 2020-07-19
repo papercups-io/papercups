@@ -11,6 +11,7 @@ import {colors, Layout, Menu, Sider} from './common';
 import {MailOutlined, UserOutlined, SettingOutlined} from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
+import GettingStartedOverview from './account/GettingStartedOverview';
 import AllConversations from './conversations/AllConversations';
 import MyConversations from './conversations/MyConversations';
 import PriorityConversations from './conversations/PriorityConversations';
@@ -54,6 +55,9 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="overview">
                   <Link to="/account/overview">Overview</Link>
                 </Menu.Item>
+                <Menu.Item key="getting-started">
+                  <Link to="/account/getting-started">Getting started</Link>
+                </Menu.Item>
               </Menu.SubMenu>
               <Menu.SubMenu
                 key="conversations"
@@ -95,6 +99,10 @@ const Dashboard = (props: RouteComponentProps) => {
       <Layout style={{marginLeft: 200, background: colors.white}}>
         <Switch>
           <Route path="/account/overview" component={AccountOverview} />
+          <Route
+            path="/account/getting-started"
+            component={GettingStartedOverview}
+          />
           <Route path="/account*" component={AccountOverview} />
           <Route path="/conversations/all" component={AllConversations} />
           <Route path="/conversations/me" component={MyConversations} />
