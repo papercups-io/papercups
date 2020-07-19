@@ -1,21 +1,39 @@
 {
-  "name": "Papercups",
-  "description": "An open source customer chat messaging service",
-  "repository": "https://github.com/papercups-io/papercups",
-  "keywords": ["elixir", "phoenix", "chat"],
-  "env": {
-    "SECRET_KEY_BASE": {
-      "description": "A secret key for verifying the integrity of signed cookies.",
-      "generator": "secret"
-    }
-  },
-  "addons": ["heroku-postgresql"],
-  "buildpacks": [
-    {
-      "url": "https://buildpack-registry.s3.amazonaws.com/buildpacks/hashnuke/elixir.tgz"
+    "name": "Papercups",
+    "description": "An open source customer chat messaging service",
+    "repository": "https://github.com/papercups-io/papercups",
+    "keywords": [
+        "elixir",
+        "phoenix",
+        "chat"
+    ],
+    "env": {
+        "SECRET_KEY_BASE": {
+            "description": "A secret key for verifying the integrity of signed cookies.",
+            "generator": "secret"
+        },
+        "AWS_ACCESS_KEY_ID": {
+            "description": "aws access key id with permissions to send emails through ses service",
+            "required": false
+        },
+        "NO_REPLY_EMAIL": {
+            "description": "Email address that will notify you when there is a new conversation/message",
+            "required": false
+        },
+        "AWS_SECRET_ACCESS_KEY": {
+            "description": "aws access key with permissions to send emails through ses service",
+            "required": false
+        }
     },
-    {
-      "url": "https://github.com/gjaldon/heroku-buildpack-phoenix-static"
-    }
-  ]
+    "addons": [
+        "heroku-postgresql"
+    ],
+    "buildpacks": [
+        {
+            "url": "https://buildpack-registry.s3.amazonaws.com/buildpacks/hashnuke/elixir.tgz"
+        },
+        {
+            "url": "https://github.com/gjaldon/heroku-buildpack-phoenix-static"
+        }
+    ]
 }
