@@ -196,13 +196,13 @@ class ConversationsContainer extends React.Component<Props, State> {
       return;
     }
 
-    const conversations = await this.props.fetch();
-
-    this.updateConversationsState(conversations);
-
     this.channel.push('watch', {
       conversation_id: conversationId,
     });
+
+    const conversations = await this.props.fetch();
+
+    this.updateConversationsState(conversations);
   };
 
   handleSelectConversation = (id: string) => {
@@ -216,7 +216,7 @@ class ConversationsContainer extends React.Component<Props, State> {
 
     const {messagesByConversation, conversationIds} = this.state;
     const {conversation_id: conversationId} = message;
-    const existing = messagesByConversation[conversationId];
+    const existing = messagesByConversation[conversationId] || [];
     const update = {
       ...messagesByConversation,
       [conversationId]: [...existing, message],
