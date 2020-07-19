@@ -5,16 +5,9 @@ import utc from 'dayjs/plugin/utc';
 import {colors, Text} from '../common';
 import {SmileTwoTone} from '../icons';
 import {formatRelativeTime} from '../../utils';
+import {Message} from '../../types';
 
 dayjs.extend(utc);
-
-// TODO: DRY up
-type Message = {
-  sender: string;
-  body: string;
-  created_at: string;
-  customer_id: string;
-};
 
 type Props = {
   message: Message;
@@ -29,7 +22,8 @@ const ChatMessage = ({
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
-  const {body, created_at} = message;
+  const {body, created_at, user_id} = message;
+  const isAgent = !!user_id;
   const created = dayjs.utc(created_at);
   const timestamp = formatRelativeTime(created);
 
@@ -51,8 +45,7 @@ const ChatMessage = ({
         </Flex>
         {shouldDisplayTimestamp && (
           <Flex m={1} sx={{justifyContent: 'flex-end'}}>
-            {/* TODO: this should be dynamic */}
-            <Text type="secondary">Sent {timestamp || '30 mins ago'}</Text>
+            <Text type="secondary">Sent {timestamp}</Text>
           </Flex>
         )}
       </Box>
@@ -63,7 +56,11 @@ const ChatMessage = ({
     <Box pr={4} pl={0} pb={isLastInGroup ? 3 : 2}>
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
         <Box mr={3} mt={1}>
-          <SmileTwoTone style={{fontSize: 20}} twoToneColor={colors.gold} />
+          {/* TODO: include name/email to distinguish between agents */}
+          <SmileTwoTone
+            style={{fontSize: 20}}
+            twoToneColor={isAgent ? colors.primary : colors.gold}
+          />
         </Box>
         <Box
           px={3}
@@ -80,8 +77,7 @@ const ChatMessage = ({
       </Flex>
       {shouldDisplayTimestamp && (
         <Flex m={1} pl={4} sx={{justifyContent: 'flex-start'}}>
-          {/* TODO: this should be dynamic */}
-          <Text type="secondary">Sent {timestamp || '30 mins ago'}</Text>
+          <Text type="secondary">Sent {timestamp}</Text>
         </Flex>
       )}
     </Box>

@@ -7,6 +7,7 @@ import * as API from '../../api';
 import {colors, Content, Layout, Result, Sider, Text, Title} from '../common';
 import {socket} from '../../socket';
 import {formatRelativeTime} from '../../utils';
+import {Message, Conversation} from '../../types';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
 import GettingStarted from './GettingStarted';
@@ -26,23 +27,6 @@ const EmptyMessagesPlaceholder = () => {
       />
     </Box>
   );
-};
-
-// NB: actual message records will look slightly different
-type Message = {
-  sender: string;
-  body: string;
-  created_at: string;
-  customer_id: string;
-  conversation_id: string;
-};
-// NB: actual conversation records will look different
-type Conversation = {
-  id: string;
-  customer: string;
-  date: string;
-  preview: string;
-  messages?: Array<Message>;
 };
 
 type Props = {
@@ -274,10 +258,8 @@ class ConversationsContainer extends React.Component<Props, State> {
 
   formatMessage = (message: any) => {
     return {
+      ...message,
       sender: message.customer_id ? 'customer' : 'agent',
-      body: message.body,
-      created_at: message.created_at,
-      customer_id: message.customer_id,
     };
   };
 
@@ -346,7 +328,7 @@ class ConversationsContainer extends React.Component<Props, State> {
   };
 
   render() {
-    const {account} = this.props;
+    const {account, currentUser} = this.props;
     const users = (account && account.users) || [];
     const {
       loading,
@@ -449,6 +431,7 @@ class ConversationsContainer extends React.Component<Props, State> {
                     // Slight hack
                     const msg = this.formatMessage(message);
                     const next = messages[key + 1];
+                    const isMe = msg.user_id && msg.user_id === currentUser.id;
                     const isLastInGroup = next
                       ? msg.customer_id !== next.customer_id
                       : true;
@@ -458,7 +441,7 @@ class ConversationsContainer extends React.Component<Props, State> {
                       <ChatMessage
                         key={key}
                         message={msg}
-                        isMe={!msg.customer_id}
+                        isMe={isMe}
                         isLastInGroup={isLastInGroup}
                         shouldDisplayTimestamp={isLastInGroup}
                       />
