@@ -34,7 +34,7 @@ class Demo extends React.Component<Props, State> {
           title="Welcome to Papercups!"
           subtitle="Ask us anything in the chat window below 😊"
           primaryColor={colors.primary}
-          accountId="22af71fc-26b4-4c39-9425-e6e427be0b96"
+          accountId="eb504736-0f20-4978-98ff-1a82ae60b266"
         />
       </Flex>
     );

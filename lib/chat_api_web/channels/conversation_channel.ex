@@ -1,8 +1,7 @@
 defmodule ChatApiWeb.ConversationChannel do
   use ChatApiWeb, :channel
 
-  alias ChatApi.Emails.Email
-  alias ChatApi.{Accounts, Chat, Conversations}
+  alias ChatApi.{Accounts, Chat, Conversations, Emails}
 
   @impl true
   def join("conversation:lobby", payload, socket) do
@@ -41,10 +40,7 @@ defmodule ChatApiWeb.ConversationChannel do
   def handle_in("shout", payload, socket) do
     account = Accounts.get_account!(payload["account_id"])
 
-    account.users
-    |> Enum.filter(fn u -> u.email_alert_on_new_message end)
-    |> Enum.map(fn u -> u.email end)
-    |> Enum.map(fn e -> Email.send(e, payload["body"], payload["conversation_id"]) end)
+    Emails.send_email_alerts(account.users, payload["body"], payload["conversation_id"])
 
     case socket.assigns do
       %{conversation: conversation} ->
