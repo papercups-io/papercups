@@ -7,6 +7,6 @@ defmodule ChatApiWeb.UserView do
   end
 
   def render("user.json", %{user: user}) do
-    %{id: user.id, email: user.email}
+    %{id: user.id, email: user.email, created_at: user.inserted_at}
   end
 end

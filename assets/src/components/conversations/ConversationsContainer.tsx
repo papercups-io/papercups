@@ -358,7 +358,7 @@ class ConversationsContainer extends React.Component<Props, State> {
             overflow: 'auto',
             height: '100vh',
             position: 'fixed',
-            left: 80,
+            left: 200,
           }}
         >
           <Box p={3} sx={{borderBottom: '1px solid #f0f0f0'}}>

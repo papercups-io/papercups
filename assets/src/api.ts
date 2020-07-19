@@ -233,3 +233,15 @@ export const fetchCustomerConversations = async (
     .query({customer_id: customerId, account_id: accountId})
     .then((res) => res.body.data);
 };
+
+export const generateUserInvitation = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`${API_BASE_URL}/api/user_invitations`)
+    .send({user_invitation: {}})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
