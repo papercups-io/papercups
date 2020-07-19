@@ -38,12 +38,22 @@ defmodule ChatApiWeb.ConversationChannel do
   # broadcast to everyone in the current topic (conversation:lobby).
   @impl true
   def handle_in("shout", payload, socket) do
-    %{id: conversation_id, account_id: account_id} = socket.assigns.conversation
-    msg = Map.merge(payload, %{"conversation_id" => conversation_id, "account_id" => account_id})
-    {:ok, message} = Chat.create_message(msg)
-    result = ChatApiWeb.MessageView.render("message.json", message: message)
+    case socket.assigns do
+      %{conversation: conversation} ->
+        %{id: conversation_id, account_id: account_id} = conversation
 
-    broadcast(socket, "shout", result)
+        msg =
+          Map.merge(payload, %{"conversation_id" => conversation_id, "account_id" => account_id})
+
+        {:ok, message} = Chat.create_message(msg)
+        result = ChatApiWeb.MessageView.render("message.json", message: message)
+
+        broadcast(socket, "shout", result)
+
+      _ ->
+        broadcast(socket, "shout", payload)
+    end
+
     {:noreply, socket}
   end
 
