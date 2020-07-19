@@ -8,13 +8,19 @@ defmodule ChatApi.Emails.Email do
 
   #TODO: Move conversation id out the mailer should only care about the message
   def send(to_address, message, conversation_id) do
-    body = "A new message has arrived: " <> message <> "\nhttps://www.papercups.io/conversations/" <> conversation_id
-    new()
-    |> to(to_address)
-    |> from(@from_address)
-    |> subject("A customer has sent you a message!")
-    |> text_body(body)
-    |> ChatApi.Mailer.deliver()
+    # Using try catch here because if someone is self hosting and doesn't need the email service it would error out
+    # TODO: Find a better solution besides try catch probably in config.exs setup an empty mailer that doesn't do anything
+    try do
+      body = "A new message has arrived: " <> message <> "\nhttps://www.papercups.io/conversations/" <> conversation_id
+      new()
+      |> to(to_address)
+      |> from({"hello", @from_address})
+      |> subject("A customer has sent you a message!")
+      |> text_body(body)
+      |> ChatApi.Mailer.deliver()
+    rescue
+      e -> IO.puts("Email config environment variable may not have been setup properly: #{e.message}")
+    end
   end
 
   @spec changeset(

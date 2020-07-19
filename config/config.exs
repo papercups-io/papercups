@@ -35,10 +35,15 @@ config :chat_api, :pow,
 
 # Configure :ex_aws
 
-config :chat_api, ChatApi.Mailer,
-  adapter: Swoosh.Adapters.Mailgun,
-  api_key: System.get_env("MAILGUN_API_KEY"),
-  domain: System.get_env("DOMAIN")
+mailgun_api_key = System.get_env("MAILGUN_API_KEY")
+domain = System.get_env("DOMAIN")
+
+if mailgun_api_key != nil and domain != nil do
+  config :chat_api, ChatApi.Mailer,
+    adapter: Swoosh.Adapters.Mailgun,
+    api_key: mailgun_api_key,
+    domain: domain
+end
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
