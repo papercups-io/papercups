@@ -89,10 +89,13 @@ class ConversationsContainer extends React.Component<Props, State> {
     this.joinNotificationChannel(accountId, conversationIds);
   }
 
+  componentWillUnmount() {
+    this.channel && this.channel.leave();
+  }
+
   refreshConversationsData = async () => {
     this.setState({loading: true});
 
-    const {selectedConversationId} = this.state;
     const conversations = await this.props.fetch();
 
     if (!conversations || !conversations.length) {
@@ -115,6 +118,12 @@ class ConversationsContainer extends React.Component<Props, State> {
         selectedConversationId: null,
       };
     }
+
+    return this.updateConversationsState(conversations);
+  };
+
+  updateConversationsState = (conversations: Array<any>) => {
+    const {selectedConversationId} = this.state;
 
     const conversationsById = conversations.reduce((acc: any, conv: any) => {
       return {...acc, [conv.id]: conv};
@@ -174,14 +183,18 @@ class ConversationsContainer extends React.Component<Props, State> {
       this.channel.leave(); // TODO: what's the best practice here?
     }
 
-    // TODO: If no conversations exist, join lobby?? (which is just an open chat room???)
-    // (this could be a fun little feature... lobby is where you can chat with... us??)
+    // TODO: If no conversations exist, should we create a conversation with us
+    // so new users can play around with the chat right away and give us feedback?
     this.channel = socket.channel(`notification:${accountId}`, {
       ids: conversationIds,
     });
 
     this.channel.on('shout', (message) => {
       this.handleNewMessage(message);
+    });
+
+    this.channel.on('conversation', ({id: conversationId}) => {
+      this.handleNewConversation(conversationId);
     });
 
     this.channel
@@ -192,6 +205,20 @@ class ConversationsContainer extends React.Component<Props, State> {
       .receive('error', (err) => {
         console.log('Unable to join', err);
       });
+  };
+
+  handleNewConversation = async (conversationId?: string) => {
+    if (!this.channel || !conversationId) {
+      return;
+    }
+
+    const conversations = await this.props.fetch();
+
+    this.updateConversationsState(conversations);
+
+    this.channel.push('watch', {
+      conversation_id: conversationId,
+    });
   };
 
   handleSelectConversation = (id: string) => {
@@ -238,11 +265,10 @@ class ConversationsContainer extends React.Component<Props, State> {
 
     this.channel.push('shout', {
       body: message,
-      sender: 'agent',
-      // created_at: new Date(),
+      user_id: userId,
       conversation_id: selectedConversationId,
       account_id: accountId,
-      user_id: userId,
+      sender: 'agent', // TODO: remove?
     });
   };
 

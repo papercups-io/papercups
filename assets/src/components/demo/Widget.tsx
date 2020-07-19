@@ -48,20 +48,24 @@ class Widget extends React.Component<Props, State> {
   }
 
   fetchLatestConversation = (customerId: string) => {
+    if (!customerId) {
+      // If there's no customerId, we haven't seen this customer before,
+      // so do nothing until they try to create a new message
+      return;
+    }
+
     const {accountId} = this.state;
 
     console.log('Fetching conversations for customer:', customerId);
-
-    if (!customerId) {
-      return this.initializeNewConversation();
-    }
 
     API.fetchCustomerConversations(customerId, accountId)
       .then((conversations) => {
         console.log('Found existing conversations:', conversations);
 
         if (!conversations || !conversations.length) {
-          return this.initializeNewConversation();
+          // If there are no conversations yet, wait until the customer creates
+          // a new message to create the new conversation
+          return;
         }
 
         const [latest] = conversations;
@@ -85,7 +89,7 @@ class Widget extends React.Component<Props, State> {
             ),
         });
 
-        this.joinConversationChannel(conversationId);
+        this.joinConversationChannel(conversationId, customerId);
       })
       .catch((err) => console.log('Error fetching conversations!', err));
   };
@@ -109,17 +113,21 @@ class Widget extends React.Component<Props, State> {
 
     this.setState({customerId, conversationId, messages: []});
 
-    this.joinConversationChannel(conversationId);
+    this.joinConversationChannel(conversationId, customerId);
+
+    return {customerId, conversationId};
   };
 
-  joinConversationChannel = (conversationId: string) => {
+  joinConversationChannel = (conversationId: string, customerId?: string) => {
     if (this.channel && this.channel.leave) {
       this.channel.leave(); // TODO: what's the best practice here?
     }
 
     console.log('Joining channel:', conversationId);
 
-    this.channel = socket.channel(`conversation:${conversationId}`, {});
+    this.channel = socket.channel(`conversation:${conversationId}`, {
+      customer_id: customerId,
+    });
 
     this.channel.on('shout', (message) => {
       this.handleNewMessage(message);
@@ -153,22 +161,27 @@ class Widget extends React.Component<Props, State> {
     }
   };
 
-  handleSendMessage = (e?: any) => {
+  handleSendMessage = async (e?: any) => {
     e && e.preventDefault();
 
-    const {message, customerId, accountId, conversationId} = this.state;
+    const {message, customerId, conversationId} = this.state;
 
-    if (!this.channel || !message || message.trim().length === 0) {
+    if (!message || message.trim().length === 0) {
+      return;
+    }
+
+    if (!customerId || !conversationId) {
+      await this.initializeNewConversation();
+    }
+
+    if (!this.channel) {
       return;
     }
 
     this.channel.push('shout', {
       body: message,
-      sender: 'customer',
-      // created_at: new Date(),
-      conversation_id: conversationId,
-      account_id: accountId,
-      customer_id: customerId,
+      customer_id: this.state.customerId,
+      sender: 'customer', // TODO: remove?
     });
 
     this.setState({message: ''});

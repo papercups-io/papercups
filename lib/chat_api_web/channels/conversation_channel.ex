@@ -14,7 +14,14 @@ defmodule ChatApiWeb.ConversationChannel do
 
   def join("conversation:" <> private_conversation_id, payload, socket) do
     if authorized?(payload, private_conversation_id) do
-      {:ok, socket}
+      conversation = Conversations.get_conversation!(private_conversation_id)
+
+      {:ok,
+       assign(
+         socket,
+         :conversation,
+         ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
+       )}
     else
       {:error, %{reason: "unauthorized"}}
     end
@@ -31,10 +38,22 @@ defmodule ChatApiWeb.ConversationChannel do
   # broadcast to everyone in the current topic (conversation:lobby).
   @impl true
   def handle_in("shout", payload, socket) do
-    {:ok, message} = Chat.create_message(payload)
-    result = ChatApiWeb.MessageView.render("message.json", message: message)
+    case socket.assigns do
+      %{conversation: conversation} ->
+        %{id: conversation_id, account_id: account_id} = conversation
 
-    broadcast(socket, "shout", result)
+        msg =
+          Map.merge(payload, %{"conversation_id" => conversation_id, "account_id" => account_id})
+
+        {:ok, message} = Chat.create_message(msg)
+        result = ChatApiWeb.MessageView.render("message.json", message: message)
+
+        broadcast(socket, "shout", result)
+
+      _ ->
+        broadcast(socket, "shout", payload)
+    end
+
     {:noreply, socket}
   end
 

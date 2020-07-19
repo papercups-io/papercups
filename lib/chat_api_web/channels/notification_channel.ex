@@ -13,6 +13,7 @@ defmodule ChatApiWeb.NotificationChannel do
     end
   end
 
+  # TODO: secure this better!
   def join("notification:" <> _account_id, %{"ids" => ids}, socket) do
     topics = for conversation_id <- ids, do: "conversation:#{conversation_id}"
 
