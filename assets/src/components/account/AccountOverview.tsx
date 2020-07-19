@@ -1,9 +1,19 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
-import {colors, Button, Input, Paragraph, Table, Text, Title} from '../common';
+import {
+  colors,
+  notification,
+  Button,
+  Input,
+  Paragraph,
+  Table,
+  Text,
+  Title,
+} from '../common';
 import {SmileTwoTone} from '../icons';
 import * as API from '../../api';
+import {BASE_URL} from '../../config';
 
 type Props = {};
 type State = {
@@ -29,11 +39,9 @@ class AccountOverview extends React.Component<Props, State> {
   handleGenerateInviteUrl = async () => {
     const {id: token} = await API.generateUserInvitation();
 
-    console.log({token});
-
     this.setState(
       {
-        inviteUrl: `http://localhost:3000/register/${token}`,
+        inviteUrl: `${BASE_URL}/register/${token}`,
       },
       () => this.focusAndHighlightInput()
     );
@@ -49,6 +57,11 @@ class AccountOverview extends React.Component<Props, State> {
 
     if (document.queryCommandSupported('copy')) {
       document.execCommand('copy');
+      notification.open({
+        message: 'Copied to clipboard!',
+        description:
+          'You can now paste your unique invitation URL to a teammate.',
+      });
     }
   };
 
