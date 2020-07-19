@@ -35,7 +35,6 @@ defmodule ChatApi.MixProject do
     [
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:hackney, "~> 1.9"},
       {:swoosh, "~> 1.0"},
       {:gen_smtp, "~> 0.13"},
       {:phoenix, "~> 1.5.3"},
@@ -46,6 +45,8 @@ defmodule ChatApi.MixProject do
       {:telemetry_metrics, "~> 0.4"},
       {:telemetry_poller, "~> 0.4"},
       {:gettext, "~> 0.11"},
+      {:tesla, "~> 1.3"},
+      {:hackney, "~> 1.16"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:corsica, "~> 1.0"},
