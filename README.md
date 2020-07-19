@@ -14,6 +14,11 @@ To start your server:
 - Create and migrate your database with `mix ecto.setup`
 - Start the server with `mix phx.server`
 
+## Setting up email alerts
+
+- Set the environment variable in the .env.example
+* at the moment we only support mailgun - other messaging channels coming soon!
+
 This will automatically start up the React frontend in watch mode on `localhost:3000`, with the API running on `localhost:4000`.
 
 ### To start client side

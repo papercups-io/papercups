@@ -35,6 +35,9 @@ defmodule ChatApi.MixProject do
     [
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:hackney, "~> 1.9"},
+      {:swoosh, "~> 1.0"},
+      {:gen_smtp, "~> 0.13"},
       {:phoenix, "~> 1.5.3"},
       {:phoenix_ecto, "~> 4.1"},
       {:ecto_sql, "~> 3.4"},

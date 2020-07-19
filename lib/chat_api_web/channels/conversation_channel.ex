@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.ConversationChannel do
   use ChatApiWeb, :channel
 
-  alias ChatApi.{Chat, Conversations}
+  alias ChatApi.{Accounts, Chat, Conversations, Emails}
 
   @impl true
   def join("conversation:lobby", payload, socket) do
@@ -38,6 +38,10 @@ defmodule ChatApiWeb.ConversationChannel do
   # broadcast to everyone in the current topic (conversation:lobby).
   @impl true
   def handle_in("shout", payload, socket) do
+    account = Accounts.get_account!(payload["account_id"])
+
+    Emails.send_email_alerts(account.users, payload["body"], payload["conversation_id"])
+
     case socket.assigns do
       %{conversation: conversation} ->
         %{id: conversation_id, account_id: account_id} = conversation
