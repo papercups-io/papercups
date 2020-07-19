@@ -1,9 +1,6 @@
 import request from 'superagent';
 import {getAuthTokens} from './storage';
 
-// TODO: remove this if we no longer need it
-const API_BASE_URL = ''; // 'http://localhost:4000';
-
 // TODO: handle this on the server instead
 function now() {
   const date = new Date();
@@ -47,20 +44,20 @@ export const me = async (token = getAccessToken()) => {
   }
 
   return request
-    .get(`${API_BASE_URL}/api/me`)
+    .get(`/api/me`)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
 
 export const login = async ({email, password}: LoginParams) => {
   return request
-    .post(`${API_BASE_URL}/api/session`)
+    .post(`/api/session`)
     .send({user: {email, password}})
     .then((res) => res.body.data);
 };
 
 export const logout = async () => {
-  return request.delete(`${API_BASE_URL}/api/session`).then((res) => res.body);
+  return request.delete(`/api/session`).then((res) => res.body);
 };
 
 export const register = async ({
@@ -71,7 +68,7 @@ export const register = async ({
   passwordConfirmation,
 }: RegisterParams) => {
   return request
-    .post(`${API_BASE_URL}/api/registration`)
+    .post(`/api/registration`)
     .send({
       user: {
         company_name: companyName,
@@ -90,14 +87,14 @@ export const renew = async (token = getRefreshToken()) => {
   }
 
   return request
-    .post(`${API_BASE_URL}/api/session/renew`)
+    .post(`/api/session/renew`)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
 
 export const createNewCustomer = async (accountId: string) => {
   return request
-    .post(`${API_BASE_URL}/api/customers`)
+    .post(`/api/customers`)
     .send({
       customer: {
         account_id: accountId,
@@ -113,7 +110,7 @@ export const createNewConversation = async (
   customerId: string
 ) => {
   return request
-    .post(`${API_BASE_URL}/api/conversations`)
+    .post(`/api/conversations`)
     .send({
       conversation: {
         account_id: accountId,
@@ -129,7 +126,7 @@ export const fetchAccountInfo = async (token = getAccessToken()) => {
   }
 
   return request
-    .get(`${API_BASE_URL}/api/accounts/me`)
+    .get(`/api/accounts/me`)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -140,7 +137,7 @@ export const fetchAllConversations = async (token = getAccessToken()) => {
   }
 
   return request
-    .get(`${API_BASE_URL}/api/conversations`)
+    .get(`/api/conversations`)
     .query({status: 'open'})
     .set('Authorization', token)
     .then((res) => res.body.data);
@@ -155,7 +152,7 @@ export const fetchMyConversations = async (
   }
 
   return request
-    .get(`${API_BASE_URL}/api/conversations`)
+    .get(`/api/conversations`)
     .query({assignee_id: userId})
     .set('Authorization', token)
     .then((res) => res.body.data);
@@ -167,7 +164,7 @@ export const fetchPriorityConversations = async (token = getAccessToken()) => {
   }
 
   return request
-    .get(`${API_BASE_URL}/api/conversations`)
+    .get(`/api/conversations`)
     .query({priority: 'priority'})
     .set('Authorization', token)
     .then((res) => res.body.data);
@@ -179,7 +176,7 @@ export const fetchClosedConversations = async (token = getAccessToken()) => {
   }
 
   return request
-    .get(`${API_BASE_URL}/api/conversations`)
+    .get(`/api/conversations`)
     .query({status: 'closed'})
     .set('Authorization', token)
     .then((res) => res.body.data);
@@ -195,7 +192,7 @@ export const updateConversation = async (
   }
 
   return request
-    .put(`${API_BASE_URL}/api/conversations/${conversationId}`)
+    .put(`/api/conversations/${conversationId}`)
     .set('Authorization', token)
     .send(updates)
     .then((res) => res.body.data);
@@ -208,7 +205,7 @@ export const fetchMessages = async (token = getAccessToken()) => {
   }
 
   return request
-    .get(`${API_BASE_URL}/api/messages`)
+    .get(`/api/messages`)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -219,7 +216,7 @@ export const countMessages = async (token = getAccessToken()) => {
   }
 
   return request
-    .get(`${API_BASE_URL}/api/messages/count`)
+    .get(`/api/messages/count`)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -229,7 +226,19 @@ export const fetchCustomerConversations = async (
   accountId: string
 ) => {
   return request
-    .get(`${API_BASE_URL}/api/conversations/customer`)
+    .get(`/api/conversations/customer`)
     .query({customer_id: customerId, account_id: accountId})
+    .then((res) => res.body.data);
+};
+
+export const generateUserInvitation = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/user_invitations`)
+    .send({user_invitation: {}})
+    .set('Authorization', token)
     .then((res) => res.body.data);
 };

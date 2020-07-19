@@ -10,7 +10,7 @@ import {formatRelativeTime} from '../../utils';
 import {Message, Conversation} from '../../types';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
-import GettingStarted from './GettingStarted';
+import GettingStarted from '../account/GettingStarted';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationFooter from './ConversationFooter';
@@ -358,7 +358,7 @@ class ConversationsContainer extends React.Component<Props, State> {
             overflow: 'auto',
             height: '100vh',
             position: 'fixed',
-            left: 80,
+            left: 200,
           }}
         >
           <Box p={3} sx={{borderBottom: '1px solid #f0f0f0'}}>
