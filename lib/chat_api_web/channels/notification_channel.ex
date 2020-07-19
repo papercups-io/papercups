@@ -42,14 +42,13 @@ defmodule ChatApiWeb.NotificationChannel do
   def handle_in("shout", payload, socket) do
     {:ok, message} = Chat.create_message(payload)
     result = ChatApiWeb.MessageView.render("message.json", message: message)
-
-    broadcast(socket, "shout", result)
-    # TODO: figure out exactly the difference between all these `broadcast` methods
-    broadcast_from!(socket, "shout", result)
+    # TODO: write doc explaining difference between push, broadcast, etc.
+    push(socket, "shout", result)
 
     case result do
       %{conversation_id: conversation_id} ->
         topic = "conversation:" <> conversation_id
+
         ChatApiWeb.Endpoint.broadcast_from!(self(), topic, "shout", result)
 
       _ ->
