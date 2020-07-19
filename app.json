@@ -12,16 +12,16 @@
             "description": "A secret key for verifying the integrity of signed cookies.",
             "generator": "secret"
         },
-        "AWS_ACCESS_KEY_ID": {
-            "description": "aws access key id with permissions to send emails through ses service",
+        "FROM_ADDRESS": {
+            "description": "The email address where you will be alerting your customer service agents from",
             "required": false
         },
-        "NO_REPLY_EMAIL": {
-            "description": "Email address that will notify you when there is a new conversation/message",
+        "MAILGUN_API_KEY": {
+            "description": "Mail gun api key",
             "required": false
         },
-        "AWS_SECRET_ACCESS_KEY": {
-            "description": "aws access key with permissions to send emails through ses service",
+        "DOMAIN": {
+            "description": "The domain you are sending email from",
             "required": false
         }
     },
