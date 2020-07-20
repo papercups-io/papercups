@@ -24,9 +24,7 @@ defmodule ChatApi.Slack do
     slack_enabled = System.get_env("PAPERCUPS_SLACK_ENABLED")
     url = "https://www.papercups.io/conversations/" <> conversation_id
     description = "conversation " <> conversation_id
-    # Oof interpolation is a little awkward, but this creates a formatted link
-    # e.g. `<papercups.io/conversations/xxxxx|New message in conversation xxxxx>`
-    link = "<" <> url <> "|" <> description <> ">"
+    link = "<#{url}|#{description}>"
     subject = "New message in " <> link
 
     payload = %{
