@@ -1,6 +1,6 @@
 # Papercups
 
-The code behind papercups.io
+The code behind [papercups.io](https://www.papercups.io/)
 
 # One click Heroku deployment
 
@@ -14,20 +14,21 @@ To start your server:
 - Create and migrate your database with `mix ecto.setup`
 - Start the server with `mix phx.server`
 
-## Setting up email alerts
-
-- Set the environment variable in the .env.example
-* at the moment we only support mailgun - other messaging channels coming soon!
-
 This will automatically start up the React frontend in watch mode on `localhost:3000`, with the API running on `localhost:4000`.
 
 ### To start client side
 
 The frontend code will start up automatically when you run `mix phx.server`, but for more information see: [README](assets/README.md)
 
+## Setting up email alerts
+
+Set the environment variables in the [`.env.example`](https://github.com/papercups-io/papercups/blob/master/.env.example) file.
+
+At the moment we only support [Mailgun](https://www.mailgun.com/) — other messaging channels are coming soon!
+
 ## Running tests
 
-Create postgres test database named: `chat_api_test`
+Create a PostgreSQL test database named: `chat_api_test`, and run:
 
 ```
 mix test
