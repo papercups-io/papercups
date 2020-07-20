@@ -18,7 +18,7 @@ This will automatically start up the React frontend in watch mode on `localhost:
 
 ### To start client side
 
-The frontend code will start up automatically when you run `mix phx.server`, but for more information see: [README](assets/README.md)
+The frontend code will start up automatically when you run `mix phx.server`, but for more information see: [assets/README.md](assets/README.md)
 
 ## Setting up email alerts
 
