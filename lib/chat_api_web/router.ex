@@ -32,6 +32,8 @@ defmodule ChatApiWeb.Router do
 
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)
+
+    post("/slack/webhook", SlackController, :webhook)
   end
 
   # Protected routes

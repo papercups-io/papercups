@@ -5,35 +5,54 @@ defmodule ChatApi.Slack do
 
   use Tesla
 
-  plug Tesla.Middleware.BaseUrl, "https://hooks.slack.com"
-  plug Tesla.Middleware.Headers, [{"content-type", "application/json"}]
+  plug Tesla.Middleware.BaseUrl, "https://slack.com/api"
+
+  plug Tesla.Middleware.Headers, [
+    {"content-type", "application/json; charset=utf-8"},
+    {"Authorization", "Bearer " <> System.get_env("SLACK_BOT_ACCESS_TOKEN")}
+  ]
+
   plug Tesla.Middleware.JSON
+  plug Tesla.Middleware.Logger
 
-  def send(message) do
-    webhook_url = System.get_env("PAPERCUPS_SLACK_WEBHOOK_URL")
+  @doc """
+  `message` looks like:
 
-    if is_nil(webhook_url) do
-      raise "The SLACK_WEBHOOK_URL environment variable is required to send Slack messages"
-    end
-
-    post(webhook_url, message)
+  %{
+    "channel" => "#bots",
+    "text" => "Testing another reply",
+    "attachments" => [%{"text" => "This is some other message"}],
+    "thread_ts" => "1595255129.000500" # For replying in thread
+  }
+  """
+  def send_message(message) do
+    post("/chat.postMessage", message)
   end
 
   def send_conversation_message_alert(conversation_id, text) do
     # TODO: handle this in user settings, for now just toggling on/off with env
-    slack_enabled = System.get_env("PAPERCUPS_SLACK_ENABLED")
-    url = "https://www.papercups.io/conversations/" <> conversation_id
+    slack_enabled = System.get_env("SLACK_BOT_ACCESS_TOKEN")
+
+    base =
+      if Mix.env() == :dev do
+        "http://localhost:3000"
+      else
+        "https://www.papercups.io"
+      end
+
+    url = base <> "/conversations/" <> conversation_id
     description = "conversation " <> conversation_id
     link = "<#{url}|#{description}>"
     subject = "New message in " <> link
 
     payload = %{
+      "channel" => "#bots",
       "text" => subject,
       "attachments" => [%{"text" => text}]
     }
 
     if slack_enabled do
-      send(payload)
+      send_message(payload)
     else
       # Inspect what would've been sent for debugging
       IO.inspect(payload)
