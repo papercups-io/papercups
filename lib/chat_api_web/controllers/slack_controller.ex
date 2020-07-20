@@ -37,14 +37,15 @@ defmodule ChatApiWeb.SlackController do
     thread = SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel)
 
     with conversation <- thread.conversation do
-      %{id: conversation_id, account_id: account_id} = conversation
+      %{id: conversation_id, account_id: account_id, assignee_id: assignee_id} = conversation
 
       params = %{
         "body" => text,
         "conversation_id" => conversation_id,
         "account_id" => account_id,
-        # TODO: map Slack users to internal users? (hardcoding for now to test)
-        "user_id" => 1
+        # TODO: map Slack users to internal users eventually?
+        # (Currently we just assume the assignee is always the one responding)
+        "user_id" => assignee_id
       }
 
       {:ok, message} = Chat.create_message(params)

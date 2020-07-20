@@ -46,7 +46,10 @@ defmodule ChatApi.Slack do
     url = base <> "/conversations/" <> conversation_id
     description = "conversation " <> conversation_id
     link = "<#{url}|#{description}>"
-    subject = "New message in " <> link
+
+    subject =
+      "New conversation started: " <>
+        link <> "\n\nReply to this thread to chat with the customer :rocket:"
 
     # TODO: clean up a bit
     payload =
@@ -69,9 +72,13 @@ defmodule ChatApi.Slack do
 
       # TODO: clean up a bit
       if is_nil(thread) do
-        result = create_new_slack_conversation_thread(conversation_id, response)
+        {:ok, thread} = create_new_slack_conversation_thread(conversation_id, response)
 
-        result
+        send_message(%{
+          "channel" => "#bots",
+          "text" => "(Send a message here to get started!)",
+          "thread_ts" => thread.slack_thread_ts
+        })
       end
     else
       # Inspect what would've been sent for debugging
@@ -80,16 +87,31 @@ defmodule ChatApi.Slack do
   end
 
   def create_new_slack_conversation_thread(conversation_id, response) do
-    # TODO: use a `with` statement here for better error handling?
-    conversation = Conversations.get_conversation!(conversation_id)
+    # TODO: This is just a temporary workaround to handle having a user_id
+    # in the message when an agent responds on Slack. At the moment, if anyone
+    # responds to a thread on Slack, we just assume it's the assignee.
+    with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
+         primary_user_id = get_conversation_primary_user_id(conversation) do
+      params =
+        Map.merge(
+          %{
+            conversation_id: conversation_id,
+            account_id: conversation.account_id
+          },
+          extract_slack_conversation_thread_info(response)
+        )
 
-    params =
-      Map.merge(
-        %{conversation_id: conversation_id, account_id: conversation.account_id},
-        extract_slack_conversation_thread_info(response)
-      )
+      Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
+      SlackConversationThreads.create_slack_conversation_thread(params)
+    end
+  end
 
-    SlackConversationThreads.create_slack_conversation_thread(params)
+  defp get_conversation_primary_user_id(conversation) do
+    conversation
+    |> Map.get(:account)
+    |> Map.get(:users)
+    |> List.first()
+    |> Map.get(:id)
   end
 
   defp extract_slack_conversation_thread_info(%{body: body}) do
