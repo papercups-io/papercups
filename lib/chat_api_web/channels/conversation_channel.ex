@@ -38,8 +38,6 @@ defmodule ChatApiWeb.ConversationChannel do
   # broadcast to everyone in the current topic (conversation:lobby).
   @impl true
   def handle_in("shout", payload, socket) do
-    account = Accounts.get_account!(payload["account_id"])
-
     case socket.assigns do
       %{conversation: conversation} ->
         %{id: conversation_id, account_id: account_id} = conversation
@@ -49,7 +47,12 @@ defmodule ChatApiWeb.ConversationChannel do
 
         {:ok, message} = Chat.create_message(msg)
         result = ChatApiWeb.MessageView.render("message.json", message: message)
-        Emails.send_email_alerts(account.users, payload["body"], payload["conversation_id"])
+
+        # TODO: maybe do these in an "after_send" hook or something more async,
+        # since this notification logic probably shouldn't live in here.
+        account = Accounts.get_account!(account_id)
+        Emails.send_email_alerts(account.users, message.body, conversation_id)
+        ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body)
 
         broadcast(socket, "shout", result)
 
