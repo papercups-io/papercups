@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
-    "@papercups-io/chat-widget": "^1.0.4",
+    "@papercups-io/chat-widget": "^1.0.5",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
@@ -20,6 +20,7 @@
     "dayjs": "^1.8.29",
     "phoenix": "^1.5.3",
     "react": "^16.13.1",
+    "react-color": "^2.18.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
@@ -62,6 +63,7 @@
   },
   "proxy": "http://localhost:4000",
   "devDependencies": {
+    "@types/react-color": "^3.0.4",
     "cpx": "^1.5.0",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
