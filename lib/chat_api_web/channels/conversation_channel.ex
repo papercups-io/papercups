@@ -48,13 +48,14 @@ defmodule ChatApiWeb.ConversationChannel do
         {:ok, message} = Chat.create_message(msg)
         result = ChatApiWeb.MessageView.render("message.json", message: message)
 
+        # TODO: double check that this still works as expected
+        broadcast(socket, "shout", result)
+
         # TODO: maybe do these in an "after_send" hook or something more async,
         # since this notification logic probably shouldn't live in here.
         account = Accounts.get_account!(account_id)
         Emails.send_email_alerts(account.users, message.body, conversation_id)
         ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body)
-
-        broadcast(socket, "shout", result)
 
       _ ->
         broadcast(socket, "shout", payload)

@@ -1,9 +1,66 @@
 defmodule ChatApiWeb.SlackController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{Chat, SlackConversationThreads}
+  alias ChatApi.{Chat, Slack, SlackAuthorizations, SlackConversationThreads}
 
   action_fallback ChatApiWeb.FallbackController
+
+  def oauth(conn, %{"code" => code}) do
+    IO.inspect("Code from Slack OAuth:")
+    IO.inspect(code)
+
+    {:ok, response} = Slack.get_access_token(code)
+    %{body: body} = response
+
+    if Map.get(body, "ok") do
+      with %{
+             "access_token" => access_token,
+             "app_id" => app_id,
+             "bot_user_id" => bot_user_id,
+             "scope" => scope,
+             "token_type" => token_type,
+             "authed_user" => authed_user,
+             "team" => team,
+             "incoming_webhook" => incoming_webhook
+           } <- body,
+           %{"id" => authed_user_id} <- authed_user,
+           %{"id" => team_id, "name" => team_name} <- team,
+           %{
+             "channel" => channel,
+             "channel_id" => channel_id,
+             "configuration_url" => configuration_url,
+             "url" => webhook_url
+           } <- incoming_webhook do
+        # FIXME
+        account_id = "eb504736-0f20-4978-98ff-1a82ae60b266"
+
+        params = %{
+          account_id: account_id,
+          access_token: access_token,
+          app_id: app_id,
+          authed_user_id: authed_user_id,
+          bot_user_id: bot_user_id,
+          scope: scope,
+          token_type: token_type,
+          channel: channel,
+          channel_id: channel_id,
+          configuration_url: configuration_url,
+          team_id: team_id,
+          team_name: team_name,
+          webhook_url: webhook_url
+        }
+
+        SlackAuthorizations.find_or_create(account_id, params)
+
+        send_resp(conn, 200, "")
+      else
+        _ ->
+          raise "Unrecognized OAuth response"
+      end
+    else
+      raise "OAuth access denied"
+    end
+  end
 
   def webhook(conn, payload) do
     IO.inspect("Payload from Slack webhook:")
