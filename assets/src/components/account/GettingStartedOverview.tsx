@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Flex} from 'theme-ui';
+import {Box} from 'theme-ui';
 import * as API from '../../api';
 import GettingStarted from './GettingStarted';
 
