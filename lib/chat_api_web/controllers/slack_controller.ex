@@ -4,7 +4,7 @@ defmodule ChatApiWeb.SlackController do
   action_fallback ChatApiWeb.FallbackController
 
   def webhook(conn, payload) do
-    IO.inspect("!!!")
+    IO.inspect("Payload from Slack webhook:")
     IO.inspect(payload)
 
     case payload do
