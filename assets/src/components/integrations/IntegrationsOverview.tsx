@@ -138,11 +138,21 @@ class IntegrationsOverview extends React.Component<Props, State> {
         render: (action: any, record: any) => {
           const {key, status} = record;
           const isConnected = status === 'connected';
+          // NB: when testing locally, update `origin` to an ngrok url
+          // pointing at localhost: 4000 (or wherever your server is running)
+          const origin = window.location.origin;
+          const redirect = `${origin}/integrations/slack`;
+          const q = {
+            scope: 'incoming-webhook chat:write channels:history im:history',
+            client_id: '1192316529232.1250363411891',
+            redirect_uri: redirect,
+          };
+          const query = qs.stringify(q);
 
           switch (key) {
             case 'slack':
               return (
-                <a href="https://slack.com/oauth/v2/authorize?scope=incoming-webhook%20chat%3Awrite%20channels%3Ahistory%20im%3Ahistory&client_id=1192316529232.1250363411891&redirect_uri=http://7ca52bb28c62.ngrok.io/integrations/slack">
+                <a href={`https://slack.com/oauth/v2/authorize?${query}`}>
                   <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
                 </a>
               );
