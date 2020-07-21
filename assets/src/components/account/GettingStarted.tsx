@@ -96,7 +96,7 @@ const ExamplePage = () => {
         </Text>
       </Paragraph>
 
-      <SyntaxHighlighter language="javascript" style={atomOneLight}>
+      <SyntaxHighlighter language="html" style={atomOneLight}>
         {HTML_CODE}
       </SyntaxHighlighter>
       <Title level={3}>Learn more</Title>
