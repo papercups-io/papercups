@@ -12,8 +12,11 @@ use Mix.Config
 config :chat_api, ChatApiWeb.Endpoint,
   http: [port: {:system, "PORT"}],
   url: [scheme: "https", host: "www.papercups.io", port: 443],
-  # FIXME: just testing what this does
-  check_origin: false,
+  # FIXME: not sure the best way to handle this
+  check_origin: [
+    "https://*.papercups.io",
+    "http://localhost:3000"
+  ],
   force_ssl: [rewrite_on: [:x_forwarded_proto]]
 
 # Do not print debug messages in production
