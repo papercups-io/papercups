@@ -94,18 +94,11 @@ const ExamplePage = () => {
           Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
           <Text code>{'</head>'}</Text> tags:
         </Text>
-        <SyntaxHighlighter language="javascript" style={atomOneLight}>
-          {HTML_CODE}
-        </SyntaxHighlighter>
-        <pre
-          style={{
-            backgroundColor: '#f6f8fa',
-            color: colors.black,
-            fontSize: 12,
-          }}
-        ></pre>
       </Paragraph>
 
+      <SyntaxHighlighter language="javascript" style={atomOneLight}>
+        {HTML_CODE}
+      </SyntaxHighlighter>
       <Title level={3}>Learn more</Title>
       <Paragraph>
         <Text>
