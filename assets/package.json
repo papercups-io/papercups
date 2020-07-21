@@ -14,6 +14,7 @@
     "@types/react": "^16.9.41",
     "@types/react-dom": "^16.9.8",
     "@types/react-router-dom": "^5.1.5",
+    "@types/react-syntax-highlighter": "^11.0.4",
     "@types/superagent": "^4.1.8",
     "@types/theme-ui": "^0.3.4",
     "antd": "^4.3.5",
@@ -25,6 +26,7 @@
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
+    "react-syntax-highlighter": "^12.2.1",
     "superagent": "^5.3.1",
     "theme-ui": "^0.3.1",
     "typescript": "~3.7.2"
