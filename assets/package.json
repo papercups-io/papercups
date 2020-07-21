@@ -64,6 +64,7 @@
   },
   "proxy": "http://localhost:4000",
   "devDependencies": {
+    "@types/query-string": "^6.3.0",
     "@types/react-color": "^3.0.4",
     "cpx": "^1.5.0",
     "husky": "^4.2.5",
