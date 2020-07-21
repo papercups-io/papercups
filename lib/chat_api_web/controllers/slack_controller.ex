@@ -52,13 +52,34 @@ defmodule ChatApiWeb.SlackController do
 
         SlackAuthorizations.find_or_create(account_id, params)
 
-        send_resp(conn, 200, "")
+        json(conn, %{data: %{ok: true}})
       else
         _ ->
           raise "Unrecognized OAuth response"
       end
     else
       raise "OAuth access denied"
+    end
+  end
+
+  def authorization(conn, _payload) do
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      auth = SlackAuthorizations.get_authorization_by_account(account_id)
+
+      case auth do
+        nil ->
+          json(conn, %{data: nil})
+
+        _ ->
+          json(conn, %{
+            data: %{
+              created_at: auth.inserted_at,
+              channel: auth.channel,
+              configuration_url: auth.configuration_url,
+              team_name: auth.team_name
+            }
+          })
+      end
     end
   end
 

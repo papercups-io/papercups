@@ -45,6 +45,9 @@ defmodule ChatApiWeb.Router do
     get("/accounts/me", AccountController, :me)
     get("/messages/count", MessageController, :count)
 
+    get("/slack/oauth", SlackController, :oauth)
+    get("/slack/authorization", SlackController, :authorization)
+
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/accounts", AccountController, only: [:update, :delete])
     resources("/messages", MessageController, except: [:new, :edit])

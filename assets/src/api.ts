@@ -242,3 +242,29 @@ export const generateUserInvitation = async (token = getAccessToken()) => {
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const fetchSlackAuthorization = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/slack/authorization`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const authorizeSlackIntegration = async (
+  code: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/slack/oauth`)
+    .query({code})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};

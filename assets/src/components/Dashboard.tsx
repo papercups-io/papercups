@@ -2,13 +2,19 @@ import React from 'react';
 import {
   useLocation,
   Switch,
+  Redirect,
   Route,
   Link,
   RouteComponentProps,
 } from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {colors, Layout, Menu, Sider} from './common';
-import {MailOutlined, UserOutlined, SettingOutlined} from './icons';
+import {
+  ApiOutlined,
+  MailOutlined,
+  UserOutlined,
+  SettingOutlined,
+} from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import GettingStartedOverview from './account/GettingStartedOverview';
@@ -16,6 +22,7 @@ import AllConversations from './conversations/AllConversations';
 import MyConversations from './conversations/MyConversations';
 import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
+import IntegrationsOverview from './integrations/IntegrationsOverview';
 
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
@@ -42,7 +49,7 @@ const Dashboard = (props: RouteComponentProps) => {
         <Flex sx={{flexDirection: 'column', height: '100%'}}>
           <Box py={3} sx={{flex: 1}}>
             <Menu
-              selectedKeys={[key]}
+              selectedKeys={[section, key]}
               defaultOpenKeys={[section]}
               mode="inline"
               theme="dark"
@@ -77,20 +84,26 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/conversations/closed">Closed</Link>
                 </Menu.Item>
               </Menu.SubMenu>
+              <Menu.Item
+                title="Integrations"
+                icon={<ApiOutlined />}
+                key="integrations"
+              >
+                <Link to="/integrations">Integrations</Link>
+              </Menu.Item>
             </Menu>
           </Box>
 
           <Box py={3}>
             <Menu mode="inline" theme="dark">
-              <Menu.SubMenu
-                key="settings"
+              <Menu.Item
+                title="Log out"
                 icon={<SettingOutlined />}
-                title="Settings"
+                key="logout"
+                onClick={logout}
               >
-                <Menu.Item key="all" onClick={logout}>
-                  Log out
-                </Menu.Item>
-              </Menu.SubMenu>
+                Log out
+              </Menu.Item>
             </Menu>
           </Box>
         </Flex>
@@ -104,6 +117,9 @@ const Dashboard = (props: RouteComponentProps) => {
             component={GettingStartedOverview}
           />
           <Route path="/account*" component={AccountOverview} />
+          <Route path="/integrations/:type" component={IntegrationsOverview} />
+          <Route path="/integrations" component={IntegrationsOverview} />
+          <Route path="/integrations*" component={IntegrationsOverview} />
           <Route path="/conversations/all" component={AllConversations} />
           <Route path="/conversations/me" component={MyConversations} />
           <Route
@@ -112,6 +128,7 @@ const Dashboard = (props: RouteComponentProps) => {
           />
           <Route path="/conversations/closed" component={ClosedConversations} />
           <Route path="/conversations*" component={AllConversations} />
+          <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
     </Layout>
