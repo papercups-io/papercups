@@ -10,6 +10,10 @@ defmodule ChatApiWeb.SlackController do
     IO.inspect(code)
 
     {:ok, response} = Slack.get_access_token(code)
+
+    IO.inspect("Slack OAuth response:")
+    IO.inspect(response)
+
     %{body: body} = response
 
     if Map.get(body, "ok") do
