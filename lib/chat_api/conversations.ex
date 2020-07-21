@@ -91,6 +91,10 @@ defmodule ChatApi.Conversations do
     Conversation |> Repo.get(id)
   end
 
+  def get_conversation_with!(id, preloaded) do
+    Conversation |> Repo.get!(id) |> Repo.preload(preloaded)
+  end
+
   @doc """
   Creates a conversation.
 

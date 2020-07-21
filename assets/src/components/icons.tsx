@@ -1,3 +1,4 @@
+import ApiOutlined from '@ant-design/icons/ApiOutlined';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
@@ -14,6 +15,7 @@ import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 
 export {
+  ApiOutlined,
   CheckOutlined,
   DownOutlined,
   LoadingOutlined,

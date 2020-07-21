@@ -113,7 +113,6 @@ class AccountOverview extends React.Component<Props, State> {
   };
 
   render() {
-    console.log(this.state);
     const {account, inviteUrl} = this.state;
 
     if (!account) {
