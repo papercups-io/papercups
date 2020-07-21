@@ -28,6 +28,9 @@
     "addons": [
         "heroku-postgresql"
     ],
+    "scripts": {
+        "postdeploy": "mix ecto.migrate"
+      },
     "buildpacks": [
         {
             "url": "https://buildpack-registry.s3.amazonaws.com/buildpacks/hashnuke/elixir.tgz"
