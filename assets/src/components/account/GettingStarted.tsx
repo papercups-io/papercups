@@ -60,6 +60,18 @@ const ExamplePage = () => {
         </Text>
       </Paragraph>
 
+      <Title level={3}>Usage in HTML</Title>
+      <Paragraph>
+        <Text>
+          Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
+          <Text code>{'</head>'}</Text> tags:
+        </Text>
+      </Paragraph>
+
+      <SyntaxHighlighter language="html" style={atomOneLight}>
+        {HTML_CODE}
+      </SyntaxHighlighter>
+
       <Title level={3}>Usage in React</Title>
       <Paragraph>
         <Text>
@@ -88,21 +100,11 @@ const ExamplePage = () => {
       <SyntaxHighlighter language="typescript" style={atomOneLight}>
         {REACT_CODE}
       </SyntaxHighlighter>
-      <Title level={3}>Usage in HTML</Title>
-      <Paragraph>
-        <Text>
-          Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
-          <Text code>{'</head>'}</Text> tags:
-        </Text>
-      </Paragraph>
 
-      <SyntaxHighlighter language="html" style={atomOneLight}>
-        {HTML_CODE}
-      </SyntaxHighlighter>
       <Title level={3}>Learn more</Title>
       <Paragraph>
         <Text>
-          See the code and learn more in our{' '}
+          See the code and star our{' '}
           <a
             href="https://github.com/papercups-io/chat-widget"
             target="_blank"
