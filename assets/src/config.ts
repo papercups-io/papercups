@@ -10,4 +10,4 @@ const isDev = Boolean(
 
 export const BASE_URL = isDev
   ? 'http://localhost:3000'
-  : 'https://www.papercups.io';
+  : 'https://app.papercups.io';

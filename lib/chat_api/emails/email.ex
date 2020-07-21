@@ -13,7 +13,7 @@ defmodule ChatApi.Emails.Email do
     try do
       body =
         "A new message has arrived: " <>
-          message <> "\nhttps://www.papercups.io/conversations/" <> conversation_id
+          message <> "\nhttps://app.papercups.io/conversations/" <> conversation_id
 
       new()
       |> to(to_address)

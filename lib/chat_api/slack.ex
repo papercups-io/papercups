@@ -52,7 +52,7 @@ defmodule ChatApi.Slack do
       if Mix.env() == :dev do
         "http://localhost:3000"
       else
-        "https://www.papercups.io"
+        "https://app.papercups.io"
       end
 
     url = base <> "/conversations/" <> conversation_id

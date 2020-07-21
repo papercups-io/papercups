@@ -43,7 +43,7 @@ const ExamplePage = () => {
   type="text/javascript"
   async
   defer
-  src="https://www.papercups.io/widget.js"
+  src="https://app.papercups.io/widget.js"
 ></script>
   `.trim();
 
