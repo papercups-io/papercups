@@ -10,7 +10,14 @@ defmodule ChatApiWeb.APIAuthPlugTest do
   setup %{conn: conn} do
     conn = %{conn | secret_key_base: Endpoint.config(:secret_key_base)}
     {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
-    user = Repo.insert!(%User{id: 1, email: "test@example.com", account_id: account.id})
+
+    user =
+      Repo.insert!(%User{
+        id: 1,
+        email: "test@example.com",
+        account_id: account.id,
+        email_alert_on_new_message: false
+      })
 
     {:ok, conn: conn, user: user}
   end
@@ -32,7 +39,7 @@ defmodule ChatApiWeb.APIAuthPlugTest do
               }
             }, ^user} = APIAuthPlug.renew(with_auth_header(conn, renewal_token), @pow_config)
 
-    :timer.sleep(100)
+    # :timer.sleep(100)
 
     # TODO: fix the tests below!
 

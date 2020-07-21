@@ -32,6 +32,8 @@ defmodule ChatApiWeb.Router do
 
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)
+
+    post("/slack/webhook", SlackController, :webhook)
   end
 
   # Protected routes
@@ -41,6 +43,9 @@ defmodule ChatApiWeb.Router do
     get("/me", SessionController, :me)
     get("/accounts/me", AccountController, :me)
     get("/messages/count", MessageController, :count)
+
+    get("/slack/oauth", SlackController, :oauth)
+    get("/slack/authorization", SlackController, :authorization)
 
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/accounts", AccountController, only: [:update, :delete])
