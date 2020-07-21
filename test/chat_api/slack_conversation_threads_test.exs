@@ -1,30 +1,44 @@
 defmodule ChatApi.SlackConversationThreadsTest do
   use ChatApi.DataCase
 
-  alias ChatApi.SlackConversationThreads
+  alias ChatApi.{Accounts, Conversations, SlackConversationThreads}
 
   describe "slack_conversation_threads" do
     alias ChatApi.SlackConversationThreads.SlackConversationThread
 
-    # TODO: fix tests
     @valid_attrs %{
-      conversation_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      account_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       slack_thread_ts: "some slack_thread_ts",
       slack_channel: "some slack_channel"
     }
     @update_attrs %{
-      conversation_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-      account_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
       slack_thread_ts: "some updated slack_thread_ts",
       slack_channel: "some updated slack_channel"
     }
-    @invalid_attrs %{conversation_id: nil, slack_thread_ts: nil}
+    @invalid_attrs %{slack_thread_ts: nil, slack_channel: nil}
+
+    def valid_create_attrs do
+      account = account_fixture()
+      conversation = conversation_fixture(account.id)
+
+      Enum.into(@valid_attrs, %{account_id: account.id, conversation_id: conversation.id})
+    end
+
+    def account_fixture do
+      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
+      account
+    end
+
+    def conversation_fixture(account_id) do
+      {:ok, account} =
+        Conversations.create_conversation(%{status: "open", account_id: account_id})
+
+      account
+    end
 
     def slack_conversation_thread_fixture(attrs \\ %{}) do
       {:ok, slack_conversation_thread} =
         attrs
-        |> Enum.into(@valid_attrs)
+        |> Enum.into(valid_create_attrs())
         |> SlackConversationThreads.create_slack_conversation_thread()
 
       slack_conversation_thread
@@ -47,10 +61,10 @@ defmodule ChatApi.SlackConversationThreadsTest do
 
     test "create_slack_conversation_thread/1 with valid data creates a slack_conversation_thread" do
       assert {:ok, %SlackConversationThread{} = slack_conversation_thread} =
-               SlackConversationThreads.create_slack_conversation_thread(@valid_attrs)
+               SlackConversationThreads.create_slack_conversation_thread(valid_create_attrs())
 
-      assert slack_conversation_thread.conversation_id == "some conversation_id"
-      assert slack_conversation_thread.thread_ts == "some thread_ts"
+      assert slack_conversation_thread.slack_channel == "some slack_channel"
+      assert slack_conversation_thread.slack_thread_ts == "some slack_thread_ts"
     end
 
     test "create_slack_conversation_thread/1 with invalid data returns error changeset" do
@@ -67,8 +81,8 @@ defmodule ChatApi.SlackConversationThreadsTest do
                  @update_attrs
                )
 
-      assert slack_conversation_thread.conversation_id == "some updated conversation_id"
-      assert slack_conversation_thread.thread_ts == "some updated thread_ts"
+      assert slack_conversation_thread.slack_channel == "some updated slack_channel"
+      assert slack_conversation_thread.slack_thread_ts == "some updated slack_thread_ts"
     end
 
     test "update_slack_conversation_thread/2 with invalid data returns error changeset" do
