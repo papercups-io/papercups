@@ -1,6 +1,8 @@
 import React from 'react';
 import {Box} from 'theme-ui';
 import {colors, Paragraph, Text, Title} from '../common';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 const GettingStarted = ({accountId}: {accountId: string}) => {
   const REACT_CODE = `
@@ -83,35 +85,25 @@ const ExamplePage = () => {
           chat widget!
         </Text>
       </Paragraph>
-      <Paragraph>
-        <pre
-          style={{
-            backgroundColor: '#f6f8fa',
-            color: colors.black,
-            fontSize: 12,
-          }}
-        >
-          <Box p={3}>{REACT_CODE}</Box>
-        </pre>
-      </Paragraph>
-
+      <SyntaxHighlighter language="typescript" style={atomOneLight}>
+        {REACT_CODE}
+      </SyntaxHighlighter>
       <Title level={3}>Usage in HTML</Title>
       <Paragraph>
         <Text>
           Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
           <Text code>{'</head>'}</Text> tags:
         </Text>
-      </Paragraph>
-      <Paragraph>
+        <SyntaxHighlighter language="javascript" style={atomOneLight}>
+          {HTML_CODE}
+        </SyntaxHighlighter>
         <pre
           style={{
             backgroundColor: '#f6f8fa',
             color: colors.black,
             fontSize: 12,
           }}
-        >
-          <Box p={3}>{HTML_CODE}</Box>
-        </pre>
+        ></pre>
       </Paragraph>
 
       <Title level={3}>Learn more</Title>
