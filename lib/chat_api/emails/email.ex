@@ -6,12 +6,15 @@ defmodule ChatApi.Emails.Email do
 
   defstruct to_address: nil, message: nil
 
-  #TODO: Move conversation id out the mailer should only care about the message
+  # TODO: Move conversation id out the mailer should only care about the message
   def send(to_address, message, conversation_id) do
     # Using try catch here because if someone is self hosting and doesn't need the email service it would error out
     # TODO: Find a better solution besides try catch probably in config.exs setup an empty mailer that doesn't do anything
     try do
-      body = "A new message has arrived: " <> message <> "\nhttps://www.papercups.io/conversations/" <> conversation_id
+      body =
+        "A new message has arrived: " <>
+          message <> "\nhttps://www.papercups.io/conversations/" <> conversation_id
+
       new()
       |> to(to_address)
       |> from({"hello", @from_address})
@@ -19,7 +22,10 @@ defmodule ChatApi.Emails.Email do
       |> text_body(body)
       |> ChatApi.Mailer.deliver()
     rescue
-      e -> IO.puts("Email config environment variable may not have been setup properly: #{e.message}")
+      e ->
+        IO.puts(
+          "Email config environment variable may not have been setup properly: #{e.message}"
+        )
     end
   end
 
