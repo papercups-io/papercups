@@ -55,7 +55,10 @@ defmodule ChatApiWeb.ConversationChannel do
         # since this notification logic probably shouldn't live in here.
         account = Accounts.get_account!(account_id)
         Emails.send_email_alerts(account.users, message.body, conversation_id)
-        ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body)
+
+        ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body,
+          type: "customer"
+        )
 
       _ ->
         broadcast(socket, "shout", payload)

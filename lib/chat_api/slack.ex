@@ -43,7 +43,7 @@ defmodule ChatApi.Slack do
     )
   end
 
-  def send_conversation_message_alert(conversation_id, text) do
+  def send_conversation_message_alert(conversation_id, text, type: type) do
     conversation = Conversations.get_conversation!(conversation_id)
     thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id)
     %{account_id: account_id} = conversation
@@ -58,6 +58,7 @@ defmodule ChatApi.Slack do
     url = base <> "/conversations/" <> conversation_id
     description = "conversation " <> conversation_id
     link = "<#{url}|#{description}>"
+    actor = if type == "agent", do: ":female-technologist: Agent:", else: ":wave: Customer:"
 
     subject =
       "New conversation started: " <>
@@ -74,6 +75,7 @@ defmodule ChatApi.Slack do
       else
         %{
           "channel" => "#bots",
+          "text" => actor,
           "attachments" => [%{"text" => text}],
           "thread_ts" => thread.slack_thread_ts
         }

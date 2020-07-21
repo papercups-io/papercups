@@ -51,6 +51,8 @@ defmodule ChatApiWeb.NotificationChannel do
 
         ChatApiWeb.Endpoint.broadcast_from!(self(), topic, "shout", result)
 
+        ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body, type: "agent")
+
       _ ->
         nil
     end
