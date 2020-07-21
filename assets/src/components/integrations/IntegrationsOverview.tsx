@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 import {colors, Button, Paragraph, Table, Tag, Text, Title} from '../common';
+import Spinner from '../Spinner';
 import * as API from '../../api';
 
 type IntegrationType = {
@@ -87,7 +88,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   render() {
-    const {integrations = []} = this.state;
+    const {loading, integrations = []} = this.state;
     const columns = [
       {
         title: 'Integration',
@@ -151,6 +152,21 @@ class IntegrationsOverview extends React.Component<Props, State> {
         },
       },
     ];
+
+    if (loading) {
+      return (
+        <Flex
+          sx={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+          }}
+        >
+          <Spinner size={40} />
+        </Flex>
+      );
+    }
 
     return (
       <Box p={4}>
