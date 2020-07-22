@@ -97,7 +97,7 @@ defmodule ChatApi.Slack do
 
         send_message(
           %{
-            "channel" => "#bots",
+            "channel" => channel,
             "text" => "(Send a message here to get started!)",
             "thread_ts" => thread.slack_thread_ts
           },
