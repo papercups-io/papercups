@@ -19,7 +19,6 @@ import {formatRelativeTime} from '../../utils';
 import {Message, Conversation} from '../../types';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
-import GettingStarted from '../account/GettingStarted';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationFooter from './ConversationFooter';

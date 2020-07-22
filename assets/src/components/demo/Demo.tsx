@@ -4,7 +4,6 @@ import {TwitterPicker} from 'react-color';
 import {colors, Input, Paragraph, Title} from '../common';
 // Testing widget in separate package
 import ChatWidget from '@papercups-io/chat-widget';
-import GettingStarted from '../account/GettingStarted';
 
 type Props = {};
 type State = {
