@@ -1,8 +1,10 @@
 # Papercups
 
-The code behind [papercups.io](https://www.papercups.io/)
+The code behind [app.papercups.io](https://app.papercups.io/)
 
-# One click Heroku deployment
+![dashboard-v1](https://user-images.githubusercontent.com/5264279/88119050-4f54b480-cb8d-11ea-8f50-1a656068fd82.gif)
+
+## One click Heroku deployment
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/papercups-io/papercups)
 
