@@ -119,10 +119,20 @@ class AccountOverview extends React.Component<Props, State> {
       return null;
     }
 
-    const {users = []} = account;
+    const {id: token, users = []} = account;
 
     return (
       <Box p={4}>
+        <Box mb={5}>
+          <Title level={3}>Account Overview</Title>
+          <Paragraph>
+            <Text>This is your account token: </Text>
+            <Text strong keyboard copyable>
+              {token}
+            </Text>
+          </Paragraph>
+        </Box>
+
         <Box mb={5}>
           <Title level={4}>Invite new teammate</Title>
 

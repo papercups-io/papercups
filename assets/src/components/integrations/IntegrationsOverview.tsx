@@ -58,7 +58,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Slack',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
-      icon: 'slack.svg',
+      icon: '/slack.svg',
     };
   };
 
@@ -68,7 +68,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Gmail',
       status: 'not_connected',
       created_at: null,
-      icon: 'gmail.svg',
+      icon: '/gmail.svg',
     };
   };
 

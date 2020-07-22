@@ -64,26 +64,26 @@ defmodule ChatApi.Slack do
       "New conversation started: " <>
         link <> "\n\nReply to this thread to chat with the customer :rocket:"
 
+    auth = SlackAuthorizations.get_authorization_by_account(account_id)
+    access_token = auth.access_token || System.get_env("SLACK_BOT_ACCESS_TOKEN")
+    channel = auth.channel || "#bots"
+
     # TODO: clean up a bit
     payload =
       if is_nil(thread) do
         %{
-          "channel" => "#bots",
+          "channel" => channel,
           "text" => subject,
           "attachments" => [%{"text" => text}]
         }
       else
         %{
-          "channel" => "#bots",
+          "channel" => channel,
           "text" => actor,
           "attachments" => [%{"text" => text}],
           "thread_ts" => thread.slack_thread_ts
         }
       end
-
-    # Allow passing in access token as an env variable to make testing a bit easier
-    access_token =
-      get_account_access_token(account_id) || System.get_env("SLACK_BOT_ACCESS_TOKEN")
 
     slack_enabled = not is_nil(access_token)
 
@@ -97,7 +97,7 @@ defmodule ChatApi.Slack do
 
         send_message(
           %{
-            "channel" => "#bots",
+            "channel" => channel,
             "text" => "(Send a message here to get started!)",
             "thread_ts" => thread.slack_thread_ts
           },
@@ -127,15 +127,6 @@ defmodule ChatApi.Slack do
 
       Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
       SlackConversationThreads.create_slack_conversation_thread(params)
-    end
-  end
-
-  def get_account_access_token(account_id) do
-    auth = SlackAuthorizations.get_authorization_by_account(account_id)
-
-    case auth do
-      %{access_token: access_token} -> access_token
-      _ -> nil
     end
   end
 
