@@ -20,7 +20,7 @@ const ExamplePage = () => {
       <ChatWidget
         title='Welcome to Papercups!'
         subtitle='Ask us anything in the chat window below 😊'
-        primaryColor='#13c2c2'
+        primaryColor='#1890ff'
         accountId='${accountId}'
       />
     </>
@@ -35,7 +35,7 @@ const ExamplePage = () => {
       accountId: '${accountId}',
       title: 'Welcome to Papercups!',
       subtitle: 'Ask us anything in the chat window below 😊',
-      primaryColor: '#13c2c2',
+      primaryColor: '#1890ff',
     },
   };
 </script>
@@ -49,7 +49,7 @@ const ExamplePage = () => {
 
   return (
     <Box>
-      <Title level={2}>Getting started</Title>
+      <Title level={3}>Getting started</Title>
       <Paragraph>
         <Text>
           Before you can start receiving messages here in your dashboard, you'll
@@ -60,7 +60,25 @@ const ExamplePage = () => {
         </Text>
       </Paragraph>
 
-      <Title level={3}>Usage in HTML</Title>
+      <Title level={4}>Demo</Title>
+      <Paragraph>
+        <Text>
+          To see the chat widget in action, check out{' '}
+          <a
+            href="https://app.papercups.io/demo"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            our lovely demo
+          </a>
+          .{' '}
+          <span role="img" aria-label="boom">
+            🚀
+          </span>
+        </Text>
+      </Paragraph>
+
+      <Title level={4}>Usage in HTML</Title>
       <Paragraph>
         <Text>
           Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
@@ -72,7 +90,7 @@ const ExamplePage = () => {
         {HTML_CODE}
       </SyntaxHighlighter>
 
-      <Title level={3}>Usage in React</Title>
+      <Title level={4}>Usage in React</Title>
       <Paragraph>
         <Text>
           First, install the <Text code>@papercups-io/chat-widget</Text>{' '}
@@ -101,7 +119,7 @@ const ExamplePage = () => {
         {REACT_CODE}
       </SyntaxHighlighter>
 
-      <Title level={3}>Learn more</Title>
+      <Title level={4}>Learn more</Title>
       <Paragraph>
         <Text>
           See the code and star our{' '}
