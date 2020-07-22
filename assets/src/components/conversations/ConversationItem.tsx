@@ -38,7 +38,7 @@ const ConversationItem = ({
   onSelectConversation: (id: string) => void;
 }) => {
   const formatted = formatConversation(conversation, messages);
-  const {id, priority, status, customer, date, preview} = formatted;
+  const {id, priority, status, customer, date, preview, read} = formatted;
   const isPriority = priority === 'priority';
   const isClosed = status === 'closed';
 
@@ -74,7 +74,7 @@ const ConversationItem = ({
           textOverflow: 'ellipsis',
         }}
       >
-        {preview}
+        <Text strong={!read}>{preview}</Text>
       </Box>
     </Box>
   );

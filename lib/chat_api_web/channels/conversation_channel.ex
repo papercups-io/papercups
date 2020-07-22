@@ -46,6 +46,7 @@ defmodule ChatApiWeb.ConversationChannel do
           Map.merge(payload, %{"conversation_id" => conversation_id, "account_id" => account_id})
 
         {:ok, message} = Chat.create_message(msg)
+        Conversations.mark_conversation_unread(conversation_id)
         result = ChatApiWeb.MessageView.render("message.json", message: message)
 
         # TODO: double check that this still works as expected

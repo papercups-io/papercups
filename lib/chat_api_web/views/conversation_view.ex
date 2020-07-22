@@ -23,6 +23,7 @@ defmodule ChatApiWeb.ConversationView do
       id: conversation.id,
       created_at: conversation.inserted_at,
       status: conversation.status,
+      read: conversation.read,
       priority: conversation.priority,
       account_id: conversation.account_id,
       customer_id: conversation.customer_id
@@ -34,6 +35,7 @@ defmodule ChatApiWeb.ConversationView do
       id: conversation.id,
       created_at: conversation.inserted_at,
       status: conversation.status,
+      read: conversation.read,
       priority: conversation.priority,
       account_id: conversation.account_id,
       customer_id: conversation.customer_id,

@@ -2,7 +2,7 @@ defmodule ChatApiWeb.NotificationChannel do
   use ChatApiWeb, :channel
 
   alias Phoenix.Socket.Broadcast
-  alias ChatApi.Chat
+  alias ChatApi.{Chat, Conversations}
 
   @impl true
   def join("notification:lobby", payload, socket) do
@@ -23,6 +23,13 @@ defmodule ChatApiWeb.NotificationChannel do
      |> put_new_topics(topics)}
   end
 
+  # Channels can be used in a request/response fashion
+  # by sending replies to requests from the client
+  @impl true
+  def handle_in("ping", payload, socket) do
+    {:reply, {:ok, payload}, socket}
+  end
+
   def handle_in("watch", %{"conversation_id" => id}, socket) do
     {:reply, :ok, put_new_topics(socket, ["conversation:#{id}"])}
   end
@@ -31,14 +38,15 @@ defmodule ChatApiWeb.NotificationChannel do
     {:reply, :ok, ChatApiWeb.Endpoint.unsubscribe("conversation:#{id}")}
   end
 
-  # Channels can be used in a request/response fashion
-  # by sending replies to requests from the client
-  @impl true
-  def handle_in("ping", payload, socket) do
-    {:reply, {:ok, payload}, socket}
+  def handle_in("read", %{"conversation_id" => id}, socket) do
+    conversation = Conversations.mark_conversation_read(id)
+
+    IO.puts("READ!")
+    IO.inspect(conversation)
+
+    {:reply, :ok, socket}
   end
 
-  @impl true
   def handle_in("shout", payload, socket) do
     {:ok, message} = Chat.create_message(payload)
     result = ChatApiWeb.MessageView.render("message.json", message: message)
