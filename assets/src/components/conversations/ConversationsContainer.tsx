@@ -4,7 +4,16 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Channel} from 'phoenix';
 import * as API from '../../api';
-import {colors, Content, Layout, Result, Sider, Text, Title} from '../common';
+import {
+  Button,
+  colors,
+  Content,
+  Layout,
+  Result,
+  Sider,
+  Text,
+  Title,
+} from '../common';
 import {socket} from '../../socket';
 import {formatRelativeTime} from '../../utils';
 import {Message, Conversation} from '../../types';
@@ -14,6 +23,8 @@ import GettingStarted from '../account/GettingStarted';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationFooter from './ConversationFooter';
+import {Route, Link} from 'react-router-dom';
+import {SmileOutlined} from '@ant-design/icons';
 
 dayjs.extend(utc);
 
@@ -25,6 +36,24 @@ const EmptyMessagesPlaceholder = () => {
         title="No messages"
         subTitle="Nothing to show here! Take a well-earned break 😊"
       />
+    </Box>
+  );
+};
+
+const GettingStartedRedirect = () => {
+  return (
+    <Box my={4}>
+      <Result
+        icon={<SmileOutlined />}
+        title="No messages"
+        subTitle="It looks like your widget hasn't been set up yet!"
+        extra={
+          <Link to="/account/getting-started">
+            <Button type="primary">Get Started</Button>
+          </Link>
+        }
+      />
+      ,
     </Box>
   );
 };
@@ -448,7 +477,7 @@ class ConversationsContainer extends React.Component<Props, State> {
                     );
                   })
                 ) : showGetStarted ? (
-                  <GettingStarted accountId={account.id} />
+                  <GettingStartedRedirect />
                 ) : (
                   <EmptyMessagesPlaceholder />
                 )}

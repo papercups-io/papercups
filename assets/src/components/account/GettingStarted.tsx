@@ -4,7 +4,17 @@ import {colors, Paragraph, Text, Title} from '../common';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
-const GettingStarted = ({accountId}: {accountId: string}) => {
+const GettingStarted = ({
+  accountId,
+  primaryColor = '#13c2c2',
+  subtitle,
+  title,
+}: {
+  accountId: string;
+  primaryColor?: string;
+  subtitle: string;
+  title: string;
+}) => {
   const REACT_CODE = `
 import React from 'react';
 import ChatWidget from '@papercups-io/chat-widget';
@@ -18,9 +28,9 @@ const ExamplePage = () => {
         if you would like it to render on every page
       */}
       <ChatWidget
-        title='Welcome to Papercups!'
-        subtitle='Ask us anything in the chat window below 😊'
-        primaryColor='#13c2c2'
+        title='${title}'
+        subtitle= '${subtitle}'
+        primaryColor='${primaryColor}'
         accountId='${accountId}'
       />
     </>
@@ -33,9 +43,9 @@ const ExamplePage = () => {
   window.Papercups = {
     config: {
       accountId: '${accountId}',
-      title: 'Welcome to Papercups!',
-      subtitle: 'Ask us anything in the chat window below 😊',
-      primaryColor: '#13c2c2',
+      title: '${title}',
+      subtitle: '${subtitle}',
+      primaryColor: '${primaryColor}',
     },
   };
 </script>
@@ -49,7 +59,6 @@ const ExamplePage = () => {
 
   return (
     <Box>
-      <Title level={2}>Getting started</Title>
       <Paragraph>
         <Text>
           Before you can start receiving messages here in your dashboard, you'll
