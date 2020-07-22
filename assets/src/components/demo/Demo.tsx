@@ -54,13 +54,19 @@ class Demo extends React.Component<Props, State> {
 
         <Box mb={4}>
           <Paragraph>Update the title:</Paragraph>
-          <Input type="text" value={title} onChange={this.handleChangeTitle} />
+          <Input
+            type="text"
+            placeholder="Welcome!"
+            value={title}
+            onChange={this.handleChangeTitle}
+          />
         </Box>
 
         <Box mb={4}>
           <Paragraph>Update the subtitle:</Paragraph>
           <Input
             type="text"
+            placeholder="How can we help you?"
             value={subtitle}
             onChange={this.handleChangeSubtitle}
           />
@@ -75,7 +81,7 @@ class Demo extends React.Component<Props, State> {
         </Box>
 
         <ChatWidget
-          title={title || 'Welcome'}
+          title={title || 'Welcome!'}
           subtitle={subtitle}
           primaryColor={color}
           accountId={accountId}
