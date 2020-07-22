@@ -17,18 +17,18 @@ type State = {
 };
 
 class GettingStartedOverview extends React.Component<Props, State> {
-  async componentDidMount() {
-    const account = await API.fetchAccountInfo();
-
-    this.setState({account});
-  }
   state: State = {
     account: null,
     color: colors.primary,
     title: 'Welcome to Papercups!',
     subtitle: 'Ask us anything in the chat window below 😊',
-    // accountId: account.id,
   };
+
+  async componentDidMount() {
+    const account = await API.fetchAccountInfo();
+
+    this.setState({account});
+  }
 
   handleChangeTitle = (e: any) => {
     this.setState({title: e.target.value});
@@ -95,57 +95,82 @@ const ExamplePage = () => {
   render() {
     const {color, title, subtitle, account} = this.state;
 
-    const accountId = account ? account.id : '';
+    if (!account) {
+      return null; // TODO: better loading state
+    }
+
+    const {id: accountId} = account;
+
     return (
       <Box
-        p={5}
+        p={4}
         sx={{
           maxWidth: 720,
         }}
       >
         <Box mb={4}>
           <Title>Getting Started</Title>
-        </Box>
-        <Paragraph>
-          <Text>
-            Customize your widget with the form and color picker. It'll update
-            the code below for easy copy and pasting.
-          </Text>
-        </Paragraph>
-
-        <Box mb={4}>
-          <Paragraph>Update the title:</Paragraph>
-          <Input type="text" value={title} onChange={this.handleChangeTitle} />
+          <Paragraph>
+            <Text>
+              Before you can start chatting with your customers, you'll need to
+              install our chat component on your website.
+            </Text>
+          </Paragraph>
         </Box>
 
         <Box mb={4}>
-          <Paragraph>Update the subtitle:</Paragraph>
-          <Input
-            type="text"
-            value={subtitle}
-            onChange={this.handleChangeSubtitle}
+          <Title level={3}>Customize your widget</Title>
+          <Paragraph>
+            <Text>
+              Customize your widget with the form and color picker. It will
+              update the preview to the right as well as the code below so you
+              can easily copy and paste it into your website looking just the
+              way you like!
+            </Text>
+          </Paragraph>
+
+          <Box mb={3}>
+            <label htmlFor="title">Update the title:</label>
+            <Input
+              id="title"
+              type="text"
+              placeholder="Welcome!"
+              value={title}
+              onChange={this.handleChangeTitle}
+            />
+          </Box>
+
+          <Box mb={3}>
+            <label htmlFor="subtitle">Update the subtitle:</label>
+            <Input
+              id="subtitle"
+              type="text"
+              placeholder="How can we help you?"
+              value={subtitle}
+              onChange={this.handleChangeSubtitle}
+            />
+          </Box>
+
+          <Box mb={3}>
+            <Paragraph>Try changing the color:</Paragraph>
+            <TwitterPicker
+              color={this.state.color}
+              onChangeComplete={this.handleChangeColor}
+            />
+          </Box>
+
+          <ChatWidget
+            title={title || 'Welcome!'}
+            subtitle={subtitle}
+            primaryColor={color}
+            accountId={accountId}
+            baseUrl={'https://app.papercups.io'}
+            defaultIsOpen
           />
         </Box>
 
         <Box mb={4}>
-          <Paragraph>Try changing the color:</Paragraph>
-          <TwitterPicker
-            color={this.state.color}
-            onChangeComplete={this.handleChangeColor}
-          />
-        </Box>
-
-        <ChatWidget
-          title={title || 'Welcome'}
-          subtitle={subtitle}
-          primaryColor={color}
-          accountId={accountId}
-          baseUrl={'https://app.papercups.io'}
-          defaultIsOpen={true}
-        />
-
-        <Box>
-          <Title level={2}>Setup Widget</Title>
+          <Title level={3}>Installing the widget</Title>
           <Paragraph>
             <Text>
               Before you can start receiving messages here in your dashboard,
@@ -155,7 +180,9 @@ const ExamplePage = () => {
               </span>
             </Text>
           </Paragraph>
+        </Box>
 
+        <Box mb={4}>
           <Title level={3}>Usage in HTML</Title>
           <Paragraph>
             <Text>
@@ -167,7 +194,9 @@ const ExamplePage = () => {
           <SyntaxHighlighter language="html" style={atomOneLight}>
             {this.generateCode(title, subtitle, color, accountId).HTML_CODE}
           </SyntaxHighlighter>
+        </Box>
 
+        <Box mb={4}>
           <Title level={3}>Usage in React</Title>
           <Paragraph>
             <Text>
@@ -175,6 +204,7 @@ const ExamplePage = () => {
               package:
             </Text>
           </Paragraph>
+
           <Paragraph>
             <pre
               style={{
@@ -186,6 +216,7 @@ const ExamplePage = () => {
               <Box p={3}>npm install --save @papercups-io/chat-widget</Box>
             </pre>
           </Paragraph>
+
           <Paragraph>
             <Text>
               Your account token has been prefilled in the code below. Simply
@@ -193,25 +224,26 @@ const ExamplePage = () => {
               display the chat widget!
             </Text>
           </Paragraph>
+
           <SyntaxHighlighter language="typescript" style={atomOneLight}>
             {this.generateCode(title, subtitle, color, accountId).REACT_CODE}
           </SyntaxHighlighter>
-
-          <Title level={3}>Learn more</Title>
-          <Paragraph>
-            <Text>
-              See the code and star our{' '}
-              <a
-                href="https://github.com/papercups-io/chat-widget"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Github repo
-              </a>
-              .
-            </Text>
-          </Paragraph>
         </Box>
+
+        <Title level={3}>Learn more</Title>
+        <Paragraph>
+          <Text>
+            See the code and star our{' '}
+            <a
+              href="https://github.com/papercups-io/chat-widget"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Github repo
+            </a>
+            .
+          </Text>
+        </Paragraph>
       </Box>
     );
   }

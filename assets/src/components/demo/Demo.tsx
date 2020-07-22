@@ -79,6 +79,7 @@ class Demo extends React.Component<Props, State> {
           subtitle={subtitle}
           primaryColor={color}
           accountId={accountId}
+          defaultIsOpen
         />
       </Box>
     );
