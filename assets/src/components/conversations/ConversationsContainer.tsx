@@ -1,4 +1,5 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -14,6 +15,7 @@ import {
   Text,
   Title,
 } from '../common';
+import {SmileOutlined} from '../icons';
 import {socket} from '../../socket';
 import {formatRelativeTime} from '../../utils';
 import {Message, Conversation} from '../../types';
@@ -22,8 +24,6 @@ import ChatMessage from './ChatMessage';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationFooter from './ConversationFooter';
-import {Route, Link} from 'react-router-dom';
-import {SmileOutlined} from '@ant-design/icons';
 
 dayjs.extend(utc);
 
