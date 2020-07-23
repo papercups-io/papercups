@@ -41,9 +41,6 @@ defmodule ChatApiWeb.NotificationChannel do
   def handle_in("read", %{"conversation_id" => id}, socket) do
     conversation = Conversations.mark_conversation_read(id)
 
-    IO.puts("READ!")
-    IO.inspect(conversation)
-
     {:reply, :ok, socket}
   end
 

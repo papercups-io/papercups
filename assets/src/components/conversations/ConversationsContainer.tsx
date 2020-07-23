@@ -231,7 +231,7 @@ class ConversationsContainer extends React.Component<Props, State> {
         conversation_id: conversationId,
       })
       .receive('ok', (res) => {
-        console.log('Marked as read!');
+        console.log('Marked as read!', conversationId);
 
         const {conversationsById} = this.state;
         const current = conversationsById[conversationId];
@@ -262,7 +262,12 @@ class ConversationsContainer extends React.Component<Props, State> {
 
   handleSelectConversation = (id: string) => {
     this.setState({selectedConversationId: id}, () => {
-      this.handleConversationRead(id);
+      const conversation = this.state.conversationsById[id];
+
+      if (conversation && !conversation.read) {
+        this.handleConversationRead(id);
+      }
+
       this.scrollToEl.scrollIntoView();
     });
   };
@@ -293,17 +298,22 @@ class ConversationsContainer extends React.Component<Props, State> {
         conversationIds: updatedConversationIds,
       },
       () => {
+        // TODO: this is a bit hacky... there's probably a better way to
+        // handle listening for changes on conversation records...
         if (selectedConversationId === conversationId) {
+          // If the new message matches the id of the selected conversation,
+          // mark it as read right away and scroll to the latest message
           this.handleConversationRead(selectedConversationId);
 
           this.scrollToEl.scrollIntoView();
         } else if (selectedConversationId) {
-          const selected = conversationsById[selectedConversationId];
+          // Otherwise, find the updated conversation and mark it as unread
+          const conversation = conversationsById[conversationId];
 
           this.setState({
             conversationsById: {
               ...conversationsById,
-              [conversationId]: {...selected, read: false},
+              [conversationId]: {...conversation, read: false},
             },
           });
         }
