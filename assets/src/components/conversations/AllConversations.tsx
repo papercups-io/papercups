@@ -1,6 +1,6 @@
 import React from 'react';
 import {useConversations} from './ConversationsProvider';
-import ConversationsWrapper from './ConversationsWrapper';
+import ConversationsContainer from './ConversationsContainer';
 
 const AllConversations = () => {
   const {
@@ -23,7 +23,7 @@ const AllConversations = () => {
   }
 
   return (
-    <ConversationsWrapper
+    <ConversationsContainer
       loading={loading}
       title="All conversations"
       account={account}

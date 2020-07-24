@@ -1,5 +1,5 @@
 import React from 'react';
-import ConversationsWrapper from './ConversationsWrapper';
+import ConversationsContainer from './ConversationsContainer';
 import {useConversations} from './ConversationsProvider';
 
 const PriorityConversations = () => {
@@ -23,7 +23,7 @@ const PriorityConversations = () => {
   }
 
   return (
-    <ConversationsWrapper
+    <ConversationsContainer
       loading={loading}
       title="Prioritized"
       account={account}

@@ -1,5 +1,5 @@
 import React from 'react';
-import ConversationsWrapper from './ConversationsWrapper';
+import ConversationsContainer from './ConversationsContainer';
 import {useConversations} from './ConversationsProvider';
 
 const ClosedConversations = () => {
@@ -23,7 +23,7 @@ const ClosedConversations = () => {
   }
 
   return (
-    <ConversationsWrapper
+    <ConversationsContainer
       loading={loading}
       title={'Closed'}
       account={account}
