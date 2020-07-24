@@ -8,7 +8,6 @@ const MyConversations = () => {
     currentUser,
     account,
     // showGetStarted, // FIXME
-    selectedConversationId,
     mine = [],
     conversationsById = {},
     messagesByConversation = {},
@@ -29,7 +28,6 @@ const MyConversations = () => {
       account={account}
       currentUser={currentUser}
       showGetStarted={false}
-      selectedConversationId={selectedConversationId}
       conversationIds={mine}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}

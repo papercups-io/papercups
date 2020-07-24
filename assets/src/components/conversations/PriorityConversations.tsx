@@ -8,7 +8,6 @@ const PriorityConversations = () => {
     currentUser,
     account,
     // showGetStarted, // FIXME
-    selectedConversationId,
     priority = [],
     conversationsById = {},
     messagesByConversation = {},
@@ -29,7 +28,6 @@ const PriorityConversations = () => {
       account={account}
       currentUser={currentUser}
       showGetStarted={false}
-      selectedConversationId={selectedConversationId}
       conversationIds={priority}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}

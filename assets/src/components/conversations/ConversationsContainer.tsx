@@ -61,7 +61,6 @@ type Props = {
   currentUser: any;
   loading: boolean;
   showGetStarted: boolean;
-  selectedConversationId: string | null;
   conversationIds: Array<string>;
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};

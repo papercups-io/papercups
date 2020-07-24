@@ -12,8 +12,6 @@ export const ConversationsContext = React.createContext<{
   account: any;
   currentUser: any;
 
-  selectedConversationId: string | null;
-
   all: Array<string>;
   mine: Array<string>;
   priority: Array<string>;
@@ -38,8 +36,6 @@ export const ConversationsContext = React.createContext<{
   loading: true,
   account: null,
   currentUser: null,
-
-  selectedConversationId: null,
 
   all: [],
   mine: [],
@@ -483,7 +479,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
       loading,
       account,
       currentUser,
-      selectedConversationId,
       all,
       mine,
       priority,
@@ -499,7 +494,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
           loading,
           account,
           currentUser,
-          selectedConversationId,
           all,
           mine,
           priority,
