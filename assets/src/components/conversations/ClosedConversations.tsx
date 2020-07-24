@@ -12,11 +12,21 @@ const ClosedConversations = () => {
     closed = [],
     conversationsById = {},
     messagesByConversation = {},
+    fetchAllConversations,
     fetchClosedConversations,
     onSelectConversation,
     onUpdateConversation,
     onSendMessage,
   } = useConversations();
+
+  const fetch = async () => {
+    const results = await fetchClosedConversations();
+    // Need to refresh the cache for the edge case where we re-open a
+    // conversation and then want to view in-app notifications for it.
+    await fetchAllConversations();
+
+    return results;
+  };
 
   if (loading) {
     return null;
@@ -33,7 +43,7 @@ const ClosedConversations = () => {
       conversationIds={closed}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
-      fetch={fetchClosedConversations}
+      fetch={fetch}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onSendMessage={onSendMessage}

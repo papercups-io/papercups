@@ -156,7 +156,7 @@ export const fetchMyConversations = async (
 
   return request
     .get(`/api/conversations`)
-    .query({assignee_id: userId})
+    .query({assignee_id: userId, status: 'open'})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -168,7 +168,7 @@ export const fetchPriorityConversations = async (token = getAccessToken()) => {
 
   return request
     .get(`/api/conversations`)
-    .query({priority: 'priority'})
+    .query({priority: 'priority', status: 'open'})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

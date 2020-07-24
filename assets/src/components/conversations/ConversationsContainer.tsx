@@ -1,8 +1,6 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import {
   Button,
   colors,
@@ -19,8 +17,6 @@ import ChatMessage from './ChatMessage';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationFooter from './ConversationFooter';
-
-dayjs.extend(utc);
 
 const formatMessage = (message: any) => {
   return {
@@ -70,9 +66,13 @@ type Props = {
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
   fetch: () => Promise<Array<string>>;
-  onSelectConversation: (id: string, fn: () => void) => void;
-  onUpdateConversation: (id: string, params: any) => void;
-  onSendMessage: (message: string, fn: () => void) => void;
+  onSelectConversation: (id: string, fn?: () => void) => void;
+  onUpdateConversation: (id: string, params: any) => Promise<void>;
+  onSendMessage: (
+    message: string,
+    conversationId: string,
+    fn: () => void
+  ) => void;
 };
 
 type State = {loading: boolean; selected: string | null};
@@ -85,32 +85,69 @@ class ConversationsContainer extends React.Component<Props, State> {
   componentDidMount() {
     this.props
       .fetch()
-      .then(() => this.setState({loading: false}))
+      .then(([first]) => {
+        this.setState({loading: false});
+        this.handleSelectConversation(first);
+      })
       .then(() => this.scrollToEl.scrollIntoView());
   }
 
+  componentDidUpdate(prev: Props) {
+    if (!this.state.selected) {
+      return null;
+    }
+
+    const {selected} = this.state;
+    const {messagesByConversation: prevMessagesByConversation} = prev;
+    const {messagesByConversation} = this.props;
+    const prevMessages = prevMessagesByConversation[selected] || [];
+    const messages = messagesByConversation[selected] || [];
+
+    if (messages.length > prevMessages.length) {
+      this.scrollToEl.scrollIntoView();
+    }
+  }
+
+  refreshSelectedConversation = async () => {
+    const {selected} = this.state;
+
+    const ids = await this.props.fetch();
+
+    if (!selected || ids.indexOf(selected) === -1) {
+      this.handleSelectConversation(ids[0]);
+    }
+  };
+
   handleSelectConversation = (id: string) => {
-    this.props.onSelectConversation(id, () => {
+    this.setState({selected: id}, () => {
       this.scrollToEl.scrollIntoView();
     });
+
+    this.props.onSelectConversation(id);
   };
 
-  handleCloseConversation = (conversationId: string) => {
-    this.props.onUpdateConversation(conversationId, {status: 'closed'});
+  handleCloseConversation = async (conversationId: string) => {
+    await this.props.onUpdateConversation(conversationId, {status: 'closed'});
+    await this.refreshSelectedConversation();
   };
 
-  handleReopenConversation = (conversationId: string) => {
-    this.props.onUpdateConversation(conversationId, {status: 'open'});
+  handleReopenConversation = async (conversationId: string) => {
+    await this.props.onUpdateConversation(conversationId, {status: 'open'});
+    await this.refreshSelectedConversation();
   };
 
-  handleMarkPriority = (conversationId: string) => {
-    this.props.onUpdateConversation(conversationId, {priority: 'priority'});
+  handleMarkPriority = async (conversationId: string) => {
+    await this.props.onUpdateConversation(conversationId, {
+      priority: 'priority',
+    });
+    await this.refreshSelectedConversation();
   };
 
-  handleMarkUnpriority = (conversationId: string) => {
-    this.props.onUpdateConversation(conversationId, {
+  handleMarkUnpriority = async (conversationId: string) => {
+    await this.props.onUpdateConversation(conversationId, {
       priority: 'not_priority',
     });
+    await this.refreshSelectedConversation();
   };
 
   handleAssignUser = (conversationId: string, userId: string) => {
@@ -118,16 +155,24 @@ class ConversationsContainer extends React.Component<Props, State> {
   };
 
   handleSendMessage = (message: string) => {
-    this.props.onSendMessage(message, () => this.scrollToEl.scrollIntoView());
+    const {selected: conversationId} = this.state;
+
+    if (!conversationId) {
+      return null;
+    }
+
+    this.props.onSendMessage(message, conversationId, () => {
+      this.scrollToEl.scrollIntoView();
+    });
   };
 
   render() {
+    const {selected: selectedConversationId} = this.state;
     const {
       title,
       account,
       currentUser,
       showGetStarted,
-      selectedConversationId,
       conversationIds = [],
       conversationsById = {},
       messagesByConversation = {},
@@ -163,7 +208,7 @@ class ConversationsContainer extends React.Component<Props, State> {
           </Box>
 
           <Box>
-            {conversationIds.length ? (
+            {!loading && conversationIds.length ? (
               conversationIds.map((conversationId, idx) => {
                 const conversation = conversationsById[conversationId];
                 const messages = messagesByConversation[conversationId];

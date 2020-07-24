@@ -5,6 +5,8 @@ import {notification} from '../common';
 import {Conversation, Message} from '../../types';
 import {socket} from '../../socket';
 
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
 export const ConversationsContext = React.createContext<{
   loading: boolean;
   account: any;
@@ -22,7 +24,11 @@ export const ConversationsContext = React.createContext<{
 
   onSelectConversation: (id: string) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
-  onSendMessage: (message: string, cb?: () => void) => any;
+  onSendMessage: (
+    message: string,
+    conversationId: string,
+    cb?: () => void
+  ) => any;
 
   fetchAllConversations: () => Promise<Array<string>>;
   fetchMyConversations: () => Promise<Array<string>>;
@@ -121,19 +127,19 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
     // TODO: rename?
     this.channel.on('shout', (message) => {
-      // handle new message
+      // Handle new message
       this.handleNewMessage(message);
     });
 
-    // TODO: rename to `conversation:created`?
+    // TODO: fix race condition between this event and `shout` above
     this.channel.on('conversation:created', ({id, conversation}) => {
-      // handle new conversation
+      // Handle conversation created
       this.handleNewConversation(id);
     });
 
-    // TODO: this is a tiny bit broken
+    // TODO: can probably use this for more things
     this.channel.on('conversation:updated', ({id, updates}) => {
-      // handle new conversation
+      // Handle conversation updated
       this.handleConversationUpdated(id, updates);
     });
 
@@ -141,9 +147,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
       .join()
       .receive('ok', (res) => {
         console.log('Joined successfully', res);
-
-        // TODO: mark conversation read?
-        this.handleConversationRead(this.state.selectedConversationId);
       })
       .receive('error', (err) => {
         console.log('Unable to join', err);
@@ -154,7 +157,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
     console.log('New message!', message);
 
     const {
-      all,
       messagesByConversation,
       selectedConversationId,
       conversationsById,
@@ -165,15 +167,10 @@ export class ConversationsProvider extends React.Component<Props, State> {
       ...messagesByConversation,
       [conversationId]: [...existingMessages, message],
     };
-    const updatedConversationIds = [
-      conversationId,
-      ...all.filter((id) => id !== conversationId),
-    ];
 
     this.setState(
       {
         messagesByConversation: updatedMessagesByConversation,
-        all: updatedConversationIds,
       },
       () => {
         // TODO: this is a bit hacky... there's probably a better way to
@@ -185,6 +182,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
         } else {
           // Otherwise, find the updated conversation and mark it as unread
           const conversation = conversationsById[conversationId];
+          const shouldDisplayAlert =
+            conversation && conversation.status === 'open';
 
           this.setState({
             conversationsById: {
@@ -192,13 +191,14 @@ export class ConversationsProvider extends React.Component<Props, State> {
               [conversationId]: {...conversation, read: false},
             },
           });
-        }
 
-        // TODO: add icon?
-        notification.open({
-          message: 'New message',
-          description: message.body,
-        });
+          if (shouldDisplayAlert) {
+            notification.open({
+              message: 'New message',
+              description: message.body,
+            });
+          }
+        }
       }
     );
   };
@@ -233,12 +233,23 @@ export class ConversationsProvider extends React.Component<Props, State> {
       return;
     }
 
-    this.channel.push('watch', {
+    this.channel.push('watch:one', {
       conversation_id: conversationId,
     });
 
-    // TODO: double check that this works
+    // FIXME: this is a hack to fix the race condition with the `shout` event
+    await sleep(1000);
     await this.fetchAllConversations();
+  };
+
+  handleJoinMultipleConversations = (conversationIds: Array<string>) => {
+    if (!this.channel) {
+      return;
+    }
+
+    this.channel.push('watch:many', {
+      conversation_ids: conversationIds,
+    });
   };
 
   handleConversationUpdated = (id: string, updates: any) => {
@@ -253,22 +264,22 @@ export class ConversationsProvider extends React.Component<Props, State> {
     });
   };
 
-  handleSelectConversation = (id: string, cb?: () => void) => {
+  handleSelectConversation = (id: string) => {
     this.setState({selectedConversationId: id}, () => {
       const conversation = this.state.conversationsById[id];
 
       if (conversation && !conversation.read) {
         this.handleConversationRead(id);
       }
-
-      if (cb && typeof cb === 'function') {
-        cb();
-      }
     });
   };
 
-  handleSendMessage = (message: string, cb?: () => void) => {
-    const {account, currentUser, selectedConversationId} = this.state;
+  handleSendMessage = (
+    message: string,
+    conversationId: string,
+    cb?: () => void
+  ) => {
+    const {account, currentUser} = this.state;
     const {id: accountId} = account;
     const {id: userId} = currentUser;
 
@@ -276,19 +287,17 @@ export class ConversationsProvider extends React.Component<Props, State> {
       return;
     }
 
-    this.channel
-      .push('shout', {
-        body: message,
-        user_id: userId,
-        conversation_id: selectedConversationId,
-        account_id: accountId,
-        sender: 'agent', // TODO: remove?
-      })
-      .receive('ok', () => {
-        if (cb && typeof cb === 'function') {
-          cb();
-        }
-      });
+    this.channel.push('shout', {
+      body: message,
+      user_id: userId,
+      conversation_id: conversationId,
+      account_id: accountId,
+      sender: 'agent', // TODO: remove?
+    });
+
+    if (cb && typeof cb === 'function') {
+      cb();
+    }
   };
 
   handleUpdateConversation = async (conversationId: string, params: any) => {
@@ -307,10 +316,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
       await API.updateConversation(conversationId, {
         conversation: params,
       });
-
-      await this.fetchAllConversations(); // TODO: double check this!
     } catch (err) {
-      // Revert
+      // Revert state if there's an error
       this.setState({
         conversationsById: conversationsById,
       });
@@ -355,15 +362,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
     conversations: Array<Conversation>,
     type: ConversationBucket
   ) => {
-    const {
-      currentUser,
-      selectedConversationId,
-      conversationsById,
-      messagesByConversation,
-    } = this.state;
+    const {currentUser, conversationsById, messagesByConversation} = this.state;
     const currentUserId = currentUser ? currentUser.id : null;
     const state = this.formatConversationState(conversations);
-    const [recentConversationId] = state.conversationIds;
     const updatedConversationsById = {
       ...conversationsById,
       ...state.conversationsById,
@@ -372,10 +373,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
       ...messagesByConversation,
       ...state.messagesByConversation,
     };
-    const updatedSelectedId =
-      selectedConversationId && state.conversationsById[selectedConversationId]
-        ? selectedConversationId
-        : recentConversationId;
 
     const updates = {
       loading: false,
@@ -385,49 +382,38 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
     switch (type) {
       case 'all':
-        const conversations = state.conversationIds.map(
-          (id) => updates.conversationsById[id]
-        );
+        const conversations = state.conversationIds
+          .map((id) => updates.conversationsById[id])
+          .filter((c) => c.status === 'open');
+        const all = conversations.map((c) => c.id);
         const mine = conversations
-          .filter((c) => c.assignee_id === currentUserId)
+          .filter((c) => c.assignee_id === currentUserId && c.status === 'open')
           .map((c) => c.id);
         const priority = conversations
-          .filter((c) => c.priority === 'priority')
+          .filter((c) => c.priority === 'priority' && c.status === 'open')
           .map((c) => c.id);
 
-        return this.setState(
-          {
-            ...updates,
-            mine,
-            priority,
-            all: state.conversationIds,
-          },
-          () => this.handleSelectConversation(updatedSelectedId)
-        );
+        return this.setState({
+          ...updates,
+          all,
+          mine,
+          priority,
+        });
       case 'mine':
-        return this.setState(
-          {
-            ...updates,
-            mine: state.conversationIds,
-          },
-          () => this.handleSelectConversation(updatedSelectedId)
-        );
+        return this.setState({
+          ...updates,
+          mine: state.conversationIds,
+        });
       case 'priority':
-        return this.setState(
-          {
-            ...updates,
-            priority: state.conversationIds,
-          },
-          () => this.handleSelectConversation(updatedSelectedId)
-        );
+        return this.setState({
+          ...updates,
+          priority: state.conversationIds,
+        });
       case 'closed':
-        return this.setState(
-          {
-            ...updates,
-            closed: state.conversationIds,
-          },
-          () => this.handleSelectConversation(updatedSelectedId)
-        );
+        return this.setState({
+          ...updates,
+          closed: state.conversationIds,
+        });
     }
   };
 
@@ -470,6 +456,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     const {conversationIds} = this.formatConversationState(conversations);
 
     this.updateConversationState(conversations, 'closed');
+    this.handleJoinMultipleConversations(conversationIds);
 
     return conversationIds;
   };
@@ -504,12 +491,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
       conversationsById,
       messagesByConversation,
     } = this.state;
-
-    console.log({
-      selectedConversationId,
-      conversationsById,
-      messagesByConversation,
-    });
     const unreadByCategory = this.getUnreadByCategory();
 
     return (
