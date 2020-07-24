@@ -17,7 +17,8 @@ defmodule ChatApiWeb.SlackController do
     %{body: body} = response
 
     if Map.get(body, "ok") do
-      with %{
+      with %{account_id: account_id} <- conn.assigns.current_user,
+           %{
              "access_token" => access_token,
              "app_id" => app_id,
              "bot_user_id" => bot_user_id,
@@ -35,9 +36,6 @@ defmodule ChatApiWeb.SlackController do
              "configuration_url" => configuration_url,
              "url" => webhook_url
            } <- incoming_webhook do
-        # FIXME
-        account_id = "eb504736-0f20-4978-98ff-1a82ae60b266"
-
         params = %{
           account_id: account_id,
           access_token: access_token,
@@ -54,7 +52,7 @@ defmodule ChatApiWeb.SlackController do
           webhook_url: webhook_url
         }
 
-        SlackAuthorizations.find_or_create(account_id, params)
+        SlackAuthorizations.create_or_update(account_id, params)
 
         json(conn, %{data: %{ok: true}})
       else
