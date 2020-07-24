@@ -44,11 +44,11 @@ defmodule ChatApi.SlackAuthorizations do
     |> Repo.one()
   end
 
-  def find_or_create(account_id, params) do
+  def create_or_update(account_id, params) do
     existing = get_authorization_by_account(account_id)
 
     if existing do
-      existing
+      update_slack_authorization(existing, params)
     else
       create_slack_authorization(params)
     end
