@@ -460,7 +460,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
   getUnreadByCategory = () => {
     const {all, mine, priority, conversationsById} = this.state;
 
-    // FIXME
     return {
       all: all
         .map((id) => conversationsById[id])
