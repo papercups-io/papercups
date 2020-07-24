@@ -2,7 +2,7 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {colors, Text} from '../common';
+import {colors, Badge, Text} from '../common';
 import {SmileTwoTone, StarFilled} from '../icons';
 import {formatRelativeTime} from '../../utils';
 
@@ -38,7 +38,7 @@ const ConversationItem = ({
   onSelectConversation: (id: string) => void;
 }) => {
   const formatted = formatConversation(conversation, messages);
-  const {id, priority, status, customer, date, preview} = formatted;
+  const {id, priority, status, customer, date, preview, read} = formatted;
   const isPriority = priority === 'priority';
   const isClosed = status === 'closed';
 
@@ -65,7 +65,12 @@ const ConversationItem = ({
           </Box>
           <Text strong>{customer}</Text>
         </Flex>
-        <Text type="secondary">{date}</Text>
+
+        {read ? (
+          <Text type="secondary">{date}</Text>
+        ) : (
+          <Badge status="processing" />
+        )}
       </Flex>
       <Box
         style={{
@@ -74,7 +79,11 @@ const ConversationItem = ({
           textOverflow: 'ellipsis',
         }}
       >
-        {preview}
+        {read ? (
+          <Text type="secondary">{preview}</Text>
+        ) : (
+          <Text strong>{preview}</Text>
+        )}
       </Box>
     </Box>
   );

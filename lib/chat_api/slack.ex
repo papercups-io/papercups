@@ -48,44 +48,36 @@ defmodule ChatApi.Slack do
     thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id)
     %{account_id: account_id} = conversation
 
-    base =
-      if Mix.env() == :dev do
-        "http://localhost:3000"
-      else
-        "https://app.papercups.io"
+    %{access_token: access_token, channel: channel} =
+      case SlackAuthorizations.get_authorization_by_account(account_id) do
+        nil -> %{access_token: get_default_access_token(), channel: "#bots"}
+        auth -> auth
       end
 
-    url = base <> "/conversations/" <> conversation_id
-    description = "conversation " <> conversation_id
-    link = "<#{url}|#{description}>"
-    actor = if type == "agent", do: ":female-technologist: Agent:", else: ":wave: Customer:"
-
-    subject =
-      "New conversation started: " <>
-        link <> "\n\nReply to this thread to chat with the customer :rocket:"
-
-    auth = SlackAuthorizations.get_authorization_by_account(account_id)
-    access_token = auth.access_token || System.get_env("SLACK_BOT_ACCESS_TOKEN")
-    channel = auth.channel || "#bots"
-
-    # TODO: clean up a bit
+    # TODO: clean up a bit?
     payload =
-      if is_nil(thread) do
-        %{
-          "channel" => channel,
-          "text" => subject,
-          "attachments" => [%{"text" => text}]
-        }
-      else
-        %{
-          "channel" => channel,
-          "text" => actor,
-          "attachments" => [%{"text" => text}],
-          "thread_ts" => thread.slack_thread_ts
-        }
+      case thread do
+        nil ->
+          subject = get_initial_slack_thread_subject(conversation_id)
+
+          %{
+            "channel" => channel,
+            "text" => subject,
+            "attachments" => [%{"text" => text}]
+          }
+
+        %{slack_thread_ts: slack_thread_ts} ->
+          subject = get_slack_reply_subject(type)
+
+          %{
+            "channel" => channel,
+            "text" => subject,
+            "attachments" => [%{"text" => text}],
+            "thread_ts" => slack_thread_ts
+          }
       end
 
-    slack_enabled = not is_nil(access_token)
+    slack_enabled = is_valid_access_token(access_token)
 
     if slack_enabled do
       {:ok, response} = send_message(payload, access_token)
@@ -107,6 +99,34 @@ defmodule ChatApi.Slack do
     else
       # Inspect what would've been sent for debugging
       IO.inspect(payload)
+    end
+  end
+
+  def get_initial_slack_thread_subject(conversation_id) do
+    # TODO: use env variables here?
+    base =
+      if Mix.env() == :dev do
+        "http://localhost:3000"
+      else
+        "https://app.papercups.io"
+      end
+
+    url = base <> "/conversations/" <> conversation_id
+    description = "conversation " <> conversation_id
+    link = "<#{url}|#{description}>"
+
+    subject =
+      "New conversation started: " <>
+        link <> "\n\nReply to this thread to chat with the customer :rocket:"
+
+    subject
+  end
+
+  def get_slack_reply_subject(type) do
+    if type == "agent" do
+      ":female-technologist: Agent:"
+    else
+      ":wave: Customer:"
     end
   end
 
@@ -136,6 +156,23 @@ defmodule ChatApi.Slack do
     |> Map.get(:users)
     |> List.first()
     |> Map.get(:id)
+  end
+
+  defp is_valid_access_token(token) do
+    case token do
+      "xoxb-" <> _rest -> true
+      _ -> false
+    end
+  end
+
+  defp get_default_access_token() do
+    token = System.get_env("SLACK_BOT_ACCESS_TOKEN")
+
+    if is_valid_access_token(token) do
+      token
+    else
+      nil
+    end
   end
 
   defp extract_slack_conversation_thread_info(%{body: body}) do

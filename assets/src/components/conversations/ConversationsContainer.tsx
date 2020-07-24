@@ -68,7 +68,7 @@ type Props = {
 type State = {
   loading: boolean;
   showGetStarted: boolean;
-  selectedConversationId?: string | null;
+  selectedConversationId: string | null;
   conversationIds: Array<string>;
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
@@ -213,9 +213,36 @@ class ConversationsContainer extends React.Component<Props, State> {
       .join()
       .receive('ok', (res) => {
         console.log('Joined successfully', res);
+
+        this.handleConversationRead(this.state.selectedConversationId);
       })
       .receive('error', (err) => {
         console.log('Unable to join', err);
+      });
+  };
+
+  handleConversationRead = (conversationId: string | null) => {
+    if (!this.channel || !conversationId) {
+      return;
+    }
+
+    this.channel
+      .push('read', {
+        conversation_id: conversationId,
+      })
+      .receive('ok', (res) => {
+        console.log('Marked as read!', conversationId);
+
+        const {conversationsById} = this.state;
+        const current = conversationsById[conversationId];
+
+        // Optimistic update
+        this.setState({
+          conversationsById: {
+            ...conversationsById,
+            [conversationId]: {...current, read: true},
+          },
+        });
       });
   };
 
@@ -234,15 +261,26 @@ class ConversationsContainer extends React.Component<Props, State> {
   };
 
   handleSelectConversation = (id: string) => {
-    this.setState({selectedConversationId: id}, () =>
-      this.scrollToEl.scrollIntoView()
-    );
+    this.setState({selectedConversationId: id}, () => {
+      const conversation = this.state.conversationsById[id];
+
+      if (conversation && !conversation.read) {
+        this.handleConversationRead(id);
+      }
+
+      this.scrollToEl.scrollIntoView();
+    });
   };
 
   handleNewMessage = (message: Message) => {
     console.log('New message!', message);
 
-    const {messagesByConversation, conversationIds} = this.state;
+    const {
+      messagesByConversation,
+      conversationIds,
+      selectedConversationId,
+      conversationsById,
+    } = this.state;
     const {conversation_id: conversationId} = message;
     const existing = messagesByConversation[conversationId] || [];
     const update = {
@@ -260,7 +298,25 @@ class ConversationsContainer extends React.Component<Props, State> {
         conversationIds: updatedConversationIds,
       },
       () => {
-        this.scrollToEl.scrollIntoView();
+        // TODO: this is a bit hacky... there's probably a better way to
+        // handle listening for changes on conversation records...
+        if (selectedConversationId === conversationId) {
+          // If the new message matches the id of the selected conversation,
+          // mark it as read right away and scroll to the latest message
+          this.handleConversationRead(selectedConversationId);
+
+          this.scrollToEl.scrollIntoView();
+        } else if (selectedConversationId) {
+          // Otherwise, find the updated conversation and mark it as unread
+          const conversation = conversationsById[conversationId];
+
+          this.setState({
+            conversationsById: {
+              ...conversationsById,
+              [conversationId]: {...conversation, read: false},
+            },
+          });
+        }
       }
     );
   };

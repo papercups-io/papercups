@@ -131,6 +131,26 @@ defmodule ChatApi.Conversations do
     |> Repo.update()
   end
 
+  def mark_conversation_read(%Conversation{} = conversation) do
+    update_conversation(conversation, %{read: true})
+  end
+
+  def mark_conversation_read(conversation_id) do
+    conversation = get_conversation!(conversation_id)
+
+    mark_conversation_read(conversation)
+  end
+
+  def mark_conversation_unread(%Conversation{} = conversation) do
+    update_conversation(conversation, %{read: false})
+  end
+
+  def mark_conversation_unread(conversation_id) do
+    conversation = get_conversation!(conversation_id)
+
+    mark_conversation_unread(conversation)
+  end
+
   @doc """
   Deletes a conversation.
 
