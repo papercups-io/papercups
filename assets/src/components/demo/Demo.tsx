@@ -30,7 +30,7 @@ class Demo extends React.Component<Props, State> {
       title: defaultTitle || 'Welcome to Papercups!',
       subtitle:
         defaultSubtitle || 'Ask us anything in the chat window below 😊',
-      accountId: 'eb504736-0f20-4978-98ff-1a82ae60b266',
+      accountId: 'fe038edd-ca6c-4072-a3dc-9350a773455d',
     };
   }
 

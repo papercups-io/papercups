@@ -1,3 +1,8 @@
+export type User = {
+  id: number;
+  email: string;
+};
+
 // NB: actual message records will look slightly different
 export type Message = {
   body: string;
@@ -16,4 +21,8 @@ export type Conversation = {
   date: string;
   preview: string;
   messages?: Array<Message>;
+  priority?: string;
+  read?: boolean;
+  status?: string;
+  assignee_id?: number;
 };
