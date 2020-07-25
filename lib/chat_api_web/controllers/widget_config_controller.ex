@@ -12,6 +12,7 @@ defmodule ChatApiWeb.WidgetConfigController do
   end
 
   def create(conn, %{"widget_config" => widget_config_params}) do
+    #TOOD Account id shouldn't be passed in #173997813
     with {:ok, %WidgetConfig{} = widget_config} <- WidgetConfigs.create_widget_config(widget_config_params) do
       conn
       |> put_status(:created)
