@@ -36,8 +36,7 @@ class Demo extends React.Component<Props, State> {
     this.state = {
       color: defaultColor || colors.primary,
       title: defaultTitle || 'Welcome to Papercups!',
-      subtitle:
-        defaultSubtitle || 'Ask us anything in the chat window below 😊',
+      subtitle: defaultSubtitle || 'Ask us anything using the chat window 💭',
       accountId: 'eb504736-0f20-4978-98ff-1a82ae60b266',
     };
   }
@@ -56,6 +55,18 @@ class Demo extends React.Component<Props, State> {
 
   render() {
     const {color, title, subtitle, accountId} = this.state;
+    const defaultColors = [
+      colors.primary,
+      '#00B3BE',
+      '#099720',
+      '#7556EB',
+      '#DE2828',
+      '#F223C5',
+      '#EC7F00',
+      '#1E1F21',
+      '#89603A',
+      '#878784',
+    ];
 
     return (
       <Box
@@ -67,7 +78,7 @@ class Demo extends React.Component<Props, State> {
         <Box mb={4}>
           <Title>Demo</Title>
           <Paragraph>
-            Hello there! You can customize the widget's display text and colors
+            Hello! Try customizing the chat widget's display text and colors.
           </Paragraph>
         </Box>
 
@@ -93,10 +104,11 @@ class Demo extends React.Component<Props, State> {
 
         <Box mb={4}>
           <Paragraph>
-            Try changing the color (hint: you can enter any hex value you want!)
+            Try changing the color (you can enter any hex value you want!)
           </Paragraph>
           <TwitterPicker
             color={this.state.color}
+            colors={defaultColors}
             onChangeComplete={this.handleChangeColor}
           />
         </Box>
