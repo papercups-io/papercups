@@ -2,9 +2,6 @@ import React, {useState, useEffect, useContext} from 'react';
 import {getAuthTokens, setAuthTokens, removeAuthTokens} from '../../storage';
 import * as API from '../../api';
 
-const defaultRedirectCallback = () =>
-  window.history.replaceState({}, document.title, window.location.pathname);
-
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
   tokens: any | null;
@@ -23,91 +20,124 @@ export const AuthContext = React.createContext<{
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({
-  children,
-  onRedirectCallback = defaultRedirectCallback,
-}: React.PropsWithChildren<{
-  onRedirectCallback?: (state: any) => void;
-}>) => {
-  const t = getAuthTokens();
-  // TODO: experiment with `useReducer` for managing auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [tokens, setTokens] = useState(t);
-  const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState(null);
+// Refresh every 20 mins
+const AUTH_SESSION_TTL = 20 * 60 * 1000;
 
-  const handleAuthSuccess = (tokens: any) => {
-    setAuthTokens(tokens);
-    setTokens(tokens);
-    setIsAuthenticated(true);
-  };
+type Props = React.PropsWithChildren<{}>;
+type State = {
+  loading: boolean;
+  tokens: any;
+  isAuthenticated: boolean;
+};
 
-  const handleClearAuth = () => {
-    removeAuthTokens();
-    setTokens(null);
-    setIsAuthenticated(false);
-  };
+export class AuthProvider extends React.Component<Props, State> {
+  timeout: any = null;
 
-  useEffect(() => {
-    console.log('AuthProvider mounted!');
-    const renewToken = tokens && tokens.renew_token;
+  constructor(props: Props) {
+    super(props);
 
-    if (!renewToken) {
-      setLoading(false);
+    const cachedTokens = getAuthTokens();
+    this.state = {
+      loading: true,
+      isAuthenticated: false,
+      tokens: cachedTokens,
+    };
+  }
+
+  async componentDidMount() {
+    const {tokens} = this.state;
+    const refreshToken = tokens && tokens.renew_token;
+
+    if (!refreshToken) {
+      this.setState({loading: false});
 
       return;
     }
 
-    // Check if user is logged in already
-    API.renew(renewToken)
-      .then((tokens) => handleAuthSuccess(tokens))
-      .catch((err) => console.log('Error renewing session!', err))
-      .then(() => setLoading(false));
-    // eslint-disable-next-line
-  }, []);
+    await this.refresh(refreshToken);
 
-  const register = async (params: API.RegisterParams): Promise<void> => {
+    this.setState({loading: false});
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.timeout);
+
+    this.timeout = null;
+  }
+
+  handleAuthSuccess = (tokens: any) => {
+    setAuthTokens(tokens);
+
+    this.setState({tokens, isAuthenticated: true});
+
+    const nextRefreshToken = tokens && tokens.renew_token;
+
+    this.timeout = setTimeout(
+      () => this.refresh(nextRefreshToken),
+      AUTH_SESSION_TTL
+    );
+  };
+
+  handleClearAuth = () => {
+    removeAuthTokens();
+
+    this.setState({tokens: null, isAuthenticated: false});
+  };
+
+  refresh = async (refreshToken: string) => {
+    return API.renew(refreshToken)
+      .then((tokens) => this.handleAuthSuccess(tokens))
+      .catch((err) => {
+        console.log('Invalid session:', err);
+      });
+  };
+
+  register = async (params: API.RegisterParams): Promise<void> => {
     console.log('Signing up!');
     // Set user, authenticated status, etc
     return API.register(params)
-      .then((tokens) => handleAuthSuccess(tokens))
+      .then((tokens) => this.handleAuthSuccess(tokens))
       .then(() => {
         console.log('Successfully signed up!');
       });
   };
 
-  const login = async (params: API.LoginParams): Promise<void> => {
+  login = async (params: API.LoginParams): Promise<void> => {
     console.log('Logging in!');
     // Set user, authenticated status, etc
     return API.login(params)
-      .then((tokens) => handleAuthSuccess(tokens))
+      .then((tokens) => this.handleAuthSuccess(tokens))
       .then(() => {
         console.log('Successfully logged in!');
       });
   };
 
-  const logout = async (): Promise<void> => {
+  logout = async (): Promise<void> => {
     console.log('Logging out!');
     // Set user, authenticated status, etc
     return API.logout()
-      .then(() => handleClearAuth())
+      .then(() => this.handleClearAuth())
       .then(() => {
         console.log('Successfully logged out!');
       });
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        isAuthenticated,
-        tokens,
-        loading,
-        register,
-        login,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  render() {
+    const {loading, isAuthenticated, tokens} = this.state;
+
+    return (
+      <AuthContext.Provider
+        value={{
+          isAuthenticated,
+          tokens,
+          loading,
+          register: this.register,
+          login: this.login,
+          logout: this.logout,
+        }}
+      >
+        {this.props.children}
+      </AuthContext.Provider>
+    );
+  }
+}
