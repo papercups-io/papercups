@@ -29,3 +29,6 @@ chat_api-*.tar
 
 # Environment variable file
 .env
+
+# Jetbrain IDE files
+.idea/
