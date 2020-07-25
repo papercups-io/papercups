@@ -7,7 +7,7 @@ const PriorityConversations = () => {
     loading,
     currentUser,
     account,
-    // showGetStarted, // FIXME
+    isNewUser,
     priority = [],
     conversationsById = {},
     messagesByConversation = {},
@@ -27,7 +27,7 @@ const PriorityConversations = () => {
       title="Prioritized"
       account={account}
       currentUser={currentUser}
-      showGetStarted={false}
+      showGetStarted={isNewUser}
       conversationIds={priority}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}

@@ -11,6 +11,7 @@ export const ConversationsContext = React.createContext<{
   loading: boolean;
   account: any;
   currentUser: any;
+  isNewUser: boolean;
 
   all: Array<string>;
   mine: Array<string>;
@@ -36,6 +37,7 @@ export const ConversationsContext = React.createContext<{
   loading: true,
   account: null,
   currentUser: null,
+  isNewUser: false,
 
   all: [],
   mine: [],
@@ -64,6 +66,7 @@ type State = {
   loading: boolean;
   account: any | null;
   currentUser: any | null;
+  isNewUser: boolean;
 
   selectedConversationId: string | null;
   conversationsById: {[key: string]: any};
@@ -80,6 +83,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     loading: true,
     account: null,
     currentUser: null,
+    isNewUser: false,
 
     selectedConversationId: null,
     conversationsById: {},
@@ -96,11 +100,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
   async componentDidMount() {
     socket.connect();
 
-    const [currentUser, account] = await Promise.all([
+    const [currentUser, account, numTotalMessages] = await Promise.all([
       API.me(),
       API.fetchAccountInfo(),
+      API.countMessages().then((r) => r.count),
     ]);
-    this.setState({currentUser, account});
+    this.setState({currentUser, account, isNewUser: numTotalMessages === 0});
     const conversationIds = await this.fetchAllConversations();
     const {id: accountId} = account;
 
@@ -478,6 +483,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
       loading,
       account,
       currentUser,
+      isNewUser,
       all,
       mine,
       priority,
@@ -493,6 +499,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
           loading,
           account,
           currentUser,
+          isNewUser,
           all,
           mine,
           priority,

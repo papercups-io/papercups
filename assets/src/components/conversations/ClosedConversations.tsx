@@ -7,7 +7,7 @@ const ClosedConversations = () => {
     loading,
     currentUser,
     account,
-    // showGetStarted, // FIXME
+    isNewUser,
     closed = [],
     conversationsById = {},
     messagesByConversation = {},
@@ -34,10 +34,10 @@ const ClosedConversations = () => {
   return (
     <ConversationsContainer
       loading={loading}
-      title={'Closed'}
+      title="Closed"
       account={account}
       currentUser={currentUser}
-      showGetStarted={false}
+      showGetStarted={isNewUser}
       conversationIds={closed}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}

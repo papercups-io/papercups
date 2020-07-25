@@ -7,7 +7,7 @@ const AllConversations = () => {
     loading,
     currentUser,
     account,
-    // showGetStarted, // FIXME
+    isNewUser,
     all = [],
     conversationsById = {},
     messagesByConversation = {},
@@ -27,7 +27,7 @@ const AllConversations = () => {
       title="All conversations"
       account={account}
       currentUser={currentUser}
-      showGetStarted={false}
+      showGetStarted={isNewUser}
       conversationIds={all}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
