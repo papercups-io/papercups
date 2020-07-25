@@ -1,11 +1,12 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router-dom';
+import {RouteComponentProps, Link} from 'react-router-dom';
 import {Box} from 'theme-ui';
 import {TwitterPicker} from 'react-color';
 import qs from 'query-string';
 import {colors, Input, Paragraph, Title} from '../common';
 // Testing widget in separate package
 import ChatWidget from '@papercups-io/chat-widget';
+import {Button} from '../common';
 
 type Props = RouteComponentProps & {};
 type State = {
@@ -58,9 +59,7 @@ class Demo extends React.Component<Props, State> {
         <Box mb={4}>
           <Title>Demo</Title>
           <Paragraph>
-            Hello there! You can play around with the chat widget on this page
-            by clicking on the toggle in the lower right-hand corner of the
-            page.
+            Hello there! You can customize the widget's display text and colors
           </Paragraph>
         </Box>
 
@@ -101,6 +100,9 @@ class Demo extends React.Component<Props, State> {
           accountId={accountId}
           defaultIsOpen
         />
+        <Link to="/register">
+          <Button type="primary">Register</Button>
+        </Link>
       </Box>
     );
   }
