@@ -78,7 +78,7 @@ class Demo extends React.Component<Props, State> {
         <Box mb={4}>
           <Title>Demo</Title>
           <Paragraph>
-            Hello there! You can customize the widget's display text and colors
+            Hello! Try customizing the chat widget's display text and colors.
           </Paragraph>
         </Box>
 
