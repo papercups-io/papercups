@@ -1,12 +1,20 @@
 import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
-import {Box} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 import {TwitterPicker} from 'react-color';
 import qs from 'query-string';
-import {colors, Input, Paragraph, Title} from '../common';
+import {
+  colors,
+  Button,
+  Divider,
+  Input,
+  Paragraph,
+  Text,
+  Title,
+} from '../common';
+import {RightCircleOutlined} from '../icons';
 // Testing widget in separate package
 import ChatWidget from '@papercups-io/chat-widget';
-import {Button} from '../common';
 
 type Props = RouteComponentProps & {};
 type State = {
@@ -93,6 +101,19 @@ class Demo extends React.Component<Props, State> {
           />
         </Box>
 
+        <Divider />
+
+        <Flex mb={4} sx={{alignItems: 'center'}}>
+          <Box mr={3}>
+            <Text strong>Ready to get started?</Text>
+          </Box>
+          <Link to="/register">
+            <Button type="primary" icon={<RightCircleOutlined />}>
+              Sign up for free
+            </Button>
+          </Link>
+        </Flex>
+
         <ChatWidget
           title={title || 'Welcome!'}
           subtitle={subtitle}
@@ -100,9 +121,6 @@ class Demo extends React.Component<Props, State> {
           accountId={accountId}
           defaultIsOpen
         />
-        <Link to="/register">
-          <Button type="primary">Register</Button>
-        </Link>
       </Box>
     );
   }

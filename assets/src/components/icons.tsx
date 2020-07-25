@@ -4,6 +4,7 @@ import DownOutlined from '@ant-design/icons/DownOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
+import RightCircleOutlined from '@ant-design/icons/RightCircleOutlined';
 import SendOutlined from '@ant-design/icons/SendOutlined';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
 import SmileOutlined from '@ant-design/icons/SmileOutlined';
@@ -21,6 +22,7 @@ export {
   LoadingOutlined,
   MailOutlined,
   PlusOutlined,
+  RightCircleOutlined,
   SendOutlined,
   SettingOutlined,
   SmileOutlined,
