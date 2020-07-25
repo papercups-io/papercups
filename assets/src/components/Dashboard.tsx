@@ -50,7 +50,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Box py={3} sx={{flex: 1}}>
             <Menu
               selectedKeys={[section, key]}
-              defaultOpenKeys={[section]}
+              defaultOpenKeys={[section, 'account', 'conversations']}
               mode="inline"
               theme="dark"
             >
