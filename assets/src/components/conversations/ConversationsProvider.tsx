@@ -3,9 +3,8 @@ import {Channel} from 'phoenix';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Conversation, Message} from '../../types';
+import {sleep} from '../../utils';
 import {socket} from '../../socket';
-
-const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export const ConversationsContext = React.createContext<{
   loading: boolean;

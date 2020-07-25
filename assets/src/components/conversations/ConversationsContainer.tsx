@@ -6,12 +6,14 @@ import {
   colors,
   Content,
   Layout,
+  notification,
   Result,
   Sider,
   Text,
   Title,
 } from '../common';
 import {SmileOutlined} from '../icons';
+import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
 import ConversationHeader from './ConversationHeader';
@@ -127,11 +129,37 @@ class ConversationsContainer extends React.Component<Props, State> {
 
   handleCloseConversation = async (conversationId: string) => {
     await this.props.onUpdateConversation(conversationId, {status: 'closed'});
+
+    notification.open({
+      message: 'Conversation closed!',
+      duration: 6, // 6 seconds
+      description: (
+        <Box>
+          You can view your closed conversations{' '}
+          <a href="/conversations/closed">here</a>.
+        </Box>
+      ),
+    });
+
+    await sleep(2000);
     await this.refreshSelectedConversation();
   };
 
   handleReopenConversation = async (conversationId: string) => {
     await this.props.onUpdateConversation(conversationId, {status: 'open'});
+
+    notification.open({
+      message: 'Conversation re-opened!',
+      duration: 6, // 6 seconds
+      description: (
+        <Box>
+          You can view this conversations once again{' '}
+          <a href="/conversations/all">here</a>.
+        </Box>
+      ),
+    });
+
+    await sleep(2000);
     await this.refreshSelectedConversation();
   };
 
