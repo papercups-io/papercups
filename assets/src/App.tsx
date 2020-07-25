@@ -41,6 +41,7 @@ const App = () => {
         <Route path="/login" component={Login} />
         <Route path="/register" component={Register} />
         <Route path="/widget" component={Widget} />
+        <Route path="/register/:invite" component={Register} />
         <Route path="/demo" component={Demo} />
         <Route path="/" component={Dashboard} />
         <Route path="*" render={() => <Redirect to="/conversations" />} />
