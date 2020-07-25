@@ -54,6 +54,7 @@ export class AuthProvider extends React.Component<Props, State> {
       return;
     }
 
+    // Attempt refresh auth session on load
     await this.refresh(refreshToken);
 
     this.setState({loading: false});
@@ -72,6 +73,8 @@ export class AuthProvider extends React.Component<Props, State> {
 
     const nextRefreshToken = tokens && tokens.renew_token;
 
+    // Refresh the session every 20 mins to avoid the access token expiring
+    // (By default, the session will expire after 30 mins)
     this.timeout = setTimeout(
       () => this.refresh(nextRefreshToken),
       AUTH_SESSION_TTL
