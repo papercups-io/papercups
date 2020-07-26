@@ -47,6 +47,7 @@ defmodule ChatApiWeb.Router do
 
     get("/slack/oauth", SlackController, :oauth)
     get("/slack/authorization", SlackController, :authorization)
+    put("/widget_configs/create_or_update", WidgetConfigController, :createOrUpdate)
 
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/accounts", AccountController, only: [:update, :delete])

@@ -21,6 +21,12 @@ defmodule ChatApiWeb.WidgetConfigController do
     end
   end
 
+  @spec update(any, map) :: any
+  def createOrUpdate(conn, %{"id" => id, "widget_config" => widget_config_params}) do
+    widget_config = WidgetConfigs.create_or_update(id, widget_config_params)
+    render(conn, "show.json", widget_config: widget_config)
+  end
+
   def show(conn, %{"id" => id}) do
     widget_config = WidgetConfigs.get_widget_config!(id)
     render(conn, "show.json", widget_config: widget_config)

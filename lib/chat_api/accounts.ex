@@ -37,7 +37,7 @@ defmodule ChatApi.Accounts do
 
   """
   def get_account!(id) do
-    Account |> Repo.get!(id) |> Repo.preload(:users)
+    Account |> Repo.get!(id) |> Repo.preload(:users) |> Repo.preload(:widget_config)
   end
 
   @spec create_account(

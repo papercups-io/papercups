@@ -11,25 +11,37 @@ import {BASE_URL} from '../../config';
 
 type Props = {};
 type State = {
-  account: any;
+  account_id: any;
   color: string;
   title: string;
   subtitle: string;
+  id?: string;
 };
 
 class GettingStartedOverview extends React.Component<Props, State> {
   state: State = {
-    account: null,
+    account_id: null,
     color: colors.primary,
     title: 'Welcome!',
     subtitle: 'Ask us anything in the chat window below 😊',
+    // company_name: null,
   };
 
   async componentDidMount() {
     const account = await API.fetchAccountInfo();
     const {company_name: company} = account;
 
-    this.setState({account, title: `Welcome to ${company}`});
+    const {color, title, subtitle, id} = account.widget_config;
+
+    if (id) {
+      this.setState({
+        account_id: account.id,
+        color,
+        subtitle,
+        id,
+        title: title || `Welcome to ${company}`,
+      });
+    }
   }
 
   handleChangeTitle = (e: any) => {
@@ -44,11 +56,25 @@ class GettingStartedOverview extends React.Component<Props, State> {
     this.setState({color: color.hex});
   };
 
+  async componentWillUnmount() {
+    this.createOrUpdateWidgetConfig();
+  }
+
+  createOrUpdateWidgetConfig = () => {
+    const {color, title, subtitle, account_id} = this.state;
+    API.createOrUpdateWidgetConfig(
+      {color, title, subtitle, account_id},
+      this.state.id
+    )
+      .then((res) => console.log(res))
+      .catch((err) => console.log(err));
+  };
+
   generateCode = (
     title: string,
     subtitle: string,
     primaryColor: string,
-    accountId: string
+    account_id: string
   ) => {
     const REACT_CODE = `
 import React from 'react';
@@ -66,7 +92,7 @@ const ExamplePage = () => {
         title='${title}'
         subtitle= '${subtitle}'
         primaryColor='${primaryColor}'
-        accountId='${accountId}'
+        accountId='${account_id}'
       />
     </>
   );
@@ -77,7 +103,7 @@ const ExamplePage = () => {
 <script>
   window.Papercups = {
     config: {
-      accountId: '${accountId}',
+      accountId: '${account_id}',
       title: '${title}',
       subtitle: '${subtitle}',
       primaryColor: '${primaryColor}',
@@ -95,13 +121,11 @@ const ExamplePage = () => {
   };
 
   render() {
-    const {color, title, subtitle, account} = this.state;
+    const {color, title, subtitle, account_id} = this.state;
 
-    if (!account) {
+    if (!account_id) {
       return null; // TODO: better loading state
     }
-
-    const {id: accountId} = account;
 
     return (
       <Box
@@ -165,7 +189,7 @@ const ExamplePage = () => {
             title={title || 'Welcome!'}
             subtitle={subtitle}
             primaryColor={color}
-            accountId={accountId}
+            accountId={account_id}
             baseUrl={BASE_URL}
             defaultIsOpen
           />
@@ -194,7 +218,7 @@ const ExamplePage = () => {
           </Paragraph>
 
           <SyntaxHighlighter language="html" style={atomOneLight}>
-            {this.generateCode(title, subtitle, color, accountId).HTML_CODE}
+            {this.generateCode(title, subtitle, color, account_id).HTML_CODE}
           </SyntaxHighlighter>
         </Box>
 
@@ -228,7 +252,7 @@ const ExamplePage = () => {
           </Paragraph>
 
           <SyntaxHighlighter language="typescript" style={atomOneLight}>
-            {this.generateCode(title, subtitle, color, accountId).REACT_CODE}
+            {this.generateCode(title, subtitle, color, account_id).REACT_CODE}
           </SyntaxHighlighter>
         </Box>
 

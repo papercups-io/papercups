@@ -37,6 +37,20 @@ defmodule ChatApi.WidgetConfigs do
   """
   def get_widget_config!(id), do: Repo.get!(WidgetConfig, id)
 
+  def create_or_update(nil, params) do
+      create_widget_config(params)
+  end
+
+  def create_or_update(id, params) do
+    existing = get_widget_config!(id)
+
+    if existing do
+      update_widget_config(existing, params)
+    else
+      create_widget_config(params)
+    end
+  end
+
   @doc """
   Creates a widget_config.
 

@@ -20,5 +20,6 @@ defmodule ChatApi.WidgetConfigs.WidgetConfig do
     widget_config
     |> cast(attrs, [:title, :subtitle, :color, :account_id])
     |> validate_required([:title, :subtitle, :color, :account_id])
+    |> unique_constraint(:account_id)
   end
 end
