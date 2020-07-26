@@ -6,13 +6,7 @@ defmodule ChatApiWeb.SlackController do
   action_fallback ChatApiWeb.FallbackController
 
   def oauth(conn, %{"code" => code}) do
-    IO.inspect("Code from Slack OAuth:")
-    IO.inspect(code)
-
     {:ok, response} = Slack.get_access_token(code)
-
-    IO.inspect("Slack OAuth response:")
-    IO.inspect(response)
 
     %{body: body} = response
 
