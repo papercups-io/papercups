@@ -83,7 +83,10 @@ const Dashboard = (props: RouteComponentProps) => {
                       }}
                     >
                       <Box mr={2}>All conversations</Box>
-                      <Badge count={unread.all} />
+                      <Badge
+                        count={unread.all}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
                     </Flex>
                   </Link>
                 </Menu.Item>
@@ -96,7 +99,10 @@ const Dashboard = (props: RouteComponentProps) => {
                       }}
                     >
                       <Box mr={2}>Assigned to me</Box>
-                      <Badge count={unread.mine} />
+                      <Badge
+                        count={unread.mine}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
                     </Flex>
                   </Link>
                 </Menu.Item>
@@ -109,7 +115,10 @@ const Dashboard = (props: RouteComponentProps) => {
                       }}
                     >
                       <Box mr={2}>Prioritized</Box>
-                      <Badge count={unread.priority} />
+                      <Badge
+                        count={unread.priority}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
                     </Flex>
                   </Link>
                 </Menu.Item>
