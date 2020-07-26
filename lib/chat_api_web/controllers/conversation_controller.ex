@@ -26,7 +26,7 @@ defmodule ChatApiWeb.ConversationController do
            Conversations.create_conversation(conversation_params) do
       %{id: conversation_id, account_id: account_id} = conversation
 
-      ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation", %{
+      ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:created", %{
         "id" => conversation_id
       })
 

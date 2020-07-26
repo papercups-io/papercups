@@ -1,5 +1,6 @@
 import request from 'superagent';
 import {getAuthTokens} from './storage';
+import {Conversation, User} from './types';
 
 // TODO: handle this on the server instead
 function now() {
@@ -38,7 +39,7 @@ const getRefreshToken = (): string | null => {
   return (tokens && tokens.renew_token) || null;
 };
 
-export const me = async (token = getAccessToken()) => {
+export const me = async (token = getAccessToken()): Promise<User> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -131,7 +132,9 @@ export const fetchAccountInfo = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const fetchAllConversations = async (token = getAccessToken()) => {
+export const fetchAllConversations = async (
+  token = getAccessToken()
+): Promise<Array<Conversation>> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -153,7 +156,7 @@ export const fetchMyConversations = async (
 
   return request
     .get(`/api/conversations`)
-    .query({assignee_id: userId})
+    .query({assignee_id: userId, status: 'open'})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -165,7 +168,7 @@ export const fetchPriorityConversations = async (token = getAccessToken()) => {
 
   return request
     .get(`/api/conversations`)
-    .query({priority: 'priority'})
+    .query({priority: 'priority', status: 'open'})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

@@ -1,5 +1,7 @@
 import dayjs from 'dayjs';
 
+export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
 export const formatRelativeTime = (date: dayjs.Dayjs) => {
   const ms = dayjs().diff(date, 'second');
   const mins = Math.floor(ms / 60);

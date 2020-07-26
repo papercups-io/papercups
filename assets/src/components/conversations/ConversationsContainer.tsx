@@ -1,31 +1,31 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import {Channel} from 'phoenix';
-import * as API from '../../api';
 import {
   Button,
   colors,
   Content,
   Layout,
+  notification,
   Result,
   Sider,
   Text,
   Title,
 } from '../common';
 import {SmileOutlined} from '../icons';
-import {socket} from '../../socket';
-import {formatRelativeTime} from '../../utils';
-import {Message, Conversation} from '../../types';
+import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationFooter from './ConversationFooter';
 
-dayjs.extend(utc);
+const formatMessage = (message: any) => {
+  return {
+    ...message,
+    sender: message.customer_id ? 'customer' : 'agent',
+  };
+};
 
 const EmptyMessagesPlaceholder = () => {
   return (
@@ -59,371 +59,152 @@ const GettingStartedRedirect = () => {
 
 type Props = {
   title?: string;
-  conversations: Array<Conversation>;
   account: any;
   currentUser: any;
-  fetch: () => Promise<Array<Conversation>>;
-  onRefresh?: () => void;
-};
-type State = {
   loading: boolean;
   showGetStarted: boolean;
-  selectedConversationId: string | null;
   conversationIds: Array<string>;
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
-  isUpdatingConversation: boolean;
+  fetch: () => Promise<Array<string>>;
+  onSelectConversation: (id: string, fn?: () => void) => void;
+  onUpdateConversation: (id: string, params: any) => Promise<void>;
+  onSendMessage: (
+    message: string,
+    conversationId: string,
+    fn: () => void
+  ) => void;
 };
+
+type State = {loading: boolean; selected: string | null};
 
 class ConversationsContainer extends React.Component<Props, State> {
   scrollToEl: any = null;
 
-  channel: Channel | null = null;
+  state: State = {loading: true, selected: null};
 
-  state: State = {
-    loading: true,
-    showGetStarted: false,
-    selectedConversationId: null,
-    conversationIds: [],
-    conversationsById: {},
-    messagesByConversation: {},
-    isUpdatingConversation: false,
-  };
-
-  async componentDidMount() {
-    socket.connect();
-
-    const {conversationIds = []} = await this.refreshConversationsData();
-
-    const {account} = this.props;
-    const {id: accountId} = account;
-
-    this.joinNotificationChannel(accountId, conversationIds);
+  componentDidMount() {
+    this.props
+      .fetch()
+      .then(([first]) => {
+        this.setState({loading: false});
+        this.handleSelectConversation(first);
+      })
+      .then(() => this.scrollToEl.scrollIntoView());
   }
 
-  componentWillUnmount() {
-    this.channel && this.channel.leave();
+  componentDidUpdate(prev: Props) {
+    if (!this.state.selected) {
+      return null;
+    }
+
+    const {selected} = this.state;
+    const {messagesByConversation: prevMessagesByConversation} = prev;
+    const {messagesByConversation} = this.props;
+    const prevMessages = prevMessagesByConversation[selected] || [];
+    const messages = messagesByConversation[selected] || [];
+
+    if (messages.length > prevMessages.length) {
+      this.scrollToEl.scrollIntoView();
+    }
   }
 
-  refreshConversationsData = async () => {
-    this.setState({loading: true});
+  refreshSelectedConversation = async () => {
+    const {selected} = this.state;
 
-    const conversations = await this.props.fetch();
+    const ids = await this.props.fetch();
 
-    if (!conversations || !conversations.length) {
-      const {count: numAccountMessages} = await API.countMessages();
-      const hasNoMessagesYet = numAccountMessages === 0;
-
-      this.setState({
-        showGetStarted: hasNoMessagesYet,
-        conversationsById: {},
-        messagesByConversation: {},
-        conversationIds: [],
-        selectedConversationId: null,
-        loading: false,
-      });
-
-      return {
-        conversationsById: {},
-        messagesByConversation: {},
-        conversationIds: [],
-        selectedConversationId: null,
-      };
+    if (!selected || ids.indexOf(selected) === -1) {
+      this.handleSelectConversation(ids[0]);
     }
-
-    return this.updateConversationsState(conversations);
-  };
-
-  updateConversationsState = (conversations: Array<any>) => {
-    const {selectedConversationId} = this.state;
-
-    const conversationsById = conversations.reduce((acc: any, conv: any) => {
-      return {...acc, [conv.id]: conv};
-    }, {});
-    const messagesByConversation = conversations.reduce(
-      (acc: any, conv: any) => {
-        return {
-          ...acc,
-          [conv.id]: conv.messages.sort(
-            (a: any, b: any) =>
-              +new Date(a.created_at) - +new Date(b.created_at)
-          ),
-        };
-      },
-      {}
-    );
-    const conversationIds = Object.keys(conversationsById).sort(
-      (a: string, b: string) => {
-        const messagesA = messagesByConversation[a];
-        const messagesB = messagesByConversation[b];
-        const x = messagesA[messagesA.length - 1];
-        const y = messagesB[messagesB.length - 1];
-
-        return +new Date(y?.created_at) - +new Date(x?.created_at);
-      }
-    );
-    const [recentConversationId] = conversationIds;
-    const updatedSelectedId =
-      selectedConversationId && conversationsById[selectedConversationId]
-        ? selectedConversationId
-        : recentConversationId;
-
-    this.setState(
-      {
-        conversationsById,
-        messagesByConversation,
-        conversationIds,
-        selectedConversationId: updatedSelectedId,
-        loading: false,
-      },
-      () => this.scrollToEl.scrollIntoView()
-    );
-
-    return {
-      conversationsById,
-      messagesByConversation,
-      conversationIds,
-      selectedConversationId,
-    };
-  };
-
-  joinNotificationChannel = (
-    accountId: string,
-    conversationIds: Array<string>
-  ) => {
-    if (this.channel && this.channel.leave) {
-      this.channel.leave(); // TODO: what's the best practice here?
-    }
-
-    // TODO: If no conversations exist, should we create a conversation with us
-    // so new users can play around with the chat right away and give us feedback?
-    this.channel = socket.channel(`notification:${accountId}`, {
-      ids: conversationIds,
-    });
-
-    this.channel.on('shout', (message) => {
-      this.handleNewMessage(message);
-    });
-
-    this.channel.on('conversation', ({id: conversationId}) => {
-      this.handleNewConversation(conversationId);
-    });
-
-    this.channel
-      .join()
-      .receive('ok', (res) => {
-        console.log('Joined successfully', res);
-
-        this.handleConversationRead(this.state.selectedConversationId);
-      })
-      .receive('error', (err) => {
-        console.log('Unable to join', err);
-      });
-  };
-
-  handleConversationRead = (conversationId: string | null) => {
-    if (!this.channel || !conversationId) {
-      return;
-    }
-
-    this.channel
-      .push('read', {
-        conversation_id: conversationId,
-      })
-      .receive('ok', (res) => {
-        console.log('Marked as read!', conversationId);
-
-        const {conversationsById} = this.state;
-        const current = conversationsById[conversationId];
-
-        // Optimistic update
-        this.setState({
-          conversationsById: {
-            ...conversationsById,
-            [conversationId]: {...current, read: true},
-          },
-        });
-      });
-  };
-
-  handleNewConversation = async (conversationId?: string) => {
-    if (!this.channel || !conversationId) {
-      return;
-    }
-
-    this.channel.push('watch', {
-      conversation_id: conversationId,
-    });
-
-    const conversations = await this.props.fetch();
-
-    this.updateConversationsState(conversations);
   };
 
   handleSelectConversation = (id: string) => {
-    this.setState({selectedConversationId: id}, () => {
-      const conversation = this.state.conversationsById[id];
+    this.setState({selected: id}, () => {
+      this.scrollToEl.scrollIntoView();
+    });
 
-      if (conversation && !conversation.read) {
-        this.handleConversationRead(id);
-      }
+    this.props.onSelectConversation(id);
+  };
 
+  handleCloseConversation = async (conversationId: string) => {
+    await this.props.onUpdateConversation(conversationId, {status: 'closed'});
+
+    notification.open({
+      message: 'Conversation closed!',
+      duration: 6, // 6 seconds
+      description: (
+        <Box>
+          You can view your closed conversations{' '}
+          <a href="/conversations/closed">here</a>.
+        </Box>
+      ),
+    });
+
+    await sleep(2000);
+    await this.refreshSelectedConversation();
+  };
+
+  handleReopenConversation = async (conversationId: string) => {
+    await this.props.onUpdateConversation(conversationId, {status: 'open'});
+
+    notification.open({
+      message: 'Conversation re-opened!',
+      duration: 6, // 6 seconds
+      description: (
+        <Box>
+          You can view this conversations once again{' '}
+          <a href="/conversations/all">here</a>.
+        </Box>
+      ),
+    });
+
+    await sleep(2000);
+    await this.refreshSelectedConversation();
+  };
+
+  handleMarkPriority = async (conversationId: string) => {
+    await this.props.onUpdateConversation(conversationId, {
+      priority: 'priority',
+    });
+    await this.refreshSelectedConversation();
+  };
+
+  handleMarkUnpriority = async (conversationId: string) => {
+    await this.props.onUpdateConversation(conversationId, {
+      priority: 'not_priority',
+    });
+    await this.refreshSelectedConversation();
+  };
+
+  handleAssignUser = (conversationId: string, userId: string) => {
+    this.props.onUpdateConversation(conversationId, {assignee_id: userId});
+  };
+
+  handleSendMessage = (message: string) => {
+    const {selected: conversationId} = this.state;
+
+    if (!conversationId) {
+      return null;
+    }
+
+    this.props.onSendMessage(message, conversationId, () => {
       this.scrollToEl.scrollIntoView();
     });
   };
 
-  handleNewMessage = (message: Message) => {
-    console.log('New message!', message);
-
-    const {
-      messagesByConversation,
-      conversationIds,
-      selectedConversationId,
-      conversationsById,
-    } = this.state;
-    const {conversation_id: conversationId} = message;
-    const existing = messagesByConversation[conversationId] || [];
-    const update = {
-      ...messagesByConversation,
-      [conversationId]: [...existing, message],
-    };
-    const updatedConversationIds = [
-      conversationId,
-      ...conversationIds.filter((id) => id !== conversationId),
-    ];
-
-    this.setState(
-      {
-        messagesByConversation: update,
-        conversationIds: updatedConversationIds,
-      },
-      () => {
-        // TODO: this is a bit hacky... there's probably a better way to
-        // handle listening for changes on conversation records...
-        if (selectedConversationId === conversationId) {
-          // If the new message matches the id of the selected conversation,
-          // mark it as read right away and scroll to the latest message
-          this.handleConversationRead(selectedConversationId);
-
-          this.scrollToEl.scrollIntoView();
-        } else if (selectedConversationId) {
-          // Otherwise, find the updated conversation and mark it as unread
-          const conversation = conversationsById[conversationId];
-
-          this.setState({
-            conversationsById: {
-              ...conversationsById,
-              [conversationId]: {...conversation, read: false},
-            },
-          });
-        }
-      }
-    );
-  };
-
-  handleSendMessage = (message: string) => {
-    const {account, currentUser} = this.props;
-    const {selectedConversationId} = this.state;
-    const {id: accountId} = account;
-    const {id: userId} = currentUser;
-
-    if (!this.channel || !message || message.trim().length === 0) {
-      return;
-    }
-
-    this.channel.push('shout', {
-      body: message,
-      user_id: userId,
-      conversation_id: selectedConversationId,
-      account_id: accountId,
-      sender: 'agent', // TODO: remove?
-    });
-  };
-
-  formatMessage = (message: any) => {
-    return {
-      ...message,
-      sender: message.customer_id ? 'customer' : 'agent',
-    };
-  };
-
-  formatConversation = (conversation: any, messages: Array<any>) => {
-    const recent = messages[messages.length - 1];
-    const created = dayjs.utc(recent.created_at);
-    const date = formatRelativeTime(created);
-
-    return {
-      ...conversation,
-      customer: 'Anonymous User',
-      date: date || '1d', // TODO
-      preview: recent && recent.body ? recent.body : '...',
-      messages: messages,
-    };
-  };
-
-  handleUpdateConversation = async (conversationId: string, params: any) => {
-    this.setState({isUpdatingConversation: true});
-
-    const {conversationsById} = this.state;
-    const existing = conversationsById[conversationId];
-
-    // Optimistic update
-    this.setState({
-      conversationsById: {
-        ...conversationsById,
-        [conversationId]: {...existing, ...params},
-      },
-    });
-
-    try {
-      await API.updateConversation(conversationId, {
-        conversation: params,
-      });
-
-      await this.refreshConversationsData();
-    } catch (err) {
-      // Revert
-      this.setState({
-        conversationsById: conversationsById,
-      });
-    }
-
-    this.setState({isUpdatingConversation: false});
-  };
-
-  handleCloseConversation = (conversationId: string) => {
-    this.handleUpdateConversation(conversationId, {status: 'closed'});
-  };
-
-  handleReopenConversation = (conversationId: string) => {
-    this.handleUpdateConversation(conversationId, {status: 'open'});
-  };
-
-  handleMarkPriority = (conversationId: string) => {
-    this.handleUpdateConversation(conversationId, {priority: 'priority'});
-  };
-
-  handleMarkUnpriority = (conversationId: string) => {
-    this.handleUpdateConversation(conversationId, {priority: 'not_priority'});
-  };
-
-  handleAssignUser = (conversationId: string, userId: string) => {
-    this.handleUpdateConversation(conversationId, {assignee_id: userId});
-  };
-
   render() {
-    const {account, currentUser} = this.props;
-    const users = (account && account.users) || [];
+    const {selected: selectedConversationId} = this.state;
     const {
-      loading,
+      title,
+      account,
+      currentUser,
       showGetStarted,
-      selectedConversationId,
       conversationIds = [],
       conversationsById = {},
       messagesByConversation = {},
-    } = this.state;
-
-    // TODO: add loading state
+    } = this.props;
+    const users = (account && account.users) || [];
 
     const messages = selectedConversationId
       ? messagesByConversation[selectedConversationId]
@@ -431,6 +212,8 @@ class ConversationsContainer extends React.Component<Props, State> {
     const selectedConversation = selectedConversationId
       ? conversationsById[selectedConversationId]
       : null;
+
+    const loading = this.props.loading || this.state.loading;
 
     return (
       <Layout style={{background: colors.white}}>
@@ -442,17 +225,17 @@ class ConversationsContainer extends React.Component<Props, State> {
             overflow: 'auto',
             height: '100vh',
             position: 'fixed',
-            left: 200,
+            left: 220,
           }}
         >
           <Box p={3} sx={{borderBottom: '1px solid #f0f0f0'}}>
             <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
-              {this.props.title || 'Conversations'}
+              {title || 'Conversations'}
             </Title>
           </Box>
 
           <Box>
-            {conversationIds.length ? (
+            {!loading && conversationIds.length ? (
               conversationIds.map((conversationId, idx) => {
                 const conversation = conversationsById[conversationId];
                 const messages = messagesByConversation[conversationId];
@@ -513,7 +296,7 @@ class ConversationsContainer extends React.Component<Props, State> {
                 {messages.length ? (
                   messages.map((message: any, key: number) => {
                     // Slight hack
-                    const msg = this.formatMessage(message);
+                    const msg = formatMessage(message);
                     const next = messages[key + 1];
                     const isMe = msg.user_id && msg.user_id === currentUser.id;
                     const isLastInGroup = next

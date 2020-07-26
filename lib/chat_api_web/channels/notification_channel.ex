@@ -30,8 +30,14 @@ defmodule ChatApiWeb.NotificationChannel do
     {:reply, {:ok, payload}, socket}
   end
 
-  def handle_in("watch", %{"conversation_id" => id}, socket) do
+  def handle_in("watch:one", %{"conversation_id" => id}, socket) do
     {:reply, :ok, put_new_topics(socket, ["conversation:#{id}"])}
+  end
+
+  def handle_in("watch:many", %{"conversation_ids" => ids}, socket) do
+    topics = Enum.map(ids, fn id -> "conversation:#{id}" end)
+
+    {:reply, :ok, put_new_topics(socket, topics)}
   end
 
   def handle_in("unwatch", %{"conversation_id" => id}, _socket) do
@@ -39,7 +45,7 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   def handle_in("read", %{"conversation_id" => id}, socket) do
-    conversation = Conversations.mark_conversation_read(id)
+    _conversation = Conversations.mark_conversation_read(id)
 
     {:reply, :ok, socket}
   end

@@ -26,7 +26,8 @@ defmodule ChatApiWeb.ConversationView do
       read: conversation.read,
       priority: conversation.priority,
       account_id: conversation.account_id,
-      customer_id: conversation.customer_id
+      customer_id: conversation.customer_id,
+      assignee_id: conversation.assignee_id
     }
   end
 

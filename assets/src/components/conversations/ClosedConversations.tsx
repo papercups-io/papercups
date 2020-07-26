@@ -1,63 +1,52 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router-dom';
-import * as API from '../../api';
-import {Conversation} from '../../types';
 import ConversationsContainer from './ConversationsContainer';
+import {useConversations} from './ConversationsProvider';
 
-type Props = RouteComponentProps & {};
-type State = {
-  account: any;
-  currentUser: any;
-  conversations: Array<Conversation>;
-  loading: boolean;
+const ClosedConversations = () => {
+  const {
+    loading,
+    currentUser,
+    account,
+    isNewUser,
+    closed = [],
+    conversationsById = {},
+    messagesByConversation = {},
+    fetchAllConversations,
+    fetchClosedConversations,
+    onSelectConversation,
+    onUpdateConversation,
+    onSendMessage,
+  } = useConversations();
+
+  const fetch = async () => {
+    const results = await fetchClosedConversations();
+    // Need to refresh the cache for the edge case where we re-open a
+    // conversation and then want to view in-app notifications for it.
+    await fetchAllConversations();
+
+    return results;
+  };
+
+  if (loading) {
+    return null;
+  }
+
+  return (
+    <ConversationsContainer
+      loading={loading}
+      title="Closed"
+      account={account}
+      currentUser={currentUser}
+      showGetStarted={isNewUser}
+      conversationIds={closed}
+      conversationsById={conversationsById}
+      messagesByConversation={messagesByConversation}
+      fetch={fetch}
+      onSelectConversation={onSelectConversation}
+      onUpdateConversation={onUpdateConversation}
+      onSendMessage={onSendMessage}
+    />
+  );
 };
-
-class ClosedConversations extends React.Component<Props, State> {
-  state: any = {
-    account: null,
-    currentUser: null,
-    conversations: [],
-    loading: true,
-  };
-
-  componentDidMount() {
-    const promises = [
-      // TODO: do in AuthProvider
-      API.me()
-        .then((user) => this.setState({currentUser: user}))
-        .catch((err) => console.log('Error fetching current user:', err)),
-
-      // TODO: handle in a different context?
-      API.fetchAccountInfo()
-        .then((account) => this.setState({account}))
-        .catch((err) => console.log('Error fetching account info:', err)),
-    ];
-
-    Promise.all(promises).then(() => this.setState({loading: false}));
-  }
-
-  handleFetchConversations = () => {
-    return API.fetchClosedConversations();
-  };
-
-  render() {
-    const {account, currentUser, conversations, loading} = this.state;
-
-    if (loading || !account || !currentUser) {
-      // TODO: handle loading state
-      return null;
-    }
-
-    return (
-      <ConversationsContainer
-        title="Closed"
-        account={account}
-        currentUser={currentUser}
-        conversations={conversations}
-        fetch={this.handleFetchConversations}
-      />
-    );
-  }
-}
 
 export default ClosedConversations;

@@ -8,7 +8,7 @@ import {
   RouteComponentProps,
 } from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {colors, Layout, Menu, Sider} from './common';
+import {colors, Badge, Layout, Menu, Sider} from './common';
 import {
   ApiOutlined,
   MailOutlined,
@@ -18,6 +18,10 @@ import {
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import GettingStartedOverview from './account/GettingStartedOverview';
+import {
+  ConversationsProvider,
+  useConversations,
+} from './conversations/ConversationsProvider';
 import AllConversations from './conversations/AllConversations';
 import MyConversations from './conversations/MyConversations';
 import PriorityConversations from './conversations/PriorityConversations';
@@ -26,17 +30,16 @@ import IntegrationsOverview from './integrations/IntegrationsOverview';
 
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
-  const location = useLocation();
-  const [section, key] = location.pathname.split('/').slice(1); // Slice off initial slash
+  const {pathname} = useLocation();
+  const {unreadByCategory: unread} = useConversations();
+  const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
 
-  const logout = () => {
-    auth.logout().then(() => props.history.push('/login'));
-  };
+  const logout = () => auth.logout().then(() => props.history.push('/login'));
 
   return (
     <Layout>
       <Sider
-        width={200}
+        width={220}
         collapsed={false}
         style={{
           overflow: 'auto',
@@ -72,13 +75,43 @@ const Dashboard = (props: RouteComponentProps) => {
                 title="Inbox"
               >
                 <Menu.Item key="all">
-                  <Link to="/conversations/all">All conversations</Link>
+                  <Link to="/conversations/all">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>All conversations</Box>
+                      <Badge count={unread.all} />
+                    </Flex>
+                  </Link>
                 </Menu.Item>
                 <Menu.Item key="me">
-                  <Link to="/conversations/me">Assigned to me</Link>
+                  <Link to="/conversations/me">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Assigned to me</Box>
+                      <Badge count={unread.mine} />
+                    </Flex>
+                  </Link>
                 </Menu.Item>
                 <Menu.Item key="priority">
-                  <Link to="/conversations/priority">Prioritized</Link>
+                  <Link to="/conversations/priority">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Prioritized</Box>
+                      <Badge count={unread.priority} />
+                    </Flex>
+                  </Link>
                 </Menu.Item>
                 <Menu.Item key="closed">
                   <Link to="/conversations/closed">Closed</Link>
@@ -109,7 +142,7 @@ const Dashboard = (props: RouteComponentProps) => {
         </Flex>
       </Sider>
 
-      <Layout style={{marginLeft: 200, background: colors.white}}>
+      <Layout style={{marginLeft: 220, background: colors.white}}>
         <Switch>
           <Route path="/account/overview" component={AccountOverview} />
           <Route
@@ -127,7 +160,6 @@ const Dashboard = (props: RouteComponentProps) => {
             component={PriorityConversations}
           />
           <Route path="/conversations/closed" component={ClosedConversations} />
-          <Route path="/conversations*" component={AllConversations} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
@@ -135,4 +167,12 @@ const Dashboard = (props: RouteComponentProps) => {
   );
 };
 
-export default Dashboard;
+const DashboardWrapper = (props: RouteComponentProps) => {
+  return (
+    <ConversationsProvider>
+      <Dashboard {...props} />
+    </ConversationsProvider>
+  );
+};
+
+export default DashboardWrapper;

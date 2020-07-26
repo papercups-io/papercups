@@ -136,16 +136,27 @@ defmodule ChatApi.Slack do
     # responds to a thread on Slack, we just assume it's the assignee.
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
          primary_user_id = get_conversation_primary_user_id(conversation) do
+      account_id = conversation.account_id
+
       params =
         Map.merge(
           %{
             conversation_id: conversation_id,
-            account_id: conversation.account_id
+            account_id: account_id
           },
           extract_slack_conversation_thread_info(response)
         )
 
-      Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
+      {:ok, update} =
+        Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
+
+      result = ChatApiWeb.ConversationView.render("basic.json", conversation: update)
+
+      ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
+        "id" => conversation_id,
+        "updates" => result
+      })
+
       SlackConversationThreads.create_slack_conversation_thread(params)
     end
   end
