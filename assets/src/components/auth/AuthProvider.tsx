@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext} from 'react';
+import React, {useContext} from 'react';
 import {getAuthTokens, setAuthTokens, removeAuthTokens} from '../../storage';
 import * as API from '../../api';
 

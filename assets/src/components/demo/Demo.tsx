@@ -131,6 +131,7 @@ class Demo extends React.Component<Props, State> {
           subtitle={subtitle}
           primaryColor={color}
           accountId={accountId}
+          greeting="Hello! Have any questions?"
           defaultIsOpen
         />
       </Box>
