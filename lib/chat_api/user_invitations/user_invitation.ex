@@ -4,12 +4,12 @@ defmodule ChatApi.UserInvitations.UserInvitation do
 
   alias ChatApi.Accounts.Account
 
-  #number of days the invite is valid
+  # number of days the invite is valid
   @days_from_now 3
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  #Id is the invite token
+  # Id is the invite token
   schema "user_invitations" do
     field(:expires_at, :utc_datetime)
     belongs_to(:account, Account)

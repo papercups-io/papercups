@@ -15,6 +15,7 @@ defmodule ChatApiWeb.RegistrationController do
       else
         {:ok, account} =
           ChatApi.Accounts.create_account(%{company_name: user_params["company_name"]})
+
         account
       end
 

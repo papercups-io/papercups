@@ -4,7 +4,6 @@ defmodule ChatApi.UserInvitationsTest do
   alias ChatApi.{Accounts, UserInvitations}
 
   describe "user_invitations" do
-
     def fixture(:account) do
       {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
       account

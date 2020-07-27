@@ -44,7 +44,6 @@ defmodule ChatApiWeb.RegistrationControllerTest do
   end
 
   describe("registering with invitation token") do
-
     def fixture(:account) do
       {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
       account
@@ -73,7 +72,7 @@ defmodule ChatApiWeb.RegistrationControllerTest do
 
       invite_token = json_response(existing_conn, 201)["data"]["id"]
 
-      random_number = :rand.uniform(1000000000) |> Integer.to_string()
+      random_number = :rand.uniform(1_000_000_000) |> Integer.to_string()
       registration_email = random_number <> "anotheremail@example.com"
 
       params = %{
