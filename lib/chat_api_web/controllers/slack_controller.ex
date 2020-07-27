@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.SlackController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{Chat, Slack, SlackAuthorizations, SlackConversationThreads}
+  alias ChatApi.{Messages, Slack, SlackAuthorizations, SlackConversationThreads}
 
   action_fallback ChatApiWeb.FallbackController
 
@@ -128,7 +128,7 @@ defmodule ChatApiWeb.SlackController do
         "user_id" => assignee_id
       }
 
-      {:ok, message} = Chat.create_message(params)
+      {:ok, message} = Messages.create_message(params)
       result = ChatApiWeb.MessageView.render("message.json", message: message)
 
       ChatApiWeb.Endpoint.broadcast!("conversation:" <> conversation.id, "shout", result)

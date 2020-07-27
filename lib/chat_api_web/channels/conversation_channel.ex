@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.ConversationChannel do
   use ChatApiWeb, :channel
 
-  alias ChatApi.{Accounts, Chat, Conversations, Emails}
+  alias ChatApi.{Accounts, Messages, Conversations, Emails}
 
   @impl true
   def join("conversation:lobby", payload, socket) do
@@ -45,7 +45,7 @@ defmodule ChatApiWeb.ConversationChannel do
         msg =
           Map.merge(payload, %{"conversation_id" => conversation_id, "account_id" => account_id})
 
-        {:ok, message} = Chat.create_message(msg)
+        {:ok, message} = Messages.create_message(msg)
         Conversations.mark_conversation_unread(conversation_id)
         result = ChatApiWeb.MessageView.render("message.json", message: message)
 

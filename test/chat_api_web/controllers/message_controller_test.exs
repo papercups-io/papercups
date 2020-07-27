@@ -1,8 +1,8 @@
 defmodule ChatApiWeb.MessageControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.Chat
-  alias ChatApi.Chat.Message
+  alias ChatApi.Messages
+  alias ChatApi.Messages.Message
   alias ChatApi.Accounts
 
   @update_attrs %{
@@ -17,7 +17,7 @@ defmodule ChatApiWeb.MessageControllerTest do
 
   def fixture(:message) do
     attrs = valid_create_attrs()
-    {:ok, message} = Chat.create_message(attrs)
+    {:ok, message} = Messages.create_message(attrs)
     message
   end
 
