@@ -11,7 +11,10 @@ defmodule ChatApiWeb.CustomerControllerTest do
   }
   @update_attrs %{
     first_seen: ~D[2020-01-01],
-    last_seen: ~D[2020-01-02]
+    last_seen: ~D[2020-01-02],
+    name: "Test User",
+    email: "user@test.com",
+    phone: "+16501235555"
   }
 
   @invalid_attrs %{
