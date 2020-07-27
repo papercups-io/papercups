@@ -30,8 +30,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
   async componentDidMount() {
     const account = await API.fetchAccountInfo();
     const {company_name: company} = account;
-
-    const {color, title, subtitle, id} = account.widget_config;
+    const {color, title, subtitle, id} = account.widget_setting;
 
     if (id) {
       this.setState({
@@ -57,12 +56,12 @@ class GettingStartedOverview extends React.Component<Props, State> {
   };
 
   async componentWillUnmount() {
-    this.createOrUpdateWidgetConfig();
+    this.createOrUpdateWidgetSetting();
   }
 
-  createOrUpdateWidgetConfig = () => {
+  createOrUpdateWidgetSetting = () => {
     const {color, title, subtitle, account_id} = this.state;
-    API.createOrUpdateWidgetConfig(
+    API.createOrUpdateWidgetSetting(
       {color, title, subtitle, account_id},
       this.state.id
     )

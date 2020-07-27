@@ -1,4 +1,4 @@
-defmodule ChatApi.WidgetConfigs.WidgetConfig do
+defmodule ChatApi.WidgetSettings.WidgetSetting do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -6,7 +6,7 @@ defmodule ChatApi.WidgetConfigs.WidgetConfig do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  schema "widget_configs" do
+  schema "widget_settings" do
     field :color, :string
     field :subtitle, :string
     field :title, :string
@@ -16,8 +16,8 @@ defmodule ChatApi.WidgetConfigs.WidgetConfig do
   end
 
   @doc false
-  def changeset(widget_config, attrs) do
-    widget_config
+  def changeset(widget_setting, attrs) do
+    widget_setting
     |> cast(attrs, [:title, :subtitle, :color, :account_id])
     |> validate_required([:title, :subtitle, :color, :account_id])
     |> unique_constraint(:account_id)

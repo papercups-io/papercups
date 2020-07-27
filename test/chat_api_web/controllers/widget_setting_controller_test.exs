@@ -1,8 +1,8 @@
-defmodule ChatApiWeb.WidgetConfigControllerTest do
+defmodule ChatApiWeb.WidgetSettingControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.WidgetConfigs
-  alias ChatApi.WidgetConfigs.WidgetConfig
+  alias ChatApi.WidgetSettings
+  alias ChatApi.WidgetSettings.WidgetSetting
   alias ChatApi.Accounts
   @invalid_attrs %{color: nil, subtitle: nil, title: nil}
 
@@ -24,11 +24,11 @@ defmodule ChatApiWeb.WidgetConfigControllerTest do
     }
   end
 
-  def fixture(:widget_config) do
+  def fixture(:widget_setting) do
     {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    {:ok, widget_config} = WidgetConfigs.create_widget_config(create_attr(account.id))
+    {:ok, widget_setting} = WidgetSettings.create_widget_setting(create_attr(account.id))
 
-    widget_config
+    widget_setting
   end
 
   def fixture(:account) do
@@ -46,23 +46,23 @@ defmodule ChatApiWeb.WidgetConfigControllerTest do
   end
 
   describe "index" do
-    test "lists all widget_configs", %{authed_conn: authed_conn} do
-      conn = get(authed_conn, Routes.widget_config_path(authed_conn, :index))
+    test "lists all widget_settings", %{authed_conn: authed_conn} do
+      conn = get(authed_conn, Routes.widget_setting_path(authed_conn, :index))
       assert json_response(conn, 200)["data"] == []
     end
   end
 
-  describe "create widget_config" do
-    test "renders widget_config when data is valid", %{authed_conn: authed_conn, account: account} do
+  describe "create widget_setting" do
+    test "renders widget_setting when data is valid", %{authed_conn: authed_conn, account: account} do
 
       conn =
-        post(authed_conn, Routes.widget_config_path(authed_conn, :create),
-          widget_config: create_attr(account.id)
+        post(authed_conn, Routes.widget_setting_path(authed_conn, :create),
+          widget_setting: create_attr(account.id)
         )
 
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
-      # conn = get(authed_conn, Routes.widget_config_path(authed_conn, :show, id))
+      # conn = get(authed_conn, Routes.widget_setting_path(authed_conn, :show, id))
 
       # assert %{
       #          "id" => id,
@@ -74,30 +74,30 @@ defmodule ChatApiWeb.WidgetConfigControllerTest do
 
     test "renders errors when data is invalid", %{authed_conn: authed_conn} do
       conn =
-        post(authed_conn, Routes.widget_config_path(authed_conn, :create),
-          widget_config: @invalid_attrs
+        post(authed_conn, Routes.widget_setting_path(authed_conn, :create),
+          widget_setting: @invalid_attrs
         )
 
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
 
-  describe "update widget_config" do
-    setup [:create_widget_config]
+  describe "update widget_setting" do
+    setup [:create_widget_setting]
 
-    test "renders widget_config when data is valid", %{
+    test "renders widget_setting when data is valid", %{
       authed_conn: authed_conn,
-      widget_config: %WidgetConfig{id: id} = widget_config,
+      widget_setting: %WidgetSetting{id: id} = widget_setting,
       account: account
     } do
       conn =
-        put(authed_conn, Routes.widget_config_path(authed_conn, :update, widget_config),
-          widget_config: update_attrs(account.id)
+        put(authed_conn, Routes.widget_setting_path(authed_conn, :update, widget_setting),
+          widget_setting: update_attrs(account.id)
         )
 
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
-      conn = get(authed_conn, Routes.widget_config_path(authed_conn, :show, id))
+      conn = get(authed_conn, Routes.widget_setting_path(authed_conn, :show, id))
 
       assert %{
                "id" => id,
@@ -109,32 +109,32 @@ defmodule ChatApiWeb.WidgetConfigControllerTest do
 
     test "renders errors when data is invalid", %{
       authed_conn: authed_conn,
-      widget_config: widget_config
+      widget_setting: widget_setting
     } do
       conn =
-        put(authed_conn, Routes.widget_config_path(authed_conn, :update, widget_config),
-          widget_config: @invalid_attrs
+        put(authed_conn, Routes.widget_setting_path(authed_conn, :update, widget_setting),
+          widget_setting: @invalid_attrs
         )
 
       assert json_response(conn, 422)["errors"] != %{}
     end
   end
 
-  describe "delete widget_config" do
-    setup [:create_widget_config]
+  describe "delete widget_setting" do
+    setup [:create_widget_setting]
 
-    test "deletes chosen widget_config", %{authed_conn: authed_conn, widget_config: widget_config} do
-      conn = delete(authed_conn, Routes.widget_config_path(authed_conn, :delete, widget_config))
+    test "deletes chosen widget_setting", %{authed_conn: authed_conn, widget_setting: widget_setting} do
+      conn = delete(authed_conn, Routes.widget_setting_path(authed_conn, :delete, widget_setting))
       assert response(conn, 204)
 
       assert_error_sent 404, fn ->
-        get(authed_conn, Routes.widget_config_path(authed_conn, :show, widget_config))
+        get(authed_conn, Routes.widget_setting_path(authed_conn, :show, widget_setting))
       end
     end
   end
 
-  defp create_widget_config(_) do
-    widget_config = fixture(:widget_config)
-    %{widget_config: widget_config}
+  defp create_widget_setting(_) do
+    widget_setting = fixture(:widget_setting)
+    %{widget_setting: widget_setting}
   end
 end

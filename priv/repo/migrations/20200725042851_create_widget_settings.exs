@@ -1,8 +1,8 @@
-defmodule ChatApi.Repo.Migrations.CreateWidgetConfigs do
+defmodule ChatApi.Repo.Migrations.CreateWidgetSettings do
   use Ecto.Migration
 
   def change do
-    create table(:widget_configs, primary_key: false) do
+    create table(:widget_settings, primary_key: false) do
       add(:id, :binary_id, primary_key: true)
       add(:title, :string)
       add(:subtitle, :string)
@@ -11,6 +11,6 @@ defmodule ChatApi.Repo.Migrations.CreateWidgetConfigs do
 
       timestamps()
     end
-    create(unique_index(:widget_configs, [:account_id]))
+    create(unique_index(:widget_settings, [:account_id]))
   end
 end
