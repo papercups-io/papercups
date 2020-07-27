@@ -30,11 +30,13 @@ class GettingStartedOverview extends React.Component<Props, State> {
   async componentDidMount() {
     const account = await API.fetchAccountInfo();
     const {company_name: company} = account;
-    const {color, title, subtitle, id} = account.widget_setting;
 
-    if (id) {
+    this.setState({account_id: account.id});
+
+    if (account.widget_settings && account.widget_settings.id) {
+      const {color, title, subtitle, id} = account.widget_setting;
+
       this.setState({
-        account_id: account.id,
         color,
         subtitle,
         id,
