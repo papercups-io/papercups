@@ -10,8 +10,7 @@ export type Message = {
   customer_id?: string;
   conversation_id: string;
   user_id?: string;
-  // Deprecate
-  sender: string;
+  user?: User;
 };
 
 // NB: actual conversation records will look different

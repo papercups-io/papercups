@@ -52,7 +52,8 @@ defmodule ChatApiWeb.NotificationChannel do
 
   def handle_in("shout", payload, socket) do
     {:ok, message} = Messages.create_message(payload)
-    result = ChatApiWeb.MessageView.render("message.json", message: message)
+    message = Messages.get_message!(message.id)
+    result = ChatApiWeb.MessageView.render("expanded.json", message: message)
     # TODO: write doc explaining difference between push, broadcast, etc.
     push(socket, "shout", result)
 
