@@ -3,6 +3,8 @@ defmodule ChatApi.Slack do
   A module to handle sending Slack notifications.
   """
 
+  require Logger
+
   use Tesla
 
   alias ChatApi.{Conversations, SlackAuthorizations, SlackConversationThreads}
@@ -100,7 +102,7 @@ defmodule ChatApi.Slack do
       end
     else
       # Inspect what would've been sent for debugging
-      IO.inspect(payload)
+      Logger.info("Would have sent to Slack: #{inspect(payload)}")
     end
   end
 
@@ -195,7 +197,7 @@ defmodule ChatApi.Slack do
         slack_thread_ts: Map.get(body, "ts")
       }
     else
-      IO.inspect(body)
+      Logger.error("Error sending Slack message: #{inspect(body)}")
 
       raise "chat.postMessage returned ok=false"
     end
