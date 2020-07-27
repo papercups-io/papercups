@@ -17,7 +17,6 @@ const formatConversation = (conversation: any, messages: Array<any> = []) => {
 
   return {
     ...conversation,
-    customer: 'Anonymous User',
     date: date || '1d', // TODO
     preview: recent && recent.body ? recent.body : '...',
     messages: messages,
@@ -39,6 +38,7 @@ const ConversationItem = ({
 }) => {
   const formatted = formatConversation(conversation, messages);
   const {id, priority, status, customer, date, preview, read} = formatted;
+  const {name, email} = customer;
   const isPriority = priority === 'priority';
   const isClosed = status === 'closed';
 
@@ -63,7 +63,7 @@ const ConversationItem = ({
               <SmileTwoTone style={{fontSize: 16}} twoToneColor={color} />
             )}
           </Box>
-          <Text strong>{customer}</Text>
+          <Text strong>{name || email || 'Anonymous User'}</Text>
         </Flex>
 
         {read ? (

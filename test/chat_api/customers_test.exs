@@ -13,7 +13,10 @@ defmodule ChatApi.CustomersTest do
     }
     @update_attrs %{
       first_seen: ~D[2020-01-01],
-      last_seen: ~D[2020-01-02]
+      last_seen: ~D[2020-01-02],
+      name: "Test User",
+      email: "user@test.com",
+      phone: "+16501235555"
     }
     @invalid_attrs %{
       first_seen: 3
@@ -60,6 +63,10 @@ defmodule ChatApi.CustomersTest do
     test "update_customer/2 with valid data updates the customer" do
       customer = customer_fixture()
       assert {:ok, %Customer{} = customer} = Customers.update_customer(customer, @update_attrs)
+
+      assert customer.email == @update_attrs.email
+      assert customer.name == @update_attrs.name
+      assert customer.phone == @update_attrs.phone
     end
 
     test "update_customer/2 with invalid data returns error changeset" do
