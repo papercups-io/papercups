@@ -45,6 +45,8 @@ defmodule ChatApi.Slack do
 
   def send_conversation_message_alert(conversation_id, text, type: type) do
     conversation = Conversations.get_conversation!(conversation_id)
+    # Check if a Slack thread already exists for this conversation.
+    # If one exists, send followup messages as replies; otherwise, start a new thread
     thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id)
     %{account_id: account_id} = conversation
 
@@ -193,6 +195,8 @@ defmodule ChatApi.Slack do
         slack_thread_ts: Map.get(body, "ts")
       }
     else
+      IO.inspect(body)
+
       raise "chat.postMessage returned ok=false"
     end
   end
