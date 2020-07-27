@@ -20,13 +20,6 @@ import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationFooter from './ConversationFooter';
 
-const formatMessage = (message: any) => {
-  return {
-    ...message,
-    sender: message.customer_id ? 'customer' : 'agent',
-  };
-};
-
 const EmptyMessagesPlaceholder = () => {
   return (
     <Box my={4}>
@@ -240,9 +233,9 @@ class ConversationsContainer extends React.Component<Props, State> {
                 const conversation = conversationsById[conversationId];
                 const messages = messagesByConversation[conversationId];
                 const isHighlighted = conversationId === selectedConversationId;
-                const {gold, red, green, gray} = colors;
+                const {gold, red, green, purple, magenta} = colors;
                 // TODO: come up with a better way to make colors/avatars consistent
-                const color = [gold, red, green, gray[0]][idx % 4];
+                const color = [gold, red, green, purple, magenta][idx % 5];
 
                 return (
                   <ConversationItem
@@ -294,9 +287,8 @@ class ConversationsContainer extends React.Component<Props, State> {
                 sx={{minHeight: '100%'}}
               >
                 {messages.length ? (
-                  messages.map((message: any, key: number) => {
+                  messages.map((msg: any, key: number) => {
                     // Slight hack
-                    const msg = formatMessage(message);
                     const next = messages[key + 1];
                     const isMe = msg.user_id && msg.user_id === currentUser.id;
                     const isLastInGroup = next

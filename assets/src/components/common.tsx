@@ -20,7 +20,17 @@ import Tag from 'antd/lib/tag';
 import Tooltip from 'antd/lib/tooltip';
 import Typography from 'antd/lib/typography';
 
-import {blue, green, red, gold, grey} from '@ant-design/colors';
+import {
+  blue,
+  green,
+  red,
+  volcano,
+  orange,
+  gold,
+  purple,
+  magenta,
+  grey,
+} from '@ant-design/colors';
 
 const {Title, Text, Paragraph} = Typography;
 const {Header, Content, Footer, Sider} = Layout;
@@ -32,6 +42,10 @@ export const colors = {
   green: green[5],
   red: red[5],
   gold: gold[5],
+  volcano: volcano[5],
+  orange: orange[5],
+  purple: purple[5],
+  magenta: magenta[5],
   blue: blue, // expose all blues
   gray: grey, // expose all grays
 };

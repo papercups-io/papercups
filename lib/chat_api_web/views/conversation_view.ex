@@ -42,7 +42,7 @@ defmodule ChatApiWeb.ConversationView do
       customer_id: conversation.customer_id,
       assignee_id: conversation.assignee_id,
       customer: render_one(conversation.customer, CustomerView, "customer.json"),
-      messages: render_many(conversation.messages, MessageView, "message.json")
+      messages: render_many(conversation.messages, MessageView, "expanded.json")
     }
   end
 end

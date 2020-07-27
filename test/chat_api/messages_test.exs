@@ -30,7 +30,9 @@ defmodule ChatApi.MessagesTest do
 
     test "list_messages/0 returns all messages" do
       message = message_fixture()
-      assert Messages.list_messages() == [message]
+      messages = Messages.list_messages() |> Enum.map(fn msg -> msg.body end)
+
+      assert messages == [message.body]
     end
 
     test "get_message!/1 returns the message with given id" do

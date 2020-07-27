@@ -1,6 +1,6 @@
 defmodule ChatApiWeb.MessageView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.MessageView
+  alias ChatApiWeb.{MessageView, UserView}
 
   def render("index.json", %{messages: messages}) do
     %{data: render_many(messages, MessageView, "message.json")}
@@ -18,6 +18,18 @@ defmodule ChatApiWeb.MessageView do
       customer_id: message.customer_id,
       conversation_id: message.conversation_id,
       user_id: message.user_id
+    }
+  end
+
+  def render("expanded.json", %{message: message}) do
+    %{
+      id: message.id,
+      body: message.body,
+      created_at: message.inserted_at,
+      conversation_id: message.conversation_id,
+      customer_id: message.customer_id,
+      user_id: message.user_id,
+      user: render_one(message.user, UserView, "user.json")
     }
   end
 end
