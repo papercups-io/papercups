@@ -11,6 +11,6 @@ defmodule ChatApiWeb.CustomerView do
   end
 
   def render("customer.json", %{customer: customer}) do
-    %{id: customer.id}
+    %{id: customer.id, name: customer.name, email: customer.email, phone: customer.phone}
   end
 end

@@ -31,7 +31,14 @@ const ConversationHeader = ({
     return null;
   }
 
-  const {id: conversationId, assignee_id, status, priority} = conversation;
+  const {
+    id: conversationId,
+    assignee_id,
+    status,
+    priority,
+    customer = {},
+  } = conversation;
+  const {name, email} = customer;
   const assigneeId = assignee_id ? String(assignee_id) : undefined;
 
   return (
@@ -49,7 +56,7 @@ const ConversationHeader = ({
         sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
       >
         <Title level={4} style={{marginBottom: 0, marginTop: 4}}>
-          Anonymous User
+          {name || email || 'Anonymous User'}
         </Title>
 
         <Flex mx={-1}>
