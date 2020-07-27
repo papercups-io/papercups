@@ -2,7 +2,7 @@ defmodule ChatApi.ConversationsTest do
   use ChatApi.DataCase
 
   alias ChatApi.Conversations
-  alias ChatApi.Chat
+  alias ChatApi.Messages
   alias ChatApi.Accounts
 
   describe "conversations" do
@@ -30,7 +30,7 @@ defmodule ChatApi.ConversationsTest do
         |> Conversations.create_conversation()
 
       {:ok, _message} =
-        Chat.create_message(%{
+        Messages.create_message(%{
           body: "Test message",
           conversation_id: conversation.id,
           account_id: conversation.account_id

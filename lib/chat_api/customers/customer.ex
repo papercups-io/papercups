@@ -3,7 +3,7 @@ defmodule ChatApi.Customers.Customer do
   import Ecto.Changeset
 
   alias ChatApi.Conversations.Conversation
-  alias ChatApi.Chat.Message
+  alias ChatApi.Messages.Message
   alias ChatApi.Accounts.Account
 
   @primary_key {:id, :binary_id, autogenerate: true}

@@ -47,7 +47,7 @@ After that, we can add the `has_many` and `belongs_to` relationships to the `Con
 
 ```ex
 # in conversation.ex
-alias ChatApi.Chat.Message
+alias ChatApi.Messages.Message
 
 schema "conversations" do
   # ...

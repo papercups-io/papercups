@@ -4,7 +4,7 @@ defmodule ChatApi.Accounts.Account do
 
   alias ChatApi.Customers.Customer
   alias ChatApi.Conversations.Conversation
-  alias ChatApi.Chat.Message
+  alias ChatApi.Messages.Message
   alias ChatApi.Users.User
 
   @primary_key {:id, :binary_id, autogenerate: true}

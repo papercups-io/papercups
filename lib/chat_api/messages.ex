@@ -1,4 +1,4 @@
-defmodule ChatApi.Chat do
+defmodule ChatApi.Messages do
   @moduledoc """
   The Chat context.
   """
@@ -6,7 +6,7 @@ defmodule ChatApi.Chat do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
-  alias ChatApi.Chat.Message
+  alias ChatApi.Messages.Message
 
   @doc """
   Returns the list of messages.

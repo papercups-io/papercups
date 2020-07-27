@@ -2,7 +2,7 @@ defmodule ChatApi.Conversations.Conversation do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias ChatApi.Chat.Message
+  alias ChatApi.Messages.Message
   alias ChatApi.Users.User
   alias ChatApi.Accounts.Account
   alias ChatApi.Customers.Customer

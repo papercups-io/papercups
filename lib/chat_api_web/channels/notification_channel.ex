@@ -2,7 +2,7 @@ defmodule ChatApiWeb.NotificationChannel do
   use ChatApiWeb, :channel
 
   alias Phoenix.Socket.Broadcast
-  alias ChatApi.{Chat, Conversations}
+  alias ChatApi.{Messages, Conversations}
 
   @impl true
   def join("notification:lobby", payload, socket) do
@@ -51,7 +51,7 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   def handle_in("shout", payload, socket) do
-    {:ok, message} = Chat.create_message(payload)
+    {:ok, message} = Messages.create_message(payload)
     result = ChatApiWeb.MessageView.render("message.json", message: message)
     # TODO: write doc explaining difference between push, broadcast, etc.
     push(socket, "shout", result)
