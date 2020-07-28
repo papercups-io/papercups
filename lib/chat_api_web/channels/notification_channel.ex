@@ -5,17 +5,22 @@ defmodule ChatApiWeb.NotificationChannel do
   alias ChatApi.{Messages, Conversations}
 
   @impl true
-  def join("notification:" <> account_id, %{"ids" => ids}, socket) do
-    if authorized?(socket, account_id) do
-      topics = for conversation_id <- ids, do: "conversation:#{conversation_id}"
-
-      {:ok,
-       socket
-       |> assign(:topics, [])
-       |> put_new_topics(topics)}
+  def join("notification:lobby", payload, socket) do
+    if authorized?(payload) do
+      {:ok, socket}
     else
-      {:error, %{reason: "Unauthorized"}}
+      {:error, %{reason: "unauthorized"}}
     end
+  end
+
+  # TODO: secure this better!
+  def join("notification:" <> _account_id, %{"ids" => ids}, socket) do
+    topics = for conversation_id <- ids, do: "conversation:#{conversation_id}"
+
+    {:ok,
+     socket
+     |> assign(:topics, [])
+     |> put_new_topics(topics)}
   end
 
   # Channels can be used in a request/response fashion
@@ -46,22 +51,22 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   def handle_in("shout", payload, socket) do
-    with %{current_user: current_user} <- socket.assigns,
-         %{id: user_id, account_id: account_id} <- current_user do
-      msg = Map.merge(payload, %{"user_id" => user_id, "account_id" => account_id})
-      {:ok, message} = Messages.create_message(msg)
-      message = Messages.get_message!(message.id)
-      result = ChatApiWeb.MessageView.render("expanded.json", message: message)
+    {:ok, message} = Messages.create_message(payload)
+    message = Messages.get_message!(message.id)
+    result = ChatApiWeb.MessageView.render("expanded.json", message: message)
+    # TODO: write doc explaining difference between push, broadcast, etc.
+    push(socket, "shout", result)
 
-      # TODO: write doc explaining difference between push, broadcast, etc.
-      push(socket, "shout", result)
+    case result do
+      %{conversation_id: conversation_id} ->
+        topic = "conversation:" <> conversation_id
 
-      %{conversation_id: conversation_id} = result
-      topic = "conversation:" <> conversation_id
+        ChatApiWeb.Endpoint.broadcast_from!(self(), topic, "shout", result)
 
-      ChatApiWeb.Endpoint.broadcast_from!(self(), topic, "shout", result)
+        ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body, type: "agent")
 
-      ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body, type: "agent")
+      _ ->
+        nil
     end
 
     {:noreply, socket}
@@ -93,12 +98,8 @@ defmodule ChatApiWeb.NotificationChannel do
     end)
   end
 
-  defp authorized?(socket, account_id) do
-    with %{current_user: current_user} <- socket.assigns,
-         %{account_id: acct} <- current_user do
-      acct == account_id
-    else
-      _ -> false
-    end
+  # Add authorization logic here as required.
+  defp authorized?(_payload) do
+    true
   end
 end

@@ -97,7 +97,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
   channel: Channel | null = null;
 
   async componentDidMount() {
-    socket.connect({token: API.getAccessToken()});
+    socket.connect();
 
     const [currentUser, account, numTotalMessages] = await Promise.all([
       API.me(),
@@ -279,13 +279,19 @@ export class ConversationsProvider extends React.Component<Props, State> {
     conversationId: string,
     cb?: () => void
   ) => {
+    const {account, currentUser} = this.state;
+    const {id: accountId} = account;
+    const {id: userId} = currentUser;
+
     if (!this.channel || !message || message.trim().length === 0) {
       return;
     }
 
     this.channel.push('shout', {
       body: message,
+      user_id: userId,
       conversation_id: conversationId,
+      account_id: accountId,
       sender: 'agent', // TODO: remove?
     });
 
