@@ -2,7 +2,7 @@
 
 The code behind [app.papercups.io](https://app.papercups.io/)
 
-![dashboard-v1](https://user-images.githubusercontent.com/5264279/88119050-4f54b480-cb8d-11ea-8f50-1a656068fd82.gif)
+![slack-setup](https://user-images.githubusercontent.com/4218509/88715795-eb714500-d0d2-11ea-84ad-acf0c2124f31.gif)
 
 ## One click Heroku deployment
 
