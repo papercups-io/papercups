@@ -3,13 +3,30 @@ defmodule ChatApi.SlackTest do
 
   import ExUnit.CaptureLog
 
-  alias ChatApi.{Accounts, Conversations, Slack, SlackConversationThreads}
+  alias ChatApi.{
+    Accounts,
+    Conversations,
+    Slack,
+    SlackConversationThreads,
+    Users.User
+  }
 
   describe "slack" do
     def account_fixture(_attrs \\ %{}) do
       {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
 
       account
+    end
+
+    def user_fixture(account_id) do
+      %User{}
+      |> User.changeset(%{
+        email: "test@example.com",
+        password: "secret1234",
+        password_confirmation: "secret1234",
+        account_id: account_id
+      })
+      |> Repo.insert!()
     end
 
     def conversation_fixture(_attrs \\ %{}) do
@@ -47,7 +64,7 @@ defmodule ChatApi.SlackTest do
       assert Slack.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
     end
 
-    test "get_slack_message_subject/1 returns subject for initial slack thread" do
+    test "get_slack_message_subject/3 returns subject for initial slack thread" do
       conversation = conversation_fixture()
       thread = nil
       subject = Slack.get_slack_message_subject(:customer, conversation.id, thread)
@@ -56,7 +73,7 @@ defmodule ChatApi.SlackTest do
       assert String.contains?(msg, conversation.id)
     end
 
-    test "get_slack_message_subject/1 returns subject for slack reply" do
+    test "get_slack_message_subject/3 returns subject for slack reply" do
       thread = slack_conversation_thread_fixture()
       %{conversation_id: conversation_id} = thread
 
@@ -71,7 +88,7 @@ defmodule ChatApi.SlackTest do
       end
     end
 
-    test "get_slack_message_payload/1 returns payload for initial slack thread" do
+    test "get_slack_message_payload/4 returns payload for initial slack thread" do
       channel = "bots"
       subject = "New Slack thread!"
       text = "Hello world"
@@ -84,7 +101,7 @@ defmodule ChatApi.SlackTest do
              } = Slack.get_slack_message_payload(subject, channel, text, thread)
     end
 
-    test "get_slack_message_payload/1 returns payload for slack reply" do
+    test "get_slack_message_payload/4 returns payload for slack reply" do
       channel = "bots"
       subject = "New Slack thread!"
       text = "Hello world"
@@ -115,6 +132,38 @@ defmodule ChatApi.SlackTest do
                  Slack.extract_slack_conversation_thread_info(response)
                end
              end) =~ "Error sending Slack message"
+    end
+
+    test "create_new_slack_conversation_thread/2 creates a new thread and assigns the primary user" do
+      %{id: conversation_id, account_id: account_id} = conversation_fixture()
+      primary_user = user_fixture(account_id)
+      channel = "bots"
+      ts = "1234.56789"
+      response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
+
+      {:ok, thread} = Slack.create_new_slack_conversation_thread(conversation_id, response)
+
+      assert %SlackConversationThreads.SlackConversationThread{
+               slack_channel: ^channel,
+               slack_thread_ts: ^ts,
+               account_id: ^account_id,
+               conversation_id: ^conversation_id
+             } = thread
+
+      conversation = Conversations.get_conversation!(conversation_id)
+
+      assert conversation.assignee_id == primary_user.id
+    end
+
+    test "create_new_slack_conversation_thread/2 raises if no primary user exists" do
+      %{id: conversation_id} = conversation_fixture()
+      channel = "bots"
+      ts = "1234.56789"
+      response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
+
+      assert_raise RuntimeError, fn ->
+        Slack.create_new_slack_conversation_thread(conversation_id, response)
+      end
     end
   end
 end

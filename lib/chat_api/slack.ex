@@ -155,7 +155,7 @@ defmodule ChatApi.Slack do
     # in the message when an agent responds on Slack. At the moment, if anyone
     # responds to a thread on Slack, we just assume it's the assignee.
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
-         primary_user_id = get_conversation_primary_user_id(conversation) do
+         primary_user_id <- get_conversation_primary_user_id(conversation) do
       account_id = conversation.account_id
 
       {:ok, update} =
@@ -186,7 +186,10 @@ defmodule ChatApi.Slack do
     |> Map.get(:account)
     |> Map.get(:users)
     |> List.first()
-    |> Map.get(:id)
+    |> case do
+      nil -> raise "No users associated with the conversation's account"
+      user -> user.id
+    end
   end
 
   def is_valid_access_token?(token) do
