@@ -132,6 +132,8 @@ class Demo extends React.Component<Props, State> {
           primaryColor={color}
           accountId={accountId}
           greeting="Hello! Have any questions?"
+          // TODO: undo before merge
+          baseUrl="http://localhost:4000"
           defaultIsOpen
         />
       </Box>

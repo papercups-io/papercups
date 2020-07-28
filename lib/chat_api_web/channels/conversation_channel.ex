@@ -59,7 +59,7 @@ defmodule ChatApiWeb.ConversationChannel do
         Emails.send_email_alerts(account.users, message.body, conversation_id)
 
         ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body,
-          type: "customer"
+          type: :customer
         )
 
       _ ->
