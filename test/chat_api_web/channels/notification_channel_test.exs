@@ -1,32 +1,18 @@
 defmodule ChatApiWeb.NotificationChannelTest do
   use ChatApiWeb.ChannelCase
 
-  alias ChatApi.{Repo, Accounts, Conversations, Users.User}
-
-  @password "secret1234"
+  alias ChatApi.{Accounts, Conversations}
 
   setup do
     {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-
-    user =
-      %User{}
-      |> User.changeset(%{
-        email: "test@example.com",
-        password: @password,
-        password_confirmation: @password,
-        account_id: account.id
-      })
-      |> Repo.insert!()
 
     {:ok, conversation} =
       Conversations.create_conversation(%{account_id: account.id, status: "open"})
 
     {:ok, _, socket} =
       ChatApiWeb.UserSocket
-      |> socket("user_id", %{current_user: user})
-      |> subscribe_and_join(ChatApiWeb.NotificationChannel, "notification:" <> account.id, %{
-        "ids" => [conversation.id]
-      })
+      |> socket("user_id", %{some: :assign})
+      |> subscribe_and_join(ChatApiWeb.NotificationChannel, "notification:lobby")
 
     %{socket: socket, account: account, conversation: conversation}
   end
