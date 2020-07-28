@@ -7,6 +7,7 @@ import {TwitterPicker} from 'react-color';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import ChatWidget from '@papercups-io/chat-widget';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import {BASE_URL} from '../../config';
 
 type Props = {};
 type State = {
@@ -87,7 +88,7 @@ const ExamplePage = () => {
   type="text/javascript"
   async
   defer
-  src="https://app.papercups.io/widget.js"
+  src="${BASE_URL}"
 ></script>
   `.trim();
     return {REACT_CODE, HTML_CODE};
@@ -165,7 +166,7 @@ const ExamplePage = () => {
             subtitle={subtitle}
             primaryColor={color}
             accountId={accountId}
-            baseUrl="https://app.papercups.io"
+            baseUrl={BASE_URL}
             defaultIsOpen
           />
         </Box>

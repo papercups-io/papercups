@@ -3,6 +3,7 @@ defmodule ChatApi.Emails.Email do
   import Ecto.Changeset
 
   @from_address System.get_env("FROM_ADDRESS")
+  @backend_url System.get_env("BACKEND_URL") || ""
 
   defstruct to_address: nil, message: nil
 
@@ -13,7 +14,7 @@ defmodule ChatApi.Emails.Email do
     try do
       body =
         "A new message has arrived: " <>
-          message <> "\nhttps://app.papercups.io/conversations/" <> conversation_id
+          message <> "\nhttps://" <> @backend_url  <> "/conversations/" <> conversation_id
 
       new()
       |> to(to_address)
