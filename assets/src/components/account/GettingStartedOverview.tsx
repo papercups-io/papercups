@@ -165,7 +165,7 @@ const ExamplePage = () => {
             subtitle={subtitle}
             primaryColor={color}
             accountId={accountId}
-            baseUrl={'https://app.papercups.io'}
+            baseUrl="https://app.papercups.io"
             defaultIsOpen
           />
         </Box>

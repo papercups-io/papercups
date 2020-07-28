@@ -94,8 +94,10 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   defp authorized?(socket, account_id) do
-    case socket.assigns.current_user do
-      %{account_id: acct} -> acct == account_id
+    with %{current_user: current_user} <- socket.assigns,
+         %{account_id: acct} <- current_user do
+      acct == account_id
+    else
       _ -> false
     end
   end
