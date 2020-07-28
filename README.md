@@ -1,8 +1,10 @@
 # Papercups
 
-The code behind [app.papercups.io](https://app.papercups.io/)
-<br>
-Check out the [Demo](https://app.papercups.io/demo/)
+Papercups is an open source live customer chat web app. We offer a hosted version at [app.papercups.io](https://app.papercups.io/)
+
+You can check out how our widget looks at our [demo page](https://app.papercups.io/demo/)
+
+Our chat widget is also open sourced at [github.com/papercups-io/chat-widget](https://github.com/papercups-io/chat-widget)
 
 ![slack-setup](https://user-images.githubusercontent.com/4218509/88716918-a0583180-d0d4-11ea-93b3-12437ac51138.gif)
 
