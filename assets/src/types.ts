@@ -3,6 +3,12 @@ export type User = {
   email: string;
 };
 
+export type Customer = {
+  id: number;
+  email?: string;
+  name?: string;
+};
+
 // NB: actual message records will look slightly different
 export type Message = {
   body: string;

@@ -5,12 +5,25 @@ import utc from 'dayjs/plugin/utc';
 import {colors, Text, Tooltip} from '../common';
 import {UserOutlined} from '../icons';
 import {formatRelativeTime} from '../../utils';
-import {Message} from '../../types';
+import {Customer, Message, User} from '../../types';
 
 dayjs.extend(utc);
 
+const getSenderIdentifier = (customer?: Customer, user?: User) => {
+  if (user) {
+    return user.email || 'Agent';
+  } else if (customer) {
+    const {name, email} = customer;
+
+    return name || email || 'Anonymous User';
+  } else {
+    return 'Anonymous User';
+  }
+};
+
 type Props = {
   message: Message;
+  customer?: Customer;
   isMe?: boolean;
   isLastInGroup?: boolean;
   shouldDisplayTimestamp?: boolean;
@@ -18,14 +31,14 @@ type Props = {
 
 const ChatMessage = ({
   message,
+  customer,
   isMe,
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
   const {body, created_at, user} = message;
   const isAgent = !!user;
-  // TODO: once we have customer metadata, show customer name/email here instead
-  const tooltip = user ? user.email : 'Anonymous Customer';
+  const tooltip = getSenderIdentifier(customer, user);
   const created = dayjs.utc(created_at);
   const timestamp = formatRelativeTime(created);
 

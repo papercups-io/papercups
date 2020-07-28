@@ -205,6 +205,9 @@ class ConversationsContainer extends React.Component<Props, State> {
     const selectedConversation = selectedConversationId
       ? conversationsById[selectedConversationId]
       : null;
+    const selectedCustomer = selectedConversation
+      ? selectedConversation.customer
+      : null;
 
     const loading = this.props.loading || this.state.loading;
 
@@ -300,6 +303,7 @@ class ConversationsContainer extends React.Component<Props, State> {
                       <ChatMessage
                         key={key}
                         message={msg}
+                        customer={selectedCustomer}
                         isMe={isMe}
                         isLastInGroup={isLastInGroup}
                         shouldDisplayTimestamp={isLastInGroup}
