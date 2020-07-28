@@ -145,6 +145,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
           const q = {
             scope:
               'incoming-webhook chat:write channels:history im:history channels:manage chat:write.public',
+            user_scope: 'channels:history im:history',
             client_id: '1192316529232.1250363411891',
             redirect_uri: redirect,
           };
