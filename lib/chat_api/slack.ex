@@ -60,7 +60,6 @@ defmodule ChatApi.Slack do
       {:ok, response} = send_message(payload, access_token)
 
       # If no thread exists yet, start a new thread and kick off the first reply
-      # TODO: clean up a bit
       if is_nil(thread) do
         {:ok, thread} = create_new_slack_conversation_thread(conversation_id, response)
 
@@ -92,6 +91,8 @@ defmodule ChatApi.Slack do
     account_id = get_conversation_account_id(conversation_id)
 
     case SlackAuthorizations.get_authorization_by_account(account_id) do
+      # Supports a fallback access token as an env variable to make it easier to
+      # test locally (assumes the existence of a "bots" channel in your workspace)
       nil -> %{access_token: get_default_access_token(), channel: "#bots"}
       auth -> auth
     end
