@@ -27,13 +27,13 @@ export type RegisterParams = LoginParams & {
   passwordConfirmation: string;
 };
 
-const getAccessToken = (): string | null => {
+export const getAccessToken = (): string | null => {
   const tokens = getAuthTokens();
 
   return (tokens && tokens.token) || null;
 };
 
-const getRefreshToken = (): string | null => {
+export const getRefreshToken = (): string | null => {
   const tokens = getAuthTokens();
 
   return (tokens && tokens.renew_token) || null;
