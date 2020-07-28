@@ -28,10 +28,10 @@ export type RegisterParams = LoginParams & {
 };
 
 export type WidgetSettingParams = {
+  id?: string;
   title: string;
   subtitle: string;
   color: string;
-  account_id: string;
 };
 
 export const getAccessToken = (): string | null => {
@@ -280,8 +280,7 @@ export const authorizeSlackIntegration = async (
 };
 
 export const createOrUpdateWidgetSetting = async (
-  widgetConfigParams: WidgetSettingParams,
-  id?: string,
+  widgetSettingParams: WidgetSettingParams,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -289,8 +288,8 @@ export const createOrUpdateWidgetSetting = async (
   }
 
   return request
-    .put(`/api/widget_settings/${id}`)
-    .send({widget_setting: widgetConfigParams})
+    .put(`/api/widget_settings/create_or_update`)
+    .send({widget_settings: widgetSettingParams})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

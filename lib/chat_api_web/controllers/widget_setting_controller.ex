@@ -11,32 +11,13 @@ defmodule ChatApiWeb.WidgetSettingController do
     render(conn, "index.json", widget_settings: widget_settings)
   end
 
-  def create(conn, %{"widget_setting" => widget_setting_params}) do
-    #TOOD Account id shouldn't be passed in #173997813
-    with {:ok, %WidgetSetting{} = widget_setting} <- WidgetSettings.create_widget_setting(widget_setting_params) do
-      conn
-      |> put_status(:created)
-      |> put_resp_header("location", Routes.widget_setting_path(conn, :show, widget_setting))
-      |> render("show.json", widget_setting: widget_setting)
-    end
-  end
-
-  @spec update(any, map) :: any
-  def createOrUpdate(conn, %{"id" => id, "widget_setting" => widget_setting_params}) do
-    widget_setting = WidgetSettings.create_or_update(id, widget_setting_params)
-    render(conn, "show.json", widget_setting: widget_setting)
-  end
-
-  def show(conn, %{"id" => id}) do
-    widget_setting = WidgetSettings.get_widget_setting!(id)
-    render(conn, "show.json", widget_setting: widget_setting)
-  end
-
-  def update(conn, %{"id" => id, "widget_setting" => widget_setting_params}) do
-    widget_setting = WidgetSettings.get_widget_setting!(id)
-
-    with {:ok, %WidgetSetting{} = widget_setting} <- WidgetSettings.update_widget_setting(widget_setting, widget_setting_params) do
-      render(conn, "show.json", widget_setting: widget_setting)
+  def create_or_update(conn, %{"widget_settings" => widget_settings_params}) do
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      id = widget_settings_params["id"]
+      widget_settings_params = Map.merge(widget_settings_params, %{"account_id" => account_id})
+      {:ok, widget_setting} = WidgetSettings.create_or_update(id, widget_settings_params)
+      # IO.inspect(widget_setting)
+      render(conn, "widget_setting.json", widget_setting: widget_setting)
     end
   end
 

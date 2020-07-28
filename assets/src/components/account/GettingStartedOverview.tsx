@@ -24,7 +24,6 @@ class GettingStartedOverview extends React.Component<Props, State> {
     color: colors.primary,
     title: 'Welcome!',
     subtitle: 'Ask us anything in the chat window below 😊',
-    // company_name: null,
   };
 
   async componentDidMount() {
@@ -55,18 +54,16 @@ class GettingStartedOverview extends React.Component<Props, State> {
 
   handleChangeColor = (color: any) => {
     this.setState({color: color.hex});
+    this.createOrUpdateWidgetSetting();
   };
 
   async componentWillUnmount() {
     this.createOrUpdateWidgetSetting();
   }
 
-  createOrUpdateWidgetSetting = () => {
-    const {color, title, subtitle, account_id} = this.state;
-    API.createOrUpdateWidgetSetting(
-      {color, title, subtitle, account_id},
-      this.state.id
-    )
+  createOrUpdateWidgetSetting = async () => {
+    const {color, title, subtitle, id} = this.state;
+    API.createOrUpdateWidgetSetting({color, title, subtitle, id})
       .then((res) => console.log(res))
       .catch((err) => console.log(err));
   };
@@ -164,6 +161,7 @@ const ExamplePage = () => {
               placeholder="Welcome!"
               value={title}
               onChange={this.handleChangeTitle}
+              onBlur={this.createOrUpdateWidgetSetting}
             />
           </Box>
 
@@ -175,6 +173,7 @@ const ExamplePage = () => {
               placeholder="How can we help you?"
               value={subtitle}
               onChange={this.handleChangeSubtitle}
+              onBlur={this.createOrUpdateWidgetSetting}
             />
           </Box>
 
