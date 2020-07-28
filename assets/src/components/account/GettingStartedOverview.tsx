@@ -20,14 +20,15 @@ class GettingStartedOverview extends React.Component<Props, State> {
   state: State = {
     account: null,
     color: colors.primary,
-    title: 'Welcome to Papercups!',
+    title: 'Welcome!',
     subtitle: 'Ask us anything in the chat window below 😊',
   };
 
   async componentDidMount() {
     const account = await API.fetchAccountInfo();
+    const {company_name: company} = account;
 
-    this.setState({account});
+    this.setState({account, title: `Welcome to ${company}`});
   }
 
   handleChangeTitle = (e: any) => {
