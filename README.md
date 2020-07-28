@@ -1,6 +1,8 @@
 # Papercups
 
 The code behind [app.papercups.io](https://app.papercups.io/)
+<br>
+Check out the [Demo](https://app.papercups.io/demo/)
 
 ![slack-setup](https://user-images.githubusercontent.com/4218509/88716918-a0583180-d0d4-11ea-93b3-12437ac51138.gif)
 
