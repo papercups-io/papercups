@@ -23,9 +23,15 @@ defmodule ChatApi.CustomersTest do
     }
 
     def add_account_id(attrs) do
-      {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-      attr = Enum.into(attrs, %{account_id: account.id})
-      attr
+      account = account_fixture()
+
+      Enum.into(attrs, %{account_id: account.id})
+    end
+
+    def account_fixture(_attrs \\ %{}) do
+      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
+
+      account
     end
 
     def customer_fixture(attrs \\ %{}) do
@@ -67,6 +73,21 @@ defmodule ChatApi.CustomersTest do
       assert customer.email == @update_attrs.email
       assert customer.name == @update_attrs.name
       assert customer.phone == @update_attrs.phone
+    end
+
+    test "update_customer_metadata/2 only updates customizable fields" do
+      customer = customer_fixture()
+      new_account = account_fixture()
+      attrs = Enum.into(@update_attrs, %{account_id: new_account.id})
+
+      assert {:ok, %Customer{} = customer} = Customers.update_customer_metadata(customer, attrs)
+
+      assert customer.email == @update_attrs.email
+      assert customer.name == @update_attrs.name
+      assert customer.phone == @update_attrs.phone
+
+      # `account_id` should not be customizable through this API
+      assert customer.account_id != new_account.id
     end
 
     test "update_customer/2 with invalid data returns error changeset" do

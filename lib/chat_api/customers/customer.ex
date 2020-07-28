@@ -47,4 +47,19 @@ defmodule ChatApi.Customers.Customer do
     ])
     |> validate_required([:first_seen, :last_seen, :account_id])
   end
+
+  def metadata_changeset(customer, attrs) do
+    customer
+    |> cast(attrs, [
+      :email,
+      :name,
+      :phone,
+      :external_id,
+      :browser,
+      :browser_version,
+      :browser_language,
+      :os,
+      :ip
+    ])
+  end
 end

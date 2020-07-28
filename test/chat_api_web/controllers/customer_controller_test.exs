@@ -110,6 +110,31 @@ defmodule ChatApiWeb.CustomerControllerTest do
     end
   end
 
+  describe "update customer metadata" do
+    setup [:create_customer]
+
+    test "renders customer when data is valid", %{
+      conn: conn,
+      authed_conn: authed_conn,
+      customer: %Customer{id: id} = customer
+    } do
+      resp =
+        put(conn, Routes.customer_path(conn, :update_metadata, customer), metadata: @update_attrs)
+
+      assert %{"id" => ^id} = json_response(resp, 200)["data"]
+
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :show, id))
+
+      assert %{
+               "email" => email,
+               "name" => name
+             } = json_response(resp, 200)["data"]
+
+      assert email == @update_attrs.email
+      assert name == @update_attrs.name
+    end
+  end
+
   defp create_customer(_) do
     customer = fixture(:customer)
     %{customer: customer}

@@ -29,6 +29,7 @@ defmodule ChatApiWeb.Router do
     post("/accounts", AccountController, :create)
     post("/conversations", ConversationController, :create)
     post("/customers", CustomerController, :create)
+    put("/customers/:id/metadata", CustomerController, :update_metadata)
 
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)

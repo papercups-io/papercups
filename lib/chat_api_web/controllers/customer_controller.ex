@@ -36,6 +36,14 @@ defmodule ChatApiWeb.CustomerController do
     end
   end
 
+  def update_metadata(conn, %{"id" => id, "metadata" => metadata}) do
+    customer = Customers.get_customer!(id)
+
+    with {:ok, %Customer{} = customer} <- Customers.update_customer_metadata(customer, metadata) do
+      render(conn, "show.json", customer: customer)
+    end
+  end
+
   def delete(conn, %{"id" => id}) do
     customer = Customers.get_customer!(id)
 
