@@ -32,7 +32,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
       widget_settings: widgetSettings,
     } = account;
 
-    this.setState({accountId});
+    this.setState({accountId, title: `Welcome to ${company}`});
 
     if (widgetSettings && widgetSettings.id) {
       const {color, title, subtitle} = widgetSettings;

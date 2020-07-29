@@ -288,7 +288,7 @@ export const updateWidgetSettings = async (
   }
 
   return request
-    .put(`/api/widget_settings/create_or_update`)
+    .put(`/api/widget_settings`)
     .send({widget_settings: widgetSettingsParams})
     .set('Authorization', token)
     .then((res) => res.body.data);
