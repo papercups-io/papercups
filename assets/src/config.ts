@@ -11,5 +11,5 @@ const isDev = Boolean(
 const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
 
 export const BASE_URL = isDev
-  ? 'http://localhost:3000'
+  ? 'http://localhost:4000'
   : `https://${REACT_URL}`;
