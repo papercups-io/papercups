@@ -36,7 +36,7 @@ defmodule ChatApi.WidgetSettingsTest do
       account
     end
 
-    def widget_setting_fixture(attrs \\ %{}) do
+    def widget_settings_fixture(attrs \\ %{}) do
       {:ok, widget_setting} =
         attrs
         |> Enum.into(valid_attrs())
@@ -46,12 +46,12 @@ defmodule ChatApi.WidgetSettingsTest do
     end
 
     test "list_widget_settings/0 returns all widget_settings" do
-      widget_setting = widget_setting_fixture()
+      widget_setting = widget_settings_fixture()
       assert WidgetSettings.list_widget_settings() == [widget_setting]
     end
 
     test "get_widget_setting!/1 returns the widget_setting with given id" do
-      widget_setting = widget_setting_fixture()
+      widget_setting = widget_settings_fixture()
       assert WidgetSettings.get_widget_setting!(widget_setting.id) == widget_setting
     end
 
@@ -69,7 +69,7 @@ defmodule ChatApi.WidgetSettingsTest do
     end
 
     test "update_widget_setting/2 with valid data updates the widget_setting" do
-      widget_setting = widget_setting_fixture()
+      widget_setting = widget_settings_fixture()
 
       assert {:ok, %WidgetSetting{} = widget_setting} =
                WidgetSettings.update_widget_setting(widget_setting, update_attrs())
@@ -80,7 +80,7 @@ defmodule ChatApi.WidgetSettingsTest do
     end
 
     test "update_widget_setting/2 with invalid data returns error changeset" do
-      widget_setting = widget_setting_fixture()
+      widget_setting = widget_settings_fixture()
 
       assert {:error, %Ecto.Changeset{}} =
                WidgetSettings.update_widget_setting(widget_setting, @invalid_attrs)
@@ -89,7 +89,7 @@ defmodule ChatApi.WidgetSettingsTest do
     end
 
     test "delete_widget_setting/1 deletes the widget_setting" do
-      widget_setting = widget_setting_fixture()
+      widget_setting = widget_settings_fixture()
       assert {:ok, %WidgetSetting{}} = WidgetSettings.delete_widget_setting(widget_setting)
 
       assert_raise Ecto.NoResultsError, fn ->
@@ -98,7 +98,7 @@ defmodule ChatApi.WidgetSettingsTest do
     end
 
     test "change_widget_setting/1 returns a widget_setting changeset" do
-      widget_setting = widget_setting_fixture()
+      widget_setting = widget_settings_fixture()
       assert %Ecto.Changeset{} = WidgetSettings.change_widget_setting(widget_setting)
     end
   end

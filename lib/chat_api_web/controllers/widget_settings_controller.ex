@@ -1,15 +1,10 @@
-defmodule ChatApiWeb.WidgetSettingController do
+defmodule ChatApiWeb.WidgetSettingsController do
   use ChatApiWeb, :controller
 
   alias ChatApi.WidgetSettings
   alias ChatApi.WidgetSettings.WidgetSetting
 
   action_fallback ChatApiWeb.FallbackController
-
-  def index(conn, _params) do
-    widget_settings = WidgetSettings.list_widget_settings()
-    render(conn, "index.json", widget_settings: widget_settings)
-  end
 
   def create_or_update(conn, %{"widget_settings" => widget_settings_params}) do
     with %{account_id: account_id} <- conn.assigns.current_user do

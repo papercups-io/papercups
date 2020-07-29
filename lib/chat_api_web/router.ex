@@ -47,14 +47,13 @@ defmodule ChatApiWeb.Router do
 
     get("/slack/oauth", SlackController, :oauth)
     get("/slack/authorization", SlackController, :authorization)
-    put("/widget_settings/create_or_update", WidgetSettingController, :create_or_update)
+    put("/widget_settings/create_or_update", WidgetSettingsController, :create_or_update)
 
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/accounts", AccountController, only: [:update, :delete])
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
     resources("/customers", CustomerController, except: [:new, :edit, :create])
-    resources "/widget_settings", WidgetSettingController, only: [:index, :delete]
   end
 
   # Enables LiveDashboard only for development
