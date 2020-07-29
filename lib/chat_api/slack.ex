@@ -108,11 +108,13 @@ defmodule ChatApi.Slack do
 
   def get_initial_slack_thread_subject(conversation_id) do
     # TODO: use env variables here?
+    url = System.get_env("BACKEND_URL") || ""
+
     base =
       if Mix.env() == :dev do
         "http://localhost:3000"
       else
-        "https://app.papercups.io"
+        "https://" <> url
       end
 
     url = base <> "/conversations/" <> conversation_id
