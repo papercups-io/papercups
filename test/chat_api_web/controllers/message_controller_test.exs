@@ -27,8 +27,8 @@ defmodule ChatApiWeb.MessageControllerTest do
   end
 
   setup %{conn: conn} do
-    user = %ChatApi.Users.User{email: "test@example.com"}
     account = fixture(:account)
+    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 

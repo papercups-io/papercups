@@ -7,8 +7,10 @@ defmodule ChatApiWeb.UserInvitationController do
   action_fallback ChatApiWeb.FallbackController
 
   def index(conn, _params) do
-    user_invitations = UserInvitations.list_user_invitations()
-    render(conn, "index.json", user_invitations: user_invitations)
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      user_invitations = UserInvitations.list_user_invitations(account_id)
+      render(conn, "index.json", user_invitations: user_invitations)
+    end
   end
 
   def create(conn, %{"user_invitation" => _user_invitation_params} = _) do
