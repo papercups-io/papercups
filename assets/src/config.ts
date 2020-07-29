@@ -13,3 +13,7 @@ const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
 export const BASE_URL = isDev
   ? 'http://localhost:4000'
   : `https://${REACT_URL}`;
+
+// Defaults to Papercups client ID (it's ok for this value to be public)
+export const SLACK_CLIENT_ID =
+  process.env.REACT_APP_SLACK_CLIENT_ID || '1192316529232.1250363411891';

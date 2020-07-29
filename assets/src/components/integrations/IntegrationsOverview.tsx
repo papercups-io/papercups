@@ -5,6 +5,7 @@ import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 import {colors, Button, Paragraph, Table, Tag, Text, Title} from '../common';
 import Spinner from '../Spinner';
+import {SLACK_CLIENT_ID} from '../../config';
 import * as API from '../../api';
 
 type IntegrationType = {
@@ -144,9 +145,9 @@ class IntegrationsOverview extends React.Component<Props, State> {
           const redirect = `${origin}/integrations/slack`;
           const q = {
             scope:
-              'incoming-webhook chat:write channels:history im:history channels:manage chat:write.public',
-            user_scope: 'channels:history im:history',
-            client_id: '1192316529232.1250363411891',
+              'incoming-webhook chat:write channels:history channels:manage chat:write.public',
+            user_scope: 'channels:history',
+            client_id: SLACK_CLIENT_ID,
             redirect_uri: redirect,
           };
           const query = qs.stringify(q);
