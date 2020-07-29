@@ -286,7 +286,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.channel.push('shout', {
       body: message,
       conversation_id: conversationId,
-      sender: 'agent', // TODO: remove?
     });
 
     if (cb && typeof cb === 'function') {

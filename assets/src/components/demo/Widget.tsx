@@ -66,20 +66,10 @@ class Widget extends React.Component<Props, State> {
 
         this.setState({
           conversationId,
-          messages: messages
-            .map((msg: any) => {
-              return {
-                body: msg.body,
-                created_at: msg.created_at,
-                customer_id: msg.customer_id,
-                // Deprecate
-                sender: msg.customer_id ? 'customer' : 'agent',
-              };
-            })
-            .sort(
-              (a: any, b: any) =>
-                +new Date(a.created_at) - +new Date(b.created_at)
-            ),
+          messages: messages.sort(
+            (a: any, b: any) =>
+              +new Date(a.created_at) - +new Date(b.created_at)
+          ),
         });
 
         this.joinConversationChannel(conversationId, customerId);
@@ -174,7 +164,6 @@ class Widget extends React.Component<Props, State> {
     this.channel.push('shout', {
       body: message,
       customer_id: this.state.customerId,
-      sender: 'customer', // TODO: remove?
     });
 
     this.setState({message: ''});

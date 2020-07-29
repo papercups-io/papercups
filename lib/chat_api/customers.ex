@@ -73,6 +73,12 @@ defmodule ChatApi.Customers do
     |> Repo.update()
   end
 
+  def update_customer_metadata(%Customer{} = customer, attrs) do
+    customer
+    |> Customer.metadata_changeset(attrs)
+    |> Repo.update()
+  end
+
   @doc """
   Deletes a customer.
 
