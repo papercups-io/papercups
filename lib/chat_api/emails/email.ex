@@ -14,7 +14,7 @@ defmodule ChatApi.Emails.Email do
     try do
       body =
         "A new message has arrived: " <>
-          message <> "\nhttps://" <> @backend_url  <> "/conversations/" <> conversation_id
+          message <> "\nhttps://" <> @backend_url <> "/conversations/" <> conversation_id
 
       new()
       |> to(to_address)

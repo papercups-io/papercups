@@ -1,17 +1,16 @@
 import React from 'react';
 import {Box} from 'theme-ui';
-import * as API from '../../api';
-import Title from 'antd/lib/typography/Title';
-import {Paragraph, Input, colors, Text} from '../common';
 import {TwitterPicker} from 'react-color';
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import ChatWidget from '@papercups-io/chat-widget';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import ChatWidget from '@papercups-io/chat-widget';
+import * as API from '../../api';
+import {Paragraph, Input, colors, Text, Title} from '../common';
 import {BASE_URL} from '../../config';
 
 type Props = {};
 type State = {
-  account: any;
+  accountId: string | null;
   color: string;
   title: string;
   subtitle: string;
@@ -19,7 +18,7 @@ type State = {
 
 class GettingStartedOverview extends React.Component<Props, State> {
   state: State = {
-    account: null,
+    accountId: null,
     color: colors.primary,
     title: 'Welcome!',
     subtitle: 'Ask us anything in the chat window below 😊',
@@ -27,9 +26,23 @@ class GettingStartedOverview extends React.Component<Props, State> {
 
   async componentDidMount() {
     const account = await API.fetchAccountInfo();
-    const {company_name: company} = account;
+    const {
+      id: accountId,
+      company_name: company,
+      widget_settings: widgetSettings,
+    } = account;
 
-    this.setState({account, title: `Welcome to ${company}`});
+    this.setState({accountId, title: `Welcome to ${company}`});
+
+    if (widgetSettings && widgetSettings.id) {
+      const {color, title, subtitle} = widgetSettings;
+
+      this.setState({
+        color: color || this.state.color,
+        subtitle: subtitle || this.state.subtitle,
+        title: title || `Welcome to ${company}`,
+      });
+    }
   }
 
   handleChangeTitle = (e: any) => {
@@ -41,7 +54,17 @@ class GettingStartedOverview extends React.Component<Props, State> {
   };
 
   handleChangeColor = (color: any) => {
-    this.setState({color: color.hex});
+    this.setState({color: color.hex}, () => {
+      this.updateWidgetSettings();
+    });
+  };
+
+  updateWidgetSettings = async () => {
+    const {color, title, subtitle} = this.state;
+
+    API.updateWidgetSettings({color, title, subtitle})
+      .then((res) => console.log('Updated widget settings:', res))
+      .catch((err) => console.log('Error updating widget settings:', err));
   };
 
   generateCode = (
@@ -95,13 +118,11 @@ const ExamplePage = () => {
   };
 
   render() {
-    const {color, title, subtitle, account} = this.state;
+    const {color, title, subtitle, accountId} = this.state;
 
-    if (!account) {
+    if (!accountId) {
       return null; // TODO: better loading state
     }
-
-    const {id: accountId} = account;
 
     return (
       <Box
@@ -139,6 +160,7 @@ const ExamplePage = () => {
               placeholder="Welcome!"
               value={title}
               onChange={this.handleChangeTitle}
+              onBlur={this.updateWidgetSettings}
             />
           </Box>
 
@@ -150,6 +172,7 @@ const ExamplePage = () => {
               placeholder="How can we help you?"
               value={subtitle}
               onChange={this.handleChangeSubtitle}
+              onBlur={this.updateWidgetSettings}
             />
           </Box>
 

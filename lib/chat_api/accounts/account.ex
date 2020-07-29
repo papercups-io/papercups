@@ -6,6 +6,7 @@ defmodule ChatApi.Accounts.Account do
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
   alias ChatApi.Users.User
+  alias ChatApi.WidgetSettings.WidgetSetting
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -15,6 +16,7 @@ defmodule ChatApi.Accounts.Account do
     has_many(:conversations, Conversation)
     has_many(:messages, Message)
     has_many(:users, User)
+    has_one(:widget_settings, WidgetSetting)
 
     timestamps()
   end

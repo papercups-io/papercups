@@ -11,7 +11,7 @@ use Mix.Config
 # before starting your production server.
 config :chat_api, ChatApiWeb.Endpoint,
   http: [port: {:system, "PORT"}],
-  url: [scheme: "https", host: {:system,  "BACKEND_URL"}, port: 443],
+  url: [scheme: "https", host: {:system, "BACKEND_URL"}, port: 443],
   # FIXME: not sure the best way to handle this, but we want
   # to allow our customers' websites to connect to our server
   check_origin: false,

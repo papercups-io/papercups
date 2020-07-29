@@ -27,6 +27,13 @@ export type RegisterParams = LoginParams & {
   passwordConfirmation: string;
 };
 
+export type WidgetSettingsParams = {
+  id?: string;
+  title: string;
+  subtitle: string;
+  color: string;
+};
+
 export const getAccessToken = (): string | null => {
   const tokens = getAuthTokens();
 
@@ -268,6 +275,21 @@ export const authorizeSlackIntegration = async (
   return request
     .get(`/api/slack/oauth`)
     .query({code})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateWidgetSettings = async (
+  widgetSettingsParams: WidgetSettingsParams,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/widget_settings`)
+    .send({widget_settings: widgetSettingsParams})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

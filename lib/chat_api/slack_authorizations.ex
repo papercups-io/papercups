@@ -44,6 +44,10 @@ defmodule ChatApi.SlackAuthorizations do
     |> Repo.one()
   end
 
+  @spec create_or_update(
+          any,
+          :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}
+        ) :: any
   def create_or_update(account_id, params) do
     existing = get_authorization_by_account(account_id)
 
