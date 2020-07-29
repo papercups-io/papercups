@@ -12,6 +12,11 @@ Our chat widget is also open sourced at [github.com/papercups-io/chat-widget](ht
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/papercups-io/papercups)
 
+
+## Philosophy
+
+We wanted to make a self hosted version of tools like intercom and drift for companies that have privacy and security concerns about having customer data going to third party services. We’re starting with chat right now but we want to expand in to all forms of customer communication like email campaigns and push notifications. 
+
 ## Getting started
 
 To start your server:
