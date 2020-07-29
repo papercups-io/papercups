@@ -16,7 +16,7 @@ defmodule ChatApi.Accounts.Account do
     has_many(:conversations, Conversation)
     has_many(:messages, Message)
     has_many(:users, User)
-    has_one(:widget_setting, WidgetSetting)
+    has_one(:widget_settings, WidgetSetting)
 
     timestamps()
   end

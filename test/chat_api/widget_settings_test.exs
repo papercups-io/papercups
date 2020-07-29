@@ -9,6 +9,7 @@ defmodule ChatApi.WidgetSettingsTest do
 
     def valid_attrs() do
       {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
+
       %{
         color: "some color",
         subtitle: "some subtitle",
@@ -19,6 +20,7 @@ defmodule ChatApi.WidgetSettingsTest do
 
     def update_attrs() do
       {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
+
       %{
         color: "some updated color",
         subtitle: "some updated subtitle",

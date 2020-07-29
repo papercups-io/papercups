@@ -37,12 +37,18 @@ defmodule ChatApi.WidgetSettings do
   """
   def get_widget_setting!(id), do: Repo.get!(WidgetSetting, id)
 
-  def create_or_update(nil, params) do
-      create_widget_setting(params)
+  def get_settings_by_account(account_id) do
+    WidgetSetting
+    |> where(account_id: ^account_id)
+    |> Repo.one()
   end
 
-  def create_or_update(id, params) do
-    existing = get_widget_setting!(id)
+  def create_or_update(nil, params) do
+    create_widget_setting(params)
+  end
+
+  def create_or_update(account_id, params) do
+    existing = get_settings_by_account(account_id)
 
     if existing do
       update_widget_setting(existing, params)

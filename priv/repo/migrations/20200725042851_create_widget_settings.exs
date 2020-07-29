@@ -11,6 +11,7 @@ defmodule ChatApi.Repo.Migrations.CreateWidgetSettings do
 
       timestamps()
     end
+
     create(unique_index(:widget_settings, [:account_id]))
   end
 end

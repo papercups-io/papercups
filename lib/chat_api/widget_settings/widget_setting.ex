@@ -16,8 +16,8 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
   end
 
   @doc false
-  def changeset(widget_setting, attrs) do
-    widget_setting
+  def changeset(widget_settings, attrs) do
+    widget_settings
     |> cast(attrs, [:title, :subtitle, :color, :account_id])
     |> validate_required([:title, :subtitle, :color, :account_id])
     |> unique_constraint(:account_id)

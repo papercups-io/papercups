@@ -1,26 +1,24 @@
 import React from 'react';
 import {Box} from 'theme-ui';
-import * as API from '../../api';
-import Title from 'antd/lib/typography/Title';
-import {Paragraph, Input, colors, Text} from '../common';
 import {TwitterPicker} from 'react-color';
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import ChatWidget from '@papercups-io/chat-widget';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
+import ChatWidget from '@papercups-io/chat-widget';
+import * as API from '../../api';
+import {Paragraph, Input, colors, Text, Title} from '../common';
 import {BASE_URL} from '../../config';
 
 type Props = {};
 type State = {
-  account_id: any;
+  accountId: string | null;
   color: string;
   title: string;
   subtitle: string;
-  id?: string;
 };
 
 class GettingStartedOverview extends React.Component<Props, State> {
   state: State = {
-    account_id: null,
+    accountId: null,
     color: colors.primary,
     title: 'Welcome!',
     subtitle: 'Ask us anything in the chat window below 😊',
@@ -28,17 +26,20 @@ class GettingStartedOverview extends React.Component<Props, State> {
 
   async componentDidMount() {
     const account = await API.fetchAccountInfo();
-    const {company_name: company} = account;
+    const {
+      id: accountId,
+      company_name: company,
+      widget_settings: widgetSettings,
+    } = account;
 
-    this.setState({account_id: account.id});
+    this.setState({accountId});
 
-    if (account.widget_settings && account.widget_settings.id) {
-      const {color, title, subtitle, id} = account.widget_setting;
+    if (widgetSettings && widgetSettings.id) {
+      const {color, title, subtitle} = widgetSettings;
 
       this.setState({
-        color,
-        subtitle,
-        id,
+        color: color || this.state.color,
+        subtitle: subtitle || this.state.subtitle,
         title: title || `Welcome to ${company}`,
       });
     }
@@ -53,26 +54,24 @@ class GettingStartedOverview extends React.Component<Props, State> {
   };
 
   handleChangeColor = (color: any) => {
-    this.setState({color: color.hex});
-    this.createOrUpdateWidgetSetting();
+    this.setState({color: color.hex}, () => {
+      this.updateWidgetSettings();
+    });
   };
 
-  async componentWillUnmount() {
-    this.createOrUpdateWidgetSetting();
-  }
+  updateWidgetSettings = async () => {
+    const {color, title, subtitle} = this.state;
 
-  createOrUpdateWidgetSetting = async () => {
-    const {color, title, subtitle, id} = this.state;
-    API.createOrUpdateWidgetSetting({color, title, subtitle, id})
-      .then((res) => console.log(res))
-      .catch((err) => console.log(err));
+    API.updateWidgetSettings({color, title, subtitle})
+      .then((res) => console.log('Updated widget settings:', res))
+      .catch((err) => console.log('Error updating widget settings:', err));
   };
 
   generateCode = (
     title: string,
     subtitle: string,
     primaryColor: string,
-    account_id: string
+    accountId: string
   ) => {
     const REACT_CODE = `
 import React from 'react';
@@ -90,7 +89,7 @@ const ExamplePage = () => {
         title='${title}'
         subtitle= '${subtitle}'
         primaryColor='${primaryColor}'
-        accountId='${account_id}'
+        accountId='${accountId}'
       />
     </>
   );
@@ -101,7 +100,7 @@ const ExamplePage = () => {
 <script>
   window.Papercups = {
     config: {
-      accountId: '${account_id}',
+      accountId: '${accountId}',
       title: '${title}',
       subtitle: '${subtitle}',
       primaryColor: '${primaryColor}',
@@ -119,9 +118,9 @@ const ExamplePage = () => {
   };
 
   render() {
-    const {color, title, subtitle, account_id} = this.state;
+    const {color, title, subtitle, accountId} = this.state;
 
-    if (!account_id) {
+    if (!accountId) {
       return null; // TODO: better loading state
     }
 
@@ -161,7 +160,7 @@ const ExamplePage = () => {
               placeholder="Welcome!"
               value={title}
               onChange={this.handleChangeTitle}
-              onBlur={this.createOrUpdateWidgetSetting}
+              onBlur={this.updateWidgetSettings}
             />
           </Box>
 
@@ -173,7 +172,7 @@ const ExamplePage = () => {
               placeholder="How can we help you?"
               value={subtitle}
               onChange={this.handleChangeSubtitle}
-              onBlur={this.createOrUpdateWidgetSetting}
+              onBlur={this.updateWidgetSettings}
             />
           </Box>
 
@@ -189,7 +188,7 @@ const ExamplePage = () => {
             title={title || 'Welcome!'}
             subtitle={subtitle}
             primaryColor={color}
-            accountId={account_id}
+            accountId={accountId}
             baseUrl={BASE_URL}
             defaultIsOpen
           />
@@ -218,7 +217,7 @@ const ExamplePage = () => {
           </Paragraph>
 
           <SyntaxHighlighter language="html" style={atomOneLight}>
-            {this.generateCode(title, subtitle, color, account_id).HTML_CODE}
+            {this.generateCode(title, subtitle, color, accountId).HTML_CODE}
           </SyntaxHighlighter>
         </Box>
 
@@ -252,7 +251,7 @@ const ExamplePage = () => {
           </Paragraph>
 
           <SyntaxHighlighter language="typescript" style={atomOneLight}>
-            {this.generateCode(title, subtitle, color, account_id).REACT_CODE}
+            {this.generateCode(title, subtitle, color, accountId).REACT_CODE}
           </SyntaxHighlighter>
         </Box>
 
