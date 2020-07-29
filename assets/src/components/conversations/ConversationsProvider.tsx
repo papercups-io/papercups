@@ -153,6 +153,14 @@ export class ConversationsProvider extends React.Component<Props, State> {
       this.handleConversationUpdated(id, updates);
     });
 
+    this.channel.on('presence_state', (state) => {
+      console.log('Presence state:', state);
+    });
+
+    this.channel.on('presence_diff', (state) => {
+      console.log('Presence diff:', state);
+    });
+
     this.channel
       .join()
       .receive('ok', (res) => {

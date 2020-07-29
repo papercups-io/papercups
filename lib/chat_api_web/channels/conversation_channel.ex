@@ -16,9 +16,10 @@ defmodule ChatApiWeb.ConversationChannel do
     if authorized?(payload, private_conversation_id) do
       conversation = Conversations.get_conversation!(private_conversation_id)
 
+      # TODO: include the customer id here
       {:ok,
-       assign(
-         socket,
+       socket
+       |> assign(
          :conversation,
          ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
        )}
