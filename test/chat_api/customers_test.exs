@@ -44,7 +44,7 @@ defmodule ChatApi.CustomersTest do
       customer
     end
 
-    test "list_customers/0 returns all customers" do
+    test "list_customers/1 returns all customers" do
       customer = customer_fixture()
       account_id = customer.account_id
 
