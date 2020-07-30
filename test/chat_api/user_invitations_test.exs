@@ -33,9 +33,9 @@ defmodule ChatApi.UserInvitationsTest do
       {:ok, account: account}
     end
 
-    test "list_user_invitations/0 returns all user_invitations", %{account: account} do
+    test "list_user_invitations/1 returns all user_invitations", %{account: account} do
       user_invitation = user_invitation_fixture(%{account_id: account.id})
-      assert UserInvitations.list_user_invitations() == [user_invitation]
+      assert UserInvitations.list_user_invitations(account.id) == [user_invitation]
     end
 
     test "generates dates and token", %{account: account} do

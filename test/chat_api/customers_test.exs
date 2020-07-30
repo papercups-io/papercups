@@ -44,9 +44,11 @@ defmodule ChatApi.CustomersTest do
       customer
     end
 
-    test "list_customers/0 returns all customers" do
+    test "list_customers/1 returns all customers" do
       customer = customer_fixture()
-      assert Customers.list_customers() == [customer]
+      account_id = customer.account_id
+
+      assert Customers.list_customers(account_id) == [customer]
     end
 
     test "get_customer!/1 returns the customer with given id" do

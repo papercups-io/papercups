@@ -7,8 +7,10 @@ defmodule ChatApiWeb.MessageController do
   action_fallback(ChatApiWeb.FallbackController)
 
   def index(conn, _params) do
-    messages = Messages.list_messages()
-    render(conn, "index.json", messages: messages)
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      messages = Messages.list_messages(account_id)
+      render(conn, "index.json", messages: messages)
+    end
   end
 
   def count(conn, _params) do

@@ -13,12 +13,12 @@ defmodule ChatApi.UserInvitations do
 
   ## Examples
 
-      iex> list_user_invitations()
+      iex> list_user_invitations(account_id)
       [%UserInvitation{}, ...]
 
   """
-  def list_user_invitations do
-    Repo.all(UserInvitation)
+  def list_user_invitations(account_id) do
+    UserInvitation |> where(account_id: ^account_id) |> Repo.all()
   end
 
   @doc """

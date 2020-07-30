@@ -13,12 +13,12 @@ defmodule ChatApi.Customers do
 
   ## Examples
 
-      iex> list_customers()
+      iex> list_customers(account_id)
       [%Customer{}, ...]
 
   """
-  def list_customers do
-    Repo.all(Customer)
+  def list_customers(account_id) do
+    Customer |> where(account_id: ^account_id) |> Repo.all()
   end
 
   @doc """

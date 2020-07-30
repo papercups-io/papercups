@@ -13,12 +13,12 @@ defmodule ChatApi.Messages do
 
   ## Examples
 
-      iex> list_messages()
+      iex> list_messages(account_id)
       [%Message{}, ...]
 
   """
-  def list_messages do
-    Message |> Repo.all() |> Repo.preload(:conversation)
+  def list_messages(account_id) do
+    Message |> where(account_id: ^account_id) |> preload(:conversation) |> Repo.all()
   end
 
   def count_messages_by_account(account_id) do

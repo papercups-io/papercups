@@ -7,8 +7,10 @@ defmodule ChatApiWeb.CustomerController do
   action_fallback ChatApiWeb.FallbackController
 
   def index(conn, _params) do
-    customers = Customers.list_customers()
-    render(conn, "index.json", customers: customers)
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      customers = Customers.list_customers(account_id)
+      render(conn, "index.json", customers: customers)
+    end
   end
 
   def create(conn, %{"customer" => customer_params}) do
