@@ -60,8 +60,7 @@ defmodule ChatApiWeb.NotificationChannel do
       topic = "conversation:" <> conversation_id
 
       ChatApiWeb.Endpoint.broadcast_from!(self(), topic, "shout", result)
-
-      ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body, type: "agent")
+      ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body, type: :agent)
     end
 
     {:noreply, socket}

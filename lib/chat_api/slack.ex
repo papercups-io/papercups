@@ -46,48 +46,20 @@ defmodule ChatApi.Slack do
   end
 
   def send_conversation_message_alert(conversation_id, text, type: type) do
-    conversation = Conversations.get_conversation!(conversation_id)
     # Check if a Slack thread already exists for this conversation.
     # If one exists, send followup messages as replies; otherwise, start a new thread
     thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id)
-    %{account_id: account_id} = conversation
+    %{access_token: access_token, channel: channel} = get_slack_authorization(conversation_id)
 
-    %{access_token: access_token, channel: channel} =
-      case SlackAuthorizations.get_authorization_by_account(account_id) do
-        nil -> %{access_token: get_default_access_token(), channel: "#bots"}
-        auth -> auth
-      end
-
-    # TODO: clean up a bit?
     payload =
-      case thread do
-        nil ->
-          subject = get_initial_slack_thread_subject(conversation_id)
+      type
+      |> get_slack_message_subject!(conversation_id, thread)
+      |> get_slack_message_payload(channel, text, thread)
 
-          %{
-            "channel" => channel,
-            "text" => subject,
-            "attachments" => [%{"text" => text}]
-          }
-
-        %{slack_thread_ts: slack_thread_ts} ->
-          subject = get_slack_reply_subject(type)
-
-          %{
-            "channel" => channel,
-            "text" => subject,
-            "attachments" => [%{"text" => text}],
-            "thread_ts" => slack_thread_ts
-          }
-      end
-
-    slack_enabled = is_valid_access_token(access_token)
-
-    if slack_enabled do
+    if is_valid_access_token?(access_token) do
       {:ok, response} = send_message(payload, access_token)
 
       # If no thread exists yet, start a new thread and kick off the first reply
-      # TODO: clean up a bit
       if is_nil(thread) do
         {:ok, thread} = create_new_slack_conversation_thread(conversation_id, response)
 
@@ -106,7 +78,27 @@ defmodule ChatApi.Slack do
     end
   end
 
-  def get_initial_slack_thread_subject(conversation_id) do
+  def get_conversation_account_id(conversation_id) do
+    with %{account_id: account_id} <- Conversations.get_conversation!(conversation_id) do
+      account_id
+    else
+      # TODO: better error handling
+      _error -> nil
+    end
+  end
+
+  def get_slack_authorization(conversation_id) do
+    account_id = get_conversation_account_id(conversation_id)
+
+    case SlackAuthorizations.get_authorization_by_account(account_id) do
+      # Supports a fallback access token as an env variable to make it easier to
+      # test locally (assumes the existence of a "bots" channel in your workspace)
+      nil -> %{access_token: get_default_access_token(), channel: "#bots"}
+      auth -> auth
+    end
+  end
+
+  def get_slack_message_subject!(:customer, conversation_id, nil) do
     # TODO: use env variables here?
     url = System.get_env("BACKEND_URL") || ""
 
@@ -128,12 +120,34 @@ defmodule ChatApi.Slack do
     subject
   end
 
-  def get_slack_reply_subject(type) do
-    if type == "agent" do
-      ":female-technologist: Agent:"
-    else
-      ":wave: Customer:"
+  def get_slack_message_subject!(type, _conversation_id, _thread) do
+    case type do
+      :agent -> ":female-technologist: Agent:"
+      :customer -> ":wave: Customer:"
+      _ -> raise "Unrecognized sender type: " <> type
     end
+  end
+
+  def get_slack_message_payload(subject, channel, text, nil) do
+    %{
+      "channel" => channel,
+      "text" => subject,
+      "attachments" => [%{"text" => text}]
+    }
+  end
+
+  def get_slack_message_payload(
+        subject,
+        channel,
+        text,
+        %{slack_thread_ts: slack_thread_ts} = _thread
+      ) do
+    %{
+      "channel" => channel,
+      "text" => subject,
+      "attachments" => [%{"text" => text}],
+      "thread_ts" => slack_thread_ts
+    }
   end
 
   def create_new_slack_conversation_thread(conversation_id, response) do
@@ -141,17 +155,8 @@ defmodule ChatApi.Slack do
     # in the message when an agent responds on Slack. At the moment, if anyone
     # responds to a thread on Slack, we just assume it's the assignee.
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
-         primary_user_id = get_conversation_primary_user_id(conversation) do
+         primary_user_id <- get_conversation_primary_user_id(conversation) do
       account_id = conversation.account_id
-
-      params =
-        Map.merge(
-          %{
-            conversation_id: conversation_id,
-            account_id: account_id
-          },
-          extract_slack_conversation_thread_info(response)
-        )
 
       {:ok, update} =
         Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
@@ -163,36 +168,38 @@ defmodule ChatApi.Slack do
         "updates" => result
       })
 
+      params =
+        Map.merge(
+          %{
+            conversation_id: conversation_id,
+            account_id: account_id
+          },
+          extract_slack_conversation_thread_info(response)
+        )
+
       SlackConversationThreads.create_slack_conversation_thread(params)
     end
   end
 
-  defp get_conversation_primary_user_id(conversation) do
+  def get_conversation_primary_user_id(conversation) do
     conversation
     |> Map.get(:account)
     |> Map.get(:users)
     |> List.first()
-    |> Map.get(:id)
+    |> case do
+      nil -> raise "No users associated with the conversation's account"
+      user -> user.id
+    end
   end
 
-  defp is_valid_access_token(token) do
+  def is_valid_access_token?(token) do
     case token do
       "xoxb-" <> _rest -> true
       _ -> false
     end
   end
 
-  defp get_default_access_token() do
-    token = System.get_env("SLACK_BOT_ACCESS_TOKEN")
-
-    if is_valid_access_token(token) do
-      token
-    else
-      nil
-    end
-  end
-
-  defp extract_slack_conversation_thread_info(%{body: body}) do
+  def extract_slack_conversation_thread_info(%{body: body}) do
     if Map.get(body, "ok") do
       %{
         slack_channel: Map.get(body, "channel"),
@@ -202,6 +209,16 @@ defmodule ChatApi.Slack do
       Logger.error("Error sending Slack message: #{inspect(body)}")
 
       raise "chat.postMessage returned ok=false"
+    end
+  end
+
+  defp get_default_access_token() do
+    token = System.get_env("SLACK_BOT_ACCESS_TOKEN")
+
+    if is_valid_access_token?(token) do
+      token
+    else
+      nil
     end
   end
 end
