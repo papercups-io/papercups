@@ -15,7 +15,7 @@ _Watch how easy it is to get set up with our Slack integration 🚀 :_
 
 We wanted to make a self-hosted version of tools like Intercom and Drift for companies that have privacy and security concerns about having customer data going to third party services. We’re starting with chat right now but we want to expand into all forms of customer communication like email campaigns and push notifications.
 
-Stay tuned! We'll be posting a more details roadmap soon 🤓
+Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 
 ## Getting started
 
