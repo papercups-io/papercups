@@ -53,8 +53,8 @@ mix archive.install hex phx_new 1.5.4
 ### Cloning the repo
 
 ```
-git clone git@github.com:reichert621/taro.git
-cd taro
+git clone git@github.com:papercups-io/papercups.git
+cd papercups
 ```
 
 ### To start your server
