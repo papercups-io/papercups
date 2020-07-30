@@ -53,7 +53,7 @@ defmodule ChatApi.Slack do
 
     payload =
       type
-      |> get_slack_message_subject(conversation_id, thread)
+      |> get_slack_message_subject!(conversation_id, thread)
       |> get_slack_message_payload(channel, text, thread)
 
     if is_valid_access_token?(access_token) do
@@ -98,7 +98,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  def get_slack_message_subject(:customer, conversation_id, nil) do
+  def get_slack_message_subject!(:customer, conversation_id, nil) do
     # TODO: use env variables here?
     url = System.get_env("BACKEND_URL") || ""
 
@@ -120,7 +120,7 @@ defmodule ChatApi.Slack do
     subject
   end
 
-  def get_slack_message_subject(type, _conversation_id, _thread) do
+  def get_slack_message_subject!(type, _conversation_id, _thread) do
     case type do
       :agent -> ":female-technologist: Agent:"
       :customer -> ":wave: Customer:"

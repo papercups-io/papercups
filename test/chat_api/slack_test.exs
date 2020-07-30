@@ -64,27 +64,27 @@ defmodule ChatApi.SlackTest do
       assert Slack.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
     end
 
-    test "get_slack_message_subject/3 returns subject for initial slack thread" do
+    test "get_slack_message_subject!/3 returns subject for initial slack thread" do
       conversation = conversation_fixture()
       thread = nil
-      subject = Slack.get_slack_message_subject(:customer, conversation.id, thread)
+      subject = Slack.get_slack_message_subject!(:customer, conversation.id, thread)
 
       assert "New conversation started:" <> msg = subject
       assert String.contains?(msg, conversation.id)
     end
 
-    test "get_slack_message_subject/3 returns subject for slack reply" do
+    test "get_slack_message_subject!/3 returns subject for slack reply" do
       thread = slack_conversation_thread_fixture()
       %{conversation_id: conversation_id} = thread
 
-      assert Slack.get_slack_message_subject(:agent, conversation_id, thread) ==
+      assert Slack.get_slack_message_subject!(:agent, conversation_id, thread) ==
                ":female-technologist: Agent:"
 
-      assert Slack.get_slack_message_subject(:customer, conversation_id, thread) ==
+      assert Slack.get_slack_message_subject!(:customer, conversation_id, thread) ==
                ":wave: Customer:"
 
       assert_raise ArgumentError, fn ->
-        Slack.get_slack_message_subject(:invalid, conversation_id, thread)
+        Slack.get_slack_message_subject!(:invalid, conversation_id, thread)
       end
     end
 
