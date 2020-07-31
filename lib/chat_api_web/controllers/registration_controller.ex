@@ -10,7 +10,7 @@ defmodule ChatApiWeb.RegistrationController do
     invite_token = user_params["invite_token"]
 
     account =
-      if(invite_token) do
+      if invite_token do
         ChatApi.UserInvitations.get_user_invitation!(user_params["invite_token"]).account
       else
         {:ok, account} =
