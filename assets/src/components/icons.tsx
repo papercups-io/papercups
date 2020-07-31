@@ -14,6 +14,7 @@ import StarOutlined from '@ant-design/icons/StarOutlined';
 import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
+import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 
 export {
   ApiOutlined,
@@ -32,4 +33,5 @@ export {
   UploadOutlined,
   UpOutlined,
   UserOutlined,
+  LogoutOutlined,
 };
