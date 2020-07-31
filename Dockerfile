@@ -26,5 +26,5 @@ COPY lib lib
 RUN mix do compile
 RUN mix phx.digest
 
-COPY docker-entrypoint.sh docker-entrypoint.sh
-CMD ["docker-entrypoint.sh"]
+COPY docker-entrypoint.sh .
+CMD ["/usr/src/app/docker-entrypoint.sh"]
