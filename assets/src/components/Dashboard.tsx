@@ -9,12 +9,7 @@ import {
 } from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {colors, Badge, Layout, Menu, Sider} from './common';
-import {
-  ApiOutlined,
-  MailOutlined,
-  UserOutlined,
-  SettingOutlined,
-} from './icons';
+import {ApiOutlined, MailOutlined, UserOutlined, LogoutOutlined} from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import GettingStartedOverview from './account/GettingStartedOverview';
@@ -140,7 +135,7 @@ const Dashboard = (props: RouteComponentProps) => {
             <Menu mode="inline" theme="dark">
               <Menu.Item
                 title="Log out"
-                icon={<SettingOutlined />}
+                icon={<LogoutOutlined />}
                 key="logout"
                 onClick={logout}
               >

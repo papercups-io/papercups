@@ -2,6 +2,7 @@ import ApiOutlined from '@ant-design/icons/ApiOutlined';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
+import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
 import RightCircleOutlined from '@ant-design/icons/RightCircleOutlined';
@@ -20,6 +21,7 @@ export {
   CheckOutlined,
   DownOutlined,
   LoadingOutlined,
+  LogoutOutlined,
   MailOutlined,
   PlusOutlined,
   RightCircleOutlined,
