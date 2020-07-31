@@ -1,4 +1,4 @@
-ARG MIX_ENV=prod
+ARG MIX_ENV=dev
 FROM elixir:1.10 as dev
 WORKDIR /usr/src/app
 ENV LANG=C.UTF-8
@@ -9,7 +9,7 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
     mix local.rebar --force
 
 # declared here since they are required at build and run time.
-ENV DATABASE_URL="ecto://postgres:postgres@localhost/chat_api" PORT=4000 SECRET_KEY_BASE="" MIX_ENV=prod FROM_ADDRESS="" MAILGUN_API_KEY=""
+ENV DATABASE_URL="ecto://postgres:postgres@localhost/chat_api" SECRET_KEY_BASE="" MIX_ENV=dev FROM_ADDRESS="" MAILGUN_API_KEY=""
 
 COPY mix.exs mix.lock ./
 COPY config config
