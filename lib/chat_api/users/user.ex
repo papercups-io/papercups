@@ -5,11 +5,13 @@ defmodule ChatApi.Users.User do
 
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Accounts.Account
+  alias ChatApi.UserProfiles.UserProfile
 
   schema "users" do
     field(:email_alert_on_new_message, :boolean)
     has_many(:conversations, Conversation, foreign_key: :assignee_id)
     belongs_to(:account, Account, type: :binary_id)
+    has_one(:profile, UserProfile)
 
     pow_user_fields()
 

@@ -11,7 +11,9 @@ dayjs.extend(utc);
 
 const getSenderIdentifier = (customer?: Customer, user?: User) => {
   if (user) {
-    return user.email || 'Agent';
+    const {display_name, full_name, email} = user;
+
+    return display_name || full_name || email || 'Agent';
   } else if (customer) {
     const {name, email} = customer;
 
