@@ -2,6 +2,7 @@ import ApiOutlined from '@ant-design/icons/ApiOutlined';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
+import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
 import RightCircleOutlined from '@ant-design/icons/RightCircleOutlined';
@@ -14,13 +15,13 @@ import StarOutlined from '@ant-design/icons/StarOutlined';
 import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
-import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 
 export {
   ApiOutlined,
   CheckOutlined,
   DownOutlined,
   LoadingOutlined,
+  LogoutOutlined,
   MailOutlined,
   PlusOutlined,
   RightCircleOutlined,
@@ -33,5 +34,4 @@ export {
   UploadOutlined,
   UpOutlined,
   UserOutlined,
-  LogoutOutlined,
 };
