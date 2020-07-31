@@ -59,7 +59,8 @@ cd papercups
 
 ### To start your server
 
-- Install dependencies with `mix deps.get`
+- Install backend dependencies with `mix deps.get`
+- Install frontend dependencies with `cd assets && npm install`
 - Create and migrate your database with `mix ecto.setup`
 - Start the server with `mix phx.server`
 
