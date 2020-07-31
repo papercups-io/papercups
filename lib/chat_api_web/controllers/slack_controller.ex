@@ -1,18 +1,18 @@
 defmodule ChatApiWeb.SlackController do
   use ChatApiWeb, :controller
 
+  require Logger
+
   alias ChatApi.{Messages, Slack, SlackAuthorizations, SlackConversationThreads}
 
   action_fallback ChatApiWeb.FallbackController
 
   def oauth(conn, %{"code" => code}) do
-    IO.inspect("Code from Slack OAuth:")
-    IO.inspect(code)
+    Logger.info("Code from Slack OAuth: #{inspect(code)}")
 
     {:ok, response} = Slack.get_access_token(code)
 
-    IO.inspect("Slack OAuth response:")
-    IO.inspect(response)
+    Logger.info("Slack OAuth response: #{inspect(response)}")
 
     %{body: body} = response
 
@@ -86,8 +86,8 @@ defmodule ChatApiWeb.SlackController do
   end
 
   def webhook(conn, payload) do
-    IO.inspect("Payload from Slack webhook:")
-    IO.inspect(payload)
+    # TODO: switch to `debug`
+    Logger.info("Payload from Slack webhook: #{inspect(payload)}")
 
     case payload do
       %{"event" => event} ->
@@ -111,12 +111,10 @@ defmodule ChatApiWeb.SlackController do
          %{"type" => "message", "text" => text, "thread_ts" => thread_ts, "channel" => channel} =
            event
        ) do
-    IO.inspect("Handling Slack event:")
-    IO.inspect(event)
+    # TODO: switch to `debug`
+    Logger.info("Handling Slack event: #{inspect(event)}")
 
-    thread = SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel)
-
-    with conversation <- thread.conversation do
+    with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
       %{id: conversation_id, account_id: account_id, assignee_id: assignee_id} = conversation
 
       params = %{
@@ -136,4 +134,11 @@ defmodule ChatApiWeb.SlackController do
   end
 
   defp handle_event(_), do: nil
+
+  defp get_thread_conversation(thread_ts, channel) do
+    case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
+      %{conversation: conversation} -> {:ok, conversation}
+      _ -> {:error, "Not found"}
+    end
+  end
 end
