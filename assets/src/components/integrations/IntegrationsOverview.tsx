@@ -140,7 +140,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
           const {key, status} = record;
           const isConnected = status === 'connected';
           // NB: when testing locally, update `origin` to an ngrok url
-          // pointing at localhost: 4000 (or wherever your server is running)
+          // pointing at localhost:4000 (or wherever your server is running)
           const origin = window.location.origin;
           const redirect = `${origin}/integrations/slack`;
           const q = {
