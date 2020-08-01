@@ -65,36 +65,17 @@ defmodule ChatApi.UserProfilesTest do
       assert {:error, %Ecto.Changeset{}} = UserProfiles.create_user_profile(@invalid_attrs)
     end
 
-    # test "update_user_profile/2 with valid data updates the user_profile" do
-    #   user_profile = user_profile_fixture()
+    test "create_or_update/2 with valid data creates or updates the user_profile", %{user: user} do
+      attrs = Map.merge(@valid_attrs, %{user_id: user.id})
 
-    #   assert {:ok, %UserProfile{} = user_profile} =
-    #            UserProfiles.update_user_profile(user_profile, @update_attrs)
+      assert {:ok, %UserProfile{} = user_profile} = UserProfiles.create_or_update(user.id, attrs)
 
-    #   assert user_profile.display_name == "some updated display_name"
-    #   assert user_profile.full_name == "some updated full_name"
-    #   assert user_profile.profile_photo_url == "some updated profile_photo_url"
-    #   assert user_profile.user_id == 43
-    # end
+      assert user_profile.display_name == "some display_name"
 
-    # test "update_user_profile/2 with invalid data returns error changeset" do
-    #   user_profile = user_profile_fixture()
+      assert {:ok, %UserProfile{} = user_profile} =
+               UserProfiles.create_or_update(user.id, @update_attrs)
 
-    #   assert {:error, %Ecto.Changeset{}} =
-    #            UserProfiles.update_user_profile(user_profile, @invalid_attrs)
-
-    #   assert user_profile == UserProfiles.get_user_profile(@user_id)
-    # end
-
-    # test "delete_user_profile/1 deletes the user_profile" do
-    #   user_profile = user_profile_fixture()
-    #   assert {:ok, %UserProfile{}} = UserProfiles.delete_user_profile(user_profile)
-    #   assert_raise Ecto.NoResultsError, fn -> UserProfiles.get_user_profile(@user_id) end
-    # end
-
-    # test "change_user_profile/1 returns a user_profile changeset" do
-    #   user_profile = user_profile_fixture()
-    #   assert %Ecto.Changeset{} = UserProfiles.change_user_profile(user_profile)
-    # end
+      assert user_profile.display_name == "some updated display_name"
+    end
   end
 end

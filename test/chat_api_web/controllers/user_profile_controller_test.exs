@@ -1,100 +1,89 @@
 defmodule ChatApiWeb.UserProfileControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.UserProfiles
-  alias ChatApi.UserProfiles.UserProfile
+  alias ChatApi.{Accounts, UserProfiles, Repo}
+  alias ChatApi.Users.User
+
+  @password "supersecret123"
 
   @create_attrs %{
     display_name: "some display_name",
     full_name: "some full_name",
-    profile_photo_url: "some profile_photo_url",
-    user_id: 42
+    profile_photo_url: "some profile_photo_url"
   }
   @update_attrs %{
     display_name: "some updated display_name",
     full_name: "some updated full_name",
-    profile_photo_url: "some updated profile_photo_url",
-    user_id: 43
+    profile_photo_url: "some updated profile_photo_url"
   }
-  @invalid_attrs %{display_name: nil, full_name: nil, profile_photo_url: nil, user_id: nil}
 
-  def fixture(:user_profile) do
-    {:ok, user_profile} = UserProfiles.create_user_profile(@create_attrs)
+  def user_profile_fixture(attrs \\ %{}) do
+    {:ok, user_profile} =
+      attrs
+      |> Enum.into(attrs)
+      |> UserProfiles.create_user_profile()
+
     user_profile
   end
 
   setup %{conn: conn} do
-    {:ok, conn: put_req_header(conn, "accept", "application/json")}
+    {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
+
+    user =
+      %User{}
+      |> User.changeset(%{
+        email: "test@example.com",
+        password: @password,
+        password_confirmation: @password,
+        account_id: account.id
+      })
+      |> Repo.insert!()
+
+    conn = put_req_header(conn, "accept", "application/json")
+    authed_conn = Pow.Plug.assign_current_user(conn, user, [])
+
+    {:ok, conn: conn, authed_conn: authed_conn, user: user}
   end
 
-  describe "index" do
-    test "lists all profiles", %{conn: conn} do
-      conn = get(conn, Routes.user_profile_path(conn, :index))
-      assert json_response(conn, 200)["data"] == []
-    end
-  end
+  describe "create_or_update user_profile" do
+    test "creates or updates a user's profile", %{
+      authed_conn: authed_conn
+    } do
+      resp =
+        put(authed_conn, Routes.user_profile_path(authed_conn, :create_or_update),
+          user_profile: @create_attrs
+        )
 
-  describe "create user_profile" do
-    test "renders user_profile when data is valid", %{conn: conn} do
-      conn = post(conn, Routes.user_profile_path(conn, :create), user_profile: @create_attrs)
-      assert %{"id" => id} = json_response(conn, 201)["data"]
+      assert %{"display_name" => display_name, "full_name" => full_name} =
+               json_response(resp, 200)["data"]
 
-      conn = get(conn, Routes.user_profile_path(conn, :show, id))
+      assert display_name == @create_attrs.display_name
+      assert full_name == @create_attrs.full_name
 
-      assert %{
-               "id" => id,
-               "display_name" => "some display_name",
-               "full_name" => "some full_name",
-               "profile_photo_url" => "some profile_photo_url",
-               "user_id" => 42
-             } = json_response(conn, 200)["data"]
-    end
+      resp =
+        put(authed_conn, Routes.user_profile_path(authed_conn, :create_or_update),
+          user_profile: @update_attrs
+        )
 
-    test "renders errors when data is invalid", %{conn: conn} do
-      conn = post(conn, Routes.user_profile_path(conn, :create), user_profile: @invalid_attrs)
-      assert json_response(conn, 422)["errors"] != %{}
-    end
-  end
+      assert %{"display_name" => display_name, "full_name" => full_name} =
+               json_response(resp, 200)["data"]
 
-  describe "update user_profile" do
-    setup [:create_user_profile]
-
-    test "renders user_profile when data is valid", %{conn: conn, user_profile: %UserProfile{id: id} = user_profile} do
-      conn = put(conn, Routes.user_profile_path(conn, :update, user_profile), user_profile: @update_attrs)
-      assert %{"id" => ^id} = json_response(conn, 200)["data"]
-
-      conn = get(conn, Routes.user_profile_path(conn, :show, id))
-
-      assert %{
-               "id" => id,
-               "display_name" => "some updated display_name",
-               "full_name" => "some updated full_name",
-               "profile_photo_url" => "some updated profile_photo_url",
-               "user_id" => 43
-             } = json_response(conn, 200)["data"]
-    end
-
-    test "renders errors when data is invalid", %{conn: conn, user_profile: user_profile} do
-      conn = put(conn, Routes.user_profile_path(conn, :update, user_profile), user_profile: @invalid_attrs)
-      assert json_response(conn, 422)["errors"] != %{}
+      assert display_name == @update_attrs.display_name
+      assert full_name == @update_attrs.full_name
     end
   end
 
-  describe "delete user_profile" do
-    setup [:create_user_profile]
+  describe "show user_profile" do
+    test "retrieves the user's profile", %{authed_conn: authed_conn, user: user} do
+      attrs = Map.merge(@create_attrs, %{user_id: user.id})
+      user_profile = user_profile_fixture(attrs)
+      resp = get(authed_conn, Routes.user_profile_path(authed_conn, :show, %{}))
 
-    test "deletes chosen user_profile", %{conn: conn, user_profile: user_profile} do
-      conn = delete(conn, Routes.user_profile_path(conn, :delete, user_profile))
-      assert response(conn, 204)
+      assert %{"display_name" => display_name, "full_name" => full_name} =
+               json_response(resp, 200)["data"]
 
-      assert_error_sent 404, fn ->
-        get(conn, Routes.user_profile_path(conn, :show, user_profile))
-      end
+      assert display_name == user_profile.display_name
+      assert full_name == user_profile.full_name
     end
-  end
-
-  defp create_user_profile(_) do
-    user_profile = fixture(:user_profile)
-    %{user_profile: user_profile}
   end
 end
