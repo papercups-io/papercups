@@ -25,7 +25,7 @@ If you haven't installed Elixir, Phoenix, NodeJS, and PostgresQL yet, you can fi
 
 ## Developing on Docker
 
-`docker-compose up`
+`docker build -t papercups . && docker-compose up`
 
 **tl;dr:**
 
