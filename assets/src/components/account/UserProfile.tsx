@@ -5,11 +5,10 @@ import * as API from '../../api';
 
 type Props = {};
 type State = {
-  currentUser: any;
-  lastSavedState: any;
   fullName: string;
   displayName: string;
   profilePhotoUrl: string;
+  isLoading: boolean;
   isEditing: boolean;
 };
 
@@ -17,20 +16,17 @@ class UserProfile extends React.Component<Props, State> {
   input: any = null;
 
   state: State = {
-    currentUser: null,
-    lastSavedState: {},
     fullName: '',
     displayName: '',
     profilePhotoUrl: '',
+    isLoading: true,
     isEditing: false,
   };
 
   async componentDidMount() {
-    const currentUser = await API.me();
-
-    this.setState({currentUser});
-
     await this.fetchLatestProfile();
+
+    this.setState({isLoading: false});
   }
 
   fetchLatestProfile = async () => {
@@ -102,15 +98,15 @@ class UserProfile extends React.Component<Props, State> {
 
   render() {
     const {
-      currentUser,
+      isLoading,
       fullName,
       displayName,
       profilePhotoUrl,
       isEditing,
     } = this.state;
 
-    if (!currentUser) {
-      return null;
+    if (isLoading) {
+      return null; // TODO: switch to loading state
     }
 
     return (
