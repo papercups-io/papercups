@@ -144,8 +144,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
           const origin = window.location.origin;
           const redirect = `${origin}/integrations/slack`;
           const q = {
-            scope:
-              'incoming-webhook chat:write channels:history channels:manage chat:write.public',
+            scope: 'incoming-webhook chat:write channels:history',
             user_scope: 'channels:history',
             client_id: SLACK_CLIENT_ID,
             redirect_uri: redirect,
