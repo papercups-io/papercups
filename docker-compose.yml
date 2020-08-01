@@ -1,0 +1,23 @@
+version: "3"
+
+services:
+  web:
+    image: papercups
+    ports:
+      - "3000:3000"
+      - "4000:4000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: "ecto://postgres:postgres@db/postgres"
+  db:
+    image: postgres:alpine
+    container_name: papercups
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
