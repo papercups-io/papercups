@@ -100,6 +100,7 @@ We currently use Heroku for deployments:
 
 ```
 git push heroku master
+heroku run "POOL_SIZE=2 mix ecto.migrate"
 ```
 
 ## Running compiler on file change
