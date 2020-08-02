@@ -1,8 +1,4 @@
-import {Socket} from 'phoenix';
-
-const url =
+export const SOCKET_URL =
   window.location.hostname === 'localhost'
     ? 'ws://localhost:4000/socket'
     : '/socket';
-
-export const socket = new Socket(url);

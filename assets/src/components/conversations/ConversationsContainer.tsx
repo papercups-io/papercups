@@ -60,7 +60,7 @@ type Props = {
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
   fetch: () => Promise<Array<string>>;
-  onSelectConversation: (id: string, fn?: () => void) => void;
+  onSelectConversation: (id: string | null, fn?: () => void) => void;
   onUpdateConversation: (id: string, params: any) => Promise<void>;
   onSendMessage: (
     message: string,
@@ -84,6 +84,11 @@ class ConversationsContainer extends React.Component<Props, State> {
         this.handleSelectConversation(first);
       })
       .then(() => this.scrollToEl.scrollIntoView());
+  }
+
+  componentWillUnmount() {
+    // Mark selected conversation as null
+    this.handleSelectConversation(null);
   }
 
   componentDidUpdate(prev: Props) {
@@ -112,7 +117,7 @@ class ConversationsContainer extends React.Component<Props, State> {
     }
   };
 
-  handleSelectConversation = (id: string) => {
+  handleSelectConversation = (id: string | null) => {
     this.setState({selected: id}, () => {
       this.scrollToEl.scrollIntoView();
     });
