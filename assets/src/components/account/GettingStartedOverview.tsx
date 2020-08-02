@@ -90,6 +90,7 @@ const ExamplePage = () => {
         subtitle= '${subtitle}'
         primaryColor='${primaryColor}'
         accountId='${accountId}'
+        baseUrl='${BASE_URL}'
       />
     </>
   );
@@ -104,6 +105,7 @@ const ExamplePage = () => {
       title: '${title}',
       subtitle: '${subtitle}',
       primaryColor: '${primaryColor}',
+      baseUrl: '${BASE_URL}'
     },
   };
 </script>
