@@ -8,8 +8,6 @@ defmodule ChatApiWeb.ConversationController do
 
   @spec index(Plug.Conn.t(), any) :: Plug.Conn.t()
   def index(conn, params) do
-    raise "Oh no!"
-
     with %{account_id: account_id} <- conn.assigns.current_user do
       conversations = Conversations.list_conversations_by_account(account_id, params)
 
