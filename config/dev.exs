@@ -1,7 +1,6 @@
 use Mix.Config
 
-database_url =
-  System.get_env("DATABASE_URL") || "ecto://postgres:postgres@localhost/chat_api_dev"
+database_url = System.get_env("DATABASE_URL") || "ecto://postgres:postgres@localhost/chat_api_dev"
 
 # Configure your database
 config :chat_api, ChatApi.Repo,
