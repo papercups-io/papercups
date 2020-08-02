@@ -25,6 +25,10 @@ If you haven't installed Elixir, Phoenix, NodeJS, and PostgresQL yet, you can fi
 
 ## Developing on Docker
 
+You can edit your local code when developing with docker and it will update in the container. 
+
+*The docker file is made for development only at the moment*
+
 `docker build -t papercups . && docker-compose up`
 
 **tl;dr:**
