@@ -1,4 +1,4 @@
-version: "3"
+version: "3.2"
 
 services:
   web:
@@ -6,6 +6,12 @@ services:
     ports:
       - "3000:3000"
       - "4000:4000"
+    volumes:
+      - type: bind
+        source: .
+        target: /usr/src/app
+    command:
+      - ./docker-entrypoint.sh
     depends_on:
       - db
     environment:
@@ -13,9 +19,3 @@ services:
   db:
     image: postgres:alpine
     container_name: papercups
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_DB: postgres
-      POSTGRES_PASSWORD: postgres
