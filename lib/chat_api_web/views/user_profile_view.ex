@@ -11,10 +11,12 @@ defmodule ChatApiWeb.UserProfileView do
   end
 
   def render("user_profile.json", %{user_profile: user_profile}) do
-    %{id: user_profile.id,
+    %{
+      id: user_profile.id,
       user_id: user_profile.user_id,
       full_name: user_profile.full_name,
       display_name: user_profile.display_name,
-      profile_photo_url: user_profile.profile_photo_url}
+      profile_photo_url: user_profile.profile_photo_url
+    }
   end
 end

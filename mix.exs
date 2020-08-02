@@ -50,7 +50,8 @@ defmodule ChatApi.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:corsica, "~> 1.0"},
-      {:pow, "~> 1.0.18"}
+      {:pow, "~> 1.0.18"},
+      {:sentry, "8.0.0"}
     ]
   end
 
