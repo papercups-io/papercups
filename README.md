@@ -23,14 +23,6 @@ Papercups runs on Elixir/Phoenix, with a TypeScript React app for the frontend.
 
 If you haven't installed Elixir, Phoenix, NodeJS, and PostgresQL yet, you can find some great instructions here: https://hexdocs.pm/phoenix/installation.html
 
-## Developing on Docker
-
-You can edit your local code when developing with docker and it will update in the container. 
-
-*The docker file is made for development only at the moment*
-
-`docker build -t papercups . && docker-compose up`
-
 **tl;dr:**
 
 - Install Elixir: https://elixir-lang.org/install.html
@@ -77,6 +69,16 @@ This will automatically start up the React frontend in watch mode on `localhost:
 ### To start client side
 
 The frontend code will start up automatically when you run `mix phx.server`, but for more information see: [assets/README.md](assets/README.md)
+
+### Developing on Docker
+
+You can edit your local code when developing with docker and it will update in the container.
+
+_The docker file is made for development only at the moment_
+
+```
+docker build -t papercups . && docker-compose up
+```
 
 ## Running tests
 
