@@ -23,6 +23,10 @@ Papercups runs on Elixir/Phoenix, with a TypeScript React app for the frontend.
 
 If you haven't installed Elixir, Phoenix, NodeJS, and PostgresQL yet, you can find some great instructions here: https://hexdocs.pm/phoenix/installation.html
 
+## Developing on Docker
+
+`docker build -t papercups . && docker-compose up`
+
 **tl;dr:**
 
 - Install Elixir: https://elixir-lang.org/install.html
