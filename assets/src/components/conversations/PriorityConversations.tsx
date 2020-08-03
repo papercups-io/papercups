@@ -11,6 +11,7 @@ const PriorityConversations = () => {
     priority = [],
     conversationsById = {},
     messagesByConversation = {},
+    currentlyOnline = {},
     fetchPriorityConversations,
     onSelectConversation,
     onUpdateConversation,
@@ -27,6 +28,7 @@ const PriorityConversations = () => {
       title="Prioritized"
       account={account}
       currentUser={currentUser}
+      currentlyOnline={currentlyOnline}
       showGetStarted={isNewUser}
       conversationIds={priority}
       conversationsById={conversationsById}

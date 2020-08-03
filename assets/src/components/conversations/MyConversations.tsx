@@ -11,6 +11,7 @@ const MyConversations = () => {
     mine = [],
     conversationsById = {},
     messagesByConversation = {},
+    currentlyOnline = {},
     fetchMyConversations,
     onSelectConversation,
     onUpdateConversation,
@@ -27,6 +28,7 @@ const MyConversations = () => {
       title="Assigned to me"
       account={account}
       currentUser={currentUser}
+      currentlyOnline={currentlyOnline}
       showGetStarted={isNewUser}
       conversationIds={mine}
       conversationsById={conversationsById}

@@ -11,6 +11,7 @@ const ClosedConversations = () => {
     closed = [],
     conversationsById = {},
     messagesByConversation = {},
+    currentlyOnline = {},
     fetchAllConversations,
     fetchClosedConversations,
     onSelectConversation,
@@ -37,6 +38,7 @@ const ClosedConversations = () => {
       title="Closed"
       account={account}
       currentUser={currentUser}
+      currentlyOnline={currentlyOnline}
       showGetStarted={isNewUser}
       conversationIds={closed}
       conversationsById={conversationsById}
