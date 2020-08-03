@@ -90,6 +90,36 @@ heroku config:set REACT_APP_SLACK_CLIENT_ID='YOUR_CLIENT_ID_HERE'
 heroku config:set PAPERCUPS_SLACK_CLIENT_SECRET='YOUR_CLIENT_SECRET_HERE'
 ```
 
+### Testing
+
+- Go to the `/integrations` path in your dashboard
+- Click on "Connect" for Slack
+
+<img width="1186" alt="Screen Shot 2020-08-03 at 7 00 57 PM" src="https://user-images.githubusercontent.com/5264279/89235340-f9840180-d5bb-11ea-9a64-0495dcdd53b9.png">
+
+- Go through the OAuth flow for your app
+- Select a channel to connect with
+
+<img width="1186" alt="Screen Shot 2020-08-03 at 7 01 18 PM" src="https://user-images.githubusercontent.com/5264279/89235339-f9840180-d5bb-11ea-9013-16d3d0ab73a1.png">
+
+- If successful, it should take you back to this page:
+
+<img width="1186" alt="Screen Shot 2020-08-03 at 7 01 24 PM" src="https://user-images.githubusercontent.com/5264279/89235336-f9840180-d5bb-11ea-83c6-d7edf9fcb039.png">
+
+- To test that it works, go to the "Getting started" tab
+- Try sending a message in the widget on the right:
+
+<img width="1066" alt="Screen Shot 2020-08-03 at 7 08 58 PM" src="https://user-images.githubusercontent.com/5264279/89235757-d3129600-d5bc-11ea-8331-509ce15496a2.png">
+
+- Check Slack to verify you received a message
+- Try sending a reply through Slack
+
+<img width="379" alt="Screen Shot 2020-08-03 at 7 10 32 PM" src="https://user-images.githubusercontent.com/5264279/89235854-081ee880-d5bd-11ea-888f-e44c3d6ec9ae.png">
+
+- Verify that the reply was received
+
+<img width="1186" alt="Screen Shot 2020-08-03 at 7 11 03 PM" src="https://user-images.githubusercontent.com/5264279/89235882-18cf5e80-d5bd-11ea-9d66-9b8630494c68.png">
+
 ### Done!
 
 That should be it! Feel free to open an issue if you have any problems getting set up :)
