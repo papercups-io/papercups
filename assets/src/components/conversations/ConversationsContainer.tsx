@@ -54,6 +54,7 @@ type Props = {
   title?: string;
   account: any;
   currentUser: any;
+  currentlyOnline?: any;
   loading: boolean;
   showGetStarted: boolean;
   conversationIds: Array<string>;
@@ -115,6 +116,13 @@ class ConversationsContainer extends React.Component<Props, State> {
     if (!selected || ids.indexOf(selected) === -1) {
       this.handleSelectConversation(ids[0]);
     }
+  };
+
+  isCustomerOnline = (customerId: string) => {
+    const {currentlyOnline = {}} = this.props;
+    const key = `customer:${customerId}`;
+
+    return !!(currentlyOnline && currentlyOnline[key]);
   };
 
   handleSelectConversation = (id: string | null) => {
@@ -240,6 +248,8 @@ class ConversationsContainer extends React.Component<Props, State> {
               conversationIds.map((conversationId, idx) => {
                 const conversation = conversationsById[conversationId];
                 const messages = messagesByConversation[conversationId];
+                const {customer_id: customerId} = conversation;
+                const isCustomerOnline = this.isCustomerOnline(customerId);
                 const isHighlighted = conversationId === selectedConversationId;
                 const {gold, red, green, purple, magenta} = colors;
                 // TODO: come up with a better way to make colors/avatars consistent
@@ -251,6 +261,7 @@ class ConversationsContainer extends React.Component<Props, State> {
                     conversation={conversation}
                     messages={messages}
                     isHighlighted={isHighlighted}
+                    isCustomerOnline={isCustomerOnline}
                     color={color}
                     onSelectConversation={this.handleSelectConversation}
                   />

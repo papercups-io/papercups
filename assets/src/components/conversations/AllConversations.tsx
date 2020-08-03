@@ -11,6 +11,7 @@ const AllConversations = () => {
     all = [],
     conversationsById = {},
     messagesByConversation = {},
+    currentlyOnline = {},
     fetchAllConversations,
     onSelectConversation,
     onUpdateConversation,
@@ -27,6 +28,7 @@ const AllConversations = () => {
       title="All conversations"
       account={account}
       currentUser={currentUser}
+      currentlyOnline={currentlyOnline}
       showGetStarted={isNewUser}
       conversationIds={all}
       conversationsById={conversationsById}

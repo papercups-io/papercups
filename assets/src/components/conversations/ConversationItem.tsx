@@ -28,12 +28,14 @@ const ConversationItem = ({
   messages,
   color,
   isHighlighted,
+  isCustomerOnline,
   onSelectConversation,
 }: {
   conversation: Array<any>;
   messages: Array<any>;
   color: string;
   isHighlighted?: boolean;
+  isCustomerOnline?: boolean;
   onSelectConversation: (id: string) => void;
 }) => {
   const formatted = formatConversation(conversation, messages);
@@ -67,7 +69,11 @@ const ConversationItem = ({
         </Flex>
 
         {read ? (
-          <Text type="secondary">{date}</Text>
+          isCustomerOnline ? (
+            <Badge status="success" text="Online" />
+          ) : (
+            <Text type="secondary">{date}</Text>
+          )
         ) : (
           <Badge status="processing" />
         )}

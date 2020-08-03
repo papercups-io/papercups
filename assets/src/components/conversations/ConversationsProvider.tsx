@@ -19,6 +19,7 @@ export const ConversationsContext = React.createContext<{
   unreadByCategory: any;
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
+  currentlyOnline: {[key: string]: any};
 
   onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
@@ -45,6 +46,7 @@ export const ConversationsContext = React.createContext<{
   unreadByCategory: {},
   conversationsById: {},
   messagesByConversation: {},
+  currentlyOnline: {},
 
   onSelectConversation: () => {},
   onSendMessage: () => {},
@@ -70,6 +72,7 @@ type State = {
   selectedConversationId: string | null;
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
+  presence: {[key: string]: any};
 
   all: Array<string>;
   mine: Array<string>;
@@ -87,6 +90,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     selectedConversationId: null,
     conversationsById: {},
     messagesByConversation: {},
+    presence: {},
 
     all: [],
     mine: [],
@@ -103,7 +107,11 @@ export class ConversationsProvider extends React.Component<Props, State> {
       API.fetchAccountInfo(),
       API.countMessages().then((r) => r.count),
     ]);
-    this.setState({currentUser, account, isNewUser: numTotalMessages === 0});
+    this.setState({
+      currentUser,
+      account,
+      isNewUser: numTotalMessages === 0,
+    });
     const conversationIds = await this.fetchAllConversations();
     const {id: accountId} = account;
 
@@ -154,11 +162,11 @@ export class ConversationsProvider extends React.Component<Props, State> {
     });
 
     this.channel.on('presence_state', (state) => {
-      console.log('Presence state:', state);
+      this.handlePresenceState(state);
     });
 
-    this.channel.on('presence_diff', (state) => {
-      console.log('Presence diff:', state);
+    this.channel.on('presence_diff', (diff) => {
+      this.handlePresenceDiff(diff);
     });
 
     this.channel
@@ -174,6 +182,69 @@ export class ConversationsProvider extends React.Component<Props, State> {
           10000
         );
       });
+  };
+
+  handlePresenceState = (state: any) => {
+    this.setState({presence: state});
+  };
+
+  updatePresenceWithJoins = (joins: any, presence: any) => {
+    return Object.keys(joins).reduce((acc, key) => {
+      const existing = acc[key];
+      const update = joins[key];
+
+      if (!update || !update.metas) {
+        throw new Error(`Unexpected join state: ${update}`);
+      }
+
+      if (existing && existing.metas) {
+        return {...acc, [key]: {metas: [...existing.metas, ...update.metas]}};
+      } else {
+        return {...acc, [key]: {metas: update.metas}};
+      }
+    }, presence);
+  };
+
+  updatePresenceWithLeaves = (leaves: any, presence: any) => {
+    return Object.keys(leaves).reduce((acc, key) => {
+      const existing = acc[key];
+      const update = leaves[key];
+
+      if (!update || !update.metas) {
+        throw new Error(`Unexpected leave state: ${update}`);
+      }
+
+      if (existing && existing.metas) {
+        const remaining = existing.metas.filter((meta: any) => {
+          return update.metas.some((m: any) => meta.phx_ref === m.phx_ref);
+        });
+
+        return {
+          ...acc,
+          [key]: remaining.length ? {metas: remaining} : null,
+        };
+      } else {
+        return {...acc, [key]: null};
+      }
+    }, presence);
+  };
+
+  handlePresenceDiff = (diff: any) => {
+    const {joins, leaves} = diff;
+    const {presence} = this.state;
+
+    const withJoins = this.updatePresenceWithJoins(joins, presence);
+    const withLeaves = this.updatePresenceWithLeaves(leaves, presence);
+    const combined = {...withJoins, ...withLeaves};
+    const latest = Object.keys(combined).reduce((acc, key: string) => {
+      if (!combined[key]) {
+        return acc;
+      }
+
+      return {...acc, [key]: combined[key]};
+    }, {} as {[key: string]: any});
+
+    this.setState({presence: latest});
   };
 
   handleNewMessage = async (message: Message) => {
@@ -509,6 +580,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
       closed,
       conversationsById,
       messagesByConversation,
+      presence,
     } = this.state;
     const unreadByCategory = this.getUnreadByCategory();
 
@@ -526,6 +598,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
           unreadByCategory,
           conversationsById,
           messagesByConversation,
+          currentlyOnline: presence,
 
           onSelectConversation: this.handleSelectConversation,
           onUpdateConversation: this.handleUpdateConversation,

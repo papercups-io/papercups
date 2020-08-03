@@ -39,7 +39,8 @@ defmodule ChatApiWeb.ConversationChannel do
 
   @impl true
   def handle_info(:after_join, socket) do
-    with %{customer_id: customer_id} <- socket.assigns do
+    with %{customer_id: customer_id, conversation: conversation} <- socket.assigns,
+         %{account_id: account_id} <- conversation do
       key = "customer:" <> customer_id
 
       {:ok, _} =
@@ -47,7 +48,15 @@ defmodule ChatApiWeb.ConversationChannel do
           online_at: inspect(System.system_time(:second))
         })
 
+      topic = "notification:" <> account_id
+
+      {:ok, _} =
+        Presence.track(self(), topic, key, %{
+          online_at: inspect(System.system_time(:second))
+        })
+
       push(socket, "presence_state", Presence.list(socket))
+      ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
     end
 
     {:noreply, socket}
