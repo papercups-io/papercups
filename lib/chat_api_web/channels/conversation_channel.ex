@@ -24,6 +24,8 @@ defmodule ChatApiWeb.ConversationChannel do
           ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
         )
 
+      # If the payload includes a customer_id, we want to mark this customer
+      # as "online" via Phoenix Presence in the :after_join hook
       case payload do
         %{"customer_id" => customer_id} ->
           send(self(), :after_join)
@@ -43,6 +45,7 @@ defmodule ChatApiWeb.ConversationChannel do
          %{account_id: account_id} <- conversation do
       key = "customer:" <> customer_id
 
+      # Track the presence of this customer in the conversation
       {:ok, _} =
         Presence.track(socket, key, %{
           online_at: inspect(System.system_time(:second))
@@ -50,6 +53,8 @@ defmodule ChatApiWeb.ConversationChannel do
 
       topic = "notification:" <> account_id
 
+      # Track the presence of this customer for the given account,
+      # so agents can see the "online" status in the dashboard
       {:ok, _} =
         Presence.track(self(), topic, key, %{
           online_at: inspect(System.system_time(:second))

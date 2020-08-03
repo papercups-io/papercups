@@ -132,7 +132,6 @@ class Demo extends React.Component<Props, State> {
           primaryColor={color}
           accountId={accountId}
           greeting="Hello! Have any questions?"
-          baseUrl="http://localhost:4000"
           defaultIsOpen
         />
       </Box>
