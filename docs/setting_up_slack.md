@@ -1,8 +1,16 @@
+## Setting up Slack
+
+If you plan on self-hosting Papercups, you'll need to set up your own Slack app if you want to handle messaging through Slack.
+
+### Creating the app
+
 - Go to https://api.slack.com/apps
 - Click “Create New App”
 - Name it whatever you’d like, and pick the Slack workspace you’d like to test it against
 
 ![](https://paper-attachments.dropbox.com/s_63895AAB3973EA701984146FF05B40938812C8B7E2ACDD7574570851E5FDF9D0_1596320538271_Screen+Shot+2020-08-01+at+6.03.09+PM.png)
+
+### Subscribing to Slack events
 
 - Go to “Event Subscriptions”
 - Toggle “Enable Events” to “On”
@@ -16,6 +24,8 @@
 - Subscribe to the `message.channels` user event
 
 ![](https://paper-attachments.dropbox.com/s_63895AAB3973EA701984146FF05B40938812C8B7E2ACDD7574570851E5FDF9D0_1596320538144_Screen+Shot+2020-08-01+at+6.07.39+PM.png)
+
+### Setting up scopes and permissions
 
 - Go to “OAuth & Permissions”
 - Click the “Install App to Workspace” button to install your app to your test workspace if you haven’t already
@@ -42,6 +52,8 @@
 
 ![](https://paper-attachments.dropbox.com/s_63895AAB3973EA701984146FF05B40938812C8B7E2ACDD7574570851E5FDF9D0_1596321782746_Screen+Shot+2020-08-01+at+6.42.23+PM.png)
 
+### Enabling distribution of your app
+
 - Set up your app for distribution
 - Under “Basic Information”, go to the “Manage distribution” section and click “Distribute App”
 
@@ -55,6 +67,8 @@
 - Click on “Activate Public Distribution”
 
 ![](https://paper-attachments.dropbox.com/s_63895AAB3973EA701984146FF05B40938812C8B7E2ACDD7574570851E5FDF9D0_1596320537770_Screen+Shot+2020-08-01+at+6.13.12+PM.png)
+
+### Setting up your environment variables
 
 - In the “Basic Information” section, scroll down to “App Credentials” to get the keys you’ll be using as environment variables
 
@@ -75,3 +89,7 @@ heroku config:set PAPERCUPS_SLACK_CLIENT_ID='YOUR_CLIENT_ID_HERE'
 heroku config:set REACT_APP_SLACK_CLIENT_ID='YOUR_CLIENT_ID_HERE'
 heroku config:set PAPERCUPS_SLACK_CLIENT_SECRET='YOUR_CLIENT_SECRET_HERE'
 ```
+
+### Done!
+
+That should be it! Feel free to open an issue if you have any problems getting set up :)
