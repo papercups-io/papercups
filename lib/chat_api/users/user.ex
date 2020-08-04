@@ -5,8 +5,7 @@ defmodule ChatApi.Users.User do
 
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Accounts.Account
-  alias ChatApi.UserProfiles.UserProfile
-  alias ChatApi.Users.UserSettings
+  alias ChatApi.Users.{UserProfile, UserSettings}
 
   schema "users" do
     has_many(:conversations, Conversation, foreign_key: :assignee_id)

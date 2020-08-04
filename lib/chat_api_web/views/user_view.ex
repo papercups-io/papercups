@@ -2,7 +2,7 @@ defmodule ChatApiWeb.UserView do
   use ChatApiWeb, :view
   alias ChatApiWeb.UserView
 
-  alias ChatApi.UserProfiles.UserProfile
+  alias ChatApi.Users.UserProfile
 
   def render("show.json", %{user: user}) do
     %{data: render_one(user, UserView, "user.json")}

@@ -1,4 +1,4 @@
-defmodule ChatApi.UserProfiles.UserProfile do
+defmodule ChatApi.Users.UserProfile do
   use Ecto.Schema
   import Ecto.Changeset
 
