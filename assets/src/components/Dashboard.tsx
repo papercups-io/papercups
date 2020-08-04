@@ -9,14 +9,10 @@ import {
 } from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {colors, Badge, Layout, Menu, Sider} from './common';
-import {
-  ApiOutlined,
-  MailOutlined,
-  UserOutlined,
-  SettingOutlined,
-} from './icons';
+import {ApiOutlined, MailOutlined, UserOutlined, LogoutOutlined} from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
+import UserProfile from './account/UserProfile';
 import GettingStartedOverview from './account/GettingStartedOverview';
 import {
   ConversationsProvider,
@@ -64,6 +60,9 @@ const Dashboard = (props: RouteComponentProps) => {
               >
                 <Menu.Item key="overview">
                   <Link to="/account/overview">Overview</Link>
+                </Menu.Item>
+                <Menu.Item key="profile">
+                  <Link to="/account/profile">My Profile</Link>
                 </Menu.Item>
                 <Menu.Item key="getting-started">
                   <Link to="/account/getting-started">Getting started</Link>
@@ -140,7 +139,7 @@ const Dashboard = (props: RouteComponentProps) => {
             <Menu mode="inline" theme="dark">
               <Menu.Item
                 title="Log out"
-                icon={<SettingOutlined />}
+                icon={<LogoutOutlined />}
                 key="logout"
                 onClick={logout}
               >
@@ -154,6 +153,7 @@ const Dashboard = (props: RouteComponentProps) => {
       <Layout style={{marginLeft: 220, background: colors.white}}>
         <Switch>
           <Route path="/account/overview" component={AccountOverview} />
+          <Route path="/account/profile" component={UserProfile} />
           <Route
             path="/account/getting-started"
             component={GettingStartedOverview}

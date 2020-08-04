@@ -31,6 +31,18 @@ config :phoenix, :json_library, Jason
 
 config :tesla, adapter: Tesla.Adapter.Hackney
 
+# Configure Sentry
+sentry_dsn = System.get_env("SENTRY_DSN")
+
+if sentry_dsn != nil do
+  config :sentry,
+    dsn: sentry_dsn,
+    environment_name: Mix.env(),
+    included_environments: [:prod],
+    enable_source_code_context: true,
+    root_source_code_path: File.cwd!()
+end
+
 config :chat_api, :pow,
   user: ChatApi.Users.User,
   repo: ChatApi.Repo

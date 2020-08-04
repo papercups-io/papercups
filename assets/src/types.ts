@@ -1,6 +1,9 @@
 export type User = {
   id: number;
   email: string;
+  display_name?: string;
+  full_name?: string;
+  profile_photo_url?: string;
 };
 
 export type Customer = {

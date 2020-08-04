@@ -12,7 +12,9 @@ dayjs.extend(utc);
 
 const getSenderIdentifier = (customer?: Customer, user?: User) => {
   if (user) {
-    return user.email || 'Agent';
+    const {display_name, full_name, email} = user;
+
+    return display_name || full_name || email || 'Agent';
   } else if (customer) {
     const {name, email} = customer;
 
@@ -20,6 +22,62 @@ const getSenderIdentifier = (customer?: Customer, user?: User) => {
   } else {
     return 'Anonymous User';
   }
+};
+
+const SenderAvatar = ({
+  isAgent,
+  name,
+  user,
+}: {
+  isAgent: boolean;
+  name: string;
+  user?: User;
+}) => {
+  const profilePhotoUrl = user && user.profile_photo_url;
+
+  if (profilePhotoUrl) {
+    return (
+      <Tooltip title={name}>
+        <Box
+          mr={2}
+          style={{
+            height: 32,
+            width: 32,
+            borderRadius: '50%',
+            justifyContent: 'center',
+            alignItems: 'center',
+
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+            backgroundImage: `url(${profilePhotoUrl})`,
+          }}
+        />
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip title={name}>
+      <Flex
+        mr={2}
+        sx={{
+          bg: isAgent ? colors.primary : colors.gold,
+          height: 32,
+          width: 32,
+          borderRadius: '50%',
+          justifyContent: 'center',
+          alignItems: 'center',
+          color: '#fff',
+        }}
+      >
+        {isAgent ? (
+          name.slice(0, 1).toUpperCase()
+        ) : (
+          <UserOutlined style={{color: colors.white}} />
+        )}
+      </Flex>
+    </Tooltip>
+  );
 };
 
 type Props = {
@@ -70,26 +128,7 @@ const ChatMessage = ({
   return (
     <Box pr={4} pl={0} pb={isLastInGroup ? 3 : 2}>
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
-        <Tooltip title={tooltip}>
-          <Flex
-            mr={2}
-            sx={{
-              bg: isAgent ? colors.primary : colors.gold,
-              height: 32,
-              width: 32,
-              borderRadius: '50%',
-              justifyContent: 'center',
-              alignItems: 'center',
-              color: '#fff',
-            }}
-          >
-            {isAgent ? (
-              tooltip.slice(0, 1).toUpperCase()
-            ) : (
-              <UserOutlined style={{color: colors.white}} />
-            )}
-          </Flex>
-        </Tooltip>
+        <SenderAvatar name={tooltip} user={user} isAgent={isAgent} />
 
         <Box
           px={3}

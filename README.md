@@ -59,7 +59,8 @@ cd papercups
 
 ### To start your server
 
-- Install dependencies with `mix deps.get`
+- Install backend dependencies with `mix deps.get`
+- Install frontend dependencies with `cd assets && npm install`
 - Create and migrate your database with `mix ecto.setup`
 - Start the server with `mix phx.server`
 
@@ -68,6 +69,16 @@ This will automatically start up the React frontend in watch mode on `localhost:
 ### To start client side
 
 The frontend code will start up automatically when you run `mix phx.server`, but for more information see: [assets/README.md](assets/README.md)
+
+### Developing on Docker
+
+You can edit your local code when developing with docker and it will update in the container.
+
+_The docker file is made for development only at the moment_
+
+```
+docker build -t papercups . && docker-compose up
+```
 
 ## Running tests
 
@@ -89,6 +100,7 @@ We currently use Heroku for deployments:
 
 ```
 git push heroku master
+heroku run "POOL_SIZE=2 mix ecto.migrate"
 ```
 
 ## Running compiler on file change

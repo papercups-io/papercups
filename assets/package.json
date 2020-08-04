@@ -4,7 +4,8 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
-    "@papercups-io/chat-widget": "^1.0.9",
+    "@papercups-io/chat-widget": "^1.0.12",
+    "@sentry/react": "^5.20.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
@@ -20,6 +21,7 @@
     "antd": "^4.3.5",
     "dayjs": "^1.8.29",
     "marked": "^1.1.1",
+    "logrocket": "^1.0.10",
     "phoenix": "^1.5.3",
     "query-string": "^6.13.1",
     "react": "^16.13.1",

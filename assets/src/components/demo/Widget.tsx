@@ -1,13 +1,13 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Channel} from 'phoenix';
+import {Channel, Socket} from 'phoenix';
 import {colors, Button, TextArea, Title} from '../common';
 import {SendOutlined} from '../icons';
 import {Message} from '../../types';
 import ChatMessage from '../conversations/ChatMessage';
 import * as API from '../../api';
 import {getCustomerId, setCustomerId} from '../../storage';
-import {socket} from '../../socket';
+import {SOCKET_URL} from '../../socket';
 
 type Props = {};
 type State = {
@@ -21,6 +21,7 @@ type State = {
 class Widget extends React.Component<Props, State> {
   scrollToEl: any = null;
 
+  socket: Socket | null = null;
   channel: Channel | null = null;
 
   state: State = {
@@ -35,8 +36,6 @@ class Widget extends React.Component<Props, State> {
   };
 
   componentDidMount() {
-    socket.connect();
-
     this.fetchLatestConversation(this.state.customerId);
   }
 
@@ -102,13 +101,23 @@ class Widget extends React.Component<Props, State> {
   };
 
   joinConversationChannel = (conversationId: string, customerId?: string) => {
+    if (this.socket && this.socket.disconnect) {
+      console.log('Existing socket:', this.socket);
+
+      this.socket.disconnect();
+    }
+
+    this.socket = new Socket(SOCKET_URL);
+    this.socket.connect();
+
     if (this.channel && this.channel.leave) {
+      console.log('Existing channel:', this.channel);
       this.channel.leave(); // TODO: what's the best practice here?
     }
 
     console.log('Joining channel:', conversationId);
 
-    this.channel = socket.channel(`conversation:${conversationId}`, {
+    this.channel = this.socket.channel(`conversation:${conversationId}`, {
       customer_id: customerId,
     });
 

@@ -1,10 +1,10 @@
 import React, {useContext} from 'react';
-import {Channel} from 'phoenix';
+import {Channel, Socket} from 'phoenix';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Conversation, Message} from '../../types';
 import {sleep} from '../../utils';
-import {socket} from '../../socket';
+import {SOCKET_URL} from '../../socket';
 
 export const ConversationsContext = React.createContext<{
   loading: boolean;
@@ -20,7 +20,7 @@ export const ConversationsContext = React.createContext<{
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
 
-  onSelectConversation: (id: string) => any;
+  onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
   onSendMessage: (
     message: string,
@@ -94,11 +94,10 @@ export class ConversationsProvider extends React.Component<Props, State> {
     closed: [],
   };
 
+  socket: Socket | null = null;
   channel: Channel | null = null;
 
   async componentDidMount() {
-    socket.connect({token: API.getAccessToken()});
-
     const [currentUser, account, numTotalMessages] = await Promise.all([
       API.me(),
       API.fetchAccountInfo(),
@@ -115,13 +114,24 @@ export class ConversationsProvider extends React.Component<Props, State> {
     accountId: string,
     conversationIds: Array<string>
   ) => {
+    if (this.socket && this.socket.disconnect) {
+      console.log('Existing socket:', this.socket);
+      this.socket.disconnect();
+    }
+
+    this.socket = new Socket(SOCKET_URL, {
+      params: {token: API.getAccessToken()},
+    });
+    this.socket.connect();
+
     if (this.channel && this.channel.leave) {
+      console.log('Existing channel:', this.channel);
       this.channel.leave(); // TODO: what's the best practice here?
     }
 
     // TODO: If no conversations exist, should we create a conversation with us
     // so new users can play around with the chat right away and give us feedback?
-    this.channel = socket.channel(`notification:${accountId}`, {
+    this.channel = this.socket.channel(`notification:${accountId}`, {
       ids: conversationIds,
     });
 
@@ -150,6 +160,11 @@ export class ConversationsProvider extends React.Component<Props, State> {
       })
       .receive('error', (err) => {
         console.log('Unable to join', err);
+        // TODO: double check that this works (retries after 10s)
+        setTimeout(
+          () => this.joinNotificationChannel(accountId, conversationIds),
+          10000
+        );
       });
   };
 
@@ -264,8 +279,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
     });
   };
 
-  handleSelectConversation = (id: string) => {
+  handleSelectConversation = (id: string | null) => {
     this.setState({selectedConversationId: id}, () => {
+      if (!id) {
+        return;
+      }
+
       const conversation = this.state.conversationsById[id];
 
       if (conversation && !conversation.read) {
