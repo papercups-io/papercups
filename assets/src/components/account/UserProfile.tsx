@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Button, Input, Paragraph, Title} from '../common';
+import {Button, Checkbox, Divider, Input, Paragraph, Title} from '../common';
 import * as API from '../../api';
 
 type Props = {};
@@ -8,6 +8,7 @@ type State = {
   fullName: string;
   displayName: string;
   profilePhotoUrl: string;
+  shouldEmailOnNewMessages: boolean;
   isLoading: boolean;
   isEditing: boolean;
 };
@@ -19,12 +20,15 @@ class UserProfile extends React.Component<Props, State> {
     fullName: '',
     displayName: '',
     profilePhotoUrl: '',
+    shouldEmailOnNewMessages: false,
     isLoading: true,
     isEditing: false,
   };
 
   async componentDidMount() {
     await this.fetchLatestProfile();
+    // await this.handleUpdateNotificationSettings();
+    await this.fetchUserSettings();
 
     this.setState({isLoading: false});
   }
@@ -49,6 +53,16 @@ class UserProfile extends React.Component<Props, State> {
         displayName: '',
         fullName: '',
         profilePhotoUrl: '',
+      });
+    }
+  };
+
+  fetchUserSettings = async () => {
+    const settings = await API.fetchUserSettings();
+
+    if (settings) {
+      this.setState({
+        shouldEmailOnNewMessages: settings.email_alert_on_new_message,
       });
     }
   };
@@ -92,6 +106,21 @@ class UserProfile extends React.Component<Props, State> {
       .then(() => this.setState({isEditing: false}));
   };
 
+  handleToggleEmailAlertSetting = async (e: any) => {
+    const shouldEmailOnNewMessages = !!e.target.checked;
+
+    // Optimistic update
+    this.setState({shouldEmailOnNewMessages});
+
+    return API.updateUserSettings({
+      email_alert_on_new_message: shouldEmailOnNewMessages,
+    }).catch((err) => {
+      console.log('Failed to update settings!', err);
+      // Reset if fails to actually update
+      return this.fetchUserSettings();
+    });
+  };
+
   handleStartEditing = () => {
     this.setState({isEditing: true});
   };
@@ -102,6 +131,7 @@ class UserProfile extends React.Component<Props, State> {
       fullName,
       displayName,
       profilePhotoUrl,
+      shouldEmailOnNewMessages,
       isEditing,
     } = this.state;
 
@@ -185,6 +215,24 @@ class UserProfile extends React.Component<Props, State> {
             Edit
           </Button>
         )}
+
+        <Divider />
+
+        <Title level={3}>Notification Settings</Title>
+
+        <Box mb={3} sx={{maxWidth: 480}}>
+          <Paragraph>
+            Choose how you would like to be alerted when your account receives
+            new messages from customers.
+          </Paragraph>
+        </Box>
+
+        <Checkbox
+          checked={shouldEmailOnNewMessages}
+          onChange={this.handleToggleEmailAlertSetting}
+        >
+          Send email alert on new messages
+        </Checkbox>
       </Box>
     );
   }
