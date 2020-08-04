@@ -27,8 +27,7 @@ class UserProfile extends React.Component<Props, State> {
 
   async componentDidMount() {
     await this.fetchLatestProfile();
-    // await this.handleUpdateNotificationSettings();
-    await this.fetchUserSettings();
+    await this.fetchLatestSettings();
 
     this.setState({isLoading: false});
   }
@@ -49,6 +48,7 @@ class UserProfile extends React.Component<Props, State> {
         profilePhotoUrl,
       });
     } else {
+      // NB: this also handles resetting these values if the optimistic update fails
       this.setState({
         displayName: '',
         fullName: '',
@@ -57,12 +57,17 @@ class UserProfile extends React.Component<Props, State> {
     }
   };
 
-  fetchUserSettings = async () => {
+  fetchLatestSettings = async () => {
     const settings = await API.fetchUserSettings();
 
     if (settings) {
       this.setState({
         shouldEmailOnNewMessages: settings.email_alert_on_new_message,
+      });
+    } else {
+      // NB: this also handles resetting these values if the optimistic update fails
+      this.setState({
+        shouldEmailOnNewMessages: false,
       });
     }
   };
@@ -117,7 +122,7 @@ class UserProfile extends React.Component<Props, State> {
     }).catch((err) => {
       console.log('Failed to update settings!', err);
       // Reset if fails to actually update
-      return this.fetchUserSettings();
+      return this.fetchLatestSettings();
     });
   };
 
