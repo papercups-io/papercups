@@ -65,15 +65,18 @@ defmodule ChatApi.UserProfilesTest do
       assert {:error, %Ecto.Changeset{}} = UserProfiles.create_user_profile(@invalid_attrs)
     end
 
-    test "create_or_update/2 with valid data creates or updates the user_profile", %{user: user} do
+    test "create_or_update_profile/2 with valid data creates or updates the user_profile", %{
+      user: user
+    } do
       attrs = Map.merge(@valid_attrs, %{user_id: user.id})
 
-      assert {:ok, %UserProfile{} = user_profile} = UserProfiles.create_or_update(user.id, attrs)
+      assert {:ok, %UserProfile{} = user_profile} =
+               UserProfiles.create_or_update_profile(user.id, attrs)
 
       assert user_profile.display_name == "some display_name"
 
       assert {:ok, %UserProfile{} = user_profile} =
-               UserProfiles.create_or_update(user.id, @update_attrs)
+               UserProfiles.create_or_update_profile(user.id, @update_attrs)
 
       assert user_profile.display_name == "some updated display_name"
     end

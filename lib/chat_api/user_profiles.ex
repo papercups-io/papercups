@@ -9,19 +9,6 @@ defmodule ChatApi.UserProfiles do
   alias ChatApi.UserProfiles.UserProfile
 
   @doc """
-  Returns the list of profiles.
-
-  ## Examples
-
-      iex> list_profiles()
-      [%UserProfile{}, ...]
-
-  """
-  def list_profiles do
-    Repo.all(UserProfile)
-  end
-
-  @doc """
   Gets a single user_profile.
 
   Raises `Ecto.NoResultsError` if the User profile does not exist.
@@ -75,7 +62,7 @@ defmodule ChatApi.UserProfiles do
     |> Repo.update()
   end
 
-  def create_or_update(user_id, params) do
+  def create_or_update_profile(user_id, params) do
     existing = get_user_profile(user_id)
 
     if existing do
