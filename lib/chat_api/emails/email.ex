@@ -12,15 +12,19 @@ defmodule ChatApi.Emails.Email do
     # Using try catch here because if someone is self hosting and doesn't need the email service it would error out
     # TODO: Find a better solution besides try catch probably in config.exs setup an empty mailer that doesn't do anything
     try do
-      body =
-        "A new message has arrived: " <>
-          message <> "\nhttps://" <> @backend_url <> "/conversations/" <> conversation_id
+      link =
+        "<a href=\"https://#{@backend_url}/conversations/#{conversation_id}\">View in dashboard</a>"
+
+      msg = "<b>#{message}</b>"
+      html = "A new message has arrived:<br />" <> msg <> "<br /><br />" <> link
+      text = "A new message has arrived: #{message}"
 
       new()
       |> to(to_address)
-      |> from({"hello", @from_address})
+      |> from({"Papercups", @from_address})
       |> subject("A customer has sent you a message!")
-      |> text_body(body)
+      |> html_body(html)
+      |> text_body(text)
       |> ChatApi.Mailer.deliver()
     rescue
       e ->

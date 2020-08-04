@@ -92,13 +92,13 @@ defmodule ChatApiWeb.ConversationChannel do
         # TODO: double check that this still works as expected
         broadcast(socket, "shout", result)
 
-        # TODO: maybe do these in an "after_send" hook or something more async,
-        # since this notification logic probably shouldn't live in here.
-        Emails.send_email_alerts(message.body, account_id, conversation_id)
-
         ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body,
           type: :customer
         )
+
+        # TODO: maybe do these in an "after_send" hook or something more async,
+        # since this notification logic probably shouldn't live in here.
+        Emails.send_email_alerts(message.body, account_id, conversation_id)
 
       _ ->
         broadcast(socket, "shout", payload)
