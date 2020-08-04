@@ -1,6 +1,7 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
+import marked from 'marked';
 import utc from 'dayjs/plugin/utc';
 import {colors, Text, Tooltip} from '../common';
 import {UserOutlined} from '../icons';
@@ -55,7 +56,7 @@ const ChatMessage = ({
               borderRadius: 4,
             }}
           >
-            {body}
+            <span dangerouslySetInnerHTML={{__html: marked(body)}} />
           </Box>
         </Flex>
         {shouldDisplayTimestamp && (
@@ -66,7 +67,6 @@ const ChatMessage = ({
       </Box>
     );
   }
-
   return (
     <Box pr={4} pl={0} pb={isLastInGroup ? 3 : 2}>
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
@@ -101,7 +101,7 @@ const ChatMessage = ({
             maxWidth: '80%',
           }}
         >
-          {body}
+          <span dangerouslySetInnerHTML={{__html: marked(body)}} />
         </Box>
       </Flex>
       {shouldDisplayTimestamp && (
