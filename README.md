@@ -94,6 +94,8 @@ Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite
 
 # Appendix
 
+(We'll add more instructions here as we implement more integrations.)
+
 ## Setting up email alerts
 
 Set the environment variables in the [`.env.example`](https://github.com/papercups-io/papercups/blob/master/.env.example) file.
