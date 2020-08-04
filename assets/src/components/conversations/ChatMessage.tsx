@@ -1,12 +1,12 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
-import marked from 'marked';
 import utc from 'dayjs/plugin/utc';
 import {colors, Text, Tooltip} from '../common';
 import {UserOutlined} from '../icons';
 import {formatRelativeTime} from '../../utils';
 import {Customer, Message, User} from '../../types';
+import ChatMessageBody from './ChatMessageBody';
 
 dayjs.extend(utc);
 
@@ -112,9 +112,16 @@ const ChatMessage = ({
               color: colors.white,
               background: colors.primary,
               borderRadius: 4,
+              a: {
+                color: colors.white,
+                cursor: 'pointer',
+              },
+              'a:hover': {
+                textDecoration: 'underline',
+              },
             }}
           >
-            <span dangerouslySetInnerHTML={{__html: marked(body)}} />
+            <ChatMessageBody body={body} />
           </Box>
         </Flex>
         {shouldDisplayTimestamp && (
@@ -140,7 +147,7 @@ const ChatMessage = ({
             maxWidth: '80%',
           }}
         >
-          <span dangerouslySetInnerHTML={{__html: marked(body)}} />
+          <ChatMessageBody body={body} />
         </Box>
       </Flex>
       {shouldDisplayTimestamp && (
