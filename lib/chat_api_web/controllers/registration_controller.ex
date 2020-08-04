@@ -16,7 +16,8 @@ defmodule ChatApiWeb.RegistrationController do
       |> Pow.Plug.create_user(params)
       |> case do
            {:ok, _user, conn} ->
-             ChatApi.UserInvitations.delete_user_invitation(invite)
+             ChatApi.UserInvitations.update_user_invitation(invite,
+               %{expires_at: DateTime.utc_now() |> DateTime.truncate(:second)})
              send_api_token(conn)
 
            {:error, changeset, conn} ->

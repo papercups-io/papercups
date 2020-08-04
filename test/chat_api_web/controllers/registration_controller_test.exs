@@ -88,9 +88,6 @@ defmodule ChatApiWeb.RegistrationControllerTest do
       account = Accounts.get_account!(account.id) |> Repo.preload([:users])
 
       assert(Enum.any?(account.users, fn u -> u.email == registration_email end))
-      assert_raise(Ecto.NoResultsError, fn ->
-        UserInvitations.get_user_invitation!(invite_token)
-      end)
     end
 
     test "error for non-existing invite token", %{conn: conn} do
