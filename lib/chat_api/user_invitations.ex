@@ -5,8 +5,10 @@ defmodule ChatApi.UserInvitations do
 
   import Ecto.Query, warn: false
   alias ChatApi.Repo
-
   alias ChatApi.UserInvitations.UserInvitation
+
+  # number of days the invite is valid
+  @days_from_now 3
 
   @doc """
   Returns the list of user_invitations.
@@ -53,6 +55,7 @@ defmodule ChatApi.UserInvitations do
   """
   def create_user_invitation(attrs \\ %{}) do
     %UserInvitation{}
+    |> set_expires_at()
     |> UserInvitation.changeset(attrs)
     |> Repo.insert()
   end
@@ -106,5 +109,9 @@ defmodule ChatApi.UserInvitations do
   """
   def change_user_invitation(%UserInvitation{} = user_invitation, attrs \\ %{}) do
     UserInvitation.changeset(user_invitation, attrs)
+  end
+
+  defp set_expires_at(invitation) do
+    %{invitation | expires_at: DateTime.utc_now() |> DateTime.add(@days_from_now) |> DateTime.truncate(:second)}
   end
 end
