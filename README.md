@@ -88,6 +88,12 @@ Create a PostgreSQL test database named: `chat_api_test`, and run:
 mix test
 ```
 
+## Get in touch
+
+Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-gfs0d269-dEHm3SYs_5KmFKQ9YhBzDw) or [Discord](https://discord.gg/Dq2A3eh)! :wave:
+
+# Appendix
+
 ## Setting up email alerts
 
 Set the environment variables in the [`.env.example`](https://github.com/papercups-io/papercups/blob/master/.env.example) file.
