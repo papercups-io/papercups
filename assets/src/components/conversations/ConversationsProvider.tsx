@@ -73,6 +73,71 @@ type PresenceDiff = {
   leaves: PhoenixPresence;
 };
 
+export const updatePresenceWithJoiners = (
+  joiners: PhoenixPresence,
+  currentState: PhoenixPresence
+): PhoenixPresence => {
+  // Update our presence state by adding all the joiners, represented by
+  // keys like "customer:1a2b3c", "user:123", etc.
+  // The `metas` represent the metadata of each presence. A single user/customer
+  // can have multiple `metas` if logged into multiple devices/windows.
+  let result = {...currentState};
+
+  Object.keys(joiners).forEach((key) => {
+    const existing = result[key];
+    const update = joiners[key];
+
+    // `metas` is how Phoenix tracks each individual presence
+    if (!update || !update.metas) {
+      throw new Error(`Unexpected join state: ${update}`);
+    }
+
+    if (existing && existing.metas) {
+      result[key] = {metas: [...existing.metas, ...update.metas]};
+    } else {
+      result[key] = {metas: update.metas};
+    }
+  });
+
+  return result;
+};
+
+export const updatePresenceWithExiters = (
+  exiters: PhoenixPresence,
+  currentState: PhoenixPresence
+): PhoenixPresence => {
+  // Update our presence state by removing all the exiters, represented by
+  // keys like "customer:1a2b3c", "user:123", etc. We currently indicate an
+  // "exit" by setting their key to `null`.
+  // The `metas` represent the metadata of each presence. A single user/customer
+  // can have multiple `metas` if logged into multiple devices/windows.
+  let result = {...currentState};
+
+  Object.keys(exiters).forEach((key) => {
+    const existing = result[key];
+    const update = exiters[key];
+
+    // `metas` is how Phoenix tracks each individual presence
+    if (!update || !update.metas) {
+      throw new Error(`Unexpected leave state: ${update}`);
+    }
+
+    if (existing && existing.metas) {
+      const remaining = existing.metas.filter((meta: PresenceMetadata) => {
+        return update.metas.some(
+          (m: PresenceMetadata) => meta.phx_ref !== m.phx_ref
+        );
+      });
+
+      result[key] = remaining.length ? {metas: remaining} : null;
+    } else {
+      result[key] = null;
+    }
+  });
+
+  return result;
+};
+
 type Props = React.PropsWithChildren<{}>;
 type State = {
   loading: boolean;
@@ -199,70 +264,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.setState({presence: state});
   };
 
-  updatePresenceWithJoiners = (
-    joiners: PhoenixPresence,
-    presence: PhoenixPresence
-  ) => {
-    // Update our presence state by adding all the joiners, represented by
-    // keys like "customer:1a2b3c", "user:123", etc.
-    // The `metas` represent the metadata of each presence. A single user/customer
-    // can have multiple `metas` if logged into multiple devices/windows.
-    return Object.keys(joiners).reduce((acc, key) => {
-      const existing = acc[key];
-      const update = joiners[key];
-
-      if (!update || !update.metas) {
-        throw new Error(`Unexpected join state: ${update}`);
-      }
-
-      if (existing && existing.metas) {
-        return {...acc, [key]: {metas: [...existing.metas, ...update.metas]}};
-      } else {
-        return {...acc, [key]: {metas: update.metas}};
-      }
-    }, presence);
-  };
-
-  updatePresenceWithExiters = (
-    exiters: PhoenixPresence,
-    presence: PhoenixPresence
-  ) => {
-    // Update our presence state by removing all the exiters, represented by
-    // keys like "customer:1a2b3c", "user:123", etc. We currently indicate an
-    // "exit" by setting their key to `null`.
-    // The `metas` represent the metadata of each presence. A single user/customer
-    // can have multiple `metas` if logged into multiple devices/windows.
-    return Object.keys(exiters).reduce((acc, key) => {
-      const existing = acc[key];
-      const update = exiters[key];
-
-      if (!update || !update.metas) {
-        throw new Error(`Unexpected leave state: ${update}`);
-      }
-
-      if (existing && existing.metas) {
-        const remaining = existing.metas.filter((meta: PresenceMetadata) => {
-          return update.metas.some(
-            (m: PresenceMetadata) => meta.phx_ref === m.phx_ref
-          );
-        });
-
-        return {
-          ...acc,
-          [key]: remaining.length ? {metas: remaining} : null,
-        };
-      } else {
-        return {...acc, [key]: null};
-      }
-    }, presence);
-  };
-
   handlePresenceDiff = (diff: PresenceDiff) => {
     const {joins, leaves} = diff;
     const {presence} = this.state;
 
-    const withJoins = this.updatePresenceWithJoiners(joins, presence);
-    const withLeaves = this.updatePresenceWithExiters(leaves, presence);
+    const withJoins = updatePresenceWithJoiners(joins, presence);
+    const withLeaves = updatePresenceWithExiters(leaves, presence);
     const combined = {...withJoins, ...withLeaves};
     const latest = Object.keys(combined).reduce((acc, key: string) => {
       if (!combined[key]) {
