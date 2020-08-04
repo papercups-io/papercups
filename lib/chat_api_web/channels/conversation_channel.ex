@@ -94,8 +94,7 @@ defmodule ChatApiWeb.ConversationChannel do
 
         # TODO: maybe do these in an "after_send" hook or something more async,
         # since this notification logic probably shouldn't live in here.
-        account = Accounts.get_account!(account_id)
-        Emails.send_email_alerts(account.users, message.body, conversation_id)
+        Emails.send_email_alerts(message.body, account_id, conversation_id)
 
         ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body,
           type: :customer

@@ -15,8 +15,7 @@ defmodule ChatApiWeb.APIAuthPlugTest do
       Repo.insert!(%User{
         id: 1,
         email: "test@example.com",
-        account_id: account.id,
-        email_alert_on_new_message: false
+        account_id: account.id
       })
 
     {:ok, conn: conn, user: user}
