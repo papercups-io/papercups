@@ -62,6 +62,17 @@ export const useConversations = () => useContext(ConversationsContext);
 
 type ConversationBucket = 'all' | 'mine' | 'priority' | 'closed';
 
+type PresenceMetadata = {online_at?: string; phx_ref: string};
+type PhoenixPresence = {
+  [key: string]: {
+    metas: Array<PresenceMetadata>;
+  } | null;
+};
+type PresenceDiff = {
+  joins: PhoenixPresence;
+  leaves: PhoenixPresence;
+};
+
 type Props = React.PropsWithChildren<{}>;
 type State = {
   loading: boolean;
@@ -72,7 +83,7 @@ type State = {
   selectedConversationId: string | null;
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
-  presence: {[key: string]: any};
+  presence: PhoenixPresence;
 
   all: Array<string>;
   mine: Array<string>;
@@ -184,14 +195,21 @@ export class ConversationsProvider extends React.Component<Props, State> {
       });
   };
 
-  handlePresenceState = (state: any) => {
+  handlePresenceState = (state: PhoenixPresence) => {
     this.setState({presence: state});
   };
 
-  updatePresenceWithJoins = (joins: any, presence: any) => {
-    return Object.keys(joins).reduce((acc, key) => {
+  updatePresenceWithJoiners = (
+    joiners: PhoenixPresence,
+    presence: PhoenixPresence
+  ) => {
+    // Update our presence state by adding all the joiners, represented by
+    // keys like "customer:1a2b3c", "user:123", etc.
+    // The `metas` represent the metadata of each presence. A single user/customer
+    // can have multiple `metas` if logged into multiple devices/windows.
+    return Object.keys(joiners).reduce((acc, key) => {
       const existing = acc[key];
-      const update = joins[key];
+      const update = joiners[key];
 
       if (!update || !update.metas) {
         throw new Error(`Unexpected join state: ${update}`);
@@ -205,18 +223,28 @@ export class ConversationsProvider extends React.Component<Props, State> {
     }, presence);
   };
 
-  updatePresenceWithLeaves = (leaves: any, presence: any) => {
-    return Object.keys(leaves).reduce((acc, key) => {
+  updatePresenceWithExiters = (
+    exiters: PhoenixPresence,
+    presence: PhoenixPresence
+  ) => {
+    // Update our presence state by removing all the exiters, represented by
+    // keys like "customer:1a2b3c", "user:123", etc. We currently indicate an
+    // "exit" by setting their key to `null`.
+    // The `metas` represent the metadata of each presence. A single user/customer
+    // can have multiple `metas` if logged into multiple devices/windows.
+    return Object.keys(exiters).reduce((acc, key) => {
       const existing = acc[key];
-      const update = leaves[key];
+      const update = exiters[key];
 
       if (!update || !update.metas) {
         throw new Error(`Unexpected leave state: ${update}`);
       }
 
       if (existing && existing.metas) {
-        const remaining = existing.metas.filter((meta: any) => {
-          return update.metas.some((m: any) => meta.phx_ref === m.phx_ref);
+        const remaining = existing.metas.filter((meta: PresenceMetadata) => {
+          return update.metas.some(
+            (m: PresenceMetadata) => meta.phx_ref === m.phx_ref
+          );
         });
 
         return {
@@ -229,12 +257,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
     }, presence);
   };
 
-  handlePresenceDiff = (diff: any) => {
+  handlePresenceDiff = (diff: PresenceDiff) => {
     const {joins, leaves} = diff;
     const {presence} = this.state;
 
-    const withJoins = this.updatePresenceWithJoins(joins, presence);
-    const withLeaves = this.updatePresenceWithLeaves(leaves, presence);
+    const withJoins = this.updatePresenceWithJoiners(joins, presence);
+    const withLeaves = this.updatePresenceWithExiters(leaves, presence);
     const combined = {...withJoins, ...withLeaves};
     const latest = Object.keys(combined).reduce((acc, key: string) => {
       if (!combined[key]) {
@@ -242,7 +270,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
       }
 
       return {...acc, [key]: combined[key]};
-    }, {} as {[key: string]: any});
+    }, {} as PhoenixPresence);
 
     this.setState({presence: latest});
   };
@@ -416,15 +444,20 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   formatConversationState = (conversations: Array<Conversation>) => {
-    const conversationsById = conversations.reduce((acc: any, conv: any) => {
-      return {...acc, [conv.id]: conv};
-    }, {});
+    const conversationsById = conversations.reduce(
+      (acc: any, conv: Conversation) => {
+        return {...acc, [conv.id]: conv};
+      },
+      {}
+    );
     const messagesByConversation = conversations.reduce(
-      (acc: any, conv: any) => {
+      (acc: any, conv: Conversation) => {
+        const {messages = []} = conv;
+
         return {
           ...acc,
-          [conv.id]: conv.messages.sort(
-            (a: any, b: any) =>
+          [conv.id]: messages.sort(
+            (a: Message, b: Message) =>
               +new Date(a.created_at) - +new Date(b.created_at)
           ),
         };
