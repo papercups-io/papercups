@@ -21,7 +21,7 @@ defmodule ChatApi.Emails.Email do
 
       new()
       |> to(to_address)
-      |> from({"Papercups", @from_address})
+      |> from({"hello", @from_address})
       |> subject("A customer has sent you a message!")
       |> html_body(html)
       |> text_body(text)
