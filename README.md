@@ -21,52 +21,23 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 
 Papercups runs on Elixir/Phoenix, with a TypeScript React app for the frontend.
 
-If you haven't installed Elixir, Phoenix, NodeJS, and PostgresQL yet, you can find some great instructions here: https://hexdocs.pm/phoenix/installation.html
 
-**tl;dr:**
-
-- Install Elixir: https://elixir-lang.org/install.html
-- Install Hex:
-
-```
-mix local.hex
-```
-
-- To check that we are on Elixir 1.6 and Erlang 20 or later, run:
-
-```
-elixir -v
-Erlang/OTP 20 [erts-9.3] [source] [64-bit] [smp:8:8] [async-threads:10] [hipe] [kernel-poll:false] [dtrace]
-
-Elixir 1.6.3
-```
-
-- Install the Phoenix application generator:
-
-```
-mix archive.install hex phx_new 1.5.4
-```
-
-- Install NodeJS: https://nodejs.org/en/download/
-- Install PostgresQL: https://wiki.postgresql.org/wiki/Detailed_installation_guides
-
-### Cloning the repo
+- Install [PostgreSQL](https://wiki.postgresql.org/wiki/Detailed_installation_guides)
+- Install [asdf](https://asdf-vm.com/#/core-manage-asdf-vm?id=install)
+- Install [Erlang dependencies](https://github.com/asdf-vm/asdf-erlang#before-asdf-install)
 
 ```
 git clone git@github.com:papercups-io/papercups.git
 cd papercups
+asdf install
+mix local.hex
+mix deps.get
+cd assets && npm install
+mix ecto.setup
+mix phx.server
 ```
 
-### To start your server
-
-- Install backend dependencies with `mix deps.get`
-- Install frontend dependencies with `cd assets && npm install`
-- Create and migrate your database with `mix ecto.setup`
-- Start the server with `mix phx.server`
-
 This will automatically start up the React frontend in watch mode on `localhost:3000`, with the API running on `localhost:4000`.
-
-### To start client side
 
 The frontend code will start up automatically when you run `mix phx.server`, but for more information see: [assets/README.md](assets/README.md)
 
