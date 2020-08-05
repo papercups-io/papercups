@@ -42,5 +42,11 @@ defmodule ChatApi.UserInvitationsTest do
       user_invitation = user_invitation_fixture(%{account_id: account.id})
       assert user_invitation.expires_at != nil
     end
+
+    test "sets invitation as expired", %{account: account} do
+      {_, user_invitation} = user_invitation_fixture(%{account_id: account.id})
+        |> UserInvitations.expire_user_invitation()
+      assert UserInvitations.expired?(user_invitation) == true
+    end
   end
 end

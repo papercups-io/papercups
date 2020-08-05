@@ -89,5 +89,46 @@ defmodule ChatApiWeb.RegistrationControllerTest do
 
       assert(Enum.any?(account.users, fn u -> u.email == registration_email end))
     end
+
+    test "error for non-existing invite token", %{conn: conn} do
+      random_number = :rand.uniform(1_000_000_000) |> Integer.to_string()
+      registration_email = random_number <> "anotheremail@example.com"
+
+      params = %{
+        "user" => %{
+          "invite_token" => "093ada1d-02c2-4e08-bdd1-d0d6e567db2e",
+          "email" => registration_email,
+          "password" => @password,
+          "password_confirmation" => @password
+        }
+      }
+
+      existing_conn = post(conn, Routes.registration_path(conn, :create, params))
+      assert json = json_response(existing_conn, 500)
+      assert json["error"]["message"] == "Invalid invitation token"
+      assert json["error"]["status"] == 500
+    end
+
+    test "error for expired invite token", %{conn: conn, account: account} do
+      {_, user_invitation} = UserInvitations.create_user_invitation(%{account_id: account.id})
+      UserInvitations.expire_user_invitation(user_invitation)
+
+      random_number = :rand.uniform(1_000_000_000) |> Integer.to_string()
+      registration_email = random_number <> "anotheremail@example.com"
+
+      params = %{
+        "user" => %{
+          "invite_token" => user_invitation.id,
+          "email" => registration_email,
+          "password" => @password,
+          "password_confirmation" => @password
+        }
+      }
+
+      existing_conn = post(conn, Routes.registration_path(conn, :create, params))
+      assert json = json_response(existing_conn, 500)
+      assert json["error"]["message"] == "Invitation token has expired"
+      assert json["error"]["status"] == 500
+    end
   end
 end
