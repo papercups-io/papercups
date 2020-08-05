@@ -16,19 +16,19 @@ defmodule ChatApiWeb.RegistrationController do
       |> Pow.Plug.create_user(params)
       |> case do
            {:ok, _user, conn} ->
-             ChatApi.UserInvitations.update_user_invitation(invite,
-               %{expires_at: DateTime.utc_now() |> DateTime.truncate(:second)})
-             send_api_token(conn)
-
+             if ChatApi.UserInvitations.expired?(invite) do
+               send_server_error(conn, "Invitation token has expired")
+             else
+               ChatApi.UserInvitations.expire_user_invitation(invite)
+               send_api_token(conn)
+             end
            {:error, changeset, conn} ->
              errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
              send_user_create_errors(conn, errors)
          end
     rescue
       Ecto.NoResultsError ->
-       conn
-       |> put_status(500)
-       |> json(%{error: %{status: 500, message: "Invalid invitation token"}})
+       send_server_error(conn, "Invalid invitation token")
     end
   end
 
@@ -62,5 +62,11 @@ defmodule ChatApiWeb.RegistrationController do
     conn
     |> put_status(500)
     |> json(%{error: %{status: 500, message: "Couldn't create user", errors: errors}})
+  end
+
+  defp send_server_error(conn, message) do
+    conn
+    |> put_status(500)
+    |> json(%{error: %{status: 500, message: message}})
   end
 end

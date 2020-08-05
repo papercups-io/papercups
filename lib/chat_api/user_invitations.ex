@@ -111,6 +111,35 @@ defmodule ChatApi.UserInvitations do
     UserInvitation.changeset(user_invitation, attrs)
   end
 
+  @doc """
+  Sets a user invitation as expired
+
+  ## Examples
+
+      iex> expire_user_invitation(user_invitation)
+      {:ok, %UserInvitation{}}
+
+  """
+  def expire_user_invitation(%UserInvitation{} = user_invitation) do
+    user_invitation
+    |> update_user_invitation(%{expires_at: DateTime.utc_now() |> DateTime.truncate(:second)})
+  end
+
+  @doc """
+  Checks if the user invitation has expired
+
+  ## Examples
+
+      iex> expired?(user_invitation)
+      true
+
+      iex> expired?(user_invitation)
+      false
+  """
+  def expired?(%UserInvitation{} = user_invitation) do
+    (DateTime.utc_now() |> DateTime.truncate(:second)) >= user_invitation.expires_at
+  end
+
   defp set_expires_at(invitation) do
     %{invitation | expires_at: DateTime.utc_now() |> DateTime.add(@days_from_now) |> DateTime.truncate(:second)}
   end
