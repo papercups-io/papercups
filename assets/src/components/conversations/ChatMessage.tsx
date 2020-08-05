@@ -6,7 +6,7 @@ import {colors, Text, Tooltip} from '../common';
 import {UserOutlined} from '../icons';
 import {formatRelativeTime} from '../../utils';
 import {Customer, Message, User} from '../../types';
-import ChatMessageBody from './ChatMessageBody';
+import ChatMessageBox from './ChatMessageBox';
 
 dayjs.extend(utc);
 
@@ -105,24 +105,15 @@ const ChatMessage = ({
     return (
       <Box pr={0} pl={4} pb={isLastInGroup ? 3 : 2}>
         <Flex sx={{justifyContent: 'flex-end'}}>
-          <Box
+          <ChatMessageBox
+            content={body}
             px={3}
             py={2}
             sx={{
               color: colors.white,
               background: colors.primary,
-              borderRadius: 4,
-              a: {
-                color: colors.white,
-                cursor: 'pointer',
-              },
-              'a:hover': {
-                textDecoration: 'underline',
-              },
             }}
-          >
-            <ChatMessageBody body={body} />
-          </Box>
+          />
         </Flex>
         {shouldDisplayTimestamp && (
           <Flex m={1} sx={{justifyContent: 'flex-end'}}>
@@ -136,19 +127,16 @@ const ChatMessage = ({
     <Box pr={4} pl={0} pb={isLastInGroup ? 3 : 2}>
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
         <SenderAvatar name={tooltip} user={user} isAgent={isAgent} />
-
-        <Box
+        <ChatMessageBox
+          content={body}
           px={3}
           py={2}
           sx={{
             color: colors.black,
             background: 'rgb(245, 245, 245)',
-            borderRadius: 4,
             maxWidth: '80%',
           }}
-        >
-          <ChatMessageBody body={body} />
-        </Box>
+        />
       </Flex>
       {shouldDisplayTimestamp && (
         <Flex my={1} mx={2} pl={4} sx={{justifyContent: 'flex-start'}}>
