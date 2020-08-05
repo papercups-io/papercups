@@ -104,9 +104,9 @@ defmodule ChatApiWeb.RegistrationControllerTest do
       }
 
       existing_conn = post(conn, Routes.registration_path(conn, :create, params))
-      assert json = json_response(existing_conn, 500)
+      assert json = json_response(existing_conn, 403)
       assert json["error"]["message"] == "Invalid invitation token"
-      assert json["error"]["status"] == 500
+      assert json["error"]["status"] == 403
     end
 
     test "error for expired invite token", %{conn: conn, account: account} do
@@ -126,9 +126,9 @@ defmodule ChatApiWeb.RegistrationControllerTest do
       }
 
       existing_conn = post(conn, Routes.registration_path(conn, :create, params))
-      assert json = json_response(existing_conn, 500)
+      assert json = json_response(existing_conn, 403)
       assert json["error"]["message"] == "Invitation token has expired"
-      assert json["error"]["status"] == 500
+      assert json["error"]["status"] == 403
     end
   end
 end
