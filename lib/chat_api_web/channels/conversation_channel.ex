@@ -1,6 +1,7 @@
 defmodule ChatApiWeb.ConversationChannel do
   use ChatApiWeb, :channel
 
+  alias ChatApiWeb.Presence
   alias ChatApi.{Accounts, Messages, Conversations, Emails}
 
   @impl true
@@ -16,15 +17,54 @@ defmodule ChatApiWeb.ConversationChannel do
     if authorized?(payload, private_conversation_id) do
       conversation = Conversations.get_conversation!(private_conversation_id)
 
-      {:ok,
-       assign(
-         socket,
-         :conversation,
-         ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
-       )}
+      socket =
+        assign(
+          socket,
+          :conversation,
+          ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
+        )
+
+      # If the payload includes a customer_id, we want to mark this customer
+      # as "online" via Phoenix Presence in the :after_join hook
+      case payload do
+        %{"customer_id" => customer_id} ->
+          send(self(), :after_join)
+          {:ok, socket |> assign(:customer_id, customer_id)}
+
+        _ ->
+          {:ok, socket}
+      end
     else
       {:error, %{reason: "unauthorized"}}
     end
+  end
+
+  @impl true
+  def handle_info(:after_join, socket) do
+    with %{customer_id: customer_id, conversation: conversation} <- socket.assigns,
+         %{account_id: account_id} <- conversation do
+      key = "customer:" <> customer_id
+
+      # Track the presence of this customer in the conversation
+      {:ok, _} =
+        Presence.track(socket, key, %{
+          online_at: inspect(System.system_time(:second))
+        })
+
+      topic = "notification:" <> account_id
+
+      # Track the presence of this customer for the given account,
+      # so agents can see the "online" status in the dashboard
+      {:ok, _} =
+        Presence.track(self(), topic, key, %{
+          online_at: inspect(System.system_time(:second))
+        })
+
+      push(socket, "presence_state", Presence.list(socket))
+      ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
+    end
+
+    {:noreply, socket}
   end
 
   # Channels can be used in a request/response fashion
@@ -36,7 +76,6 @@ defmodule ChatApiWeb.ConversationChannel do
 
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (conversation:lobby).
-  @impl true
   def handle_in("shout", payload, socket) do
     case socket.assigns do
       %{conversation: conversation} ->

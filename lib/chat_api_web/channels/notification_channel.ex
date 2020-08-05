@@ -1,6 +1,7 @@
 defmodule ChatApiWeb.NotificationChannel do
   use ChatApiWeb, :channel
 
+  alias ChatApiWeb.Presence
   alias Phoenix.Socket.Broadcast
   alias ChatApi.{Messages, Conversations}
 
@@ -8,6 +9,8 @@ defmodule ChatApiWeb.NotificationChannel do
   def join("notification:" <> account_id, %{"ids" => ids}, socket) do
     if authorized?(socket, account_id) do
       topics = for conversation_id <- ids, do: "conversation:#{conversation_id}"
+
+      send(self(), :after_join)
 
       {:ok,
        socket
@@ -74,6 +77,22 @@ defmodule ChatApiWeb.NotificationChannel do
 
       _ ->
         push(socket, event, payload)
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_info(:after_join, socket) do
+    with %{current_user: current_user} <- socket.assigns,
+         %{id: user_id} <- current_user do
+      key = "user:" <> inspect(user_id)
+
+      {:ok, _} =
+        Presence.track(socket, key, %{
+          online_at: inspect(System.system_time(:second))
+        })
+
+      push(socket, "presence_state", Presence.list(socket))
     end
 
     {:noreply, socket}
