@@ -112,7 +112,7 @@ class UserProfile extends React.Component<Props, State> {
   };
 
   handleToggleEmailAlertSetting = async (e: any) => {
-    const shouldEmailOnNewMessages = !!e.target.checked;
+    const shouldEmailOnNewMessages = e.target.checked;
 
     // Optimistic update
     this.setState({shouldEmailOnNewMessages});
