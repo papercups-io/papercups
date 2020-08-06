@@ -12,41 +12,43 @@ defmodule ChatApiWeb.RegistrationController do
     try do
       invite = ChatApi.UserInvitations.get_user_invitation!(user_params["invite_token"])
       params = Enum.into(user_params, %{"account_id" => invite.account.id})
+
       conn
       |> Pow.Plug.create_user(params)
       |> case do
-           {:ok, _user, conn} ->
-             if ChatApi.UserInvitations.expired?(invite) do
-               send_server_error(conn, "Invitation token has expired")
-             else
-               ChatApi.UserInvitations.expire_user_invitation(invite)
-               send_api_token(conn)
-             end
-           {:error, changeset, conn} ->
-             errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
-             send_user_create_errors(conn, errors)
-         end
+        {:ok, _user, conn} ->
+          if ChatApi.UserInvitations.expired?(invite) do
+            send_server_error(conn, "Invitation token has expired")
+          else
+            ChatApi.UserInvitations.expire_user_invitation(invite)
+            send_api_token(conn)
+          end
+
+        {:error, changeset, conn} ->
+          errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
+          send_user_create_errors(conn, errors)
+      end
     rescue
       Ecto.NoResultsError ->
-       send_server_error(conn, "Invalid invitation token")
+        send_server_error(conn, "Invalid invitation token")
     end
   end
 
   def create(conn, %{"user" => user_params}) do
-      {:ok, account} =
-          ChatApi.Accounts.create_account(%{company_name: user_params["company_name"]})
+    {:ok, account} = ChatApi.Accounts.create_account(%{company_name: user_params["company_name"]})
 
     params = Enum.into(user_params, %{"account_id" => account.id})
+
     conn
     |> Pow.Plug.create_user(params)
     |> case do
-         {:ok, _user, conn} ->
-           send_api_token(conn)
+      {:ok, _user, conn} ->
+        send_api_token(conn)
 
-         {:error, changeset, conn} ->
-           errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
-           send_user_create_errors(conn, errors)
-       end
+      {:error, changeset, conn} ->
+        errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
+        send_user_create_errors(conn, errors)
+    end
   end
 
   defp send_api_token(conn) do
