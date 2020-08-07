@@ -98,6 +98,7 @@ const ExamplePage = () => {
 };
   `.trim();
 
+    // TODO: come up with a better way to version the widget.js
     const HTML_CODE = `
 <script>
   window.Papercups = {
@@ -114,7 +115,7 @@ const ExamplePage = () => {
   type="text/javascript"
   async
   defer
-  src="${BASE_URL}/widget.js"
+  src="${BASE_URL}/widget-v2.js"
 ></script>
   `.trim();
     return {REACT_CODE, HTML_CODE};
