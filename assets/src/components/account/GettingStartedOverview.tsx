@@ -74,6 +74,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
     primaryColor: string,
     accountId: string
   ) => {
+    // TODO: update these to include greeting, new message placeholder, etc.
     const REACT_CODE = `
 import React from 'react';
 import ChatWidget from '@papercups-io/chat-widget';
