@@ -15,11 +15,20 @@ defmodule ChatApi.Customers.Customer do
     field(:name, :string)
     field(:phone, :string)
     field(:external_id, :string)
+
+    # Metadata
     field(:browser, :string)
     field(:browser_version, :string)
     field(:browser_language, :string)
     field(:os, :string)
     field(:ip, :string)
+    field(:last_seen_at, :utc_datetime)
+    field(:current_url, :string)
+    field(:host, :string)
+    field(:pathname, :string)
+    field(:screen_height, :integer)
+    field(:screen_width, :integer)
+    field(:lib, :string)
 
     has_many(:messages, Message)
     has_many(:conversations, Conversation)
@@ -47,7 +56,14 @@ defmodule ChatApi.Customers.Customer do
       :browser_version,
       :browser_language,
       :os,
-      :ip
+      :ip,
+      :last_seen_at,
+      :current_url,
+      :host,
+      :pathname,
+      :screen_height,
+      :screen_width,
+      :lib
     ])
     |> validate_required([:first_seen, :last_seen, :account_id])
   end
@@ -63,7 +79,14 @@ defmodule ChatApi.Customers.Customer do
       :browser_version,
       :browser_language,
       :os,
-      :ip
+      :ip,
+      :last_seen_at,
+      :current_url,
+      :host,
+      :pathname,
+      :screen_height,
+      :screen_width,
+      :lib
     ])
   end
 end
