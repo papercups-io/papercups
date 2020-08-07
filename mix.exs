@@ -65,7 +65,8 @@ defmodule ChatApi.MixProject do
       {:oauth2, "~> 0.9"},
       {:mail, "~> 0.2"},
       {:phoenix_swagger, "~> 0.8"},
-      {:ex_json_schema, "~> 0.5"}
+      {:ex_json_schema, "~> 0.5"},
+      {:redix, "~> 0.9.2"}
     ]
   end
 
