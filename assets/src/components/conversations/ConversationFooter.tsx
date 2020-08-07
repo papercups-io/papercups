@@ -11,7 +11,17 @@ const ConversationFooter = ({
 
   const handleMessageChange = (e: any) => setMessage(e.target.value);
 
-  const handleSendMessage = () => {
+  const handleKeyDown = (e: any) => {
+    const {key, metaKey} = e;
+    // Not sure what the best UX is here, but we currently allow
+    // sending the message by pressing "cmd/metaKey + Enter"
+    if (metaKey && key === 'Enter') {
+      handleSendMessage();
+    }
+  };
+
+  const handleSendMessage = (e?: any) => {
+    e && e.preventDefault();
     onSendMessage(message);
     setMessage('');
   };
@@ -27,20 +37,23 @@ const ConversationFooter = ({
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
           }}
         >
-          <Box mb={2}>
-            <TextArea
-              className="TextArea--transparent"
-              placeholder="Type your message here!"
-              autoSize={{minRows: 1, maxRows: 4}}
-              value={message}
-              onChange={handleMessageChange}
-            />
-          </Box>
-          <Flex sx={{justifyContent: 'flex-end'}}>
-            <Button type="primary" onClick={handleSendMessage}>
-              Send
-            </Button>
-          </Flex>
+          <form onSubmit={handleSendMessage}>
+            <Box mb={2}>
+              <TextArea
+                className="TextArea--transparent"
+                placeholder="Type your message here!"
+                autoSize={{minRows: 1, maxRows: 4}}
+                value={message}
+                onKeyDown={handleKeyDown}
+                onChange={handleMessageChange}
+              />
+            </Box>
+            <Flex sx={{justifyContent: 'flex-end'}}>
+              <Button type="primary" htmlType="submit">
+                Send
+              </Button>
+            </Flex>
+          </form>
         </Box>
       </Box>
     </Footer>
