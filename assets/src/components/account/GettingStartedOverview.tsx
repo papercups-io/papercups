@@ -32,16 +32,17 @@ class GettingStartedOverview extends React.Component<Props, State> {
       widget_settings: widgetSettings,
     } = account;
 
-    this.setState({accountId, title: `Welcome to ${company}`});
-
     if (widgetSettings && widgetSettings.id) {
       const {color, title, subtitle} = widgetSettings;
 
       this.setState({
+        accountId,
         color: color || this.state.color,
         subtitle: subtitle || this.state.subtitle,
         title: title || `Welcome to ${company}`,
       });
+    } else {
+      this.setState({accountId, title: `Welcome to ${company}`});
     }
   }
 
@@ -97,6 +98,7 @@ const ExamplePage = () => {
 };
   `.trim();
 
+    // TODO: come up with a better way to version the widget.js
     const HTML_CODE = `
 <script>
   window.Papercups = {
