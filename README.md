@@ -104,7 +104,7 @@ At the moment we only support [Mailgun](https://www.mailgun.com/) — other mess
 
 ## Deploying
 
-We currently use Heroku for deployments:
+We currently use Heroku for deployments. (This is for internal use only.)
 
 ```
 git push heroku master
