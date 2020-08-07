@@ -115,7 +115,7 @@ const ExamplePage = () => {
   type="text/javascript"
   async
   defer
-  src="${BASE_URL}/widget-v2.js"
+  src="${BASE_URL}/widget.js"
 ></script>
   `.trim();
     return {REACT_CODE, HTML_CODE};
