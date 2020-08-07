@@ -26,8 +26,7 @@ defmodule ChatApiWeb.AccountView do
       id: account.id,
       company_name: account.company_name,
       users: render_many(account.users, UserView, "user.json"),
-      widget_settings:
-        render_one(account.widget_settings, WidgetSettingsView, "widget_settings.json")
+      widget_settings: render_one(account.widget_settings, WidgetSettingsView, "basic.json")
     }
   end
 end

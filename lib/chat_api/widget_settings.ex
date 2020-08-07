@@ -40,6 +40,7 @@ defmodule ChatApi.WidgetSettings do
   def get_settings_by_account(account_id) do
     WidgetSetting
     |> where(account_id: ^account_id)
+    |> preload(:account)
     |> Repo.one()
   end
 

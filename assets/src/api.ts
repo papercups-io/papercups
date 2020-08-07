@@ -32,6 +32,8 @@ export type WidgetSettingsParams = {
   title: string;
   subtitle: string;
   color: string;
+  greeting?: string;
+  new_message_placeholder?: string;
 };
 
 export const getAccessToken = (): string | null => {
