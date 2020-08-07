@@ -167,6 +167,34 @@ export const updateUserProfile = async (
     .then((res) => res.body.data);
 };
 
+export const fetchUserSettings = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get('/api/user_settings')
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateUserSettings = async (
+  updates: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put('/api/user_settings')
+    .set('Authorization', token)
+    .send({
+      user_settings: updates,
+    })
+    .then((res) => res.body.data);
+};
+
 export const fetchAllConversations = async (
   token = getAccessToken()
 ): Promise<Array<Conversation>> => {

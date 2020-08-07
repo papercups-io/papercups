@@ -50,6 +50,8 @@ defmodule ChatApiWeb.Router do
     put("/widget_settings", WidgetSettingsController, :create_or_update)
     get("/profile", UserProfileController, :show)
     put("/profile", UserProfileController, :create_or_update)
+    get("/user_settings", UserSettingsController, :show)
+    put("/user_settings", UserSettingsController, :create_or_update)
 
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/accounts", AccountController, only: [:update, :delete])

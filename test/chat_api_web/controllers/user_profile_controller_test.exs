@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.UserProfileControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.{Accounts, UserProfiles, Repo}
+  alias ChatApi.{Accounts, Users, Repo}
   alias ChatApi.Users.User
 
   @password "supersecret123"
@@ -21,7 +21,7 @@ defmodule ChatApiWeb.UserProfileControllerTest do
     {:ok, user_profile} =
       attrs
       |> Enum.into(attrs)
-      |> UserProfiles.create_user_profile()
+      |> Users.create_user_profile()
 
     user_profile
   end
