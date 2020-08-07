@@ -6,12 +6,18 @@ defmodule ChatApiWeb.WidgetSettingsController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  def show(conn, %{"account_id" => account_id}) do
+    widget_settings = WidgetSettings.get_settings_by_account(account_id)
+
+    render(conn, "show.json", widget_settings: widget_settings)
+  end
+
   def create_or_update(conn, %{"widget_settings" => widget_settings_params}) do
     with %{account_id: account_id} <- conn.assigns.current_user do
       widget_settings_params = Map.merge(widget_settings_params, %{"account_id" => account_id})
       {:ok, widget_settings} = WidgetSettings.create_or_update(account_id, widget_settings_params)
 
-      render(conn, "show.json", widget_settings: widget_settings)
+      render(conn, "update.json", widget_settings: widget_settings)
     end
   end
 
