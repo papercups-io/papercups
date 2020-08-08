@@ -52,6 +52,27 @@ export const colors = {
 
 export const TextArea = Input.TextArea;
 
+/* Whitelist node types that we allow when we render markdown.
+ * Reference https://github.com/rexxars/react-markdown#node-types
+ */
+export const allowedNodeTypes: any[] = [
+  'root',
+  'text',
+  'break',
+  'paragraph',
+  'emphasis',
+  'strong',
+  'blockquote',
+  'delete',
+  'link',
+  'linkReference',
+  'list',
+  'listItem',
+  'heading',
+  'inlineCode',
+  'code',
+];
+
 export {
   // Typography
   Title,

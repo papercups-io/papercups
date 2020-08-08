@@ -1,8 +1,7 @@
 import React from 'react';
-import DOMPurify from 'dompurify';
-import marked from 'marked';
-import {Box, Flex} from 'theme-ui';
-import {colors} from '../common';
+import ReactMarkdown from 'react-markdown';
+import {Box} from 'theme-ui';
+import {colors, allowedNodeTypes} from '../common';
 
 type ChatMessageBoxProps = {
   content: string;
@@ -12,9 +11,26 @@ type ChatMessageBoxProps = {
 };
 
 const ChatMessageBox = ({content, px, py, sx}: ChatMessageBoxProps) => {
-  const markupContent = DOMPurify.sanitize(marked(content));
   const parsedSx = Object.assign(sx, {
     borderRadius: 4,
+    h1: {
+      color: colors.white,
+    },
+    h2: {
+      color: colors.white,
+    },
+    h3: {
+      color: colors.white,
+    },
+    h4: {
+      color: colors.white,
+    },
+    h5: {
+      color: colors.white,
+    },
+    h6: {
+      color: colors.white,
+    },
     a: {
       color: colors.white,
       cursor: 'pointer',
@@ -23,13 +39,19 @@ const ChatMessageBox = ({content, px, py, sx}: ChatMessageBoxProps) => {
       textDecoration: 'underline',
     },
     p: {
-      display: 'inherit',
+      mb: 0,
+    },
+    blockquote: {
+      px: 2,
+      borderLeft: '3px solid',
+      borderColor: colors.white,
+      mb: 0,
     },
   });
 
   return (
     <Box px={px} py={py} sx={parsedSx}>
-      <span dangerouslySetInnerHTML={{__html: markupContent}} />
+      <ReactMarkdown source={content} allowedTypes={allowedNodeTypes} />
     </Box>
   );
 };
