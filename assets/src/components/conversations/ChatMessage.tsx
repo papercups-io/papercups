@@ -106,11 +106,11 @@ const ChatMessage = ({
       <Box pr={0} pl={4} pb={isLastInGroup ? 3 : 2}>
         <Flex sx={{justifyContent: 'flex-end'}}>
           <ChatMessageBox
+            className="Text--white"
             content={body}
-            textColor={colors.white}
-            px={3}
-            py={2}
             sx={{
+              px: 3,
+              py: 2,
               background: colors.primary,
             }}
           />
@@ -129,10 +129,9 @@ const ChatMessage = ({
         <SenderAvatar name={tooltip} user={user} isAgent={isAgent} />
         <ChatMessageBox
           content={body}
-          textColor={colors.black}
-          px={3}
-          py={2}
           sx={{
+            px: 3,
+            py: 2,
             background: 'rgb(245, 245, 245)',
             maxWidth: '80%',
           }}
