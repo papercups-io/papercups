@@ -42,12 +42,35 @@ class Register extends React.Component<Props, State> {
   };
 
   handleChangePassword = (e: any) => {
-    this.setState({password: e.target.value});
+    let value = e.target.value;
+    this.setState({password: value});
+    this.validatePassword(value);
   };
 
   handleChangePasswordConfirmation = (e: any) => {
-    this.setState({passwordConfirmation: e.target.value});
+    let value = e.target.value;
+    this.setState({passwordConfirmation: value});
+    this.validatePasswordConfirmation(value);
   };
+
+  validatePasswordConfirmation(passwordConfirmation: string) {
+    if (passwordConfirmation !== this.state.password) {
+      this.setState({error: 'password confirmation does not match'});
+    } else {
+      this.setState({error: null});
+    }
+  }
+
+  validatePassword(password: string) {
+    // skip validation until password confirmation is set
+    if (this.state.passwordConfirmation.length === 0) return;
+
+    if (password !== this.state.passwordConfirmation) {
+      this.setState({error: 'password confirmation does not match'});
+    } else {
+      this.setState({error: null});
+    }
+  }
 
   handleSubmit = (e: any) => {
     e.preventDefault();
