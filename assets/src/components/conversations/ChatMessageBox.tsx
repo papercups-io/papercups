@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import breaks from 'remark-breaks';
 import {Box} from 'theme-ui';
 import {allowedNodeTypes} from '../common';
 
@@ -28,6 +29,7 @@ const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
         className={`Text--markdown ${className}`}
         source={content}
         allowedTypes={allowedNodeTypes}
+        plugins={[breaks]}
       />
     </Box>
   );

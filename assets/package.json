@@ -30,6 +30,7 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.1",
     "react-syntax-highlighter": "^12.2.1",
+    "remark-breaks": "^2.0.0",
     "superagent": "^5.3.1",
     "theme-ui": "^0.3.1",
     "typescript": "~3.7.2"
