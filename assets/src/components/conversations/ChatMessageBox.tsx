@@ -1,38 +1,46 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import {Box} from 'theme-ui';
-import {colors, allowedNodeTypes} from '../common';
+import {allowedNodeTypes} from '../common';
 
 type ChatMessageBoxProps = {
   content: string;
+  textColor: string;
   px: number;
   py: number;
   sx: object;
 };
 
-const ChatMessageBox = ({content, px, py, sx}: ChatMessageBoxProps) => {
+const ChatMessageBox = ({
+  content,
+  textColor,
+  px,
+  py,
+  sx,
+}: ChatMessageBoxProps) => {
   const parsedSx = Object.assign(sx, {
     borderRadius: 4,
+    color: textColor,
     h1: {
-      color: colors.white,
+      color: textColor,
     },
     h2: {
-      color: colors.white,
+      color: textColor,
     },
     h3: {
-      color: colors.white,
+      color: textColor,
     },
     h4: {
-      color: colors.white,
+      color: textColor,
     },
     h5: {
-      color: colors.white,
+      color: textColor,
     },
     h6: {
-      color: colors.white,
+      color: textColor,
     },
     a: {
-      color: colors.white,
+      color: textColor,
       cursor: 'pointer',
     },
     'a:hover': {
@@ -44,7 +52,7 @@ const ChatMessageBox = ({content, px, py, sx}: ChatMessageBoxProps) => {
     blockquote: {
       px: 2,
       borderLeft: '3px solid',
-      borderColor: colors.white,
+      borderColor: textColor,
       mb: 0,
     },
   });
