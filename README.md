@@ -50,13 +50,6 @@ mix archive.install hex phx_new 1.5.4
 - Install NodeJS: https://nodejs.org/en/download/
 - Install PostgresQL: https://wiki.postgresql.org/wiki/Detailed_installation_guides
 
-### Cloning the repo
-
-```
-git clone git@github.com:papercups-io/papercups.git
-cd papercups
-```
-
 ### To start your server
 
 - Install backend dependencies with `mix deps.get`
