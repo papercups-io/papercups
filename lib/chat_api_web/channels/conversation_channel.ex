@@ -86,7 +86,20 @@ defmodule ChatApiWeb.ConversationChannel do
 
         {:ok, message} = Messages.create_message(msg)
         message = Messages.get_message!(message.id)
-        Conversations.mark_conversation_unread(conversation_id)
+
+        # Mark as unread and ensure the conversation is open, since we want to
+        # reopen a conversation if it received a new message after being closed.
+        {:ok, conversation} =
+          conversation_id
+          |> Conversations.get_conversation!()
+          |> Conversations.update_conversation(%{status: "open", read: false})
+
+        ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
+          "id" => conversation_id,
+          "updates" =>
+            ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
+        })
+
         result = ChatApiWeb.MessageView.render("expanded.json", message: message)
 
         # TODO: double check that this still works as expected

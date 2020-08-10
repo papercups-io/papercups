@@ -391,6 +391,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
         [id]: {...conversation, ...updates},
       },
     });
+
+    return this.fetchAllConversations();
   };
 
   handleSelectConversation = (id: string | null) => {
