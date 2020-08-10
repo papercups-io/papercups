@@ -9,6 +9,7 @@ type Props = RouteComponentProps<{invite?: string}> & {
 };
 type State = {
   loading: boolean;
+  submitted: boolean;
   companyName: string;
   email: string;
   password: string;
@@ -20,6 +21,7 @@ type State = {
 class Register extends React.Component<Props, State> {
   state: State = {
     loading: false,
+    submitted: false,
     companyName: '',
     email: '',
     password: '',
@@ -42,40 +44,50 @@ class Register extends React.Component<Props, State> {
   };
 
   handleChangePassword = (e: any) => {
-    let value = e.target.value;
-    this.setState({password: value});
-    this.validatePassword(value);
+    this.setState({password: e.target.value});
   };
 
   handleChangePasswordConfirmation = (e: any) => {
     let value = e.target.value;
-    this.setState({passwordConfirmation: value});
-    this.validatePasswordConfirmation(value);
+    this.setState({passwordConfirmation: e.target.value});
   };
 
-  validatePasswordConfirmation(passwordConfirmation: string) {
-    if (passwordConfirmation !== this.state.password) {
-      this.setState({error: 'password confirmation does not match'});
-    } else {
-      this.setState({error: null});
-    }
-  }
+  getValidationError = () => {
+    const {companyName, email, password, passwordConfirmation} = this.state;
 
-  validatePassword(password: string) {
-    // skip validation until password confirmation is set
-    if (this.state.passwordConfirmation.length === 0) return;
-
-    if (password !== this.state.passwordConfirmation) {
-      this.setState({error: 'password confirmation does not match'});
+    if (!companyName) {
+      return 'Company name is required';
+    } else if (!email) {
+      return 'Email is required';
+    } else if (!password) {
+      return 'Password is required';
+    } else if (password !== passwordConfirmation) {
+      return 'Password confirmation does not match';
     } else {
-      this.setState({error: null});
+      return null;
     }
-  }
+  };
+
+  handleInputBlur = () => {
+    if (!this.state.submitted) {
+      return;
+    }
+
+    this.setState({error: this.getValidationError()});
+  };
 
   handleSubmit = (e: any) => {
     e.preventDefault();
 
-    this.setState({loading: true, error: null});
+    const error = this.getValidationError();
+
+    if (error) {
+      this.setState({error, submitted: true});
+
+      return;
+    }
+
+    this.setState({loading: true, submitted: true, error: null});
     const {
       companyName,
       inviteToken,
@@ -138,6 +150,7 @@ class Register extends React.Component<Props, State> {
                   autoComplete="company-name"
                   value={companyName}
                   onChange={this.handleChangeCompanyName}
+                  onBlur={this.handleInputBlur}
                 />
               </Box>
             )}
@@ -151,6 +164,7 @@ class Register extends React.Component<Props, State> {
                 autoComplete="username"
                 value={email}
                 onChange={this.handleChangeEmail}
+                onBlur={this.handleInputBlur}
               />
             </Box>
 
@@ -163,6 +177,7 @@ class Register extends React.Component<Props, State> {
                 autoComplete="current-password"
                 value={password}
                 onChange={this.handleChangePassword}
+                onBlur={this.handleInputBlur}
               />
             </Box>
 
@@ -175,6 +190,7 @@ class Register extends React.Component<Props, State> {
                 autoComplete="current-password"
                 value={passwordConfirmation}
                 onChange={this.handleChangePasswordConfirmation}
+                onBlur={this.handleInputBlur}
               />
             </Box>
 
