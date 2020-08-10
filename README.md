@@ -17,69 +17,9 @@ We wanted to make a self-hosted version of tools like Intercom and Drift for com
 
 Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 
-## Getting started
+## Documentation
 
-Papercups runs on Elixir/Phoenix, with a TypeScript React app for the frontend.
-
-If you haven't installed Elixir, Phoenix, NodeJS, and PostgresQL yet, you can find some great instructions here: https://hexdocs.pm/phoenix/installation.html
-
-**tl;dr:**
-
-- Install Elixir: https://elixir-lang.org/install.html
-- Install Hex:
-
-```
-mix local.hex
-```
-
-- To check that we are on Elixir 1.6 and Erlang 20 or later, run:
-
-```
-elixir -v
-Erlang/OTP 20 [erts-9.3] [source] [64-bit] [smp:8:8] [async-threads:10] [hipe] [kernel-poll:false] [dtrace]
-
-Elixir 1.6.3
-```
-
-- Install the Phoenix application generator:
-
-```
-mix archive.install hex phx_new 1.5.4
-```
-
-- Install NodeJS: https://nodejs.org/en/download/
-- Install PostgresQL: https://wiki.postgresql.org/wiki/Detailed_installation_guides
-
-### To start your server
-
-- Install backend dependencies with `mix deps.get`
-- Install frontend dependencies with `cd assets && npm install`
-- Create and migrate your database with `mix ecto.setup`
-- Start the server with `mix phx.server`
-
-This will automatically start up the React frontend in watch mode on `localhost:3000`, with the API running on `localhost:4000`.
-
-### To start client side
-
-The frontend code will start up automatically when you run `mix phx.server`, but for more information see: [assets/README.md](assets/README.md)
-
-### Developing on Docker
-
-You can edit your local code when developing with docker and it will update in the container.
-
-_The docker file is made for development only at the moment_
-
-```
-docker build -t papercups . && docker-compose up
-```
-
-## Running tests
-
-Create a PostgreSQL test database named: `chat_api_test`, and run:
-
-```
-mix test
-```
+[Development Setup](https://github.com/papercups-io/papercups/wiki/Development-Setup#getting-started)
 
 ## Get in touch
 
