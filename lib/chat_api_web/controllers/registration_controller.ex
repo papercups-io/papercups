@@ -18,7 +18,7 @@ defmodule ChatApiWeb.RegistrationController do
       |> case do
         {:ok, _user, conn} ->
           if ChatApi.UserInvitations.expired?(invite) do
-            send_server_error(conn, "Invitation token has expired")
+            send_server_error(conn, 403, "Invitation token has expired")
           else
             ChatApi.UserInvitations.expire_user_invitation(invite)
             send_api_token(conn)
@@ -30,7 +30,7 @@ defmodule ChatApiWeb.RegistrationController do
       end
     rescue
       Ecto.NoResultsError ->
-        send_server_error(conn, "Invalid invitation token")
+        send_server_error(conn, 403, "Invalid invitation token")
     end
   end
 
@@ -66,9 +66,9 @@ defmodule ChatApiWeb.RegistrationController do
     |> json(%{error: %{status: 500, message: "Couldn't create user", errors: errors}})
   end
 
-  defp send_server_error(conn, message) do
+  defp send_server_error(conn, status_code, message) do
     conn
-    |> put_status(500)
-    |> json(%{error: %{status: 500, message: message}})
+    |> put_status(status_code)
+    |> json(%{error: %{status: status_code, message: message}})
   end
 end
