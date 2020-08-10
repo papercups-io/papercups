@@ -25,17 +25,6 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 
 Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-gfs0d269-dEHm3SYs_5KmFKQ9YhBzDw) or [Discord](https://discord.gg/Dq2A3eh)! :wave:
 
-## Setting up email alerts
+## License
 
-Set the environment variables in the [`.env.example`](https://github.com/papercups-io/papercups/blob/master/.env.example) file.
-
-At the moment we only support [Mailgun](https://www.mailgun.com/) — other messaging channels are coming soon!
-
-## Deploying
-
-We currently use Heroku for deployments. (This is for internal use only.)
-
-```
-git push heroku master
-heroku run "POOL_SIZE=2 mix ecto.migrate"
-```
+MIT © Papercups
