@@ -39,11 +39,3 @@ We currently use Heroku for deployments. (This is for internal use only.)
 git push heroku master
 heroku run "POOL_SIZE=2 mix ecto.migrate"
 ```
-
-## Learn more about Phoenix
-
-- Official website: https://www.phoenixframework.org/
-- Guides: https://hexdocs.pm/phoenix/overview.html
-- Docs: https://hexdocs.pm/phoenix
-- Forum: https://elixirforum.com/c/phoenix-forum
-- Source: https://github.com/phoenixframework/phoenix
