@@ -25,10 +25,6 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 
 Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-gfs0d269-dEHm3SYs_5KmFKQ9YhBzDw) or [Discord](https://discord.gg/Dq2A3eh)! :wave:
 
-# Appendix
-
-(We'll add more instructions here as we implement more integrations.)
-
 ## Setting up email alerts
 
 Set the environment variables in the [`.env.example`](https://github.com/papercups-io/papercups/blob/master/.env.example) file.
@@ -42,14 +38,6 @@ We currently use Heroku for deployments. (This is for internal use only.)
 ```
 git push heroku master
 heroku run "POOL_SIZE=2 mix ecto.migrate"
-```
-
-## Running compiler on file change
-
-_Note_: Make sure you are running this inside of ChatApi otherwise it'll trigger on UI changes
-
-```
-./scripts/compile_watch.sh
 ```
 
 ## Learn more about Phoenix
