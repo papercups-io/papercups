@@ -48,7 +48,6 @@ class Register extends React.Component<Props, State> {
   };
 
   handleChangePasswordConfirmation = (e: any) => {
-    let value = e.target.value;
     this.setState({passwordConfirmation: e.target.value});
   };
 
