@@ -5,6 +5,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import ChatWidget from '@papercups-io/chat-widget';
 import * as API from '../../api';
+import {User} from '../../types';
 import {Paragraph, Input, colors, Text, Title} from '../common';
 import {BASE_URL} from '../../config';
 
@@ -16,11 +17,13 @@ type State = {
   subtitle: string;
   greeting?: string;
   newMessagePlaceholder?: string;
+  currentUser: User | null;
 };
 
 class GettingStartedOverview extends React.Component<Props, State> {
   state: State = {
     accountId: null,
+    currentUser: null,
     color: colors.primary,
     title: 'Welcome!',
     subtitle: 'Ask us anything in the chat window below 😊',
@@ -29,6 +32,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
   };
 
   async componentDidMount() {
+    const currentUser = await API.me();
     const account = await API.fetchAccountInfo();
     const {
       id: accountId,
@@ -47,6 +51,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
 
       this.setState({
         accountId,
+        currentUser,
         greeting,
         color: color || this.state.color,
         subtitle: subtitle || this.state.subtitle,
@@ -54,7 +59,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
         newMessagePlaceholder: newMessagePlaceholder || 'Start typing...',
       });
     } else {
-      this.setState({accountId, title: `Welcome to ${company}`});
+      this.setState({accountId, currentUser, title: `Welcome to ${company}`});
     }
   }
 
@@ -170,6 +175,22 @@ const ExamplePage = () => {
   `.trim();
   };
 
+  getUserMetadata = () => {
+    const {currentUser} = this.state;
+
+    if (!currentUser) {
+      return {};
+    }
+
+    const {id, email} = currentUser;
+
+    // TODO: include name if available
+    return {
+      email: email,
+      external_id: String(id),
+    };
+  };
+
   render() {
     const {
       color,
@@ -183,6 +204,8 @@ const ExamplePage = () => {
     if (!accountId) {
       return null; // TODO: better loading state
     }
+
+    const customer = this.getUserMetadata();
 
     return (
       <Box
@@ -257,7 +280,6 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
-          handleChangeNewMessagePlaceholder
           <Box mb={3}>
             <Paragraph>Try changing the color:</Paragraph>
             <TwitterPicker
@@ -272,6 +294,7 @@ const ExamplePage = () => {
             greeting={greeting}
             newMessagePlaceholder={newMessagePlaceholder}
             accountId={accountId}
+            customer={customer}
             baseUrl={BASE_URL}
             defaultIsOpen
           />

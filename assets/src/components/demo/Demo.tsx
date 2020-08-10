@@ -73,6 +73,7 @@ class Demo extends React.Component<Props, State> {
 
     const {id, email} = currentUser;
 
+    // TODO: include name if available
     return {
       email: email,
       external_id: String(id),
