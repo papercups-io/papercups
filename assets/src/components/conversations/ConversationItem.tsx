@@ -65,7 +65,17 @@ const ConversationItem = ({
               <SmileTwoTone style={{fontSize: 16}} twoToneColor={color} />
             )}
           </Box>
-          <Text strong>{name || email || 'Anonymous User'}</Text>
+          <Text
+            strong
+            style={{
+              maxWidth: 120,
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+            }}
+          >
+            {name || email || 'Anonymous User'}
+          </Text>
         </Flex>
 
         {read ? (

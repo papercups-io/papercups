@@ -13,6 +13,7 @@ import {
   Title,
 } from '../common';
 import {RightCircleOutlined} from '../icons';
+import * as API from '../../api';
 // Testing widget in separate package
 import ChatWidget from '@papercups-io/chat-widget';
 
@@ -22,6 +23,7 @@ type State = {
   title: string;
   subtitle: string;
   accountId: string;
+  currentUser?: any;
 };
 
 class Demo extends React.Component<Props, State> {
@@ -38,7 +40,16 @@ class Demo extends React.Component<Props, State> {
       title: defaultTitle || 'Welcome to Papercups!',
       subtitle: defaultSubtitle || 'Ask us anything using the chat window 💭',
       accountId: 'eb504736-0f20-4978-98ff-1a82ae60b266',
+      currentUser: null,
     };
+  }
+
+  componentDidMount() {
+    API.me()
+      .then((currentUser) => this.setState({currentUser}))
+      .catch((err) => {
+        // Not logged in, no big deal
+      });
   }
 
   handleChangeTitle = (e: any) => {
@@ -53,8 +64,24 @@ class Demo extends React.Component<Props, State> {
     this.setState({color: color.hex});
   };
 
+  getCustomerMetadata = () => {
+    const {currentUser} = this.state;
+
+    if (!currentUser) {
+      return {};
+    }
+
+    const {id, email} = currentUser;
+
+    return {
+      email: email,
+      external_id: String(id),
+    };
+  };
+
   render() {
     const {color, title, subtitle, accountId} = this.state;
+    const customer = this.getCustomerMetadata();
     const defaultColors = [
       colors.primary,
       '#00B3BE',
@@ -132,6 +159,7 @@ class Demo extends React.Component<Props, State> {
           primaryColor={color}
           accountId={accountId}
           greeting="Hello! Have any questions?"
+          customer={customer}
           defaultIsOpen
         />
       </Box>
