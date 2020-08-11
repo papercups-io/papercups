@@ -52,9 +52,15 @@ class Register extends React.Component<Props, State> {
   };
 
   getValidationError = () => {
-    const {companyName, email, password, passwordConfirmation} = this.state;
+    const {
+      companyName,
+      email,
+      password,
+      passwordConfirmation,
+      inviteToken,
+    } = this.state;
 
-    if (!companyName) {
+    if (!companyName && !inviteToken) {
       return 'Company name is required';
     } else if (!email) {
       return 'Email is required';
