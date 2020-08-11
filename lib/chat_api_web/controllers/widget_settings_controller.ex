@@ -12,6 +12,14 @@ defmodule ChatApiWeb.WidgetSettingsController do
     render(conn, "show.json", widget_settings: widget_settings)
   end
 
+  def update_metadata(conn, payload) do
+    with %{"account_id" => account_id, "metadata" => metadata} <- payload do
+      {:ok, widget_settings} = WidgetSettings.update_widget_metadata(account_id, metadata)
+
+      render(conn, "update.json", widget_settings: widget_settings)
+    end
+  end
+
   def create_or_update(conn, %{"widget_settings" => widget_settings_params}) do
     with %{account_id: account_id} <- conn.assigns.current_user do
       widget_settings_params = Map.merge(widget_settings_params, %{"account_id" => account_id})

@@ -13,6 +13,11 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
     field :greeting, :string
     field :new_message_placeholder, :string
     field :base_url, :string
+
+    field :host, :string
+    field :pathname, :string
+    field :last_seen_at, :utc_datetime
+
     belongs_to(:account, Account)
 
     timestamps()
@@ -28,7 +33,10 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
       :greeting,
       :new_message_placeholder,
       :base_url,
-      :account_id
+      :account_id,
+      :host,
+      :pathname,
+      :last_seen_at
     ])
     |> validate_required([:title, :subtitle, :color, :account_id])
     |> unique_constraint(:account_id)

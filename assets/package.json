@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
-    "@papercups-io/chat-widget": "^1.0.23",
+    "@papercups-io/chat-widget": "^1.0.24-beta.2",
     "@sentry/react": "^5.20.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
@@ -28,7 +28,7 @@
     "react-dom": "^16.13.1",
     "react-markdown": "^4.3.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "3.4.1",
+    "react-scripts": "^3.4.2",
     "react-syntax-highlighter": "^12.2.1",
     "remark-breaks": "^2.0.0",
     "superagent": "^5.3.1",
