@@ -20,7 +20,9 @@ defmodule ChatApiWeb.RegistrationController do
           if ChatApi.UserInvitations.expired?(invite) do
             send_server_error(conn, 403, "Invitation token has expired")
           else
-            ChatApi.UserInvitations.expire_user_invitation(invite)
+            # # TODO: figure out what we want to do here -- it's not currently
+            # # obvious that a user invitation expires after one use.
+            # ChatApi.UserInvitations.expire_user_invitation(invite)
             send_api_token(conn)
           end
 
