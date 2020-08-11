@@ -162,6 +162,7 @@ class Demo extends React.Component<Props, State> {
           greeting="Hello! Have any questions?"
           customer={customer}
           defaultIsOpen
+          requireEmailUpfront
         />
       </Box>
     );
