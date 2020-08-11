@@ -138,7 +138,7 @@ class ConversationsContainer extends React.Component<Props, State> {
 
     notification.open({
       message: 'Conversation closed!',
-      duration: 6, // 6 seconds
+      duration: 2, // 2 seconds
       description: (
         <Box>
           You can view your closed conversations{' '}
@@ -147,7 +147,7 @@ class ConversationsContainer extends React.Component<Props, State> {
       ),
     });
 
-    await sleep(2000);
+    await sleep(400);
     await this.refreshSelectedConversation();
   };
 
@@ -156,7 +156,7 @@ class ConversationsContainer extends React.Component<Props, State> {
 
     notification.open({
       message: 'Conversation re-opened!',
-      duration: 6, // 6 seconds
+      duration: 2, // 2 seconds
       description: (
         <Box>
           You can view this conversations once again{' '}
@@ -165,7 +165,7 @@ class ConversationsContainer extends React.Component<Props, State> {
       ),
     });
 
-    await sleep(2000);
+    await sleep(400);
     await this.refreshSelectedConversation();
   };
 
