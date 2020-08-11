@@ -94,6 +94,12 @@ defmodule ChatApi.WidgetSettings do
     |> Repo.update()
   end
 
+  def update_widget_metadata(account_id, metadata) do
+    attrs = Map.take(metadata, ["host", "pathname", "last_seen_at"])
+
+    account_id |> get_settings_by_account() |> update_widget_setting(attrs)
+  end
+
   @doc """
   Deletes a widget_setting.
 
