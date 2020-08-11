@@ -113,7 +113,7 @@ class Login extends React.Component<Props, State> {
             )}
 
             <Box mt={error ? 3 : 4}>
-              Don't have an account? <Link to="register">Sign up!</Link>
+              Don't have an account? <Link to="/register">Sign up!</Link>
             </Box>
           </form>
         </Box>

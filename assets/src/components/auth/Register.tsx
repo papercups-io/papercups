@@ -218,7 +218,7 @@ class Register extends React.Component<Props, State> {
             )}
 
             <Box mt={error ? 3 : 4}>
-              Already have an account? <Link to="login">Log in!</Link>
+              Already have an account? <Link to="/login">Log in!</Link>
             </Box>
           </form>
         </Box>
