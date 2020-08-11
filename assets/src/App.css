@@ -27,6 +27,10 @@ body {
   resize: none;
 }
 
+.Text--markdown {
+  overflow-wrap: break-word;
+}
+
 .Text--markdown a {
   text-decoration: underline;
 }
