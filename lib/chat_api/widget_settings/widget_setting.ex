@@ -38,7 +38,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
       :pathname,
       :last_seen_at
     ])
-    |> validate_required([:title, :subtitle, :color, :account_id])
+    |> validate_required([:account_id])
     |> unique_constraint(:account_id)
   end
 end

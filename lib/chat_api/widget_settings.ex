@@ -96,8 +96,9 @@ defmodule ChatApi.WidgetSettings do
 
   def update_widget_metadata(account_id, metadata) do
     attrs = Map.take(metadata, ["host", "pathname", "last_seen_at"])
+    {:ok, settings} = create_or_update(account_id, %{account_id: account_id})
 
-    account_id |> get_settings_by_account() |> update_widget_setting(attrs)
+    update_widget_setting(settings, attrs)
   end
 
   @doc """

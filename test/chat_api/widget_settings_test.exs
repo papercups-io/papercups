@@ -30,6 +30,7 @@ defmodule ChatApi.WidgetSettingsTest do
     end
 
     @invalid_attrs %{color: nil, subtitle: nil, title: nil}
+    @valid_metadata %{"host" => "app.papercups.io", "pathname" => "/"}
 
     def fixture(:account) do
       {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
@@ -79,13 +80,14 @@ defmodule ChatApi.WidgetSettingsTest do
       assert widget_setting.title == "some updated title"
     end
 
-    test "update_widget_setting/2 with invalid data returns error changeset" do
-      widget_setting = widget_settings_fixture()
+    test "update_widget_metadata/2 with valid data updates the metadata if no settings exist yet" do
+      account = fixture(:account)
 
-      assert {:error, %Ecto.Changeset{}} =
-               WidgetSettings.update_widget_setting(widget_setting, @invalid_attrs)
+      assert {:ok, %WidgetSetting{} = widget_setting} =
+               WidgetSettings.update_widget_metadata(account.id, @valid_metadata)
 
-      assert widget_setting == WidgetSettings.get_widget_setting!(widget_setting.id)
+      assert widget_setting.host == "app.papercups.io"
+      assert widget_setting.pathname == "/"
     end
 
     test "delete_widget_setting/1 deletes the widget_setting" do
