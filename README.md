@@ -23,7 +23,7 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 
 ## Get in touch
 
-Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-gfs0d269-dEHm3SYs_5KmFKQ9YhBzDw) or [Discord](https://discord.gg/Dq2A3eh)! :wave:
+Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-gfs0d269-dEHm3SYs_5KmFKQ9YhBzDw)! :wave:
 
 ## License
 
