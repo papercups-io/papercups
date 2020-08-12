@@ -1,8 +1,15 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
+import {Twemoji} from 'react-emoji-render';
 import {Box} from 'theme-ui';
 import {allowedNodeTypes} from '../common';
+
+const renderers = {
+  text: (props: any) => {
+    return <Twemoji text={props.children} />;
+  },
+};
 
 type ChatMessageBoxProps = {
   className?: string;
@@ -29,6 +36,7 @@ const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
         className={`Text--markdown ${className}`}
         source={content}
         allowedTypes={allowedNodeTypes}
+        renderers={renderers}
         plugins={[breaks]}
       />
     </Box>
