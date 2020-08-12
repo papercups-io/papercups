@@ -9,7 +9,9 @@ _Watch how easy it is to get set up with our Slack integration 🚀 :_
 
 ## One click Heroku deployment
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/papercups-io/papercups)
+The fastest way to get started is one click [deploy on Heroku](https://docs.eventnative.dev/deployment/deploy-on-heroku) with:
+
+<a href="https://heroku.com/deploy?template=https://github.com/papercups-io/papercups"><img src="https://www.herokucdn.com/deploy/button.svg" width="200px" /></a>
 
 ## Philosophy
 
@@ -17,9 +19,18 @@ We wanted to make a self-hosted version of tools like Intercom and Drift for com
 
 Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 
+## Features
+
+- **Custom chat widget** - a customizable chat widget you can embed on your website to talk to your customers
+- **React support** - embed the chat widget as a React component, or a simple HTML snippet
+- **Slack integration** - connect with Slack, so you can view and reply to messages directly from a Slack channel
+- **Markdown and emoji support** - use markdown and emoji to add character to your messages!
+- **Invite your team** - send invite links to your teammates to join your account
+- **Conversation management** - close, assign, and prioritize conversations
+
 ## Documentation
 
-[Development Setup](https://github.com/papercups-io/papercups/wiki/Development-Setup#getting-started)
+[Getting setup for development](https://github.com/papercups-io/papercups/wiki/Development-Setup#getting-started)
 
 ## Get in touch
 
