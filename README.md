@@ -29,6 +29,12 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 - **Conversation management** - close, assign, and prioritize conversations
 - **Built on Elixir** - optimized for responsiveness, fault-tolerance, and support for realtime updates
 
+## Demo
+
+We set up a [simple page](https://app.papercups.io/demo) that demonstrates how Papercups works. 
+
+Try sending us a message to see what the chat experience is like!
+
 ## Documentation
 
 [Getting setup for development](https://github.com/papercups-io/papercups/wiki/Development-Setup#getting-started)
