@@ -27,10 +27,15 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 - **Markdown and emoji support** - use markdown and emoji to add character to your messages!
 - **Invite your team** - send invite links to your teammates to join your account
 - **Conversation management** - close, assign, and prioritize conversations
+- **Built on Elixir** - optimized for responsiveness, fault-tolerance, and support for realtime updates
 
 ## Documentation
 
 [Getting setup for development](https://github.com/papercups-io/papercups/wiki/Development-Setup#getting-started)
+
+## Contributing
+
+We :heart: contributions big or small. See [CONTRIBUTING.md](https://github.com/papercups-io/papercups/blob/master/CONTRIBUTING.md) for a guide on how to get started.
 
 ## Get in touch
 
