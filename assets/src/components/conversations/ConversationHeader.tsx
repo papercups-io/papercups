@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Select, Title, Tooltip} from '../common';
+import {colors, Button, Select, Text, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
   StarOutlined,
@@ -40,6 +40,7 @@ const ConversationHeader = ({
   } = conversation;
   const {name, email} = customer;
   const assigneeId = assignee_id ? String(assignee_id) : undefined;
+  const hasBothNameAndEmail = !!(name && email);
 
   return (
     <header
@@ -56,10 +57,17 @@ const ConversationHeader = ({
         sx={{justifyContent: 'space-between', alignItems: 'center'}}
       >
         <Box>
-          <Title level={4} style={{marginBottom: 0, marginTop: 4}}>
+          <Title
+            level={4}
+            style={{marginBottom: 0, marginTop: hasBothNameAndEmail ? 0 : 4}}
+          >
             {name || email || 'Anonymous User'}
           </Title>
-          {name && email && <Box style={{marginLeft: 1}}>{email}</Box>}
+          {hasBothNameAndEmail && (
+            <Box style={{marginLeft: 1}}>
+              <Text type="secondary">{email}</Text>
+            </Box>
+          )}
         </Box>
 
         <Flex mx={-1}>
