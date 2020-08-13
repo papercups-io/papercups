@@ -53,11 +53,14 @@ const ConversationHeader = ({
         py={3}
         px={4}
         backgroundColor={colors.white}
-        sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
+        sx={{justifyContent: 'space-between', alignItems: 'center'}}
       >
-        <Title level={4} style={{marginBottom: 0, marginTop: 4}}>
-          {name || email || 'Anonymous User'}
-        </Title>
+        <Box>
+          <Title level={4} style={{marginBottom: 0, marginTop: 4}}>
+            {name || email || 'Anonymous User'}
+          </Title>
+          {name && email && <Box style={{marginLeft: 1}}>{email}</Box>}
+        </Box>
 
         <Flex mx={-1}>
           <Box mx={1}>
