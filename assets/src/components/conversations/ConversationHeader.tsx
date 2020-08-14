@@ -1,5 +1,6 @@
 import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
+import {Popconfirm} from 'antd';
 import {colors, Button, Select, Text, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
@@ -115,31 +116,40 @@ const ConversationHeader = ({
             )}
           </Box>
 
-          <Box mx={1}>
-            {status === 'closed' ? (
-              <Fragment>
+          {status === 'closed' ? (
+            <Fragment>
+              <Box mx={1}>
                 <Tooltip title="Reopen conversation" placement="bottomRight">
                   <Button
                     icon={<UploadOutlined />}
                     onClick={() => onReopenConversation(conversationId)}
                   />
                 </Tooltip>
-                <Tooltip title="Delete conversation" placement="bottomRight">
-                  <Button
-                    icon={<DeleteOutlined />}
-                    onClick={() => onDeleteConversation(conversationId)}
-                  />
-                </Tooltip>
-              </Fragment>
-            ) : (
+              </Box>
+              <Box mx={1}>
+                <Popconfirm
+                  title="Are you sure"
+                  okText="Yes"
+                  cancelText="No"
+                  placement="leftBottom"
+                  onConfirm={() => onDeleteConversation(conversationId)}
+                >
+                  <Tooltip title="Delete conversation" placement="bottomRight">
+                    <Button icon={<DeleteOutlined />} />
+                  </Tooltip>
+                </Popconfirm>
+              </Box>
+            </Fragment>
+          ) : (
+            <Box mx={1}>
               <Tooltip title="Close conversation" placement="bottomRight">
                 <Button
                   icon={<CheckOutlined />}
                   onClick={() => onCloseConversation(conversationId)}
                 />
               </Tooltip>
-            )}
-          </Box>
+            </Box>
+          )}
         </Flex>
       </Flex>
     </header>

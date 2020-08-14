@@ -178,8 +178,8 @@ class ConversationsContainer extends React.Component<Props, State> {
       duration: 2, // 2 seconds
       description: (
         <Box>
-          You can view this conversations once again{' '}
-          <a href="/conversations/all">here</a>.
+          The conversation was permanently deleted, you can view your active
+          conversations <a href="/conversations/all">here</a>.
         </Box>
       ),
     });
