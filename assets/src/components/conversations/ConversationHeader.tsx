@@ -1,8 +1,10 @@
-import React from 'react';
+import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
+import {Popconfirm} from 'antd';
 import {colors, Button, Select, Text, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
+  DeleteOutlined,
   StarOutlined,
   StarFilled,
   UploadOutlined,
@@ -17,6 +19,7 @@ const ConversationHeader = ({
   onRemovePriority,
   onCloseConversation,
   onReopenConversation,
+  onDeleteConversation,
 }: {
   conversation: any;
   users: Array<any>;
@@ -25,6 +28,7 @@ const ConversationHeader = ({
   onRemovePriority: (conversationId: string) => void;
   onCloseConversation: (conversationId: string) => void;
   onReopenConversation: (conversationId: string) => void;
+  onDeleteConversation: (conversationId: string) => void;
 }) => {
   if (!conversation) {
     // No point in showing the header if no conversation exists
@@ -112,23 +116,40 @@ const ConversationHeader = ({
             )}
           </Box>
 
-          <Box mx={1}>
-            {status === 'closed' ? (
-              <Tooltip title="Reopen conversation" placement="bottomRight">
-                <Button
-                  icon={<UploadOutlined />}
-                  onClick={() => onReopenConversation(conversationId)}
-                />
-              </Tooltip>
-            ) : (
+          {status === 'closed' ? (
+            <Fragment>
+              <Box mx={1}>
+                <Tooltip title="Reopen conversation" placement="bottomRight">
+                  <Button
+                    icon={<UploadOutlined />}
+                    onClick={() => onReopenConversation(conversationId)}
+                  />
+                </Tooltip>
+              </Box>
+              <Box mx={1}>
+                <Popconfirm
+                  title="Are you sure you want to delete this conversation?"
+                  okText="Yes"
+                  cancelText="No"
+                  placement="leftBottom"
+                  onConfirm={() => onDeleteConversation(conversationId)}
+                >
+                  <Tooltip title="Delete conversation" placement="bottomRight">
+                    <Button icon={<DeleteOutlined />} />
+                  </Tooltip>
+                </Popconfirm>
+              </Box>
+            </Fragment>
+          ) : (
+            <Box mx={1}>
               <Tooltip title="Close conversation" placement="bottomRight">
                 <Button
                   icon={<CheckOutlined />}
                   onClick={() => onCloseConversation(conversationId)}
                 />
               </Tooltip>
-            )}
-          </Box>
+            </Box>
+          )}
         </Flex>
       </Flex>
     </header>

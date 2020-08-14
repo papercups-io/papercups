@@ -63,6 +63,7 @@ type Props = {
   fetch: () => Promise<Array<string>>;
   onSelectConversation: (id: string | null, fn?: () => void) => void;
   onUpdateConversation: (id: string, params: any) => Promise<void>;
+  onDeleteConversation: (id: string) => Promise<void>;
   onSendMessage: (
     message: string,
     conversationId: string,
@@ -161,6 +162,24 @@ class ConversationsContainer extends React.Component<Props, State> {
         <Box>
           You can view this conversations once again{' '}
           <a href="/conversations/all">here</a>.
+        </Box>
+      ),
+    });
+
+    await sleep(400);
+    await this.refreshSelectedConversation();
+  };
+
+  handleDeleteConversation = async (conversationId: string) => {
+    await this.props.onDeleteConversation(conversationId);
+
+    notification.open({
+      message: 'Conversation deleted!',
+      duration: 2, // 2 seconds
+      description: (
+        <Box>
+          The conversation was permanently deleted, you can view your active
+          conversations <a href="/conversations/all">here</a>.
         </Box>
       ),
     });
@@ -285,6 +304,7 @@ class ConversationsContainer extends React.Component<Props, State> {
             onRemovePriority={this.handleMarkUnpriority}
             onCloseConversation={this.handleCloseConversation}
             onReopenConversation={this.handleReopenConversation}
+            onDeleteConversation={this.handleDeleteConversation}
           />
 
           <Content style={{overflowY: 'scroll'}}>

@@ -15,6 +15,7 @@ const PriorityConversations = () => {
     fetchPriorityConversations,
     onSelectConversation,
     onUpdateConversation,
+    onDeleteConversation,
     onSendMessage,
   } = useConversations();
 
@@ -36,6 +37,7 @@ const PriorityConversations = () => {
       fetch={fetchPriorityConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
+      onDeleteConversation={onDeleteConversation}
       onSendMessage={onSendMessage}
     />
   );
