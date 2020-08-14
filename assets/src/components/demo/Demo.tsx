@@ -159,7 +159,7 @@ class Demo extends React.Component<Props, State> {
           subtitle={subtitle}
           primaryColor={color}
           accountId={accountId}
-          greeting="Hello! Have any questions?"
+          greeting="Hello :) have any questions or feedback? Alex or Kam will reply as soon as they can!"
           customer={customer}
           defaultIsOpen
         />
