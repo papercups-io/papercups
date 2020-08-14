@@ -23,6 +23,7 @@ export const ConversationsContext = React.createContext<{
 
   onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
+  onDeleteConversation: (id: string) => Promise<any>;
   onSendMessage: (
     message: string,
     conversationId: string,
@@ -51,7 +52,7 @@ export const ConversationsContext = React.createContext<{
   onSelectConversation: () => {},
   onSendMessage: () => {},
   onUpdateConversation: () => Promise.resolve(),
-
+  onDeleteConversation: () => Promise.resolve(),
   fetchAllConversations: () => Promise.resolve([]),
   fetchMyConversations: () => Promise.resolve([]),
   fetchPriorityConversations: () => Promise.resolve([]),
@@ -452,6 +453,19 @@ export class ConversationsProvider extends React.Component<Props, State> {
     }
   };
 
+  handleDeleteConversation = async (conversationId: string) => {
+    const {conversationsById} = this.state;
+
+    try {
+      await API.deleteConversation(conversationId);
+    } catch (err) {
+      // Revert state if there's an error
+      this.setState({
+        conversationsById: conversationsById,
+      });
+    }
+  };
+
   formatConversationState = (conversations: Array<Conversation>) => {
     const conversationsById = conversations.reduce(
       (acc: any, conv: Conversation) => {
@@ -644,6 +658,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
           onSelectConversation: this.handleSelectConversation,
           onUpdateConversation: this.handleUpdateConversation,
+          onDeleteConversation: this.handleDeleteConversation,
           onSendMessage: this.handleSendMessage,
 
           fetchAllConversations: this.fetchAllConversations,

@@ -15,6 +15,7 @@ const MyConversations = () => {
     fetchMyConversations,
     onSelectConversation,
     onUpdateConversation,
+    onDeleteConversation,
     onSendMessage,
   } = useConversations();
 
@@ -36,6 +37,7 @@ const MyConversations = () => {
       fetch={fetchMyConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
+      onDeleteConversation={onDeleteConversation}
       onSendMessage={onSendMessage}
     />
   );

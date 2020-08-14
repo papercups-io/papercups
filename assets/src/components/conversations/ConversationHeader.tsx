@@ -1,8 +1,9 @@
-import React from 'react';
+import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
 import {colors, Button, Select, Text, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
+  DeleteOutlined,
   StarOutlined,
   StarFilled,
   UploadOutlined,
@@ -17,6 +18,7 @@ const ConversationHeader = ({
   onRemovePriority,
   onCloseConversation,
   onReopenConversation,
+  onDeleteConversation,
 }: {
   conversation: any;
   users: Array<any>;
@@ -25,6 +27,7 @@ const ConversationHeader = ({
   onRemovePriority: (conversationId: string) => void;
   onCloseConversation: (conversationId: string) => void;
   onReopenConversation: (conversationId: string) => void;
+  onDeleteConversation: (conversationId: string) => void;
 }) => {
   if (!conversation) {
     // No point in showing the header if no conversation exists
@@ -114,12 +117,20 @@ const ConversationHeader = ({
 
           <Box mx={1}>
             {status === 'closed' ? (
-              <Tooltip title="Reopen conversation" placement="bottomRight">
-                <Button
-                  icon={<UploadOutlined />}
-                  onClick={() => onReopenConversation(conversationId)}
-                />
-              </Tooltip>
+              <Fragment>
+                <Tooltip title="Reopen conversation" placement="bottomRight">
+                  <Button
+                    icon={<UploadOutlined />}
+                    onClick={() => onReopenConversation(conversationId)}
+                  />
+                </Tooltip>
+                <Tooltip title="Delete conversation" placement="bottomRight">
+                  <Button
+                    icon={<DeleteOutlined />}
+                    onClick={() => onDeleteConversation(conversationId)}
+                  />
+                </Tooltip>
+              </Fragment>
             ) : (
               <Tooltip title="Close conversation" placement="bottomRight">
                 <Button
