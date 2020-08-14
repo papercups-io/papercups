@@ -126,6 +126,15 @@ const ConversationHeader = ({
                   />
                 </Tooltip>
               </Box>
+              {/*
+
+              FIXME: there's an issue deleting conversations that have associated
+              Slack conversations:
+                ** (Ecto.ConstraintError) constraint error when attempting to delete struct:
+                * slack_conversation_threads_conversation_id_fkey (foreign_key_constraint)
+
+              Need to fix that before uncommenting this.
+
               <Box mx={1}>
                 <Popconfirm
                   title="Are you sure you want to delete this conversation?"
@@ -139,6 +148,8 @@ const ConversationHeader = ({
                   </Tooltip>
                 </Popconfirm>
               </Box>
+
+              */}
             </Fragment>
           ) : (
             <Box mx={1}>
