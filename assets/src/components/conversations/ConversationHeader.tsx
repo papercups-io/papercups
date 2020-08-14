@@ -128,7 +128,7 @@ const ConversationHeader = ({
               </Box>
               <Box mx={1}>
                 <Popconfirm
-                  title="Are you sure"
+                  title="Are you sure you want to delete this conversation?"
                   okText="Yes"
                   cancelText="No"
                   placement="leftBottom"
