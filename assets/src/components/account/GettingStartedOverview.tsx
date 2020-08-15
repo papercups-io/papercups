@@ -8,6 +8,7 @@ import * as API from '../../api';
 import {User} from '../../types';
 import {Paragraph, Input, colors, Text, Title} from '../common';
 import {BASE_URL} from '../../config';
+import {debounce} from 'lodash';
 
 type Props = {};
 type State = {
@@ -63,26 +64,38 @@ class GettingStartedOverview extends React.Component<Props, State> {
     }
   }
 
+  debouncedUpdateWidgetSettings = debounce(
+    () => this.updateWidgetSettings(),
+    400
+  );
+
   handleChangeTitle = (e: any) => {
-    this.setState({title: e.target.value});
+    this.setState({title: e.target.value}, this.debouncedUpdateWidgetSettings);
   };
 
   handleChangeSubtitle = (e: any) => {
-    this.setState({subtitle: e.target.value});
+    this.setState(
+      {subtitle: e.target.value},
+      this.debouncedUpdateWidgetSettings
+    );
   };
 
   handleChangeGreeting = (e: any) => {
-    this.setState({greeting: e.target.value});
+    this.setState(
+      {greeting: e.target.value},
+      this.debouncedUpdateWidgetSettings
+    );
   };
 
   handleChangeNewMessagePlaceholder = (e: any) => {
-    this.setState({newMessagePlaceholder: e.target.value});
+    this.setState(
+      {newMessagePlaceholder: e.target.value},
+      this.debouncedUpdateWidgetSettings
+    );
   };
 
   handleChangeColor = (color: any) => {
-    this.setState({color: color.hex}, () => {
-      this.updateWidgetSettings();
-    });
+    this.setState({color: color.hex}, this.debouncedUpdateWidgetSettings);
   };
 
   updateWidgetSettings = async () => {
