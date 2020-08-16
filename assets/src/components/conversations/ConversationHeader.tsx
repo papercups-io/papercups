@@ -1,10 +1,8 @@
 import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Popconfirm} from 'antd';
 import {colors, Button, Select, Text, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
-  DeleteOutlined,
   StarOutlined,
   StarFilled,
   UploadOutlined,
@@ -63,7 +61,10 @@ const ConversationHeader = ({
         <Box>
           <Title
             level={4}
-            style={{marginBottom: 0, marginTop: hasBothNameAndEmail ? 0 : 4}}
+            style={{
+              marginBottom: hasBothNameAndEmail ? 0 : 4,
+              marginTop: hasBothNameAndEmail ? 0 : 4,
+            }}
           >
             {name || email || 'Anonymous User'}
           </Title>
