@@ -42,7 +42,8 @@ const ConversationFooter = ({
               <TextArea
                 className="TextArea--transparent"
                 placeholder="Type your message here!"
-                autoSize={{minRows: 1, maxRows: 4}}
+                autoSize={{maxRows: 4}}
+                autoFocus
                 value={message}
                 onKeyDown={handleKeyDown}
                 onChange={handleMessageChange}

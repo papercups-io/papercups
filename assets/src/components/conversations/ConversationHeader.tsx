@@ -63,7 +63,10 @@ const ConversationHeader = ({
         <Box>
           <Title
             level={4}
-            style={{marginBottom: 0, marginTop: hasBothNameAndEmail ? 0 : 4}}
+            style={{
+              marginBottom: hasBothNameAndEmail ? 0 : 4,
+              marginTop: hasBothNameAndEmail ? 0 : 4,
+            }}
           >
             {name || email || 'Anonymous User'}
           </Title>

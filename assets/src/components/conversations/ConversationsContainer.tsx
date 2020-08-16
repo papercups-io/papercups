@@ -18,6 +18,7 @@ import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
+import ConversationClosing from './ConversationClosing';
 import ConversationFooter from './ConversationFooter';
 
 const EmptyMessagesPlaceholder = () => {
@@ -71,12 +72,16 @@ type Props = {
   ) => void;
 };
 
-type State = {loading: boolean; selected: string | null};
+type State = {
+  loading: boolean;
+  selected: string | null;
+  closing: Array<string>;
+};
 
 class ConversationsContainer extends React.Component<Props, State> {
   scrollToEl: any = null;
 
-  state: State = {loading: true, selected: null};
+  state: State = {loading: true, selected: null, closing: []};
 
   componentDidMount() {
     this.props
@@ -84,6 +89,7 @@ class ConversationsContainer extends React.Component<Props, State> {
       .then(([first]) => {
         this.setState({loading: false});
         this.handleSelectConversation(first);
+        this.setupKeyboardShortcuts();
       })
       .then(() => this.scrollToEl.scrollIntoView());
   }
@@ -91,6 +97,7 @@ class ConversationsContainer extends React.Component<Props, State> {
   componentWillUnmount() {
     // Mark selected conversation as null
     this.handleSelectConversation(null);
+    this.removeKeyboardShortcuts();
   }
 
   componentDidUpdate(prev: Props) {
@@ -109,13 +116,106 @@ class ConversationsContainer extends React.Component<Props, State> {
     }
   }
 
+  setupKeyboardShortcuts = () => {
+    window.addEventListener('keydown', this.handleKeyboardShortcut);
+  };
+
+  removeKeyboardShortcuts = () => {
+    window.removeEventListener('keydown', this.handleKeyboardShortcut);
+  };
+
+  handleKeyboardShortcut = (e: any) => {
+    // TODO: should we use something other than metaKey/cmd?
+    const {metaKey, key} = e;
+
+    if (!metaKey) {
+      return null;
+    }
+
+    // TODO: clean up a bit
+    switch (key) {
+      case 'ArrowDown':
+        e.preventDefault();
+
+        return this.handleSelectConversation(this.getNextConversationId());
+      case 'ArrowUp':
+        e.preventDefault();
+
+        return this.handleSelectConversation(this.getPreviousConversationId());
+      case 'd':
+        e.preventDefault();
+
+        return (
+          this.state.selected &&
+          this.handleCloseConversation(this.state.selected)
+        );
+      case 'p':
+        e.preventDefault();
+
+        return (
+          this.state.selected && this.handleMarkPriority(this.state.selected)
+        );
+      case 'u':
+        e.preventDefault();
+
+        return (
+          this.state.selected && this.handleMarkUnpriority(this.state.selected)
+        );
+      default:
+        return null;
+    }
+  };
+
+  getNextConversationId = () => {
+    const {selected} = this.state;
+    const {conversationIds = []} = this.props;
+
+    if (conversationIds.length === 0) {
+      return null;
+    }
+
+    const lastConversationId = conversationIds[conversationIds.length - 1];
+
+    if (!selected) {
+      return lastConversationId;
+    }
+
+    const index = conversationIds.indexOf(selected);
+
+    return conversationIds[index + 1] || lastConversationId || null;
+  };
+
+  getPreviousConversationId = () => {
+    const {selected} = this.state;
+    const {conversationIds = []} = this.props;
+
+    if (conversationIds.length === 0) {
+      return null;
+    }
+
+    const firstConversationId = conversationIds[0];
+
+    if (!selected) {
+      return firstConversationId;
+    }
+
+    const index = conversationIds.indexOf(selected);
+
+    return conversationIds[index - 1] || firstConversationId;
+  };
+
+  // TODO: make sure this works as expected
   refreshSelectedConversation = async () => {
     const {selected} = this.state;
+    const nextId = this.getNextConversationId();
+    const updatedIds = await this.props.fetch();
+    const hasValidSelectedId = selected && updatedIds.indexOf(selected) !== -1;
 
-    const ids = await this.props.fetch();
+    if (!hasValidSelectedId) {
+      const hasValidNextId = nextId && updatedIds.indexOf(nextId) !== -1;
+      const nextSelectedId = hasValidNextId ? nextId : updatedIds[0];
 
-    if (!selected || ids.indexOf(selected) === -1) {
-      this.handleSelectConversation(ids[0]);
+      this.handleSelectConversation(nextSelectedId);
     }
   };
 
@@ -135,21 +235,15 @@ class ConversationsContainer extends React.Component<Props, State> {
   };
 
   handleCloseConversation = async (conversationId: string) => {
+    this.setState({closing: [...this.state.closing, conversationId]});
+
     await this.props.onUpdateConversation(conversationId, {status: 'closed'});
-
-    notification.open({
-      message: 'Conversation closed!',
-      duration: 2, // 2 seconds
-      description: (
-        <Box>
-          You can view your closed conversations{' '}
-          <a href="/conversations/closed">here</a>.
-        </Box>
-      ),
-    });
-
-    await sleep(400);
+    await sleep(2000);
     await this.refreshSelectedConversation();
+
+    this.setState({
+      closing: this.state.closing.filter((id) => id !== conversationId),
+    });
   };
 
   handleReopenConversation = async (conversationId: string) => {
@@ -219,7 +313,7 @@ class ConversationsContainer extends React.Component<Props, State> {
   };
 
   render() {
-    const {selected: selectedConversationId} = this.state;
+    const {selected: selectedConversationId, closing = []} = this.state;
     const {
       title,
       account,
@@ -242,6 +336,8 @@ class ConversationsContainer extends React.Component<Props, State> {
       : null;
 
     const loading = this.props.loading || this.state.loading;
+    const isClosingSelected =
+      selectedConversationId && closing.indexOf(selectedConversationId) !== -1;
 
     return (
       <Layout style={{background: colors.white}}>
@@ -270,9 +366,20 @@ class ConversationsContainer extends React.Component<Props, State> {
                 const {customer_id: customerId} = conversation;
                 const isCustomerOnline = this.isCustomerOnline(customerId);
                 const isHighlighted = conversationId === selectedConversationId;
+                const isClosing = closing.indexOf(conversationId) !== -1;
                 const {gold, red, green, purple, magenta} = colors;
                 // TODO: come up with a better way to make colors/avatars consistent
-                const color = [gold, red, green, purple, magenta][idx % 5];
+                const colorIndex = parseInt(customerId, 32) % 5;
+                const color = [gold, red, green, purple, magenta][colorIndex];
+
+                if (isClosing) {
+                  return (
+                    <ConversationClosing
+                      key={conversationId}
+                      isHighlighted={isHighlighted}
+                    />
+                  );
+                }
 
                 return (
                   <ConversationItem
@@ -307,7 +414,9 @@ class ConversationsContainer extends React.Component<Props, State> {
             onDeleteConversation={this.handleDeleteConversation}
           />
 
-          <Content style={{overflowY: 'scroll'}}>
+          <Content
+            style={{overflowY: 'scroll', opacity: isClosingSelected ? 0.6 : 1}}
+          >
             {loading ? (
               <Flex
                 sx={{
@@ -357,7 +466,12 @@ class ConversationsContainer extends React.Component<Props, State> {
           </Content>
 
           {selectedConversation && (
-            <ConversationFooter onSendMessage={this.handleSendMessage} />
+            // NB: the `key` forces a rerender so the input can clear
+            // any text from the last conversation and trigger autofocus
+            <ConversationFooter
+              key={selectedConversation.id}
+              onSendMessage={this.handleSendMessage}
+            />
           )}
         </Layout>
       </Layout>
