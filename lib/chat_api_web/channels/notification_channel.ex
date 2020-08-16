@@ -59,11 +59,11 @@ defmodule ChatApiWeb.NotificationChannel do
       result = ChatApiWeb.MessageView.render("expanded.json", message: message)
 
       # If the received message is the first one sent by any company user, assign the conversation to the user
-      if Messages.count_messages_sent_by_company_user_in_conversation(message.conversation_id) == @messages_limit_to_autoassign do
-        {:ok, conversation} =
-          message.conversation_id
-          |> Conversations.get_conversation!()
-          |> Conversations.update_conversation(%{assignee_id: message.user_id})
+      if Messages.count_messages_sent_by_company_user_in_conversation(message.conversation_id) ==
+           @messages_limit_to_autoassign do
+        message.conversation_id
+        |> Conversations.get_conversation!()
+        |> Conversations.update_conversation(%{assignee_id: message.user_id})
       end
 
       # TODO: write doc explaining difference between push, broadcast, etc.
