@@ -161,6 +161,13 @@ class ConversationsContainer extends React.Component<Props, State> {
         return (
           this.state.selected && this.handleMarkUnpriority(this.state.selected)
         );
+      case 'o':
+        e.preventDefault();
+
+        return (
+          this.state.selected &&
+          this.handleReopenConversation(this.state.selected)
+        );
       default:
         return null;
     }
@@ -237,8 +244,10 @@ class ConversationsContainer extends React.Component<Props, State> {
   handleCloseConversation = async (conversationId: string) => {
     this.setState({closing: [...this.state.closing, conversationId]});
 
-    await this.props.onUpdateConversation(conversationId, {status: 'closed'});
+    // TODO: figure out the best way to handle this when closing multiple
+    // conversations in a row very quickly
     await sleep(1000);
+    await this.props.onUpdateConversation(conversationId, {status: 'closed'});
     await this.refreshSelectedConversation();
 
     this.setState({
@@ -272,7 +281,7 @@ class ConversationsContainer extends React.Component<Props, State> {
       duration: 2, // 2 seconds
       description: (
         <Box>
-          The conversation was permanently deleted, you can view your active
+          This conversation was permanently deleted. You can view your active
           conversations <a href="/conversations/all">here</a>.
         </Box>
       ),
