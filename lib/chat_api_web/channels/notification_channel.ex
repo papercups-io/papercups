@@ -5,6 +5,8 @@ defmodule ChatApiWeb.NotificationChannel do
   alias Phoenix.Socket.Broadcast
   alias ChatApi.{Messages, Conversations}
 
+  @messages_limit_to_autoassign 1
+
   @impl true
   def join("notification:" <> account_id, %{"ids" => ids}, socket) do
     if authorized?(socket, account_id) do
@@ -55,6 +57,14 @@ defmodule ChatApiWeb.NotificationChannel do
       {:ok, message} = Messages.create_message(msg)
       message = Messages.get_message!(message.id)
       result = ChatApiWeb.MessageView.render("expanded.json", message: message)
+
+      # If the received message is the first one sent by any company user, assign the conversation to the user
+      if Messages.count_messages_sent_by_company_user_in_conversation(message.conversation_id) == @messages_limit_to_autoassign do
+        {:ok, conversation} =
+          message.conversation_id
+          |> Conversations.get_conversation!()
+          |> Conversations.update_conversation(%{assignee_id: message.user_id})
+      end
 
       # TODO: write doc explaining difference between push, broadcast, etc.
       push(socket, "shout", result)

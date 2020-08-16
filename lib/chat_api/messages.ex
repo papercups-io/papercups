@@ -31,6 +31,16 @@ defmodule ChatApi.Messages do
     Repo.one(query)
   end
 
+  def count_messages_sent_by_company_user_in_conversation(conversation_id) do
+    query =
+      from(m in Message,
+        where: m.conversation_id == ^conversation_id and not is_nil(m.user_id),
+        select: count("*")
+      )
+
+    Repo.one(query)
+  end
+
   @doc """
   Gets a single message.
 
