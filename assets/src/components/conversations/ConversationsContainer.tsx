@@ -238,7 +238,7 @@ class ConversationsContainer extends React.Component<Props, State> {
     this.setState({closing: [...this.state.closing, conversationId]});
 
     await this.props.onUpdateConversation(conversationId, {status: 'closed'});
-    await sleep(2000);
+    await sleep(1000);
     await this.refreshSelectedConversation();
 
     this.setState({

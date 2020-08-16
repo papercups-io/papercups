@@ -1,10 +1,8 @@
 import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Popconfirm} from 'antd';
 import {colors, Button, Select, Text, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
-  DeleteOutlined,
   StarOutlined,
   StarFilled,
   UploadOutlined,
