@@ -206,7 +206,7 @@ class UserProfile extends React.Component<Props, State> {
             type="text"
             value={email}
             onChange={this.handleChangeEmail}
-            
+            disabled={!isEditing}
           />
         </Box>
 
