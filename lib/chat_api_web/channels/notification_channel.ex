@@ -51,8 +51,11 @@ defmodule ChatApiWeb.NotificationChannel do
   def handle_in("shout", payload, socket) do
     with %{current_user: current_user} <- socket.assigns,
          %{id: user_id, account_id: account_id} <- current_user do
-      msg = Map.merge(payload, %{"user_id" => user_id, "account_id" => account_id})
-      {:ok, message} = Messages.create_message(msg)
+      {:ok, message} =
+        payload
+        |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
+        |> Messages.create_message()
+
       message = Messages.get_message!(message.id)
       result = ChatApiWeb.MessageView.render("expanded.json", message: message)
 
