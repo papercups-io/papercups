@@ -15,6 +15,7 @@ defmodule ChatApiWeb.MessageView do
       id: message.id,
       body: message.body,
       created_at: message.inserted_at,
+      sent_at: message.sent_at,
       customer_id: message.customer_id,
       conversation_id: message.conversation_id,
       user_id: message.user_id
@@ -26,6 +27,7 @@ defmodule ChatApiWeb.MessageView do
       id: message.id,
       body: message.body,
       created_at: message.inserted_at,
+      sent_at: message.sent_at,
       conversation_id: message.conversation_id,
       customer_id: message.customer_id,
       user_id: message.user_id,

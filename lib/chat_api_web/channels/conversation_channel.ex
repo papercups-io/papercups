@@ -101,23 +101,23 @@ defmodule ChatApiWeb.ConversationChannel do
         })
 
         result = ChatApiWeb.MessageView.render("expanded.json", message: message)
-
-        # TODO: double check that this still works as expected
         broadcast(socket, "shout", result)
-
-        ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body,
-          type: :customer
-        )
-
-        # TODO: maybe do these in an "after_send" hook or something more async,
-        # since this notification logic probably shouldn't live in here.
-        Emails.send_email_alerts(message.body, account_id, conversation_id)
+        send_message_alerts(message.body, conversation_id, account_id)
 
       _ ->
         broadcast(socket, "shout", payload)
     end
 
     {:noreply, socket}
+  end
+
+  defp send_message_alerts(message, conversation_id, account_id) do
+    # TODO: how should we handle errors here?
+    ChatApi.Slack.send_conversation_message_alert(conversation_id, message, type: :customer)
+
+    # TODO: maybe do these in an "after_send" hook or something more async,
+    # since this notification logic probably shouldn't live in here.
+    Emails.send_email_alerts(message, account_id, conversation_id)
   end
 
   # Add authorization logic here as required.

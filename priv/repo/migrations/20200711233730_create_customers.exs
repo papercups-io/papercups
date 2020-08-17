@@ -3,9 +3,9 @@ defmodule ChatApi.Repo.Migrations.CreateCustomers do
 
   def change do
     create table(:customers, primary_key: false) do
-      add :id, :binary_id, primary_key: true
-      add :first_seen, :date, null: false
-      add :last_seen, :date, null: false
+      add(:id, :binary_id, primary_key: true)
+      add(:first_seen, :date, null: false)
+      add(:last_seen, :date, null: false)
       add(:account_id, references(:accounts, type: :uuid))
 
       timestamps()

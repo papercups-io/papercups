@@ -29,11 +29,16 @@ defmodule ChatApi.Slack do
   }
   """
   def send_message(message, access_token) do
-    post("/chat.postMessage", message,
-      headers: [
-        {"Authorization", "Bearer " <> access_token}
-      ]
-    )
+    if is_valid_access_token?(access_token) do
+      post("/chat.postMessage", message,
+        headers: [
+          {"Authorization", "Bearer " <> access_token}
+        ]
+      )
+    else
+      # Inspect what would've been sent for debugging
+      Logger.info("Would have sent to Slack: #{inspect(message)}")
+    end
   end
 
   def get_access_token(code) do
@@ -51,30 +56,28 @@ defmodule ChatApi.Slack do
     thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id)
     %{access_token: access_token, channel: channel} = get_slack_authorization(conversation_id)
 
-    payload =
-      type
-      |> get_slack_message_subject!(conversation_id, thread)
-      |> get_slack_message_payload(channel, text, thread)
+    type
+    |> get_slack_message_subject!(conversation_id, thread)
+    |> get_slack_message_payload(channel, text, thread)
+    |> send_message(access_token)
+    |> case do
+      {:ok, response} ->
+        # If no thread exists yet, start a new thread and kick off the first reply
+        if is_nil(thread) do
+          {:ok, thread} = create_new_slack_conversation_thread(conversation_id, response)
 
-    if is_valid_access_token?(access_token) do
-      {:ok, response} = send_message(payload, access_token)
+          send_message(
+            %{
+              "channel" => channel,
+              "text" => "(Send a message here to get started!)",
+              "thread_ts" => thread.slack_thread_ts
+            },
+            access_token
+          )
+        end
 
-      # If no thread exists yet, start a new thread and kick off the first reply
-      if is_nil(thread) do
-        {:ok, thread} = create_new_slack_conversation_thread(conversation_id, response)
-
-        send_message(
-          %{
-            "channel" => channel,
-            "text" => "(Send a message here to get started!)",
-            "thread_ts" => thread.slack_thread_ts
-          },
-          access_token
-        )
-      end
-    else
-      # Inspect what would've been sent for debugging
-      Logger.info("Would have sent to Slack: #{inspect(payload)}")
+      error ->
+        Logger.error("Unable to send Slack message: #{inspect(error)}")
     end
   end
 
@@ -151,34 +154,34 @@ defmodule ChatApi.Slack do
   end
 
   def create_new_slack_conversation_thread(conversation_id, response) do
-    # TODO: This is just a temporary workaround to handle having a user_id
-    # in the message when an agent responds on Slack. At the moment, if anyone
-    # responds to a thread on Slack, we just assume it's the assignee.
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
          primary_user_id <- get_conversation_primary_user_id(conversation) do
-      account_id = conversation.account_id
+      # TODO: This is just a temporary workaround to handle having a user_id
+      # in the message when an agent responds on Slack. At the moment, if anyone
+      # responds to a thread on Slack, we just assume it's the assignee.
+      assign_and_broadcast_conversation_updated(conversation, primary_user_id)
 
-      {:ok, update} =
-        Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
-
-      result = ChatApiWeb.ConversationView.render("basic.json", conversation: update)
-
-      ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
-        "id" => conversation_id,
-        "updates" => result
-      })
-
-      params =
-        Map.merge(
-          %{
-            conversation_id: conversation_id,
-            account_id: account_id
-          },
-          extract_slack_conversation_thread_info(response)
-        )
-
-      SlackConversationThreads.create_slack_conversation_thread(params)
+      %{
+        conversation_id: conversation_id,
+        account_id: conversation.account_id
+      }
+      |> Map.merge(extract_slack_conversation_thread_info(response))
+      |> SlackConversationThreads.create_slack_conversation_thread()
     end
+  end
+
+  def assign_and_broadcast_conversation_updated(conversation, primary_user_id) do
+    %{id: conversation_id, account_id: account_id} = conversation
+
+    {:ok, update} =
+      Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
+
+    result = ChatApiWeb.ConversationView.render("basic.json", conversation: update)
+
+    ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
+      "id" => conversation_id,
+      "updates" => result
+    })
   end
 
   def get_conversation_primary_user_id(conversation) do
