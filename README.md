@@ -22,7 +22,8 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 ## Features
 
 - **Custom chat widget** - a customizable chat widget you can embed on your website to talk to your customers
-- **React support** - embed the chat widget as a React component, or a simple HTML snippet
+- **React support** - embed the chat widget as a [React component](https://github.com/papercups-io/chat-widget#using-in-react), or a simple [HTML snippet](https://github.com/papercups-io/chat-widget#using-in-html)
+- **React Native support (alpha)** - embed the chat widget in your [React Native](https://github.com/papercups-io/chat-widget-native#papercups-iochat-widget-native) app (work in progress)
 - **Slack integration** - connect with Slack, so you can view and reply to messages directly from a Slack channel
 - **Markdown and emoji support** - use markdown and emoji to add character to your messages!
 - **Invite your team** - send invite links to your teammates to join your account
