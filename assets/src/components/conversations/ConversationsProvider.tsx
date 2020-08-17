@@ -220,7 +220,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
       ids: conversationIds,
     });
 
-    // TODO: rename?
+    // TODO: rename to message:created?
     this.channel.on('shout', (message) => {
       // Handle new message
       this.handleNewMessage(message);
