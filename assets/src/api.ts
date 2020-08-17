@@ -141,6 +141,25 @@ export const fetchAccountInfo = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const updateAccountInfo = async (
+  updates: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  console.log(updates);
+
+  return request
+    .put(`/api/accounts/me`)
+    .set('Authorization', token)
+    .send({
+      account: updates,
+    })
+    .then((res) => res.body.data);
+};
+
 export const fetchUserProfile = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
