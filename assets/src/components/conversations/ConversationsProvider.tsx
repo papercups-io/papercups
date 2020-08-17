@@ -422,6 +422,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.channel.push('shout', {
       body: message,
       conversation_id: conversationId,
+      sent_at: new Date().toISOString(),
     });
 
     if (cb && typeof cb === 'function') {
