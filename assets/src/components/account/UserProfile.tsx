@@ -8,6 +8,7 @@ type State = {
   fullName: string;
   displayName: string;
   profilePhotoUrl: string;
+  email: string;
   shouldEmailOnNewMessages: boolean;
   isLoading: boolean;
   isEditing: boolean;
@@ -20,6 +21,7 @@ class UserProfile extends React.Component<Props, State> {
     fullName: '',
     displayName: '',
     profilePhotoUrl: '',
+    email: '',
     shouldEmailOnNewMessages: false,
     isLoading: true,
     isEditing: false,
@@ -40,12 +42,14 @@ class UserProfile extends React.Component<Props, State> {
         display_name: displayName,
         full_name: fullName,
         profile_photo_url: profilePhotoUrl,
+        email: email,
       } = profile;
 
       this.setState({
         displayName,
         fullName,
         profilePhotoUrl,
+        email,
       });
     } else {
       // NB: this also handles resetting these values if the optimistic update fails
@@ -53,6 +57,7 @@ class UserProfile extends React.Component<Props, State> {
         displayName: '',
         fullName: '',
         profilePhotoUrl: '',
+        email: '',
       });
     }
   };
@@ -83,6 +88,9 @@ class UserProfile extends React.Component<Props, State> {
   handleChangeProfilePhotoUrl = (e: any) => {
     this.setState({profilePhotoUrl: e.target.value});
   };
+  handleChangeEmail = (e:any) => {
+    this.setState({email: e.target.value});
+  }
 
   handleCancel = () => {
     return this.fetchLatestProfile().then(() =>
@@ -91,12 +99,13 @@ class UserProfile extends React.Component<Props, State> {
   };
 
   handleUpdate = () => {
-    const {displayName, fullName, profilePhotoUrl} = this.state;
+    const {displayName, fullName, profilePhotoUrl, email} = this.state;
 
     return API.updateUserProfile({
       display_name: displayName,
       full_name: fullName,
       profile_photo_url: profilePhotoUrl,
+      email: email,
     })
       .then((profile) => {
         console.log('Successfully updated profile!', profile);
@@ -136,6 +145,7 @@ class UserProfile extends React.Component<Props, State> {
       fullName,
       displayName,
       profilePhotoUrl,
+      email,
       shouldEmailOnNewMessages,
       isEditing,
     } = this.state;
@@ -189,6 +199,16 @@ class UserProfile extends React.Component<Props, State> {
               disabled={!isEditing}
             />
           </Box>
+          <Box mb={3} sx={{maxWidth: 480}}>
+          <label htmlFor="email">Email:</label>
+          <Input
+            id="email"
+            type="text"
+            value={email}
+            onChange={this.handleChangeEmail}
+            
+          />
+        </Box>
 
           <Box
             style={{
