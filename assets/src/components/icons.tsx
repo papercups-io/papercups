@@ -1,5 +1,7 @@
 import ApiOutlined from '@ant-design/icons/ApiOutlined';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
+import CreditCardOutlined from '@ant-design/icons/CreditCardOutlined';
+import CreditCardTwoTone from '@ant-design/icons/CreditCardTwoTone';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
@@ -20,6 +22,8 @@ import UserOutlined from '@ant-design/icons/UserOutlined';
 export {
   ApiOutlined,
   CheckOutlined,
+  CreditCardOutlined,
+  CreditCardTwoTone,
   DeleteOutlined,
   DownOutlined,
   LoadingOutlined,

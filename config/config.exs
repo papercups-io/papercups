@@ -58,6 +58,14 @@ if mailgun_api_key != nil and domain != nil do
     domain: domain
 end
 
+case System.get_env("PAPERCUPS_STRIPE_SECRET") do
+  "sk_" <> _rest = api_key ->
+    config :stripity_stripe, api_key: api_key
+
+  _ ->
+    nil
+end
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"

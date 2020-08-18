@@ -11,7 +11,10 @@ defmodule ChatApi.Accounts.Account do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "accounts" do
-    field :company_name, :string
+    field(:company_name, :string)
+    field(:stripe_customer_id, :string)
+    field(:stripe_default_payment_method_id, :string)
+
     has_many(:customers, Customer)
     has_many(:conversations, Conversation)
     has_many(:messages, Message)
@@ -21,14 +24,10 @@ defmodule ChatApi.Accounts.Account do
     timestamps()
   end
 
-  @spec changeset(
-          {map, map} | %{:__struct__ => atom | %{__changeset__: map}, optional(atom) => any},
-          :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}
-        ) :: Ecto.Changeset.t()
   @doc false
   def changeset(account, attrs) do
     account
-    |> cast(attrs, [:company_name])
+    |> cast(attrs, [:company_name, :stripe_customer_id, :stripe_default_payment_method_id])
     |> validate_required([:company_name])
   end
 end
