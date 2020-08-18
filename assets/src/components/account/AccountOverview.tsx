@@ -20,7 +20,6 @@ type State = {
   account: any;
   currentUser: any;
   inviteUrl: string;
-  companyName: string;
   isEditing: boolean;
 };
 
@@ -28,10 +27,9 @@ class AccountOverview extends React.Component<Props, State> {
   input: any = null;
 
   state: State = {
-    account: {company_name: null},
+    account: null,
     currentUser: null,
     inviteUrl: '',
-    companyName: '',
     isEditing: false,
   };
 
@@ -41,31 +39,8 @@ class AccountOverview extends React.Component<Props, State> {
       API.me(),
     ]);
 
-    this.setState({
-      account: {company_name: account.company_name},
-      currentUser,
-      companyName: account.company_name,
-    });
+    this.setState({account, currentUser});
   }
-
-  // fetchLatestProfile = async () => {
-  //   const profile = await API.fetchAccountInfo();
-
-  //   if (profile) {
-  //     const {
-  //       account: account
-  //     } = profile;
-
-  //     this.setState({
-  //       account,
-  //     });
-  //   } else {
-  //     // NB: this also handles resetting these values if the optimistic update fails
-  //     this.setState({
-  //       account: null
-  //     });
-  //   }
-  // };
 
   handleGenerateInviteUrl = async () => {
     const {id: token} = await API.generateUserInvitation();
@@ -160,35 +135,31 @@ class AccountOverview extends React.Component<Props, State> {
     this.setState({isEditing: false});
   };
 
-  // 8/17/20 - all functionality of open issue is working, except properly persisting the update
-  handleUpdateAccountInfo = () => {
-    const {account} = this.state;
+  handleUpdate = () => {
+    const {company_name: companyName} = this.state.account;
 
     return API.updateAccountInfo({
-      account: {company_name: account.company_name},
+      company_name: companyName,
     })
       .then((account) => {
-        console.log(account.company_name);
         console.log('Successfully updated company name!', account);
 
         this.setState({isEditing: false});
       })
       .catch((err) => {
         console.log('Failed to update company name!', err);
-
-        // return this.fetchLatestProfile();
       })
       .then(() => this.setState({isEditing: false}));
   };
 
   render() {
-    const {account, inviteUrl, companyName, isEditing} = this.state;
+    const {account, inviteUrl, isEditing} = this.state;
 
     if (!account) {
       return null;
     }
 
-    const {id: token, users = []} = account;
+    const {id: token, users = [], company_name: companyName} = account;
 
     return (
       <Box p={4}>
@@ -207,7 +178,7 @@ class AccountOverview extends React.Component<Props, State> {
             <Input
               id="company_name"
               type="text"
-              value={account.company_name}
+              value={companyName}
               onChange={this.handleChangeCompanyName}
               disabled={!isEditing}
             />
@@ -221,7 +192,7 @@ class AccountOverview extends React.Component<Props, State> {
                 </Button>
               </Box>
               <Box>
-                <Button type="primary" onClick={this.handleUpdateAccountInfo}>
+                <Button type="primary" onClick={this.handleUpdate}>
                   Save
                 </Button>
               </Box>

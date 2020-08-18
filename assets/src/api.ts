@@ -149,8 +149,6 @@ export const updateAccountInfo = async (
     throw new Error('Invalid token!');
   }
 
-  console.log(updates);
-
   return request
     .put(`/api/accounts/me`)
     .set('Authorization', token)
