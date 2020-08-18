@@ -19,13 +19,13 @@ const PaymentForm = ({onSuccess}: Props) => {
 
     if (!stripe || !elements) {
       // Stripe.js has not yet loaded.
-      return console.log('Stripe elements not found!', {stripe, elements});
+      return console.error('Stripe elements not found!', {stripe, elements});
     }
 
     const cardElement = elements.getElement(CardElement);
 
     if (!cardElement) {
-      return console.log('Could not find card element!', {
+      return console.error('Could not find card element!', {
         elements,
         cardElement,
       });
@@ -39,7 +39,7 @@ const PaymentForm = ({onSuccess}: Props) => {
     });
 
     if (error) {
-      console.log('Failed to create payment method', error);
+      console.error('Failed to create payment method', error);
     } else if (paymentMethod && paymentMethod.id) {
       const result = await API.createPaymentMethod(paymentMethod);
       console.log('Successfully added payment method!', result);
