@@ -18,8 +18,7 @@ const PaymentForm = ({onSuccess}: Props) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
-      // Stripe.js has not yet loaded.
-      return console.error('Stripe elements not found!', {stripe, elements});
+      return console.error('Stripe has not loaded yet!', {stripe, elements});
     }
 
     const cardElement = elements.getElement(CardElement);
