@@ -353,3 +353,18 @@ export const updateWidgetSettings = async (
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const createPaymentMethod = async (
+  paymentMethod: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/payment_methods`)
+    .send({payment_method: paymentMethod})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};

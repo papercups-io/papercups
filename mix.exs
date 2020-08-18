@@ -51,6 +51,7 @@ defmodule ChatApi.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:corsica, "~> 1.0"},
       {:pow, "~> 1.0.18"},
+      {:stripity_stripe, "~> 2.0"},
       {:sentry, "8.0.0"}
     ]
   end

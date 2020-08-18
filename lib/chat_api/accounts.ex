@@ -40,10 +40,6 @@ defmodule ChatApi.Accounts do
     Account |> Repo.get!(id) |> Repo.preload([:users, :widget_settings])
   end
 
-  @spec create_account(
-          :invalid
-          | %{optional(:__struct__) => none, optional(atom | binary) => any}
-        ) :: any
   @doc """
   Creates a account.
 

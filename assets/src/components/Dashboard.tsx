@@ -10,7 +10,13 @@ import {
 import {Helmet} from 'react-helmet';
 import {Box, Flex} from 'theme-ui';
 import {colors, Badge, Layout, Menu, Sider} from './common';
-import {ApiOutlined, MailOutlined, UserOutlined, LogoutOutlined} from './icons';
+import {
+  ApiOutlined,
+  MailOutlined,
+  UserOutlined,
+  LogoutOutlined,
+  CreditCardOutlined,
+} from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -24,6 +30,7 @@ import MyConversations from './conversations/MyConversations';
 import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
+import BillingOverview from './billing/BillingOverview';
 
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
@@ -144,6 +151,13 @@ const Dashboard = (props: RouteComponentProps) => {
               >
                 <Link to="/integrations">Integrations</Link>
               </Menu.Item>
+              <Menu.Item
+                title="Billing"
+                icon={<CreditCardOutlined />}
+                key="billing"
+              >
+                <Link to="/billing">Billing</Link>
+              </Menu.Item>
             </Menu>
           </Box>
 
@@ -171,6 +185,7 @@ const Dashboard = (props: RouteComponentProps) => {
             component={GettingStartedOverview}
           />
           <Route path="/account*" component={AccountOverview} />
+          <Route path="/billing" component={BillingOverview} />
           <Route path="/integrations/:type" component={IntegrationsOverview} />
           <Route path="/integrations" component={IntegrationsOverview} />
           <Route path="/integrations*" component={IntegrationsOverview} />
