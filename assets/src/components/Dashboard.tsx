@@ -38,7 +38,11 @@ const Dashboard = (props: RouteComponentProps) => {
     <Layout>
       <Helmet>
         <title>
-          {totalNumUnread ? `(${totalNumUnread}) New message!` : 'Papercups'}
+          {totalNumUnread
+            ? `(${totalNumUnread}) New message${
+                totalNumUnread === 1 ? '' : 's'
+              }!`
+            : 'Papercups'}
         </title>
       </Helmet>
 
