@@ -7,6 +7,7 @@ import {
   Link,
   RouteComponentProps,
 } from 'react-router-dom';
+import {Helmet} from 'react-helmet';
 import {Box, Flex} from 'theme-ui';
 import {colors, Badge, Layout, Menu, Sider} from './common';
 import {ApiOutlined, MailOutlined, UserOutlined, LogoutOutlined} from './icons';
@@ -29,11 +30,18 @@ const Dashboard = (props: RouteComponentProps) => {
   const {pathname} = useLocation();
   const {unreadByCategory: unread} = useConversations();
   const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
+  const totalNumUnread = (unread && unread.all) || 0;
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
 
   return (
     <Layout>
+      <Helmet>
+        <title>
+          {totalNumUnread ? `(${totalNumUnread}) New message!` : 'Papercups'}
+        </title>
+      </Helmet>
+
       <Sider
         width={220}
         collapsed={false}
