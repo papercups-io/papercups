@@ -40,14 +40,6 @@ defmodule ChatApi.StripeClient do
       %{stripe_customer_id: customer_id} ->
         customer_id
 
-      # TODO: remove (after adding `stripe_customer_id` field to accounts)
-      %{company_name: name} = account ->
-        {:ok, customer} = Stripe.Customer.create(%{name: name, email: user.email})
-        stripe_customer_id = customer.id
-        Accounts.update_account(account, %{stripe_customer_id: stripe_customer_id})
-
-        stripe_customer_id
-
       _account ->
         nil
     end

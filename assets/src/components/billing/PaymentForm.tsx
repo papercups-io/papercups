@@ -41,10 +41,7 @@ const PaymentForm = ({onSuccess}: Props) => {
     if (error) {
       console.log('Failed to create payment method', error);
     } else if (paymentMethod && paymentMethod.id) {
-      console.log('Payment method:', paymentMethod);
-
       const result = await API.createPaymentMethod(paymentMethod);
-      // TODO: set payment method on account
       console.log('Successfully added payment method!', result);
 
       onSuccess && onSuccess(result);
