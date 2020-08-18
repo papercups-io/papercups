@@ -309,8 +309,6 @@ const ExamplePage = () => {
             accountId={accountId}
             customer={customer}
             baseUrl={BASE_URL}
-            // TODO: remove after testing
-            iframeUrlOverride="https://chat-window-git-show-unsent-messages.papercups.vercel.app/"
             defaultIsOpen
           />
         </Box>

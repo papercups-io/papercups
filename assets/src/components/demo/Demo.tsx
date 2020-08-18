@@ -161,8 +161,6 @@ class Demo extends React.Component<Props, State> {
           accountId={accountId}
           greeting="Hello :) have any questions or feedback? Alex or Kam will reply as soon as they can!"
           customer={customer}
-          // TODO: remove after testing
-          iframeUrlOverride="https://chat-window-git-show-unsent-messages.papercups.vercel.app/"
           defaultIsOpen
         />
       </Box>
