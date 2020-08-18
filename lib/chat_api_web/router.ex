@@ -55,6 +55,7 @@ defmodule ChatApiWeb.Router do
     get("/user_settings", UserSettingsController, :show)
     put("/user_settings", UserSettingsController, :create_or_update)
     post("/payment_methods", PaymentMethodController, :create)
+    get("/payment_methods", PaymentMethodController, :show)
 
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/accounts", AccountController, only: [:update, :delete])

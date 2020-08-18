@@ -1,6 +1,6 @@
-defmodule ChatApi.Stripe do
+defmodule ChatApi.StripeClient do
   @moduledoc """
-  The Stripe context.
+  The StripeClient context.
   """
 
   import Ecto.Query, warn: false
@@ -10,7 +10,7 @@ defmodule ChatApi.Stripe do
   @doc """
   Add a payment method to an account via Stripe
   """
-  def add_payment_method(customer_id, payment_method_id) do
+  def add_payment_method(customer_id, payment_method_id, account_id) do
     payment_method =
       Stripe.PaymentMethod.attach(%{payment_method: payment_method_id, customer: customer_id})
 
@@ -18,7 +18,9 @@ defmodule ChatApi.Stripe do
       invoice_settings: %{default_payment_method: payment_method_id}
     })
 
-    # TODO: set a flag on the account indicating that a payment method was successfully added
+    Account
+    |> Repo.get!(account_id)
+    |> Accounts.update_account(%{stripe_default_payment_method_id: payment_method_id})
 
     payment_method
   end

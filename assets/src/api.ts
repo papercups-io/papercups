@@ -354,6 +354,17 @@ export const updateWidgetSettings = async (
     .then((res) => res.body.data);
 };
 
+export const fetchDefaultPaymentMethod = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/payment_methods`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const createPaymentMethod = async (
   paymentMethod: any,
   token = getAccessToken()

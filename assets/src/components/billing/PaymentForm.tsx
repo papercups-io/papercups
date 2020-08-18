@@ -1,11 +1,15 @@
 import React from 'react';
-import {Box} from 'theme-ui';
+import {Flex} from 'theme-ui';
 import {useStripe, useElements, CardElement} from '@stripe/react-stripe-js';
-import {Button} from '../common';
+import {Button, Text} from '../common';
 import * as API from '../../api';
 import CardInputSection from './CardInputSection';
 
-const PaymentForm = () => {
+type Props = {
+  onSuccess?: (paymentMethod: any) => void;
+};
+
+const PaymentForm = ({onSuccess}: Props) => {
   const [isSubmitting, setSubmitting] = React.useState(false);
   const stripe = useStripe();
   const elements = useElements();
@@ -42,6 +46,8 @@ const PaymentForm = () => {
       const result = await API.createPaymentMethod(paymentMethod);
       // TODO: set payment method on account
       console.log('Successfully added payment method!', result);
+
+      onSuccess && onSuccess(result);
     }
 
     setSubmitting(false);
@@ -49,9 +55,11 @@ const PaymentForm = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Box mb={2} sx={{maxWidth: 480}}>
+      <Text strong>Update payment information</Text>
+
+      <Flex mt={1} mb={2} sx={{maxWidth: 480, alignItems: 'center'}}>
         <CardInputSection />
-      </Box>
+      </Flex>
 
       <Button
         htmlType="submit"
@@ -59,7 +67,7 @@ const PaymentForm = () => {
         disabled={!stripe}
         loading={isSubmitting}
       >
-        Update payment information
+        Update
       </Button>
     </form>
   );
