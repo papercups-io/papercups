@@ -9,12 +9,20 @@ defmodule ChatApiWeb.PaymentMethodController do
     with user <- conn.assigns.current_user,
          %{account_id: account_id} <- user,
          %{"id" => payment_method_id} <- payment_method_params do
-      {:ok, payment_method} =
+      result =
         account_id
         |> StripeClient.find_or_create_customer(user)
         |> StripeClient.add_payment_method(payment_method_id, account_id)
 
-      render(conn, "show.json", payment_method: payment_method)
+      case result do
+        {:ok, payment_method} ->
+          render(conn, "show.json", payment_method: payment_method)
+
+        {:error, err} ->
+          conn
+          |> put_status(err.extra.http_status)
+          |> json(%{error: %{status: err.extra.http_status, message: err.user_message}})
+      end
     end
   end
 

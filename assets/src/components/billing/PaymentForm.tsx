@@ -1,5 +1,5 @@
 import React from 'react';
-import {Flex} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 import {useStripe, useElements, CardElement} from '@stripe/react-stripe-js';
 import {Button, Text} from '../common';
 import * as API from '../../api';
@@ -11,6 +11,7 @@ type Props = {
 
 const PaymentForm = ({onSuccess}: Props) => {
   const [isSubmitting, setSubmitting] = React.useState(false);
+  const [error, setErrorMessage] = React.useState('');
   const stripe = useStripe();
   const elements = useElements();
 
@@ -31,6 +32,7 @@ const PaymentForm = ({onSuccess}: Props) => {
     }
 
     setSubmitting(true);
+    setErrorMessage('');
 
     const {error, paymentMethod} = await stripe.createPaymentMethod({
       type: 'card',
@@ -39,11 +41,23 @@ const PaymentForm = ({onSuccess}: Props) => {
 
     if (error) {
       console.error('Failed to create payment method', error);
-    } else if (paymentMethod && paymentMethod.id) {
-      const result = await API.createPaymentMethod(paymentMethod);
-      console.log('Successfully added payment method!', result);
 
-      onSuccess && onSuccess(result);
+      setErrorMessage(error.message || 'Failed to save card information.');
+    } else if (paymentMethod && paymentMethod.id) {
+      try {
+        const result = await API.createPaymentMethod(paymentMethod);
+        console.log('Successfully added payment method!', result);
+
+        onSuccess && onSuccess(result);
+      } catch (err) {
+        console.log('Failed to create payment method:', err);
+
+        setErrorMessage(
+          err?.response?.body?.error?.message ||
+            err?.message ||
+            'Failed to save card information.'
+        );
+      }
     }
 
     setSubmitting(false);
@@ -57,14 +71,22 @@ const PaymentForm = ({onSuccess}: Props) => {
         <CardInputSection />
       </Flex>
 
-      <Button
-        htmlType="submit"
-        type="primary"
-        disabled={!stripe}
-        loading={isSubmitting}
-      >
-        Update
-      </Button>
+      <Flex sx={{alignItems: 'center'}}>
+        <Button
+          htmlType="submit"
+          type="primary"
+          disabled={!stripe}
+          loading={isSubmitting}
+        >
+          Update
+        </Button>
+
+        {error && (
+          <Box ml={3}>
+            <Text type="danger">{error}</Text>
+          </Box>
+        )}
+      </Flex>
     </form>
   );
 };
