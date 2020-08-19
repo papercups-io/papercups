@@ -24,6 +24,6 @@ defmodule ChatApi.Messages.Message do
   def changeset(message, attrs) do
     message
     |> cast(attrs, [:body, :conversation_id, :account_id, :customer_id, :user_id, :sent_at])
-    |> validate_required([:body, :account_id])
+    |> validate_required([:body, :account_id, :conversation_id])
   end
 end
