@@ -49,6 +49,7 @@ const PaymentForm = ({onSuccess}: Props) => {
         console.log('Successfully added payment method!', result);
 
         onSuccess && onSuccess(result);
+        cardElement.clear();
       } catch (err) {
         console.log('Failed to create payment method:', err);
 

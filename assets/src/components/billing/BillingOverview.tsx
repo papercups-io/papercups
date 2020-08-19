@@ -3,7 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {Elements} from '@stripe/react-stripe-js';
 import {loadStripe} from '@stripe/stripe-js';
 import * as API from '../../api';
-import {colors, Paragraph, Text, Title} from '../common';
+import {colors, notification, Paragraph, Text, Title} from '../common';
 import {CreditCardTwoTone} from '../icons';
 import Spinner from '../Spinner';
 import PaymentForm from './PaymentForm';
@@ -29,6 +29,13 @@ class BillingOverview extends React.Component<Props, State> {
 
   handleUpdatePaymentMethod = (paymentMethod: any) => {
     this.setState({defaultPaymentMethod: paymentMethod});
+
+    notification.success({
+      message: 'Payment method updated!',
+      description:
+        "Don't worry, you won't be charged unless you upgrade your account.",
+      duration: 10, // 10 seconds
+    });
   };
 
   formatPaymentMethodInfo = (paymentMethod?: any) => {
