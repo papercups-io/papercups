@@ -76,6 +76,10 @@ defmodule ChatApi.Slack do
           )
         end
 
+      # We hit this is there is no API token, just passing through
+      :ok ->
+        nil
+
       error ->
         Logger.error("Unable to send Slack message: #{inspect(error)}")
     end
@@ -123,6 +127,7 @@ defmodule ChatApi.Slack do
     subject
   end
 
+  # TODO: show sender/customer name here if available rather than generic "Agent"/"Customer"
   def get_slack_message_subject!(type, _conversation_id, _thread) do
     case type do
       :agent -> ":female-technologist: Agent:"

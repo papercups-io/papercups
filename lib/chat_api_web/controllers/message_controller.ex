@@ -56,8 +56,11 @@ defmodule ChatApiWeb.MessageController do
 
   defp broadcast_new_message(message) do
     result = ChatApiWeb.MessageView.render("expanded.json", message: message)
-    topic = "conversation:" <> Map.get(message, :conversation_id)
+    %{conversation_id: conversation_id, body: body, customer_id: customer_id} = message
+    topic = "conversation:" <> conversation_id
+    type = if is_nil(customer_id), do: :agent, else: :customer
 
     ChatApiWeb.Endpoint.broadcast!(topic, "shout", result)
+    ChatApi.Slack.send_conversation_message_alert(conversation_id, body, type: type)
   end
 end
