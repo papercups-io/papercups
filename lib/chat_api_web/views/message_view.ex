@@ -7,7 +7,7 @@ defmodule ChatApiWeb.MessageView do
   end
 
   def render("show.json", %{message: message}) do
-    %{data: render_one(message, MessageView, "message.json")}
+    %{data: render_one(message, MessageView, "expanded.json")}
   end
 
   def render("message.json", %{message: message}) do
@@ -18,6 +18,7 @@ defmodule ChatApiWeb.MessageView do
       sent_at: message.sent_at,
       customer_id: message.customer_id,
       conversation_id: message.conversation_id,
+      account_id: message.account_id,
       user_id: message.user_id
     }
   end
@@ -30,6 +31,7 @@ defmodule ChatApiWeb.MessageView do
       sent_at: message.sent_at,
       conversation_id: message.conversation_id,
       customer_id: message.customer_id,
+      account_id: message.account_id,
       user_id: message.user_id,
       user: render_one(message.user, UserView, "user.json")
     }
