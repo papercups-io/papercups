@@ -18,6 +18,7 @@ import {BASE_URL} from '../../config';
 type Props = {};
 type State = {
   account: any;
+  companyName: string;
   currentUser: any;
   inviteUrl: string;
   isEditing: boolean;
@@ -28,19 +29,31 @@ class AccountOverview extends React.Component<Props, State> {
 
   state: State = {
     account: null,
+    companyName: '',
     currentUser: null,
     inviteUrl: '',
     isEditing: false,
   };
 
   async componentDidMount() {
-    const [account, currentUser] = await Promise.all([
-      API.fetchAccountInfo(),
-      API.me(),
-    ]);
+    // NB: this fetches the account data and also handles setting this.state.account and this.state.companyName
+    await this.fetchLatestAccountInfo();
 
-    this.setState({account, currentUser});
+    const currentUser = await API.me();
+    this.setState({currentUser});
   }
+
+  fetchLatestAccountInfo = async () => {
+    const account = await API.fetchAccountInfo();
+
+    if (account) {
+      this.setState({account});
+      this.setState({companyName: this.state.account.company_name});
+    } else {
+      // NB: this also handles resetting this value if the optimistic update fails
+      this.setState({companyName: ''});
+    }
+  };
 
   handleGenerateInviteUrl = async () => {
     const {id: token} = await API.generateUserInvitation();
@@ -119,12 +132,7 @@ class AccountOverview extends React.Component<Props, State> {
   };
 
   handleChangeCompanyName = (e: any) => {
-    this.setState({
-      account: {
-        ...this.state.account,
-        company_name: e.target.value,
-      },
-    });
+    this.setState({companyName: e.target.value});
   };
 
   handleStartEditing = () => {
@@ -132,15 +140,15 @@ class AccountOverview extends React.Component<Props, State> {
   };
 
   handleCancel = () => {
-    this.setState({isEditing: false});
+    return this.fetchLatestAccountInfo().then(() =>
+      this.setState({isEditing: false})
+    );
   };
 
   handleUpdate = () => {
-    const {company_name: companyName} = this.state.account;
+    const {companyName} = this.state;
 
-    return API.updateAccountInfo({
-      company_name: companyName,
-    })
+    return API.updateAccountInfo({company_name: companyName})
       .then((account) => {
         console.log('Successfully updated company name!', account);
 
@@ -148,18 +156,20 @@ class AccountOverview extends React.Component<Props, State> {
       })
       .catch((err) => {
         console.log('Failed to update company name!', err);
+
+        return this.fetchLatestAccountInfo();
       })
       .then(() => this.setState({isEditing: false}));
   };
 
   render() {
-    const {account, inviteUrl, isEditing} = this.state;
+    const {account, companyName, inviteUrl, isEditing} = this.state;
 
     if (!account) {
       return null;
     }
 
-    const {id: token, users = [], company_name: companyName} = account;
+    const {id: token, users = []} = account;
 
     return (
       <Box p={4}>
