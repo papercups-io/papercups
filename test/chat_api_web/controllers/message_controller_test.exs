@@ -1,9 +1,8 @@
 defmodule ChatApiWeb.MessageControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.Messages
+  alias ChatApi.{Accounts, Conversations, Messages}
   alias ChatApi.Messages.Message
-  alias ChatApi.Accounts
 
   @update_attrs %{
     body: "some updated body"
@@ -12,7 +11,11 @@ defmodule ChatApiWeb.MessageControllerTest do
 
   def valid_create_attrs do
     {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    %{body: "some body", account_id: account.id}
+
+    {:ok, conversation} =
+      Conversations.create_conversation(%{status: "open", account_id: account.id})
+
+    %{body: "some body", account_id: account.id, conversation_id: conversation.id}
   end
 
   def fixture(:message) do

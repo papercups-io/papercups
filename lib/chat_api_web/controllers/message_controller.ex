@@ -22,7 +22,10 @@ defmodule ChatApiWeb.MessageController do
   end
 
   def create(conn, %{"message" => message_params}) do
-    with {:ok, %Message{} = message} <- Messages.create_message(message_params) do
+    with {:ok, %Message{} = msg} <- Messages.create_message(message_params),
+         message <- Messages.get_message!(msg.id) do
+      broadcast_new_message(message)
+
       conn
       |> put_status(:created)
       |> put_resp_header("location", Routes.message_path(conn, :show, message))
@@ -49,5 +52,12 @@ defmodule ChatApiWeb.MessageController do
     with {:ok, %Message{}} <- Messages.delete_message(message) do
       send_resp(conn, :no_content, "")
     end
+  end
+
+  defp broadcast_new_message(message) do
+    result = ChatApiWeb.MessageView.render("expanded.json", message: message)
+    topic = "conversation:" <> Map.get(message, :conversation_id)
+
+    ChatApiWeb.Endpoint.broadcast!(topic, "shout", result)
   end
 end
