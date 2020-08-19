@@ -30,6 +30,23 @@ defmodule ChatApiWeb.CustomerController do
     render(conn, "show.json", customer: customer)
   end
 
+  def identify(conn, %{
+        "external_id" => external_id,
+        "account_id" => account_id
+      }) do
+    case Customers.find_by_external_id(account_id, external_id) do
+      %{id: customer_id} ->
+        json(conn, %{
+          data: %{
+            customer_id: customer_id
+          }
+        })
+
+      _ ->
+        json(conn, %{data: %{customer_id: nil}})
+    end
+  end
+
   def update(conn, %{"id" => id, "customer" => customer_params}) do
     customer = Customers.get_customer!(id)
 

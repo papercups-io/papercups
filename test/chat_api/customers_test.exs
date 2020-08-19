@@ -108,5 +108,13 @@ defmodule ChatApi.CustomersTest do
       customer = customer_fixture()
       assert %Ecto.Changeset{} = Customers.change_customer(customer)
     end
+
+    test "find_by_external_id/1 returns a customer by external_id" do
+      external_id = "cus_123"
+      customer = customer_fixture(%{external_id: external_id})
+      account_id = customer.account_id
+
+      assert customer = Customers.find_by_external_id(account_id, external_id)
+    end
   end
 end

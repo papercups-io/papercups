@@ -26,10 +26,12 @@ defmodule ChatApiWeb.Router do
     resources("/session", SessionController, singleton: true, only: [:create, :delete])
     post("/session/renew", SessionController, :renew)
 
+    # TODO: figure out a way to secure these methods so they aren't abused
     post("/accounts", AccountController, :create)
     post("/conversations", ConversationController, :create)
     post("/customers", CustomerController, :create)
     put("/customers/:id/metadata", CustomerController, :update_metadata)
+    get("/customers/identify", CustomerController, :identify)
     get("/widget_settings", WidgetSettingsController, :show)
     put("/widget_settings/metadata", WidgetSettingsController, :update_metadata)
 

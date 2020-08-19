@@ -37,6 +37,14 @@ defmodule ChatApi.Customers do
   """
   def get_customer!(id), do: Repo.get!(Customer, id)
 
+  def find_by_external_id(account_id, external_id) do
+    Customer
+    |> where(account_id: ^account_id, external_id: ^external_id)
+    |> order_by(desc: :updated_at)
+    |> first()
+    |> Repo.one()
+  end
+
   @doc """
   Creates a customer.
 
