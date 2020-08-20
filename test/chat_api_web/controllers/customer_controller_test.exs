@@ -32,8 +32,12 @@ defmodule ChatApiWeb.CustomerControllerTest do
     account
   end
 
-  def fixture(:customer) do
-    {:ok, customer} = Customers.create_customer(valid_create_attrs())
+  def fixture(:customer, attrs \\ %{}) do
+    {:ok, customer} =
+      attrs
+      |> Enum.into(valid_create_attrs())
+      |> Customers.create_customer()
+
     customer
   end
 
@@ -138,6 +142,63 @@ defmodule ChatApiWeb.CustomerControllerTest do
 
       assert email == @update_attrs.email
       assert name == @update_attrs.name
+    end
+  end
+
+  describe "identifies a customer by external_id" do
+    test "finds the correct customer", %{
+      conn: conn
+    } do
+      external_id = "cus_123"
+      customer = fixture(:customer, %{external_id: external_id})
+      %{id: customer_id, account_id: account_id} = customer
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account_id,
+          external_id: external_id
+        )
+
+      assert %{
+               "customer_id" => ^customer_id
+             } = json_response(resp, 200)["data"]
+    end
+
+    test "returns nil if no match is found", %{
+      conn: conn
+    } do
+      customer = fixture(:customer, %{external_id: "cus_123"})
+      %{id: _customer_id, account_id: account_id} = customer
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account_id,
+          external_id: "invalid"
+        )
+
+      assert %{
+               "customer_id" => nil
+             } = json_response(resp, 200)["data"]
+    end
+
+    test "returns the most recent match if multiple exist", %{
+      conn: conn
+    } do
+      external_id = "cus_123"
+      _customer_a = fixture(:customer, %{external_id: external_id})
+      _customer_b = fixture(:customer, %{external_id: external_id})
+      customer_c = fixture(:customer, %{external_id: external_id})
+      %{id: customer_c_id, account_id: account_id} = customer_c
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account_id,
+          external_id: external_id
+        )
+
+      assert %{
+               "customer_id" => ^customer_c_id
+             } = json_response(resp, 200)["data"]
     end
   end
 
