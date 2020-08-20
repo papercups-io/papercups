@@ -1,6 +1,8 @@
 defmodule ChatApiWeb.SlackControllerTest do
   use ChatApiWeb.ConnCase
 
+  import ExUnit.CaptureLog
+
   alias ChatApi.{
     Accounts,
     Conversations,
@@ -11,6 +13,7 @@ defmodule ChatApiWeb.SlackControllerTest do
 
   @slack_channel "#test"
   @slack_thread_ts "123.456"
+  @slack_user_id "U123"
 
   @auth_params %{
     access_token: "xoxb-test-access-token",
@@ -23,7 +26,8 @@ defmodule ChatApiWeb.SlackControllerTest do
     "type" => "message",
     "text" => "Hello world",
     "thread_ts" => @slack_thread_ts,
-    "channel" => @slack_channel
+    "channel" => @slack_channel,
+    "user" => @slack_user_id
   }
 
   def fixture(:account) do
@@ -106,9 +110,12 @@ defmodule ChatApiWeb.SlackControllerTest do
     test "sends an event to the webhook", %{conn: conn, thread: thread} do
       account_id = thread.account_id
 
-      post(conn, Routes.slack_path(conn, :webhook), %{
-        "event" => @event_params
-      })
+      # TODO: figure out a better way to handle Slack warnings in test mode
+      assert capture_log(fn ->
+               post(conn, Routes.slack_path(conn, :webhook), %{
+                 "event" => @event_params
+               })
+             end)
 
       assert [%{body: body}] = Messages.list_messages(account_id)
       assert body == @event_params["text"]

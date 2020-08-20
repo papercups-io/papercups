@@ -3,7 +3,12 @@ defmodule ChatApiWeb.SlackController do
 
   require Logger
 
-  alias ChatApi.{Messages, Slack, SlackAuthorizations, SlackConversationThreads}
+  alias ChatApi.{
+    Messages,
+    Slack,
+    SlackAuthorizations,
+    SlackConversationThreads
+  }
 
   action_fallback ChatApiWeb.FallbackController
 
@@ -108,29 +113,33 @@ defmodule ChatApiWeb.SlackController do
   end
 
   defp handle_event(
-         %{"type" => "message", "text" => text, "thread_ts" => thread_ts, "channel" => channel} =
-           event
+         %{
+           "type" => "message",
+           "text" => text,
+           "thread_ts" => thread_ts,
+           "channel" => channel,
+           "user" => user_id
+         } = event
        ) do
     # TODO: switch to `debug`
     Logger.info("Handling Slack event: #{inspect(event)}")
 
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
-      %{id: conversation_id, account_id: account_id, assignee_id: assignee_id} = conversation
+      %{id: conversation_id, account_id: account_id} = conversation
+      sender_id = Slack.get_sender_id(conversation, user_id)
 
       params = %{
         "body" => text,
         "conversation_id" => conversation_id,
         "account_id" => account_id,
-        # TODO: map Slack users to internal users eventually?
-        # (Currently we just assume the assignee is always the one responding)
-        "user_id" => assignee_id
+        "user_id" => sender_id
       }
 
       {:ok, message} = Messages.create_message(params)
       message = Messages.get_message!(message.id)
       result = ChatApiWeb.MessageView.render("expanded.json", message: message)
 
-      ChatApiWeb.Endpoint.broadcast!("conversation:" <> conversation.id, "shout", result)
+      ChatApiWeb.Endpoint.broadcast!("conversation:" <> conversation_id, "shout", result)
     end
   end
 

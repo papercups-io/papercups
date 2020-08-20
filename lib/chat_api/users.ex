@@ -6,7 +6,13 @@ defmodule ChatApi.Users do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
-  alias ChatApi.Users.{UserProfile, UserSettings}
+  alias ChatApi.Users.{User, UserProfile, UserSettings}
+
+  def find_user_by_email(_account_id, nil), do: nil
+
+  def find_user_by_email(account_id, email) do
+    User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
+  end
 
   @doc """
   Gets a single user_profile.
