@@ -20,7 +20,16 @@ defmodule ChatApiWeb.RegistrationControllerTest do
         "email" => "invalid",
         "password" => @password,
         "password_confirmation" => "",
-        "company_name" => "test"
+        "company_name" => "Invalid Inc"
+      }
+    }
+
+    @missing_company_name %{
+      "user" => %{
+        "email" => "invalid",
+        "password" => @password,
+        "password_confirmation" => @password,
+        "company_name" => ""
       }
     }
 
@@ -40,6 +49,21 @@ defmodule ChatApiWeb.RegistrationControllerTest do
       assert json["error"]["status"] == 500
       assert json["error"]["errors"]["password_confirmation"] == ["does not match confirmation"]
       assert json["error"]["errors"]["email"] == ["has invalid format"]
+
+      # No accounts should have been created
+      assert [] = Accounts.list_accounts()
+    end
+
+    test "with missing company name", %{conn: conn} do
+      conn = post(conn, Routes.registration_path(conn, :create, @missing_company_name))
+
+      assert json = json_response(conn, 500)
+      assert json["error"]["message"] == "Couldn't create user"
+      assert json["error"]["status"] == 500
+      assert json["error"]["errors"]["company_name"] == ["can't be blank"]
+
+      # No accounts should have been created
+      assert [] = Accounts.list_accounts()
     end
   end
 

@@ -37,20 +37,32 @@ defmodule ChatApiWeb.RegistrationController do
   end
 
   def create(conn, %{"user" => user_params}) do
-    {:ok, account} = ChatApi.Accounts.create_account(%{company_name: user_params["company_name"]})
-
-    params = Enum.into(user_params, %{"account_id" => account.id})
-
     conn
-    |> Pow.Plug.create_user(params)
+    |> user_with_account_transaction(user_params)
+    |> ChatApi.Repo.transaction()
     |> case do
-      {:ok, _user, conn} ->
+      {:ok, %{conn: conn}} ->
         send_api_token(conn)
 
-      {:error, changeset, conn} ->
+      {:error, _op, changeset, _changes} ->
         errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
         send_user_create_errors(conn, errors)
     end
+  end
+
+  def user_with_account_transaction(conn, params) do
+    Ecto.Multi.new()
+    |> Ecto.Multi.run(:account, fn _repo, %{} ->
+      ChatApi.Accounts.create_account(%{company_name: params["company_name"]})
+    end)
+    |> Ecto.Multi.run(:conn, fn _repo, %{account: account} ->
+      user = Enum.into(params, %{"account_id" => account.id})
+
+      case Pow.Plug.create_user(conn, user) do
+        {:ok, _user, conn} -> {:ok, conn}
+        {:error, reason, _conn} -> {:error, reason}
+      end
+    end)
   end
 
   defp send_api_token(conn) do
