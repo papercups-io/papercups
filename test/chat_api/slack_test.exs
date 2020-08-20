@@ -6,16 +6,34 @@ defmodule ChatApi.SlackTest do
   alias ChatApi.{
     Accounts,
     Conversations,
+    Customers,
     Slack,
     SlackConversationThreads,
     Users.User
   }
 
   describe "slack" do
+    # TODO: start moving to factories
     def account_fixture(_attrs \\ %{}) do
       {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
 
       account
+    end
+
+    def customer_fixture(attrs \\ %{}) do
+      account = account_fixture()
+
+      {:ok, customer} =
+        %{
+          first_seen: ~D[2020-01-01],
+          last_seen: ~D[2020-01-01],
+          email: "test@test.com",
+          account_id: account.id
+        }
+        |> Enum.into(attrs)
+        |> Customers.create_customer()
+
+      customer
     end
 
     def user_fixture(account_id) do
@@ -29,11 +47,18 @@ defmodule ChatApi.SlackTest do
       |> Repo.insert!()
     end
 
-    def conversation_fixture(_attrs \\ %{}) do
+    def conversation_fixture(attrs \\ %{}) do
       %{id: account_id} = account_fixture()
+      %{id: customer_id} = customer_fixture()
 
       {:ok, conversation} =
-        Conversations.create_conversation(%{account_id: account_id, status: "open"})
+        %{
+          status: "open",
+          account_id: account_id,
+          customer_id: customer_id
+        }
+        |> Enum.into(attrs)
+        |> Conversations.create_conversation()
 
       conversation
     end
@@ -64,27 +89,30 @@ defmodule ChatApi.SlackTest do
       assert Slack.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
     end
 
-    test "get_slack_message_subject!/3 returns subject for initial slack thread" do
-      conversation = conversation_fixture()
+    test "get_slack_message_subject!/4 returns subject for initial slack thread" do
+      customer = customer_fixture()
+      conversation = conversation_fixture(%{customer_id: customer.id})
       thread = nil
-      subject = Slack.get_slack_message_subject!(:customer, conversation.id, thread)
+      subject = Slack.get_slack_message_subject!(:customer, customer, conversation.id, thread)
 
-      assert "New conversation started:" <> msg = subject
-      assert String.contains?(msg, conversation.id)
+      assert String.contains?(subject, customer.email)
+      assert String.contains?(subject, conversation.id)
+      assert String.contains?(subject, "Reply to this thread to start chatting")
     end
 
-    test "get_slack_message_subject!/3 returns subject for slack reply" do
+    test "get_slack_message_subject!/4 returns subject for slack reply" do
+      customer = customer_fixture()
       thread = slack_conversation_thread_fixture()
       %{conversation_id: conversation_id} = thread
 
-      assert Slack.get_slack_message_subject!(:agent, conversation_id, thread) ==
+      assert Slack.get_slack_message_subject!(:agent, customer, conversation_id, thread) ==
                ":female-technologist: Agent:"
 
-      assert Slack.get_slack_message_subject!(:customer, conversation_id, thread) ==
-               ":wave: Customer:"
+      assert Slack.get_slack_message_subject!(:customer, customer, conversation_id, thread) ==
+               ":wave: #{customer.email}:"
 
       assert_raise ArgumentError, fn ->
-        Slack.get_slack_message_subject!(:invalid, conversation_id, thread)
+        Slack.get_slack_message_subject!(:invalid, customer, conversation_id, thread)
       end
     end
 

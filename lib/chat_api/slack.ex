@@ -7,7 +7,8 @@ defmodule ChatApi.Slack do
 
   use Tesla
 
-  alias ChatApi.{Conversations, SlackAuthorizations, SlackConversationThreads}
+  alias ChatApi.{Conversations, SlackAuthorizations, SlackConversationThreads, Users}
+  alias ChatApi.Customers.Customer
 
   plug Tesla.Middleware.BaseUrl, "https://slack.com/api"
 
@@ -41,6 +42,47 @@ defmodule ChatApi.Slack do
     end
   end
 
+  def retrieve_user_info(user_id, access_token) do
+    if is_valid_access_token?(access_token) do
+      get("/users.info",
+        query: [user: user_id],
+        headers: [
+          {"Authorization", "Bearer " <> access_token}
+        ]
+      )
+    else
+      Logger.info("Invalid access token")
+    end
+  end
+
+  def get_user_email(user_id, access_token) do
+    with {:ok, response} <- retrieve_user_info(user_id, access_token) do
+      try do
+        extract_slack_user_email(response)
+      rescue
+        error ->
+          Logger.error("Unable to retrieve Slack user email: #{inspect(error)}")
+
+          nil
+      end
+    end
+  end
+
+  # Look for a match between the Slack sender and internal Papercups users
+  # to try to identify the sender; falls back to the default assignee id.
+  def get_sender_id(conversation, user_id) do
+    %{account_id: account_id, assignee_id: assignee_id} = conversation
+    %{access_token: access_token} = get_slack_authorization(account_id)
+
+    user_id
+    |> get_user_email(access_token)
+    |> Users.find_user_by_email(account_id)
+    |> case do
+      %{id: id} -> id
+      _ -> assignee_id
+    end
+  end
+
   def get_access_token(code) do
     client_id = System.get_env("PAPERCUPS_SLACK_CLIENT_ID")
     client_secret = System.get_env("PAPERCUPS_SLACK_CLIENT_SECRET")
@@ -54,10 +96,14 @@ defmodule ChatApi.Slack do
     # Check if a Slack thread already exists for this conversation.
     # If one exists, send followup messages as replies; otherwise, start a new thread
     thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id)
-    %{access_token: access_token, channel: channel} = get_slack_authorization(conversation_id)
+
+    %{account_id: account_id, customer: customer} =
+      Conversations.get_conversation_with!(conversation_id, :customer)
+
+    %{access_token: access_token, channel: channel} = get_slack_authorization(account_id)
 
     type
-    |> get_slack_message_subject!(conversation_id, thread)
+    |> get_slack_message_subject!(customer, conversation_id, thread)
     |> get_slack_message_payload(channel, text, thread)
     |> send_message(access_token)
     |> case do
@@ -94,9 +140,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  def get_slack_authorization(conversation_id) do
-    account_id = get_conversation_account_id(conversation_id)
-
+  def get_slack_authorization(account_id) do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
       # Supports a fallback access token as an env variable to make it easier to
       # test locally (assumes the existence of a "bots" channel in your workspace)
@@ -105,7 +149,18 @@ defmodule ChatApi.Slack do
     end
   end
 
-  def get_slack_message_subject!(:customer, conversation_id, nil) do
+  # TODO: not sure the most idiomatic way to handle this, but basically this
+  # just formats how we show the name/email of the customer if they exist
+  def identify_customer(%Customer{} = %{email: email, name: name}) do
+    case [name, email] do
+      [nil, nil] -> "Anonymous User"
+      [x, nil] -> x
+      [nil, y] -> y
+      [x, y] -> "#{x} (#{y})"
+    end
+  end
+
+  def get_slack_message_subject!(:customer, customer, conversation_id, nil) do
     # TODO: use env variables here?
     url = System.get_env("BACKEND_URL") || ""
 
@@ -117,21 +172,20 @@ defmodule ChatApi.Slack do
       end
 
     url = base <> "/conversations/" <> conversation_id
-    description = "conversation " <> conversation_id
-    link = "<#{url}|#{description}>"
+    conversation = "<#{url}|conversation>"
 
     subject =
-      "New conversation started: " <>
-        link <> "\n\nReply to this thread to chat with the customer :rocket:"
+      "New #{conversation} started with #{identify_customer(customer)}!" <>
+        "\n\nReply to this thread to start chatting :rocket:"
 
     subject
   end
 
   # TODO: show sender/customer name here if available rather than generic "Agent"/"Customer"
-  def get_slack_message_subject!(type, _conversation_id, _thread) do
+  def get_slack_message_subject!(type, customer, _conversation_id, _thread) do
     case type do
       :agent -> ":female-technologist: Agent:"
-      :customer -> ":wave: Customer:"
+      :customer -> ":wave: #{identify_customer(customer)}:"
       _ -> raise "Unrecognized sender type: " <> type
     end
   end
@@ -217,6 +271,16 @@ defmodule ChatApi.Slack do
       Logger.error("Error sending Slack message: #{inspect(body)}")
 
       raise "chat.postMessage returned ok=false"
+    end
+  end
+
+  def extract_slack_user_email(%{body: body}) do
+    if Map.get(body, "ok") do
+      get_in(body, ["user", "profile", "email"])
+    else
+      Logger.error("Error retrieving user info: #{inspect(body)}")
+
+      raise "users.info returned ok=false"
     end
   end
 
