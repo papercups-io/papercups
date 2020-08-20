@@ -45,14 +45,9 @@ class AccountOverview extends React.Component<Props, State> {
 
   fetchLatestAccountInfo = async () => {
     const account = await API.fetchAccountInfo();
+    const {company_name: companyName} = account;
 
-    if (account) {
-      this.setState({account});
-      this.setState({companyName: this.state.account.company_name});
-    } else {
-      // NB: this also handles resetting this value if the optimistic update fails
-      this.setState({companyName: ''});
-    }
+    this.setState({account, companyName});
   };
 
   handleGenerateInviteUrl = async () => {
