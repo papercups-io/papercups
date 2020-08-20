@@ -36,10 +36,11 @@ class AccountOverview extends React.Component<Props, State> {
   };
 
   async componentDidMount() {
-    // NB: this fetches the account data and also handles setting this.state.account and this.state.companyName
+    // NB: this fetches the account data and also handles setting
+    // this.state.account and this.state.companyName
     await this.fetchLatestAccountInfo();
-
     const currentUser = await API.me();
+
     this.setState({currentUser});
   }
 
