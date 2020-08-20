@@ -73,9 +73,11 @@ defmodule ChatApi.Slack do
   def get_sender_id(conversation, user_id) do
     %{account_id: account_id, assignee_id: assignee_id} = conversation
     %{access_token: access_token} = get_slack_authorization(account_id)
-    email = get_user_email(user_id, access_token)
 
-    case Users.find_user_by_email(account_id, email) do
+    user_id
+    |> get_user_email(access_token)
+    |> Users.find_user_by_email(account_id)
+    |> case do
       %{id: id} -> id
       _ -> assignee_id
     end

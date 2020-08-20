@@ -8,9 +8,9 @@ defmodule ChatApi.Users do
 
   alias ChatApi.Users.{User, UserProfile, UserSettings}
 
-  def find_user_by_email(_account_id, nil), do: nil
+  def find_user_by_email(nil, _account_id), do: nil
 
-  def find_user_by_email(account_id, email) do
+  def find_user_by_email(email, account_id) do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
