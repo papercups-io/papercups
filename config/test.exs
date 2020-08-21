@@ -18,5 +18,7 @@ config :chat_api, ChatApiWeb.Endpoint,
   http: [port: 4002],
   server: false
 
+config :chat_api, Oban, crontab: false, queues: false, plugins: false
+
 # Print only warnings and errors during test
 config :logger, level: :warn

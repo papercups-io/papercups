@@ -47,6 +47,15 @@ config :chat_api, :pow,
   user: ChatApi.Users.User,
   repo: ChatApi.Repo
 
+config :chat_api, Oban,
+  repo: ChatApi.Repo,
+  plugins: [Oban.Plugins.Pruner],
+  queues: [default: 10, events: 50, mailers: 20],
+  crontab: [
+    # Hourly example worker
+    {"0 * * * *", ChatApi.Workers.Example}
+  ]
+
 # Configure Mailgun
 mailgun_api_key = System.get_env("MAILGUN_API_KEY")
 domain = System.get_env("DOMAIN")
