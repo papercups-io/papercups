@@ -30,7 +30,7 @@ defmodule ChatApi.Slack do
   }
   """
   def send_message(message, access_token) do
-    if is_valid_access_token?(access_token) do
+    if should_execute?(access_token) do
       post("/chat.postMessage", message,
         headers: [
           {"Authorization", "Bearer " <> access_token}
@@ -39,11 +39,13 @@ defmodule ChatApi.Slack do
     else
       # Inspect what would've been sent for debugging
       Logger.info("Would have sent to Slack: #{inspect(message)}")
+
+      {:ok, nil}
     end
   end
 
   def retrieve_user_info(user_id, access_token) do
-    if is_valid_access_token?(access_token) do
+    if should_execute?(access_token) do
       get("/users.info",
         query: [user: user_id],
         headers: [
@@ -52,7 +54,13 @@ defmodule ChatApi.Slack do
       )
     else
       Logger.info("Invalid access token")
+
+      {:ok, nil}
     end
+  end
+
+  def should_execute?(access_token) do
+    Mix.env() != :test && is_valid_access_token?(access_token)
   end
 
   def get_user_email(user_id, access_token) do
@@ -107,6 +115,10 @@ defmodule ChatApi.Slack do
     |> get_slack_message_payload(channel, text, thread)
     |> send_message(access_token)
     |> case do
+      # Just pass through in test/dev mode (not sure if there's a more idiomatic way to do this)
+      {:ok, nil} ->
+        nil
+
       {:ok, response} ->
         # If no thread exists yet, start a new thread and kick off the first reply
         if is_nil(thread) do
@@ -121,10 +133,6 @@ defmodule ChatApi.Slack do
             access_token
           )
         end
-
-      # We hit this is there is no API token, just passing through
-      :ok ->
-        nil
 
       error ->
         Logger.error("Unable to send Slack message: #{inspect(error)}")

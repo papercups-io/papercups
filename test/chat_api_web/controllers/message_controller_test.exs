@@ -1,26 +1,35 @@
 defmodule ChatApiWeb.MessageControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.{Accounts, Conversations, Messages}
+  alias ChatApi.{Accounts, Conversations, Messages, Repo}
   alias ChatApi.Messages.Message
+  alias ChatApi.Users.User
 
   @update_attrs %{
     body: "some updated body"
   }
   @invalid_attrs %{body: nil}
 
-  def valid_create_attrs do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
+  @password "supersecret123"
 
+  def valid_create_attrs(account_id) do
     {:ok, conversation} =
-      Conversations.create_conversation(%{status: "open", account_id: account.id})
+      Conversations.create_conversation(%{status: "open", account_id: account_id})
 
-    %{body: "some body", account_id: account.id, conversation_id: conversation.id}
+    %{
+      body: "some body",
+      account_id: account_id,
+      conversation_id: conversation.id
+    }
   end
 
   def fixture(:message) do
-    attrs = valid_create_attrs()
-    {:ok, message} = Messages.create_message(attrs)
+    {:ok, message} =
+      fixture(:account)
+      |> Map.get(:id)
+      |> valid_create_attrs()
+      |> Messages.create_message()
+
     message
   end
 
@@ -31,7 +40,17 @@ defmodule ChatApiWeb.MessageControllerTest do
 
   setup %{conn: conn} do
     account = fixture(:account)
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
+
+    user =
+      %User{}
+      |> User.changeset(%{
+        email: "test@example.com",
+        password: @password,
+        password_confirmation: @password,
+        account_id: account.id
+      })
+      |> Repo.insert!()
+
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
@@ -53,9 +72,10 @@ defmodule ChatApiWeb.MessageControllerTest do
   end
 
   describe "create message" do
-    test "renders message when data is valid", %{authed_conn: authed_conn} do
-      conn =
-        post(authed_conn, Routes.message_path(authed_conn, :create), message: valid_create_attrs())
+    test "renders message when data is valid", %{authed_conn: authed_conn, account: account} do
+      message = valid_create_attrs(account.id)
+
+      conn = post(authed_conn, Routes.message_path(authed_conn, :create), message: message)
 
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
