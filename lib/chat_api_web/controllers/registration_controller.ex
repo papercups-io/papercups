@@ -23,7 +23,7 @@ defmodule ChatApiWeb.RegistrationController do
             # # TODO: figure out what we want to do here -- it's not currently
             # # obvious that a user invitation expires after one use.
             # ChatApi.UserInvitations.expire_user_invitation(invite)
-            send_api_token(conn)
+            conn |> enqueue_welcome_email() |> send_api_token()
           end
 
         {:error, changeset, conn} ->
@@ -42,7 +42,7 @@ defmodule ChatApiWeb.RegistrationController do
     |> ChatApi.Repo.transaction()
     |> case do
       {:ok, %{conn: conn}} ->
-        send_api_token(conn)
+        conn |> enqueue_welcome_email() |> send_api_token()
 
       {:error, _op, changeset, _changes} ->
         errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
@@ -63,6 +63,17 @@ defmodule ChatApiWeb.RegistrationController do
         {:error, reason, _conn} -> {:error, reason}
       end
     end)
+  end
+
+  defp enqueue_welcome_email(conn) do
+    with %{email: email} <- conn.assigns.current_user do
+      %{email: email}
+      # Send email 35 mins after registering
+      |> ChatApi.Workers.SendWelcomeEmail.new(schedule_in: 35 * 60)
+      |> Oban.insert()
+    end
+
+    conn
   end
 
   defp send_api_token(conn) do

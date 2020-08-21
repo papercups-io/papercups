@@ -117,7 +117,7 @@ defmodule ChatApiWeb.ConversationChannel do
 
     # TODO: maybe do these in an "after_send" hook or something more async,
     # since this notification logic probably shouldn't live in here.
-    Emails.send_email_alerts(message, account_id, conversation_id)
+    Emails.send_new_message_alerts(message, account_id, conversation_id)
   end
 
   # Add authorization logic here as required.
