@@ -68,8 +68,8 @@ defmodule ChatApiWeb.RegistrationController do
   defp enqueue_welcome_email(conn) do
     with %{email: email} <- conn.assigns.current_user do
       %{email: email}
-      # Send email 35 mins after registering
-      |> ChatApi.Workers.SendWelcomeEmail.new(schedule_in: 35 * 60)
+      # Send email 5 mins after registering (TODO: wait longer)
+      |> ChatApi.Workers.SendWelcomeEmail.new(schedule_in: 5 * 60)
       |> Oban.insert()
     end
 
