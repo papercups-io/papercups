@@ -9,11 +9,24 @@ defmodule ChatApi.Workers.SendWelcomeEmail do
     # (since the current email message is only relevant for hosted users)
     # TODO: we should also probably come up with a less generic environment
     # variable name than "DOMAIN"... maybe "MAILGUN_DOMAIN"?
-    if System.get_env("DOMAIN") == "mail.papercups.io" do
+    if is_hosted_version?() && welcome_email_enabled?() do
       Logger.info("Sending welcome email: #{email}")
       ChatApi.Emails.send_welcome_email(email)
+    else
+      Logger.info("Skipping welcome email: #{email}")
     end
 
     :ok
+  end
+
+  def is_hosted_version?() do
+    System.get_env("DOMAIN") == "mail.papercups.io"
+  end
+
+  def welcome_email_enabled?() do
+    case System.get_env("WELCOME_EMAIL_ENABLED") do
+      x when x == "1" or x == "true" -> true
+      _ -> false
+    end
   end
 end
