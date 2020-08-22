@@ -64,6 +64,7 @@ defmodule ChatApiWeb.Router do
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
     resources("/customers", CustomerController, except: [:new, :edit, :create])
+    resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
   end
 
   # Enables LiveDashboard only for development

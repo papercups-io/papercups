@@ -20,8 +20,12 @@ defmodule ChatApiWeb.ConversationControllerTest do
 
   def fixture(:conversation) do
     account = fixture(:account)
-    attrs = Map.put(@create_attrs, :account_id, account.id)
-    {:ok, conversation} = Conversations.create_conversation(attrs)
+
+    {:ok, conversation} =
+      @create_attrs
+      |> Enum.into(%{account_id: account.id})
+      |> Conversations.create_conversation()
+
     conversation
   end
 
