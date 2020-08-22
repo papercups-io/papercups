@@ -18,6 +18,7 @@ import StarOutlined from '@ant-design/icons/StarOutlined';
 import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
+import QuestionCircleOutlined from '@ant-design/icons/QuestionCircleOutlined';
 
 export {
   ApiOutlined,
@@ -40,4 +41,5 @@ export {
   UploadOutlined,
   UpOutlined,
   UserOutlined,
+  QuestionCircleOutlined,
 };

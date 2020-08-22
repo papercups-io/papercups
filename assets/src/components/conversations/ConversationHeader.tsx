@@ -7,6 +7,7 @@ import {
   StarFilled,
   UploadOutlined,
   UserOutlined,
+  QuestionCircleOutlined,
 } from '../icons';
 
 const ConversationHeader = ({
@@ -40,9 +41,22 @@ const ConversationHeader = ({
     priority,
     customer = {},
   } = conversation;
-  const {name, email} = customer;
+  const {name, email, current_url, browser, os} = customer;
   const assigneeId = assignee_id ? String(assignee_id) : undefined;
   const hasBothNameAndEmail = !!(name && email);
+  const metaData = (
+    <Fragment>
+      <p>
+        <strong>Current URL:</strong> {current_url}
+      </p>
+      <p>
+        <strong>Browser:</strong> {browser}
+      </p>
+      <p>
+        <strong>OS:</strong> {os}
+      </p>
+    </Fragment>
+  );
 
   return (
     <header
@@ -58,22 +72,29 @@ const ConversationHeader = ({
         backgroundColor={colors.white}
         sx={{justifyContent: 'space-between', alignItems: 'center'}}
       >
-        <Box>
-          <Title
-            level={4}
-            style={{
-              marginBottom: hasBothNameAndEmail ? 0 : 4,
-              marginTop: hasBothNameAndEmail ? 0 : 4,
-            }}
-          >
-            {name || email || 'Anonymous User'}
-          </Title>
-          {hasBothNameAndEmail && (
-            <Box style={{marginLeft: 1}}>
-              <Text type="secondary">{email}</Text>
-            </Box>
-          )}
-        </Box>
+        <Flex>
+          <Box>
+            <Title
+              level={4}
+              style={{
+                marginBottom: hasBothNameAndEmail ? 0 : 4,
+                marginTop: hasBothNameAndEmail ? 0 : 4,
+              }}
+            >
+              {name || email || 'Anonymous User'}
+            </Title>
+            {hasBothNameAndEmail && (
+              <Box style={{marginLeft: 1}}>
+                <Text type="secondary">{email}</Text>
+              </Box>
+            )}
+          </Box>
+          <Box mx={1} my={1}>
+            <Tooltip title={metaData} placement="bottomLeft">
+              <QuestionCircleOutlined />
+            </Tooltip>
+          </Box>
+        </Flex>
 
         <Flex mx={-1}>
           <Box mx={1}>
