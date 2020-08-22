@@ -199,10 +199,49 @@ defmodule ChatApi.Slack do
   end
 
   def get_slack_message_payload(subject, channel, text, nil) do
+    # %{
+    #   "channel" => channel,
+    #   "text" => subject,
+    #   "attachments" => [%{"text" => text}]
+    # }
+
     %{
       "channel" => channel,
-      "text" => subject,
-      "attachments" => [%{"text" => text}]
+      "blocks" => [
+        %{
+          "type" => "section",
+          "text" => %{
+            "type" => "mrkdwn",
+            "text" => subject
+          }
+        },
+        # TODO: make these dynamic
+        %{
+          "type" => "section",
+          "fields" => [
+            %{
+              "type" => "mrkdwn",
+              "text" => "*Name:*\nAnonymous User"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*Email:*\nN/A"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*URL:*\nwww.papercups.io"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*Browser:*\nChrome"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*OS:*\nMac OS X"
+            }
+          ]
+        }
+      ]
     }
   end
 
