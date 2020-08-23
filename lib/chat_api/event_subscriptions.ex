@@ -21,6 +21,13 @@ defmodule ChatApi.EventSubscriptions do
     EventSubscription |> where(account_id: ^account_id) |> Repo.all()
   end
 
+  def list_verified_event_subscriptions(account_id) do
+    EventSubscription
+    |> where(account_id: ^account_id)
+    |> where(verified: true)
+    |> Repo.all()
+  end
+
   @doc """
   Gets a single event_subscription.
 
@@ -102,6 +109,23 @@ defmodule ChatApi.EventSubscriptions do
     EventSubscription.changeset(event_subscription, attrs)
   end
 
+  def notify_event_subscriptions(account_id, event) do
+    account_id
+    |> list_verified_event_subscriptions()
+    |> Enum.map(fn sub ->
+      notify_webhook_url(sub.webhook_url, event)
+    end)
+  end
+
+  def notify_webhook_url(url, event) do
+    [
+      Tesla.Middleware.JSON,
+      {Tesla.Middleware.Headers, [{"content-type", "application/json"}]}
+    ]
+    |> Tesla.client()
+    |> Tesla.post(url, event)
+  end
+
   def is_valid_uri?(str) do
     case URI.parse(str) do
       %URI{scheme: nil} -> false
@@ -117,13 +141,7 @@ defmodule ChatApi.EventSubscriptions do
       challenge = :crypto.strong_rand_bytes(64) |> Base.encode32() |> binary_part(0, 64)
       event = %{"event" => "webhook:verify", "payload" => challenge}
 
-      [
-        Tesla.Middleware.JSON,
-        {Tesla.Middleware.Headers, [{"content-type", "application/json"}]}
-      ]
-      |> Tesla.client()
-      |> Tesla.post(url, event)
-      |> case do
+      case notify_webhook_url(url, event) do
         {:ok, %{body: body}} -> body == challenge
         _ -> false
       end

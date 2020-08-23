@@ -94,11 +94,10 @@ defmodule ChatApiWeb.SlackController do
     # TODO: switch to `debug`
     Logger.info("Payload from Slack webhook: #{inspect(payload)}")
 
-    case payload do
-      # TODO: remove!
-      %{"event" => "webhook:verify"} ->
-        send_resp(conn, 200, payload["payload"])
+    # TODO: remove after testing webhook event subscriptions!
+    handle_test_payload(payload)
 
+    case payload do
       %{"event" => event} ->
         handle_event(event)
         send_resp(conn, 200, "")
@@ -109,6 +108,10 @@ defmodule ChatApiWeb.SlackController do
       _ ->
         send_resp(conn, 200, "")
     end
+  end
+
+  defp handle_test_payload(%{"event" => event, "payload" => payload}) do
+    IO.inspect("Event: #{inspect(event)} - Payload: #{inspect(payload)}")
   end
 
   defp handle_event(%{"bot_id" => _bot_id} = _event) do
