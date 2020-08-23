@@ -12,6 +12,9 @@ defmodule ChatApiWeb.SessionController do
       {:ok, conn} ->
         json(conn, %{
           data: %{
+            user_id: conn.assigns.current_user.id,
+            email: conn.assigns.current_user.email,
+            account_id: conn.assigns.current_user.account_id,
             token: conn.private[:api_auth_token],
             renew_token: conn.private[:api_renew_token]
           }
@@ -36,9 +39,12 @@ defmodule ChatApiWeb.SessionController do
         |> put_status(401)
         |> json(%{error: %{status: 401, message: "Invalid token"}})
 
-      {conn, _user} ->
+      {conn, user} ->
         json(conn, %{
           data: %{
+            user_id: user.id,
+            email: user.email,
+            account_id: user.account_id,
             token: conn.private[:api_auth_token],
             renew_token: conn.private[:api_renew_token]
           }

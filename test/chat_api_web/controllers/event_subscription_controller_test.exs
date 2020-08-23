@@ -6,12 +6,10 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
 
   @create_attrs %{
     scope: "some scope",
-    verified: true,
     webhook_url: "some webhook_url"
   }
   @update_attrs %{
     scope: "some updated scope",
-    verified: false,
     webhook_url: "some updated webhook_url"
   }
   @invalid_attrs %{account_id: nil, scope: nil, verified: nil, webhook_url: nil}
@@ -66,7 +64,6 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
       assert %{
                "id" => id,
                "scope" => "some scope",
-               "verified" => true,
                "webhook_url" => "some webhook_url"
              } = json_response(resp, 200)["data"]
     end
@@ -100,7 +97,6 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
       assert %{
                "id" => id,
                "scope" => "some updated scope",
-               "verified" => false,
                "webhook_url" => "some updated webhook_url"
              } = json_response(conn, 200)["data"]
     end
