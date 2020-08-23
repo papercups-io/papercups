@@ -101,4 +101,34 @@ defmodule ChatApi.EventSubscriptions do
   def change_event_subscription(%EventSubscription{} = event_subscription, attrs \\ %{}) do
     EventSubscription.changeset(event_subscription, attrs)
   end
+
+  def is_valid_uri?(str) do
+    case URI.parse(str) do
+      %URI{scheme: nil} -> false
+      %URI{host: nil} -> false
+      %URI{path: nil} -> false
+      _uri -> true
+    end
+  end
+
+  def is_valid_webhook_url?(url) do
+    if is_valid_uri?(url) do
+      # Generate random string (TODO: maybe this should be its own utility method)
+      challenge = :crypto.strong_rand_bytes(64) |> Base.encode32() |> binary_part(0, 64)
+      event = %{"event" => "webhook:verify", "payload" => challenge}
+
+      [
+        Tesla.Middleware.JSON,
+        {Tesla.Middleware.Headers, [{"content-type", "application/json"}]}
+      ]
+      |> Tesla.client()
+      |> Tesla.post(url, event)
+      |> case do
+        {:ok, %{body: body}} -> body == challenge
+        _ -> false
+      end
+    else
+      false
+    end
+  end
 end

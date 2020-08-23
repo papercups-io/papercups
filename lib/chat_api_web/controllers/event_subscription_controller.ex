@@ -18,13 +18,22 @@ defmodule ChatApiWeb.EventSubscriptionController do
          params <- Map.merge(event_subscription_params, %{"account_id" => account_id}),
          {:ok, %EventSubscription{} = event_subscription} <-
            EventSubscriptions.create_event_subscription(params) do
+      # Not sure the most appropriate place to handle this verification :shrug:
+      verified =
+        event_subscription
+        |> Map.get(:webhook_url)
+        |> EventSubscriptions.is_valid_webhook_url?()
+
+      {:ok, result} =
+        EventSubscriptions.update_event_subscription(event_subscription, %{verified: verified})
+
       conn
       |> put_status(:created)
       |> put_resp_header(
         "location",
-        Routes.event_subscription_path(conn, :show, event_subscription)
+        Routes.event_subscription_path(conn, :show, result)
       )
-      |> render("show.json", event_subscription: event_subscription)
+      |> render("show.json", event_subscription: result)
     end
   end
 
@@ -52,5 +61,15 @@ defmodule ChatApiWeb.EventSubscriptionController do
            EventSubscriptions.delete_event_subscription(event_subscription) do
       send_resp(conn, :no_content, "")
     end
+  end
+
+  def verify(conn, %{"url" => url}) do
+    verified = EventSubscriptions.is_valid_webhook_url?(url)
+
+    json(conn, %{
+      data: %{
+        verified: verified
+      }
+    })
   end
 end

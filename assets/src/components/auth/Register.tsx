@@ -151,7 +151,7 @@ class Register extends React.Component<Props, State> {
                 <Input
                   id="companyName"
                   size="large"
-                  type="companyName"
+                  type="text"
                   autoComplete="company-name"
                   value={companyName}
                   onChange={this.handleChangeCompanyName}

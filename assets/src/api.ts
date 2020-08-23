@@ -36,6 +36,10 @@ export type WidgetSettingsParams = {
   new_message_placeholder?: string;
 };
 
+export type EventSubscriptionParams = {
+  webhook_url: string;
+};
+
 export const getAccessToken = (): string | null => {
   const tokens = getAuthTokens();
 
@@ -338,6 +342,49 @@ export const fetchSlackAuthorization = async (token = getAccessToken()) => {
   return request
     .get(`/api/slack/authorization`)
     .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchEventSubscriptions = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/event_subscriptions`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const verifyWebhookUrl = async (
+  url: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/event_subscriptions/verify`)
+    .set('Authorization', token)
+    .send({url})
+    .then((res) => res.body.data);
+};
+
+export const createEventSubscriptions = async (
+  params: EventSubscriptionParams,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/event_subscriptions`)
+    .set('Authorization', token)
+    .send({
+      event_subscription: params,
+    })
     .then((res) => res.body.data);
 };
 

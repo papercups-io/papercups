@@ -95,6 +95,10 @@ defmodule ChatApiWeb.SlackController do
     Logger.info("Payload from Slack webhook: #{inspect(payload)}")
 
     case payload do
+      # TODO: remove!
+      %{"event" => "webhook:verify"} ->
+        send_resp(conn, 200, payload["payload"])
+
       %{"event" => event} ->
         handle_event(event)
         send_resp(conn, 200, "")
