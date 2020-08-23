@@ -56,13 +56,10 @@ defmodule ChatApiWeb.NotificationChannel do
         |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
         |> Messages.create_message()
 
-      # message = Messages.get_message!(message.id)
       message
       |> Map.get(:id)
       |> Messages.get_message!()
       |> broadcast_new_message()
-
-      # broadcast_new_message(message)
     end
 
     {:noreply, socket}
