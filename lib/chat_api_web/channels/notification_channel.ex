@@ -3,7 +3,7 @@ defmodule ChatApiWeb.NotificationChannel do
 
   alias ChatApiWeb.Presence
   alias Phoenix.Socket.Broadcast
-  alias ChatApi.{Messages, Conversations}
+  alias ChatApi.{Messages, Conversations, EventSubscriptions}
 
   @impl true
   def join("notification:" <> account_id, %{"ids" => ids}, socket) do
@@ -56,17 +56,10 @@ defmodule ChatApiWeb.NotificationChannel do
         |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
         |> Messages.create_message()
 
-      message = Messages.get_message!(message.id)
-      result = ChatApiWeb.MessageView.render("expanded.json", message: message)
-
-      # TODO: write doc explaining difference between push, broadcast, etc.
-      push(socket, "shout", result)
-
-      %{conversation_id: conversation_id} = result
-      topic = "conversation:" <> conversation_id
-
-      ChatApiWeb.Endpoint.broadcast_from!(self(), topic, "shout", result)
-      ChatApi.Slack.send_conversation_message_alert(conversation_id, message.body, type: :agent)
+      message
+      |> Map.get(:id)
+      |> Messages.get_message!()
+      |> broadcast_new_message()
     end
 
     {:noreply, socket}
@@ -99,6 +92,41 @@ defmodule ChatApiWeb.NotificationChannel do
     end
 
     {:noreply, socket}
+  end
+
+  defp send_message_alerts(message) do
+    %{conversation_id: conversation_id, customer_id: customer_id, body: body} = message
+    type = if is_nil(customer_id), do: :agent, else: :customer
+
+    # TODO: how should we handle errors here?
+    ChatApi.Slack.send_conversation_message_alert(conversation_id, body, type: type)
+  end
+
+  # TODO: DRY up with conversation channel
+  defp send_webhook_notifications(account_id, payload) do
+    EventSubscriptions.notify_event_subscriptions(account_id, %{
+      "event" => "message:created",
+      "payload" => payload
+    })
+  end
+
+  defp broadcast_new_message(message) do
+    json = ChatApiWeb.MessageView.render("expanded.json", message: message)
+    %{conversation_id: conversation_id, account_id: account_id} = message
+    topic = "conversation:" <> conversation_id
+
+    # TODO: explain the difference between broadcast! and broadcast_from! and
+    # why we use one vs the other here
+    ChatApiWeb.Endpoint.broadcast!(topic, "shout", json)
+
+    # Handling async for now
+    Task.start(fn ->
+      send_message_alerts(message)
+    end)
+
+    Task.start(fn ->
+      send_webhook_notifications(account_id, json)
+    end)
   end
 
   defp put_new_topics(socket, topics) do

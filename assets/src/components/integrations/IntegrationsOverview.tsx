@@ -1,31 +1,32 @@
 import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
-import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
-import {colors, Button, Paragraph, Table, Tag, Text, Title} from '../common';
+import {Button, Paragraph, Text, Title} from '../common';
+import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
-import {SLACK_CLIENT_ID} from '../../config';
 import * as API from '../../api';
-
-type IntegrationType = {
-  key: 'slack' | 'gmail';
-  integration: string;
-  status: 'connected' | 'not_connected';
-  created_at?: string | null;
-  icon: string;
-};
+import {IntegrationType, WebhookEventSubscription} from './support';
+import IntegrationsTable from './IntegrationsTable';
+import WebhooksTable from './WebhooksTable';
+import NewWebhookModal from './NewWebhookModal';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
   loading: boolean;
+  isWebhookModalOpen: boolean;
+  selectedWebhook: WebhookEventSubscription | null;
   integrations: Array<IntegrationType>;
+  webhooks: Array<WebhookEventSubscription>;
 };
 
 class IntegrationsOverview extends React.Component<Props, State> {
   state: State = {
     loading: true,
+    isWebhookModalOpen: false,
+    selectedWebhook: null,
     integrations: [],
+    webhooks: [],
   };
 
   async componentDidMount() {
@@ -42,8 +43,9 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchSlackIntegration(),
         this.fetchGmailIntegration(),
       ]);
+      const webhooks = await API.fetchEventSubscriptions();
 
-      this.setState({integrations, loading: false});
+      this.setState({integrations, webhooks, loading: false});
     } catch (err) {
       console.log('Error loading integrations:', err);
 
@@ -88,83 +90,56 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
   };
 
+  handleAddWebhook = () => {
+    this.setState({isWebhookModalOpen: true});
+  };
+
+  handleUpdateWebhook = (webhook: WebhookEventSubscription) => {
+    this.setState({isWebhookModalOpen: true, selectedWebhook: webhook});
+  };
+
+  handleDeleteWebhook = async (webhook: WebhookEventSubscription) => {
+    const {id: webhookId} = webhook;
+
+    if (!webhookId) {
+      return;
+    }
+
+    await API.deleteEventSubscription(webhookId);
+    await this.refreshEventSubscriptions();
+  };
+
+  refreshEventSubscriptions = async () => {
+    try {
+      const webhooks = await API.fetchEventSubscriptions();
+
+      this.setState({webhooks});
+    } catch (err) {
+      console.log('Error refreshing event subscriptions:', err);
+    }
+  };
+
+  handleWebhookModalSuccess = (webhook: WebhookEventSubscription) => {
+    this.setState({
+      isWebhookModalOpen: false,
+      selectedWebhook: null,
+    });
+
+    this.refreshEventSubscriptions();
+  };
+
+  handleWebhookModalCancel = () => {
+    this.setState({isWebhookModalOpen: false, selectedWebhook: null});
+  };
+
   render() {
-    const {loading, integrations = []} = this.state;
-    const columns = [
-      {
-        title: 'Integration',
-        dataIndex: 'integration',
-        key: 'integration',
-        render: (value: string, record: any) => {
-          const {icon} = record;
-
-          return (
-            <Flex sx={{alignItems: 'center'}}>
-              <img src={icon} alt={value} style={{height: 20}} />
-              <Text strong style={{marginLeft: 8}}>
-                {value}
-              </Text>
-            </Flex>
-          );
-        },
-      },
-      {
-        title: 'Status',
-        dataIndex: 'status',
-        key: 'status',
-        render: (value: string) => {
-          return value === 'connected' ? (
-            <Tag color={colors.green}>Connected</Tag>
-          ) : (
-            <Tag>Not connected</Tag>
-          );
-        },
-      },
-      {
-        title: 'Connected since',
-        dataIndex: 'created_at',
-        key: 'created_at',
-        render: (value: string) => {
-          if (!value) {
-            return '--';
-          }
-
-          return dayjs(value).format('MMMM DD, YYYY');
-        },
-      },
-      {
-        title: 'Action',
-        dataIndex: 'action',
-        key: 'action',
-        render: (action: any, record: any) => {
-          const {key, status} = record;
-          const isConnected = status === 'connected';
-          // NB: when testing locally, update `origin` to an ngrok url
-          // pointing at localhost:4000 (or wherever your server is running)
-          const origin = window.location.origin;
-          const redirect = `${origin}/integrations/slack`;
-          const q = {
-            scope:
-              'incoming-webhook chat:write channels:history channels:manage chat:write.public users:read users:read.email',
-            user_scope: 'channels:history',
-            client_id: SLACK_CLIENT_ID,
-            redirect_uri: redirect,
-          };
-          const query = qs.stringify(q);
-
-          switch (key) {
-            case 'slack':
-              return (
-                <a href={`https://slack.com/oauth/v2/authorize?${query}`}>
-                  <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-                </a>
-              );
-            default:
-              return <Button disabled>Coming soon!</Button>;
-          }
-        },
-      },
-    ];
+    const {
+      loading,
+      isWebhookModalOpen,
+      selectedWebhook,
+      webhooks = [],
+      integrations = [],
+    } = this.state;
 
     if (loading) {
       return (
@@ -183,7 +158,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
     return (
       <Box p={4}>
-        <Box mb={5}>
+        <Box mb={4}>
           <Title level={4}>Integrations</Title>
 
           <Paragraph>
@@ -196,9 +171,43 @@ class IntegrationsOverview extends React.Component<Props, State> {
           </Paragraph>
 
           <Box my={4}>
-            <Table dataSource={integrations} columns={columns} />;
+            <IntegrationsTable integrations={integrations} />
           </Box>
         </Box>
+
+        <Box mb={4}>
+          <Title level={4}>Event Subscriptions</Title>
+
+          <Flex sx={{justifyContent: 'space-between', alignItems: 'baseline'}}>
+            <Paragraph>
+              <Text>
+                Create your own integrations with custom webhooks{' '}
+                <span role="img" aria-label=":)">
+                  🤓
+                </span>
+              </Text>
+            </Paragraph>
+
+            <Button icon={<PlusOutlined />} onClick={this.handleAddWebhook}>
+              Add webhook URL
+            </Button>
+          </Flex>
+
+          <Box my={4}>
+            <WebhooksTable
+              webhooks={webhooks}
+              onUpdateWebhook={this.handleUpdateWebhook}
+              onDeleteWebhook={this.handleDeleteWebhook}
+            />
+          </Box>
+        </Box>
+
+        <NewWebhookModal
+          webhook={selectedWebhook}
+          visible={isWebhookModalOpen}
+          onSuccess={this.handleWebhookModalSuccess}
+          onCancel={this.handleWebhookModalCancel}
+        />
       </Box>
     );
   }

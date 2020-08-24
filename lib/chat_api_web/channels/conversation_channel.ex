@@ -2,7 +2,7 @@ defmodule ChatApiWeb.ConversationChannel do
   use ChatApiWeb, :channel
 
   alias ChatApiWeb.Presence
-  alias ChatApi.{Messages, Conversations, Emails}
+  alias ChatApi.{Messages, Conversations, Emails, EventSubscriptions}
 
   @impl true
   def join("conversation:lobby", payload, socket) do
@@ -77,33 +77,15 @@ defmodule ChatApiWeb.ConversationChannel do
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (conversation:lobby).
   def handle_in("shout", payload, socket) do
-    case socket.assigns do
-      %{conversation: conversation} ->
-        %{id: conversation_id, account_id: account_id} = conversation
-
-        msg =
-          Map.merge(payload, %{"conversation_id" => conversation_id, "account_id" => account_id})
-
-        {:ok, message} = Messages.create_message(msg)
-        message = Messages.get_message!(message.id)
-
-        # Mark as unread and ensure the conversation is open, since we want to
-        # reopen a conversation if it received a new message after being closed.
-        {:ok, conversation} =
-          conversation_id
-          |> Conversations.get_conversation!()
-          |> Conversations.update_conversation(%{status: "open", read: false})
-
-        ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
-          "id" => conversation_id,
-          "updates" =>
-            ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
-        })
-
-        result = ChatApiWeb.MessageView.render("expanded.json", message: message)
-        broadcast(socket, "shout", result)
-        send_message_alerts(message.body, conversation_id, account_id)
-
+    with %{conversation: conversation} <- socket.assigns,
+         %{id: conversation_id, account_id: account_id} <- conversation,
+         {:ok, message} <-
+           payload
+           |> Map.merge(%{"conversation_id" => conversation_id, "account_id" => account_id})
+           |> Messages.create_message(),
+         message <- Messages.get_message!(message.id) do
+      broadcast_new_message(socket, message)
+    else
       _ ->
         broadcast(socket, "shout", payload)
     end
@@ -111,13 +93,53 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
-  defp send_message_alerts(message, conversation_id, account_id) do
+  defp send_message_alerts(message) do
+    %{conversation_id: conversation_id, account_id: account_id, body: body} = message
     # TODO: how should we handle errors here?
-    ChatApi.Slack.send_conversation_message_alert(conversation_id, message, type: :customer)
+    ChatApi.Slack.send_conversation_message_alert(conversation_id, body, type: :customer)
 
     # TODO: maybe do these in an "after_send" hook or something more async,
     # since this notification logic probably shouldn't live in here.
     Emails.send_new_message_alerts(message, account_id, conversation_id)
+  end
+
+  defp send_webhook_notifications(account_id, payload) do
+    EventSubscriptions.notify_event_subscriptions(account_id, %{
+      "event" => "message:created",
+      "payload" => payload
+    })
+  end
+
+  defp broadcast_conversation_update(message) do
+    %{conversation_id: conversation_id, account_id: account_id} = message
+    # Mark as unread and ensure the conversation is open, since we want to
+    # reopen a conversation if it received a new message after being closed.
+    {:ok, conversation} =
+      conversation_id
+      |> Conversations.get_conversation!()
+      |> Conversations.update_conversation(%{status: "open", read: false})
+
+    ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
+      "id" => conversation_id,
+      "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
+    })
+  end
+
+  defp broadcast_new_message(socket, message) do
+    broadcast_conversation_update(message)
+
+    %{account_id: account_id} = message
+    json = ChatApiWeb.MessageView.render("expanded.json", message: message)
+    broadcast(socket, "shout", json)
+
+    # Handling async for now
+    Task.start(fn ->
+      send_message_alerts(message)
+    end)
+
+    Task.start(fn ->
+      send_webhook_notifications(account_id, json)
+    end)
   end
 
   # Add authorization logic here as required.
