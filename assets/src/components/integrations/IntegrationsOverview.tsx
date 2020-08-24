@@ -6,6 +6,7 @@ import qs from 'query-string';
 import {
   colors,
   Button,
+  Divider,
   Input,
   Modal,
   Paragraph,
@@ -242,25 +243,62 @@ const NewWebhookModal = ({
         </Button>,
       ]}
     >
-      <Box mb={2}>
-        <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <label htmlFor="webhook_url">Webhook URL</label>
+      <Box>
+        <Paragraph>
+          <Text>
+            You can subscribe to be notified of events in Papercups (for
+            example, when a new message is created) at a URL of your choice.
+          </Text>
+        </Paragraph>
 
-          {isVerifying ? (
-            <Text type="secondary">Verifying...</Text>
-          ) : isVerified ? (
-            <Text>Verified!</Text>
-          ) : null}
-        </Flex>
-        <Input
-          id="webhook_url"
-          size="large"
-          type="text"
-          value={url}
-          placeholder="https://myawesomeapp.com/api/webhook"
-          onChange={handleChangeUrl}
-          onBlur={handleVerifyUrl}
-        />
+        <Box>
+          <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
+            <label htmlFor="webhook_url">
+              <Text strong>Webhook URL</Text>
+            </label>
+
+            {isVerifying ? (
+              <Text type="secondary">Verifying...</Text>
+            ) : isVerified ? (
+              <Text>Verified!</Text>
+            ) : null}
+          </Flex>
+          <Input
+            id="webhook_url"
+            size="large"
+            type="text"
+            value={url}
+            placeholder="https://myawesomeapp.com/api/webhook"
+            onChange={handleChangeUrl}
+            onBlur={handleVerifyUrl}
+          />
+        </Box>
+
+        <Divider />
+
+        <Paragraph>
+          <Text type="secondary">
+            We'll send HTTP POST requests to this URL when events occur. As soon
+            as you enter a URL, we'll send a request with a{' '}
+            <Text code>payload</Text> parameter, and your endpoint must respond
+            with the value.
+          </Text>
+        </Paragraph>
+
+        <Paragraph>
+          <Text type="secondary">
+            Note that for development URLs using <Text code>localhost</Text>,
+            you may need to use a tool like{' '}
+            <a
+              href="https://ngrok.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ngrok
+            </a>{' '}
+            to test your URL.
+          </Text>
+        </Paragraph>
       </Box>
     </Modal>
   );
