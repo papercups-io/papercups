@@ -22,8 +22,13 @@ defmodule ChatApiWeb.MessageController do
   end
 
   def create(conn, %{"message" => message_params}) do
-    with {:ok, %Message{} = msg} <- Messages.create_message(message_params),
-         message <- Messages.get_message!(msg.id) do
+    with %{id: user_id, account_id: account_id} <- conn.assigns.current_user,
+         {:ok, %Message{} = msg} <-
+           message_params
+           |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
+           |> Messages.create_message(),
+         message <-
+           Messages.get_message!(msg.id) do
       broadcast_new_message(message)
 
       conn
