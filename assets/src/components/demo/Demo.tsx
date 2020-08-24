@@ -13,6 +13,7 @@ import {
   Title,
 } from '../common';
 import {RightCircleOutlined} from '../icons';
+import {BASE_URL} from '../../config';
 import * as API from '../../api';
 // Testing widget in separate package
 import ChatWidget from '@papercups-io/chat-widget';
@@ -161,6 +162,7 @@ class Demo extends React.Component<Props, State> {
           accountId={accountId}
           greeting="Hello :) have any questions or feedback? Alex or Kam will reply as soon as they can!"
           customer={customer}
+          baseUrl={BASE_URL}
           defaultIsOpen
         />
       </Box>
