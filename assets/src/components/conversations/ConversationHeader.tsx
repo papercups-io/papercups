@@ -1,13 +1,13 @@
 import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Select, Text, Title, Tooltip} from '../common';
+import {colors, Button, Popover, Select, Text, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
   StarOutlined,
   StarFilled,
   UploadOutlined,
   UserOutlined,
-  QuestionCircleOutlined,
+  InfoCircleOutlined,
 } from '../icons';
 
 const ConversationHeader = ({
@@ -44,18 +44,23 @@ const ConversationHeader = ({
   const {name, email, current_url, browser, os} = customer;
   const assigneeId = assignee_id ? String(assignee_id) : undefined;
   const hasBothNameAndEmail = !!(name && email);
-  const metaData = (
-    <Fragment>
-      <p>
-        <strong>Current URL:</strong> {current_url}
-      </p>
-      <p>
-        <strong>Browser:</strong> {browser}
-      </p>
-      <p>
-        <strong>OS:</strong> {os}
-      </p>
-    </Fragment>
+  const metadata = (
+    <Box>
+      <Box mb={1}>
+        <Text strong>Current URL: </Text>
+        <a href={current_url} target="_blank" rel="noopener noreferrer">
+          {current_url}
+        </a>
+      </Box>
+      <Box mb={1}>
+        <Text strong>Browser: </Text>
+        <Text>{browser}</Text>
+      </Box>
+      <Box>
+        <Text strong>OS: </Text>
+        <Text>{os}</Text>
+      </Box>
+    </Box>
   );
 
   return (
@@ -72,8 +77,8 @@ const ConversationHeader = ({
         backgroundColor={colors.white}
         sx={{justifyContent: 'space-between', alignItems: 'center'}}
       >
-        <Flex>
-          <Box>
+        <Box>
+          <Flex sx={{alignItems: 'center'}}>
             <Title
               level={4}
               style={{
@@ -83,18 +88,19 @@ const ConversationHeader = ({
             >
               {name || email || 'Anonymous User'}
             </Title>
-            {hasBothNameAndEmail && (
-              <Box style={{marginLeft: 1}}>
-                <Text type="secondary">{email}</Text>
-              </Box>
-            )}
-          </Box>
-          <Box mx={1} my={1}>
-            <Tooltip title={metaData} placement="bottomLeft">
-              <QuestionCircleOutlined />
-            </Tooltip>
-          </Box>
-        </Flex>
+
+            <Box ml={2} mt={1}>
+              <Popover content={metadata} placement="bottom">
+                <InfoCircleOutlined />
+              </Popover>
+            </Box>
+          </Flex>
+          {hasBothNameAndEmail && (
+            <Box style={{marginLeft: 1, lineHeight: 1.2}}>
+              <Text type="secondary">{email}</Text>
+            </Box>
+          )}
+        </Box>
 
         <Flex mx={-1}>
           <Box mx={1}>

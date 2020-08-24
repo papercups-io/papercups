@@ -4,6 +4,7 @@ import CreditCardOutlined from '@ant-design/icons/CreditCardOutlined';
 import CreditCardTwoTone from '@ant-design/icons/CreditCardTwoTone';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
+import InfoCircleOutlined from '@ant-design/icons/InfoCircleOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
@@ -18,7 +19,6 @@ import StarOutlined from '@ant-design/icons/StarOutlined';
 import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
-import QuestionCircleOutlined from '@ant-design/icons/QuestionCircleOutlined';
 
 export {
   ApiOutlined,
@@ -27,6 +27,7 @@ export {
   CreditCardTwoTone,
   DeleteOutlined,
   DownOutlined,
+  InfoCircleOutlined,
   LoadingOutlined,
   LogoutOutlined,
   MailOutlined,
@@ -41,5 +42,4 @@ export {
   UploadOutlined,
   UpOutlined,
   UserOutlined,
-  QuestionCircleOutlined,
 };
