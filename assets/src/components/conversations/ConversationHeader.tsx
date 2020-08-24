@@ -10,6 +10,49 @@ import {
   InfoCircleOutlined,
 } from '../icons';
 
+const hasCustomerMetadata = (customer: any) => {
+  const {current_url, browser, os} = customer;
+
+  if (!current_url && !browser && !os) {
+    return false;
+  }
+
+  return true;
+};
+
+const CustomerMetadataPopoverContent = ({customer}: {customer: any}) => {
+  if (!hasCustomerMetadata(customer)) {
+    return null;
+  }
+
+  const {current_url, browser, os} = customer;
+
+  return (
+    <Box sx={{maxWidth: 400}}>
+      {current_url && (
+        <Box mb={1} sx={{overflowWrap: 'break-word'}}>
+          <Text strong>Current URL: </Text>
+          <a href={current_url} target="_blank" rel="noopener noreferrer">
+            {current_url}
+          </a>
+        </Box>
+      )}
+      {browser && (
+        <Box mb={1}>
+          <Text strong>Browser: </Text>
+          <Text>{browser}</Text>
+        </Box>
+      )}
+      {os && (
+        <Box mb={1}>
+          <Text strong>OS: </Text>
+          <Text>{os}</Text>
+        </Box>
+      )}
+    </Box>
+  );
+};
+
 const ConversationHeader = ({
   conversation,
   users,
@@ -41,27 +84,9 @@ const ConversationHeader = ({
     priority,
     customer = {},
   } = conversation;
-  const {name, email, current_url, browser, os} = customer;
+  const {name, email} = customer;
   const assigneeId = assignee_id ? String(assignee_id) : undefined;
   const hasBothNameAndEmail = !!(name && email);
-  const metadata = (
-    <Box>
-      <Box mb={1}>
-        <Text strong>Current URL: </Text>
-        <a href={current_url} target="_blank" rel="noopener noreferrer">
-          {current_url}
-        </a>
-      </Box>
-      <Box mb={1}>
-        <Text strong>Browser: </Text>
-        <Text>{browser}</Text>
-      </Box>
-      <Box>
-        <Text strong>OS: </Text>
-        <Text>{os}</Text>
-      </Box>
-    </Box>
-  );
 
   return (
     <header
@@ -89,11 +114,18 @@ const ConversationHeader = ({
               {name || email || 'Anonymous User'}
             </Title>
 
-            <Box ml={2} mt={1}>
-              <Popover content={metadata} placement="bottom">
-                <InfoCircleOutlined />
-              </Popover>
-            </Box>
+            {hasCustomerMetadata(customer) && (
+              <Box ml={2} mt={1}>
+                <Popover
+                  content={
+                    <CustomerMetadataPopoverContent customer={customer} />
+                  }
+                  placement="bottom"
+                >
+                  <InfoCircleOutlined />
+                </Popover>
+              </Box>
+            )}
           </Flex>
           {hasBothNameAndEmail && (
             <Box style={{marginLeft: 1, lineHeight: 1.2}}>
