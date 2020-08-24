@@ -1,14 +1,17 @@
 import React from 'react';
+import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
-import {colors, Button, Table, Tag, Text} from '../common';
+import {colors, Button, Popconfirm, Table, Tag, Text} from '../common';
 import {WebhookEventSubscription} from './support';
 
 const WebhooksTable = ({
   webhooks,
   onUpdateWebhook,
+  onDeleteWebhook,
 }: {
   webhooks: Array<WebhookEventSubscription>;
   onUpdateWebhook: (webhook: WebhookEventSubscription) => void;
+  onDeleteWebhook: (webhook: WebhookEventSubscription) => void;
 }) => {
   const columns = [
     {
@@ -52,7 +55,25 @@ const WebhooksTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (action: any, record: WebhookEventSubscription) => {
-        return <Button onClick={() => onUpdateWebhook(record)}>Update</Button>;
+        return (
+          <Flex mx={-1}>
+            <Box mx={1}>
+              <Button onClick={() => onUpdateWebhook(record)}>Update</Button>
+            </Box>
+            <Box mx={1}>
+              {/* TODO: maybe use an icon here instead? (and figure out how to animate deletions) */}
+              <Popconfirm
+                title="Are you sure you want to delete this webhook?"
+                okText="Yes"
+                cancelText="No"
+                placement="topLeft"
+                onConfirm={() => onDeleteWebhook(record)}
+              >
+                <Button danger>Remove</Button>
+              </Popconfirm>
+            </Box>
+          </Flex>
+        );
       },
     },
   ];

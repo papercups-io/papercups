@@ -98,6 +98,17 @@ class IntegrationsOverview extends React.Component<Props, State> {
     this.setState({isWebhookModalOpen: true, selectedWebhook: webhook});
   };
 
+  handleDeleteWebhook = async (webhook: WebhookEventSubscription) => {
+    const {id: webhookId} = webhook;
+
+    if (!webhookId) {
+      return;
+    }
+
+    await API.deleteEventSubscription(webhookId);
+    await this.refreshEventSubscriptions();
+  };
+
   refreshEventSubscriptions = async () => {
     try {
       const webhooks = await API.fetchEventSubscriptions();
@@ -186,6 +197,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
             <WebhooksTable
               webhooks={webhooks}
               onUpdateWebhook={this.handleUpdateWebhook}
+              onDeleteWebhook={this.handleDeleteWebhook}
             />
           </Box>
         </Box>

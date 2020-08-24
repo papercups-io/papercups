@@ -406,6 +406,19 @@ export const updateEventSubscription = async (
     .then((res) => res.body.data);
 };
 
+export const deleteEventSubscription = async (
+  id: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/event_subscriptions/${id}`)
+    .set('Authorization', token);
+};
+
 export const authorizeSlackIntegration = async (
   code: string,
   token = getAccessToken()
