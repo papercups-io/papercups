@@ -28,9 +28,9 @@ const CustomerMetadataPopoverContent = ({customer}: {customer: any}) => {
   const {current_url, browser, os} = customer;
 
   return (
-    <Box sx={{maxWidth: 400}}>
+    <Box>
       {current_url && (
-        <Box mb={1} sx={{overflowWrap: 'break-word'}}>
+        <Box mb={1}>
           <Text strong>Current URL: </Text>
           <a href={current_url} target="_blank" rel="noopener noreferrer">
             {current_url}
