@@ -371,7 +371,7 @@ export const verifyWebhookUrl = async (
     .then((res) => res.body.data);
 };
 
-export const createEventSubscriptions = async (
+export const createEventSubscription = async (
   params: EventSubscriptionParams,
   token = getAccessToken()
 ) => {
@@ -384,6 +384,24 @@ export const createEventSubscriptions = async (
     .set('Authorization', token)
     .send({
       event_subscription: params,
+    })
+    .then((res) => res.body.data);
+};
+
+export const updateEventSubscription = async (
+  id: string,
+  updates: EventSubscriptionParams,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/event_subscriptions/${id}`)
+    .set('Authorization', token)
+    .send({
+      event_subscription: updates,
     })
     .then((res) => res.body.data);
 };
