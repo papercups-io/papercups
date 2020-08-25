@@ -37,16 +37,20 @@ defmodule ChatApiWeb.RegistrationController do
   end
 
   def create(conn, %{"user" => user_params}) do
-    conn
-    |> user_with_account_transaction(user_params)
-    |> ChatApi.Repo.transaction()
-    |> case do
-      {:ok, %{conn: conn}} ->
-        conn |> enqueue_welcome_email() |> send_api_token()
+    if registration_disabled?() do
+      send_server_error(conn, 403, "An invitation token is required to register")
+    else
+      conn
+      |> user_with_account_transaction(user_params)
+      |> ChatApi.Repo.transaction()
+      |> case do
+        {:ok, %{conn: conn}} ->
+          conn |> enqueue_welcome_email() |> send_api_token()
 
-      {:error, _op, changeset, _changes} ->
-        errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
-        send_user_create_errors(conn, errors)
+        {:error, _op, changeset, _changes} ->
+          errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
+          send_user_create_errors(conn, errors)
+      end
     end
   end
 
@@ -95,5 +99,12 @@ defmodule ChatApiWeb.RegistrationController do
     conn
     |> put_status(status_code)
     |> json(%{error: %{status: status_code, message: message}})
+  end
+
+  defp registration_disabled?() do
+    case System.get_env("PAPERCUPS_REGISTRATION_DISABLED") do
+      x when x == "1" or x == "true" -> true
+      _ -> false
+    end
   end
 end
