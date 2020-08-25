@@ -89,58 +89,89 @@ defmodule ChatApi.SlackTest do
       assert Slack.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
     end
 
-    test "get_slack_message_subject!/4 returns subject for initial slack thread" do
+    test "get_message_text/1 returns subject for initial slack thread" do
       customer = customer_fixture()
       conversation = conversation_fixture(%{customer_id: customer.id})
-      thread = nil
-      subject = Slack.get_slack_message_subject!(:customer, customer, conversation.id, thread)
 
-      assert String.contains?(subject, customer.email)
-      assert String.contains?(subject, conversation.id)
-      assert String.contains?(subject, "Reply to this thread to start chatting")
+      text =
+        Slack.get_message_text(%{
+          customer: customer,
+          text: "Test message",
+          conversation_id: conversation.id,
+          type: :customer,
+          thread: nil
+        })
+
+      assert String.contains?(text, customer.email)
+      assert String.contains?(text, conversation.id)
+      assert String.contains?(text, "Reply to this thread to start chatting")
     end
 
-    test "get_slack_message_subject!/4 returns subject for slack reply" do
+    test "get_message_text/1 returns subject for slack reply" do
       customer = customer_fixture()
       thread = slack_conversation_thread_fixture()
       %{conversation_id: conversation_id} = thread
 
-      assert Slack.get_slack_message_subject!(:agent, customer, conversation_id, thread) ==
-               ":female-technologist: Agent:"
+      assert Slack.get_message_text(%{
+               text: "Test message",
+               conversation_id: conversation_id,
+               customer: customer,
+               type: :agent,
+               thread: thread
+             }) ==
+               "*:female-technologist: Agent*: Test message"
 
-      assert Slack.get_slack_message_subject!(:customer, customer, conversation_id, thread) ==
-               ":wave: #{customer.email}:"
+      assert Slack.get_message_text(%{
+               text: "Test message",
+               conversation_id: conversation_id,
+               customer: customer,
+               type: :customer,
+               thread: thread
+             }) ==
+               "*:wave: #{customer.email}*: Test message"
 
       assert_raise ArgumentError, fn ->
-        Slack.get_slack_message_subject!(:invalid, customer, conversation_id, thread)
+        Slack.get_message_text(%{
+          text: "Test message",
+          conversation_id: conversation_id,
+          customer: customer,
+          type: :invalid,
+          thread: thread
+        })
       end
     end
 
-    test "get_slack_message_payload/4 returns payload for initial slack thread" do
+    test "get_message_payload/2 returns payload for initial slack thread" do
       channel = "bots"
-      subject = "New Slack thread!"
       text = "Hello world"
-      thread = nil
+      customer = customer_fixture()
 
       assert %{
-               "attachments" => attachments,
-               "channel" => ^channel,
-               "text" => ^subject
-             } = Slack.get_slack_message_payload(subject, channel, text, thread)
+               "blocks" => blocks,
+               "channel" => ^channel
+             } =
+               Slack.get_message_payload(text, %{
+                 channel: channel,
+                 customer: customer,
+                 thread: nil
+               })
     end
 
-    test "get_slack_message_payload/4 returns payload for slack reply" do
+    test "get_message_payload/2 returns payload for slack reply" do
       channel = "bots"
-      subject = "New Slack thread!"
       text = "Hello world"
       thread = slack_conversation_thread_fixture()
 
       assert %{
-               "attachments" => attachments,
                "channel" => ^channel,
-               "text" => ^subject,
+               "text" => ^text,
                "thread_ts" => thread_ts
-             } = Slack.get_slack_message_payload(subject, channel, text, thread)
+             } =
+               Slack.get_message_payload(text, %{
+                 channel: channel,
+                 thread: thread,
+                 customer: nil
+               })
     end
 
     test "extract_slack_conversation_thread_info/1 extracts thread info from slack response" do

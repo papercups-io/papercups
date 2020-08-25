@@ -110,9 +110,20 @@ defmodule ChatApi.Slack do
 
     %{access_token: access_token, channel: channel} = get_slack_authorization(account_id)
 
-    type
-    |> get_slack_message_subject!(customer, conversation_id, thread)
-    |> get_slack_message_payload(channel, text, thread)
+    # TODO: use a struct here?
+    %{
+      customer: customer,
+      text: text,
+      conversation_id: conversation_id,
+      type: type,
+      thread: thread
+    }
+    |> get_message_text()
+    |> get_message_payload(%{
+      channel: channel,
+      customer: customer,
+      thread: thread
+    })
     |> send_message(access_token)
     |> case do
       # Just pass through in test/dev mode (not sure if there's a more idiomatic way to do this)
@@ -168,8 +179,13 @@ defmodule ChatApi.Slack do
     end
   end
 
-  def get_slack_message_subject!(:customer, customer, conversation_id, nil) do
-    # TODO: use env variables here?
+  def get_message_text(%{
+        customer: customer,
+        text: text,
+        conversation_id: conversation_id,
+        type: :customer,
+        thread: nil
+      }) do
     url = System.get_env("BACKEND_URL") || ""
 
     base =
@@ -180,44 +196,90 @@ defmodule ChatApi.Slack do
       end
 
     url = base <> "/conversations/" <> conversation_id
-    conversation = "<#{url}|conversation>"
+    dashboard = "<#{url}|dashboard>"
 
-    subject =
-      "New #{conversation} started with #{identify_customer(customer)}!" <>
-        "\n\nReply to this thread to start chatting :rocket:"
-
-    subject
+    "*:wave: #{identify_customer(customer)} says*: #{text}" <>
+      "\n\nReply to this thread to start chatting, or view in the #{dashboard} :rocket:"
   end
 
-  # TODO: show sender/customer name here if available rather than generic "Agent"/"Customer"
-  def get_slack_message_subject!(type, customer, _conversation_id, _thread) do
+  def get_message_text(%{
+        customer: customer,
+        text: text,
+        type: type,
+        conversation_id: _conversation_id,
+        thread: _thread
+      }) do
     case type do
-      :agent -> ":female-technologist: Agent:"
-      :customer -> ":wave: #{identify_customer(customer)}:"
+      :agent -> "*:female-technologist: Agent*: #{text}"
+      :customer -> "*:wave: #{identify_customer(customer)}*: #{text}"
       _ -> raise "Unrecognized sender type: " <> type
     end
   end
 
-  def get_slack_message_payload(subject, channel, text, nil) do
+  def get_message_payload(text, %{
+        channel: channel,
+        customer: %{
+          name: name,
+          email: email,
+          current_url: current_url,
+          browser: browser,
+          os: os
+        },
+        thread: nil
+      }) do
     %{
       "channel" => channel,
-      "text" => subject,
-      "attachments" => [%{"text" => text}]
+      "blocks" => [
+        %{
+          "type" => "section",
+          "text" => %{
+            "type" => "mrkdwn",
+            "text" => text
+          }
+        },
+        %{
+          "type" => "section",
+          "fields" => [
+            %{
+              "type" => "mrkdwn",
+              "text" => "*Name:*\n#{name || "Anonymous User"}"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*Email:*\n#{email || "N/A"}"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*URL:*\n#{current_url || "N/A"}"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*Browser:*\n#{browser || "N/A"}"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*OS:*\n#{os || "N/A"}"
+            }
+          ]
+        }
+      ]
     }
   end
 
-  def get_slack_message_payload(
-        subject,
-        channel,
-        text,
-        %{slack_thread_ts: slack_thread_ts} = _thread
-      ) do
+  def get_message_payload(text, %{
+        channel: channel,
+        customer: _customer,
+        thread: %{slack_thread_ts: slack_thread_ts}
+      }) do
     %{
       "channel" => channel,
-      "text" => subject,
-      "attachments" => [%{"text" => text}],
+      "text" => text,
       "thread_ts" => slack_thread_ts
     }
+  end
+
+  def get_message_payload(text, params) do
+    raise "Unrecognized params for Slack payload: #{text} #{inspect(params)}"
   end
 
   def create_new_slack_conversation_thread(conversation_id, response) do
