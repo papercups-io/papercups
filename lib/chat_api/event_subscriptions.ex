@@ -142,11 +142,21 @@ defmodule ChatApi.EventSubscriptions do
       event = %{"event" => "webhook:verify", "payload" => challenge}
 
       case notify_webhook_url(url, event) do
-        {:ok, %{body: body}} -> body == challenge
-        _ -> false
+        {:ok, %{body: body}} ->
+          verify_webhook_challenge(body, challenge)
+
+        _ ->
+          false
       end
     else
       false
+    end
+  end
+
+  defp verify_webhook_challenge(body, challenge) do
+    case body do
+      %{"challenge" => json} -> json == challenge
+      str -> str == challenge
     end
   end
 end
