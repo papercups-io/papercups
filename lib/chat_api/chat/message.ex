@@ -12,6 +12,8 @@ defmodule ChatApi.Messages.Message do
   schema "messages" do
     field(:body, :string)
     field(:sent_at, :utc_datetime)
+    field(:seen_at, :utc_datetime)
+
     belongs_to(:conversation, Conversation)
     belongs_to(:account, Account)
     belongs_to(:customer, Customer)
@@ -23,7 +25,15 @@ defmodule ChatApi.Messages.Message do
   @doc false
   def changeset(message, attrs) do
     message
-    |> cast(attrs, [:body, :conversation_id, :account_id, :customer_id, :user_id, :sent_at])
+    |> cast(attrs, [
+      :body,
+      :conversation_id,
+      :account_id,
+      :customer_id,
+      :user_id,
+      :sent_at,
+      :seen_at
+    ])
     |> validate_required([:body, :account_id, :conversation_id])
   end
 end
