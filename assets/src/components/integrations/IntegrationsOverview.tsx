@@ -2,7 +2,7 @@ import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
-import {Button, Paragraph, Text, Title} from '../common';
+import {Alert, Button, Paragraph, Text, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
@@ -170,7 +170,18 @@ class IntegrationsOverview extends React.Component<Props, State> {
             </Text>
           </Paragraph>
 
-          <Box my={4}>
+          <Alert
+            message={
+              <Text>
+                At the moment, we only support connecting to{' '}
+                <Text strong>public</Text> Slack channels in your workspace
+              </Text>
+            }
+            type="warning"
+            showIcon
+          />
+
+          <Box mt={3} mb={4}>
             <IntegrationsTable integrations={integrations} />
           </Box>
         </Box>
