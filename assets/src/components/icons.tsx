@@ -16,6 +16,7 @@ import SmileOutlined from '@ant-design/icons/SmileOutlined';
 import SmileTwoTone from '@ant-design/icons/SmileTwoTone';
 import StarFilled from '@ant-design/icons/StarFilled';
 import StarOutlined from '@ant-design/icons/StarOutlined';
+import TeamOutlined from '@ant-design/icons/TeamOutlined';
 import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
@@ -39,6 +40,7 @@ export {
   SmileTwoTone,
   StarFilled,
   StarOutlined,
+  TeamOutlined,
   UploadOutlined,
   UpOutlined,
   UserOutlined,
