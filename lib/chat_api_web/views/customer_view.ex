@@ -15,10 +15,14 @@ defmodule ChatApiWeb.CustomerView do
       id: customer.id,
       name: customer.name,
       email: customer.email,
+      first_seen: customer.first_seen,
+      last_seen: customer.last_seen,
       phone: customer.phone,
+      host: customer.host,
+      pathname: customer.pathname,
       current_url: customer.current_url,
       browser: customer.browser,
-      os: customer.os,
+      os: customer.os
     }
   end
 end

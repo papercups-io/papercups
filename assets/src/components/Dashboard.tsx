@@ -16,6 +16,7 @@ import {
   UserOutlined,
   LogoutOutlined,
   CreditCardOutlined,
+  TeamOutlined,
 } from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
@@ -31,6 +32,7 @@ import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
+import CustomersPage from './customers/CustomersPage';
 
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
@@ -145,6 +147,13 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
+                title="Customers"
+                icon={<TeamOutlined />}
+                key="customers"
+              >
+                <Link to="/customers">Customers</Link>
+              </Menu.Item>
+              <Menu.Item
                 title="Integrations"
                 icon={<ApiOutlined />}
                 key="integrations"
@@ -186,6 +195,7 @@ const Dashboard = (props: RouteComponentProps) => {
           />
           <Route path="/account*" component={AccountOverview} />
           <Route path="/billing" component={BillingOverview} />
+          <Route path="/customers" component={CustomersPage} />
           <Route path="/integrations/:type" component={IntegrationsOverview} />
           <Route path="/integrations" component={IntegrationsOverview} />
           <Route path="/integrations*" component={IntegrationsOverview} />
