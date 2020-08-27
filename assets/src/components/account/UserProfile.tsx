@@ -6,6 +6,7 @@ import * as API from '../../api';
 type Props = {};
 type State = {
   fullName: string;
+  email: string;
   displayName: string;
   profilePhotoUrl: string;
   shouldEmailOnNewMessages: boolean;
@@ -19,6 +20,7 @@ class UserProfile extends React.Component<Props, State> {
   state: State = {
     fullName: '',
     displayName: '',
+    email: '',
     profilePhotoUrl: '',
     shouldEmailOnNewMessages: false,
     isLoading: true,
@@ -40,9 +42,11 @@ class UserProfile extends React.Component<Props, State> {
         display_name: displayName,
         full_name: fullName,
         profile_photo_url: profilePhotoUrl,
+        email,
       } = profile;
 
       this.setState({
+        email,
         displayName,
         fullName,
         profilePhotoUrl,
@@ -53,6 +57,7 @@ class UserProfile extends React.Component<Props, State> {
         displayName: '',
         fullName: '',
         profilePhotoUrl: '',
+        email: '',
       });
     }
   };
@@ -134,6 +139,7 @@ class UserProfile extends React.Component<Props, State> {
     const {
       isLoading,
       fullName,
+      email,
       displayName,
       profilePhotoUrl,
       shouldEmailOnNewMessages,
@@ -154,6 +160,11 @@ class UserProfile extends React.Component<Props, State> {
             display name will be prioritized first, but if no display name is
             provided, your full name or email will be used instead.
           </Paragraph>
+        </Box>
+
+        <Box mb={3} sx={{maxWidth: 480}}>
+          <label htmlFor="email">Email:</label>
+          <Input id="email" type="text" value={email} disabled />
         </Box>
 
         <Box mb={3} sx={{maxWidth: 480}}>
