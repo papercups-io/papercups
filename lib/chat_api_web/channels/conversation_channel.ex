@@ -93,6 +93,15 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
+  def handle_in("messages:seen", _payload, socket) do
+    with %{conversation: conversation} <- socket.assigns,
+         %{id: conversation_id} <- conversation do
+      Conversations.mark_agent_messages_as_seen(conversation_id)
+    end
+
+    {:noreply, socket}
+  end
+
   defp send_message_alerts(message) do
     %{conversation_id: conversation_id, account_id: account_id, body: body} = message
     # TODO: how should we handle errors here?
