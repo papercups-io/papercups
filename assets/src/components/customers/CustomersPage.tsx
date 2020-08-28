@@ -1,11 +1,18 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
-import {Alert, Paragraph, Table, Text, Title, Tooltip} from '../common';
+import utc from 'dayjs/plugin/utc';
+import {Alert, Badge, Paragraph, Table, Text, Title, Tooltip} from '../common';
+import {useConversations} from '../conversations/ConversationsProvider';
 import * as API from '../../api';
 import Spinner from '../Spinner';
 
-type Props = {};
+// TODO: create date utility methods so we don't have to do this everywhere
+dayjs.extend(utc);
+
+type Props = {
+  currentlyOnline?: any;
+};
 type State = {
   loading: boolean;
   customers: Array<any>;
@@ -29,13 +36,30 @@ class CustomersPage extends React.Component<Props, State> {
     }
   }
 
+  isCustomerOnline = (customer: any) => {
+    const {currentlyOnline = {}} = this.props;
+    const {id: customerId} = customer;
+
+    return currentlyOnline[customerId];
+  };
+
   renderCustomersTable = (customers: Array<any>) => {
+    const {currentlyOnline} = this.props;
     const data = customers
       .filter((customer) => !!customer.email) // Only show customers with email for now
       .map((customer) => {
         return {key: customer.id, ...customer};
       })
-      .sort((a, b) => +new Date(b.last_seen) - +new Date(a.last_seen));
+      .sort((a, b) => {
+        if (this.isCustomerOnline(a)) {
+          return -1;
+        } else if (this.isCustomerOnline(b)) {
+          return 1;
+        }
+
+        // TODO: fix how we set `last_seen`!
+        return +new Date(b.last_seen) - +new Date(a.last_seen);
+      });
 
     const columns = [
       {
@@ -59,8 +83,13 @@ class CustomersPage extends React.Component<Props, State> {
         dataIndex: 'last_seen',
         key: 'last_seen',
         render: (value: string, record: any) => {
-          const {pathname, current_url} = record;
-          const formatted = dayjs(value).format('MMMM DD, YYYY');
+          const {id, pathname, current_url} = record;
+          const formatted = dayjs.utc(value).format('MMMM DD, YYYY');
+          const isOnline = currentlyOnline[id];
+
+          if (isOnline) {
+            return <Badge status="processing" text="Online now!" />;
+          }
 
           return (
             <Box>
@@ -149,4 +178,19 @@ class CustomersPage extends React.Component<Props, State> {
   }
 }
 
-export default CustomersPage;
+const CustomersPageWrapper = () => {
+  const {currentlyOnline = {}} = useConversations();
+  const online = Object.keys(currentlyOnline).reduce((acc, key: string) => {
+    const [prefix, id] = key.split(':');
+
+    if (prefix === 'customer' && !!id) {
+      return {...acc, [id]: true};
+    }
+
+    return acc;
+  }, {} as {[key: string]: boolean});
+
+  return <CustomersPage currentlyOnline={online} />;
+};
+
+export default CustomersPageWrapper;
