@@ -16,7 +16,8 @@ defmodule ChatApiWeb.UserProfileView do
       user_id: user_profile.user_id,
       full_name: user_profile.full_name,
       display_name: user_profile.display_name,
-      profile_photo_url: user_profile.profile_photo_url
+      profile_photo_url: user_profile.profile_photo_url,
+      email: user_profile.user.email
     }
   end
 end
