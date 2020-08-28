@@ -163,11 +163,6 @@ class UserProfile extends React.Component<Props, State> {
         </Box>
 
         <Box mb={3} sx={{maxWidth: 480}}>
-          <label htmlFor="email">Email:</label>
-          <Input id="email" type="text" value={email} disabled />
-        </Box>
-
-        <Box mb={3} sx={{maxWidth: 480}}>
           <label htmlFor="full_name">Full name:</label>
           <Input
             id="full_name"
@@ -187,6 +182,11 @@ class UserProfile extends React.Component<Props, State> {
             onChange={this.handleChangeDisplayName}
             disabled={!isEditing}
           />
+        </Box>
+
+        <Box mb={3} sx={{maxWidth: 480}}>
+          <label htmlFor="email">Email:</label>
+          <Input id="email" type="text" value={email} disabled />
         </Box>
 
         <Flex sx={{alignItems: 'center'}}>

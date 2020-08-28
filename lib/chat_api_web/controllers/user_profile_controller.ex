@@ -17,6 +17,8 @@ defmodule ChatApiWeb.UserProfileController do
       params = Map.merge(user_profile_params, %{"user_id" => user_id})
       {:ok, user_profile} = Users.create_or_update_profile(user_id, params)
 
+      user_profile = user_profile |> ChatApi.Repo.preload(:user)
+
       render(conn, "show.json", user_profile: user_profile)
     end
   end

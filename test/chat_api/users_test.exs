@@ -47,7 +47,7 @@ defmodule ChatApi.UsersTest do
     end
 
     test "get_user_profile/1 returns the user_profile with given id", %{user: user} do
-      user_profile = user_profile_fixture(%{user_id: user.id})
+      user_profile = user_profile_fixture(%{user_id: user.id}) |> Repo.preload(:user)
 
       assert Users.get_user_profile(user.id) == user_profile
     end

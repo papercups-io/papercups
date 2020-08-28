@@ -18,4 +18,6 @@ services:
       DATABASE_URL: "ecto://postgres:postgres@db/postgres"
   db:
     image: postgres:alpine
-    container_name: papercups
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
