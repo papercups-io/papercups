@@ -1,5 +1,5 @@
 export type IntegrationType = {
-  key: 'slack' | 'gmail';
+  key: 'slack' | 'gmail' | 'microsoft-teams' | 'whatsapp' | 'twilio';
   integration: string;
   status: 'connected' | 'not_connected';
   created_at?: string | null;

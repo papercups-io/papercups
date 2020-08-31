@@ -42,6 +42,9 @@ class IntegrationsOverview extends React.Component<Props, State> {
       const integrations = await Promise.all([
         this.fetchSlackIntegration(),
         this.fetchGmailIntegration(),
+        this.fetchTwilioIntegration(),
+        this.fetchMicrosoftTeamsIntegration(),
+        this.fetchWhatsAppIntegration(),
       ]);
       const webhooks = await API.fetchEventSubscriptions();
 
@@ -72,6 +75,36 @@ class IntegrationsOverview extends React.Component<Props, State> {
       status: 'not_connected',
       created_at: null,
       icon: '/gmail.svg',
+    };
+  };
+
+  fetchMicrosoftTeamsIntegration = async (): Promise<IntegrationType> => {
+    return {
+      key: 'microsoft-teams',
+      integration: 'Microsoft Teams',
+      status: 'not_connected',
+      created_at: null,
+      icon: '/microsoft-teams.svg',
+    };
+  };
+
+  fetchTwilioIntegration = async (): Promise<IntegrationType> => {
+    return {
+      key: 'twilio',
+      integration: 'Twilio',
+      status: 'not_connected',
+      created_at: null,
+      icon: '/twilio.svg',
+    };
+  };
+
+  fetchWhatsAppIntegration = async (): Promise<IntegrationType> => {
+    return {
+      key: 'whatsapp',
+      integration: 'WhatsApp',
+      status: 'not_connected',
+      created_at: null,
+      icon: '/whatsapp.svg',
     };
   };
 
