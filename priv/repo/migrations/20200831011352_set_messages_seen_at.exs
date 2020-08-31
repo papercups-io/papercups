@@ -11,9 +11,7 @@ defmodule ChatApi.Repo.Migrations.SetMessagesSeenAt do
     Conversation
     |> preload(:messages)
     |> Repo.all()
-    |> Enum.each(fn conversation ->
-      mark_messages_seen(conversation)
-    end)
+    |> Enum.map(fn conv -> mark_messages_seen(conv) end)
   end
 
   def down do
