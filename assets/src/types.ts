@@ -16,6 +16,8 @@ export type Customer = {
 export type Message = {
   body: string;
   created_at: string;
+  sent_at?: string;
+  seen_at?: string;
   customer_id?: string;
   conversation_id: string;
   user_id?: string;

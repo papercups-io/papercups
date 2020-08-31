@@ -95,11 +95,13 @@ const ChatMessage = ({
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
-  const {body, created_at, user} = message;
+  const {body, sent_at, created_at, user, seen_at} = message;
   const isAgent = !!user;
   const tooltip = getSenderIdentifier(customer, user);
-  const created = dayjs.utc(created_at);
-  const timestamp = formatRelativeTime(created);
+  const sentAt = dayjs.utc(sent_at || created_at);
+  const formattedSentAt = formatRelativeTime(sentAt);
+  const seenAt = seen_at ? dayjs.utc(seen_at) : null;
+  const formattedSeenAt = seenAt ? formatRelativeTime(seenAt) : null;
 
   if (isMe) {
     return (
@@ -117,7 +119,11 @@ const ChatMessage = ({
         </Flex>
         {shouldDisplayTimestamp && (
           <Flex m={1} sx={{justifyContent: 'flex-end'}}>
-            <Text type="secondary">Sent {timestamp}</Text>
+            {formattedSeenAt ? (
+              <Text type="secondary">Seen {formattedSeenAt}</Text>
+            ) : (
+              <Text type="secondary">Sent {formattedSentAt}</Text>
+            )}
           </Flex>
         )}
       </Box>
@@ -139,7 +145,7 @@ const ChatMessage = ({
       </Flex>
       {shouldDisplayTimestamp && (
         <Flex my={1} mx={2} pl={4} sx={{justifyContent: 'flex-start'}}>
-          <Text type="secondary">Sent {timestamp}</Text>
+          <Text type="secondary">Sent {formattedSentAt}</Text>
         </Flex>
       )}
     </Box>
