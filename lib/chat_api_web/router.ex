@@ -10,6 +10,7 @@ defmodule ChatApiWeb.Router do
   end
 
   pipeline :api do
+    plug(ChatApiWeb.IPAddressPlug)
     plug(:accepts, ["json"])
     plug(ChatApiWeb.APIAuthPlug, otp_app: :chat_api)
   end
