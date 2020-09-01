@@ -10,7 +10,7 @@ import Login from './components/auth/Login';
 import Register from './components/auth/Register';
 import Demo from './components/demo/Demo';
 import Dashboard from './components/Dashboard';
-import Widget from './components/demo/Widget';
+import Pricing from './components/billing/PricingOverview';
 import './App.css';
 
 const App = () => {
@@ -28,7 +28,7 @@ const App = () => {
           <Route path="/login" component={Login} />
           <Route path="/register/:invite" component={Register} />
           <Route path="/register" component={Register} />
-          <Route path="/widget" component={Widget} />
+          <Route path="/pricing" component={Pricing} />
           <Route path="*" render={() => <Redirect to="/login" />} />
         </Switch>
       </Router>
@@ -39,10 +39,10 @@ const App = () => {
     <Router>
       <Switch>
         <Route path="/login" component={Login} />
-        <Route path="/widget" component={Widget} />
         <Route path="/register/:invite" component={Register} />
         <Route path="/register" component={Register} />
         <Route path="/demo" component={Demo} />
+        <Route path="/pricing" component={Pricing} />
         <Route path="/" component={Dashboard} />
         <Route path="*" render={() => <Redirect to="/conversations" />} />
       </Switch>
