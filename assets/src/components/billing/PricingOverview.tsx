@@ -114,8 +114,8 @@ class PricingOverview extends React.Component<Props, State> {
                 <Paragraph>Comes with:</Paragraph>
 
                 <Paragraph>
-                  <li>2 agents</li>
-                  <li>Unlimited conversations</li>
+                  <li>2 seats included</li>
+                  <li>100,000 messages</li>
                   <li>Customizable chat widget</li>
                   <li>Slack integration</li>
                 </Paragraph>
@@ -143,8 +143,8 @@ class PricingOverview extends React.Component<Props, State> {
                 </Paragraph>
 
                 <Paragraph>
-                  <li>Includes 5 seats</li>
-                  <li>Chat bots</li>
+                  <li>5 seats included</li>
+                  <li>Unlimited messages</li>
                   <li>Additional integrations</li>
                   <li>Webhooks</li>
                 </Paragraph>
@@ -153,11 +153,11 @@ class PricingOverview extends React.Component<Props, State> {
           />
 
           <PricingCard
-            title="Custom"
+            title="Enterprise"
             description="Advanced workflows, security, and support."
             cta={
               <Button type="primary" size="large" block ghost>
-                Chat with us
+                Contact sales
               </Button>
             }
             pricing={<Text>Custom pricing</Text>}
@@ -168,7 +168,7 @@ class PricingOverview extends React.Component<Props, State> {
                 </Paragraph>
 
                 <Paragraph>
-                  <li>Unlimited agents</li>
+                  <li>Unlimited seats</li>
                   <li>First-class support</li>
                   <li>Custom integrations</li>
                 </Paragraph>
@@ -198,8 +198,8 @@ class PricingOverview extends React.Component<Props, State> {
                 <Paragraph>Comes with:</Paragraph>
 
                 <Paragraph>
-                  <li>2 agents</li>
-                  <li>Unlimited conversations</li>
+                  <li>2 seats included</li>
+                  <li>100,000 messages</li>
                   <li>Customizable chat widget</li>
                   <li>Slack integration</li>
                 </Paragraph>
@@ -227,8 +227,8 @@ class PricingOverview extends React.Component<Props, State> {
                 </Paragraph>
 
                 <Paragraph>
-                  <li>Includes 5 seats</li>
-                  <li>Chat bots</li>
+                  <li>5 seats included</li>
+                  <li>Unlimited messages</li>
                   <li>Additional integrations</li>
                   <li>Webhooks</li>
                 </Paragraph>
@@ -238,11 +238,11 @@ class PricingOverview extends React.Component<Props, State> {
           />
 
           <PricingSection
-            title="Custom"
+            title="Enterprise"
             description="Advanced workflows, security, and support."
             cta={
               <Button type="primary" size="large" block ghost>
-                Chat with us
+                Contact sales
               </Button>
             }
             pricing={<Text>Custom pricing</Text>}
@@ -253,7 +253,7 @@ class PricingOverview extends React.Component<Props, State> {
                 </Paragraph>
 
                 <Paragraph>
-                  <li>Unlimited agents</li>
+                  <li>Unlimited seats</li>
                   <li>First-class support</li>
                   <li>Custom integrations</li>
                 </Paragraph>
