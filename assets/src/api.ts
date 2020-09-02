@@ -471,6 +471,17 @@ export const fetchDefaultPaymentMethod = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const fetchBillingInfo = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/billing`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const createPaymentMethod = async (
   paymentMethod: any,
   token = getAccessToken()

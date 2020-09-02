@@ -142,7 +142,23 @@ class BillingOverview extends React.Component<Props, State> {
   state = {loading: true, defaultPaymentMethod: null};
 
   async componentDidMount() {
-    const defaultPaymentMethod = await API.fetchDefaultPaymentMethod();
+    const {
+      subscription,
+      product,
+      num_users: numUsers,
+      num_messages: numMessages,
+      payment_method: defaultPaymentMethod,
+      subscription_plan: subscriptionPlan,
+    } = await API.fetchBillingInfo();
+
+    console.log({
+      subscription,
+      product,
+      numUsers,
+      numMessages,
+      defaultPaymentMethod,
+      subscriptionPlan,
+    });
 
     this.setState({defaultPaymentMethod, loading: false});
   }

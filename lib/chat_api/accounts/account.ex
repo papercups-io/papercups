@@ -12,7 +12,11 @@ defmodule ChatApi.Accounts.Account do
   @foreign_key_type :binary_id
   schema "accounts" do
     field(:company_name, :string)
+    field(:subscription_plan, :string)
+
     field(:stripe_customer_id, :string)
+    field(:stripe_subscription_id, :string)
+    field(:stripe_product_id, :string)
     field(:stripe_default_payment_method_id, :string)
 
     has_many(:customers, Customer)
@@ -27,7 +31,14 @@ defmodule ChatApi.Accounts.Account do
   @doc false
   def changeset(account, attrs) do
     account
-    |> cast(attrs, [:company_name, :stripe_customer_id, :stripe_default_payment_method_id])
+    |> cast(attrs, [
+      :company_name,
+      :subscription_plan,
+      :stripe_customer_id,
+      :stripe_subscription_id,
+      :stripe_product_id,
+      :stripe_default_payment_method_id
+    ])
     |> validate_required([:company_name])
   end
 end
