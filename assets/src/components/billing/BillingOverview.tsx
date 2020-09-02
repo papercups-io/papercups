@@ -1,4 +1,6 @@
 import React from 'react';
+import {capitalize} from 'lodash';
+import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import {Elements} from '@stripe/react-stripe-js';
 import {loadStripe} from '@stripe/stripe-js';
@@ -28,6 +30,43 @@ enum Alignment {
   Left = 'left',
   Center = 'center',
 }
+
+type CreditCardBrand =
+  | 'amex'
+  | 'cartes_bancaires'
+  | 'diners_club'
+  | 'discover'
+  | 'jcb'
+  | 'mastercard'
+  | 'visa'
+  | 'unionpay'
+  | string;
+
+const getBrandName = (brand: CreditCardBrand) => {
+  switch (brand) {
+    case 'visa':
+      return 'Visa';
+    case 'mastercard':
+      return 'MasterCard';
+    case 'amex':
+      return 'American Express';
+    case 'discover':
+      return 'Discover';
+    case 'unionpay':
+      return 'UnionPay';
+    case 'diners_club':
+      return 'Diners Club';
+    case 'cartes_bancaires':
+      return 'Cartes Bancaires';
+    case 'jcb':
+      return 'JCB';
+    default:
+      return brand
+        .split('_')
+        .map((str) => capitalize(str))
+        .join(' ');
+  }
+};
 
 const BillingBreakdownTable = () => {
   const columns = [
@@ -122,28 +161,24 @@ class BillingOverview extends React.Component<Props, State> {
   formatPaymentMethodInfo = (paymentMethod?: any) => {
     if (!paymentMethod) {
       return (
-        <Flex sx={{alignItems: 'center', my: 1}}>
-          <Text type="secondary">None</Text>
-        </Flex>
+        <Text type="secondary">
+          No credit card information has been entered yet.
+        </Text>
       );
     }
 
-    const {last4, exp_month, exp_year} = paymentMethod;
+    const {brand, last4, exp_month, exp_year} = paymentMethod;
+    const brandName = getBrandName(brand);
+    const expiresAt = dayjs()
+      .set('month', exp_month - 1)
+      .set('year', exp_year)
+      .format('MMM YYYY');
 
     return (
-      <Flex sx={{alignItems: 'center', my: 1}}>
-        <Box mr={2}>
-          <CreditCardTwoTone twoToneColor={colors.primary} />
-        </Box>
-        <Text keyboard style={{letterSpacing: 0.6}}>
-          ••••••••••••{last4}
-        </Text>
-        <Box ml={2}>
-          <Text type="secondary">
-            expires {exp_month}/{exp_year}
-          </Text>
-        </Box>
-      </Flex>
+      <Text type="secondary">
+        Billed to <CreditCardTwoTone twoToneColor={colors.primary} />{' '}
+        {brandName} ending in {last4} (expires {expiresAt})
+      </Text>
     );
   };
 
@@ -200,10 +235,7 @@ class BillingOverview extends React.Component<Props, State> {
           <BillingBreakdownTable />
         </Box>
 
-        <Box mb={4}>
-          <Text strong>Default payment method</Text>
-          <Box>{this.formatPaymentMethodInfo(defaultPaymentMethod)}</Box>
-        </Box>
+        <Box mb={4}>{this.formatPaymentMethodInfo(defaultPaymentMethod)}</Box>
 
         <Box mb={4}>
           <Elements stripe={stripe}>
