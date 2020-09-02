@@ -12,6 +12,7 @@ const {
   REACT_APP_SENTRY_DSN,
   REACT_APP_LOGROCKET_ID,
   REACT_APP_POSTHOG_TOKEN,
+  REACT_APP_POSTHOG_API_HOST = 'https://app.posthog.com',
 } = process.env;
 
 if (REACT_APP_SENTRY_DSN) {
@@ -23,7 +24,7 @@ if (REACT_APP_LOGROCKET_ID) {
 }
 
 if (REACT_APP_POSTHOG_TOKEN) {
-  posthog.init(REACT_APP_POSTHOG_TOKEN, {api_host: 'https://app.posthog.com'});
+  posthog.init(REACT_APP_POSTHOG_TOKEN, {api_host: REACT_APP_POSTHOG_API_HOST});
 }
 
 ReactDOM.render(
