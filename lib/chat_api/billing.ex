@@ -4,7 +4,7 @@ defmodule ChatApi.Billing do
   """
 
   import Ecto.Query, warn: false
-  alias ChatApi.Messages
+  alias ChatApi.{Accounts, Messages}
 
   @doc """
   Get billing info from Stripe for the given account
@@ -34,6 +34,43 @@ defmodule ChatApi.Billing do
     else
       # TODO: need to fix this
       _ -> %{}
+    end
+  end
+
+  def find_stripe_product_by_plan(plan) do
+    with {:ok, %{data: products}} <- Stripe.Product.list(%{active: true}) do
+      Enum.find(products, fn prod -> prod.metadata["name"] == plan end)
+    end
+  end
+
+  def get_stripe_price_ids_by_product(product) do
+    with {:ok, %{data: prices}} <- Stripe.Price.list(%{product: product.id}) do
+      Enum.map(prices, fn price -> %{price: price.id} end)
+    end
+  end
+
+  def get_subscription_items_to_delete(subscription_id) do
+    with {:ok, %{items: %{data: items}}} <- Stripe.Subscription.retrieve(subscription_id) do
+      Enum.map(items, fn item -> %{id: item.id, deleted: true} end)
+    end
+  end
+
+  def update_subscription_plan(account, plan) do
+    %{
+      stripe_subscription_id: subscription_id
+    } = account
+
+    product = find_stripe_product_by_plan(plan)
+    new_items = get_stripe_price_ids_by_product(product)
+    items_to_delete = get_subscription_items_to_delete(subscription_id)
+    items = new_items ++ items_to_delete
+
+    with {:ok, subscription} <- Stripe.Subscription.update(subscription_id, %{items: items}) do
+      Accounts.update_account(account, %{
+        stripe_subscription_id: subscription.id,
+        stripe_product_id: product.id,
+        subscription_plan: plan
+      })
     end
   end
 end

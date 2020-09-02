@@ -7,13 +7,22 @@ import CardInputSection from './CardInputSection';
 
 type Props = {
   onSuccess?: (paymentMethod: any) => void;
+  onCancel?: () => void;
 };
 
-const PaymentForm = ({onSuccess}: Props) => {
+const PaymentForm = ({onSuccess, onCancel}: Props) => {
   const [isSubmitting, setSubmitting] = React.useState(false);
   const [error, setErrorMessage] = React.useState('');
   const stripe = useStripe();
   const elements = useElements();
+
+  const handleCancel = (e: any) => {
+    e.preventDefault();
+
+    if (onCancel && typeof onCancel == 'function') {
+      onCancel();
+    }
+  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -66,27 +75,34 @@ const PaymentForm = ({onSuccess}: Props) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Text strong>Update payment information</Text>
+      <Text strong>Credit card number</Text>
 
-      <Flex mt={1} mb={2} sx={{maxWidth: 480, alignItems: 'center'}}>
+      <Flex mt={1} mb={2} sx={{alignItems: 'center'}}>
         <CardInputSection />
       </Flex>
 
-      <Flex sx={{alignItems: 'center'}}>
-        <Button
-          htmlType="submit"
-          type="primary"
-          disabled={!stripe}
-          loading={isSubmitting}
-        >
-          Update
-        </Button>
+      {error && (
+        <Box my={2}>
+          <Text type="danger">{error}</Text>
+        </Box>
+      )}
 
-        {error && (
-          <Box ml={3}>
-            <Text type="danger">{error}</Text>
-          </Box>
-        )}
+      <Flex mx={-1} sx={{alignItems: 'center', justifyContent: 'flex-end'}}>
+        <Box mx={1}>
+          <Button disabled={!stripe || isSubmitting} onClick={handleCancel}>
+            Cancel
+          </Button>
+        </Box>
+        <Box mx={1}>
+          <Button
+            htmlType="submit"
+            type="primary"
+            disabled={!stripe}
+            loading={isSubmitting}
+          >
+            Update
+          </Button>
+        </Box>
       </Flex>
     </form>
   );

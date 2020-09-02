@@ -12,4 +12,12 @@ defmodule ChatApiWeb.BillingController do
       render(conn, "show.json", billing_info: billing_info)
     end
   end
+
+  def update(conn, %{"plan" => plan}) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         account <- Accounts.get_account!(account_id),
+         {:ok, _account} <- Billing.update_subscription_plan(account, plan) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
 end
