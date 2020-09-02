@@ -26,6 +26,7 @@
     "lodash": "^4.17.20",
     "logrocket": "^1.0.10",
     "phoenix": "^1.5.3",
+    "posthog-js": "^1.4.4",
     "query-string": "^6.13.1",
     "react": "^16.13.1",
     "react-color": "^2.18.1",
