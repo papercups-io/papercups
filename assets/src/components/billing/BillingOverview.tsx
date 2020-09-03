@@ -11,6 +11,7 @@ import {
   Button,
   Modal,
   Paragraph,
+  Select,
   Table,
   Text,
   Title,
@@ -30,6 +31,8 @@ enum Alignment {
   Left = 'left',
   Center = 'center',
 }
+
+type SubscriptionPlan = 'starter' | 'team';
 
 type CreditCardBrand =
   | 'amex'
@@ -68,7 +71,40 @@ const getBrandName = (brand: CreditCardBrand) => {
   }
 };
 
-const BillingBreakdownTable = () => {
+const getPlanInfo = (plan: SubscriptionPlan) => {
+  switch (plan) {
+    case 'team':
+      return {
+        name: 'Team plan',
+        includes: [
+          {feature: '5 seats'},
+          {feature: 'Unlimited messages'},
+          {feature: 'Slack integration'},
+          {feature: 'Webhooks'},
+        ],
+      };
+    case 'starter':
+    default:
+      return {
+        name: 'Starter plan',
+        includes: [
+          {feature: '2 seats'},
+          {feature: '100,000 messages'},
+          {feature: 'Slack integration'},
+        ],
+      };
+  }
+};
+
+const BillingBreakdownTable = ({
+  loading,
+  plan,
+  price,
+}: {
+  loading?: boolean;
+  plan: SubscriptionPlan;
+  price: number;
+}) => {
   const columns = [
     {
       title: 'Subscription',
@@ -107,55 +143,199 @@ const BillingBreakdownTable = () => {
       render: (price: number) => {
         return (
           <Text strong>
-            {price < 0 ? '-' : ''}${Math.abs(price).toFixed(2)}
+            {price < 0 ? '-' : ''}${Math.abs(price / 100).toFixed(2)}
           </Text>
         );
       },
     },
   ];
+  const {name, includes} = getPlanInfo(plan);
   // Just hard-coding for now
   const data = [
     {
       key: 'plan',
-      feature: 'Starter plan',
-      includes: [
-        {feature: '2 seats'},
-        {feature: '100,000 messages'},
-        {feature: 'Slack integration'},
-      ],
-      price: 0,
+      feature: name,
+      includes,
+      price,
     },
-    {key: 'discount', feature: 'Discount', price: 0},
-    {key: 'total', feature: 'Total', price: 0},
+    // {key: 'discount', feature: 'Discount', price},
+    {key: 'total', feature: 'Total', price},
   ];
 
-  return <Table dataSource={data} columns={columns} pagination={false} />;
+  return (
+    <Table
+      loading={loading}
+      dataSource={data}
+      columns={columns}
+      pagination={false}
+    />
+  );
 };
 
 type Props = {};
 type State = {
   loading: boolean;
+  updating: boolean;
+  refreshing: boolean;
+  displayPricingModal: boolean;
+  displayCreditCardModal: boolean;
   defaultPaymentMethod: any;
+  subscription: any;
+  selectedSubscriptionPlan: SubscriptionPlan;
 };
 
 class BillingOverview extends React.Component<Props, State> {
-  state = {loading: true, defaultPaymentMethod: null};
+  state = {
+    loading: true,
+    updating: false,
+    refreshing: false,
+    displayPricingModal: false,
+    displayCreditCardModal: false,
+    defaultPaymentMethod: null,
+    subscription: null,
+    selectedSubscriptionPlan: 'starter' as SubscriptionPlan,
+  };
 
   async componentDidMount() {
-    const defaultPaymentMethod = await API.fetchDefaultPaymentMethod();
-
-    this.setState({defaultPaymentMethod, loading: false});
+    await this.refreshBillingInfo();
   }
 
+  refreshBillingInfo = async () => {
+    this.setState({refreshing: true});
+
+    const {
+      subscription,
+      product,
+      num_users: numUsers,
+      num_messages: numMessages,
+      payment_method: defaultPaymentMethod,
+      subscription_plan: selectedSubscriptionPlan,
+    } = await API.fetchBillingInfo();
+
+    console.log({
+      subscription,
+      product,
+      numUsers,
+      numMessages,
+      defaultPaymentMethod,
+      selectedSubscriptionPlan,
+    });
+
+    this.setState({
+      defaultPaymentMethod,
+      subscription,
+      loading: false,
+      refreshing: false,
+      selectedSubscriptionPlan: selectedSubscriptionPlan || 'starter',
+    });
+  };
+
+  calculateSubscriptionPrice = (subscription: any) => {
+    if (!subscription || !subscription.prices) {
+      return 0;
+    }
+
+    const {prices = []} = subscription;
+
+    return prices.reduce((total: number, price: any) => {
+      const {
+        active,
+        currency,
+        interval,
+        interval_count: intervalCount,
+        unit_amount: amount = 0,
+      } = price;
+      const isValidPrice =
+        currency.toLowerCase() === 'usd' &&
+        interval === 'month' &&
+        intervalCount === 1;
+
+      if (!isValidPrice) {
+        throw new Error(`Unrecognized price: ${JSON.stringify(price)}`);
+      }
+
+      if (active) {
+        return total + amount;
+      }
+
+      return total;
+    }, 0);
+  };
+
+  handleOpenCreditCardModal = () => {
+    this.setState({displayCreditCardModal: true});
+  };
+
+  handleCloseCreditCardModal = () => {
+    this.setState({displayCreditCardModal: false});
+    // TODO: just being lazy and refreshing the page to make sure the
+    // selected subscription plan is accurately reflected in the UI
+    this.refreshBillingInfo();
+  };
+
   handleUpdatePaymentMethod = (paymentMethod: any) => {
-    this.setState({defaultPaymentMethod: paymentMethod});
+    this.setState({
+      defaultPaymentMethod: paymentMethod,
+      displayCreditCardModal: false,
+    });
 
     notification.success({
-      message: 'Payment method updated!',
-      description:
-        "Don't worry, you won't be charged unless you upgrade your account.",
+      message: 'Success!',
+      description: "You've successfully updated your billing information.",
       duration: 10, // 10 seconds
     });
+
+    this.refreshBillingInfo();
+  };
+
+  handleOpenPricingModal = () => {
+    this.setState({displayPricingModal: true});
+  };
+
+  handleCancelPricingModal = () => {
+    this.setState({displayPricingModal: false});
+  };
+
+  createOrUpdateSubscription = async (plan: SubscriptionPlan) => {
+    if (this.state.subscription) {
+      await API.updateSubscriptionPlan(plan);
+    } else {
+      await API.createSubscriptionPlan(plan);
+    }
+  };
+
+  handleSelectSubscriptionPlan = (plan: SubscriptionPlan) => {
+    console.log('Selected plan!', plan);
+
+    this.setState({selectedSubscriptionPlan: plan}, async () => {
+      const {defaultPaymentMethod} = this.state;
+
+      if (defaultPaymentMethod) {
+        this.setState({updating: true});
+        await this.createOrUpdateSubscription(plan);
+        this.setState({
+          displayPricingModal: false,
+          updating: false,
+        });
+        await this.refreshBillingInfo();
+      } else {
+        this.setState({
+          displayPricingModal: false,
+          displayCreditCardModal: true,
+        });
+      }
+    });
+  };
+
+  getNextDueDate = (subscription: any) => {
+    if (!subscription || !subscription.current_period_start) {
+      return null;
+    }
+
+    const {current_period_start: currentPeriodStart} = subscription;
+    const date = dayjs(new Date(currentPeriodStart * 1000));
+
+    return date.add(1, 'month').format('MMMM DD, YYYY');
   };
 
   formatPaymentMethodInfo = (paymentMethod?: any) => {
@@ -183,7 +363,16 @@ class BillingOverview extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, defaultPaymentMethod} = this.state;
+    const {
+      loading,
+      updating,
+      refreshing,
+      displayPricingModal,
+      displayCreditCardModal,
+      defaultPaymentMethod,
+      selectedSubscriptionPlan,
+      subscription,
+    } = this.state;
 
     if (loading) {
       return (
@@ -200,6 +389,10 @@ class BillingOverview extends React.Component<Props, State> {
       );
     }
 
+    const {name: planName} = getPlanInfo(selectedSubscriptionPlan);
+    const subscriptionPlanPrice = this.calculateSubscriptionPrice(subscription);
+    const nextDueDate = this.getNextDueDate(subscription);
+
     return (
       <Box p={4}>
         <Box mb={4}>
@@ -214,34 +407,103 @@ class BillingOverview extends React.Component<Props, State> {
           </Paragraph>
 
           {/* TODO: implement logic to select subscription plan */}
-          {false && (
-            <Box>
-              <Button>Select plan</Button>
+          <Box>
+            <Flex sx={{alignItems: 'center'}}>
+              <Box mr={3}>
+                <Text>
+                  You are currently on the <Text strong>{planName}</Text>
+                </Text>
+              </Box>
 
-              <Modal
-                title="Select plan"
-                visible={false}
-                width={800}
-                onOk={console.log}
-                onCancel={console.log}
+              <Button
+                icon={<RightCircleOutlined />}
+                onClick={this.handleOpenPricingModal}
               >
-                <PricingOptionsModal />
-              </Modal>
-            </Box>
+                Update subscription plan
+              </Button>
+            </Flex>
+
+            <Modal
+              title="Select plan"
+              visible={displayPricingModal}
+              width={800}
+              onCancel={this.handleCancelPricingModal}
+              footer={[
+                <Button key="cancel" onClick={this.handleCancelPricingModal}>
+                  Cancel
+                </Button>,
+              ]}
+            >
+              <PricingOptionsModal
+                pending={updating}
+                selected={selectedSubscriptionPlan}
+                onSelectPlan={this.handleSelectSubscriptionPlan}
+              />
+            </Modal>
+          </Box>
+        </Box>
+
+        <Box mb={4}>
+          <BillingBreakdownTable
+            loading={refreshing}
+            plan={selectedSubscriptionPlan}
+            price={subscriptionPlanPrice}
+          />
+        </Box>
+
+        <Flex mb={3} sx={{alignItems: 'center'}}>
+          <Box mr={2}>{this.formatPaymentMethodInfo(defaultPaymentMethod)}</Box>
+          <Button
+            type="primary"
+            size="small"
+            ghost
+            onClick={this.handleOpenCreditCardModal}
+          >
+            {!!defaultPaymentMethod ? 'Edit' : 'Add'} card
+          </Button>
+        </Flex>
+
+        <Box mb={4}>
+          {nextDueDate && (
+            <Text type="secondary">
+              Next due date: <Text strong>{nextDueDate}</Text>
+            </Text>
           )}
         </Box>
 
-        <Box mb={4}>
-          <BillingBreakdownTable />
-        </Box>
-
-        <Box mb={4}>{this.formatPaymentMethodInfo(defaultPaymentMethod)}</Box>
-
-        <Box mb={4}>
+        <Modal
+          title="Update credit card information"
+          visible={displayCreditCardModal}
+          onCancel={this.handleCloseCreditCardModal}
+          footer={null}
+        >
+          <Box mb={3}>
+            <Box mb={1}>
+              <Text strong>Subscription plan</Text>
+            </Box>
+            <Select
+              style={{width: '100%'}}
+              defaultValue={selectedSubscriptionPlan}
+              value={selectedSubscriptionPlan}
+              onChange={(plan) =>
+                this.setState({selectedSubscriptionPlan: plan})
+              }
+            >
+              <Select.Option value="starter">
+                Starter plan ($0/month)
+              </Select.Option>
+              <Select.Option value="team">Team plan ($40/month)</Select.Option>
+            </Select>
+          </Box>
+          {/* TODO: maybe just try Stripe Checkout instead? */}
           <Elements stripe={stripe}>
-            <PaymentForm onSuccess={this.handleUpdatePaymentMethod} />
+            <PaymentForm
+              plan={selectedSubscriptionPlan}
+              onSuccess={this.handleUpdatePaymentMethod}
+              onCancel={this.handleCloseCreditCardModal}
+            />
           </Elements>
-        </Box>
+        </Modal>
       </Box>
     );
   }

@@ -1,4 +1,5 @@
 import ApiOutlined from '@ant-design/icons/ApiOutlined';
+import CheckCircleTwoTone from '@ant-design/icons/CheckCircleTwoTone';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import CreditCardOutlined from '@ant-design/icons/CreditCardOutlined';
 import CreditCardTwoTone from '@ant-design/icons/CreditCardTwoTone';
@@ -23,6 +24,7 @@ import UserOutlined from '@ant-design/icons/UserOutlined';
 
 export {
   ApiOutlined,
+  CheckCircleTwoTone,
   CheckOutlined,
   CreditCardOutlined,
   CreditCardTwoTone,
