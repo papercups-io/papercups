@@ -464,9 +464,11 @@ class BillingOverview extends React.Component<Props, State> {
         </Flex>
 
         <Box mb={4}>
-          <Text type="secondary">
-            Next due date: <Text strong>{nextDueDate}</Text>
-          </Text>
+          {nextDueDate && (
+            <Text type="secondary">
+              Next due date: <Text strong>{nextDueDate}</Text>
+            </Text>
+          )}
         </Box>
 
         <Modal
@@ -480,7 +482,7 @@ class BillingOverview extends React.Component<Props, State> {
               <Text strong>Subscription plan</Text>
             </Box>
             <Select
-              style={{width: '100%', maxWidth: 400}}
+              style={{width: '100%'}}
               defaultValue={selectedSubscriptionPlan}
               value={selectedSubscriptionPlan}
               onChange={(plan) =>

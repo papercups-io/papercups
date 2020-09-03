@@ -221,10 +221,12 @@ export const PricingOptionsModal = ({
             <Paragraph>Comes with:</Paragraph>
 
             <Paragraph>
-              <li>2 seats included</li>
-              <li>100,000 messages</li>
-              <li>Customizable chat widget</li>
-              <li>Slack integration</li>
+              <ul>
+                <li>2 seats included</li>
+                <li>100,000 messages</li>
+                <li>Customizable chat widget</li>
+                <li>Slack integration</li>
+              </ul>
             </Paragraph>
           </>
         }
@@ -259,10 +261,12 @@ export const PricingOptionsModal = ({
             </Paragraph>
 
             <Paragraph>
-              <li>5 seats included</li>
-              <li>Unlimited messages</li>
-              <li>Additional integrations</li>
-              <li>Webhooks</li>
+              <ul>
+                <li>5 seats included</li>
+                <li>Unlimited messages</li>
+                <li>Additional integrations</li>
+                <li>Webhooks</li>
+              </ul>
             </Paragraph>
           </>
         }
@@ -274,9 +278,11 @@ export const PricingOptionsModal = ({
         title="Enterprise"
         description="Advanced workflows, security, and support."
         cta={
-          <Button type="primary" size="large" block ghost disabled={pending}>
-            Contact sales
-          </Button>
+          <a href="mailto:founders@papercups.io?Subject=Papercups Enterprise Edition">
+            <Button type="primary" size="large" block ghost disabled={pending}>
+              Contact sales
+            </Button>
+          </a>
         }
         pricing={<Text>Custom pricing</Text>}
         features={
@@ -286,9 +292,11 @@ export const PricingOptionsModal = ({
             </Paragraph>
 
             <Paragraph>
-              <li>Unlimited seats</li>
-              <li>First-class support</li>
-              <li>Custom integrations</li>
+              <ul>
+                <li>Unlimited seats</li>
+                <li>First-class support</li>
+                <li>Custom integrations</li>
+              </ul>
             </Paragraph>
           </>
         }
@@ -312,6 +320,8 @@ class PricingOverview extends React.Component<Props, State> {
         </Box>
 
         <PricingOptions />
+        <Divider />
+        <PricingOptionsModal selected={null} onSelectPlan={console.log} />
       </Box>
     );
   }
