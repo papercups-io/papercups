@@ -7,7 +7,7 @@ defmodule ChatApi.UserInvitations do
   alias ChatApi.Repo
   alias ChatApi.UserInvitations.UserInvitation
 
-  @seconds_in_a_day 86400
+  @seconds_in_a_day 86_400
   # number of days the invite is valid
   @days_from_now 3
 

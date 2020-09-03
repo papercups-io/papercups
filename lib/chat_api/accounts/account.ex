@@ -12,7 +12,7 @@ defmodule ChatApi.Accounts.Account do
   @foreign_key_type :binary_id
   schema "accounts" do
     field(:company_name, :string)
-    field(:subscription_plan, :string)
+    field(:subscription_plan, :string, default: "starter")
 
     field(:stripe_customer_id, :string)
     field(:stripe_subscription_id, :string)

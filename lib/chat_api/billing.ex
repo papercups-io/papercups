@@ -6,6 +6,8 @@ defmodule ChatApi.Billing do
   import Ecto.Query, warn: false
   alias ChatApi.{Accounts, Messages}
 
+  @trial_period_days 30
+
   @doc """
   Get billing info from Stripe for the given account
   """
@@ -84,7 +86,12 @@ defmodule ChatApi.Billing do
     product = find_stripe_product_by_plan(plan)
     items = get_stripe_price_ids_by_product(product)
 
-    with {:ok, subscription} <- Stripe.Subscription.create(%{customer: customer, items: items}) do
+    with {:ok, subscription} <-
+           Stripe.Subscription.create(%{
+             customer: customer,
+             items: items,
+             trial_period_days: @trial_period_days
+           }) do
       Accounts.update_account(account, %{
         stripe_subscription_id: subscription.id,
         stripe_product_id: product.id,

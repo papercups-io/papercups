@@ -5,16 +5,12 @@ import {Button, Text} from '../common';
 import * as API from '../../api';
 import CardInputSection from './CardInputSection';
 
-// TODO: DRY up!
-type SubscriptionPlan = 'starter' | 'team';
-
 type Props = {
-  plan?: SubscriptionPlan;
-  onSuccess?: (paymentMethod: any) => void;
+  onSuccess?: (paymentMethod: any) => Promise<void>;
   onCancel?: () => void;
 };
 
-const PaymentForm = ({plan, onSuccess, onCancel}: Props) => {
+const PaymentForm = ({onSuccess, onCancel}: Props) => {
   const [isSubmitting, setSubmitting] = React.useState(false);
   const [error, setErrorMessage] = React.useState('');
   const stripe = useStripe();
@@ -61,12 +57,10 @@ const PaymentForm = ({plan, onSuccess, onCancel}: Props) => {
         const result = await API.createPaymentMethod(paymentMethod);
         console.log('Successfully added payment method!', result);
 
-        if (plan) {
-          const subscription = await API.createSubscriptionPlan(plan);
-          console.log('Successfully created subscription!', subscription);
+        if (onSuccess && typeof onSuccess === 'function') {
+          await onSuccess(result);
         }
 
-        onSuccess && onSuccess(result);
         cardElement.clear();
       } catch (err) {
         console.log('Failed to create payment method:', err);

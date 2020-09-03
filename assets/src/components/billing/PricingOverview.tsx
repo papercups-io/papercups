@@ -2,11 +2,10 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {colors, Button, Divider, Paragraph, Text, Title} from '../common';
 import {CheckCircleTwoTone} from '../icons';
+import {SubscriptionPlan} from './support';
 
 type Props = {};
 type State = {};
-
-type SubscriptionPlan = 'starter' | 'team';
 
 const PricingCard = ({
   title,

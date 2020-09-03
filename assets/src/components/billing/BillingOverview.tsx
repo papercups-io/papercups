@@ -190,7 +190,11 @@ class BillingOverview extends React.Component<Props, State> {
     this.refreshBillingInfo();
   };
 
-  handleUpdatePaymentMethod = (paymentMethod: any) => {
+  handleUpdatePaymentMethod = async (paymentMethod: any) => {
+    const {selectedSubscriptionPlan} = this.state;
+
+    await this.createOrUpdateSubscription(selectedSubscriptionPlan);
+
     this.setState({
       defaultPaymentMethod: paymentMethod,
       displayCreditCardModal: false,
@@ -223,6 +227,12 @@ class BillingOverview extends React.Component<Props, State> {
 
   handleSelectSubscriptionPlan = (plan: SubscriptionPlan) => {
     console.log('Selected plan!', plan);
+
+    if (plan === this.state.selectedSubscriptionPlan) {
+      this.setState({displayPricingModal: false});
+
+      return;
+    }
 
     this.setState({selectedSubscriptionPlan: plan}, async () => {
       const {defaultPaymentMethod} = this.state;
@@ -418,7 +428,6 @@ class BillingOverview extends React.Component<Props, State> {
           {/* TODO: maybe just try Stripe Checkout instead? */}
           <Elements stripe={stripe}>
             <PaymentForm
-              plan={selectedSubscriptionPlan}
               onSuccess={this.handleUpdatePaymentMethod}
               onCancel={this.handleCloseCreditCardModal}
             />
