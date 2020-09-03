@@ -1,5 +1,4 @@
 import React from 'react';
-import {capitalize} from 'lodash';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import {Elements} from '@stripe/react-stripe-js';
@@ -20,6 +19,15 @@ import {CreditCardTwoTone, RightCircleOutlined} from '../icons';
 import Spinner from '../Spinner';
 import PaymentForm from './PaymentForm';
 import {PricingOptionsModal} from './PricingOverview';
+import {
+  SubscriptionPlan,
+  getBrandName,
+  getPlanInfo,
+  getNextDueDate,
+  getTrialEndDate,
+  calculateSubscriptionDiscount,
+  calculateSubscriptionPrice,
+} from './support';
 import './Billing.css';
 
 const stripe = loadStripe(
@@ -32,78 +40,16 @@ enum Alignment {
   Center = 'center',
 }
 
-type SubscriptionPlan = 'starter' | 'team';
-
-type CreditCardBrand =
-  | 'amex'
-  | 'cartes_bancaires'
-  | 'diners_club'
-  | 'discover'
-  | 'jcb'
-  | 'mastercard'
-  | 'visa'
-  | 'unionpay'
-  | string;
-
-const getBrandName = (brand: CreditCardBrand) => {
-  switch (brand) {
-    case 'visa':
-      return 'Visa';
-    case 'mastercard':
-      return 'MasterCard';
-    case 'amex':
-      return 'American Express';
-    case 'discover':
-      return 'Discover';
-    case 'unionpay':
-      return 'UnionPay';
-    case 'diners_club':
-      return 'Diners Club';
-    case 'cartes_bancaires':
-      return 'Cartes Bancaires';
-    case 'jcb':
-      return 'JCB';
-    default:
-      return brand
-        .split('_')
-        .map((str) => capitalize(str))
-        .join(' ');
-  }
-};
-
-const getPlanInfo = (plan: SubscriptionPlan) => {
-  switch (plan) {
-    case 'team':
-      return {
-        name: 'Team plan',
-        includes: [
-          {feature: '5 seats'},
-          {feature: 'Unlimited messages'},
-          {feature: 'Slack integration'},
-          {feature: 'Webhooks'},
-        ],
-      };
-    case 'starter':
-    default:
-      return {
-        name: 'Starter plan',
-        includes: [
-          {feature: '2 seats'},
-          {feature: '100,000 messages'},
-          {feature: 'Slack integration'},
-        ],
-      };
-  }
-};
-
 const BillingBreakdownTable = ({
   loading,
   plan,
   price,
+  discount = 0,
 }: {
   loading?: boolean;
   plan: SubscriptionPlan;
   price: number;
+  discount?: number;
 }) => {
   const columns = [
     {
@@ -150,7 +96,6 @@ const BillingBreakdownTable = ({
     },
   ];
   const {name, includes} = getPlanInfo(plan);
-  // Just hard-coding for now
   const data = [
     {
       key: 'plan',
@@ -158,9 +103,13 @@ const BillingBreakdownTable = ({
       includes,
       price,
     },
-    // {key: 'discount', feature: 'Discount', price},
-    {key: 'total', feature: 'Total', price},
-  ];
+    discount
+      ? {key: 'discount', feature: 'Discount', price: -1 * discount}
+      : null,
+    {key: 'total', feature: 'Total', price: price - discount},
+  ]
+    .filter((item) => !!item)
+    .map((item) => item as object);
 
   return (
     <Table
@@ -230,38 +179,6 @@ class BillingOverview extends React.Component<Props, State> {
     });
   };
 
-  calculateSubscriptionPrice = (subscription: any) => {
-    if (!subscription || !subscription.prices) {
-      return 0;
-    }
-
-    const {prices = []} = subscription;
-
-    return prices.reduce((total: number, price: any) => {
-      const {
-        active,
-        currency,
-        interval,
-        interval_count: intervalCount,
-        unit_amount: amount = 0,
-      } = price;
-      const isValidPrice =
-        currency.toLowerCase() === 'usd' &&
-        interval === 'month' &&
-        intervalCount === 1;
-
-      if (!isValidPrice) {
-        throw new Error(`Unrecognized price: ${JSON.stringify(price)}`);
-      }
-
-      if (active) {
-        return total + amount;
-      }
-
-      return total;
-    }, 0);
-  };
-
   handleOpenCreditCardModal = () => {
     this.setState({displayCreditCardModal: true});
   };
@@ -327,17 +244,6 @@ class BillingOverview extends React.Component<Props, State> {
     });
   };
 
-  getNextDueDate = (subscription: any) => {
-    if (!subscription || !subscription.current_period_start) {
-      return null;
-    }
-
-    const {current_period_start: currentPeriodStart} = subscription;
-    const date = dayjs(new Date(currentPeriodStart * 1000));
-
-    return date.add(1, 'month').format('MMMM DD, YYYY');
-  };
-
   formatPaymentMethodInfo = (paymentMethod?: any) => {
     if (!paymentMethod) {
       return (
@@ -390,8 +296,12 @@ class BillingOverview extends React.Component<Props, State> {
     }
 
     const {name: planName} = getPlanInfo(selectedSubscriptionPlan);
-    const subscriptionPlanPrice = this.calculateSubscriptionPrice(subscription);
-    const nextDueDate = this.getNextDueDate(subscription);
+    const subscriptionPlanPrice = calculateSubscriptionPrice(subscription);
+    const subscriptionPlanDiscount = calculateSubscriptionDiscount(
+      subscription
+    );
+    const nextDueDate = getNextDueDate(subscription);
+    const trialEndDate = getTrialEndDate(subscription);
 
     return (
       <Box p={4}>
@@ -406,7 +316,6 @@ class BillingOverview extends React.Component<Props, State> {
             </Text>
           </Paragraph>
 
-          {/* TODO: implement logic to select subscription plan */}
           <Box>
             <Flex sx={{alignItems: 'center'}}>
               <Box mr={3}>
@@ -448,6 +357,7 @@ class BillingOverview extends React.Component<Props, State> {
             loading={refreshing}
             plan={selectedSubscriptionPlan}
             price={subscriptionPlanPrice}
+            discount={subscriptionPlanDiscount}
           />
         </Box>
 
@@ -463,11 +373,21 @@ class BillingOverview extends React.Component<Props, State> {
           </Button>
         </Flex>
 
-        <Box mb={4}>
+        <Box mb={3}>
           {nextDueDate && (
-            <Text type="secondary">
-              Next due date: <Text strong>{nextDueDate}</Text>
-            </Text>
+            <Box mb={3}>
+              <Text type="secondary">
+                Next billing date: <Text strong>{nextDueDate}</Text>
+              </Text>
+            </Box>
+          )}
+
+          {trialEndDate && (
+            <Box mb={3}>
+              <Text type="secondary">
+                (Free trial ends <Text strong>{trialEndDate}</Text>)
+              </Text>
+            </Box>
           )}
         </Box>
 
