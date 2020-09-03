@@ -296,6 +296,14 @@ class BillingOverview extends React.Component<Props, State> {
     this.setState({displayPricingModal: false});
   };
 
+  createOrUpdateSubscription = async (plan: SubscriptionPlan) => {
+    if (this.state.subscription) {
+      await API.updateSubscriptionPlan(plan);
+    } else {
+      await API.createSubscriptionPlan(plan);
+    }
+  };
+
   handleSelectSubscriptionPlan = (plan: SubscriptionPlan) => {
     console.log('Selected plan!', plan);
 
@@ -304,7 +312,7 @@ class BillingOverview extends React.Component<Props, State> {
 
       if (defaultPaymentMethod) {
         this.setState({updating: true});
-        await API.updateSubscriptionPlan(plan);
+        await this.createOrUpdateSubscription(plan);
         this.setState({
           displayPricingModal: false,
           updating: false,
