@@ -6,6 +6,8 @@ import {CheckCircleTwoTone} from '../icons';
 type Props = {};
 type State = {};
 
+type SubscriptionPlan = 'starter' | 'team';
+
 const PricingCard = ({
   title,
   description,
@@ -185,8 +187,8 @@ export const PricingOptionsModal = ({
   onSelectPlan,
 }: {
   pending?: boolean;
-  selected: string | null;
-  onSelectPlan: (plan: string) => void;
+  selected: SubscriptionPlan | null;
+  onSelectPlan: (plan: SubscriptionPlan) => void;
 }) => {
   const handleSelectStarterPlan = () => onSelectPlan('starter');
   const handleSelectTeamPlan = () => onSelectPlan('team');

@@ -46,7 +46,8 @@ defmodule ChatApiWeb.BillingView do
       created: price.created,
       billing_scheme: price.billing_scheme,
       interval: price.recurring.interval,
-      interval_count: price.recurring.interval_count
+      interval_count: price.recurring.interval_count,
+      product_id: price.product
     }
   end
 

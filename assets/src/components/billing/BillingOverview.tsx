@@ -31,6 +31,8 @@ enum Alignment {
   Center = 'center',
 }
 
+type SubscriptionPlan = 'starter' | 'team';
+
 type CreditCardBrand =
   | 'amex'
   | 'cartes_bancaires'
@@ -68,7 +70,38 @@ const getBrandName = (brand: CreditCardBrand) => {
   }
 };
 
-const BillingBreakdownTable = () => {
+const getPlanInfo = (plan: SubscriptionPlan) => {
+  switch (plan) {
+    case 'team':
+      return {
+        name: 'Team plan',
+        includes: [
+          {feature: '5 seats'},
+          {feature: 'Unlimited messages'},
+          {feature: 'Slack integration'},
+          {feature: 'Webhooks'},
+        ],
+      };
+    case 'starter':
+    default:
+      return {
+        name: 'Starter plan',
+        includes: [
+          {feature: '2 seats'},
+          {feature: '100,000 messages'},
+          {feature: 'Slack integration'},
+        ],
+      };
+  }
+};
+
+const BillingBreakdownTable = ({
+  plan,
+  price,
+}: {
+  plan: SubscriptionPlan;
+  price: number;
+}) => {
   const columns = [
     {
       title: 'Subscription',
@@ -107,26 +140,23 @@ const BillingBreakdownTable = () => {
       render: (price: number) => {
         return (
           <Text strong>
-            {price < 0 ? '-' : ''}${Math.abs(price).toFixed(2)}
+            {price < 0 ? '-' : ''}${Math.abs(price / 100).toFixed(2)}
           </Text>
         );
       },
     },
   ];
+  const {name, includes} = getPlanInfo(plan);
   // Just hard-coding for now
   const data = [
     {
       key: 'plan',
-      feature: 'Starter plan',
-      includes: [
-        {feature: '2 seats'},
-        {feature: '100,000 messages'},
-        {feature: 'Slack integration'},
-      ],
-      price: 0,
+      feature: name,
+      includes,
+      price,
     },
-    // {key: 'discount', feature: 'Discount', price: 0},
-    {key: 'total', feature: 'Total', price: 0},
+    // {key: 'discount', feature: 'Discount', price},
+    {key: 'total', feature: 'Total', price},
   ];
 
   return <Table dataSource={data} columns={columns} pagination={false} />;
@@ -139,7 +169,8 @@ type State = {
   displayPricingModal: boolean;
   displayCreditCardModal: boolean;
   defaultPaymentMethod: any;
-  selectedSubscriptionPlan: string | null;
+  selectedSubscriptionPlan: SubscriptionPlan;
+  subscriptionPlanPrice: number;
 };
 
 class BillingOverview extends React.Component<Props, State> {
@@ -149,10 +180,17 @@ class BillingOverview extends React.Component<Props, State> {
     displayPricingModal: false,
     displayCreditCardModal: false,
     defaultPaymentMethod: null,
-    selectedSubscriptionPlan: null,
+    selectedSubscriptionPlan: 'starter' as SubscriptionPlan,
+    subscriptionPlanPrice: 0,
   };
 
   async componentDidMount() {
+    await this.refreshBillingInfo();
+  }
+
+  refreshBillingInfo = async () => {
+    this.setState({loading: true});
+
     const {
       subscription,
       product,
@@ -175,8 +213,37 @@ class BillingOverview extends React.Component<Props, State> {
       defaultPaymentMethod,
       selectedSubscriptionPlan,
       loading: false,
+      subscriptionPlanPrice: this.calculateSubscriptionPrice(subscription),
     });
-  }
+  };
+
+  calculateSubscriptionPrice = (subscription: any) => {
+    const {prices = []} = subscription;
+
+    return prices.reduce((total: number, price: any) => {
+      const {
+        active,
+        currency,
+        interval,
+        interval_count: intervalCount,
+        unit_amount: amount = 0,
+      } = price;
+      const isValidPrice =
+        currency.toLowerCase() === 'usd' &&
+        interval === 'month' &&
+        intervalCount === 1;
+
+      if (!isValidPrice) {
+        throw new Error(`Unrecognized price: ${JSON.stringify(price)}`);
+      }
+
+      if (active) {
+        return total + amount;
+      }
+
+      return total;
+    }, 0);
+  };
 
   handleOpenCreditCardModal = () => {
     this.setState({displayCreditCardModal: true});
@@ -207,7 +274,7 @@ class BillingOverview extends React.Component<Props, State> {
     this.setState({displayPricingModal: false});
   };
 
-  handleSelectSubscriptionPlan = (plan: string) => {
+  handleSelectSubscriptionPlan = (plan: SubscriptionPlan) => {
     console.log('Selected plan!', plan);
 
     this.setState({selectedSubscriptionPlan: plan}, async () => {
@@ -216,7 +283,11 @@ class BillingOverview extends React.Component<Props, State> {
       if (defaultPaymentMethod) {
         this.setState({updating: true});
         await API.updateSubscriptionPlan(plan);
-        this.setState({displayPricingModal: false, updating: false});
+        this.setState({
+          displayPricingModal: false,
+          updating: false,
+        });
+        await this.refreshBillingInfo();
       } else {
         this.setState({
           displayPricingModal: false,
@@ -258,6 +329,7 @@ class BillingOverview extends React.Component<Props, State> {
       displayCreditCardModal,
       defaultPaymentMethod,
       selectedSubscriptionPlan,
+      subscriptionPlanPrice,
     } = this.state;
 
     if (loading) {
@@ -275,6 +347,8 @@ class BillingOverview extends React.Component<Props, State> {
       );
     }
 
+    const {name: planName} = getPlanInfo(selectedSubscriptionPlan);
+
     return (
       <Box p={4}>
         <Box mb={4}>
@@ -290,12 +364,20 @@ class BillingOverview extends React.Component<Props, State> {
 
           {/* TODO: implement logic to select subscription plan */}
           <Box>
-            <Button
-              icon={<RightCircleOutlined />}
-              onClick={this.handleOpenPricingModal}
-            >
-              Update subscription plan
-            </Button>
+            <Flex sx={{alignItems: 'center'}}>
+              <Box mr={3}>
+                <Text>
+                  You are currently on the <Text strong>{planName}</Text>
+                </Text>
+              </Box>
+
+              <Button
+                icon={<RightCircleOutlined />}
+                onClick={this.handleOpenPricingModal}
+              >
+                Update subscription plan
+              </Button>
+            </Flex>
 
             <Modal
               title="Select plan"
@@ -318,7 +400,10 @@ class BillingOverview extends React.Component<Props, State> {
         </Box>
 
         <Box mb={4}>
-          <BillingBreakdownTable />
+          <BillingBreakdownTable
+            plan={selectedSubscriptionPlan}
+            price={subscriptionPlanPrice}
+          />
         </Box>
 
         <Flex mb={4} sx={{alignItems: 'center'}}>
