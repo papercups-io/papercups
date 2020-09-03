@@ -1,6 +1,6 @@
 # Papercups
 
-Papercups is an open source live customer chat web app. We offer a hosted version at [app.papercups.io](https://app.papercups.io/).
+Papercups is an open source live customer chat web app written in Elixir. We offer a hosted version at [app.papercups.io](https://app.papercups.io/).
 
 You can check out how our chat widget looks and play around with customizing it on our [demo page](https://app.papercups.io/demo/). The chat widget component is also open sourced at [github.com/papercups-io/chat-widget](https://github.com/papercups-io/chat-widget).
 
