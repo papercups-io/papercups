@@ -6,7 +6,7 @@ defmodule ChatApi.Repo.Migrations.AddStripeSubscriptionFields do
       add(:stripe_subscription_id, :string)
       add(:stripe_product_id, :string)
 
-      add(:subscription_plan, :string)
+      add(:subscription_plan, :string, default: "starter")
     end
   end
 end

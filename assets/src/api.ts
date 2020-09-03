@@ -482,7 +482,7 @@ export const fetchBillingInfo = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const updateSubscriptionPlan = async (
+export const createSubscriptionPlan = async (
   plan: string,
   token = getAccessToken()
 ) => {
@@ -492,6 +492,21 @@ export const updateSubscriptionPlan = async (
 
   return request
     .post(`/api/billing`)
+    .send({plan})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateSubscriptionPlan = async (
+  plan: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/billing`)
     .send({plan})
     .set('Authorization', token)
     .then((res) => res.body.data);

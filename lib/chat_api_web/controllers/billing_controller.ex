@@ -13,6 +13,14 @@ defmodule ChatApiWeb.BillingController do
     end
   end
 
+  def create(conn, %{"plan" => plan}) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         account <- Accounts.get_account!(account_id),
+         {:ok, _account} <- Billing.create_subscription_plan(account, plan) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
+
   def update(conn, %{"plan" => plan}) do
     with %{account_id: account_id} <- conn.assigns.current_user,
          account <- Accounts.get_account!(account_id),

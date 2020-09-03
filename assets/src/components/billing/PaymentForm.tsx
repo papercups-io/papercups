@@ -5,12 +5,16 @@ import {Button, Text} from '../common';
 import * as API from '../../api';
 import CardInputSection from './CardInputSection';
 
+// TODO: DRY up!
+type SubscriptionPlan = 'starter' | 'team';
+
 type Props = {
+  plan?: SubscriptionPlan;
   onSuccess?: (paymentMethod: any) => void;
   onCancel?: () => void;
 };
 
-const PaymentForm = ({onSuccess, onCancel}: Props) => {
+const PaymentForm = ({plan, onSuccess, onCancel}: Props) => {
   const [isSubmitting, setSubmitting] = React.useState(false);
   const [error, setErrorMessage] = React.useState('');
   const stripe = useStripe();
@@ -57,6 +61,11 @@ const PaymentForm = ({onSuccess, onCancel}: Props) => {
         const result = await API.createPaymentMethod(paymentMethod);
         console.log('Successfully added payment method!', result);
 
+        if (plan) {
+          const subscription = await API.createSubscriptionPlan(plan);
+          console.log('Successfully created subscription!', subscription);
+        }
+
         onSuccess && onSuccess(result);
         cardElement.clear();
       } catch (err) {
@@ -77,7 +86,7 @@ const PaymentForm = ({onSuccess, onCancel}: Props) => {
     <form onSubmit={handleSubmit}>
       <Text strong>Credit card number</Text>
 
-      <Flex mt={1} mb={2} sx={{alignItems: 'center'}}>
+      <Flex mt={1} mb={3} sx={{alignItems: 'center'}}>
         <CardInputSection />
       </Flex>
 

@@ -28,6 +28,7 @@ defmodule ChatApiWeb.BillingView do
       current_period_start: subscription.current_period_start,
       trial_start: subscription.trial_start,
       trial_end: subscription.trial_end,
+      days_until_due: subscription.days_until_due,
       quantity: subscription.quantity,
       prices:
         subscription.items.data

@@ -50,7 +50,8 @@ defmodule ChatApiWeb.Router do
     get("/accounts/me", AccountController, :me)
     get("/messages/count", MessageController, :count)
     get("/billing", BillingController, :show)
-    post("/billing", BillingController, :update)
+    post("/billing", BillingController, :create)
+    put("/billing", BillingController, :update)
 
     get("/slack/oauth", SlackController, :oauth)
     get("/slack/authorization", SlackController, :authorization)

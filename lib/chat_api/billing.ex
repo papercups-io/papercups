@@ -19,9 +19,9 @@ defmodule ChatApi.Billing do
       users: users
     } = account
 
-    with {:ok, subscription} <- Stripe.Subscription.retrieve(subscription_id),
-         {:ok, product} <- Stripe.Product.retrieve(product_id),
-         {:ok, payment_method} <- Stripe.PaymentMethod.retrieve(payment_method_id),
+    with subscription <- retrieve_stripe_resource(:subscription, subscription_id),
+         product <- retrieve_stripe_resource(:product, product_id),
+         payment_method <- retrieve_stripe_resource(:payment_method, payment_method_id),
          num_messages <- Messages.count_messages_by_account(account_id) do
       %{
         subscription: subscription,
@@ -31,9 +31,32 @@ defmodule ChatApi.Billing do
         num_messages: num_messages,
         num_users: Enum.count(users)
       }
+    end
+  end
+
+  def retrieve_stripe_resource(_resource, nil), do: nil
+
+  def retrieve_stripe_resource(:subscription, subscription_id) do
+    with {:ok, subscription} <- Stripe.Subscription.retrieve(subscription_id) do
+      subscription
     else
-      # TODO: need to fix this
-      _ -> %{}
+      _error -> nil
+    end
+  end
+
+  def retrieve_stripe_resource(:product, product_id) do
+    with {:ok, product} <- Stripe.Product.retrieve(product_id) do
+      product
+    else
+      _error -> nil
+    end
+  end
+
+  def retrieve_stripe_resource(:payment_method, payment_method_id) do
+    with {:ok, payment_method} <- Stripe.PaymentMethod.retrieve(payment_method_id) do
+      payment_method
+    else
+      _error -> nil
     end
   end
 
@@ -52,6 +75,21 @@ defmodule ChatApi.Billing do
   def get_subscription_items_to_delete(subscription_id) do
     with {:ok, %{items: %{data: items}}} <- Stripe.Subscription.retrieve(subscription_id) do
       Enum.map(items, fn item -> %{id: item.id, deleted: true} end)
+    end
+  end
+
+  def create_subscription_plan(account, plan) do
+    %{stripe_customer_id: customer} = account
+
+    product = find_stripe_product_by_plan(plan)
+    items = get_stripe_price_ids_by_product(product)
+
+    with {:ok, subscription} <- Stripe.Subscription.create(%{customer: customer, items: items}) do
+      Accounts.update_account(account, %{
+        stripe_subscription_id: subscription.id,
+        stripe_product_id: product.id,
+        subscription_plan: plan
+      })
     end
   end
 

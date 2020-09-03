@@ -11,6 +11,7 @@ import {
   Button,
   Modal,
   Paragraph,
+  Select,
   Table,
   Text,
   Title,
@@ -96,9 +97,11 @@ const getPlanInfo = (plan: SubscriptionPlan) => {
 };
 
 const BillingBreakdownTable = ({
+  loading,
   plan,
   price,
 }: {
+  loading?: boolean;
   plan: SubscriptionPlan;
   price: number;
 }) => {
@@ -159,29 +162,38 @@ const BillingBreakdownTable = ({
     {key: 'total', feature: 'Total', price},
   ];
 
-  return <Table dataSource={data} columns={columns} pagination={false} />;
+  return (
+    <Table
+      loading={loading}
+      dataSource={data}
+      columns={columns}
+      pagination={false}
+    />
+  );
 };
 
 type Props = {};
 type State = {
   loading: boolean;
   updating: boolean;
+  refreshing: boolean;
   displayPricingModal: boolean;
   displayCreditCardModal: boolean;
   defaultPaymentMethod: any;
+  subscription: any;
   selectedSubscriptionPlan: SubscriptionPlan;
-  subscriptionPlanPrice: number;
 };
 
 class BillingOverview extends React.Component<Props, State> {
   state = {
     loading: true,
     updating: false,
+    refreshing: false,
     displayPricingModal: false,
     displayCreditCardModal: false,
     defaultPaymentMethod: null,
+    subscription: null,
     selectedSubscriptionPlan: 'starter' as SubscriptionPlan,
-    subscriptionPlanPrice: 0,
   };
 
   async componentDidMount() {
@@ -189,7 +201,7 @@ class BillingOverview extends React.Component<Props, State> {
   }
 
   refreshBillingInfo = async () => {
-    this.setState({loading: true});
+    this.setState({refreshing: true});
 
     const {
       subscription,
@@ -211,13 +223,18 @@ class BillingOverview extends React.Component<Props, State> {
 
     this.setState({
       defaultPaymentMethod,
-      selectedSubscriptionPlan,
+      subscription,
       loading: false,
-      subscriptionPlanPrice: this.calculateSubscriptionPrice(subscription),
+      refreshing: false,
+      selectedSubscriptionPlan: selectedSubscriptionPlan || 'starter',
     });
   };
 
   calculateSubscriptionPrice = (subscription: any) => {
+    if (!subscription || !subscription.prices) {
+      return 0;
+    }
+
     const {prices = []} = subscription;
 
     return prices.reduce((total: number, price: any) => {
@@ -251,6 +268,9 @@ class BillingOverview extends React.Component<Props, State> {
 
   handleCloseCreditCardModal = () => {
     this.setState({displayCreditCardModal: false});
+    // TODO: just being lazy and refreshing the page to make sure the
+    // selected subscription plan is accurately reflected in the UI
+    this.refreshBillingInfo();
   };
 
   handleUpdatePaymentMethod = (paymentMethod: any) => {
@@ -260,10 +280,12 @@ class BillingOverview extends React.Component<Props, State> {
     });
 
     notification.success({
-      message: 'Payment method updated!',
-      description: "Don't worry, you haven't been charged for anything yet.",
+      message: 'Success!',
+      description: "You've successfully updated your billing information.",
       duration: 10, // 10 seconds
     });
+
+    this.refreshBillingInfo();
   };
 
   handleOpenPricingModal = () => {
@@ -297,6 +319,17 @@ class BillingOverview extends React.Component<Props, State> {
     });
   };
 
+  getNextDueDate = (subscription: any) => {
+    if (!subscription || !subscription.current_period_start) {
+      return null;
+    }
+
+    const {current_period_start: currentPeriodStart} = subscription;
+    const date = dayjs(new Date(currentPeriodStart * 1000));
+
+    return date.add(1, 'month').format('MMMM DD, YYYY');
+  };
+
   formatPaymentMethodInfo = (paymentMethod?: any) => {
     if (!paymentMethod) {
       return (
@@ -325,11 +358,12 @@ class BillingOverview extends React.Component<Props, State> {
     const {
       loading,
       updating,
+      refreshing,
       displayPricingModal,
       displayCreditCardModal,
       defaultPaymentMethod,
       selectedSubscriptionPlan,
-      subscriptionPlanPrice,
+      subscription,
     } = this.state;
 
     if (loading) {
@@ -348,6 +382,8 @@ class BillingOverview extends React.Component<Props, State> {
     }
 
     const {name: planName} = getPlanInfo(selectedSubscriptionPlan);
+    const subscriptionPlanPrice = this.calculateSubscriptionPrice(subscription);
+    const nextDueDate = this.getNextDueDate(subscription);
 
     return (
       <Box p={4}>
@@ -401,12 +437,13 @@ class BillingOverview extends React.Component<Props, State> {
 
         <Box mb={4}>
           <BillingBreakdownTable
+            loading={refreshing}
             plan={selectedSubscriptionPlan}
             price={subscriptionPlanPrice}
           />
         </Box>
 
-        <Flex mb={4} sx={{alignItems: 'center'}}>
+        <Flex mb={3} sx={{alignItems: 'center'}}>
           <Box mr={2}>{this.formatPaymentMethodInfo(defaultPaymentMethod)}</Box>
           <Button
             type="primary"
@@ -414,9 +451,15 @@ class BillingOverview extends React.Component<Props, State> {
             ghost
             onClick={this.handleOpenCreditCardModal}
           >
-            Edit card
+            {!!defaultPaymentMethod ? 'Edit' : 'Add'} card
           </Button>
         </Flex>
+
+        <Box mb={4}>
+          <Text type="secondary">
+            Next due date: <Text strong>{nextDueDate}</Text>
+          </Text>
+        </Box>
 
         <Modal
           title="Update credit card information"
@@ -424,9 +467,28 @@ class BillingOverview extends React.Component<Props, State> {
           onCancel={this.handleCloseCreditCardModal}
           footer={null}
         >
+          <Box mb={3}>
+            <Box mb={1}>
+              <Text strong>Subscription plan</Text>
+            </Box>
+            <Select
+              style={{width: '100%', maxWidth: 400}}
+              defaultValue={selectedSubscriptionPlan}
+              value={selectedSubscriptionPlan}
+              onChange={(plan) =>
+                this.setState({selectedSubscriptionPlan: plan})
+              }
+            >
+              <Select.Option value="starter">
+                Starter plan ($0/month)
+              </Select.Option>
+              <Select.Option value="team">Team plan ($40/month)</Select.Option>
+            </Select>
+          </Box>
           {/* TODO: maybe just try Stripe Checkout instead? */}
           <Elements stripe={stripe}>
             <PaymentForm
+              plan={selectedSubscriptionPlan}
               onSuccess={this.handleUpdatePaymentMethod}
               onCancel={this.handleCloseCreditCardModal}
             />
