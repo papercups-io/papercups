@@ -100,6 +100,8 @@ defmodule ChatApi.Billing do
 
     product = find_stripe_product_by_plan(plan)
     new_items = get_stripe_price_ids_by_product(product)
+    # TODO: just replace existing item ids with updated price ids?
+    # See https://stripe.com/docs/billing/subscriptions/fixed-price#change-price
     items_to_delete = get_subscription_items_to_delete(subscription_id)
     items = new_items ++ items_to_delete
 
