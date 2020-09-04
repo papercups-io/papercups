@@ -49,12 +49,9 @@ defmodule ChatApi.Billing do
   def find_stripe_product_by_plan(plan) do
     case Stripe.Product.list(%{active: true}) do
       {:ok, %{data: products}} ->
-        found =
-          Enum.find(products, fn prod ->
-            prod.metadata["name"] == plan
-          end)
-
-        case found do
+        products
+        |> Enum.find(fn prod -> prod.metadata["name"] == plan end)
+        |> case do
           nil -> {:error, :not_found}
           product -> {:ok, product}
         end
