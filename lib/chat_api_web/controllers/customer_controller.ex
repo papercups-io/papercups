@@ -57,8 +57,10 @@ defmodule ChatApiWeb.CustomerController do
 
   def update_metadata(conn, %{"id" => id, "metadata" => metadata}) do
     customer = Customers.get_customer!(id)
+    ip = conn.remote_ip |> :inet_parse.ntoa() |> to_string()
+    updates = Map.merge(metadata, %{"ip" => ip, "last_seen_at" => DateTime.utc_now()})
 
-    with {:ok, %Customer{} = customer} <- Customers.update_customer_metadata(customer, metadata) do
+    with {:ok, %Customer{} = customer} <- Customers.update_customer_metadata(customer, updates) do
       render(conn, "show.json", customer: customer)
     end
   end
