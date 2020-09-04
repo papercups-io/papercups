@@ -9,7 +9,7 @@ _Watch how easy it is to get set up with our Slack integration 🚀 :_
 
 ## One click Heroku deployment
 
-The fastest way to get started is one click [deploy on Heroku](https://docs.eventnative.dev/deployment/deploy-on-heroku) with:
+The fastest way to get started is one click deploy on Heroku with:
 
 <a href="https://heroku.com/deploy?template=https://github.com/papercups-io/papercups"><img src="https://www.herokucdn.com/deploy/button.svg" width="200px" /></a>
 
