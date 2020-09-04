@@ -7,6 +7,7 @@ import * as API from '../../api';
 import {
   colors,
   notification,
+  Alert,
   Button,
   Modal,
   Paragraph,
@@ -25,6 +26,8 @@ import {
   getPlanInfo,
   getNextDueDate,
   getTrialEndDate,
+  getFirstOfNextMonth,
+  shouldRequirePlanUpdate,
   calculateSubscriptionDiscount,
   calculateSubscriptionPrice,
 } from './support';
@@ -130,6 +133,7 @@ type State = {
   displayCreditCardModal: boolean;
   defaultPaymentMethod: any;
   subscription: any;
+  requiresPlanUpdate: boolean;
   selectedSubscriptionPlan: SubscriptionPlan;
 };
 
@@ -142,6 +146,7 @@ class BillingOverview extends React.Component<Props, State> {
     displayCreditCardModal: false,
     defaultPaymentMethod: null,
     subscription: null,
+    requiresPlanUpdate: false,
     selectedSubscriptionPlan: 'starter' as SubscriptionPlan,
   };
 
@@ -170,12 +175,18 @@ class BillingOverview extends React.Component<Props, State> {
       selectedSubscriptionPlan,
     });
 
+    const plan = selectedSubscriptionPlan || 'starter';
+
     this.setState({
       defaultPaymentMethod,
       subscription,
       loading: false,
       refreshing: false,
-      selectedSubscriptionPlan: selectedSubscriptionPlan || 'starter',
+      selectedSubscriptionPlan: plan,
+      requiresPlanUpdate: shouldRequirePlanUpdate(plan, {
+        numUsers,
+        numMessages,
+      }),
     });
   };
 
@@ -287,6 +298,7 @@ class BillingOverview extends React.Component<Props, State> {
       displayCreditCardModal,
       defaultPaymentMethod,
       selectedSubscriptionPlan,
+      requiresPlanUpdate,
       subscription,
     } = this.state;
 
@@ -325,6 +337,23 @@ class BillingOverview extends React.Component<Props, State> {
               </span>
             </Text>
           </Paragraph>
+
+          {requiresPlanUpdate && (
+            <Box mb={3}>
+              <Alert
+                message={
+                  <Text>
+                    It looks like you've exceeded the limits of your current
+                    plan. Please upgrade to the <Text strong>Team plan</Text> by{' '}
+                    {getFirstOfNextMonth()} to prevent any features from
+                    disabling!
+                  </Text>
+                }
+                type="warning"
+                showIcon
+              />
+            </Box>
+          )}
 
           <Box>
             <Flex sx={{alignItems: 'center'}}>

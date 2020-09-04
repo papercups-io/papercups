@@ -80,6 +80,30 @@ export const getPlanInfo = (plan: SubscriptionPlan) => {
   }
 };
 
+type SubscriptionUsage = {
+  numUsers?: number;
+  numMessages?: number;
+};
+
+export const shouldRequirePlanUpdate = (
+  plan: SubscriptionPlan,
+  usage: SubscriptionUsage
+) => {
+  const {numUsers = 1, numMessages = 0} = usage;
+
+  switch (plan) {
+    case 'starter':
+      return numUsers > 2 || numMessages > 100000;
+    case 'team':
+    default:
+      return false;
+  }
+};
+
+export const getFirstOfNextMonth = () => {
+  return dayjs().startOf('month').add(1, 'month').format('MMM DD');
+};
+
 export const getNextDueDate = (subscription: Subscription | null) => {
   if (!subscription || !subscription.current_period_start) {
     return null;
