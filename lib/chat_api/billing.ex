@@ -28,39 +28,42 @@ defmodule ChatApi.Billing do
   # TODO: is this the proper way to handle this?
   # Basically, if the resource id is nil, we just want to return nil;
   # Otherwise, if the id exists, attempt to retrieve it; if it blows up
-  # just log the error to Sentry
+  # just log the error to Sentry and pass the error through
   def retrieve_stripe_resource(_resource, nil), do: nil
 
   def retrieve_stripe_resource(:subscription, subscription_id) do
-    with {:ok, subscription} <- Stripe.Subscription.retrieve(subscription_id) do
-      subscription
-    else
+    case Stripe.Subscription.retrieve(subscription_id) do
+      {:ok, subscription} ->
+        subscription
+
       error ->
         Logger.error("Error retrieving subscription: #{inspect(error)}")
 
-        nil
+        error
     end
   end
 
   def retrieve_stripe_resource(:product, product_id) do
-    with {:ok, product} <- Stripe.Product.retrieve(product_id) do
-      product
-    else
+    case Stripe.Product.retrieve(product_id) do
+      {:ok, product} ->
+        product
+
       error ->
         Logger.error("Error retrieving product: #{inspect(error)}")
 
-        nil
+        error
     end
   end
 
   def retrieve_stripe_resource(:payment_method, payment_method_id) do
-    with {:ok, payment_method} <- Stripe.PaymentMethod.retrieve(payment_method_id) do
-      payment_method
-    else
+    case Stripe.PaymentMethod.retrieve(payment_method_id) do
+      {:ok, payment_method} ->
+        payment_method
+
       error ->
         Logger.error("Error retrieving payment method: #{inspect(error)}")
 
-        nil
+        error
     end
   end
 
