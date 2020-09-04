@@ -64,18 +64,21 @@ defmodule ChatApi.Billing do
     end
   end
 
+  # TODO: handle errors better
   def find_stripe_product_by_plan(plan) do
     with {:ok, %{data: products}} <- Stripe.Product.list(%{active: true}) do
       Enum.find(products, fn prod -> prod.metadata["name"] == plan end)
     end
   end
 
+  # TODO: handle errors better
   def get_stripe_price_ids_by_product(product) do
     with {:ok, %{data: prices}} <- Stripe.Price.list(%{product: product.id}) do
       Enum.map(prices, fn price -> %{price: price.id} end)
     end
   end
 
+  # TODO: handle errors better
   def get_subscription_items_to_delete(subscription_id) do
     with {:ok, %{items: %{data: items}}} <- Stripe.Subscription.retrieve(subscription_id) do
       Enum.map(items, fn item -> %{id: item.id, deleted: true} end)
