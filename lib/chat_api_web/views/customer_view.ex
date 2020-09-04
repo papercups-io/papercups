@@ -15,6 +15,8 @@ defmodule ChatApiWeb.CustomerView do
       id: customer.id,
       name: customer.name,
       email: customer.email,
+      created_at: customer.inserted_at,
+      updated_at: customer.updated_at,
       first_seen: customer.first_seen,
       last_seen: customer.last_seen,
       phone: customer.phone,
@@ -22,7 +24,8 @@ defmodule ChatApiWeb.CustomerView do
       pathname: customer.pathname,
       current_url: customer.current_url,
       browser: customer.browser,
-      os: customer.os
+      os: customer.os,
+      ip: customer.ip
     }
   end
 end

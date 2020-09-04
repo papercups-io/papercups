@@ -1,6 +1,15 @@
 import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Popover, Select, Text, Title, Tooltip} from '../common';
+import {
+  colors,
+  Button,
+  Drawer,
+  Popover,
+  Select,
+  Text,
+  Title,
+  Tooltip,
+} from '../common';
 import {
   CheckOutlined,
   StarOutlined,
@@ -9,6 +18,7 @@ import {
   UserOutlined,
   InfoCircleOutlined,
 } from '../icons';
+import {CustomerDetailsContent} from '../customers/CustomerDetailsModal';
 
 const hasCustomerMetadata = (customer: any) => {
   const {current_url, browser, os} = customer;
@@ -21,6 +31,8 @@ const hasCustomerMetadata = (customer: any) => {
 };
 
 const CustomerMetadataPopoverContent = ({customer}: {customer: any}) => {
+  const [isDrawerVisible, setDrawerVisible] = React.useState(false);
+
   if (!hasCustomerMetadata(customer)) {
     return null;
   }
@@ -49,6 +61,27 @@ const CustomerMetadataPopoverContent = ({customer}: {customer: any}) => {
           <Text>{os}</Text>
         </Box>
       )}
+
+      <Box mt={3}>
+        <Button block onClick={() => setDrawerVisible(true)}>
+          View more
+        </Button>
+      </Box>
+
+      <Drawer
+        title="Customer details"
+        placement="right"
+        width={400}
+        onClose={() => setDrawerVisible(false)}
+        visible={isDrawerVisible}
+        footer={
+          <Button block onClick={() => setDrawerVisible(false)}>
+            Back
+          </Button>
+        }
+      >
+        <CustomerDetailsContent customer={customer} />
+      </Drawer>
     </Box>
   );
 };
