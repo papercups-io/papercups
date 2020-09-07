@@ -79,16 +79,25 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   def handle_info(:after_join, socket) do
-    with %{current_user: current_user} <- socket.assigns,
+    with %{current_user: current_user, topics: topics} <- socket.assigns,
          %{id: user_id} <- current_user do
       key = "user:" <> inspect(user_id)
 
       {:ok, _} =
         Presence.track(socket, key, %{
-          online_at: inspect(System.system_time(:second))
+          online_at: inspect(System.system_time(:second)),
+          user_id: user_id
         })
 
       push(socket, "presence_state", Presence.list(socket))
+
+      Enum.each(topics, fn topic ->
+        {:ok, _} =
+          Presence.track(self(), topic, key, %{
+            online_at: inspect(System.system_time(:second)),
+            user_id: user_id
+          })
+      end)
     end
 
     {:noreply, socket}
@@ -137,6 +146,7 @@ defmodule ChatApiWeb.NotificationChannel do
         acc
       else
         :ok = ChatApiWeb.Endpoint.subscribe(topic)
+
         assign(acc, :topics, [topic | topics])
       end
     end)

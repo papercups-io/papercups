@@ -48,7 +48,8 @@ defmodule ChatApiWeb.ConversationChannel do
       # Track the presence of this customer in the conversation
       {:ok, _} =
         Presence.track(socket, key, %{
-          online_at: inspect(System.system_time(:second))
+          online_at: inspect(System.system_time(:second)),
+          customer_id: customer_id
         })
 
       topic = "notification:" <> account_id
@@ -57,7 +58,8 @@ defmodule ChatApiWeb.ConversationChannel do
       # so agents can see the "online" status in the dashboard
       {:ok, _} =
         Presence.track(self(), topic, key, %{
-          online_at: inspect(System.system_time(:second))
+          online_at: inspect(System.system_time(:second)),
+          customer_id: customer_id
         })
 
       push(socket, "presence_state", Presence.list(socket))
