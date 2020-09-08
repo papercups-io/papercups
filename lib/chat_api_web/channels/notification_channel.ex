@@ -81,7 +81,7 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   def handle_info(:after_join, socket) do
-    with %{current_user: current_user, topics: topics} <- socket.assigns,
+    with %{current_user: current_user} <- socket.assigns,
          %{id: user_id, account_id: account_id} <- current_user do
       key = "user:" <> inspect(user_id)
 
@@ -93,26 +93,12 @@ defmodule ChatApiWeb.NotificationChannel do
 
       push(socket, "presence_state", Presence.list(socket))
 
+      # Add tracking to "account room" so we can check which agents are online
       {:ok, _} =
         Presence.track(self(), "room:" <> account_id, key, %{
           online_at: inspect(System.system_time(:second)),
           user_id: user_id
         })
-
-      # TODO: remove after testing
-      Enum.each(topics, fn topic ->
-        {:ok, _} =
-          Presence.track(self(), topic, key, %{
-            online_at: inspect(System.system_time(:second)),
-            user_id: user_id
-          })
-
-        Logger.info("""
-          PID: #{inspect(self())}
-          Topic: #{topic}
-          Presence: #{inspect(Presence.list(topic))}
-        """)
-      end)
     end
 
     {:noreply, socket}
