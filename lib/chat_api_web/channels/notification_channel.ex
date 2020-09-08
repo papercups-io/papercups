@@ -5,6 +5,8 @@ defmodule ChatApiWeb.NotificationChannel do
   alias Phoenix.Socket.Broadcast
   alias ChatApi.{Messages, Conversations, EventSubscriptions}
 
+  require Logger
+
   @impl true
   def join("notification:" <> account_id, %{"ids" => ids}, socket) do
     if authorized?(socket, account_id) do
@@ -97,6 +99,12 @@ defmodule ChatApiWeb.NotificationChannel do
             online_at: inspect(System.system_time(:second)),
             user_id: user_id
           })
+
+        Logger.info("""
+          PID: #{inspect(self())}
+          Topic: #{topic}
+          Presence: #{inspect(Presence.list(topic))}
+        """)
       end)
     end
 

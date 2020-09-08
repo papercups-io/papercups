@@ -91,8 +91,7 @@ defmodule ChatApiWeb.SlackController do
   end
 
   def webhook(conn, payload) do
-    # TODO: switch to `debug`
-    Logger.info("Payload from Slack webhook: #{inspect(payload)}")
+    Logger.debug("Payload from Slack webhook: #{inspect(payload)}")
 
     case payload do
       %{"event" => event} ->
@@ -121,8 +120,7 @@ defmodule ChatApiWeb.SlackController do
            "user" => user_id
          } = event
        ) do
-    # TODO: switch to `debug`
-    Logger.info("Handling Slack event: #{inspect(event)}")
+    Logger.debug("Handling Slack event: #{inspect(event)}")
 
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
       %{id: conversation_id, account_id: account_id} = conversation
