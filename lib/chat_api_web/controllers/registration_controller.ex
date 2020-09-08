@@ -84,12 +84,21 @@ defmodule ChatApiWeb.RegistrationController do
     with %{email: email, account_id: account_id} <- conn.assigns.current_user do
       %{email: email}
 
+      now = :os.system_time(:seconds)
+
       param = %{
         email: email,
-        created_at: :os.system_time(:seconds)
+        created_at: now,
       }
 
+
       Customerio.identify(account_id, param)
+      |> case do
+        {:ok, _} -> nil
+        {:error , result} -> IO.inspect(result)
+      end
+
+      Customerio.track(account_id, "sign_up", %{signed_up_at: now})
       |> case do
         {:ok, _} -> nil
         {:error , result} -> IO.inspect(result)
