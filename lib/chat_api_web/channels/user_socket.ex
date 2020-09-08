@@ -2,7 +2,7 @@ defmodule ChatApiWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel("room:lobby", ChatApiWeb.RoomChannel)
+  channel("room:*", ChatApiWeb.RoomChannel)
   channel("conversation:*", ChatApiWeb.ConversationChannel)
   channel("notification:*", ChatApiWeb.NotificationChannel)
 
