@@ -164,6 +164,7 @@ class Demo extends React.Component<Props, State> {
           customer={customer}
           baseUrl={BASE_URL}
           defaultIsOpen
+          showAgentAvailability
         />
       </Box>
     );

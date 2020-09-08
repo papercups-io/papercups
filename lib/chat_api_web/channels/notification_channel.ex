@@ -92,6 +92,8 @@ defmodule ChatApiWeb.NotificationChannel do
       push(socket, "presence_state", Presence.list(socket))
 
       Enum.each(topics, fn topic ->
+        Phoenix.PubSub.subscribe(socket.pubsub_server, socket.topic)
+
         {:ok, _} =
           Presence.track(self(), topic, key, %{
             online_at: inspect(System.system_time(:second)),
