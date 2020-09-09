@@ -5,90 +5,90 @@ defmodule ChatApi.Billing do
 
   import Ecto.Query, warn: false
   alias ChatApi.{Accounts, Messages}
+  alias ChatApi.Accounts.Account
+
+  require Logger
 
   @trial_period_days 30
 
   @doc """
   Get billing info from Stripe for the given account
   """
-  def get_billing_info(account) do
-    %{
-      id: account_id,
-      stripe_subscription_id: subscription_id,
-      stripe_product_id: product_id,
-      stripe_default_payment_method_id: payment_method_id,
-      subscription_plan: subscription_plan,
-      users: users
-    } = account
-
-    with subscription <- retrieve_stripe_resource(:subscription, subscription_id),
-         product <- retrieve_stripe_resource(:product, product_id),
-         payment_method <- retrieve_stripe_resource(:payment_method, payment_method_id),
-         num_messages <- Messages.count_messages_by_account(account_id) do
+  def get_billing_info(%Account{} = account) do
+    with {:ok, subscription} <-
+           retrieve_stripe_resource(:subscription, account.stripe_subscription_id),
+         {:ok, product} <- retrieve_stripe_resource(:product, account.stripe_product_id),
+         {:ok, payment_method} <-
+           retrieve_stripe_resource(:payment_method, account.stripe_default_payment_method_id) do
       %{
         subscription: subscription,
         product: product,
         payment_method: payment_method,
-        subscription_plan: subscription_plan,
-        num_messages: num_messages,
-        num_users: Enum.count(users)
+        subscription_plan: account.subscription_plan,
+        num_messages: Messages.count_messages_by_account(account.id),
+        num_users: Enum.count(account.users)
       }
     end
   end
 
-  def retrieve_stripe_resource(_resource, nil), do: nil
+  # TODO: is this the proper way to handle this?
+  # Basically, if the resource id is nil, we just want to return nil;
+  # Otherwise, if the id exists, attempt to retrieve it
+  def retrieve_stripe_resource(_resource, nil), do: {:ok, nil}
 
-  def retrieve_stripe_resource(:subscription, subscription_id) do
-    with {:ok, subscription} <- Stripe.Subscription.retrieve(subscription_id) do
-      subscription
-    else
-      _error -> nil
-    end
-  end
+  def retrieve_stripe_resource(:subscription, subscription_id),
+    do: Stripe.Subscription.retrieve(subscription_id)
 
-  def retrieve_stripe_resource(:product, product_id) do
-    with {:ok, product} <- Stripe.Product.retrieve(product_id) do
-      product
-    else
-      _error -> nil
-    end
-  end
+  def retrieve_stripe_resource(:product, product_id),
+    do: Stripe.Product.retrieve(product_id)
 
-  def retrieve_stripe_resource(:payment_method, payment_method_id) do
-    with {:ok, payment_method} <- Stripe.PaymentMethod.retrieve(payment_method_id) do
-      payment_method
-    else
-      _error -> nil
-    end
-  end
+  def retrieve_stripe_resource(:payment_method, payment_method_id),
+    do: Stripe.PaymentMethod.retrieve(payment_method_id)
 
+  # TODO: handle errors better?
   def find_stripe_product_by_plan(plan) do
-    with {:ok, %{data: products}} <- Stripe.Product.list(%{active: true}) do
-      Enum.find(products, fn prod -> prod.metadata["name"] == plan end)
+    case Stripe.Product.list(%{active: true}) do
+      {:ok, %{data: products}} ->
+        products
+        |> Enum.find(fn prod -> prod.metadata["name"] == plan end)
+        |> case do
+          nil -> {:error, :not_found}
+          product -> {:ok, product}
+        end
+
+      error ->
+        error
     end
   end
 
+  # TODO: handle errors better?
   def get_stripe_price_ids_by_product(product) do
-    with {:ok, %{data: prices}} <- Stripe.Price.list(%{product: product.id}) do
-      Enum.map(prices, fn price -> %{price: price.id} end)
+    case Stripe.Price.list(%{product: product.id}) do
+      {:ok, %{data: prices}} ->
+        {:ok, Enum.map(prices, fn price -> %{price: price.id} end)}
+
+      error ->
+        error
     end
   end
 
+  # TODO: handle errors better?
   def get_subscription_items_to_delete(subscription_id) do
-    with {:ok, %{items: %{data: items}}} <- Stripe.Subscription.retrieve(subscription_id) do
-      Enum.map(items, fn item -> %{id: item.id, deleted: true} end)
+    case Stripe.Subscription.retrieve(subscription_id) do
+      {:ok, %{items: %{data: items}}} ->
+        {:ok, Enum.map(items, fn item -> %{id: item.id, deleted: true} end)}
+
+      error ->
+        error
     end
   end
 
   def create_subscription_plan(account, plan) do
-    %{stripe_customer_id: customer} = account
-
-    product = find_stripe_product_by_plan(plan)
-    items = get_stripe_price_ids_by_product(product)
-
-    with {:ok, subscription} <-
+    with {:ok, product} <- find_stripe_product_by_plan(plan),
+         {:ok, items} <- get_stripe_price_ids_by_product(product),
+         {:ok, subscription} <-
            Stripe.Subscription.create(%{
-             customer: customer,
+             customer: account.stripe_customer_id,
              items: items,
              trial_period_days: @trial_period_days
            }) do
@@ -97,27 +97,29 @@ defmodule ChatApi.Billing do
         stripe_product_id: product.id,
         subscription_plan: plan
       })
+    else
+      error -> error
     end
   end
 
   def update_subscription_plan(account, plan) do
-    %{
-      stripe_subscription_id: subscription_id
-    } = account
-
-    product = find_stripe_product_by_plan(plan)
-    new_items = get_stripe_price_ids_by_product(product)
     # TODO: just replace existing item ids with updated price ids?
     # See https://stripe.com/docs/billing/subscriptions/fixed-price#change-price
-    items_to_delete = get_subscription_items_to_delete(subscription_id)
-    items = new_items ++ items_to_delete
-
-    with {:ok, subscription} <- Stripe.Subscription.update(subscription_id, %{items: items}) do
+    with {:ok, product} <- find_stripe_product_by_plan(plan),
+         {:ok, new_items} <- get_stripe_price_ids_by_product(product),
+         {:ok, items_to_delete} <-
+           get_subscription_items_to_delete(account.stripe_subscription_id),
+         {:ok, subscription} <-
+           Stripe.Subscription.update(account.stripe_subscription_id, %{
+             items: new_items ++ items_to_delete
+           }) do
       Accounts.update_account(account, %{
         stripe_subscription_id: subscription.id,
         stripe_product_id: product.id,
         subscription_plan: plan
       })
+    else
+      error -> error
     end
   end
 end
