@@ -1,4 +1,6 @@
 defmodule ChatApi.Workers.SendWelcomeEmail do
+  @moduledoc false
+
   use Oban.Worker, queue: :mailers
 
   require Logger

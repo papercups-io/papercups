@@ -1,4 +1,6 @@
 defmodule ChatApi.Workers.SendConversationReplyEmail do
+  @moduledoc false
+
   use Oban.Worker, queue: :mailers
 
   import Ecto.Query, warn: false
@@ -51,6 +53,9 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
 
         {:error, reason} ->
           Logger.error("Failed to send email! #{inspect(reason)}")
+
+        {:warning, reason} ->
+          Logger.warn(reason)
 
         error ->
           Logger.error("Unexpected failure when sending reply email: #{inspect(error)}")
