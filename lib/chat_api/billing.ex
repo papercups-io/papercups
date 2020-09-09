@@ -88,7 +88,7 @@ defmodule ChatApi.Billing do
          {:ok, items} <- get_stripe_price_ids_by_product(product),
          {:ok, subscription} <-
            Stripe.Subscription.create(%{
-             customer: account.create_subscription_plan,
+             customer: account.stripe_customer_id,
              items: items,
              trial_period_days: @trial_period_days
            }) do
@@ -97,6 +97,8 @@ defmodule ChatApi.Billing do
         stripe_product_id: product.id,
         subscription_plan: plan
       })
+    else
+      error -> error
     end
   end
 
@@ -116,6 +118,8 @@ defmodule ChatApi.Billing do
         stripe_product_id: product.id,
         subscription_plan: plan
       })
+    else
+      error -> error
     end
   end
 end
