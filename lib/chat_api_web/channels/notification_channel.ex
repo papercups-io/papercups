@@ -120,6 +120,19 @@ defmodule ChatApiWeb.NotificationChannel do
     })
   end
 
+  defp enqueue_conversation_reply_email(message) do
+    # Enqueue reply email to send in 2 mins if necessary
+    schedule_in = 2 * 60
+
+    # TODO: not sure the best way to handle this, but basically we want to only
+    # enqueue the latest message to trigger an email if it remains unseen for 2 mins
+    ChatApi.Workers.SendConversationReplyEmail.cancel_pending_jobs(message)
+
+    %{message: message}
+    |> ChatApi.Workers.SendConversationReplyEmail.new(schedule_in: schedule_in)
+    |> Oban.insert()
+  end
+
   defp broadcast_new_message(message) do
     json = ChatApiWeb.MessageView.render("expanded.json", message: message)
     %{conversation_id: conversation_id, account_id: account_id} = message
@@ -129,6 +142,9 @@ defmodule ChatApiWeb.NotificationChannel do
     # why we use one vs the other here
     ChatApiWeb.Endpoint.broadcast!(topic, "shout", json)
 
+    # TODO: perhaps more of this logic should be handled in an "after_insert"
+    # on messages? (see https://blog.danielberkompas.com/2016/09/27/ecto-multi-services/)
+
     # Handling async for now
     Task.start(fn ->
       send_message_alerts(message)
@@ -136,6 +152,10 @@ defmodule ChatApiWeb.NotificationChannel do
 
     Task.start(fn ->
       send_webhook_notifications(account_id, json)
+    end)
+
+    Task.start(fn ->
+      enqueue_conversation_reply_email(json)
     end)
   end
 
