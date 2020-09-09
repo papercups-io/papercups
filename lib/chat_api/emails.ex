@@ -35,7 +35,8 @@ defmodule ChatApi.Emails do
       from: format_sender_name(user, account),
       reply_to: user.email,
       company: account.company_name,
-      messages: messages
+      messages: messages,
+      customer: customer
     )
     |> deliver()
   end

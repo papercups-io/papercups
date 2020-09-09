@@ -29,25 +29,28 @@ defmodule ChatApi.Emails.Email do
         from: from,
         reply_to: reply_to,
         company: company,
-        messages: messages
+        messages: messages,
+        customer: customer
       ) do
     new()
     |> to(to)
     |> from({from, @from_address})
     |> reply_to(reply_to)
     |> subject("New message from #{company}!")
-    |> html_body(conversation_reply_html(messages, from: from, company: company))
-    |> text_body(conversation_reply_text(messages, from: from, company: company))
+    |> html_body(conversation_reply_html(messages, from: from, to: customer, company: company))
+    |> text_body(conversation_reply_text(messages, from: from, to: customer, company: company))
   end
 
   # TODO: figure out a better way to create templates for these
-  defp conversation_reply_text(messages, from: from, company: company) do
+  defp conversation_reply_text(messages, from: from, to: customer, company: company) do
     """
-    You've received a new message from your chat with #{company}:
+    Hi #{customer.name || "there"}!
+
+    You've received a new message from your chat with #{company} (#{customer.current_url || ""}):
 
     #{
       Enum.map(messages, fn msg ->
-        format_sender(msg, company) <> ":" <> msg.body <> "\n"
+        format_sender(msg, company) <> ": " <> msg.body <> "\n"
       end)
     }
 
@@ -76,10 +79,11 @@ defmodule ChatApi.Emails.Email do
     end
   end
 
-  defp conversation_reply_html(messages, from: from, company: company) do
+  defp conversation_reply_html(messages, from: from, to: customer, company: company) do
     """
-    <p>Hi there!</p>
-    <p>You've received a new message from your chat with #{company}:</p>
+    <p>Hi #{customer.name || "there"}!</p>
+    <p>You've received a new message from your chat with
+    <a href="#{customer.current_url}">#{company}</a>:</p>
     <hr />
     #{
       Enum.map(messages, fn msg ->
