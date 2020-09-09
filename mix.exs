@@ -52,7 +52,7 @@ defmodule ChatApi.MixProject do
       {:corsica, "~> 1.0"},
       {:pow, "~> 1.0.18"},
       {:stripity_stripe, "~> 2.0"},
-      {:oban, "~> 2.0.0"},
+      {:oban, "~> 2.1.0"},
       {:sentry, "8.0.0"}
     ]
   end

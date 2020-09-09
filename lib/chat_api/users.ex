@@ -29,7 +29,14 @@ defmodule ChatApi.Users do
 
   """
   def get_user_profile(user_id) do
-    UserProfile |> where(user_id: ^user_id) |> Repo.one()
+    UserProfile |> where(user_id: ^user_id) |> Repo.one() |> Repo.preload(:user)
+  end
+
+  def get_user_info(user_id) do
+    User
+    |> where(id: ^user_id)
+    |> Repo.one()
+    |> Repo.preload([:profile, :settings])
   end
 
   @doc """

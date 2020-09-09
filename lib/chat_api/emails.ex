@@ -17,6 +17,29 @@ defmodule ChatApi.Emails do
     address |> Email.welcome() |> deliver()
   end
 
+  def format_sender_name(user, account) do
+    case user.profile do
+      nil -> account.company_name
+      profile -> profile.display_name || profile.full_name
+    end
+  end
+
+  def send_conversation_reply_email(
+        user: user,
+        customer: customer,
+        account: account,
+        messages: messages
+      ) do
+    Email.conversation_reply(
+      to: customer.email,
+      from: format_sender_name(user, account),
+      reply_to: user.email,
+      company: account.company_name,
+      messages: messages
+    )
+    |> deliver()
+  end
+
   def get_users_to_email(account_id) do
     query =
       from(u in User,

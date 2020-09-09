@@ -21,6 +21,15 @@ defmodule ChatApi.Messages do
     Message |> where(account_id: ^account_id) |> preload(:conversation) |> Repo.all()
   end
 
+  def list_by_conversation(conversation_id, account_id, limit: limit) do
+    Message
+    |> where(account_id: ^account_id, conversation_id: ^conversation_id)
+    |> order_by(desc: :sent_at)
+    |> limit(^limit)
+    |> preload([:customer, [user: :profile]])
+    |> Repo.all()
+  end
+
   def count_messages_by_account(account_id) do
     query =
       from(m in Message,
