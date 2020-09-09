@@ -50,6 +50,7 @@ export const colors = {
   magenta: magenta[5],
   blue: blue, // expose all blues
   gray: grey, // expose all grays
+  text: 'rgba(0, 0, 0, 0.65)',
 };
 
 export const TextArea = Input.TextArea;
