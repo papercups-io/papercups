@@ -24,7 +24,7 @@ defmodule ChatApi.Messages do
   def list_by_conversation(conversation_id, account_id, limit: limit) do
     Message
     |> where(account_id: ^account_id, conversation_id: ^conversation_id)
-    |> order_by(desc: :sent_at)
+    |> order_by(desc: :inserted_at)
     |> limit(^limit)
     |> preload([:customer, [user: :profile]])
     |> Repo.all()
