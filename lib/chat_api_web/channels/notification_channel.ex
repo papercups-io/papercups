@@ -120,11 +120,15 @@ defmodule ChatApiWeb.NotificationChannel do
     })
   end
 
-  defp enqueue_conversation_reply_email(payload) do
+  defp enqueue_conversation_reply_email(message) do
     # Enqueue reply email to send in 2 mins if necessary
     schedule_in = 2 * 60
 
-    payload
+    # TODO: not sure the best way to handle this, but basically we want to only
+    # enqueue the latest message to trigger an email if it remains unseen for 2 mins
+    ChatApi.Workers.SendConversationReplyEmail.cancel_pending_jobs(message)
+
+    %{message: message}
     |> ChatApi.Workers.SendConversationReplyEmail.new(schedule_in: schedule_in)
     |> Oban.insert()
   end
@@ -151,7 +155,7 @@ defmodule ChatApiWeb.NotificationChannel do
     end)
 
     Task.start(fn ->
-      enqueue_conversation_reply_email(%{message: json})
+      enqueue_conversation_reply_email(json)
     end)
   end
 

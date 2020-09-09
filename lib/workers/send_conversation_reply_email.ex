@@ -1,19 +1,11 @@
 defmodule ChatApi.Workers.SendConversationReplyEmail do
-  use Oban.Worker,
-    queue: :mailers,
-    unique: [
-      fields: [:args, :worker],
-      # Unique by conversation id
-      keys: [:conversation_id],
-      # Only worry about uniqueness for unexecuted jobs
-      states: [:available, :scheduled, :executing],
-      # 3 min
-      period: 180
-    ]
+  use Oban.Worker, queue: :mailers
+
+  import Ecto.Query, warn: false
 
   require Logger
 
-  alias ChatApi.{Accounts, Conversations, Messages, Users}
+  alias ChatApi.{Accounts, Conversations, Messages, Repo, Users}
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"message" => message}}) do
@@ -69,6 +61,22 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   end
 
   def send_email(_params), do: nil
+
+  def get_pending_job_ids(conversation_id) do
+    # TODO: double check this logic
+    Oban.Job
+    |> where(worker: "ChatApi.Workers.SendConversationReplyEmail")
+    |> where([j], j.state != "discarded")
+    |> Repo.all()
+    |> Enum.filter(fn job -> job.args["message"]["conversation_id"] == conversation_id end)
+    |> Enum.map(fn job -> job.id end)
+  end
+
+  def cancel_pending_jobs(%{conversation_id: conversation_id}) do
+    conversation_id
+    |> get_pending_job_ids()
+    |> Enum.map(fn id -> Oban.cancel_job(id) end)
+  end
 
   def has_valid_email_domain?() do
     System.get_env("DOMAIN") == "mail.papercups.io"
