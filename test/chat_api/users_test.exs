@@ -49,7 +49,13 @@ defmodule ChatApi.UsersTest do
     test "get_user_profile/1 returns the user_profile with given id", %{user: user} do
       user_profile = user_profile_fixture(%{user_id: user.id})
 
-      assert Users.get_user_profile(user.id) == user_profile
+      expected =
+        Users.get_user_profile(user.id)
+        |> Map.take([:display_name, :full_name, :profile_photo_url])
+
+      actual = Map.take(user_profile, [:display_name, :full_name, :profile_photo_url])
+
+      assert expected == actual
     end
 
     test "create_user_profile/1 with valid data creates a user_profile", %{user: user} do
