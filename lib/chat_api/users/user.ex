@@ -24,4 +24,9 @@ defmodule ChatApi.Users.User do
     |> cast(attrs, [:account_id])
     |> validate_required([:account_id])
   end
+
+  def password_changeset(user_or_changeset, attrs) do
+    user_or_changeset
+    |> pow_password_changeset(attrs)
+  end
 end

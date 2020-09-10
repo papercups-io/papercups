@@ -8,6 +8,8 @@ import {
 import {useAuth} from './components/auth/AuthProvider';
 import Login from './components/auth/Login';
 import Register from './components/auth/Register';
+import EmailVerification from './components/auth/EmailVerification';
+import PasswordReset from './components/auth/PasswordReset';
 import Demo from './components/demo/Demo';
 import Dashboard from './components/Dashboard';
 import Pricing from './components/billing/PricingOverview';
@@ -28,6 +30,8 @@ const App = () => {
           <Route path="/login" component={Login} />
           <Route path="/register/:invite" component={Register} />
           <Route path="/register" component={Register} />
+          <Route path="/verify" component={EmailVerification} />
+          <Route path="/reset" component={PasswordReset} />
           <Route path="/pricing" component={Pricing} />
           <Route path="*" render={() => <Redirect to="/login" />} />
         </Switch>
@@ -41,6 +45,8 @@ const App = () => {
         <Route path="/login" component={Login} />
         <Route path="/register/:invite" component={Register} />
         <Route path="/register" component={Register} />
+        <Route path="/verify" component={EmailVerification} />
+        <Route path="/reset" component={PasswordReset} />
         <Route path="/demo" component={Demo} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/" component={Dashboard} />

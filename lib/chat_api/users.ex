@@ -14,6 +14,12 @@ defmodule ChatApi.Users do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
+  def update_password(user, params) do
+    user
+    |> User.password_changeset(params)
+    |> Repo.update()
+  end
+
   @doc """
   Gets a single user_profile.
 
