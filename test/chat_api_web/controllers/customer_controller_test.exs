@@ -143,6 +143,18 @@ defmodule ChatApiWeb.CustomerControllerTest do
       assert email == @update_attrs.email
       assert name == @update_attrs.name
     end
+
+    test "ensures external_id is a string", %{
+      conn: conn,
+      customer: %Customer{id: id} = customer
+    } do
+      resp =
+        put(conn, Routes.customer_path(conn, :update_metadata, customer),
+          metadata: %{external_id: 123}
+        )
+
+      assert %{"id" => ^id, "external_id" => "123"} = json_response(resp, 200)["data"]
+    end
   end
 
   describe "identifies a customer by external_id" do

@@ -20,6 +20,7 @@ defmodule ChatApiWeb.CustomerView do
       first_seen: customer.first_seen,
       last_seen: customer.last_seen,
       phone: customer.phone,
+      external_id: customer.external_id,
       host: customer.host,
       pathname: customer.pathname,
       current_url: customer.current_url,
