@@ -84,7 +84,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   end
 
   def has_valid_email_domain?() do
-    System.get_env("DOMAIN") == "mail.papercups.io"
+    System.get_env("DOMAIN") == "mail.heypapercups.io"
   end
 
   def reply_emails_enabled?() do
