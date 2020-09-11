@@ -1,10 +1,12 @@
 import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
+import qs from 'query-string';
 import {Box, Flex} from 'theme-ui';
 import {Button, Input, Text, Title} from '../common';
+import * as API from '../../api';
 import {useAuth} from './AuthProvider';
 
-type Props = RouteComponentProps<{invite?: string}> & {
+type Props = RouteComponentProps<{}> & {
   onSubmit: (params: any) => Promise<void>;
 };
 
@@ -13,6 +15,7 @@ type State = {
   submitted: boolean;
   password: string;
   passwordConfirmation: string;
+  passwordResetToken: string;
   error: any;
 };
 
@@ -22,11 +25,19 @@ class PasswordReset extends React.Component<Props, State> {
     submitted: false,
     password: '',
     passwordConfirmation: '',
+    passwordResetToken: '',
     error: null,
   };
 
   componentDidMount() {
-    // load token?
+    const {search} = this.props.location;
+    const {token = ''} = qs.parse(search);
+
+    if (!token || typeof token !== 'string') {
+      this.setState({error: 'Invalid reset token!'});
+    } else {
+      this.setState({passwordResetToken: token});
+    }
   }
 
   handleChangePassword = (e: any) => {
@@ -69,19 +80,20 @@ class PasswordReset extends React.Component<Props, State> {
     }
 
     this.setState({loading: true, submitted: true, error: null});
-    const {password, passwordConfirmation} = this.state;
+    const {password, passwordConfirmation, passwordResetToken} = this.state;
 
-    this.props
-      .onSubmit({
-        password,
-        passwordConfirmation,
-      })
+    API.attemptPasswordReset(passwordResetToken, {
+      password,
+      passwordConfirmation,
+    })
+      .then(({email}) => this.props.onSubmit({email, password}))
       .then(() => this.props.history.push('/conversations'))
       .catch((err) => {
         console.log('Error!', err);
         // TODO: provide more granular error messages?
         const error =
-          err.response?.body?.error?.message || 'Invalid credentials';
+          err.response?.body?.error?.message ||
+          'Something went wrong! Try again in a few minutes.';
 
         this.setState({error, loading: false});
       });
@@ -147,6 +159,10 @@ class PasswordReset extends React.Component<Props, State> {
                 <Text type="danger">{error}</Text>
               </Box>
             )}
+
+            <Box mt={error ? 3 : 4}>
+              Back to <Link to="/login">login</Link>
+            </Box>
           </form>
         </Box>
       </Flex>
@@ -155,9 +171,9 @@ class PasswordReset extends React.Component<Props, State> {
 }
 
 const PasswordResetPage = (props: RouteComponentProps) => {
-  // const auth = useAuth();
+  const auth = useAuth();
 
-  return <PasswordReset {...props} onSubmit={() => Promise.resolve()} />;
+  return <PasswordReset {...props} onSubmit={auth.login} />;
 };
 
 export default PasswordResetPage;

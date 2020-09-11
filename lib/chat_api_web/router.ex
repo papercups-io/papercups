@@ -35,6 +35,9 @@ defmodule ChatApiWeb.Router do
     get("/customers/identify", CustomerController, :identify)
     get("/widget_settings", WidgetSettingsController, :show)
     put("/widget_settings/metadata", WidgetSettingsController, :update_metadata)
+    post("/verify_email", UserController, :verify_email)
+    post("/reset_password", UserController, :create_password_reset)
+    put("/reset_password", UserController, :reset_password)
 
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)

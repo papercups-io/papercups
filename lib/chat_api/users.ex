@@ -8,15 +8,52 @@ defmodule ChatApi.Users do
 
   alias ChatApi.Users.{User, UserProfile, UserSettings}
 
+  def find_user_by_email(email) do
+    User |> where(email: ^email) |> Repo.one()
+  end
+
   def find_user_by_email(nil, _account_id), do: nil
 
   def find_user_by_email(email, account_id) do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
-  def update_password(user, params) do
+  def find_by_email_confirmation_token(token) do
+    User |> where(email_confirmation_token: ^token) |> Repo.one()
+  end
+
+  def find_by_password_reset_token(token) do
+    User |> where(password_reset_token: ^token) |> Repo.one()
+  end
+
+  def send_password_reset_email(user) do
+    token = :crypto.strong_rand_bytes(64) |> Base.encode32() |> binary_part(0, 64)
+
     user
-    |> User.password_changeset(params)
+    |> User.password_reset_changeset(%{
+      password_reset_token: token
+    })
+    |> Repo.update()
+    |> case do
+      {:ok, user} -> ChatApi.Emails.send_password_reset_email(user)
+      error -> error
+    end
+  end
+
+  def verify_email(user) do
+    user
+    |> User.email_verification_changeset(%{
+      # email_confirmation_token: nil, # TODO: do we want to do this?
+      email_confirmed_at: DateTime.utc_now()
+    })
+    |> Repo.update()
+  end
+
+  def update_password(user, params) do
+    updates = Map.merge(params, %{"password_reset_token" => nil})
+
+    user
+    |> User.password_changeset(updates)
     |> Repo.update()
   end
 

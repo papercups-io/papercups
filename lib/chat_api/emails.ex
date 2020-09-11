@@ -19,6 +19,10 @@ defmodule ChatApi.Emails do
     address |> Email.welcome() |> deliver()
   end
 
+  def send_password_reset_email(user) do
+    user |> Email.password_reset() |> deliver()
+  end
+
   def format_sender_name(user, account) do
     case user.profile do
       nil -> account.company_name
