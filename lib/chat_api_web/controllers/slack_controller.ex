@@ -15,6 +15,7 @@ defmodule ChatApiWeb.SlackController do
   def oauth(conn, %{"code" => code}) do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
 
+    # TODO: improve error handling!
     {:ok, response} = Slack.get_access_token(code)
 
     Logger.info("Slack OAuth response: #{inspect(response)}")
