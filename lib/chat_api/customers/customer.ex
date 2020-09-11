@@ -30,6 +30,9 @@ defmodule ChatApi.Customers.Customer do
     field(:screen_width, :integer)
     field(:lib, :string)
 
+    # Freeform
+    field(:metadata, :map)
+
     has_many(:messages, Message)
     has_many(:conversations, Conversation)
     belongs_to(:account, Account)
@@ -71,6 +74,7 @@ defmodule ChatApi.Customers.Customer do
   def metadata_changeset(customer, attrs) do
     customer
     |> cast(attrs, [
+      :metadata,
       :email,
       :name,
       :phone,
