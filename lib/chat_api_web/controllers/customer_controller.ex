@@ -14,8 +14,13 @@ defmodule ChatApiWeb.CustomerController do
   end
 
   def create(conn, %{"customer" => customer_params}) do
-    ip = conn.remote_ip |> :inet_parse.ntoa() |> to_string()
-    params = Map.merge(customer_params, %{"ip" => ip})
+    params =
+      customer_params
+      |> Map.merge(%{
+        "ip" => conn.remote_ip |> :inet_parse.ntoa() |> to_string(),
+        "last_seen_at" => DateTime.utc_now()
+      })
+      |> Customers.sanitize_metadata()
 
     with {:ok, %Customer{} = customer} <- Customers.create_customer(params) do
       conn

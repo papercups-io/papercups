@@ -70,6 +70,15 @@ defmodule ChatApiWeb.CustomerControllerTest do
              } = json_response(resp, 200)["data"]
     end
 
+    test "ensures external_id is a string", %{
+      conn: conn
+    } do
+      customer = Map.merge(valid_create_attrs(), %{external_id: 123})
+      resp = post(conn, Routes.customer_path(conn, :create), customer: customer)
+
+      assert %{"external_id" => "123"} = json_response(resp, 201)["data"]
+    end
+
     test "renders errors when data is invalid", %{conn: conn} do
       conn = post(conn, Routes.customer_path(conn, :create), customer: @invalid_attrs)
       assert json_response(conn, 422)["errors"] != %{}

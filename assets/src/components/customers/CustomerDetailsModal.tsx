@@ -14,6 +14,7 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
     browser,
     os,
     phone,
+    external_id: externalId,
     created_at: createdAt,
     updated_at: lastUpdatedAt,
     current_url: lastSeenUrl,
@@ -46,6 +47,14 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
           <Paragraph>{phone || 'Unknown'}</Paragraph>
         </Box>
       </Flex>
+
+      <Box mb={2}>
+        <Box>
+          <Text strong>ID</Text>
+        </Box>
+
+        <Paragraph>{externalId || 'Unknown'}</Paragraph>
+      </Box>
 
       <Box mb={2}>
         <Box>
