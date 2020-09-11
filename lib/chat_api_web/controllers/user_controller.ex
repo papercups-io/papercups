@@ -30,7 +30,9 @@ defmodule ChatApiWeb.UserController do
 
       user ->
         case Users.send_password_reset_email(user) do
-          {:ok, _result} ->
+          {:ok, result} ->
+            Logger.info("Successfully sent password reset email: #{inspect(result)}")
+
             json(conn, %{data: %{ok: true}})
 
           {:warning, reason} ->
