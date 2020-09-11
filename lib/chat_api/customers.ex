@@ -37,12 +37,16 @@ defmodule ChatApi.Customers do
   """
   def get_customer!(id), do: Repo.get!(Customer, id)
 
-  def find_by_external_id(account_id, external_id) do
+  def find_by_external_id(external_id, account_id) when is_binary(external_id) do
     Customer
     |> where(account_id: ^account_id, external_id: ^external_id)
     |> order_by(desc: :updated_at)
     |> first()
     |> Repo.one()
+  end
+
+  def find_by_external_id(external_id, account_id) when is_integer(external_id) do
+    external_id |> to_string() |> find_by_external_id(account_id)
   end
 
   @doc """
@@ -85,6 +89,18 @@ defmodule ChatApi.Customers do
     customer
     |> Customer.metadata_changeset(attrs)
     |> Repo.update()
+  end
+
+  def sanitize_metadata(metadata) do
+    case metadata do
+      %{"external_id" => external_id} when is_integer(external_id) ->
+        metadata
+        |> Map.merge(%{"external_id" => to_string(external_id)})
+        |> sanitize_metadata()
+
+      _ ->
+        metadata
+    end
   end
 
   @doc """

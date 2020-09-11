@@ -14,8 +14,13 @@ defmodule ChatApiWeb.CustomerController do
   end
 
   def create(conn, %{"customer" => customer_params}) do
-    ip = conn.remote_ip |> :inet_parse.ntoa() |> to_string()
-    params = Map.merge(customer_params, %{"ip" => ip})
+    params =
+      customer_params
+      |> Map.merge(%{
+        "ip" => conn.remote_ip |> :inet_parse.ntoa() |> to_string(),
+        "last_seen_at" => DateTime.utc_now()
+      })
+      |> Customers.sanitize_metadata()
 
     with {:ok, %Customer{} = customer} <- Customers.create_customer(params) do
       conn
@@ -34,7 +39,7 @@ defmodule ChatApiWeb.CustomerController do
         "external_id" => external_id,
         "account_id" => account_id
       }) do
-    case Customers.find_by_external_id(account_id, external_id) do
+    case Customers.find_by_external_id(external_id, account_id) do
       %{id: customer_id} ->
         json(conn, %{
           data: %{
@@ -57,8 +62,14 @@ defmodule ChatApiWeb.CustomerController do
 
   def update_metadata(conn, %{"id" => id, "metadata" => metadata}) do
     customer = Customers.get_customer!(id)
-    ip = conn.remote_ip |> :inet_parse.ntoa() |> to_string()
-    updates = Map.merge(metadata, %{"ip" => ip, "last_seen_at" => DateTime.utc_now()})
+
+    updates =
+      metadata
+      |> Map.merge(%{
+        "ip" => conn.remote_ip |> :inet_parse.ntoa() |> to_string(),
+        "last_seen_at" => DateTime.utc_now()
+      })
+      |> Customers.sanitize_metadata()
 
     with {:ok, %Customer{} = customer} <- Customers.update_customer_metadata(customer, updates) do
       render(conn, "show.json", customer: customer)

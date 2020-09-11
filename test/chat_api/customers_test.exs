@@ -92,6 +92,12 @@ defmodule ChatApi.CustomersTest do
       assert customer.account_id != new_account.id
     end
 
+    test "sanitize_metadata/1 ensures external_id is always a string" do
+      assert %{"external_id" => nil} = Customers.sanitize_metadata(%{"external_id" => nil})
+      assert %{"external_id" => "123"} = Customers.sanitize_metadata(%{"external_id" => "123"})
+      assert %{"external_id" => "123"} = Customers.sanitize_metadata(%{"external_id" => 123})
+    end
+
     test "update_customer/2 with invalid data returns error changeset" do
       customer = customer_fixture()
       assert {:error, %Ecto.Changeset{}} = Customers.update_customer(customer, @invalid_attrs)
@@ -109,12 +115,20 @@ defmodule ChatApi.CustomersTest do
       assert %Ecto.Changeset{} = Customers.change_customer(customer)
     end
 
-    test "find_by_external_id/1 returns a customer by external_id" do
+    test "find_by_external_id/2 returns a customer by external_id" do
       external_id = "cus_123"
       customer = customer_fixture(%{external_id: external_id})
       account_id = customer.account_id
 
-      assert customer = Customers.find_by_external_id(account_id, external_id)
+      assert customer = Customers.find_by_external_id(external_id, account_id)
+    end
+
+    test "find_by_external_id/2 works with integer external_ids" do
+      external_id = "123"
+      customer = customer_fixture(%{external_id: external_id})
+      account_id = customer.account_id
+
+      assert customer = Customers.find_by_external_id(123, account_id)
     end
   end
 end
