@@ -35,8 +35,6 @@ class RequestPasswordReset extends React.Component<Props, State> {
     this.setState({loading: true, error: null});
     const {email} = this.state;
 
-    console.log('Sending request for email:', email);
-
     API.sendPasswordResetEmail(email)
       .then(({ok}) => {
         if (ok) {
@@ -106,7 +104,7 @@ class RequestPasswordReset extends React.Component<Props, State> {
             )}
 
             <Box mt={error ? 3 : 4}>
-              Back to <Link to="/login">login</Link>
+              Back to <Link to="/login">login</Link>.
             </Box>
           </form>
         </Box>

@@ -30,9 +30,7 @@ defmodule ChatApi.Users do
     token = :crypto.strong_rand_bytes(64) |> Base.encode32() |> binary_part(0, 64)
 
     user
-    |> User.password_reset_changeset(%{
-      password_reset_token: token
-    })
+    |> User.password_reset_changeset(%{password_reset_token: token})
     |> Repo.update()
     |> case do
       {:ok, user} -> ChatApi.Emails.send_password_reset_email(user)

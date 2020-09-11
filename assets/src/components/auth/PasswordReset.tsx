@@ -161,7 +161,7 @@ class PasswordReset extends React.Component<Props, State> {
             )}
 
             <Box mt={error ? 3 : 4}>
-              Back to <Link to="/login">login</Link>
+              Back to <Link to="/login">login</Link>.
             </Box>
           </form>
         </Box>
