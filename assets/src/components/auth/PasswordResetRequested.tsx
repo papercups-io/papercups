@@ -1,6 +1,7 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Flex} from 'theme-ui';
-import {Result} from '../common';
+import {Button, Result} from '../common';
 
 export const PasswordResetRequested = () => {
   return (
@@ -9,6 +10,11 @@ export const PasswordResetRequested = () => {
         status="success"
         title="Please check your email"
         subTitle="We'll send you a link to reset your password 😊"
+        extra={
+          <Link to="/login">
+            <Button>Back to login</Button>
+          </Link>
+        }
       />
     </Flex>
   );

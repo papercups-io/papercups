@@ -38,7 +38,9 @@ defmodule ChatApiWeb.UserController do
 
             json(conn, %{data: %{ok: true}})
 
-          _error ->
+          error ->
+            Logger.error(error)
+
             json(conn, %{data: %{ok: false}})
         end
     end
