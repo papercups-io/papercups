@@ -155,6 +155,55 @@ defmodule ChatApi.Emails.Email do
     """
   end
 
+  def password_reset(%ChatApi.Users.User{email: email, password_reset_token: token} = _user) do
+    new()
+    |> to(email)
+    |> from({"Papercups", @from_address})
+    |> subject("[Papercups] Link to reset your password")
+    |> html_body(password_reset_html(token))
+    |> text_body(password_reset_text(token))
+  end
+
+  defp get_app_domain() do
+    if Mix.env() == :dev do
+      "http://localhost:3000"
+    else
+      "https://" <> System.get_env("BACKEND_URL", "app.papercups.io")
+    end
+  end
+
+  # TODO: figure out a better way to create templates for these
+  defp password_reset_text(token) do
+    """
+    Hi there!
+
+    Click the link below to reset your Papercups password:
+
+    #{get_app_domain()}/reset?token=#{token}
+
+    Best,
+    Alex & Kam @ Papercups
+    """
+  end
+
+  # TODO: figure out a better way to create templates for these
+  defp password_reset_html(token) do
+    link = "#{get_app_domain()}/reset?token=#{token}"
+
+    """
+    <p>Hi there!</p>
+
+    <p>Click the link below to reset your Papercups password:</p>
+
+    <a href="#{link}">#{link}</a>
+
+    <p>
+    Best,<br />
+    Alex & Kam @ Papercups
+    </p>
+    """
+  end
+
   @spec changeset(
           {map, map} | %{:__struct__ => atom | %{__changeset__: map}, optional(atom) => any},
           :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}

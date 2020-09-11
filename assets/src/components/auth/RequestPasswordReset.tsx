@@ -2,23 +2,22 @@ import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {Button, Input, Text, Title} from '../common';
-import {useAuth} from './AuthProvider';
+import * as API from '../../api';
 
 type Props = RouteComponentProps & {
   onSubmit: (params: any) => Promise<void>;
 };
+
 type State = {
   loading: boolean;
   email: string;
-  password: string;
   error: any;
 };
 
-class Login extends React.Component<Props, State> {
+class RequestPasswordReset extends React.Component<Props, State> {
   state: State = {
     loading: false,
     email: '',
-    password: '',
     error: null,
   };
 
@@ -30,31 +29,35 @@ class Login extends React.Component<Props, State> {
     this.setState({email: e.target.value});
   };
 
-  handleChangePassword = (e: any) => {
-    this.setState({password: e.target.value});
-  };
-
   handleSubmit = (e: any) => {
     e.preventDefault();
 
     this.setState({loading: true, error: null});
-    const {email, password} = this.state;
+    const {email} = this.state;
 
-    // TODO: handle login through API
-    this.props
-      .onSubmit({email, password})
-      .then(() => this.props.history.push('/conversations'))
+    API.sendPasswordResetEmail(email)
+      .then(({ok}) => {
+        if (ok) {
+          this.props.history.push('/reset-password-requested');
+        } else {
+          this.setState({
+            error: 'Something went wrong! Try again in a few minutes.',
+            loading: false,
+          });
+        }
+      })
       .catch((err) => {
         console.log('Error!', err);
         const error =
-          err.response?.body?.error?.message || 'Invalid credentials';
+          err.response?.body?.error?.message ||
+          'Something went wrong! Try again in a few minutes.';
 
         this.setState({error, loading: false});
       });
   };
 
   render() {
-    const {loading, email, password, error} = this.state;
+    const {loading, email, error} = this.state;
 
     return (
       <Flex
@@ -67,7 +70,7 @@ class Login extends React.Component<Props, State> {
         }}
       >
         <Box sx={{width: '100%', maxWidth: 320}}>
-          <Title level={1}>Welcome back</Title>
+          <Title level={1}>Reset password</Title>
 
           <form onSubmit={this.handleSubmit}>
             <Box mb={2}>
@@ -82,18 +85,6 @@ class Login extends React.Component<Props, State> {
               />
             </Box>
 
-            <Box mb={2}>
-              <label htmlFor="password">Password</label>
-              <Input
-                id="password"
-                size="large"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={this.handleChangePassword}
-              />
-            </Box>
-
             <Box mt={3}>
               <Button
                 block
@@ -102,7 +93,7 @@ class Login extends React.Component<Props, State> {
                 htmlType="submit"
                 loading={loading}
               >
-                Log in
+                Submit
               </Button>
             </Box>
 
@@ -113,10 +104,7 @@ class Login extends React.Component<Props, State> {
             )}
 
             <Box mt={error ? 3 : 4}>
-              Don't have an account? <Link to="/register">Sign up!</Link>
-            </Box>
-            <Box my={3}>
-              <Link to="/reset-password">Forgot your password?</Link>
+              Back to <Link to="/login">login</Link>.
             </Box>
           </form>
         </Box>
@@ -125,10 +113,4 @@ class Login extends React.Component<Props, State> {
   }
 }
 
-const LoginPage = (props: RouteComponentProps) => {
-  const auth = useAuth();
-
-  return <Login {...props} onSubmit={auth.login} />;
-};
-
-export default LoginPage;
+export default RequestPasswordReset;

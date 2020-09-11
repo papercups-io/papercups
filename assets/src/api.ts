@@ -27,6 +27,11 @@ export type RegisterParams = LoginParams & {
   passwordConfirmation: string;
 };
 
+export type ResetPasswordParams = {
+  password: string;
+  passwordConfirmation: string;
+};
+
 export type WidgetSettingsParams = {
   id?: string;
   title: string;
@@ -103,6 +108,34 @@ export const renew = async (token = getRefreshToken()) => {
   return request
     .post(`/api/session/renew`)
     .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const verifyUserEmail = async (verificationToken: string) => {
+  return request
+    .post(`/api/verify_email`)
+    .send({token: verificationToken})
+    .then((res) => res.body.data);
+};
+
+export const sendPasswordResetEmail = async (email: string) => {
+  return request
+    .post(`/api/reset_password`)
+    .send({email})
+    .then((res) => res.body.data);
+};
+
+export const attemptPasswordReset = async (
+  passwordResetToken: string,
+  {password, passwordConfirmation}: ResetPasswordParams
+) => {
+  return request
+    .put(`/api/reset_password`)
+    .send({
+      password,
+      password_confirmation: passwordConfirmation,
+      token: passwordResetToken,
+    })
     .then((res) => res.body.data);
 };
 
