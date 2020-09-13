@@ -43,6 +43,16 @@ if sentry_dsn != nil do
     root_source_code_path: File.cwd!()
 end
 
+config :phoenix_swagger, json_library: Jason
+
+config :chat_api, :phoenix_swagger,
+  swagger_files: %{
+    "priv/static/swagger.json" => [
+      router: ChatApiWeb.Router,     # phoenix routes will be converted to swagger paths
+      endpoint: ChatApiWeb.Endpoint  # (optional) endpoint config used to set host, port and https schemes.
+    ]
+ }
+
 config :chat_api, :pow,
   user: ChatApi.Users.User,
   repo: ChatApi.Repo

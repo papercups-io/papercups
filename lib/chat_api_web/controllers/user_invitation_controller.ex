@@ -1,10 +1,17 @@
 defmodule ChatApiWeb.UserInvitationController do
   use ChatApiWeb, :controller
+  use PhoenixSwagger
 
   alias ChatApi.UserInvitations
   alias ChatApi.UserInvitations.UserInvitation
 
   action_fallback ChatApiWeb.FallbackController
+
+  swagger_path :index do
+    get "/posts"
+    description "List User Invitations"
+    response 200, "Success"
+  end
 
   def index(conn, _params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
