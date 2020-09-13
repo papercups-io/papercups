@@ -1,10 +1,59 @@
 defmodule ChatApiWeb.UserController do
   use ChatApiWeb, :controller
+  use PhoenixSwagger
   alias ChatApi.Users
   require Logger
 
   action_fallback ChatApiWeb.FallbackController
 
+ def swagger_definitions do
+   %{
+     Token:
+      swagger_schema do
+        title("Token")
+        description("A Token")
+        properties do
+          email(:string, "Email", required: true)
+        end
+        example(%{
+          email: "test@test.com"
+        })
+      end,
+     UserRequest:
+       swagger_schema do
+         title("UserRequest")
+         description("POST body for creating / updating a user")
+         property(:user, Schema.ref(:User), "The user details")
+       end,
+     UserResponse:
+       swagger_schema do
+         title("UserResponse")
+         description("Response body a user")
+         property(:user, Schema.ref(:User), "The user details")
+       end,
+   }
+  end
+
+  swagger_path(:verify_email) do
+    post("/api/")
+    summary("verify users='s email")
+    description("verify user's email")
+    consumes("application/json")
+    produces("application/json")
+
+    parameter(
+      :token,
+      :body,
+      Schema.ref(:VerifyEmail),
+      "The user details",
+      example: %{
+        user: %{
+          email: "test@test.com"
+        }
+      }
+    )
+    response(200, "Email already verified")
+  end
   def verify_email(conn, %{"token" => token}) do
     case Users.find_by_email_confirmation_token(token) do
       nil ->

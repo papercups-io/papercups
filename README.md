@@ -40,6 +40,13 @@ Try sending us a message to see what the chat experience is like!
 
 [Getting setup for development](https://github.com/papercups-io/papercups/wiki/Development-Setup#getting-started)
 
+Documentation for the API is available via swagger/open-api and can be accessed from: 
+http://localhost/swagger or manually generated with:
+```js
+mix phx.swagger.generate 
+```
+file can be found in `priv/static/swagger.json`
+
 ## Contributing
 
 We :heart: contributions big or small. See [CONTRIBUTING.md](https://github.com/papercups-io/papercups/blob/master/CONTRIBUTING.md) for a guide on how to get started.

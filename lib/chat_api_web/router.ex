@@ -91,6 +91,10 @@ defmodule ChatApiWeb.Router do
     end
   end
 
+  scope "/swagger" do
+    forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :chat_api, swagger_file: "swagger.json"
+  end
+
   scope "/", ChatApiWeb do
     pipe_through :browser
 
@@ -98,9 +102,6 @@ defmodule ChatApiWeb.Router do
     get "/*path", PageController, :index
   end
 
-  scope "/swagger" do
-    forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :myapp, swagger_file: "swagger.json"
-  end
 
   # swagger details
   def swagger_info do
