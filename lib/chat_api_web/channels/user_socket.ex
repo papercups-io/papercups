@@ -44,7 +44,7 @@ defmodule ChatApiWeb.UserSocket do
 
   defp get_credentials(socket, signed_token, config) do
     conn = %Plug.Conn{secret_key_base: socket.endpoint.config(:secret_key_base)}
-    store_config = [backend: Pow.Store.Backend.EtsCache]
+    store_config = store_config(config)
     salt = Atom.to_string(ChatApiWeb.APIAuthPlug)
 
     with {:ok, token} <- Pow.Plug.verify_token(conn, salt, signed_token, config),
@@ -53,5 +53,11 @@ defmodule ChatApiWeb.UserSocket do
     else
       _any -> nil
     end
+  end
+
+  defp store_config(config) do
+    backend = Pow.Config.get(config, :cache_store_backend, Pow.Store.Backend.EtsCache)
+
+    [backend: backend]
   end
 end

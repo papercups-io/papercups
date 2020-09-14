@@ -16,6 +16,8 @@ defmodule ChatApi.Application do
       ChatApiWeb.Presence,
       # Start the Endpoint (http/https)
       ChatApiWeb.Endpoint,
+      # Start the MnesiaCache
+      Pow.Store.Backend.MnesiaCache,
       # Start Oban workers
       {Oban, oban_config()}
       # Start a worker by calling: ChatApi.Worker.start_link(arg)

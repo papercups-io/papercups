@@ -33,3 +33,6 @@ chat_api-*.tar
 
 # Jetbrain IDE files
 .idea/
+
+# Mnesia Cache
+Mnesia*
