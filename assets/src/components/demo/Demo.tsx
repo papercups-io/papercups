@@ -78,6 +78,10 @@ class Demo extends React.Component<Props, State> {
     return {
       email: email,
       external_id: String(id),
+      metadata: {
+        // Just testing that ad hoc metadata works :)
+        ts: +new Date(),
+      },
     };
   };
 
