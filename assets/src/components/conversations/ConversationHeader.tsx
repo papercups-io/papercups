@@ -40,7 +40,12 @@ const CustomerMetadataPopoverContent = ({customer}: {customer: any}) => {
   const {current_url, browser, os} = customer;
 
   return (
-    <Box>
+    <Box
+      sx={{
+        maxWidth: 480,
+        wordBreak: 'break-all',
+      }}
+    >
       {current_url && (
         <Box mb={1}>
           <Text strong>Current URL: </Text>
