@@ -91,12 +91,26 @@ defmodule ChatApi.Customers do
     |> Repo.update()
   end
 
+  # TODO: figure out if any of this can be done in the changeset, or if there's
+  # a better way to handle this in general
   def sanitize_metadata(metadata) do
     case metadata do
       %{"external_id" => external_id} when is_integer(external_id) ->
+        # Ensure `external_id` is always a string
         metadata
         |> Map.merge(%{"external_id" => to_string(external_id)})
         |> sanitize_metadata()
+
+      %{"current_url" => current_url} ->
+        if String.length(current_url) > 255 do
+          # Ensure `current_url` is never longer than 255 characters
+          # (TODO: maybe just support longer urls in the future?)
+          metadata
+          |> Map.merge(%{"current_url" => String.slice(current_url, 0, 250) <> "..."})
+          |> sanitize_metadata()
+        else
+          metadata
+        end
 
       _ ->
         metadata
