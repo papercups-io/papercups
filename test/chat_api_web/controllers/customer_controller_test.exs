@@ -79,6 +79,19 @@ defmodule ChatApiWeb.CustomerControllerTest do
       assert %{"external_id" => "123"} = json_response(resp, 201)["data"]
     end
 
+    test "truncates current_url if it is too long", %{
+      conn: conn
+    } do
+      current_url =
+        "http://example.com/login?next=/insights%3Finsight%3DTRENDS%26interval%3Dday%26events%3D%255B%257B%2522id%2522%253A%2522%2524pageview%2522%252C%2522name%2522%253A%2522%2524pageview%2522%252C%2522type%2522%253A%2522events%2522%252C%2522order%2522%253A0%252C%2522math%2522%253A%2522total%2522%257D%255D%26display%3DActionsTable%26actions%3D%255B%255D%26new_entity%3D%255B%255D%26breakdown%3D%2524browser%26breakdown_type%3Devent%26properties%3D%255B%255D"
+
+      customer = Map.merge(valid_create_attrs(), %{current_url: current_url})
+      resp = post(conn, Routes.customer_path(conn, :create), customer: customer)
+
+      assert %{"current_url" => truncated} = json_response(resp, 201)["data"]
+      assert String.length(truncated) <= 255
+    end
+
     test "renders errors when data is invalid", %{conn: conn} do
       conn = post(conn, Routes.customer_path(conn, :create), customer: @invalid_attrs)
       assert json_response(conn, 422)["errors"] != %{}
