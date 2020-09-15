@@ -1,10 +1,32 @@
 defmodule ChatApiWeb.ConversationController do
   use ChatApiWeb, :controller
+  use PhoenixSwagger
 
   alias ChatApi.Conversations
   alias ChatApi.Conversations.Conversation
 
   action_fallback(ChatApiWeb.FallbackController)
+
+  swagger_path :index do
+    get("/api/conversations")
+    summary("Query for conversations")
+    description("Query for conversations. This operation supports filtering")
+    parameter("Authorization", :header, :string, "OAuth2 access token", required: true)
+
+    parameters do
+      status(:query, :string, "Status of the conversation (e.g. open, closed)", example: "open")
+
+      priority(:query, :string, "Conversation priority status (e.g. priority, not_priority)",
+        example: "priority"
+      )
+
+      assignee_id(:query, :string, "The agent assigned to the conversation",
+        example: "user_1a2b3c"
+      )
+    end
+
+    response(200, "Success")
+  end
 
   @spec index(Plug.Conn.t(), any) :: Plug.Conn.t()
   def index(conn, params) do

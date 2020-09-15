@@ -19,6 +19,11 @@ defmodule ChatApiWeb.Router do
     plug(Pow.Plug.RequireAuthenticated, error_handler: ChatApiWeb.APIAuthErrorHandler)
   end
 
+  # Swagger
+  scope "/api/swagger" do
+    forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :chat_api, swagger_file: "swagger.json"
+  end
+
   # Public routes
   scope "/api", ChatApiWeb do
     pipe_through(:api)
@@ -96,5 +101,14 @@ defmodule ChatApiWeb.Router do
 
     get "/", PageController, :index
     get "/*path", PageController, :index
+  end
+
+  def swagger_info do
+    %{
+      info: %{
+        version: "1.0",
+        title: "Papercups API"
+      }
+    }
   end
 end
