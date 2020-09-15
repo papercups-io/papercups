@@ -31,6 +31,19 @@ config :phoenix, :json_library, Jason
 
 config :tesla, adapter: Tesla.Adapter.Hackney
 
+# Configure Swagger
+config :phoenix_swagger, json_library: Jason
+
+config :chat_api, :phoenix_swagger,
+  swagger_files: %{
+    "priv/static/swagger.json" => [
+      # phoenix routes will be converted to swagger paths
+      router: ChatApiWeb.Router,
+      # (optional) endpoint config used to set host, port and https schemes.
+      endpoint: ChatApiWeb.Endpoint
+    ]
+  }
+
 # Configure Sentry
 sentry_dsn = System.get_env("SENTRY_DSN")
 
