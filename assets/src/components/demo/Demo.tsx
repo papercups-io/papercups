@@ -79,7 +79,7 @@ class Demo extends React.Component<Props, State> {
       email: email,
       external_id: String(id),
       metadata: {
-        env: 'staging',
+        // Just testing that ad hoc metadata works :)
         ts: +new Date(),
       },
     };
