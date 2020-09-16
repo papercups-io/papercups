@@ -60,27 +60,9 @@ defmodule ChatApiWeb.MessageController do
   end
 
   defp broadcast_new_message(message) do
-    json = ChatApiWeb.MessageView.render("expanded.json", message: message)
-    %{conversation_id: conversation_id, account_id: account_id} = message
-    topic = "conversation:" <> conversation_id
-
-    ChatApiWeb.Endpoint.broadcast!(topic, "shout", json)
-
-    # Handling async for now
-    Task.start(fn ->
-      send_message_alerts(message)
-    end)
-
-    Task.start(fn ->
-      Messages.send_webhook_notifications(account_id, json)
-    end)
-  end
-
-  defp send_message_alerts(message) do
-    %{conversation_id: conversation_id, customer_id: customer_id, body: body} = message
-    type = if is_nil(customer_id), do: :agent, else: :customer
-
-    # TODO: how should we handle errors here?
-    ChatApi.Slack.send_conversation_message_alert(conversation_id, body, type: type)
+    message
+    |> Messages.broadcast_to_conversation!()
+    |> Messages.notify(:slack)
+    |> Messages.notify(:webhooks)
   end
 end

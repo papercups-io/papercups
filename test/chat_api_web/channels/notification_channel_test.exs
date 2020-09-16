@@ -41,7 +41,12 @@ defmodule ChatApiWeb.NotificationChannelTest do
     account: account,
     conversation: conversation
   } do
-    msg = %{body: "Hello world!", account_id: account.id, conversation_id: conversation.id}
+    msg = %{
+      body: "Hello world!",
+      account_id: account.id,
+      conversation_id: conversation.id
+    }
+
     push(socket, "shout", msg)
 
     assert_push("shout", msg)

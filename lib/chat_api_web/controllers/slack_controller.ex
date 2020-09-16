@@ -134,17 +134,10 @@ defmodule ChatApiWeb.SlackController do
         "user_id" => sender_id
       }
 
-      # TODO: DRY up with conversation channel, notification channel, message controller
-      {:ok, message} = Messages.create_message(params)
-      message = Messages.get_message!(message.id)
-      json = ChatApiWeb.MessageView.render("expanded.json", message: message)
-
-      ChatApiWeb.Endpoint.broadcast!("conversation:" <> conversation_id, "shout", json)
-
-      # Handling async for now with `Task.start`, but we should probably use Oban instead?
-      Task.start(fn ->
-        Messages.send_webhook_notifications(account_id, json)
-      end)
+      params
+      |> Messages.create_and_fetch!()
+      |> Messages.broadcast_to_conversation!()
+      |> Messages.notify(:webhooks)
     end
   end
 
