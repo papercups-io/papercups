@@ -134,11 +134,10 @@ defmodule ChatApiWeb.SlackController do
         "user_id" => sender_id
       }
 
-      {:ok, message} = Messages.create_message(params)
-      message = Messages.get_message!(message.id)
-      result = ChatApiWeb.MessageView.render("expanded.json", message: message)
-
-      ChatApiWeb.Endpoint.broadcast!("conversation:" <> conversation_id, "shout", result)
+      params
+      |> Messages.create_and_fetch!()
+      |> Messages.broadcast_to_conversation!()
+      |> Messages.notify(:webhooks)
     end
   end
 

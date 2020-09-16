@@ -3,7 +3,7 @@ defmodule ChatApiWeb.NotificationChannel do
 
   alias ChatApiWeb.Presence
   alias Phoenix.Socket.Broadcast
-  alias ChatApi.{Messages, Conversations, EventSubscriptions}
+  alias ChatApi.{Messages, Conversations}
 
   require Logger
 
@@ -104,59 +104,12 @@ defmodule ChatApiWeb.NotificationChannel do
     {:noreply, socket}
   end
 
-  defp send_message_alerts(message) do
-    %{conversation_id: conversation_id, customer_id: customer_id, body: body} = message
-    type = if is_nil(customer_id), do: :agent, else: :customer
-
-    # TODO: how should we handle errors here?
-    ChatApi.Slack.send_conversation_message_alert(conversation_id, body, type: type)
-  end
-
-  # TODO: DRY up with conversation channel
-  defp send_webhook_notifications(account_id, payload) do
-    EventSubscriptions.notify_event_subscriptions(account_id, %{
-      "event" => "message:created",
-      "payload" => payload
-    })
-  end
-
-  defp enqueue_conversation_reply_email(message) do
-    # Enqueue reply email to send in 2 mins if necessary
-    schedule_in = 2 * 60
-
-    # TODO: not sure the best way to handle this, but basically we want to only
-    # enqueue the latest message to trigger an email if it remains unseen for 2 mins
-    ChatApi.Workers.SendConversationReplyEmail.cancel_pending_jobs(message)
-
-    %{message: message}
-    |> ChatApi.Workers.SendConversationReplyEmail.new(schedule_in: schedule_in)
-    |> Oban.insert()
-  end
-
   defp broadcast_new_message(message) do
-    json = ChatApiWeb.MessageView.render("expanded.json", message: message)
-    %{conversation_id: conversation_id, account_id: account_id} = message
-    topic = "conversation:" <> conversation_id
-
-    # TODO: explain the difference between broadcast! and broadcast_from! and
-    # why we use one vs the other here
-    ChatApiWeb.Endpoint.broadcast!(topic, "shout", json)
-
-    # TODO: perhaps more of this logic should be handled in an "after_insert"
-    # on messages? (see https://blog.danielberkompas.com/2016/09/27/ecto-multi-services/)
-
-    # Handling async for now
-    Task.start(fn ->
-      send_message_alerts(message)
-    end)
-
-    Task.start(fn ->
-      send_webhook_notifications(account_id, json)
-    end)
-
-    Task.start(fn ->
-      enqueue_conversation_reply_email(json)
-    end)
+    message
+    |> Messages.broadcast_to_conversation!()
+    |> Messages.notify(:slack)
+    |> Messages.notify(:webhooks)
+    |> Messages.notify(:conversation_reply_email)
   end
 
   defp put_new_topics(socket, topics) do

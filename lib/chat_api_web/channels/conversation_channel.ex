@@ -2,7 +2,7 @@ defmodule ChatApiWeb.ConversationChannel do
   use ChatApiWeb, :channel
 
   alias ChatApiWeb.Presence
-  alias ChatApi.{Messages, Conversations, Emails, EventSubscriptions}
+  alias ChatApi.{Messages, Conversations}
 
   @impl true
   def join("conversation:lobby", payload, socket) do
@@ -104,23 +104,6 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
-  defp send_message_alerts(message) do
-    %{conversation_id: conversation_id, account_id: account_id, body: body} = message
-    # TODO: how should we handle errors here?
-    ChatApi.Slack.send_conversation_message_alert(conversation_id, body, type: :customer)
-
-    # TODO: maybe do these in an "after_send" hook or something more async,
-    # since this notification logic probably shouldn't live in here.
-    Emails.send_new_message_alerts(body, account_id, conversation_id)
-  end
-
-  defp send_webhook_notifications(account_id, payload) do
-    EventSubscriptions.notify_event_subscriptions(account_id, %{
-      "event" => "message:created",
-      "payload" => payload
-    })
-  end
-
   defp broadcast_conversation_update(message) do
     %{conversation_id: conversation_id, account_id: account_id} = message
     # Mark as unread and ensure the conversation is open, since we want to
@@ -138,19 +121,12 @@ defmodule ChatApiWeb.ConversationChannel do
 
   defp broadcast_new_message(socket, message) do
     broadcast_conversation_update(message)
+    broadcast(socket, "shout", Messages.format(message))
 
-    %{account_id: account_id} = message
-    json = ChatApiWeb.MessageView.render("expanded.json", message: message)
-    broadcast(socket, "shout", json)
-
-    # Handling async for now
-    Task.start(fn ->
-      send_message_alerts(message)
-    end)
-
-    Task.start(fn ->
-      send_webhook_notifications(account_id, json)
-    end)
+    message
+    |> Messages.notify(:slack)
+    |> Messages.notify(:new_message_email)
+    |> Messages.notify(:webhooks)
   end
 
   # Add authorization logic here as required.
