@@ -3,7 +3,7 @@ defmodule ChatApiWeb.NotificationChannel do
 
   alias ChatApiWeb.Presence
   alias Phoenix.Socket.Broadcast
-  alias ChatApi.{Messages, Conversations, EventSubscriptions}
+  alias ChatApi.{Messages, Conversations}
 
   require Logger
 
@@ -112,14 +112,6 @@ defmodule ChatApiWeb.NotificationChannel do
     ChatApi.Slack.send_conversation_message_alert(conversation_id, body, type: type)
   end
 
-  # TODO: DRY up with conversation channel
-  defp send_webhook_notifications(account_id, payload) do
-    EventSubscriptions.notify_event_subscriptions(account_id, %{
-      "event" => "message:created",
-      "payload" => payload
-    })
-  end
-
   defp enqueue_conversation_reply_email(message) do
     # Enqueue reply email to send in 2 mins if necessary
     schedule_in = 2 * 60
@@ -151,7 +143,7 @@ defmodule ChatApiWeb.NotificationChannel do
     end)
 
     Task.start(fn ->
-      send_webhook_notifications(account_id, json)
+      Messages.send_webhook_notifications(account_id, json)
     end)
 
     Task.start(fn ->

@@ -4,9 +4,11 @@ defmodule ChatApi.Messages do
   """
 
   import Ecto.Query, warn: false
-  alias ChatApi.Repo
 
+  alias ChatApi.{EventSubscriptions, Repo}
   alias ChatApi.Messages.Message
+
+  require Logger
 
   @doc """
   Returns the list of messages.
@@ -76,6 +78,38 @@ defmodule ChatApi.Messages do
     |> Repo.insert()
   end
 
+  def create_and_fetch!(attrs \\ %{}) do
+    case create_message(attrs) do
+      {:ok, message} -> get_message!(message.id)
+      error -> error
+    end
+  end
+
+  def get_message_type(%Message{customer_id: nil}), do: :agent
+  def get_message_type(%Message{user_id: nil}), do: :customer
+  def get_message_type(_message), do: :unknown
+
+  def send_webhook_notifications(account_id, payload) do
+    EventSubscriptions.notify_event_subscriptions(account_id, %{
+      "event" => "message:created",
+      "payload" => payload
+    })
+  end
+
+  def get_conversation_topic(%Message{conversation_id: conversation_id}),
+    do: "conversation:" <> conversation_id
+
+  def to_json(%Message{} = message),
+    do: ChatApiWeb.MessageView.render("expanded.json", message: message)
+
+  def broadcast_to_conversation!(message) do
+    message
+    |> get_conversation_topic()
+    |> ChatApiWeb.Endpoint.broadcast!("shout", to_json(message))
+
+    message
+  end
+
   @doc """
   Updates a message.
 
@@ -121,5 +155,64 @@ defmodule ChatApi.Messages do
   """
   def change_message(%Message{} = message, attrs \\ %{}) do
     Message.changeset(message, attrs)
+  end
+
+  # Notifications (WIP, currently unused)
+  # TODO: move more of these to be queued up in Oban
+
+  def notify(
+        :slack,
+        %Message{body: body, conversation_id: conversation_id} = message
+      ) do
+    # TODO: should we just pass in the message struct here?
+    ChatApi.Slack.send_conversation_message_alert(conversation_id, body,
+      type: get_message_type(message)
+    )
+
+    message
+  end
+
+  def notify(:webhooks, %Message{account_id: account_id} = message) do
+    # TODO: use Oban instead?
+    Task.start(fn ->
+      send_webhook_notifications(account_id, to_json(message))
+    end)
+  end
+
+  def notify(
+        :new_message_email,
+        %Message{
+          body: body,
+          account_id: account_id,
+          conversation_id: conversation_id
+        } = message
+      ) do
+    # TODO: use Oban instead?
+    Task.start(fn ->
+      ChatApi.Emails.send_new_message_alerts(body, account_id, conversation_id)
+    end)
+
+    message
+  end
+
+  def notify(:conversation_reply_email, %Message{} = message) do
+    # 2 minutes
+    schedule_in = 2 * 60
+
+    # TODO: not sure the best way to handle this, but basically we want to only
+    # enqueue the latest message to trigger an email if it remains unseen for 2 mins
+    ChatApi.Workers.SendConversationReplyEmail.cancel_pending_jobs(message)
+
+    %{message: message}
+    |> ChatApi.Workers.SendConversationReplyEmail.new(schedule_in: schedule_in)
+    |> Oban.insert()
+
+    message
+  end
+
+  def notify(type, message) do
+    Logger.error(
+      "Unrecognized notification type #{inspect(type)} for message #{inspect(message)}"
+    )
   end
 end

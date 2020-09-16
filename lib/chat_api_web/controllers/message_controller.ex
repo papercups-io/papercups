@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.MessageController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{EventSubscriptions, Messages}
+  alias ChatApi.Messages
   alias ChatApi.Messages.Message
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -72,7 +72,7 @@ defmodule ChatApiWeb.MessageController do
     end)
 
     Task.start(fn ->
-      send_webhook_notifications(account_id, json)
+      Messages.send_webhook_notifications(account_id, json)
     end)
   end
 
@@ -82,13 +82,5 @@ defmodule ChatApiWeb.MessageController do
 
     # TODO: how should we handle errors here?
     ChatApi.Slack.send_conversation_message_alert(conversation_id, body, type: type)
-  end
-
-  # TODO: DRY up with conversation channel
-  defp send_webhook_notifications(account_id, payload) do
-    EventSubscriptions.notify_event_subscriptions(account_id, %{
-      "event" => "message:created",
-      "payload" => payload
-    })
   end
 end

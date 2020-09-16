@@ -2,7 +2,7 @@ defmodule ChatApiWeb.ConversationChannel do
   use ChatApiWeb, :channel
 
   alias ChatApiWeb.Presence
-  alias ChatApi.{Messages, Conversations, Emails, EventSubscriptions}
+  alias ChatApi.{Messages, Conversations, Emails}
 
   @impl true
   def join("conversation:lobby", payload, socket) do
@@ -114,13 +114,6 @@ defmodule ChatApiWeb.ConversationChannel do
     Emails.send_new_message_alerts(body, account_id, conversation_id)
   end
 
-  defp send_webhook_notifications(account_id, payload) do
-    EventSubscriptions.notify_event_subscriptions(account_id, %{
-      "event" => "message:created",
-      "payload" => payload
-    })
-  end
-
   defp broadcast_conversation_update(message) do
     %{conversation_id: conversation_id, account_id: account_id} = message
     # Mark as unread and ensure the conversation is open, since we want to
@@ -149,7 +142,7 @@ defmodule ChatApiWeb.ConversationChannel do
     end)
 
     Task.start(fn ->
-      send_webhook_notifications(account_id, json)
+      Messages.send_webhook_notifications(account_id, json)
     end)
   end
 
