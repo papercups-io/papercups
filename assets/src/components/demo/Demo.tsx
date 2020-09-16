@@ -169,6 +169,14 @@ class Demo extends React.Component<Props, State> {
           baseUrl={BASE_URL}
           defaultIsOpen
           showAgentAvailability
+          onChatClosed={() => console.log('Chat closed!')}
+          onChatOpened={() => console.log('Chat opened!')}
+          onMessageReceived={(message: any) =>
+            console.log('Message received!', message)
+          }
+          onMessageSent={(message: any) =>
+            console.log('Message sent!', message)
+          }
         />
       </Box>
     );
