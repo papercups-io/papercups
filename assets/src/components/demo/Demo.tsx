@@ -114,6 +114,7 @@ class Demo extends React.Component<Props, State> {
             Hello! Try customizing the chat widget's display text and colors.
           </Paragraph>
         </Box>
+
         <Box mb={4}>
           <Paragraph>Update the title:</Paragraph>
           <Input
@@ -123,6 +124,7 @@ class Demo extends React.Component<Props, State> {
             onChange={this.handleChangeTitle}
           />
         </Box>
+
         <Box mb={4}>
           <Paragraph>Update the subtitle:</Paragraph>
           <Input
@@ -132,6 +134,7 @@ class Demo extends React.Component<Props, State> {
             onChange={this.handleChangeSubtitle}
           />
         </Box>
+
         <Box mb={4}>
           <Paragraph>
             Try changing the color (you can enter any hex value you want!)
@@ -142,7 +145,9 @@ class Demo extends React.Component<Props, State> {
             onChangeComplete={this.handleChangeColor}
           />
         </Box>
+
         <Divider />
+
         <Flex mb={4} sx={{alignItems: 'center'}}>
           <Box mr={3}>
             <Text strong>Ready to get started?</Text>
@@ -153,6 +158,7 @@ class Demo extends React.Component<Props, State> {
             </Button>
           </Link>
         </Flex>
+
         <ChatWidget
           title={title || 'Welcome!'}
           subtitle={subtitle}
