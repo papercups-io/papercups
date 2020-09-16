@@ -1,14 +1,16 @@
 defmodule ChatApi.MessagesTest do
   use ChatApi.DataCase
 
-  alias ChatApi.{Messages, Conversations, Accounts}
+  alias ChatApi.{Accounts, Conversations, Customers, Messages}
 
   describe "messages" do
     alias ChatApi.Messages.Message
+    alias ChatApi.Users.User
 
     @valid_attrs %{body: "some body"}
     @update_attrs %{body: "some updated body"}
     @invalid_attrs %{body: nil}
+    @password "supersecretpassword"
 
     def valid_create_attrs do
       {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
@@ -17,6 +19,36 @@ defmodule ChatApi.MessagesTest do
         Conversations.create_conversation(%{status: "open", account_id: account.id})
 
       Enum.into(@valid_attrs, %{conversation_id: conversation.id, account_id: account.id})
+    end
+
+    def user_fixture(_attrs \\ %{}) do
+      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
+
+      %User{}
+      |> User.changeset(%{
+        email: "test@example.com",
+        password: @password,
+        password_confirmation: @password,
+        account_id: account.id
+      })
+      |> Repo.insert!()
+    end
+
+    def customer_fixture(attrs \\ %{}) do
+      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
+
+      {:ok, customer} =
+        attrs
+        |> Enum.into(%{
+          first_seen: ~D[2020-01-01],
+          last_seen: ~D[2020-01-02],
+          name: "Test User",
+          email: "user@test.com",
+          account_id: account.id
+        })
+        |> Customers.create_customer()
+
+      Customers.get_customer!(customer.id)
     end
 
     def message_fixture(attrs \\ %{}) do
@@ -71,6 +103,35 @@ defmodule ChatApi.MessagesTest do
     test "change_message/1 returns a message changeset" do
       message = message_fixture()
       assert %Ecto.Changeset{} = Messages.change_message(message)
+    end
+
+    test "get_message_type/1 returns the message sender type" do
+      customer = customer_fixture()
+      message = message_fixture(%{customer_id: customer.id})
+
+      assert :customer = Messages.get_message_type(message)
+
+      user = user_fixture()
+      message = message_fixture(%{user_id: user.id})
+
+      assert :agent = Messages.get_message_type(message)
+    end
+
+    test "get_conversation_topic/1 returns the conversation event topic" do
+      message = message_fixture()
+      %{conversation_id: conversation_id} = message
+      topic = Messages.get_conversation_topic(message)
+
+      assert "conversation:" <> ^conversation_id = topic
+    end
+
+    test "format/1 returns the formatted message" do
+      customer = customer_fixture()
+      message = message_fixture(%{customer_id: customer.id})
+
+      assert %{body: body, customer: c} = Messages.format(message)
+      assert body == message.body
+      assert customer.email == c.email
     end
   end
 end

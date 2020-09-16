@@ -99,13 +99,13 @@ defmodule ChatApi.Messages do
   def get_conversation_topic(%Message{conversation_id: conversation_id}),
     do: "conversation:" <> conversation_id
 
-  def to_json(%Message{} = message),
+  def format(%Message{} = message),
     do: ChatApiWeb.MessageView.render("expanded.json", message: message)
 
   def broadcast_to_conversation!(message) do
     message
     |> get_conversation_topic()
-    |> ChatApiWeb.Endpoint.broadcast!("shout", to_json(message))
+    |> ChatApiWeb.Endpoint.broadcast!("shout", format(message))
 
     message
   end
@@ -175,7 +175,7 @@ defmodule ChatApi.Messages do
   def notify(:webhooks, %Message{account_id: account_id} = message) do
     # TODO: use Oban instead?
     Task.start(fn ->
-      send_webhook_notifications(account_id, to_json(message))
+      send_webhook_notifications(account_id, format(message))
     end)
   end
 
