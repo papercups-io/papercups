@@ -157,7 +157,7 @@ defmodule ChatApi.Messages do
     Message.changeset(message, attrs)
   end
 
-  # Notifications (WIP, currently unused)
+  # Notifications
   # TODO: move more of these to be queued up in Oban
 
   @spec notify(Message.t(), atom()) :: Message.t()
