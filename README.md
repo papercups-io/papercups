@@ -42,7 +42,7 @@ Try sending us a message to see what the chat experience is like!
 
 ## Contributing
 
-We :heart: contributions big or small. See [CONTRIBUTING.md](https://github.com/papercups-io/papercups/blob/master/CONTRIBUTING.md) for a guide on how to get started.
+We :heart:  contributions big or small. See [CONTRIBUTING.md](https://github.com/papercups-io/papercups/blob/master/CONTRIBUTING.md) for a guide on how to get started.
 
 ## Get in touch
 
