@@ -11,6 +11,7 @@ import {
   Text,
   Title,
 } from '../common';
+import Spinner from '../Spinner';
 import {SmileTwoTone} from '../icons';
 import * as API from '../../api';
 import {BASE_URL} from '../../config';
@@ -21,6 +22,7 @@ type State = {
   companyName: string;
   currentUser: any;
   inviteUrl: string;
+  isLoading: boolean;
   isEditing: boolean;
 };
 
@@ -32,6 +34,7 @@ class AccountOverview extends React.Component<Props, State> {
     companyName: '',
     currentUser: null,
     inviteUrl: '',
+    isLoading: true,
     isEditing: false,
   };
 
@@ -41,7 +44,7 @@ class AccountOverview extends React.Component<Props, State> {
     await this.fetchLatestAccountInfo();
     const currentUser = await API.me();
 
-    this.setState({currentUser});
+    this.setState({currentUser, isLoading: false});
   }
 
   fetchLatestAccountInfo = async () => {
@@ -49,6 +52,12 @@ class AccountOverview extends React.Component<Props, State> {
     const {company_name: companyName} = account;
 
     this.setState({account, companyName});
+  };
+
+  hasAdminRole = () => {
+    const {currentUser} = this.state;
+
+    return !!currentUser && currentUser.role === 'admin';
   };
 
   handleGenerateInviteUrl = async () => {
@@ -163,9 +172,22 @@ class AccountOverview extends React.Component<Props, State> {
   };
 
   render() {
-    const {account, companyName, inviteUrl, isEditing} = this.state;
+    const {account, companyName, inviteUrl, isLoading, isEditing} = this.state;
 
-    if (!account) {
+    if (isLoading) {
+      return (
+        <Flex
+          sx={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+          }}
+        >
+          <Spinner size={40} />
+        </Flex>
+      );
+    } else if (!account) {
       return null;
     }
 
@@ -214,32 +236,34 @@ class AccountOverview extends React.Component<Props, State> {
           )}
         </Box>
 
-        <Box mb={5}>
-          <Title level={4}>Invite new teammate</Title>
+        {this.hasAdminRole() && (
+          <Box mb={5}>
+            <Title level={4}>Invite new teammate</Title>
 
-          <Paragraph>
-            <Text>
-              Generate a unique invitation URL below and send it to your
-              teammate.
-            </Text>
-          </Paragraph>
+            <Paragraph>
+              <Text>
+                Generate a unique invitation URL below and send it to your
+                teammate.
+              </Text>
+            </Paragraph>
 
-          <Flex sx={{maxWidth: 640}}>
-            <Box sx={{flex: 1}} mr={1}>
-              <Input
-                ref={(el) => (this.input = el)}
-                type="text"
-                placeholder="Click the button to generate an invite URL!"
-                value={inviteUrl}
-              ></Input>
-            </Box>
-            <Box>
-              <Button type="primary" onClick={this.handleGenerateInviteUrl}>
-                Generate invite URL
-              </Button>
-            </Box>
-          </Flex>
-        </Box>
+            <Flex sx={{maxWidth: 640}}>
+              <Box sx={{flex: 1}} mr={1}>
+                <Input
+                  ref={(el) => (this.input = el)}
+                  type="text"
+                  placeholder="Click the button to generate an invite URL!"
+                  value={inviteUrl}
+                ></Input>
+              </Box>
+              <Box>
+                <Button type="primary" onClick={this.handleGenerateInviteUrl}>
+                  Generate invite URL
+                </Button>
+              </Box>
+            </Flex>
+          </Box>
+        )}
 
         <Box mb={5}>
           <Title level={4}>Team</Title>
