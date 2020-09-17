@@ -17,11 +17,17 @@ defmodule ChatApiWeb.UserView do
           created_at: user.inserted_at,
           full_name: profile.full_name,
           display_name: profile.display_name,
-          profile_photo_url: profile.profile_photo_url
+          profile_photo_url: profile.profile_photo_url,
+          role: user.role
         }
 
       _ ->
-        %{id: user.id, email: user.email, created_at: user.inserted_at}
+        %{
+          id: user.id,
+          email: user.email,
+          created_at: user.inserted_at,
+          role: user.role
+        }
     end
   end
 end
