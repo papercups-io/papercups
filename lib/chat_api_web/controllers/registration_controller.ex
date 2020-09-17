@@ -1,6 +1,8 @@
 defmodule ChatApiWeb.RegistrationController do
   use ChatApiWeb, :controller
 
+  require Logger
+
   alias Ecto.Changeset
   alias Plug.Conn
   alias ChatApiWeb.ErrorHelpers
@@ -23,7 +25,7 @@ defmodule ChatApiWeb.RegistrationController do
             # # TODO: figure out what we want to do here -- it's not currently
             # # obvious that a user invitation expires after one use.
             # ChatApi.UserInvitations.expire_user_invitation(invite)
-            conn |> send_registration_event |> enqueue_welcome_email() |> send_api_token()
+            conn |> send_registration_event() |> enqueue_welcome_email() |> send_api_token()
           end
 
         {:error, changeset, conn} ->
@@ -81,27 +83,20 @@ defmodule ChatApiWeb.RegistrationController do
   end
 
   defp send_registration_event(conn) do
-    with %{email: email, account_id: account_id} <- conn.assigns.current_user do
-      %{email: email}
-
+    with %{email: email, user_id: user_id} <- conn.assigns.current_user do
       now = :os.system_time(:seconds)
 
-      param = %{
+      case Customerio.identify(user_id, %{
         email: email,
         created_at: now,
-      }
-
-
-      Customerio.identify(account_id, param)
-      |> case do
+      }) do
         {:ok, _} -> nil
-        {:error , result} -> IO.inspect(result)
+        {:error, result} -> Logger.error(result)
       end
 
-      Customerio.track(account_id, "sign_up", %{signed_up_at: now})
-      |> case do
+      case Customerio.track(user_id, "sign_up", %{signed_up_at: now}) do
         {:ok, _} -> nil
-        {:error , result} -> IO.inspect(result)
+        {:error, result} -> Logger.error(result)
       end
     end
 
