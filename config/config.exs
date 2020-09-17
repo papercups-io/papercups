@@ -80,6 +80,15 @@ if mailgun_api_key != nil and domain != nil do
     domain: domain
 end
 
+site_id = System.get_env("CUSTOMER_IO_SITE_ID")
+customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
+
+if site_id != nil and customerio_api_key != nil do
+  config :customerio,
+    site_id: site_id,
+    api_key: customerio_api_key
+end
+
 case System.get_env("PAPERCUPS_STRIPE_SECRET") do
   "sk_" <> _rest = api_key ->
     config :stripity_stripe, api_key: api_key
