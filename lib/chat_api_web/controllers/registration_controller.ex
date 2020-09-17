@@ -83,24 +83,34 @@ defmodule ChatApiWeb.RegistrationController do
   end
 
   defp send_registration_event(conn) do
-    with %{email: email, user_id: user_id} <- conn.assigns.current_user do
-      now = :os.system_time(:seconds)
+    send_registration_event(conn, customer_io_enabled?())
+  end
 
-      case Customerio.identify(user_id, %{
-        email: email,
-        created_at: now,
-      }) do
-        {:ok, _} -> nil
-        {:error, result} -> Logger.error(result)
-      end
+  # If CustomerIO is not enabled, just pass through
+  defp send_registration_event(conn, false), do: conn
 
-      case Customerio.track(user_id, "sign_up", %{signed_up_at: now}) do
-        {:ok, _} -> nil
-        {:error, result} -> Logger.error(result)
-      end
+  defp send_registration_event(conn, true) do
+    case conn.assigns.current_user do
+      %{email: email, id: user_id} ->
+        now = :os.system_time(:seconds)
+
+        case Customerio.identify(user_id, %{email: email, created_at: now}) do
+          {:ok, _} -> nil
+          {:error, result} -> Logger.error(inspect(result))
+        end
+
+        case Customerio.track(user_id, "sign_up", %{signed_up_at: now}) do
+          {:ok, _} -> nil
+          {:error, result} -> Logger.error(inspect(result))
+        end
+
+        conn
+
+      user ->
+        Logger.error("User missing id or email: #{inspect(user)}")
+
+        conn
     end
-
-    conn
   end
 
   defp send_api_token(conn) do
@@ -127,6 +137,13 @@ defmodule ChatApiWeb.RegistrationController do
   defp registration_disabled?() do
     case System.get_env("PAPERCUPS_REGISTRATION_DISABLED") do
       x when x == "1" or x == "true" -> true
+      _ -> false
+    end
+  end
+
+  defp customer_io_enabled?() do
+    case System.get_env("CUSTOMER_IO_API_KEY") do
+      key when is_binary(key) -> String.length(key) > 0
       _ -> false
     end
   end
