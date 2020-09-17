@@ -111,7 +111,7 @@ class Register extends React.Component<Props, State> {
       })
       .then(() => this.props.history.push('/conversations'))
       .catch((err) => {
-        console.log('Error!', err);
+        console.error('Error!', err);
         // TODO: provide more granular error messages?
         const error =
           err.response?.body?.error?.message || 'Invalid credentials';

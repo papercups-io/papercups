@@ -320,7 +320,7 @@ class PricingOverview extends React.Component<Props, State> {
 
         <PricingOptions />
         <Divider />
-        <PricingOptionsModal selected={null} onSelectPlan={console.log} />
+        <PricingOptionsModal selected={null} onSelectPlan={console.debug} />
       </Box>
     );
   }

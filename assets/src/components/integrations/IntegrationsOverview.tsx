@@ -50,7 +50,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
       this.setState({integrations, webhooks, loading: false});
     } catch (err) {
-      console.log('Error loading integrations:', err);
+      console.error('Error loading integrations:', err);
 
       this.setState({loading: false});
     }
@@ -116,7 +116,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         const code = String(q.code);
 
         return API.authorizeSlackIntegration(code).catch((err) =>
-          console.log('Failed to authorize Slack:', err)
+          console.error('Failed to authorize Slack:', err)
         );
       default:
         return null;
@@ -148,7 +148,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
       this.setState({webhooks});
     } catch (err) {
-      console.log('Error refreshing event subscriptions:', err);
+      console.error('Error refreshing event subscriptions:', err);
     }
   };
 

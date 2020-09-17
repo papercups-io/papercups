@@ -55,7 +55,7 @@ const PaymentForm = ({onSuccess, onCancel}: Props) => {
     } else if (paymentMethod && paymentMethod.id) {
       try {
         const result = await API.createPaymentMethod(paymentMethod);
-        console.log('Successfully added payment method!', result);
+        console.debug('Successfully added payment method!', result);
 
         if (onSuccess && typeof onSuccess === 'function') {
           await onSuccess(result);
@@ -63,7 +63,7 @@ const PaymentForm = ({onSuccess, onCancel}: Props) => {
 
         cardElement.clear();
       } catch (err) {
-        console.log('Failed to create payment method:', err);
+        console.error('Failed to create payment method:', err);
 
         setErrorMessage(
           err?.response?.body?.error?.message ||

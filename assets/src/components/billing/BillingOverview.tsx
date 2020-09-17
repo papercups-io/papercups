@@ -166,7 +166,7 @@ class BillingOverview extends React.Component<Props, State> {
       subscription_plan: selectedSubscriptionPlan,
     } = await API.fetchBillingInfo();
 
-    console.log({
+    console.debug({
       subscription,
       product,
       numUsers,
@@ -237,7 +237,7 @@ class BillingOverview extends React.Component<Props, State> {
   };
 
   handleSelectSubscriptionPlan = (plan: SubscriptionPlan) => {
-    console.log('Selected plan!', plan);
+    console.debug('Selected plan!', plan);
 
     if (plan === this.state.selectedSubscriptionPlan) {
       this.setState({displayPricingModal: false});

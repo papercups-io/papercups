@@ -33,11 +33,11 @@ const NewWebhookModal = ({
   const handleChangeUrl = (e: any) => setWebhookUrl(e.target.value);
 
   const handleVerifyUrl = async () => {
-    console.log('Verifying:', url);
+    console.debug('Verifying:', url);
     setIsVerifying(true);
 
     const {verified} = await API.verifyWebhookUrl(url);
-    console.log('Verified?', verified);
+    console.debug('Verified?', verified);
     await sleep(1000);
 
     setIsVerifying(false);
@@ -51,7 +51,7 @@ const NewWebhookModal = ({
   };
 
   const handleSaveWebhook = async () => {
-    console.log('Saving:', url);
+    console.debug('Saving:', url);
     setIsSaving(true);
     const existingWebhookId = webhook && webhook.id;
     const params = {webhook_url: url};

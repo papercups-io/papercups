@@ -112,12 +112,12 @@ class UserProfile extends React.Component<Props, State> {
       profile_photo_url: profilePhotoUrl,
     })
       .then((profile) => {
-        console.log('Successfully updated profile!', profile);
+        console.debug('Successfully updated profile!', profile);
 
         this.setState({isEditing: false});
       })
       .catch((err) => {
-        console.log('Failed to update profile!', err);
+        console.error('Failed to update profile!', err);
 
         return this.fetchLatestProfile();
       })
@@ -133,7 +133,7 @@ class UserProfile extends React.Component<Props, State> {
     return API.updateUserSettings({
       email_alert_on_new_message: shouldEmailOnNewMessages,
     }).catch((err) => {
-      console.log('Failed to update settings!', err);
+      console.error('Failed to update settings!', err);
       // Reset if fails to actually update
       return this.fetchLatestSettings();
     });

@@ -52,14 +52,18 @@ class AccountOverview extends React.Component<Props, State> {
   };
 
   handleGenerateInviteUrl = async () => {
-    const {id: token} = await API.generateUserInvitation();
+    try {
+      const {id: token} = await API.generateUserInvitation();
 
-    this.setState(
-      {
-        inviteUrl: `${BASE_URL}/register/${token}`,
-      },
-      () => this.focusAndHighlightInput()
-    );
+      this.setState(
+        {
+          inviteUrl: `${BASE_URL}/register/${token}`,
+        },
+        () => this.focusAndHighlightInput()
+      );
+    } catch (err) {
+      console.error('Failed to generate user invitation URL:', err);
+    }
   };
 
   focusAndHighlightInput = () => {
@@ -146,12 +150,12 @@ class AccountOverview extends React.Component<Props, State> {
 
     return API.updateAccountInfo({company_name: companyName})
       .then((account) => {
-        console.log('Successfully updated company name!', account);
+        console.debug('Successfully updated company name!', account);
 
         this.setState({isEditing: false});
       })
       .catch((err) => {
-        console.log('Failed to update company name!', err);
+        console.error('Failed to update company name!', err);
 
         return this.fetchLatestAccountInfo();
       })

@@ -55,6 +55,28 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
+  @spec create_admin(map()) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  def create_admin(params) do
+    %User{}
+    |> User.changeset(params)
+    |> User.role_changeset(%{role: "admin"})
+    |> Repo.insert()
+  end
+
+  @spec set_admin_role(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  def set_admin_role(user) do
+    user
+    |> User.role_changeset(%{role: "admin"})
+    |> Repo.update()
+  end
+
+  @spec set_user_role(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  def set_user_role(user) do
+    user
+    |> User.role_changeset(%{role: "user"})
+    |> Repo.update()
+  end
+
   @doc """
   Gets a single user_profile.
 
