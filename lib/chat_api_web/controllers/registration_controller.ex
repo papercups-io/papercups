@@ -56,6 +56,7 @@ defmodule ChatApiWeb.RegistrationController do
     end
   end
 
+  @spec user_with_account_transaction(Conn.t(), map()) :: Ecto.Multi.t()
   def user_with_account_transaction(conn, params) do
     Ecto.Multi.new()
     |> Ecto.Multi.run(:account, fn _repo, %{} ->
@@ -71,6 +72,7 @@ defmodule ChatApiWeb.RegistrationController do
     end)
   end
 
+  @spec enqueue_welcome_email(Conn.t()) :: Conn.t()
   defp enqueue_welcome_email(conn) do
     with %{email: email} <- conn.assigns.current_user do
       %{email: email}
@@ -82,10 +84,12 @@ defmodule ChatApiWeb.RegistrationController do
     conn
   end
 
+  @spec send_registration_event(Conn.t()) :: Conn.t()
   defp send_registration_event(conn) do
     send_registration_event(conn, customer_io_enabled?())
   end
 
+  @spec send_registration_event(Conn.t(), boolean()) :: Conn.t()
   # If CustomerIO is not enabled, just pass through
   defp send_registration_event(conn, false), do: conn
 
@@ -134,6 +138,7 @@ defmodule ChatApiWeb.RegistrationController do
     |> json(%{error: %{status: status_code, message: message}})
   end
 
+  @spec registration_disabled?() :: boolean()
   defp registration_disabled?() do
     case System.get_env("PAPERCUPS_REGISTRATION_DISABLED") do
       x when x == "1" or x == "true" -> true
@@ -141,6 +146,7 @@ defmodule ChatApiWeb.RegistrationController do
     end
   end
 
+  @spec customer_io_enabled?() :: boolean()
   defp customer_io_enabled?() do
     case System.get_env("CUSTOMER_IO_API_KEY") do
       key when is_binary(key) -> String.length(key) > 0
