@@ -26,7 +26,7 @@ defmodule ChatApi.Users.User do
   def changeset(user_or_changeset, attrs) do
     user_or_changeset
     |> pow_changeset(attrs)
-    |> cast(attrs, [:account_id])
+    |> cast(attrs, [:account_id, :role])
     |> validate_required([:account_id])
   end
 

@@ -62,7 +62,8 @@ defmodule ChatApiWeb.RegistrationController do
       ChatApi.Accounts.create_account(%{company_name: params["company_name"]})
     end)
     |> Ecto.Multi.run(:conn, fn _repo, %{account: account} ->
-      user = Enum.into(params, %{"account_id" => account.id})
+      # Users of new accounts should have the admin role by default
+      user = Enum.into(params, %{"account_id" => account.id, "role" => "admin"})
 
       case Pow.Plug.create_user(conn, user) do
         {:ok, _user, conn} -> {:ok, conn}

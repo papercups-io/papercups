@@ -4,7 +4,7 @@ defmodule ChatApiWeb.UserInvitationController do
   alias ChatApi.UserInvitations
   alias ChatApi.UserInvitations.UserInvitation
 
-  plug ChatApiWeb.EnsureRolePlug, :user when action in [:index, :create, :update]
+  plug ChatApiWeb.EnsureRolePlug, :admin when action in [:index, :create, :update]
 
   action_fallback ChatApiWeb.FallbackController
 
