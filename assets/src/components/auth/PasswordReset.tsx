@@ -89,7 +89,7 @@ class PasswordReset extends React.Component<Props, State> {
       .then(({email}) => this.props.onSubmit({email, password}))
       .then(() => this.props.history.push('/conversations'))
       .catch((err) => {
-        console.log('Error!', err);
+        console.error('Error!', err);
         // TODO: provide more granular error messages?
         const error =
           err.response?.body?.error?.message ||

@@ -47,7 +47,7 @@ class RequestPasswordReset extends React.Component<Props, State> {
         }
       })
       .catch((err) => {
-        console.log('Error!', err);
+        console.error('Error!', err);
         const error =
           err.response?.body?.error?.message ||
           'Something went wrong! Try again in a few minutes.';

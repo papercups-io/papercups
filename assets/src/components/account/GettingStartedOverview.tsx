@@ -114,8 +114,8 @@ class GettingStartedOverview extends React.Component<Props, State> {
       greeting,
       new_message_placeholder: newMessagePlaceholder,
     })
-      .then((res) => console.log('Updated widget settings:', res))
-      .catch((err) => console.log('Error updating widget settings:', err));
+      .then((res) => console.debug('Updated widget settings:', res))
+      .catch((err) => console.error('Error updating widget settings:', err));
   };
 
   generateHtmlCode = () => {

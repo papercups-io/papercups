@@ -5,12 +5,15 @@ import {
   colors,
   notification,
   Button,
+  Divider,
   Input,
   Paragraph,
   Table,
+  Tag,
   Text,
   Title,
 } from '../common';
+import Spinner from '../Spinner';
 import {SmileTwoTone} from '../icons';
 import * as API from '../../api';
 import {BASE_URL} from '../../config';
@@ -21,6 +24,7 @@ type State = {
   companyName: string;
   currentUser: any;
   inviteUrl: string;
+  isLoading: boolean;
   isEditing: boolean;
 };
 
@@ -32,6 +36,7 @@ class AccountOverview extends React.Component<Props, State> {
     companyName: '',
     currentUser: null,
     inviteUrl: '',
+    isLoading: true,
     isEditing: false,
   };
 
@@ -41,7 +46,7 @@ class AccountOverview extends React.Component<Props, State> {
     await this.fetchLatestAccountInfo();
     const currentUser = await API.me();
 
-    this.setState({currentUser});
+    this.setState({currentUser, isLoading: false});
   }
 
   fetchLatestAccountInfo = async () => {
@@ -51,15 +56,25 @@ class AccountOverview extends React.Component<Props, State> {
     this.setState({account, companyName});
   };
 
-  handleGenerateInviteUrl = async () => {
-    const {id: token} = await API.generateUserInvitation();
+  hasAdminRole = () => {
+    const {currentUser} = this.state;
 
-    this.setState(
-      {
-        inviteUrl: `${BASE_URL}/register/${token}`,
-      },
-      () => this.focusAndHighlightInput()
-    );
+    return !!currentUser && currentUser.role === 'admin';
+  };
+
+  handleGenerateInviteUrl = async () => {
+    try {
+      const {id: token} = await API.generateUserInvitation();
+
+      this.setState(
+        {
+          inviteUrl: `${BASE_URL}/register/${token}`,
+        },
+        () => this.focusAndHighlightInput()
+      );
+    } catch (err) {
+      console.error('Failed to generate user invitation URL:', err);
+    }
   };
 
   focusAndHighlightInput = () => {
@@ -82,8 +97,9 @@ class AccountOverview extends React.Component<Props, State> {
 
   renderUsersTable = (users: Array<any>) => {
     const {currentUser} = this.state;
+    // TODO: how should we sort the users?
     const data = users.map((u) => {
-      return {...u, key: u.id, name: '--'};
+      return {...u, key: u.id};
     });
 
     const columns = [
@@ -111,6 +127,11 @@ class AccountOverview extends React.Component<Props, State> {
         title: 'Name',
         dataIndex: 'name',
         key: 'name',
+        render: (value: string, record: any) => {
+          const {full_name: fullName, display_name: displayName} = record;
+
+          return fullName || displayName || '--';
+        },
       },
       {
         title: 'Member since',
@@ -120,6 +141,21 @@ class AccountOverview extends React.Component<Props, State> {
           const formatted = dayjs(value).format('MMMM DD, YYYY');
 
           return formatted;
+        },
+      },
+      {
+        title: 'Role',
+        dataIndex: 'role',
+        key: 'role',
+        render: (value: string) => {
+          switch (value) {
+            case 'admin':
+              return <Tag color={colors.green}>Admin</Tag>;
+            case 'user':
+              return <Tag>Member</Tag>;
+            default:
+              return '--';
+          }
         },
       },
     ];
@@ -146,12 +182,12 @@ class AccountOverview extends React.Component<Props, State> {
 
     return API.updateAccountInfo({company_name: companyName})
       .then((account) => {
-        console.log('Successfully updated company name!', account);
+        console.debug('Successfully updated company name!', account);
 
         this.setState({isEditing: false});
       })
       .catch((err) => {
-        console.log('Failed to update company name!', err);
+        console.error('Failed to update company name!', err);
 
         return this.fetchLatestAccountInfo();
       })
@@ -159,9 +195,22 @@ class AccountOverview extends React.Component<Props, State> {
   };
 
   render() {
-    const {account, companyName, inviteUrl, isEditing} = this.state;
+    const {account, companyName, inviteUrl, isLoading, isEditing} = this.state;
 
-    if (!account) {
+    if (isLoading) {
+      return (
+        <Flex
+          sx={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+          }}
+        >
+          <Spinner size={40} />
+        </Flex>
+      );
+    } else if (!account) {
       return null;
     }
 
@@ -169,7 +218,7 @@ class AccountOverview extends React.Component<Props, State> {
 
     return (
       <Box p={4}>
-        <Box mb={5}>
+        <Box mb={4}>
           <Title level={3}>Account Overview</Title>
 
           <Paragraph>
@@ -210,34 +259,41 @@ class AccountOverview extends React.Component<Props, State> {
           )}
         </Box>
 
-        <Box mb={5}>
-          <Title level={4}>Invite new teammate</Title>
+        <Divider />
 
-          <Paragraph>
-            <Text>
-              Generate a unique invitation URL below and send it to your
-              teammate.
-            </Text>
-          </Paragraph>
+        {this.hasAdminRole() && (
+          <>
+            <Box mb={4}>
+              <Title level={4}>Invite new teammate</Title>
 
-          <Flex sx={{maxWidth: 640}}>
-            <Box sx={{flex: 1}} mr={1}>
-              <Input
-                ref={(el) => (this.input = el)}
-                type="text"
-                placeholder="Click the button to generate an invite URL!"
-                value={inviteUrl}
-              ></Input>
+              <Paragraph>
+                <Text>
+                  Generate a unique invitation URL below and send it to your
+                  teammate.
+                </Text>
+              </Paragraph>
+
+              <Flex sx={{maxWidth: 640}}>
+                <Box sx={{flex: 1}} mr={1}>
+                  <Input
+                    ref={(el) => (this.input = el)}
+                    type="text"
+                    placeholder="Click the button to generate an invite URL!"
+                    value={inviteUrl}
+                  ></Input>
+                </Box>
+                <Box>
+                  <Button type="primary" onClick={this.handleGenerateInviteUrl}>
+                    Generate invite URL
+                  </Button>
+                </Box>
+              </Flex>
             </Box>
-            <Box>
-              <Button type="primary" onClick={this.handleGenerateInviteUrl}>
-                Generate invite URL
-              </Button>
-            </Box>
-          </Flex>
-        </Box>
+            <Divider />
+          </>
+        )}
 
-        <Box mb={5}>
+        <Box mb={4}>
           <Title level={4}>Team</Title>
           {this.renderUsersTable(users)}
         </Box>

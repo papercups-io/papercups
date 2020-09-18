@@ -61,8 +61,15 @@ defmodule ChatApiWeb.SessionController do
 
   def me(conn, _params) do
     case conn.assigns.current_user do
-      %{id: id, email: email, account_id: account_id} ->
-        json(conn, %{data: %{id: id, email: email, account_id: account_id}})
+      %{id: id, email: email, account_id: account_id, role: role} ->
+        json(conn, %{
+          data: %{
+            id: id,
+            email: email,
+            account_id: account_id,
+            role: role
+          }
+        })
 
       nil ->
         conn

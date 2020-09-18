@@ -81,7 +81,13 @@ defmodule ChatApiWeb.RegistrationControllerTest do
 
     setup %{conn: conn} do
       account = fixture(:account)
-      existing_user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
+
+      existing_user = %ChatApi.Users.User{
+        email: "test@example.com",
+        role: "admin",
+        account_id: account.id
+      }
+
       # conn = put_req_header(conn, "accept", "application/json")
       authed_conn = Pow.Plug.assign_current_user(conn, existing_user, [])
 

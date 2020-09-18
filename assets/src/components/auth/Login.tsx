@@ -45,7 +45,7 @@ class Login extends React.Component<Props, State> {
       .onSubmit({email, password})
       .then(() => this.props.history.push('/conversations'))
       .catch((err) => {
-        console.log('Error!', err);
+        console.error('Error!', err);
         const error =
           err.response?.body?.error?.message || 'Invalid credentials';
 

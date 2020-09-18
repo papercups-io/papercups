@@ -200,7 +200,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     conversationIds: Array<string>
   ) => {
     if (this.socket && this.socket.disconnect) {
-      console.log('Existing socket:', this.socket);
+      console.debug('Existing socket:', this.socket);
       this.socket.disconnect();
     }
 
@@ -210,7 +210,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.socket.connect();
 
     if (this.channel && this.channel.leave) {
-      console.log('Existing channel:', this.channel);
+      console.debug('Existing channel:', this.channel);
       this.channel.leave(); // TODO: what's the best practice here?
     }
 
@@ -249,10 +249,10 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.channel
       .join()
       .receive('ok', (res) => {
-        console.log('Joined successfully', res);
+        console.debug('Joined successfully', res);
       })
       .receive('error', (err) => {
-        console.log('Unable to join', err);
+        console.error('Unable to join', err);
         // TODO: double check that this works (retries after 10s)
         setTimeout(
           () => this.joinNotificationChannel(accountId, conversationIds),
@@ -284,7 +284,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   handleNewMessage = async (message: Message) => {
-    console.log('New message!', message);
+    console.debug('New message!', message);
 
     const {
       messagesByConversation,
@@ -343,7 +343,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
         conversation_id: conversationId,
       })
       .receive('ok', (res) => {
-        console.log('Marked as read!', {res, conversationId});
+        console.debug('Marked as read!', {res, conversationId});
 
         const {conversationsById} = this.state;
         const current = conversationsById[conversationId];

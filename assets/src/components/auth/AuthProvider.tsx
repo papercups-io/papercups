@@ -91,37 +91,37 @@ export class AuthProvider extends React.Component<Props, State> {
     return API.renew(refreshToken)
       .then((tokens) => this.handleAuthSuccess(tokens))
       .catch((err) => {
-        console.log('Invalid session:', err);
+        console.error('Invalid session:', err);
       });
   };
 
   register = async (params: API.RegisterParams): Promise<void> => {
-    console.log('Signing up!');
+    console.debug('Signing up!');
     // Set user, authenticated status, etc
     return API.register(params)
       .then((tokens) => this.handleAuthSuccess(tokens))
       .then(() => {
-        console.log('Successfully signed up!');
+        console.debug('Successfully signed up!');
       });
   };
 
   login = async (params: API.LoginParams): Promise<void> => {
-    console.log('Logging in!');
+    console.debug('Logging in!');
     // Set user, authenticated status, etc
     return API.login(params)
       .then((tokens) => this.handleAuthSuccess(tokens))
       .then(() => {
-        console.log('Successfully logged in!');
+        console.debug('Successfully logged in!');
       });
   };
 
   logout = async (): Promise<void> => {
-    console.log('Logging out!');
+    console.debug('Logging out!');
     // Set user, authenticated status, etc
     return API.logout()
       .then(() => this.handleClearAuth())
       .then(() => {
-        console.log('Successfully logged out!');
+        console.debug('Successfully logged out!');
       });
   };
 
