@@ -3,6 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {colors, Button, Divider, Paragraph, Text, Title} from '../common';
 import {CheckCircleTwoTone} from '../icons';
 import {SubscriptionPlan} from './support';
+import logger from '../../logger';
 
 type Props = {};
 type State = {};
@@ -320,7 +321,7 @@ class PricingOverview extends React.Component<Props, State> {
 
         <PricingOptions />
         <Divider />
-        <PricingOptionsModal selected={null} onSelectPlan={console.debug} />
+        <PricingOptionsModal selected={null} onSelectPlan={logger.debug} />
       </Box>
     );
   }

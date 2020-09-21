@@ -31,6 +31,7 @@ import {
   calculateSubscriptionDiscount,
   calculateSubscriptionPrice,
 } from './support';
+import logger from '../../logger';
 import './Billing.css';
 
 const stripe = loadStripe(
@@ -166,7 +167,7 @@ class BillingOverview extends React.Component<Props, State> {
       subscription_plan: selectedSubscriptionPlan,
     } = await API.fetchBillingInfo();
 
-    console.debug({
+    logger.debug({
       subscription,
       product,
       numUsers,
@@ -237,7 +238,7 @@ class BillingOverview extends React.Component<Props, State> {
   };
 
   handleSelectSubscriptionPlan = (plan: SubscriptionPlan) => {
-    console.debug('Selected plan!', plan);
+    logger.debug('Selected plan!', plan);
 
     if (plan === this.state.selectedSubscriptionPlan) {
       this.setState({displayPricingModal: false});

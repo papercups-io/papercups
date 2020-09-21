@@ -10,6 +10,7 @@ import {
   Title,
 } from '../common';
 import * as API from '../../api';
+import logger from '../../logger';
 
 type Props = {};
 type State = {
@@ -112,12 +113,12 @@ class UserProfile extends React.Component<Props, State> {
       profile_photo_url: profilePhotoUrl,
     })
       .then((profile) => {
-        console.debug('Successfully updated profile!', profile);
+        logger.debug('Successfully updated profile!', profile);
 
         this.setState({isEditing: false});
       })
       .catch((err) => {
-        console.error('Failed to update profile!', err);
+        logger.error('Failed to update profile!', err);
 
         return this.fetchLatestProfile();
       })
@@ -133,7 +134,7 @@ class UserProfile extends React.Component<Props, State> {
     return API.updateUserSettings({
       email_alert_on_new_message: shouldEmailOnNewMessages,
     }).catch((err) => {
-      console.error('Failed to update settings!', err);
+      logger.error('Failed to update settings!', err);
       // Reset if fails to actually update
       return this.fetchLatestSettings();
     });

@@ -17,6 +17,7 @@ import Spinner from '../Spinner';
 import {SmileTwoTone} from '../icons';
 import * as API from '../../api';
 import {BASE_URL} from '../../config';
+import logger from '../../logger';
 
 type Props = {};
 type State = {
@@ -73,7 +74,7 @@ class AccountOverview extends React.Component<Props, State> {
         () => this.focusAndHighlightInput()
       );
     } catch (err) {
-      console.error('Failed to generate user invitation URL:', err);
+      logger.error('Failed to generate user invitation URL:', err);
     }
   };
 
@@ -182,12 +183,12 @@ class AccountOverview extends React.Component<Props, State> {
 
     return API.updateAccountInfo({company_name: companyName})
       .then((account) => {
-        console.debug('Successfully updated company name!', account);
+        logger.debug('Successfully updated company name!', account);
 
         this.setState({isEditing: false});
       })
       .catch((err) => {
-        console.error('Failed to update company name!', err);
+        logger.error('Failed to update company name!', err);
 
         return this.fetchLatestAccountInfo();
       })

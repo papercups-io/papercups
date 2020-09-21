@@ -6,6 +6,7 @@ import {Alert, Button, Paragraph, Text, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
+import logger from '../../logger';
 import {IntegrationType, WebhookEventSubscription} from './support';
 import IntegrationsTable from './IntegrationsTable';
 import WebhooksTable from './WebhooksTable';
@@ -50,7 +51,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
       this.setState({integrations, webhooks, loading: false});
     } catch (err) {
-      console.error('Error loading integrations:', err);
+      logger.error('Error loading integrations:', err);
 
       this.setState({loading: false});
     }
@@ -116,7 +117,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         const code = String(q.code);
 
         return API.authorizeSlackIntegration(code).catch((err) =>
-          console.error('Failed to authorize Slack:', err)
+          logger.error('Failed to authorize Slack:', err)
         );
       default:
         return null;
@@ -148,7 +149,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
       this.setState({webhooks});
     } catch (err) {
-      console.error('Error refreshing event subscriptions:', err);
+      logger.error('Error refreshing event subscriptions:', err);
     }
   };
 

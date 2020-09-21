@@ -1,4 +1,5 @@
 import React from 'react';
+import {debounce} from 'lodash';
 import {Box} from 'theme-ui';
 import {TwitterPicker} from 'react-color';
 import SyntaxHighlighter from 'react-syntax-highlighter';
@@ -8,7 +9,7 @@ import * as API from '../../api';
 import {User} from '../../types';
 import {Paragraph, Input, colors, Text, Title} from '../common';
 import {BASE_URL} from '../../config';
-import {debounce} from 'lodash';
+import logger from '../../logger';
 
 type Props = {};
 type State = {
@@ -114,8 +115,8 @@ class GettingStartedOverview extends React.Component<Props, State> {
       greeting,
       new_message_placeholder: newMessagePlaceholder,
     })
-      .then((res) => console.debug('Updated widget settings:', res))
-      .catch((err) => console.error('Error updating widget settings:', err));
+      .then((res) => logger.debug('Updated widget settings:', res))
+      .catch((err) => logger.error('Error updating widget settings:', err));
   };
 
   generateHtmlCode = () => {

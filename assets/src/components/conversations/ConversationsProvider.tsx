@@ -1,10 +1,12 @@
 import React, {useContext} from 'react';
 import {Channel, Socket} from 'phoenix';
+import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Conversation, Message} from '../../types';
 import {sleep} from '../../utils';
 import {SOCKET_URL} from '../../socket';
+import logger from '../../logger';
 
 export const ConversationsContext = React.createContext<{
   loading: boolean;
@@ -200,7 +202,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     conversationIds: Array<string>
   ) => {
     if (this.socket && this.socket.disconnect) {
-      console.debug('Existing socket:', this.socket);
+      logger.debug('Existing socket:', this.socket);
       this.socket.disconnect();
     }
 
@@ -208,9 +210,17 @@ export class ConversationsProvider extends React.Component<Props, State> {
       params: {token: API.getAccessToken()},
     });
     this.socket.connect();
+    // TODO: attempt refreshing access token?
+    this.socket.onError(
+      throttle(
+        () =>
+          logger.error('Error connecting to socket. Try refreshing the page.'),
+        30 * 1000 // throttle every 30 secs
+      )
+    );
 
     if (this.channel && this.channel.leave) {
-      console.debug('Existing channel:', this.channel);
+      logger.debug('Existing channel:', this.channel);
       this.channel.leave(); // TODO: what's the best practice here?
     }
 
@@ -249,10 +259,10 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.channel
       .join()
       .receive('ok', (res) => {
-        console.debug('Joined successfully', res);
+        logger.debug('Joined channel successfully', res);
       })
       .receive('error', (err) => {
-        console.error('Unable to join', err);
+        logger.error('Unable to join', err);
         // TODO: double check that this works (retries after 10s)
         setTimeout(
           () => this.joinNotificationChannel(accountId, conversationIds),
@@ -284,7 +294,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   handleNewMessage = async (message: Message) => {
-    console.debug('New message!', message);
+    logger.debug('New message!', message);
 
     const {
       messagesByConversation,
@@ -343,7 +353,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
         conversation_id: conversationId,
       })
       .receive('ok', (res) => {
-        console.debug('Marked as read!', {res, conversationId});
+        logger.debug('Marked as read!', {res, conversationId});
 
         const {conversationsById} = this.state;
         const current = conversationsById[conversationId];

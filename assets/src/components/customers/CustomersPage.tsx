@@ -5,6 +5,7 @@ import {useConversations} from '../conversations/ConversationsProvider';
 import * as API from '../../api';
 import Spinner from '../Spinner';
 import CustomersTable from './CustomersTable';
+import logger from '../../logger';
 
 type Props = {
   currentlyOnline?: any;
@@ -28,7 +29,7 @@ class CustomersPage extends React.Component<Props, State> {
 
       this.setState({customers, loading: false});
     } catch (err) {
-      console.error('Error loading customers!', err);
+      logger.error('Error loading customers!', err);
 
       this.setState({loading: false});
     }
