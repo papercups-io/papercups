@@ -1,4 +1,4 @@
-const isDev = Boolean(
+export const isDev = Boolean(
   window.location.hostname === 'localhost' ||
     // [::1] is the IPv6 localhost address.
     window.location.hostname === '[::1]' ||
@@ -8,7 +8,9 @@ const isDev = Boolean(
     )
 );
 
-const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
+export const isHostedProd = window.location.hostname === 'app.papercups.io';
+
+export const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
 
 export const BASE_URL = isDev
   ? 'http://localhost:4000'

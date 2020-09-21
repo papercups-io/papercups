@@ -3,6 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {useStripe, useElements, CardElement} from '@stripe/react-stripe-js';
 import {Button, Text} from '../common';
 import * as API from '../../api';
+import logger from '../../logger';
 import CardInputSection from './CardInputSection';
 
 type Props = {
@@ -28,13 +29,13 @@ const PaymentForm = ({onSuccess, onCancel}: Props) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
-      return console.error('Stripe has not loaded yet!', {stripe, elements});
+      return logger.error('Stripe has not loaded yet!', {stripe, elements});
     }
 
     const cardElement = elements.getElement(CardElement);
 
     if (!cardElement) {
-      return console.error('Could not find card element!', {
+      return logger.error('Could not find card element!', {
         elements,
         cardElement,
       });
@@ -49,13 +50,13 @@ const PaymentForm = ({onSuccess, onCancel}: Props) => {
     });
 
     if (error) {
-      console.error('Failed to create payment method', error);
+      logger.error('Failed to create payment method', error);
 
       setErrorMessage(error.message || 'Failed to save card information.');
     } else if (paymentMethod && paymentMethod.id) {
       try {
         const result = await API.createPaymentMethod(paymentMethod);
-        console.debug('Successfully added payment method!', result);
+        logger.debug('Successfully added payment method!', result);
 
         if (onSuccess && typeof onSuccess === 'function') {
           await onSuccess(result);
@@ -63,7 +64,7 @@ const PaymentForm = ({onSuccess, onCancel}: Props) => {
 
         cardElement.clear();
       } catch (err) {
-        console.error('Failed to create payment method:', err);
+        logger.error('Failed to create payment method:', err);
 
         setErrorMessage(
           err?.response?.body?.error?.message ||

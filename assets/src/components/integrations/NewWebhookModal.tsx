@@ -3,6 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {Button, Divider, Input, Modal, Paragraph, Text} from '../common';
 import * as API from '../../api';
 import {sleep} from '../../utils';
+import logger from '../../logger';
 import {WebhookEventSubscription} from './support';
 
 // TODO: clean up a bit
@@ -33,11 +34,11 @@ const NewWebhookModal = ({
   const handleChangeUrl = (e: any) => setWebhookUrl(e.target.value);
 
   const handleVerifyUrl = async () => {
-    console.debug('Verifying:', url);
+    logger.debug('Verifying:', url);
     setIsVerifying(true);
 
     const {verified} = await API.verifyWebhookUrl(url);
-    console.debug('Verified?', verified);
+    logger.debug('Verified?', verified);
     await sleep(1000);
 
     setIsVerifying(false);
@@ -51,7 +52,7 @@ const NewWebhookModal = ({
   };
 
   const handleSaveWebhook = async () => {
-    console.debug('Saving:', url);
+    logger.debug('Saving:', url);
     setIsSaving(true);
     const existingWebhookId = webhook && webhook.id;
     const params = {webhook_url: url};

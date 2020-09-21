@@ -5,6 +5,7 @@ import {Box, Flex} from 'theme-ui';
 import {Button, Input, Text, Title} from '../common';
 import * as API from '../../api';
 import {useAuth} from './AuthProvider';
+import logger from '../../logger';
 
 type Props = RouteComponentProps<{}> & {
   onSubmit: (params: any) => Promise<void>;
@@ -89,7 +90,7 @@ class PasswordReset extends React.Component<Props, State> {
       .then(({email}) => this.props.onSubmit({email, password}))
       .then(() => this.props.history.push('/conversations'))
       .catch((err) => {
-        console.error('Error!', err);
+        logger.error('Error!', err);
         // TODO: provide more granular error messages?
         const error =
           err.response?.body?.error?.message ||

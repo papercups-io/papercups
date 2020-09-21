@@ -3,6 +3,7 @@ import {RouteComponentProps, Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {Button, Input, Text, Title} from '../common';
 import * as API from '../../api';
+import logger from '../../logger';
 
 type Props = RouteComponentProps & {
   onSubmit: (params: any) => Promise<void>;
@@ -47,7 +48,7 @@ class RequestPasswordReset extends React.Component<Props, State> {
         }
       })
       .catch((err) => {
-        console.error('Error!', err);
+        logger.error('Error!', err);
         const error =
           err.response?.body?.error?.message ||
           'Something went wrong! Try again in a few minutes.';

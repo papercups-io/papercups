@@ -15,6 +15,7 @@ import {
 import {RightCircleOutlined} from '../icons';
 import {BASE_URL} from '../../config';
 import * as API from '../../api';
+import logger from '../../logger';
 // Testing widget in separate package
 import ChatWidget from '@papercups-io/chat-widget';
 
@@ -169,13 +170,13 @@ class Demo extends React.Component<Props, State> {
           baseUrl={BASE_URL}
           defaultIsOpen
           showAgentAvailability
-          onChatClosed={() => console.debug('Chat closed!')}
-          onChatOpened={() => console.debug('Chat opened!')}
+          onChatClosed={() => logger.debug('Chat closed!')}
+          onChatOpened={() => logger.debug('Chat opened!')}
           onMessageReceived={(message: any) =>
-            console.debug('Message received!', message)
+            logger.debug('Message received!', message)
           }
           onMessageSent={(message: any) =>
-            console.debug('Message sent!', message)
+            logger.debug('Message sent!', message)
           }
         />
       </Box>
