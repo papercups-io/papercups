@@ -18,7 +18,6 @@ type Options = {
 
 export class Logger {
   debugModeEnabled: boolean;
-  logUnhandledErrors: boolean;
   callback: (level: Level, ...args: any) => void;
 
   constructor(opts: Options) {
@@ -29,8 +28,11 @@ export class Logger {
     } = opts;
 
     this.debugModeEnabled = !!debugModeEnabled;
-    this.logUnhandledErrors = !!logUnhandledErrors;
     this.callback = callback;
+
+    if (logUnhandledErrors) {
+      this.listen();
+    }
   }
 
   debug(...args: any) {
@@ -68,14 +70,12 @@ export class Logger {
 
   listen() {
     window.onerror = (msg, url, lineNo, columnNo, error) => {
-      console.log('???', error, msg); // FIXME
       const stack = error?.stack || '';
       const line = stack.split('\n')[1].trim();
       this.error(msg, line);
     };
 
     window.addEventListener('unhandledrejection', (event) => {
-      console.log('!!!', event); // FIXME
       const {message, stack} = event.reason;
       const line = stack.split('\n')[1].trim();
       this.error(message, line);
