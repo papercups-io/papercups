@@ -1,5 +1,6 @@
 import React, {useContext} from 'react';
 import {Channel, Socket} from 'phoenix';
+import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Conversation, Message} from '../../types';
@@ -209,6 +210,14 @@ export class ConversationsProvider extends React.Component<Props, State> {
       params: {token: API.getAccessToken()},
     });
     this.socket.connect();
+    // TODO: attempt refreshing access token?
+    this.socket.onError(
+      throttle(
+        () =>
+          logger.error('Error connecting to socket. Try refreshing the page.'),
+        30 * 1000 // throttle every 30 secs
+      )
+    );
 
     if (this.channel && this.channel.leave) {
       logger.debug('Existing channel:', this.channel);
