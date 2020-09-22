@@ -17,10 +17,18 @@ defmodule ChatApiWeb.EnsureUserEnabledPlug do
   def init(opts), do: opts
 
   @doc false
-  @spec call(Conn.t(), any()) :: Conn.t()
-  def call(conn, _opts \\ %{}) do
+  @spec call(Conn.t()) :: Conn.t()
+  def call(conn) do
     conn
     |> Plug.current_user()
+    |> disabled?()
+    |> maybe_halt(conn)
+  end
+
+  @doc false
+  @spec call(Conn.t(), any()) :: Conn.t()
+  def call(conn, user) do
+    user
     |> disabled?()
     |> maybe_halt(conn)
   end
