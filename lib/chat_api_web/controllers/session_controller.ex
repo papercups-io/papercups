@@ -12,15 +12,21 @@ defmodule ChatApiWeb.SessionController do
       {:ok, conn} ->
         conn
         |> ChatApiWeb.EnsureUserEnabledPlug.call()
-        |> json(%{
-          data: %{
-            user_id: conn.assigns.current_user.id,
-            email: conn.assigns.current_user.email,
-            account_id: conn.assigns.current_user.account_id,
-            token: conn.private[:api_auth_token],
-            renew_token: conn.private[:api_renew_token]
-          }
-        })
+        |> case do
+          %{halted: true} = conn ->
+            conn
+
+          conn ->
+            json(conn, %{
+              data: %{
+                user_id: conn.assigns.current_user.id,
+                email: conn.assigns.current_user.email,
+                account_id: conn.assigns.current_user.account_id,
+                token: conn.private[:api_auth_token],
+                renew_token: conn.private[:api_renew_token]
+              }
+            })
+        end
 
       {:error, conn} ->
         conn

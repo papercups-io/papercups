@@ -1,7 +1,8 @@
 defmodule ChatApiWeb.SessionControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.{Repo, Accounts, Users.User}
+  alias ChatApi.{Repo, Accounts, Users}
+  alias ChatApi.Users.User
 
   @password "secret1234"
 
@@ -38,6 +39,15 @@ defmodule ChatApiWeb.SessionControllerTest do
 
       assert json = json_response(conn, 401)
       assert json["error"]["message"] == "Invalid email or password"
+      assert json["error"]["status"] == 401
+    end
+
+    test "with disabled user", %{conn: conn, user: user} do
+      {:ok, _user} = Users.disable_user(user)
+      resp = post(conn, Routes.session_path(conn, :create, @valid_params))
+
+      assert json = json_response(resp, 401)
+      assert "Your account is disabled" <> _msg = json["error"]["message"]
       assert json["error"]["status"] == 401
     end
   end

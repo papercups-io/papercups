@@ -95,10 +95,7 @@ defmodule ChatApi.Users do
   @spec disable_user(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
   def disable_user(user) do
     user
-    |> User.disabled_at_changeset(%{
-      disabled_at: DateTime.utc_now(),
-      role: "user"
-    })
+    |> User.disabled_at_changeset(%{disabled_at: DateTime.utc_now()})
     |> Repo.update()
   end
 
