@@ -17,6 +17,7 @@ defmodule ChatApiWeb.Router do
 
   pipeline :api_protected do
     plug(Pow.Plug.RequireAuthenticated, error_handler: ChatApiWeb.APIAuthErrorHandler)
+    plug(ChatApiWeb.EnsureUserEnabledPlug)
   end
 
   # Swagger
@@ -68,6 +69,8 @@ defmodule ChatApiWeb.Router do
     put("/profile", UserProfileController, :create_or_update)
     get("/user_settings", UserSettingsController, :show)
     put("/user_settings", UserSettingsController, :create_or_update)
+    post("/users/:id/disable", UserController, :disable)
+    post("/users/:id/enable", UserController, :enable)
     post("/payment_methods", PaymentMethodController, :create)
     get("/payment_methods", PaymentMethodController, :show)
 

@@ -15,6 +15,7 @@ defmodule ChatApiWeb.UserView do
           id: user.id,
           email: user.email,
           created_at: user.inserted_at,
+          disabled_at: user.disabled_at,
           full_name: profile.full_name,
           display_name: profile.display_name,
           profile_photo_url: profile.profile_photo_url,
@@ -26,6 +27,7 @@ defmodule ChatApiWeb.UserView do
           id: user.id,
           email: user.email,
           created_at: user.inserted_at,
+          disabled_at: user.disabled_at,
           role: user.role
         }
     end

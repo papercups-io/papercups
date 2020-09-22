@@ -47,6 +47,7 @@ class UserProfile extends React.Component<Props, State> {
     const profile = await API.fetchUserProfile();
 
     if (profile) {
+      logger.debug('Profile:', profile);
       const {
         email,
         display_name: displayName,

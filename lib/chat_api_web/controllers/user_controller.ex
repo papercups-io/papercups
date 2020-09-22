@@ -3,8 +3,11 @@ defmodule ChatApiWeb.UserController do
   alias ChatApi.Users
   require Logger
 
+  plug ChatApiWeb.EnsureRolePlug, :admin when action in [:disable, :enable]
+
   action_fallback ChatApiWeb.FallbackController
 
+  @spec verify_email(Plug.Conn.t(), map) :: Plug.Conn.t()
   def verify_email(conn, %{"token" => token}) do
     case Users.find_by_email_confirmation_token(token) do
       nil ->
@@ -23,6 +26,7 @@ defmodule ChatApiWeb.UserController do
     end
   end
 
+  @spec create_password_reset(Plug.Conn.t(), map) :: Plug.Conn.t()
   def create_password_reset(conn, %{"email" => email}) do
     case Users.find_user_by_email(email) do
       nil ->
@@ -48,6 +52,7 @@ defmodule ChatApiWeb.UserController do
     end
   end
 
+  @spec reset_password(Plug.Conn.t(), map) :: Plug.Conn.t()
   def reset_password(conn, %{"token" => token} = params) do
     case Users.find_by_password_reset_token(token) do
       nil ->
@@ -60,6 +65,50 @@ defmodule ChatApiWeb.UserController do
           {:ok, user} -> json(conn, %{data: %{success: true, email: user.email}})
           {:error, reason} -> json(conn, %{data: %{success: false, message: reason}})
         end
+    end
+  end
+
+  @spec disable(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def disable(conn, %{"id" => user_id}) do
+    parsed_id = String.to_integer(user_id)
+
+    case conn.assigns.current_user do
+      %{id: ^parsed_id} ->
+        conn
+        |> put_status(400)
+        |> json(%{error: %{status: 400, message: "You cannot disable yourself."}})
+
+      %{account_id: account_id} ->
+        {:ok, user} = user_id |> Users.find_by_id(account_id) |> Users.disable_user()
+
+        render(conn, "show.json", user: user)
+
+      nil ->
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "Not authenticated"}})
+    end
+  end
+
+  @spec enable(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def enable(conn, %{"id" => user_id}) do
+    parsed_id = String.to_integer(user_id)
+
+    case conn.assigns.current_user do
+      %{id: ^parsed_id} ->
+        conn
+        |> put_status(400)
+        |> json(%{error: %{status: 400, message: "You cannot enable yourself."}})
+
+      %{account_id: account_id} ->
+        {:ok, user} = user_id |> Users.find_by_id(account_id) |> Users.enable_user()
+
+        render(conn, "show.json", user: user)
+
+      nil ->
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "Not authenticated"}})
     end
   end
 end

@@ -1,9 +1,13 @@
 defmodule ChatApiWeb.SessionControllerTest do
   use ChatApiWeb.ConnCase
 
-  alias ChatApi.{Repo, Accounts, Users.User}
+  alias ChatApi.{Repo, Accounts, Users}
+  alias ChatApi.Users.User
 
   @password "secret1234"
+
+  @valid_params %{"user" => %{"email" => "test@example.com", "password" => @password}}
+  @invalid_params %{"user" => %{"email" => "test@example.com", "password" => "invalid"}}
 
   setup do
     {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
@@ -22,9 +26,6 @@ defmodule ChatApiWeb.SessionControllerTest do
   end
 
   describe "create/2" do
-    @valid_params %{"user" => %{"email" => "test@example.com", "password" => @password}}
-    @invalid_params %{"user" => %{"email" => "test@example.com", "password" => "invalid"}}
-
     test "with valid params", %{conn: conn} do
       conn = post(conn, Routes.session_path(conn, :create, @valid_params))
 
@@ -38,6 +39,15 @@ defmodule ChatApiWeb.SessionControllerTest do
 
       assert json = json_response(conn, 401)
       assert json["error"]["message"] == "Invalid email or password"
+      assert json["error"]["status"] == 401
+    end
+
+    test "with disabled user", %{conn: conn, user: user} do
+      {:ok, _user} = Users.disable_user(user)
+      resp = post(conn, Routes.session_path(conn, :create, @valid_params))
+
+      assert json = json_response(resp, 401)
+      assert "Your account is disabled" <> _msg = json["error"]["message"]
       assert json["error"]["status"] == 401
     end
   end
@@ -69,6 +79,19 @@ defmodule ChatApiWeb.SessionControllerTest do
 
       assert json = json_response(conn, 401)
       assert json["error"]["message"] == "Invalid token"
+      assert json["error"]["status"] == 401
+    end
+
+    test "with disabled user", %{conn: conn, user: user, renewal_token: token} do
+      {:ok, _user} = Users.disable_user(user)
+
+      conn =
+        conn
+        |> Plug.Conn.put_req_header("authorization", token)
+        |> post(Routes.session_path(conn, :renew))
+
+      assert json = json_response(conn, 401)
+      assert "Your account is disabled" <> _msg = json["error"]["message"]
       assert json["error"]["status"] == 401
     end
   end

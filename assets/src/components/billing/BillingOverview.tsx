@@ -4,6 +4,7 @@ import {Box, Flex} from 'theme-ui';
 import {Elements} from '@stripe/react-stripe-js';
 import {loadStripe} from '@stripe/stripe-js';
 import * as API from '../../api';
+import {Alignment} from '../../types';
 import {
   colors,
   notification,
@@ -37,12 +38,6 @@ import './Billing.css';
 const stripe = loadStripe(
   process.env.REACT_APP_STRIPE_PUBLIC_KEY || 'pk_test_xxxxx'
 );
-
-enum Alignment {
-  Right = 'right',
-  Left = 'left',
-  Center = 'center',
-}
 
 const BillingBreakdownTable = ({
   loading,

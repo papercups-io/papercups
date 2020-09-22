@@ -4,8 +4,8 @@ defmodule ChatApiWeb.EnsureRolePlugTest do
   alias ChatApiWeb.EnsureRolePlug
 
   @opts ~w(admin)a
-  @user %{id: 1, role: "user"}
-  @admin %{id: 2, role: "admin"}
+  @user %{id: 1, role: "user", disabled_at: nil}
+  @admin %{id: 2, role: "admin", disabled_at: nil}
 
   setup do
     conn =

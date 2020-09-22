@@ -18,6 +18,14 @@ defmodule ChatApi.Users do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
+  def find_by_id!(user_id) do
+    Repo.get!(User, user_id)
+  end
+
+  def find_by_id(user_id, account_id) do
+    User |> where(account_id: ^account_id, id: ^user_id) |> Repo.one()
+  end
+
   def find_by_email_confirmation_token(token) do
     User |> where(email_confirmation_token: ^token) |> Repo.one()
   end
@@ -74,6 +82,27 @@ defmodule ChatApi.Users do
   def set_user_role(user) do
     user
     |> User.role_changeset(%{role: "user"})
+    |> Repo.update()
+  end
+
+  @spec archive_user(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  def archive_user(user) do
+    user
+    |> User.disabled_at_changeset(%{archived_at: DateTime.utc_now()})
+    |> Repo.update()
+  end
+
+  @spec disable_user(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  def disable_user(user) do
+    user
+    |> User.disabled_at_changeset(%{disabled_at: DateTime.utc_now()})
+    |> Repo.update()
+  end
+
+  @spec enable_user(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  def enable_user(user) do
+    user
+    |> User.disabled_at_changeset(%{disabled_at: nil})
     |> Repo.update()
   end
 

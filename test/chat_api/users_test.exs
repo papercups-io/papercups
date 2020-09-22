@@ -46,6 +46,24 @@ defmodule ChatApi.UsersTest do
       {:ok, user: user, account: account}
     end
 
+    test "set_admin_role/1 sets the user's role to 'admin'", %{user: user} do
+      assert {:ok, %User{role: "admin"}} = Users.set_admin_role(user)
+    end
+
+    test "set_user_role/1 sets the user's role to 'user'", %{user: user} do
+      assert {:ok, %User{role: "user"}} = Users.set_user_role(user)
+    end
+
+    test "disable_user/1 disables the user", %{user: user} do
+      assert {:ok, %User{disabled_at: disabled_at}} = Users.disable_user(user)
+      assert disabled_at != nil
+    end
+
+    test "archive_user/1 archives the user", %{user: user} do
+      assert {:ok, %User{archived_at: archived_at}} = Users.archive_user(user)
+      assert archived_at != nil
+    end
+
     test "get_user_profile/1 returns the user_profile with given id", %{user: user} do
       user_profile = user_profile_fixture(%{user_id: user.id})
 
