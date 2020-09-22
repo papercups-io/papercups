@@ -10,7 +10,9 @@ defmodule ChatApiWeb.SessionController do
     |> Pow.Plug.authenticate_user(user_params)
     |> case do
       {:ok, conn} ->
-        json(conn, %{
+        conn
+        |> ChatApiWeb.EnsureUserEnabledPlug.call()
+        |> json(%{
           data: %{
             user_id: conn.assigns.current_user.id,
             email: conn.assigns.current_user.email,

@@ -4,6 +4,9 @@ export type User = {
   display_name?: string;
   full_name?: string;
   profile_photo_url?: string;
+  created_at: string;
+  disabled_at?: string;
+  role?: 'user' | 'admin';
 };
 
 export type Customer = {
@@ -36,3 +39,9 @@ export type Conversation = {
   status?: string;
   assignee_id?: number;
 };
+
+export enum Alignment {
+  Right = 'right',
+  Left = 'left',
+  Center = 'center',
+}

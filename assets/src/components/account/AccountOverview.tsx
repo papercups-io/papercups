@@ -16,17 +16,196 @@ import {
 import Spinner from '../Spinner';
 import {SmileTwoTone} from '../icons';
 import * as API from '../../api';
+import {User, Alignment} from '../../types';
 import {BASE_URL} from '../../config';
+import {sleep} from '../../utils';
 import logger from '../../logger';
+
+const AccountUsersTable = ({
+  loading,
+  users,
+  currentUser,
+  onDisableUser,
+}: {
+  loading?: boolean;
+  users: Array<User>;
+  currentUser: User;
+  onDisableUser: (user: User) => void;
+}) => {
+  // TODO: how should we sort the users?
+  const data = users.map((u) => {
+    return {...u, key: u.id};
+  });
+
+  const columns = [
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      render: (value: string, record: User) => {
+        if (currentUser && record.id === currentUser.id) {
+          return (
+            <Flex sx={{alignItems: 'center'}}>
+              <Text strong>{value}</Text>
+              <SmileTwoTone
+                style={{fontSize: 16, marginLeft: 4}}
+                twoToneColor={colors.primary}
+              />
+            </Flex>
+          );
+        }
+
+        return value;
+      },
+    },
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (value: string, record: User) => {
+        const {full_name: fullName, display_name: displayName} = record;
+
+        return fullName || displayName || '--';
+      },
+    },
+    {
+      title: 'Member since',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (value: string) => {
+        const formatted = dayjs(value).format('MMMM DD, YYYY');
+
+        return formatted;
+      },
+    },
+    {
+      title: 'Role',
+      dataIndex: 'role',
+      key: 'role',
+      render: (value: string) => {
+        switch (value) {
+          case 'admin':
+            return <Tag color={colors.green}>Admin</Tag>;
+          case 'user':
+            return <Tag>Member</Tag>;
+          default:
+            return '--';
+        }
+      },
+    },
+    {
+      title: '',
+      dataIndex: 'action',
+      key: 'action',
+      align: Alignment.Right,
+      render: (value: string, record: User) => {
+        // Current user cannot disable themselves
+        if (currentUser && record.id === currentUser.id) {
+          return null;
+        }
+
+        return (
+          <Button danger onClick={() => onDisableUser(record)}>
+            Disable
+          </Button>
+        );
+      },
+    },
+  ];
+
+  return (
+    <Table
+      loading={loading}
+      dataSource={data}
+      columns={columns}
+      pagination={false}
+    />
+  );
+};
+
+const DisabledUsersTable = ({
+  loading,
+  users,
+  onEnableUser,
+}: {
+  loading?: boolean;
+  users: Array<User>;
+  onEnableUser: (user: User) => void;
+}) => {
+  // TODO: how should we sort the users?
+  const data = users.map((u) => {
+    return {...u, key: u.id};
+  });
+
+  const columns = [
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      render: (value: string, record: User) => {
+        return value;
+      },
+    },
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (value: string, record: User) => {
+        const {full_name: fullName, display_name: displayName} = record;
+
+        return fullName || displayName || '--';
+      },
+    },
+    {
+      title: 'Member since',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (value: string) => {
+        const formatted = dayjs(value).format('MMMM DD, YYYY');
+
+        return formatted;
+      },
+    },
+    {
+      title: 'Disabled on',
+      dataIndex: 'disabled_at',
+      key: 'disabled_at',
+      render: (value: string) => {
+        const formatted = dayjs(value).format('MMMM DD, YYYY');
+
+        return formatted;
+      },
+    },
+    {
+      title: '',
+      dataIndex: 'action',
+      key: 'action',
+      align: Alignment.Right,
+      render: (value: string, record: User) => {
+        return <Button onClick={() => onEnableUser(record)}>Enable</Button>;
+      },
+    },
+  ];
+
+  return (
+    <Table
+      loading={loading}
+      dataSource={data}
+      columns={columns}
+      pagination={false}
+    />
+  );
+};
 
 type Props = {};
 type State = {
   account: any;
   companyName: string;
-  currentUser: any;
+  currentUser: User | null;
   inviteUrl: string;
   isLoading: boolean;
   isEditing: boolean;
+  isRefreshing: boolean;
 };
 
 class AccountOverview extends React.Component<Props, State> {
@@ -39,6 +218,7 @@ class AccountOverview extends React.Component<Props, State> {
     inviteUrl: '',
     isLoading: true,
     isEditing: false,
+    isRefreshing: false,
   };
 
   async componentDidMount() {
@@ -53,6 +233,7 @@ class AccountOverview extends React.Component<Props, State> {
   fetchLatestAccountInfo = async () => {
     const account = await API.fetchAccountInfo();
     const {company_name: companyName} = account;
+    logger.debug('Account info:', account);
 
     this.setState({account, companyName});
   };
@@ -96,74 +277,6 @@ class AccountOverview extends React.Component<Props, State> {
     }
   };
 
-  renderUsersTable = (users: Array<any>) => {
-    const {currentUser} = this.state;
-    // TODO: how should we sort the users?
-    const data = users.map((u) => {
-      return {...u, key: u.id};
-    });
-
-    const columns = [
-      {
-        title: 'Email',
-        dataIndex: 'email',
-        key: 'email',
-        render: (value: string, record: any) => {
-          if (currentUser && record.id === currentUser.id) {
-            return (
-              <Flex sx={{alignItems: 'center'}}>
-                <Text strong>{value}</Text>
-                <SmileTwoTone
-                  style={{fontSize: 16, marginLeft: 4}}
-                  twoToneColor={colors.primary}
-                />
-              </Flex>
-            );
-          }
-
-          return value;
-        },
-      },
-      {
-        title: 'Name',
-        dataIndex: 'name',
-        key: 'name',
-        render: (value: string, record: any) => {
-          const {full_name: fullName, display_name: displayName} = record;
-
-          return fullName || displayName || '--';
-        },
-      },
-      {
-        title: 'Member since',
-        dataIndex: 'created_at',
-        key: 'created_at',
-        render: (value: string) => {
-          const formatted = dayjs(value).format('MMMM DD, YYYY');
-
-          return formatted;
-        },
-      },
-      {
-        title: 'Role',
-        dataIndex: 'role',
-        key: 'role',
-        render: (value: string) => {
-          switch (value) {
-            case 'admin':
-              return <Tag color={colors.green}>Admin</Tag>;
-            case 'user':
-              return <Tag>Member</Tag>;
-            default:
-              return '--';
-          }
-        },
-      },
-    ];
-
-    return <Table dataSource={data} columns={columns} />;
-  };
-
   handleChangeCompanyName = (e: any) => {
     this.setState({companyName: e.target.value});
   };
@@ -195,8 +308,68 @@ class AccountOverview extends React.Component<Props, State> {
       .then(() => this.setState({isEditing: false}));
   };
 
+  handleDisableUser = async (user: User) => {
+    this.setState({isRefreshing: true});
+    const {id: userId} = user;
+
+    return API.disableAccountUser(userId)
+      .then((user) => {
+        notification.success({
+          message: 'Successfully disabled user!',
+          description: `If this was a mistake, you can renable ${user.email} below.`,
+        });
+      })
+      .then(() => sleep(400)) // Add slight delay so not too jarring
+      .then(() => this.fetchLatestAccountInfo())
+      .catch((err) => {
+        const description =
+          err?.response?.body?.error?.message ||
+          err?.message ||
+          'Something went wrong. Please contact us or try again in a few minutes.';
+        notification.error({
+          message: 'Failed to disable user!',
+          description,
+        });
+      })
+      .then(() => this.setState({isRefreshing: false}));
+  };
+
+  handleEnableUser = async (user: User) => {
+    this.setState({isRefreshing: true});
+    const {id: userId} = user;
+
+    return API.enableAccountUser(userId)
+      .then((user) => {
+        notification.success({
+          message: 'Successfully re-enabled user!',
+          description: `If this was a mistake, you can disable ${user.email} above.`,
+        });
+      })
+      .then(() => sleep(400)) // Add slight delay so not too jarring
+      .then(() => this.fetchLatestAccountInfo())
+      .catch((err) => {
+        const description =
+          err?.response?.body?.error?.message ||
+          err?.message ||
+          'Something went wrong. Please contact us or try again in a few minutes.';
+        notification.error({
+          message: 'Failed to enable user!',
+          description,
+        });
+      })
+      .then(() => this.setState({isRefreshing: false}));
+  };
+
   render() {
-    const {account, companyName, inviteUrl, isLoading, isEditing} = this.state;
+    const {
+      account,
+      currentUser,
+      companyName,
+      inviteUrl,
+      isLoading,
+      isEditing,
+      isRefreshing,
+    } = this.state;
 
     if (isLoading) {
       return (
@@ -211,7 +384,7 @@ class AccountOverview extends React.Component<Props, State> {
           <Spinner size={40} />
         </Flex>
       );
-    } else if (!account) {
+    } else if (!account || !currentUser) {
       return null;
     }
 
@@ -296,7 +469,21 @@ class AccountOverview extends React.Component<Props, State> {
 
         <Box mb={4}>
           <Title level={4}>Team</Title>
-          {this.renderUsersTable(users)}
+          <AccountUsersTable
+            loading={isRefreshing}
+            users={users.filter((u: User) => !u.disabled_at)}
+            currentUser={currentUser}
+            onDisableUser={this.handleDisableUser}
+          />
+        </Box>
+
+        <Box mb={4}>
+          <Title level={4}>Disabled users</Title>
+          <DisabledUsersTable
+            loading={isRefreshing}
+            users={users.filter((u: User) => !!u.disabled_at)}
+            onEnableUser={this.handleEnableUser}
+          />
         </Box>
       </Box>
     );

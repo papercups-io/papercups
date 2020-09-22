@@ -11,6 +11,8 @@ defmodule ChatApi.Users.User do
     field(:email_confirmation_token, :string)
     field(:password_reset_token, :string)
     field(:email_confirmed_at, :utc_datetime)
+    field(:disabled_at, :utc_datetime)
+    field(:archived_at, :utc_datetime)
     field(:role, :string, default: "user")
 
     has_many(:conversations, Conversation, foreign_key: :assignee_id)
@@ -35,6 +37,13 @@ defmodule ChatApi.Users.User do
     user_or_changeset
     |> cast(attrs, [:role])
     |> validate_inclusion(:role, ~w(user admin))
+  end
+
+  @spec role_changeset(Ecto.Schema.t() | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
+  def disabled_at_changeset(user_or_changeset, attrs) do
+    user_or_changeset
+    |> cast(attrs, [:disabled_at, :archived_at])
+    |> validate_required([])
   end
 
   @spec email_verification_changeset(Ecto.Schema.t() | Ecto.Changeset.t(), map()) ::
