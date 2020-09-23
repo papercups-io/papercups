@@ -1,10 +1,10 @@
-defmodule ChatApi.GoogleAuthorizationsTest do
+defmodule ChatApi.GoogleTest do
   use ChatApi.DataCase
 
-  alias ChatApi.{Accounts, GoogleAuthorizations, Users.User}
+  alias ChatApi.{Accounts, Google, Users.User}
 
   describe "google_authorizations" do
-    alias ChatApi.GoogleAuthorizations.GoogleAuthorization
+    alias ChatApi.Google.GoogleAuthorization
 
     @valid_attrs %{client: "some client", refresh_token: "some long refresh token"}
     @update_attrs %{
@@ -37,7 +37,7 @@ defmodule ChatApi.GoogleAuthorizationsTest do
       {:ok, google_authorization} =
         attrs
         |> Enum.into(create_valid_params())
-        |> GoogleAuthorizations.create_google_authorization()
+        |> Google.create_google_authorization()
 
       google_authorization
     end
@@ -53,33 +53,32 @@ defmodule ChatApi.GoogleAuthorizationsTest do
 
     test "list_google_authorizations/0 returns all google_authorizations" do
       google_authorization = google_authorization_fixture()
-      assert GoogleAuthorizations.list_google_authorizations() == [google_authorization]
+      assert Google.list_google_authorizations() == [google_authorization]
     end
 
     test "get_google_authorization!/1 returns the google_authorization with given id" do
       google_authorization = google_authorization_fixture()
 
-      assert GoogleAuthorizations.get_google_authorization!(google_authorization.id) ==
+      assert Google.get_google_authorization!(google_authorization.id) ==
                google_authorization
     end
 
     test "create_google_authorization/1 with valid data creates a google_authorization" do
       assert {:ok, %GoogleAuthorization{} = google_authorization} =
-               GoogleAuthorizations.create_google_authorization(create_valid_params())
+               Google.create_google_authorization(create_valid_params())
 
       assert google_authorization.client == "some client"
     end
 
     test "create_google_authorization/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} =
-               GoogleAuthorizations.create_google_authorization(@invalid_attrs)
+      assert {:error, %Ecto.Changeset{}} = Google.create_google_authorization(@invalid_attrs)
     end
 
     test "update_google_authorization/2 with valid data updates the google_authorization" do
       google_authorization = google_authorization_fixture()
 
       assert {:ok, %GoogleAuthorization{} = google_authorization} =
-               GoogleAuthorizations.update_google_authorization(
+               Google.update_google_authorization(
                  google_authorization,
                  @update_attrs
                )
@@ -91,31 +90,30 @@ defmodule ChatApi.GoogleAuthorizationsTest do
       google_authorization = google_authorization_fixture()
 
       assert {:error, %Ecto.Changeset{}} =
-               GoogleAuthorizations.update_google_authorization(
+               Google.update_google_authorization(
                  google_authorization,
                  @invalid_attrs
                )
 
       assert google_authorization ==
-               GoogleAuthorizations.get_google_authorization!(google_authorization.id)
+               Google.get_google_authorization!(google_authorization.id)
     end
 
     test "delete_google_authorization/1 deletes the google_authorization" do
       google_authorization = google_authorization_fixture()
 
       assert {:ok, %GoogleAuthorization{}} =
-               GoogleAuthorizations.delete_google_authorization(google_authorization)
+               Google.delete_google_authorization(google_authorization)
 
       assert_raise Ecto.NoResultsError, fn ->
-        GoogleAuthorizations.get_google_authorization!(google_authorization.id)
+        Google.get_google_authorization!(google_authorization.id)
       end
     end
 
     test "change_google_authorization/1 returns a google_authorization changeset" do
       google_authorization = google_authorization_fixture()
 
-      assert %Ecto.Changeset{} =
-               GoogleAuthorizations.change_google_authorization(google_authorization)
+      assert %Ecto.Changeset{} = Google.change_google_authorization(google_authorization)
     end
   end
 end

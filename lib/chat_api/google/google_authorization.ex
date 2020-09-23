@@ -1,4 +1,4 @@
-defmodule ChatApi.GoogleAuthorizations.GoogleAuthorization do
+defmodule ChatApi.Google.GoogleAuthorization do
   use Ecto.Schema
   import Ecto.Changeset
 

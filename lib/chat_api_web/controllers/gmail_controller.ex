@@ -4,7 +4,7 @@ defmodule ChatApiWeb.GmailController do
 
   require Logger
 
-  alias ChatApi.{Google, GoogleAuthorizations}
+  alias ChatApi.Google
 
   @spec callback(Plug.Conn.t(), map()) :: Plug.Conn.t()
   @doc """
@@ -15,10 +15,10 @@ defmodule ChatApiWeb.GmailController do
   """
   def callback(conn, %{"code" => code}) do
     with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
-         client <- Google.get_token!(code: code) do
+         client <- Google.Auth.get_token!(code: code) do
       Logger.debug("Gmail access token: #{inspect(client.token)}")
 
-      case GoogleAuthorizations.create_or_update(account_id, %{
+      case Google.create_or_update_authorization(account_id, %{
              account_id: account_id,
              user_id: user_id,
              access_token: client.token.access_token,
@@ -42,7 +42,7 @@ defmodule ChatApiWeb.GmailController do
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def authorization(conn, _payload) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      case GoogleAuthorizations.get_authorization_by_account(account_id) do
+      case Google.get_authorization_by_account(account_id) do
         nil ->
           json(conn, %{data: nil})
 
@@ -63,9 +63,9 @@ defmodule ChatApiWeb.GmailController do
   def send(conn, %{"recipient" => recipient, "subject" => subject, "message" => message}) do
     with %{account_id: account_id, email: email} <- conn.assigns.current_user,
          %{refresh_token: refresh_token} <-
-           GoogleAuthorizations.get_authorization_by_account(account_id),
+           Google.get_authorization_by_account(account_id),
          %{token: %{access_token: access_token}} <-
-           Google.get_token!(refresh_token: refresh_token) do
+           Google.Auth.get_token!(refresh_token: refresh_token) do
       ChatApi.Emails.send_via_gmail(
         to: recipient,
         from: email,
@@ -90,14 +90,15 @@ defmodule ChatApiWeb.GmailController do
     scope = "https://www.googleapis.com/auth/gmail.modify"
 
     redirect(conn,
-      external: Google.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
+      external:
+        Google.Auth.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
     )
   end
 
   @spec auth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def auth(conn, _params) do
     scope = "https://www.googleapis.com/auth/gmail.modify"
-    url = Google.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
+    url = Google.Auth.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
 
     json(conn, %{data: %{url: url}})
   end
