@@ -39,7 +39,7 @@ defmodule ChatApi.Users.User do
     |> validate_inclusion(:role, ~w(user admin))
   end
 
-  @spec role_changeset(Ecto.Schema.t() | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
+  @spec disabled_at_changeset(Ecto.Schema.t() | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def disabled_at_changeset(user_or_changeset, attrs) do
     user_or_changeset
     |> cast(attrs, [:disabled_at, :archived_at])

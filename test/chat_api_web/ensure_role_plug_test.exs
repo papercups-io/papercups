@@ -1,5 +1,5 @@
 defmodule ChatApiWeb.EnsureRolePlugTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
   alias ChatApiWeb.EnsureRolePlug
 

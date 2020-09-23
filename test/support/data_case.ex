@@ -24,6 +24,7 @@ defmodule ChatApi.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import ChatApi.DataCase
+      import ChatApi.TestFixtureHelpers
     end
   end
 

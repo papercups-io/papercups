@@ -65,9 +65,14 @@ defmodule ChatApi.Users do
 
   @spec create_admin(map()) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
   def create_admin(params) do
+    Map.merge(params, %{role: "admin"})
+    |> create_user()
+  end
+
+  @spec create_user(map()) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  def create_user(params) do
     %User{}
     |> User.changeset(params)
-    |> User.role_changeset(%{role: "admin"})
     |> Repo.insert()
   end
 
@@ -109,19 +114,36 @@ defmodule ChatApi.Users do
   @doc """
   Gets a single user_profile.
 
-  Raises `Ecto.NoResultsError` if the User profile does not exist.
+  creates new UserProfile if the User profile does not exist.
 
   ## Examples
 
       iex> get_user_profile(123)
       %UserProfile{}
 
-      iex> get_user_profile(456)
-      ** (Ecto.NoResultsError)
-
   """
   def get_user_profile(user_id) do
-    UserProfile |> where(user_id: ^user_id) |> Repo.one() |> Repo.preload(:user)
+    case UserProfile |> where(user_id: ^user_id) |> Repo.one() do
+      %UserProfile{} = profile ->
+        profile
+        |> Repo.preload(:user)
+
+      nil ->
+        create_user_profile(user_id)
+    end
+  end
+
+  defp create_user_profile(user_id) do
+    case %UserProfile{}
+         |> UserProfile.changeset(%{user_id: user_id})
+         |> Repo.insert() do
+      {:ok, profile} ->
+        profile
+        |> Repo.preload(:user)
+
+      {:error, _reason} ->
+        nil
+    end
   end
 
   def get_user_info(user_id) do
@@ -132,49 +154,21 @@ defmodule ChatApi.Users do
   end
 
   @doc """
-  Creates a user_profile.
-
-  ## Examples
-
-      iex> create_user_profile(user_id, %{field: value})
-      {:ok, %UserProfile{}}
-
-      iex> create_user_profile(user_id, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_user_profile(attrs \\ %{}) do
-    %UserProfile{}
-    |> UserProfile.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @doc """
   Updates a user_profile.
 
   ## Examples
 
-      iex> update_user_profile(user_profile, %{field: new_value})
+      iex> update_user_profile(user_id, %{field: new_value})
       {:ok, %UserProfile{}}
 
-      iex> update_user_profile(user_profile, %{field: bad_value})
+      iex> update_user_profile(user_id, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_user_profile(%UserProfile{} = user_profile, attrs) do
-    user_profile
+  def update_user_profile(user_id, attrs) do
+    get_user_profile(user_id)
     |> UserProfile.changeset(attrs)
     |> Repo.update()
-  end
-
-  def create_or_update_profile(user_id, params) do
-    existing = get_user_profile(user_id)
-
-    if existing do
-      update_user_profile(existing, params)
-    else
-      create_user_profile(params)
-    end
   end
 
   @doc """
@@ -206,36 +200,34 @@ defmodule ChatApi.Users do
     UserProfile.changeset(user_profile, attrs)
   end
 
-  def get_user_settings(user_id) do
-    UserSettings |> where(user_id: ^user_id) |> Repo.one()
-  end
-
-  def create_or_update_settings(user_id, params) do
-    existing = get_user_settings(user_id)
-
-    if existing do
-      update_user_settings(existing, params)
-    else
-      create_user_settings(params)
-    end
-  end
-
   @doc """
-  Creates a user_settings.
+  Gets a single user_settings.
+
+  creates new UserSettings if the User settings does not exist.
 
   ## Examples
 
-      iex> create_user_settings(%{field: value})
-      {:ok, %UserSettings{}}
-
-      iex> create_user_settings(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
+      iex> get_user_settings(123)
+      %UserSettings{}
 
   """
-  def create_user_settings(attrs \\ %{}) do
-    %UserSettings{}
-    |> UserSettings.changeset(attrs)
-    |> Repo.insert()
+  def get_user_settings(user_id) do
+    case UserSettings |> where(user_id: ^user_id) |> Repo.one() do
+      %UserSettings{} = setting ->
+        setting
+
+      nil ->
+        create_user_setting(user_id)
+    end
+  end
+
+  defp create_user_setting(user_id) do
+    case %UserSettings{}
+         |> UserSettings.changeset(%{user_id: user_id})
+         |> Repo.insert() do
+      {:ok, setting} -> setting
+      {:serror, _reason} -> nil
+    end
   end
 
   @doc """
@@ -243,16 +235,16 @@ defmodule ChatApi.Users do
 
   ## Examples
 
-      iex> update_user_settings(user_settings, %{field: new_value})
+      iex> update_user_settings(user_id, %{field: new_value})
       {:ok, %UserSettings{}}
 
-      iex> update_user_settings(user_settings, %{field: bad_value})
+      iex> update_user_settings(user_id, %{field: bad_value})
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_user_settings(%UserSettings{} = user_settings, attrs) do
-    user_settings
-    |> UserSettings.changeset(attrs)
+  def update_user_settings(user_id, params) do
+    get_user_settings(user_id)
+    |> UserSettings.changeset(params)
     |> Repo.update()
   end
 

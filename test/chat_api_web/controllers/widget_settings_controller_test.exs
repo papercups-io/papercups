@@ -1,8 +1,7 @@
 defmodule ChatApiWeb.WidgetSettingsControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
   alias ChatApi.WidgetSettings
-  alias ChatApi.Accounts
 
   def create_attr(account_id) do
     %{
@@ -22,29 +21,19 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
     }
   end
 
-  def fixture(:widget_settings) do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    {:ok, widget_settings} = WidgetSettings.create_widget_setting(create_attr(account.id))
-
-    widget_settings
-  end
-
-  def fixture(:account) do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    account
-  end
-
   setup %{conn: conn} do
-    account = fixture(:account)
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
+    account = account_fixture()
+    user = user_fixture(account)
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
     {:ok, conn: conn, authed_conn: authed_conn, account: account}
   end
 
-  describe "create_or_update" do
-    test "creates widget_settings if none exist", %{authed_conn: authed_conn} do
+  describe "update" do
+    test "returns existing widget_settings", %{authed_conn: authed_conn, account: account} do
+      assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account(account.id)
+
       settings = %{
         title: "Test title",
         subtitle: "Test subtitle",
@@ -52,7 +41,7 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
       }
 
       resp =
-        put(authed_conn, Routes.widget_settings_path(authed_conn, :create_or_update), %{
+        put(authed_conn, Routes.widget_settings_path(authed_conn, :update), %{
           widget_settings: settings
         })
 
@@ -63,7 +52,7 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
              } = json_response(resp, 200)["data"]
 
       resp =
-        put(authed_conn, Routes.widget_settings_path(authed_conn, :create_or_update), %{
+        put(authed_conn, Routes.widget_settings_path(authed_conn, :update), %{
           widget_settings: %{color: "Updated color"}
         })
 

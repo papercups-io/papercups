@@ -1,13 +1,13 @@
 defmodule ChatApi.UsersTest do
-  use ChatApi.DataCase
+  use ChatApi.DataCase, async: true
+  @moduledoc false
 
-  alias ChatApi.{Accounts, Users}
+  alias ChatApi.Users
   alias ChatApi.Users.User
+  alias ChatApi.Users.UserSettings
 
   describe "profiles" do
     alias ChatApi.Users.UserProfile
-
-    @password "supersecret123"
 
     @valid_attrs %{
       display_name: "some display_name",
@@ -19,31 +19,10 @@ defmodule ChatApi.UsersTest do
       full_name: "some updated full_name",
       profile_photo_url: "some updated profile_photo_url"
     }
-    @invalid_attrs %{display_name: nil, full_name: nil, profile_photo_url: nil, user_id: nil}
-
-    def user_profile_fixture(attrs \\ %{}) do
-      {:ok, user_profile} =
-        attrs
-        |> Enum.into(attrs)
-        |> Users.create_user_profile()
-
-      user_profile
-    end
 
     setup do
-      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
-
-      user =
-        %User{}
-        |> User.changeset(%{
-          email: "test@example.com",
-          password: @password,
-          password_confirmation: @password,
-          account_id: account.id
-        })
-        |> Repo.insert!()
-
-      {:ok, user: user, account: account}
+      account = account_fixture()
+      {:ok, user: user_fixture(account)}
     end
 
     test "set_admin_role/1 sets the user's role to 'admin'", %{user: user} do
@@ -64,110 +43,57 @@ defmodule ChatApi.UsersTest do
       assert archived_at != nil
     end
 
-    test "get_user_profile/1 returns the user_profile with given id", %{user: user} do
-      user_profile = user_profile_fixture(%{user_id: user.id})
+    test "get_user_profile/1 returns the user_profile with given valid user id", %{user: user} do
+      assert %UserProfile{user_id: id} = Users.get_user_profile(user.id)
 
-      expected =
-        Users.get_user_profile(user.id)
-        |> Map.take([:display_name, :full_name, :profile_photo_url])
-
-      actual = Map.take(user_profile, [:display_name, :full_name, :profile_photo_url])
-
-      assert expected == actual
+      assert id == user.id
     end
 
-    test "create_user_profile/1 with valid data creates a user_profile", %{user: user} do
-      attrs = Map.merge(@valid_attrs, %{user_id: user.id})
-      assert {:ok, %UserProfile{} = user_profile} = Users.create_user_profile(attrs)
-
-      assert user_profile.display_name == "some display_name"
-      assert user_profile.full_name == "some full_name"
-      assert user_profile.profile_photo_url == "some profile_photo_url"
-    end
-
-    test "create_user_profile/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Users.create_user_profile(@invalid_attrs)
-    end
-
-    test "create_or_update_profile/2 with valid data creates or updates the user_profile", %{
+    test "update_profile/2 with valid data updates the user_profile", %{
       user: user
     } do
       attrs = Map.merge(@valid_attrs, %{user_id: user.id})
 
-      assert {:ok, %UserProfile{} = user_profile} = Users.create_or_update_profile(user.id, attrs)
+      assert {:ok, %UserProfile{} = user_profile} = Users.update_user_profile(user.id, attrs)
 
       assert user_profile.display_name == "some display_name"
 
       assert {:ok, %UserProfile{} = user_profile} =
-               Users.create_or_update_profile(user.id, @update_attrs)
+               Users.update_user_profile(user.id, @update_attrs)
 
       assert user_profile.display_name == "some updated display_name"
+    end
+
+    test "create_user/1 create user with default setting & profile", %{user: user} do
+      assert %UserProfile{} = Users.get_user_profile(user.id)
+      assert %UserSettings{} = Users.get_user_settings(user.id)
     end
   end
 
   describe "user_settings" do
-    alias ChatApi.Users.UserSettings
-
-    @password "supersecret123"
-
     @valid_attrs %{email_alert_on_new_message: true}
     @update_attrs %{email_alert_on_new_message: false}
-    @invalid_attrs %{email_alert_on_new_message: nil}
-
-    def user_settings_fixture(attrs \\ %{}) do
-      {:ok, user_settings} =
-        attrs
-        |> Enum.into(@valid_attrs)
-        |> Users.create_user_settings()
-
-      user_settings
-    end
 
     setup do
-      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
-
-      user =
-        %User{}
-        |> User.changeset(%{
-          email: "test@example.com",
-          password: @password,
-          password_confirmation: @password,
-          account_id: account.id
-        })
-        |> Repo.insert!()
-
-      {:ok, user: user, account: account}
+      account = account_fixture()
+      {:ok, user: user_fixture(account)}
     end
 
-    test "get_user_settings/1 returns the user_settings with given id", %{user: user} do
-      user_settings = user_settings_fixture(%{user_id: user.id})
+    test "get_user_settings/1 returns the user_settings with given valid user id", %{user: user} do
+      %UserSettings{user_id: user_id} = Users.get_user_settings(user.id)
 
-      assert Users.get_user_settings(user.id) == user_settings
+      assert user_id == user.id
     end
 
-    test "create_user_settings/1 with valid data creates a user_settings", %{user: user} do
-      attrs = Map.merge(@valid_attrs, %{user_id: user.id})
-      assert {:ok, %UserSettings{} = user_settings} = Users.create_user_settings(attrs)
-
-      assert user_settings.email_alert_on_new_message == true
-    end
-
-    test "create_user_settings/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} = Users.create_user_settings(@invalid_attrs)
-    end
-
-    test "create_or_update_settings/2 with valid data creates or updates the user_settings", %{
-      user: user
-    } do
+    test "update_user_settings/2 with valid data updates the user_settings", %{user: user} do
       attrs = Map.merge(@valid_attrs, %{user_id: user.id})
 
-      assert {:ok, %UserSettings{} = user_settings} =
-               Users.create_or_update_settings(user.id, attrs)
+      assert {:ok, %UserSettings{} = user_settings} = Users.update_user_settings(user.id, attrs)
 
       assert user_settings.email_alert_on_new_message == true
 
       assert {:ok, %UserSettings{} = user_settings} =
-               Users.create_or_update_settings(user.id, @update_attrs)
+               Users.update_user_settings(user.id, @update_attrs)
 
       assert user_settings.email_alert_on_new_message == false
     end

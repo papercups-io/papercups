@@ -1,10 +1,7 @@
 defmodule ChatApiWeb.UserProfileControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
-  alias ChatApi.{Accounts, Users, Repo}
-  alias ChatApi.Users.User
-
-  @password "supersecret123"
+  alias ChatApi.Users
 
   @create_attrs %{
     display_name: "some display_name",
@@ -17,27 +14,9 @@ defmodule ChatApiWeb.UserProfileControllerTest do
     profile_photo_url: "some updated profile_photo_url"
   }
 
-  def user_profile_fixture(attrs \\ %{}) do
-    {:ok, user_profile} =
-      attrs
-      |> Enum.into(attrs)
-      |> Users.create_user_profile()
-
-    user_profile
-  end
-
   setup %{conn: conn} do
-    {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
-
-    user =
-      %User{}
-      |> User.changeset(%{
-        email: "test@example.com",
-        password: @password,
-        password_confirmation: @password,
-        account_id: account.id
-      })
-      |> Repo.insert!()
+    account = account_fixture()
+    user = user_fixture(account)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
@@ -45,12 +24,12 @@ defmodule ChatApiWeb.UserProfileControllerTest do
     {:ok, conn: conn, authed_conn: authed_conn, user: user}
   end
 
-  describe "create_or_update user_profile" do
-    test "creates or updates a user's profile", %{
+  describe "update user_profile" do
+    test "updates a user's profile", %{
       authed_conn: authed_conn
     } do
       resp =
-        put(authed_conn, Routes.user_profile_path(authed_conn, :create_or_update),
+        put(authed_conn, Routes.user_profile_path(authed_conn, :update),
           user_profile: @create_attrs
         )
 
@@ -61,7 +40,7 @@ defmodule ChatApiWeb.UserProfileControllerTest do
       assert full_name == @create_attrs.full_name
 
       resp =
-        put(authed_conn, Routes.user_profile_path(authed_conn, :create_or_update),
+        put(authed_conn, Routes.user_profile_path(authed_conn, :update),
           user_profile: @update_attrs
         )
 
@@ -74,9 +53,11 @@ defmodule ChatApiWeb.UserProfileControllerTest do
   end
 
   describe "show user_profile" do
-    test "retrieves the user's profile", %{authed_conn: authed_conn, user: user} do
-      attrs = Map.merge(@create_attrs, %{user_id: user.id})
-      user_profile = user_profile_fixture(attrs)
+    test "retrieves the user's profile given valid user id", %{
+      authed_conn: authed_conn,
+      user: user
+    } do
+      user_profile = Users.get_user_profile(user.id)
       resp = get(authed_conn, Routes.user_profile_path(authed_conn, :show, %{}))
 
       assert %{"display_name" => display_name, "full_name" => full_name} =

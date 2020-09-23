@@ -1,5 +1,5 @@
 defmodule ChatApiWeb.EnsureUserEnabledPlugTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
   alias ChatApi.Users.User
   alias ChatApiWeb.EnsureUserEnabledPlug
@@ -32,12 +32,10 @@ defmodule ChatApiWeb.EnsureUserEnabledPlugTest do
   end
 
   test "call/2 with disabled user", %{conn: conn} do
-    opts = EnsureUserEnabledPlug.init(@plug_opts)
-
     conn =
       conn
       |> Pow.Plug.assign_current_user(@disabled_user, @pow_config)
-      |> EnsureUserEnabledPlug.call(opts)
+      |> EnsureUserEnabledPlug.call()
 
     assert conn.halted
     assert conn.status == 401

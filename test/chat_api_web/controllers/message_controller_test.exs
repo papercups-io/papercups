@@ -1,67 +1,38 @@
 defmodule ChatApiWeb.MessageControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
-  alias ChatApi.{Accounts, Conversations, Messages, Repo}
   alias ChatApi.Messages.Message
-  alias ChatApi.Users.User
 
   @update_attrs %{
     body: "some updated body"
   }
   @invalid_attrs %{body: nil}
 
-  @password "supersecret123"
-
-  def valid_create_attrs(account_id) do
-    {:ok, conversation} =
-      Conversations.create_conversation(%{status: "open", account_id: account_id})
-
-    %{
-      body: "some body",
-      account_id: account_id,
-      conversation_id: conversation.id
-    }
-  end
-
-  def fixture(:message) do
-    {:ok, message} =
-      fixture(:account)
-      |> Map.get(:id)
-      |> valid_create_attrs()
-      |> Messages.create_message()
-
-    message
-  end
-
-  def fixture(:account) do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    account
-  end
-
   setup %{conn: conn} do
-    account = fixture(:account)
-
-    user =
-      %User{}
-      |> User.changeset(%{
-        email: "test@example.com",
-        password: @password,
-        password_confirmation: @password,
-        account_id: account.id
-      })
-      |> Repo.insert!()
+    account = account_fixture()
+    user = user_fixture(account)
+    customer = customer_fixture(account)
+    conversation = conversation_fixture(account, customer)
+    message = message_fixture(account, conversation)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
-    {:ok, conn: conn, authed_conn: authed_conn, account: account}
+    {:ok,
+     conn: conn,
+     authed_conn: authed_conn,
+     account: account,
+     message: message,
+     conversation: conversation,
+     customer: customer}
   end
 
   describe "index" do
-    test "lists all messages", %{authed_conn: authed_conn} do
+    test "lists all messages", %{authed_conn: authed_conn, message: message} do
       conn = get(authed_conn, Routes.message_path(authed_conn, :index))
 
-      assert json_response(conn, 200)["data"] == []
+      ids = json_response(conn, 200)["data"] |> Enum.map(& &1["id"])
+      assert ids == [message.id]
     end
 
     test "returns unauthorized when auth is invalid", %{conn: conn} do
@@ -72,11 +43,18 @@ defmodule ChatApiWeb.MessageControllerTest do
   end
 
   describe "create message" do
-    test "renders message when data is valid", %{authed_conn: authed_conn, account: account} do
-      message = valid_create_attrs(account.id)
+    test "renders message when data is valid", %{
+      authed_conn: authed_conn,
+      account: account,
+      conversation: conversation
+    } do
+      message = %{
+        body: "some body",
+        account_id: account.id,
+        conversation_id: conversation.id
+      }
 
       conn = post(authed_conn, Routes.message_path(authed_conn, :create), message: message)
-
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
       conn = get(authed_conn, Routes.message_path(authed_conn, :show, id))
@@ -94,8 +72,6 @@ defmodule ChatApiWeb.MessageControllerTest do
   end
 
   describe "update message" do
-    setup [:create_message]
-
     test "renders message when data is valid", %{
       authed_conn: authed_conn,
       message: %Message{id: id} = message
@@ -126,8 +102,6 @@ defmodule ChatApiWeb.MessageControllerTest do
   end
 
   describe "delete message" do
-    setup [:create_message]
-
     test "deletes chosen message", %{authed_conn: authed_conn, message: message} do
       conn = delete(authed_conn, Routes.message_path(authed_conn, :delete, message))
       assert response(conn, 204)
@@ -136,10 +110,5 @@ defmodule ChatApiWeb.MessageControllerTest do
         get(authed_conn, Routes.message_path(authed_conn, :show, message))
       end)
     end
-  end
-
-  defp create_message(_) do
-    message = fixture(:message)
-    %{message: message}
   end
 end

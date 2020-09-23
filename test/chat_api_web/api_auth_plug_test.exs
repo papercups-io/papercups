@@ -1,5 +1,5 @@
 defmodule ChatApiWeb.APIAuthPlugTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
   doctest ChatApiWeb.APIAuthPlug
 
   alias ChatApiWeb.{APIAuthPlug, Endpoint}
