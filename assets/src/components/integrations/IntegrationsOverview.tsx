@@ -32,12 +32,14 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
   async componentDidMount() {
     try {
-      const {match, location} = this.props;
+      const {match, location, history} = this.props;
       const {search} = location;
       const {type} = match.params;
 
       if (type) {
         await this.handleIntegrationType(type, search);
+
+        history.push('/integrations');
       }
 
       const integrations = await Promise.all([
@@ -70,11 +72,13 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   fetchGmailIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchGmailAuthorization();
+
     return {
       key: 'gmail',
-      integration: 'Gmail',
-      status: 'not_connected',
-      created_at: null,
+      integration: 'Gmail (beta)',
+      status: auth ? 'connected' : 'not_connected',
+      created_at: auth ? auth.created_at : null,
       icon: '/gmail.svg',
     };
   };
@@ -109,15 +113,22 @@ class IntegrationsOverview extends React.Component<Props, State> {
     };
   };
 
-  handleIntegrationType = (type: string, query: string = '') => {
+  handleIntegrationType = async (type: string, query: string = '') => {
     const q = qs.parse(query);
+    const code = q.code ? String(q.code) : null;
+
+    if (!code) {
+      return null;
+    }
 
     switch (type) {
       case 'slack':
-        const code = String(q.code);
-
         return API.authorizeSlackIntegration(code).catch((err) =>
           logger.error('Failed to authorize Slack:', err)
+        );
+      case 'gmail':
+        return API.authorizeGmailIntegration(code).catch((err) =>
+          logger.error('Failed to authorize Gmail:', err)
         );
       default:
         return null;

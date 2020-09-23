@@ -389,6 +389,38 @@ export const fetchSlackAuthorization = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const fetchGmailAuthorization = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/gmail/authorization`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export type EmailParams = {
+  recipient: string;
+  subject: string;
+  message: string;
+};
+
+export const sendGmailNotification = async (
+  {recipient, subject, message}: EmailParams,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/gmail/send`)
+    .send({recipient, subject, message})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchEventSubscriptions = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
@@ -473,6 +505,21 @@ export const authorizeSlackIntegration = async (
 
   return request
     .get(`/api/slack/oauth`)
+    .query({code})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const authorizeGmailIntegration = async (
+  code: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/gmail/oauth`)
     .query({code})
     .set('Authorization', token)
     .then((res) => res.body.data);
