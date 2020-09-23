@@ -25,11 +25,13 @@ const AccountUsersTable = ({
   loading,
   users,
   currentUser,
+  isAdmin,
   onDisableUser,
 }: {
   loading?: boolean;
   users: Array<User>;
   currentUser: User;
+  isAdmin?: boolean;
   onDisableUser: (user: User) => void;
 }) => {
   // TODO: how should we sort the users?
@@ -99,6 +101,10 @@ const AccountUsersTable = ({
       key: 'action',
       align: Alignment.Right,
       render: (value: string, record: User) => {
+        if (!isAdmin) {
+          return null;
+        }
+
         // Current user cannot disable themselves
         if (currentUser && record.id === currentUser.id) {
           return null;
@@ -126,10 +132,12 @@ const AccountUsersTable = ({
 const DisabledUsersTable = ({
   loading,
   users,
+  isAdmin,
   onEnableUser,
 }: {
   loading?: boolean;
   users: Array<User>;
+  isAdmin?: boolean;
   onEnableUser: (user: User) => void;
 }) => {
   // TODO: how should we sort the users?
@@ -182,6 +190,10 @@ const DisabledUsersTable = ({
       key: 'action',
       align: Alignment.Right,
       render: (value: string, record: User) => {
+        if (!isAdmin) {
+          return null;
+        }
+
         return <Button onClick={() => onEnableUser(record)}>Enable</Button>;
       },
     },
@@ -389,6 +401,7 @@ class AccountOverview extends React.Component<Props, State> {
     }
 
     const {id: token, users = []} = account;
+    const isAdmin = this.hasAdminRole();
 
     return (
       <Box p={4}>
@@ -435,7 +448,7 @@ class AccountOverview extends React.Component<Props, State> {
 
         <Divider />
 
-        {this.hasAdminRole() && (
+        {isAdmin && (
           <>
             <Box mb={4}>
               <Title level={4}>Invite new teammate</Title>
@@ -473,18 +486,22 @@ class AccountOverview extends React.Component<Props, State> {
             loading={isRefreshing}
             users={users.filter((u: User) => !u.disabled_at)}
             currentUser={currentUser}
+            isAdmin={isAdmin}
             onDisableUser={this.handleDisableUser}
           />
         </Box>
 
-        <Box mb={4}>
-          <Title level={4}>Disabled users</Title>
-          <DisabledUsersTable
-            loading={isRefreshing}
-            users={users.filter((u: User) => !!u.disabled_at)}
-            onEnableUser={this.handleEnableUser}
-          />
-        </Box>
+        {isAdmin && (
+          <Box mb={4}>
+            <Title level={4}>Disabled users</Title>
+            <DisabledUsersTable
+              loading={isRefreshing}
+              users={users.filter((u: User) => !!u.disabled_at)}
+              isAdmin={isAdmin}
+              onEnableUser={this.handleEnableUser}
+            />
+          </Box>
+        )}
       </Box>
     );
   }
