@@ -56,7 +56,6 @@ defmodule ChatApi.MixProject do
       {:oban, "~> 2.1.0"},
       {:sentry, "8.0.0"},
       {:google_api_gmail, "~> 0.13"},
-      {:goth, "~> 1.2.0"},
       {:oauth2, "~> 0.9"},
       {:mail, "~> 0.2"},
       {:phoenix_swagger, "~> 0.8"},
