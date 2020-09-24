@@ -101,7 +101,14 @@ const CustomerMetadataSubheader = ({customer}: {customer: any}) => {
     return null;
   }
 
-  const {current_url, browser, os, ip, updated_at: lastUpdatedAt} = customer;
+  const {
+    current_url,
+    pathname,
+    browser,
+    os,
+    ip,
+    updated_at: lastUpdatedAt,
+  } = customer;
 
   return (
     <Flex>
@@ -126,7 +133,7 @@ const CustomerMetadataSubheader = ({customer}: {customer: any}) => {
             }}
           >
             <a href={current_url} target="_blank" rel="noopener noreferrer">
-              {current_url}
+              {pathname && pathname.length > 1 ? pathname : current_url}
             </a>
           </Box>
         )}
