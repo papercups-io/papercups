@@ -21,7 +21,6 @@ import {
   InfoCircleOutlined,
 } from '../icons';
 import {CustomerDetailsContent} from '../customers/CustomerDetailsModal';
-import Divider from 'antd/lib/divider';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -325,17 +324,19 @@ const ConversationHeader = ({
         </Flex>
       </Flex>
 
-      <Box
-        py={2}
-        mx={4}
-        sx={{
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderTop: '1px solid rgba(0,0,0,.06)',
-        }}
-      >
-        <CustomerMetadataSubheader customer={customer} />
-      </Box>
+      {hasCustomerMetadata(customer) && (
+        <Box
+          py={2}
+          mx={4}
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderTop: '1px solid rgba(0,0,0,.06)',
+          }}
+        >
+          <CustomerMetadataSubheader customer={customer} />
+        </Box>
+      )}
     </header>
   );
 };
