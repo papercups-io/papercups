@@ -43,4 +43,8 @@ defmodule ChatApi.Google.Gmail do
 
     result
   end
+
+  def decode_message_body(text) do
+    text |> String.replace("-", "+") |> Base.decode64()
+  end
 end
