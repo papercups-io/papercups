@@ -1,5 +1,7 @@
 import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import {
   colors,
   Button,
@@ -19,6 +21,9 @@ import {
   InfoCircleOutlined,
 } from '../icons';
 import {CustomerDetailsContent} from '../customers/CustomerDetailsModal';
+
+// TODO: create date utility methods so we don't have to do this everywhere
+dayjs.extend(utc);
 
 const hasCustomerMetadata = (customer: any) => {
   const {current_url, browser, os} = customer;
@@ -88,6 +93,63 @@ const CustomerMetadataPopoverContent = ({customer}: {customer: any}) => {
         <CustomerDetailsContent customer={customer} />
       </Drawer>
     </Box>
+  );
+};
+
+const CustomerMetadataSubheader = ({customer}: {customer: any}) => {
+  if (!hasCustomerMetadata(customer)) {
+    return null;
+  }
+
+  const {current_url, browser, os, ip, updated_at: lastUpdatedAt} = customer;
+
+  return (
+    <Flex>
+      <Flex
+        sx={{
+          flex: 1,
+          maxWidth: '80%',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {current_url && (
+          <Box
+            pr={3}
+            mr={3}
+            sx={{
+              maxWidth: 240,
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+              borderRight: '1px solid rgba(0,0,0,.06)',
+            }}
+          >
+            <a href={current_url} target="_blank" rel="noopener noreferrer">
+              {current_url}
+            </a>
+          </Box>
+        )}
+        {(browser || os) && (
+          <Box>
+            <Text type="secondary">
+              {[browser, os, ip].filter(Boolean).join(' · ')}
+            </Text>
+          </Box>
+        )}
+      </Flex>
+      <Box
+        pl={3}
+        ml={3}
+        sx={{
+          borderLeft: '1px solid rgba(0,0,0,.06)',
+        }}
+      >
+        <Text type="secondary">
+          Last seen {dayjs.utc(lastUpdatedAt).format('MMM DD, YYYY')}
+        </Text>
+      </Box>
+    </Flex>
   );
 };
 
@@ -261,6 +323,20 @@ const ConversationHeader = ({
           )}
         </Flex>
       </Flex>
+
+      {hasCustomerMetadata(customer) && (
+        <Box
+          py={2}
+          mx={4}
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderTop: '1px solid rgba(0,0,0,.06)',
+          }}
+        >
+          <CustomerMetadataSubheader customer={customer} />
+        </Box>
+      )}
     </header>
   );
 };
