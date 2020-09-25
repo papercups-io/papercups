@@ -5,8 +5,8 @@ defmodule ChatApiWeb.EnsureUserEnabledPlugTest do
   alias ChatApiWeb.EnsureUserEnabledPlug
 
   @pow_config [otp_app: :my_app]
-  @user %User{id: 1, disabled_at: nil}
-  @disabled_user %User{id: 2, disabled_at: DateTime.utc_now()}
+  @user %User{id: 1, disabled_at: nil, archived_at: nil}
+  @disabled_user %User{id: 2, disabled_at: DateTime.utc_now(), archived_at: nil}
   @plug_opts []
 
   setup do

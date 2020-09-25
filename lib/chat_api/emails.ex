@@ -47,6 +47,22 @@ defmodule ChatApi.Emails do
     |> deliver()
   end
 
+  def send_via_gmail(
+        to: to,
+        from: from,
+        subject: subject,
+        message: message,
+        access_token: access_token
+      ) do
+    Email.generic(
+      to: to,
+      from: from,
+      subject: subject,
+      message: message
+    )
+    |> deliver(access_token: access_token)
+  end
+
   def get_users_to_email(account_id) do
     query =
       from(u in User,
@@ -74,7 +90,7 @@ defmodule ChatApi.Emails do
     # TODO: Find a better solution besides try catch probably in config.exs setup an empty mailer that doesn't do anything
     try do
       if has_valid_to_addresses?(email) do
-        ChatApi.Mailer.deliver(email)
+        ChatApi.Mailers.Mailgun.deliver(email)
       else
         {:warning, "Skipped sending to potentially invalid email: #{inspect(email.to)}"}
       end
@@ -83,6 +99,22 @@ defmodule ChatApi.Emails do
         IO.puts(
           "Email config environment variable may not have been setup properly: #{e.message}"
         )
+
+        {:error, e.message}
+    end
+  end
+
+  # TODO: figure out how to clean this up
+  def deliver(email, access_token: access_token) do
+    try do
+      if has_valid_to_addresses?(email) do
+        ChatApi.Mailers.Gmail.deliver(email, access_token: access_token)
+      else
+        {:warning, "Skipped sending to potentially invalid email: #{inspect(email.to)}"}
+      end
+    rescue
+      e ->
+        IO.puts("Error sending via Gmail: #{e.message}")
 
         {:error, e.message}
     end
