@@ -64,6 +64,10 @@ defmodule ChatApiWeb.Router do
 
     get("/slack/oauth", SlackController, :oauth)
     get("/slack/authorization", SlackController, :authorization)
+    get("/gmail/auth", GmailController, :auth)
+    get("/gmail/oauth", GmailController, :callback)
+    get("/gmail/authorization", GmailController, :authorization)
+    post("/gmail/send", GmailController, :send)
     put("/widget_settings", WidgetSettingsController, :update)
     get("/profile", UserProfileController, :show)
     put("/profile", UserProfileController, :update)
@@ -103,6 +107,10 @@ defmodule ChatApiWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    # TODO: move somewhere else?
+    get "/gmail/auth", GmailController, :index
+
+    # Fallback to index, which renders React app
     get "/*path", PageController, :index
   end
 

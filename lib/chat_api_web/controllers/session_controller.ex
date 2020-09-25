@@ -49,7 +49,7 @@ defmodule ChatApiWeb.SessionController do
 
       {conn, user} ->
         conn
-        |> ChatApiWeb.EnsureUserEnabledPlug.call(user)
+        |> ChatApiWeb.EnsureUserEnabledPlug.call(user: user)
         |> case do
           %{halted: true} = conn ->
             conn

@@ -11,24 +11,25 @@ defmodule ChatApiWeb.EnsureUserEnabledPlug do
   alias Phoenix.Controller
   alias Plug.Conn
   alias Pow.Plug
+  alias ChatApi.Users.User
 
   @doc false
   @spec init(any()) :: any()
   def init(opts), do: opts
 
   @doc false
-  @spec call(Conn.t()) :: Conn.t()
-  def call(conn) do
-    conn
-    |> Plug.current_user()
+  @spec call(Conn.t(), any()) :: Conn.t()
+  def call(conn, _opts \\ [])
+
+  def call(conn, user: %User{} = user) do
+    user
     |> disabled?()
     |> maybe_halt(conn)
   end
 
-  @doc false
-  @spec call(Conn.t(), any()) :: Conn.t()
-  def call(conn, user) do
-    user
+  def call(conn, _opts) do
+    conn
+    |> Plug.current_user()
     |> disabled?()
     |> maybe_halt(conn)
   end

@@ -7,6 +7,14 @@ defmodule ChatApi.Emails.Email do
 
   defstruct to_address: nil, message: nil
 
+  def generic(to: to, from: from, subject: subject, message: message) do
+    new()
+    |> to(to)
+    |> from(from)
+    |> subject(subject)
+    |> text_body(message)
+  end
+
   # TODO: Move conversation id out the mailer should only care about the message
   def new_message_alert(to_address, message, conversation_id) do
     link =

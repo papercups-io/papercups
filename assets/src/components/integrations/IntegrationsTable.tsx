@@ -1,10 +1,33 @@
 import React from 'react';
 import dayjs from 'dayjs';
-import {Flex} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
-import {colors, Button, Table, Tag, Text} from '../common';
-import {SLACK_CLIENT_ID} from '../../config';
+import {colors, Button, Table, Tag, Text, Tooltip} from '../common';
+import {SLACK_CLIENT_ID, isDev} from '../../config';
 import {IntegrationType} from './support';
+
+const getSlackAuthUrl = () => {
+  // NB: when testing locally, update `origin` to an ngrok url
+  // pointing at localhost:4000 (or wherever your server is running)
+  const origin = window.location.origin;
+  const redirect = `${origin}/integrations/slack`;
+  const q = {
+    scope:
+      'incoming-webhook chat:write channels:history channels:manage chat:write.public users:read users:read.email',
+    user_scope: 'channels:history',
+    client_id: SLACK_CLIENT_ID,
+    redirect_uri: redirect,
+  };
+  const query = qs.stringify(q);
+
+  return `https://slack.com/oauth/v2/authorize?${query}`;
+};
+
+const getGmailAuthUrl = () => {
+  const origin = isDev ? 'http://localhost:4000' : window.location.origin;
+
+  return `${origin}/gmail/auth`;
+};
 
 const IntegrationsTable = ({
   integrations,
@@ -60,25 +83,28 @@ const IntegrationsTable = ({
       render: (action: any, record: any) => {
         const {key, status} = record;
         const isConnected = status === 'connected';
-        // NB: when testing locally, update `origin` to an ngrok url
-        // pointing at localhost:4000 (or wherever your server is running)
-        const origin = window.location.origin;
-        const redirect = `${origin}/integrations/slack`;
-        const q = {
-          scope:
-            'incoming-webhook chat:write channels:history channels:manage chat:write.public users:read users:read.email',
-          user_scope: 'channels:history',
-          client_id: SLACK_CLIENT_ID,
-          redirect_uri: redirect,
-        };
-        const query = qs.stringify(q);
 
         switch (key) {
           case 'slack':
             return (
-              <a href={`https://slack.com/oauth/v2/authorize?${query}`}>
+              <a href={getSlackAuthUrl()}>
                 <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
               </a>
+            );
+          case 'gmail':
+            return (
+              <Tooltip
+                title={
+                  <Box>
+                    Our verification with the Google API is pending, but you can
+                    still link your Gmail account to opt into new features.
+                  </Box>
+                }
+              >
+                <a href={getGmailAuthUrl()}>
+                  <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
+                </a>
+              </Tooltip>
             );
           default:
             return <Button disabled>Coming soon!</Button>;
