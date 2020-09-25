@@ -13,6 +13,7 @@ import PasswordReset from './components/auth/PasswordReset';
 import RequestPasswordReset from './components/auth/RequestPasswordReset';
 import PasswordResetRequested from './components/auth/PasswordResetRequested';
 import Demo from './components/demo/Demo';
+import BotDemo from './components/demo/BotDemo';
 import Dashboard from './components/Dashboard';
 import Pricing from './components/billing/PricingOverview';
 import './App.css';
@@ -30,6 +31,7 @@ const App = () => {
       <Router>
         <Switch>
           <Route path="/demo" component={Demo} />
+          <Route path="/bot/demo" component={BotDemo} />
           <Route path="/login" component={Login} />
           <Route path="/register/:invite" component={Register} />
           <Route path="/register" component={Register} />
@@ -62,6 +64,7 @@ const App = () => {
           component={PasswordResetRequested}
         />
         <Route path="/demo" component={Demo} />
+        <Route path="/bot/demo" component={BotDemo} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/" component={Dashboard} />
         <Route path="*" render={() => <Redirect to="/conversations" />} />
