@@ -123,7 +123,10 @@ defmodule ChatApi.Users do
 
   """
   def get_user_profile(user_id) do
-    case UserProfile |> where(user_id: ^user_id) |> Repo.one() do
+    UserProfile
+    |> where(user_id: ^user_id)
+    |> Repo.one()
+    |> case do
       %UserProfile{} = profile ->
         profile
         |> Repo.preload(:user)
@@ -134,9 +137,10 @@ defmodule ChatApi.Users do
   end
 
   defp create_user_profile(user_id) do
-    case %UserProfile{}
-         |> UserProfile.changeset(%{user_id: user_id})
-         |> Repo.insert() do
+    %UserProfile{}
+    |> UserProfile.changeset(%{user_id: user_id})
+    |> Repo.insert()
+    |> case do
       {:ok, profile} ->
         profile
         |> Repo.preload(:user)
@@ -212,7 +216,10 @@ defmodule ChatApi.Users do
 
   """
   def get_user_settings(user_id) do
-    case UserSettings |> where(user_id: ^user_id) |> Repo.one() do
+    UserSettings
+    |> where(user_id: ^user_id)
+    |> Repo.one()
+    |> case do
       %UserSettings{} = setting ->
         setting
 
@@ -222,9 +229,10 @@ defmodule ChatApi.Users do
   end
 
   defp create_user_setting(user_id) do
-    case %UserSettings{}
-         |> UserSettings.changeset(%{user_id: user_id})
-         |> Repo.insert() do
+    %UserSettings{}
+    |> UserSettings.changeset(%{user_id: user_id})
+    |> Repo.insert()
+    |> case do
       {:ok, setting} -> setting
       {:serror, _reason} -> nil
     end

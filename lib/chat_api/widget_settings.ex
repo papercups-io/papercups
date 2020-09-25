@@ -38,23 +38,24 @@ defmodule ChatApi.WidgetSettings do
   def get_widget_setting!(id), do: Repo.get!(WidgetSetting, id)
 
   def get_settings_by_account(account_id) do
-    existing_widget =
+    existing_settings =
       WidgetSetting
       |> where(account_id: ^account_id)
       |> preload(:account)
       |> Repo.one()
 
-    case existing_widget do
-      %WidgetSetting{} -> existing_widget
+    case existing_settings do
+      %WidgetSetting{} -> existing_settings
       nil -> create_setting_by_account(account_id)
     end
   end
 
   defp create_setting_by_account(account_id) do
-    case %WidgetSetting{}
-         |> WidgetSetting.changeset(%{account_id: account_id})
-         |> Repo.insert() do
-      {:ok, _widget} ->
+    %WidgetSetting{}
+    |> WidgetSetting.changeset(%{account_id: account_id})
+    |> Repo.insert()
+    |> case do
+      {:ok, _settings} ->
         WidgetSetting
         |> where(account_id: ^account_id)
         |> preload(:account)

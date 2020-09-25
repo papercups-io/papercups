@@ -1,7 +1,7 @@
 defmodule ChatApi.GoogleTest do
   use ChatApi.DataCase
 
-  alias ChatApi.{Accounts, Google, Users.User}
+  alias ChatApi.Google
 
   describe "google_authorizations" do
     alias ChatApi.Google.GoogleAuthorization
@@ -12,26 +12,7 @@ defmodule ChatApi.GoogleTest do
       refresh_token: "some updated long refresh token"
     }
     @invalid_attrs %{client: nil}
-    @password "supersecretpassword"
 
-    def account_fixture(_attrs \\ %{}) do
-      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
-
-      account
-    end
-
-    def user_fixture(_attrs \\ %{}) do
-      account = account_fixture()
-
-      %User{}
-      |> User.changeset(%{
-        email: "test@example.com",
-        password: @password,
-        password_confirmation: @password,
-        account_id: account.id
-      })
-      |> Repo.insert!()
-    end
 
     def google_authorization_fixture(attrs \\ %{}) do
       {:ok, google_authorization} =
@@ -43,11 +24,12 @@ defmodule ChatApi.GoogleTest do
     end
 
     def create_valid_params() do
-      user = user_fixture()
+      account = account_fixture()
+      user = user_fixture(account)
 
       Map.merge(@valid_attrs, %{
         user_id: user.id,
-        account_id: user.account_id
+        account_id: account.id
       })
     end
 
