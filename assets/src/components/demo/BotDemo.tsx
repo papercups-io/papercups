@@ -4,11 +4,13 @@ import {Box, Flex} from 'theme-ui';
 import request from 'superagent';
 import {
   colors,
+  notification,
   Button,
   Divider,
-  // Input,
+  Input,
   Paragraph,
   Text,
+  TextArea,
   Title,
 } from '../common';
 import {RightCircleOutlined} from '../icons';
@@ -56,6 +58,8 @@ type Props = RouteComponentProps & {};
 type State = {
   currentUser?: any;
   faqs: Array<FAQ>;
+  newQuestion: string;
+  newAnswer: string;
 };
 
 class Demo extends React.Component<Props, State> {
@@ -65,6 +69,8 @@ class Demo extends React.Component<Props, State> {
     this.state = {
       currentUser: null,
       faqs: DEFAULT_FAQS,
+      newQuestion: '',
+      newAnswer: '',
     };
   }
 
@@ -96,6 +102,41 @@ class Demo extends React.Component<Props, State> {
     };
   };
 
+  handleChangeQuestion = (e: any) => {
+    this.setState({newQuestion: e.target.value});
+  };
+
+  handleChangeAnswer = (e: any) => {
+    this.setState({newAnswer: e.target.value});
+  };
+
+  handleAddNewFaq = (e: any) => {
+    e.preventDefault();
+
+    const {newQuestion: q, newAnswer: a} = this.state;
+
+    if (!q || !q.trim().length || !a || !a.trim().length) {
+      return notification.error({
+        message: 'Error adding training data!',
+        description: `Both the question and answer text are required.`,
+        placement: 'topLeft',
+      });
+    }
+
+    this.setState({
+      faqs: [{q: q, a: a}, ...this.state.faqs],
+      newQuestion: '',
+      newAnswer: '',
+    });
+
+    notification.success({
+      message: 'Successfully added training data!',
+      description: `Try asking a similar question in the chat window to test it out.`,
+      placement: 'topLeft',
+      duration: 8,
+    });
+  };
+
   handleNlpDemo = (message: any) => {
     logger.debug('Message sent!', message);
 
@@ -110,7 +151,7 @@ class Demo extends React.Component<Props, State> {
   };
 
   render() {
-    const {faqs = []} = this.state;
+    const {newQuestion, newAnswer, faqs = []} = this.state;
     const customer = this.getCustomerMetadata();
 
     return (
@@ -123,11 +164,51 @@ class Demo extends React.Component<Props, State> {
         <Box mb={4}>
           <Title>Papercups Bot Demo</Title>
           <Paragraph>
-            Hello! Try asking a question in the chat window.
+            Hello! Try asking a question in the chat window. 🤖
+          </Paragraph>
+          <Paragraph>
+            The bot will try to respond to your questions in the chat based on
+            the training data below. You can add new questions/answers as well
+            if you'd like to try it out!
           </Paragraph>
         </Box>
 
         <Divider />
+
+        <Box mb={4}>
+          <Title level={4}>Add training data</Title>
+
+          <form onSubmit={this.handleAddNewFaq}>
+            <Box mb={3}>
+              <label htmlFor="question">New question</label>
+              <Input
+                id="question"
+                type="text"
+                placeholder="What is the best open source live chat tool built on Elixir?"
+                value={newQuestion}
+                onChange={this.handleChangeQuestion}
+              />
+            </Box>
+            <Box mb={3}>
+              <label htmlFor="answer">Answer</label>
+              <TextArea
+                id="answer"
+                placeholder="Hmm... it's gotta be Papercups!"
+                value={newAnswer}
+                onChange={this.handleChangeAnswer}
+              />
+            </Box>
+            <Flex sx={{justifyContent: 'flex-end'}}>
+              <Button type="primary" htmlType="submit">
+                Add
+              </Button>
+            </Flex>
+          </form>
+        </Box>
+
+        <Divider />
+
+        <Title level={2}>Training data</Title>
 
         <Box mb={4}>
           {faqs.map(({q, a}, key) => {
