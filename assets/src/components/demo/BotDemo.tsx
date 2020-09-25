@@ -164,7 +164,10 @@ class Demo extends React.Component<Props, State> {
         <Box mb={4}>
           <Title>Papercups Bot Demo</Title>
           <Paragraph>
-            Hello! Try asking a question in the chat window. 🤖
+            Hello! Try asking a question in the chat window.{' '}
+            <span role="img" aria-label=":)">
+              🤖
+            </span>
           </Paragraph>
           <Paragraph>
             The bot will try to respond to your questions in the chat based on
