@@ -13,7 +13,7 @@ defmodule ChatApi.GoogleTest do
     }
     @invalid_attrs %{client: nil}
 
-
+    # TODO: move to text_fixture_helpers
     def google_authorization_fixture(attrs \\ %{}) do
       {:ok, google_authorization} =
         attrs
