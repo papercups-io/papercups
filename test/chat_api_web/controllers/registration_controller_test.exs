@@ -1,5 +1,5 @@
 defmodule ChatApiWeb.RegistrationControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
   alias ChatApi.{Accounts, Repo, UserInvitations}
 
@@ -68,30 +68,14 @@ defmodule ChatApiWeb.RegistrationControllerTest do
   end
 
   describe("registering with invitation token") do
-    def fixture(:account) do
-      {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-      account
-    end
-
-    def fixture(:user_invitation) do
-      account = fixture(:account)
-      {:ok, user_invitation} = UserInvitations.create_user_invitation(%{account_id: account.id})
-      user_invitation
-    end
-
     setup %{conn: conn} do
-      account = fixture(:account)
-
-      existing_user = %ChatApi.Users.User{
-        email: "test@example.com",
-        role: "admin",
-        account_id: account.id
-      }
+      account = account_fixture()
+      admin_user = user_fixture(account, %{role: "admin"})
 
       # conn = put_req_header(conn, "accept", "application/json")
-      authed_conn = Pow.Plug.assign_current_user(conn, existing_user, [])
+      authed_conn = Pow.Plug.assign_current_user(conn, admin_user, [])
 
-      {:ok, authed_conn: authed_conn, account: account, user: existing_user}
+      {:ok, authed_conn: authed_conn, account: account, user: admin_user}
     end
 
     test "create with existing user", %{conn: conn, authed_conn: authed_conn, account: account} do

@@ -19,7 +19,7 @@ services:
   db:
     image: postgres:alpine
     container_name: papercups
-    ports: 
+    ports:
       - "5432:5432"
-    environment: 
+    environment:
       POSTGRES_PASSWORD: postgres

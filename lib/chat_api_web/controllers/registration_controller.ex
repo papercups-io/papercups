@@ -67,8 +67,11 @@ defmodule ChatApiWeb.RegistrationController do
       user = Enum.into(params, %{"account_id" => account.id, "role" => "admin"})
 
       case Pow.Plug.create_user(conn, user) do
-        {:ok, _user, conn} -> {:ok, conn}
-        {:error, reason, _conn} -> {:error, reason}
+        {:ok, _user, conn} ->
+          {:ok, conn}
+
+        {:error, reason, _conn} ->
+          {:error, reason}
       end
     end)
   end

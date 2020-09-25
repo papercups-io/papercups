@@ -1,7 +1,7 @@
 defmodule ChatApi.SlackAuthorizationsTest do
   use ChatApi.DataCase
 
-  alias ChatApi.{Accounts, SlackAuthorizations}
+  alias ChatApi.SlackAuthorizations
 
   describe "slack_authorizations" do
     alias ChatApi.SlackAuthorizations.SlackAuthorization
@@ -49,41 +49,35 @@ defmodule ChatApi.SlackAuthorizationsTest do
       webhook_url: nil
     }
 
-    def valid_create_attrs do
+    setup do
       account = account_fixture()
+      slack_authorization = slack_authorization_fixture(account)
 
-      Enum.into(@valid_attrs, %{account_id: account.id})
+      {:ok, account: account, slack_authorization: slack_authorization}
     end
 
-    def account_fixture do
-      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
-      account
-    end
-
-    def slack_authorization_fixture(attrs \\ %{}) do
-      {:ok, slack_authorization} =
-        attrs
-        |> Enum.into(valid_create_attrs())
-        |> SlackAuthorizations.create_slack_authorization()
-
-      slack_authorization
-    end
-
-    test "list_slack_authorizations/0 returns all slack_authorizations" do
-      slack_authorization = slack_authorization_fixture()
+    test "list_slack_authorizations/0 returns all slack_authorizations", %{
+      slack_authorization: slack_authorization
+    } do
       assert SlackAuthorizations.list_slack_authorizations() == [slack_authorization]
     end
 
-    test "get_slack_authorization!/1 returns the slack_authorization with given id" do
-      slack_authorization = slack_authorization_fixture()
-
+    test "get_slack_authorization!/1 returns the slack_authorization with given id", %{
+      slack_authorization: slack_authorization
+    } do
       assert SlackAuthorizations.get_slack_authorization!(slack_authorization.id) ==
                slack_authorization
     end
 
-    test "create_slack_authorization/1 with valid data creates a slack_authorization" do
+    test "create_slack_authorization/1 with valid data creates a slack_authorization", %{
+      account: account
+    } do
+      attrs =
+        %{account_id: account.id}
+        |> Enum.into(@valid_attrs)
+
       assert {:ok, %SlackAuthorization{} = slack_authorization} =
-               SlackAuthorizations.create_slack_authorization(valid_create_attrs())
+               SlackAuthorizations.create_slack_authorization(attrs)
 
       assert slack_authorization.access_token == "some access_token"
       assert slack_authorization.app_id == "some app_id"
@@ -104,9 +98,9 @@ defmodule ChatApi.SlackAuthorizationsTest do
                SlackAuthorizations.create_slack_authorization(@invalid_attrs)
     end
 
-    test "update_slack_authorization/2 with valid data updates the slack_authorization" do
-      slack_authorization = slack_authorization_fixture()
-
+    test "update_slack_authorization/2 with valid data updates the slack_authorization", %{
+      slack_authorization: slack_authorization
+    } do
       assert {:ok, %SlackAuthorization{} = slack_authorization} =
                SlackAuthorizations.update_slack_authorization(slack_authorization, @update_attrs)
 
@@ -124,9 +118,9 @@ defmodule ChatApi.SlackAuthorizationsTest do
       assert slack_authorization.webhook_url == "some updated webhook_url"
     end
 
-    test "update_slack_authorization/2 with invalid data returns error changeset" do
-      slack_authorization = slack_authorization_fixture()
-
+    test "update_slack_authorization/2 with invalid data returns error changeset", %{
+      slack_authorization: slack_authorization
+    } do
       assert {:error, %Ecto.Changeset{}} =
                SlackAuthorizations.update_slack_authorization(slack_authorization, @invalid_attrs)
 
@@ -134,9 +128,9 @@ defmodule ChatApi.SlackAuthorizationsTest do
                SlackAuthorizations.get_slack_authorization!(slack_authorization.id)
     end
 
-    test "delete_slack_authorization/1 deletes the slack_authorization" do
-      slack_authorization = slack_authorization_fixture()
-
+    test "delete_slack_authorization/1 deletes the slack_authorization", %{
+      slack_authorization: slack_authorization
+    } do
       assert {:ok, %SlackAuthorization{}} =
                SlackAuthorizations.delete_slack_authorization(slack_authorization)
 
@@ -145,9 +139,9 @@ defmodule ChatApi.SlackAuthorizationsTest do
       end
     end
 
-    test "change_slack_authorization/1 returns a slack_authorization changeset" do
-      slack_authorization = slack_authorization_fixture()
-
+    test "change_slack_authorization/1 returns a slack_authorization changeset", %{
+      slack_authorization: slack_authorization
+    } do
       assert %Ecto.Changeset{} =
                SlackAuthorizations.change_slack_authorization(slack_authorization)
     end

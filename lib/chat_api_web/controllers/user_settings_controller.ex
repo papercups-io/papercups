@@ -12,11 +12,10 @@ defmodule ChatApiWeb.UserSettingsController do
     end
   end
 
-  def create_or_update(conn, %{"user_settings" => user_settings_params}) do
+  def update(conn, %{"user_settings" => user_settings_params}) do
     with %{id: user_id} <- conn.assigns.current_user do
       params = Map.merge(user_settings_params, %{"user_id" => user_id})
-      {:ok, user_settings} = Users.create_or_update_settings(user_id, params)
-
+      {:ok, user_settings} = Users.update_user_settings(user_id, params)
       render(conn, "show.json", user_settings: user_settings)
     end
   end

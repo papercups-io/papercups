@@ -35,8 +35,8 @@ defmodule ChatApiWeb.EnsureUserEnabledPlug do
   end
 
   defp disabled?(%{disabled_at: disabled_at, archived_at: archived_at})
-       when not is_nil(disabled_at)
-       when not is_nil(archived_at),
+       when not is_nil(disabled_at) or
+              not is_nil(archived_at),
        do: true
 
   defp disabled?(_user), do: false

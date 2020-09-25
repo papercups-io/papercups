@@ -1,9 +1,7 @@
 defmodule ChatApiWeb.ConversationControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
-  alias ChatApi.Conversations
   alias ChatApi.Conversations.Conversation
-  alias ChatApi.Accounts
 
   @create_attrs %{
     status: "open"
@@ -13,35 +11,21 @@ defmodule ChatApiWeb.ConversationControllerTest do
   }
   @invalid_attrs %{status: nil}
 
-  def fixture(:account) do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    account
-  end
-
-  def fixture(:conversation) do
-    account = fixture(:account)
-
-    {:ok, conversation} =
-      @create_attrs
-      |> Enum.into(%{account_id: account.id})
-      |> Conversations.create_conversation()
-
-    conversation
-  end
-
   setup %{conn: conn} do
-    user = %ChatApi.Users.User{email: "test@example.com"}
+    account = account_fixture()
+    user = user_fixture(account)
+    conversation = conversation_fixture(account, customer_fixture(account))
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
-    account = fixture(:account)
 
-    {:ok, conn: conn, authed_conn: authed_conn, account: account}
+    {:ok, conn: conn, authed_conn: authed_conn, account: account, conversation: conversation}
   end
 
   describe "index" do
-    test "lists all conversations", %{authed_conn: authed_conn} do
+    test "lists all conversations", %{authed_conn: authed_conn, conversation: conversation} do
       conn = get(authed_conn, Routes.conversation_path(authed_conn, :index))
-      assert json_response(conn, 200)["data"] == []
+      ids = json_response(conn, 200)["data"] |> Enum.map(& &1["id"])
+      assert ids == [conversation.id]
     end
   end
 
@@ -73,8 +57,6 @@ defmodule ChatApiWeb.ConversationControllerTest do
   end
 
   describe "update conversation" do
-    setup [:create_conversation]
-
     test "renders conversation when data is valid", %{
       authed_conn: authed_conn,
       conversation: %Conversation{id: id} = conversation
@@ -108,8 +90,6 @@ defmodule ChatApiWeb.ConversationControllerTest do
   end
 
   describe "delete conversation" do
-    setup [:create_conversation]
-
     test "deletes chosen conversation", %{authed_conn: authed_conn, conversation: conversation} do
       conn = delete(authed_conn, Routes.conversation_path(authed_conn, :delete, conversation))
       assert response(conn, 204)
@@ -118,10 +98,5 @@ defmodule ChatApiWeb.ConversationControllerTest do
         get(authed_conn, Routes.conversation_path(authed_conn, :show, conversation))
       end)
     end
-  end
-
-  defp create_conversation(_) do
-    conversation = fixture(:conversation)
-    %{conversation: conversation}
   end
 end

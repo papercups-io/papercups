@@ -1,26 +1,13 @@
 defmodule ChatApiWeb.UserInvitationControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
-  alias ChatApi.UserInvitations
   alias ChatApi.UserInvitations.UserInvitation
-  alias ChatApi.Accounts
 
   @invalid_attrs %{account_id: nil, expires_at: nil}
 
-  def fixture(:account) do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    account
-  end
-
-  def fixture(:user_invitation) do
-    account = fixture(:account)
-    {:ok, user_invitation} = UserInvitations.create_user_invitation(%{account_id: account.id})
-    user_invitation
-  end
-
   setup %{conn: conn} do
-    account = fixture(:account)
-    user = %ChatApi.Users.User{email: "test@example.com", role: "admin", account_id: account.id}
+    account = account_fixture()
+    user = user_fixture(account, %{role: "admin"})
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
@@ -107,8 +94,8 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
     end
   end
 
-  defp create_user_invitation(_) do
-    user_invitation = fixture(:user_invitation)
+  defp create_user_invitation(%{account: account}) do
+    user_invitation = user_invitation_fixture(account)
     %{user_invitation: user_invitation}
   end
 end

@@ -1,33 +1,25 @@
 defmodule ChatApiWeb.SessionControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
-  alias ChatApi.{Repo, Accounts, Users}
+  alias ChatApi.Users
   alias ChatApi.Users.User
 
-  @password "secret1234"
-
-  @valid_params %{"user" => %{"email" => "test@example.com", "password" => @password}}
   @invalid_params %{"user" => %{"email" => "test@example.com", "password" => "invalid"}}
 
   setup do
-    {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
-
-    user =
-      %User{}
-      |> User.changeset(%{
-        email: "test@example.com",
-        password: @password,
-        password_confirmation: @password,
-        account_id: account.id
-      })
-      |> Repo.insert!()
+    account = account_fixture()
+    user = user_fixture(account)
 
     {:ok, user: user}
   end
 
+  def auth_params(%User{} = user) do
+    %{"user" => %{"email" => user.email, "password" => user.password}}
+  end
+
   describe "create/2" do
-    test "with valid params", %{conn: conn} do
-      conn = post(conn, Routes.session_path(conn, :create, @valid_params))
+    test "with valid params", %{conn: conn, user: user} do
+      conn = post(conn, Routes.session_path(conn, :create, auth_params(user)))
 
       assert json = json_response(conn, 200)
       assert json["data"]["token"]
@@ -44,7 +36,7 @@ defmodule ChatApiWeb.SessionControllerTest do
 
     test "with disabled user", %{conn: conn, user: user} do
       {:ok, _user} = Users.disable_user(user)
-      resp = post(conn, Routes.session_path(conn, :create, @valid_params))
+      resp = post(conn, Routes.session_path(conn, :create, auth_params(user)))
 
       assert json = json_response(resp, 401)
       assert "Your account is disabled" <> _msg = json["error"]["message"]
@@ -53,8 +45,8 @@ defmodule ChatApiWeb.SessionControllerTest do
   end
 
   describe "renew/2" do
-    setup %{conn: conn} do
-      authed_conn = post(conn, Routes.session_path(conn, :create, @valid_params))
+    setup %{conn: conn, user: user} do
+      authed_conn = post(conn, Routes.session_path(conn, :create, auth_params(user)))
       :timer.sleep(100)
 
       {:ok, renewal_token: authed_conn.private[:api_renew_token]}
@@ -97,8 +89,8 @@ defmodule ChatApiWeb.SessionControllerTest do
   end
 
   describe "delete/2" do
-    setup %{conn: conn} do
-      authed_conn = post(conn, Routes.session_path(conn, :create, @valid_params))
+    setup %{conn: conn, user: user} do
+      authed_conn = post(conn, Routes.session_path(conn, :create, auth_params(user)))
       :timer.sleep(100)
       {:ok, access_token: authed_conn.private[:api_auth_token]}
     end

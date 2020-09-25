@@ -1,9 +1,7 @@
 defmodule ChatApi.ConversationsTest do
-  use ChatApi.DataCase
+  use ChatApi.DataCase, async: true
 
   alias ChatApi.Conversations
-  alias ChatApi.Messages
-  alias ChatApi.Accounts
 
   describe "conversations" do
     alias ChatApi.Conversations.Conversation
@@ -18,55 +16,38 @@ defmodule ChatApi.ConversationsTest do
       Enum.into(@valid_attrs, %{account_id: account.id})
     end
 
-    def account_fixture do
-      {:ok, account} = Accounts.create_account(%{company_name: "Test Inc"})
-      account
-    end
-
-    def conversation_fixture(attrs \\ %{}) do
-      {:ok, conversation} =
-        attrs
-        |> Enum.into(@valid_attrs)
-        |> Conversations.create_conversation()
-
-      {:ok, _message} =
-        Messages.create_message(%{
-          body: "Test message",
-          conversation_id: conversation.id,
-          account_id: conversation.account_id
-        })
-
-      Conversations.get_conversation!(conversation.id)
-    end
-
     setup do
       account = account_fixture()
+      customer = customer_fixture(account)
+      conversation = conversation_fixture(account, customer)
 
-      {:ok, account: account}
+      {:ok, account: account, conversation: conversation}
     end
 
-    test "list_conversations/0 returns all conversations", %{account: account} do
-      conversation = conversation_fixture(%{account_id: account.id})
+    test "list_conversations/0 returns all conversations", %{
+      conversation: conversation
+    } do
       result_ids = Enum.map(Conversations.list_conversations(), fn r -> r.id end)
 
       assert result_ids == [conversation.id]
     end
 
     test "list_conversations_by_account/1 returns all conversations for an account", %{
-      account: account
+      account: account,
+      conversation: conversation
     } do
       different_account = account_fixture()
-      conversation = conversation_fixture(%{account_id: account.id})
-      _conversation = conversation_fixture(%{account_id: different_account.id})
+      different_customer = customer_fixture(different_account)
+      _conversation = conversation_fixture(different_account, different_customer)
 
-      result_ids =
-        Enum.map(Conversations.list_conversations_by_account(account.id), fn r -> r.id end)
+      result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
 
       assert result_ids == [conversation.id]
     end
 
-    test "get_conversation!/1 returns the conversation with given id", %{account: account} do
-      conversation = conversation_fixture(%{account_id: account.id})
+    test "get_conversation!/1 returns the conversation with given id", %{
+      conversation: conversation
+    } do
       assert Conversations.get_conversation!(conversation.id) == conversation
     end
 
@@ -81,32 +62,30 @@ defmodule ChatApi.ConversationsTest do
       assert {:error, %Ecto.Changeset{}} = Conversations.create_conversation(@invalid_attrs)
     end
 
-    test "update_conversation/2 with valid data updates the conversation", %{account: account} do
-      conversation = conversation_fixture(%{account_id: account.id})
-
+    test "update_conversation/2 with valid data updates the conversation", %{
+      conversation: conversation
+    } do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.update_conversation(conversation, @update_attrs)
 
       assert conversation.status == "closed"
     end
 
-    test "update_conversation/2 with invalid data returns error changeset", %{account: account} do
-      conversation = conversation_fixture(%{account_id: account.id})
-
+    test "update_conversation/2 with invalid data returns error changeset", %{
+      conversation: conversation
+    } do
       assert {:error, %Ecto.Changeset{}} =
                Conversations.update_conversation(conversation, @invalid_attrs)
 
-      assert conversation == Conversations.get_conversation!(conversation.id)
+      assert conversation = Conversations.get_conversation!(conversation.id)
     end
 
-    test "delete_conversation/1 deletes the conversation", %{account: account} do
-      conversation = conversation_fixture(%{account_id: account.id})
+    test "delete_conversation/1 deletes the conversation", %{conversation: conversation} do
       assert {:ok, %Conversation{}} = Conversations.delete_conversation(conversation)
       assert_raise Ecto.NoResultsError, fn -> Conversations.get_conversation!(conversation.id) end
     end
 
-    test "change_conversation/1 returns a conversation changeset", %{account: account} do
-      conversation = conversation_fixture(%{account_id: account.id})
+    test "change_conversation/1 returns a conversation changeset", %{conversation: conversation} do
       assert %Ecto.Changeset{} = Conversations.change_conversation(conversation)
     end
   end

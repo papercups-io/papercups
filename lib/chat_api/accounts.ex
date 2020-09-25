@@ -53,8 +53,7 @@ defmodule ChatApi.Accounts do
 
   """
   def create_account(attrs \\ %{}) do
-    %Account{}
-    |> Account.changeset(attrs)
+    Account.changeset(%Account{}, attrs)
     |> Repo.insert()
   end
 

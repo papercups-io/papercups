@@ -23,6 +23,7 @@ defmodule ChatApiWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import ChatApiWeb.ConnCase
+      import ChatApi.TestFixtureHelpers
 
       alias ChatApiWeb.Router.Helpers, as: Routes
 

@@ -1,9 +1,7 @@
 defmodule ChatApiWeb.CustomerControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
-  alias ChatApi.Customers
   alias ChatApi.Customers.Customer
-  alias ChatApi.Accounts
 
   @create_attrs %{
     first_seen: ~D[2020-01-01],
@@ -21,45 +19,37 @@ defmodule ChatApiWeb.CustomerControllerTest do
     last_seen: 3
   }
 
-  def valid_create_attrs do
-    account = fixture(:account)
-
+  def valid_create_attrs(account) do
     Enum.into(@create_attrs, %{account_id: account.id})
   end
 
-  def fixture(:account) do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    account
-  end
-
-  def fixture(:customer, attrs \\ %{}) do
-    {:ok, customer} =
-      attrs
-      |> Enum.into(valid_create_attrs())
-      |> Customers.create_customer()
-
-    customer
-  end
-
   setup %{conn: conn} do
-    account = fixture(:account)
+    account = account_fixture()
     user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
+    customer = customer_fixture(account)
 
-    {:ok, conn: conn, authed_conn: authed_conn}
+    {:ok, conn: conn, authed_conn: authed_conn, account: account, customer: customer}
   end
 
   describe "index" do
-    test "lists all customers", %{authed_conn: authed_conn} do
+    test "lists all customers", %{authed_conn: authed_conn, customer: customer} do
       resp = get(authed_conn, Routes.customer_path(authed_conn, :index))
-      assert json_response(resp, 200)["data"] == []
+      ids = json_response(resp, 200)["data"] |> Enum.map(& &1["id"])
+
+      assert ids == [customer.id]
     end
   end
 
   describe "create customer" do
-    test "renders customer when data is valid", %{conn: conn, authed_conn: authed_conn} do
-      resp = post(conn, Routes.customer_path(conn, :create), customer: valid_create_attrs())
+    test "renders customer when data is valid", %{
+      conn: conn,
+      authed_conn: authed_conn,
+      account: account
+    } do
+      resp =
+        post(conn, Routes.customer_path(conn, :create), customer: valid_create_attrs(account))
 
       assert %{"id" => id} = json_response(resp, 201)["data"]
 
@@ -71,21 +61,23 @@ defmodule ChatApiWeb.CustomerControllerTest do
     end
 
     test "ensures external_id is a string", %{
-      conn: conn
+      conn: conn,
+      account: account
     } do
-      customer = Map.merge(valid_create_attrs(), %{external_id: 123})
+      customer = Map.merge(valid_create_attrs(account), %{external_id: 123})
       resp = post(conn, Routes.customer_path(conn, :create), customer: customer)
 
       assert %{"external_id" => "123"} = json_response(resp, 201)["data"]
     end
 
     test "truncates current_url if it is too long", %{
-      conn: conn
+      conn: conn,
+      account: account
     } do
       current_url =
         "http://example.com/login?next=/insights%3Finsight%3DTRENDS%26interval%3Dday%26events%3D%255B%257B%2522id%2522%253A%2522%2524pageview%2522%252C%2522name%2522%253A%2522%2524pageview%2522%252C%2522type%2522%253A%2522events%2522%252C%2522order%2522%253A0%252C%2522math%2522%253A%2522total%2522%257D%255D%26display%3DActionsTable%26actions%3D%255B%255D%26new_entity%3D%255B%255D%26breakdown%3D%2524browser%26breakdown_type%3Devent%26properties%3D%255B%255D"
 
-      customer = Map.merge(valid_create_attrs(), %{current_url: current_url})
+      customer = Map.merge(valid_create_attrs(account), %{current_url: current_url})
       resp = post(conn, Routes.customer_path(conn, :create), customer: customer)
 
       assert %{"current_url" => truncated} = json_response(resp, 201)["data"]
@@ -99,8 +91,6 @@ defmodule ChatApiWeb.CustomerControllerTest do
   end
 
   describe "update customer" do
-    setup [:create_customer]
-
     test "renders customer when data is valid", %{
       authed_conn: authed_conn,
       customer: %Customer{id: id} = customer
@@ -130,8 +120,6 @@ defmodule ChatApiWeb.CustomerControllerTest do
   end
 
   describe "delete customer" do
-    setup [:create_customer]
-
     test "deletes chosen customer", %{authed_conn: authed_conn, customer: customer} do
       resp = delete(authed_conn, Routes.customer_path(authed_conn, :delete, customer))
       assert response(resp, 204)
@@ -143,8 +131,6 @@ defmodule ChatApiWeb.CustomerControllerTest do
   end
 
   describe "update customer metadata" do
-    setup [:create_customer]
-
     test "renders customer when data is valid", %{
       conn: conn,
       authed_conn: authed_conn,
@@ -181,10 +167,11 @@ defmodule ChatApiWeb.CustomerControllerTest do
 
   describe "identifies a customer by external_id" do
     test "finds the correct customer", %{
-      conn: conn
+      conn: conn,
+      account: account
     } do
       external_id = "cus_123"
-      customer = fixture(:customer, %{external_id: external_id})
+      customer = customer_fixture(account, %{external_id: external_id})
       %{id: customer_id, account_id: account_id} = customer
 
       resp =
@@ -199,9 +186,10 @@ defmodule ChatApiWeb.CustomerControllerTest do
     end
 
     test "returns nil if no match is found", %{
-      conn: conn
+      conn: conn,
+      account: account
     } do
-      customer = fixture(:customer, %{external_id: "cus_123"})
+      customer = customer_fixture(account, %{external_id: "cus_123"})
       %{id: _customer_id, account_id: account_id} = customer
 
       resp =
@@ -219,9 +207,15 @@ defmodule ChatApiWeb.CustomerControllerTest do
       conn: conn
     } do
       external_id = "cus_123"
-      _customer_a = fixture(:customer, %{external_id: external_id})
-      _customer_b = fixture(:customer, %{external_id: external_id})
-      customer_c = fixture(:customer, %{external_id: external_id})
+      acc_1 = account_fixture()
+      _customer_a = customer_fixture(acc_1, %{external_id: external_id})
+
+      acc_2 = account_fixture()
+      _customer_b = customer_fixture(acc_2, %{external_id: external_id})
+
+      acc_3 = account_fixture()
+      customer_c = customer_fixture(acc_3, %{external_id: external_id})
+
       %{id: customer_c_id, account_id: account_id} = customer_c
 
       resp =
@@ -234,10 +228,5 @@ defmodule ChatApiWeb.CustomerControllerTest do
                "customer_id" => ^customer_c_id
              } = json_response(resp, 200)["data"]
     end
-  end
-
-  defp create_customer(_) do
-    customer = fixture(:customer)
-    %{customer: customer}
   end
 end

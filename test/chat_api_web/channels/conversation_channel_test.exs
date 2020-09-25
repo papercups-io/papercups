@@ -1,10 +1,8 @@
 defmodule ChatApiWeb.ConversationChannelTest do
   use ChatApiWeb.ChannelCase
 
-  alias ChatApi.Accounts
-
   setup do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
+    account = account_fixture()
 
     {:ok, _, socket} =
       ChatApiWeb.UserSocket

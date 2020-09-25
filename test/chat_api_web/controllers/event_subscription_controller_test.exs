@@ -1,7 +1,6 @@
 defmodule ChatApiWeb.EventSubscriptionControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
-  alias ChatApi.{Accounts, EventSubscriptions}
   alias ChatApi.EventSubscriptions.EventSubscription
 
   @create_attrs %{
@@ -14,29 +13,15 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
   }
   @invalid_attrs %{account_id: nil, scope: nil, verified: nil, webhook_url: nil}
 
-  def fixture(:event_subscription) do
-    account = fixture(:account)
-
-    {:ok, event_subscription} =
-      @create_attrs
-      |> Enum.into(%{account_id: account.id})
-      |> EventSubscriptions.create_event_subscription()
-
-    event_subscription
-  end
-
-  def fixture(:account) do
-    {:ok, account} = Accounts.create_account(%{company_name: "Taro"})
-    account
-  end
-
   setup %{conn: conn} do
-    account = fixture(:account)
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
+    account = account_fixture()
+    user = user_fixture(account)
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
+    subscription = event_subscription_fixture(account)
 
-    {:ok, conn: conn, authed_conn: authed_conn, account: account}
+    {:ok,
+     conn: conn, authed_conn: authed_conn, account: account, event_subscription: subscription}
   end
 
   setup %{conn: conn} do
@@ -44,9 +29,13 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
   end
 
   describe "index" do
-    test "lists all event_subscriptions", %{authed_conn: authed_conn} do
+    test "lists all event_subscriptions", %{
+      authed_conn: authed_conn,
+      event_subscription: subscription
+    } do
       resp = get(authed_conn, Routes.event_subscription_path(authed_conn, :index))
-      assert json_response(resp, 200)["data"] == []
+      ids = json_response(resp, 200)["data"] |> Enum.map(& &1["id"])
+      assert ids == [subscription.id]
     end
   end
 
@@ -79,8 +68,6 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
   end
 
   describe "update event_subscription" do
-    setup [:create_event_subscription]
-
     test "renders event_subscription when data is valid", %{
       authed_conn: authed_conn,
       event_subscription: %EventSubscription{id: id} = event_subscription
@@ -115,8 +102,6 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
   end
 
   describe "delete event_subscription" do
-    setup [:create_event_subscription]
-
     test "deletes chosen event_subscription", %{
       authed_conn: authed_conn,
       event_subscription: event_subscription
@@ -133,10 +118,5 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
         get(authed_conn, Routes.event_subscription_path(authed_conn, :show, event_subscription))
       end
     end
-  end
-
-  defp create_event_subscription(_) do
-    event_subscription = fixture(:event_subscription)
-    %{event_subscription: event_subscription}
   end
 end

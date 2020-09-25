@@ -38,42 +38,31 @@ defmodule ChatApi.WidgetSettings do
   def get_widget_setting!(id), do: Repo.get!(WidgetSetting, id)
 
   def get_settings_by_account(account_id) do
-    WidgetSetting
-    |> where(account_id: ^account_id)
-    |> preload(:account)
-    |> Repo.one()
-  end
+    existing_widget =
+      WidgetSetting
+      |> where(account_id: ^account_id)
+      |> preload(:account)
+      |> Repo.one()
 
-  def create_or_update(nil, params) do
-    create_widget_setting(params)
-  end
-
-  def create_or_update(account_id, params) do
-    existing = get_settings_by_account(account_id)
-
-    if existing do
-      update_widget_setting(existing, params)
-    else
-      create_widget_setting(params)
+    case existing_widget do
+      %WidgetSetting{} -> existing_widget
+      nil -> create_setting_by_account(account_id)
     end
   end
 
-  @doc """
-  Creates a widget_setting.
+  defp create_setting_by_account(account_id) do
+    case %WidgetSetting{}
+         |> WidgetSetting.changeset(%{account_id: account_id})
+         |> Repo.insert() do
+      {:ok, _widget} ->
+        WidgetSetting
+        |> where(account_id: ^account_id)
+        |> preload(:account)
+        |> Repo.one()
 
-  ## Examples
-
-      iex> create_widget_setting(%{field: value})
-      {:ok, %WidgetSetting{}}
-
-      iex> create_widget_setting(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
-  def create_widget_setting(attrs \\ %{}) do
-    %WidgetSetting{}
-    |> WidgetSetting.changeset(attrs)
-    |> Repo.insert()
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -96,9 +85,9 @@ defmodule ChatApi.WidgetSettings do
 
   def update_widget_metadata(account_id, metadata) do
     attrs = Map.take(metadata, ["host", "pathname", "last_seen_at"])
-    {:ok, settings} = create_or_update(account_id, %{account_id: account_id})
 
-    update_widget_setting(settings, attrs)
+    get_settings_by_account(account_id)
+    |> update_widget_setting(attrs)
   end
 
   @doc """

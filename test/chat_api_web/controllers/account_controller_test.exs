@@ -1,7 +1,6 @@
 defmodule ChatApiWeb.AccountControllerTest do
-  use ChatApiWeb.ConnCase
+  use ChatApiWeb.ConnCase, async: true
 
-  alias ChatApi.Accounts
   alias ChatApi.Accounts.Account
 
   @create_attrs %{
@@ -12,11 +11,6 @@ defmodule ChatApiWeb.AccountControllerTest do
   }
   @invalid_attrs %{company_name: nil}
 
-  def fixture(:account) do
-    {:ok, account} = Accounts.create_account(@create_attrs)
-    account
-  end
-
   def update_current_user_account(conn, account_id) do
     user = %ChatApi.Users.User{email: "test@example.com", account_id: account_id}
     # conn = put_req_header(conn, "accept", "application/json")
@@ -26,9 +20,10 @@ defmodule ChatApiWeb.AccountControllerTest do
   end
 
   setup %{conn: conn} do
+    account = account_fixture()
     conn = put_req_header(conn, "accept", "application/json")
 
-    {:ok, conn: conn}
+    {:ok, conn: conn, account: account}
   end
 
   describe "create account" do
@@ -52,8 +47,6 @@ defmodule ChatApiWeb.AccountControllerTest do
   end
 
   describe "update account" do
-    setup [:create_account]
-
     test "renders account when data is valid", %{
       conn: conn,
       account: %Account{id: id} = account
@@ -91,8 +84,6 @@ defmodule ChatApiWeb.AccountControllerTest do
   end
 
   describe "delete account" do
-    setup [:create_account]
-
     test "deletes chosen account", %{conn: conn, account: account} do
       authed_conn = update_current_user_account(conn, account.id)
       conn = delete(authed_conn, Routes.account_path(authed_conn, :delete, account))
@@ -102,10 +93,5 @@ defmodule ChatApiWeb.AccountControllerTest do
         get(authed_conn, Routes.account_path(authed_conn, :me))
       end
     end
-  end
-
-  defp create_account(_) do
-    account = fixture(:account)
-    %{account: account}
   end
 end

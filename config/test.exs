@@ -11,7 +11,10 @@ config :chat_api, ChatApi.Repo,
   database: "chat_api_test#{System.get_env("MIX_TEST_PARTITION")}",
   hostname: "localhost",
   port: System.get_env("DATABASE_PORT") || 5432,
-  pool: Ecto.Adapters.SQL.Sandbox
+  pool: Ecto.Adapters.SQL.Sandbox,
+  # increase pool queue timeout_ms since async test
+  # in sandbox mode may produces get connection timeout
+  queue_target: 500
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
