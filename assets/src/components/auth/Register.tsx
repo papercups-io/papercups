@@ -67,6 +67,8 @@ class Register extends React.Component<Props, State> {
       return 'Email is required';
     } else if (!password) {
       return 'Password is required';
+    } else if (password.length < 8) {
+      return 'Password must be at least 8 characters';
     } else if (password !== passwordConfirmation) {
       return 'Password confirmation does not match';
     } else {
