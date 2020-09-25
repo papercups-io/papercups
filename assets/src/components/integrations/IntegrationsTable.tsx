@@ -1,8 +1,8 @@
 import React from 'react';
 import dayjs from 'dayjs';
-import {Flex} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
-import {colors, Button, Table, Tag, Text} from '../common';
+import {colors, Button, Table, Tag, Text, Tooltip} from '../common';
 import {SLACK_CLIENT_ID, isDev} from '../../config';
 import {IntegrationType} from './support';
 
@@ -93,9 +93,18 @@ const IntegrationsTable = ({
             );
           case 'gmail':
             return (
-              <a href={getGmailAuthUrl()}>
-                <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-              </a>
+              <Tooltip
+                title={
+                  <Box>
+                    Our verification with the Google API is pending, but you can
+                    still link your Gmail account to opt into new features.
+                  </Box>
+                }
+              >
+                <a href={getGmailAuthUrl()}>
+                  <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
+                </a>
+              </Tooltip>
             );
           default:
             return <Button disabled>Coming soon!</Button>;
