@@ -33,6 +33,7 @@ import ClosedConversations from './conversations/ClosedConversations';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
+import ReportingDashboard from './reporting/ReportingDashboard';
 
 const hasValidStripeKey = () => {
   const key = process.env.REACT_APP_STRIPE_PUBLIC_KEY;
@@ -217,6 +218,7 @@ const Dashboard = (props: RouteComponentProps) => {
           {shouldDisplayBilling && (
             <Route path="/billing" component={BillingOverview} />
           )}
+          <Route path="/reporting" component={ReportingDashboard} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
