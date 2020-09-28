@@ -30,7 +30,7 @@ type DateCount = {
 
 // Fake data for testing
 // TODO: replace with real data from API below!
-const FAKE_DATA: Array<ReportingDatum> = [
+const FAKE_DAILY_DATA: Array<ReportingDatum> = [
   {
     date: 'Sept 1',
     messages: 40,
@@ -68,6 +68,39 @@ const FAKE_DATA: Array<ReportingDatum> = [
   },
 ];
 
+const FAKE_WEEKLY_DATA: Array<ReportingDatum> = [
+  {
+    date: 'Aug 1',
+    messages: 40,
+    conversations: 24,
+  },
+  {
+    date: 'Aug 7',
+    messages: 30,
+    conversations: 13,
+  },
+  {
+    date: 'Aug 14',
+    messages: 20,
+    conversations: 9,
+  },
+  {
+    date: 'Aug 21',
+    messages: 27,
+    conversations: 19,
+  },
+  {
+    date: 'Aug 28',
+    messages: 90,
+    conversations: 30,
+  },
+  {
+    date: 'Sept 4',
+    messages: 23,
+    conversations: 8,
+  },
+];
+
 // TODO: display messages and conversations per day in this chart and
 // rename component to something more appropriate (e.g. DailyMessagesChart)
 const DemoLineChart = ({data}: {data: any}) => {
@@ -82,7 +115,7 @@ const DemoLineChart = ({data}: {data: any}) => {
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="date" />
-        <YAxis />
+        <YAxis width={40} />
         <Tooltip />
         <Legend />
         <Line
@@ -111,7 +144,7 @@ const DemoBarChart = ({data}: {data: any}) => {
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="date" />
-        <YAxis />
+        <YAxis width={40} />
         <Tooltip />
         <Legend />
         <Bar dataKey="messages" fill={colors.primary} />
@@ -200,12 +233,18 @@ class ReportingDashboard extends React.Component<Props, State> {
           />
         </Box>
 
-        <Flex mx={-3} sx={{maxWidth: 960}}>
+        <Flex mx={-3} sx={{maxWidth: 1080}}>
           <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
-            <DemoLineChart data={FAKE_DATA} />
+            <Box mb={2}>
+              <Text strong>Messages per day</Text>
+            </Box>
+            <DemoLineChart data={FAKE_DAILY_DATA} />
           </Box>
           <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
-            <DemoBarChart data={FAKE_DATA} />
+            <Box mb={2}>
+              <Text strong>Messages per week</Text>
+            </Box>
+            <DemoBarChart data={FAKE_WEEKLY_DATA} />
           </Box>
         </Flex>
       </Box>
