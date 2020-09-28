@@ -6,11 +6,11 @@ defmodule ChatApi.Reporting do
   import Ecto.Query, warn: false
   alias ChatApi.{Repo, Conversations.Conversation, Messages.Message}
 
-  def messages_by_day() do
+  def messages_by_date() do
     Message |> count_grouped_by_date() |> Repo.all()
   end
 
-  def conversations_by_day() do
+  def conversations_by_date() do
     Conversation |> count_grouped_by_date() |> Repo.all()
   end
 

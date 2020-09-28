@@ -9,8 +9,8 @@ defmodule ChatApiWeb.ReportingController do
   def index(conn, _params) do
     json(conn, %{
       data: %{
-        messages_by_day: Reporting.messages_by_day(),
-        conversations_by_day: Reporting.conversations_by_day()
+        messages_by_date: Reporting.messages_by_date(),
+        conversations_by_date: Reporting.conversations_by_date()
       }
     })
   end
