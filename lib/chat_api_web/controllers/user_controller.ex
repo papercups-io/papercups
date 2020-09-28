@@ -40,12 +40,12 @@ defmodule ChatApiWeb.UserController do
             json(conn, %{data: %{ok: true}})
 
           {:warning, reason} ->
-            Logger.warn(reason)
+            Logger.warn("Warning when sending password reset email: #{inspect(reason)}")
 
             json(conn, %{data: %{ok: true}})
 
           error ->
-            Logger.error(error)
+            Logger.error("Error sending password reset email: #{inspect(error)}")
 
             json(conn, %{data: %{ok: false}})
         end
