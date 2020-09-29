@@ -118,6 +118,12 @@ defmodule ChatApi.Conversations do
     |> Repo.insert()
   end
 
+  def create_test_conversation(attrs \\ %{}) do
+    %Conversation{}
+    |> Conversation.test_changeset(attrs)
+    |> Repo.insert()
+  end
+
   @doc """
   Updates a conversation.
 

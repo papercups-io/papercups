@@ -28,4 +28,10 @@ defmodule ChatApi.Conversations.Conversation do
     |> cast(attrs, [:status, :priority, :read, :assignee_id, :account_id, :customer_id])
     |> validate_required([:status, :account_id])
   end
+
+  def test_changeset(conversation, attrs) do
+    conversation
+    |> cast(attrs, [:inserted_at])
+    |> changeset(attrs)
+  end
 end

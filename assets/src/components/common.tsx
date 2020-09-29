@@ -2,7 +2,6 @@ import Alert from 'antd/lib/alert';
 import Badge from 'antd/lib/badge';
 import Button from 'antd/lib/button';
 import Checkbox from 'antd/lib/checkbox';
-import DatePicker from 'antd/lib/date-picker';
 import Divider from 'antd/lib/divider';
 import Drawer from 'antd/lib/drawer';
 import Dropdown from 'antd/lib/dropdown';
@@ -34,8 +33,11 @@ import {
   grey,
 } from '@ant-design/colors';
 
+import DatePicker from './DatePicker';
+
 const {Title, Text, Paragraph} = Typography;
 const {Header, Content, Footer, Sider} = Layout;
+const {RangePicker} = DatePicker;
 
 export const colors = {
   white: '#fff',
@@ -103,6 +105,7 @@ export {
   Popconfirm,
   Popover,
   Radio,
+  RangePicker,
   Result,
   Select,
   Spin,

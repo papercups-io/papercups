@@ -635,13 +635,22 @@ export const enableAccountUser = async (
     .then((res) => res.body.data);
 };
 
-export const fetchReportingData = async (token = getAccessToken()) => {
+type ReportingFilters = {
+  from_date?: string | null;
+  to_date?: string | null;
+};
+
+export const fetchReportingData = async (
+  filters = {} as ReportingFilters,
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/reporting`)
+    .query(filters)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
