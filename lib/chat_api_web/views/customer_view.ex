@@ -23,7 +23,8 @@ defmodule ChatApiWeb.CustomerView do
       pathname: customer.pathname,
       current_url: customer.current_url,
       browser: customer.browser,
-      os: customer.os
+      os: customer.os,
+      metadata: customer.metadata
     }
   end
 
@@ -43,7 +44,8 @@ defmodule ChatApiWeb.CustomerView do
       current_url: customer.current_url,
       browser: customer.browser,
       os: customer.os,
-      ip: customer.ip
+      ip: customer.ip,
+      metadata: customer.metadata
     }
   end
 end
