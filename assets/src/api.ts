@@ -634,3 +634,14 @@ export const enableAccountUser = async (
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const fetchReportingData = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/reporting`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
