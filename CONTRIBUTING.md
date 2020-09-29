@@ -22,11 +22,11 @@ If you want to speak to us before doing lots of work, just email founders@paperc
 
 ## Issues
 
-Spotted a bug? Has deployment gone wrong? Do you have user feedback? Raise an issue for the fastest response.
+Spotted a bug? Has deployment gone wrong? Do you have user feedback? [Raise an issue](https://github.com/papercups-io/papercups/issues/new?assignees=&labels=bug&template=bug_report.md&title=) for the fastest response.
 
 ## Feature requests
 
-Raise an issue for these and tag it as an Enhancement. We love every idea. Please give us as much context on the why as possible.
+[Raise an issue](https://github.com/papercups-io/papercups/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=) for these and make sure it's tagged as an Enhancement. We love every idea. Please give us as much context on the "why" as possible.
 
 ## Questions?
 
