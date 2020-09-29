@@ -21,6 +21,8 @@ type ReportingDatum = {
   date: string;
   messages: number | null;
   conversations: number | null;
+  sent?: number | null;
+  received?: number | null;
 };
 
 type DateCount = {
@@ -30,80 +32,60 @@ type DateCount = {
 
 // Fake data for testing
 // TODO: replace with real data from API below!
-const FAKE_DAILY_DATA: Array<ReportingDatum> = [
+const FAKE_DATA: Array<ReportingDatum> = [
   {
     date: 'Sept 1',
     messages: 40,
+    sent: 18,
+    received: 22,
     conversations: 24,
   },
   {
     date: 'Sept 2',
     messages: 30,
+    sent: 11,
+    received: 19,
     conversations: 13,
   },
   {
     date: 'Sept 3',
     messages: 20,
+    sent: 5,
+    received: 15,
     conversations: 9,
   },
   {
     date: 'Sept 4',
     messages: 27,
+    sent: 10,
+    received: 17,
     conversations: 19,
   },
   {
     date: 'Sept 5',
     messages: 90,
+    sent: 26,
+    received: 64,
     conversations: 30,
   },
   {
     date: 'Sept 6',
     messages: 23,
+    sent: 5,
+    received: 18,
     conversations: 8,
   },
   {
     date: 'Sept 7',
     messages: 34,
+    sent: 9,
+    received: 25,
     conversations: 12,
   },
 ];
 
-const FAKE_WEEKLY_DATA: Array<ReportingDatum> = [
-  {
-    date: 'Aug 1',
-    messages: 40,
-    conversations: 24,
-  },
-  {
-    date: 'Aug 7',
-    messages: 30,
-    conversations: 13,
-  },
-  {
-    date: 'Aug 14',
-    messages: 20,
-    conversations: 9,
-  },
-  {
-    date: 'Aug 21',
-    messages: 27,
-    conversations: 19,
-  },
-  {
-    date: 'Aug 28',
-    messages: 90,
-    conversations: 30,
-  },
-  {
-    date: 'Sept 4',
-    messages: 23,
-    conversations: 8,
-  },
-];
-
-// TODO: display messages and conversations per day in this chart and
-// rename component to something more appropriate (e.g. DailyMessagesChart)
-const DemoLineChart = ({data}: {data: any}) => {
+// TODO: display messages and conversations per day in this chart
+const MessagesPerDayChart = ({data}: {data: any}) => {
   return (
     <ResponsiveContainer>
       <LineChart
@@ -121,7 +103,7 @@ const DemoLineChart = ({data}: {data: any}) => {
         <Line
           type="monotone"
           dataKey="conversations"
-          stroke={colors.green}
+          stroke={colors.magenta}
           activeDot={{r: 8}}
         />
         <Line type="monotone" dataKey="messages" stroke={colors.primary} />
@@ -130,9 +112,9 @@ const DemoLineChart = ({data}: {data: any}) => {
   );
 };
 
-// TODO: display messages and conversations per week in this chart and
-// rename component to something more appropriate (e.g. WeeklyMessagesChart)
-const DemoBarChart = ({data}: {data: any}) => {
+// TODO: display messages and conversations in this chart with messages broken
+// down by "sent" vs "received" (where "sent" is outbound, "received" is inbound)
+const MessagesSentVsReceivedChart = ({data}: {data: any}) => {
   return (
     <ResponsiveContainer>
       <BarChart
@@ -147,8 +129,9 @@ const DemoBarChart = ({data}: {data: any}) => {
         <YAxis width={40} />
         <Tooltip />
         <Legend />
-        <Bar dataKey="messages" fill={colors.primary} />
-        <Bar dataKey="conversations" fill={colors.green} />
+        <Bar dataKey="sent" stackId="messages" fill={colors.green} />
+        <Bar dataKey="received" stackId="messages" fill={colors.primary} />
+        <Bar dataKey="conversations" fill={colors.magenta} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -276,13 +259,13 @@ class ReportingDashboard extends React.Component<Props, State> {
             <Box mb={2}>
               <Text strong>Messages per day</Text>
             </Box>
-            <DemoLineChart data={FAKE_DAILY_DATA} />
+            <MessagesPerDayChart data={FAKE_DATA} />
           </Box>
           <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
             <Box mb={2}>
-              <Text strong>Messages per week</Text>
+              <Text strong>Messages sent vs received</Text>
             </Box>
-            <DemoBarChart data={FAKE_WEEKLY_DATA} />
+            <MessagesSentVsReceivedChart data={FAKE_DATA} />
           </Box>
         </Flex>
       </Box>

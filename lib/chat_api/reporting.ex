@@ -6,6 +6,7 @@ defmodule ChatApi.Reporting do
   import Ecto.Query, warn: false
   alias ChatApi.{Repo, Conversations.Conversation, Messages.Message}
 
+  # TODO: filter by records created between a given `from_date` and `to_date`
   def messages_by_date(account_id) do
     Message
     |> where(account_id: ^account_id)
@@ -13,6 +14,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  # TODO: filter by records created between a given `from_date` and `to_date`
   def conversations_by_date(account_id) do
     Conversation
     |> where(account_id: ^account_id)

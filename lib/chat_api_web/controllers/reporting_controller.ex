@@ -16,6 +16,7 @@ defmodule ChatApiWeb.ReportingController do
 
     json(conn, %{
       data: %{
+        # TODO: incorporate the `from_date` and `to_date` into the methods below
         messages_by_date: Reporting.messages_by_date(account_id),
         conversations_by_date: Reporting.conversations_by_date(account_id)
       }
