@@ -78,6 +78,12 @@ defmodule ChatApi.Messages do
     |> Repo.insert()
   end
 
+  def create_test_message(attrs \\ %{}) do
+    %Message{}
+    |> Message.test_changeset(attrs)
+    |> Repo.insert()
+  end
+
   def create_and_fetch!(attrs \\ %{}) do
     case create_message(attrs) do
       {:ok, message} -> get_message!(message.id)

@@ -75,7 +75,7 @@ defmodule ChatApi.TestFixtureHelpers do
         customer_id: customer.id
       }
       |> Enum.into(attrs)
-      |> Conversations.create_conversation()
+      |> Conversations.create_test_conversation()
 
     conversation |> Repo.preload([:customer, messages: [user: :profile]])
   end
@@ -92,7 +92,7 @@ defmodule ChatApi.TestFixtureHelpers do
         conversation_id: conversation.id,
         account_id: account.id
       })
-      |> Messages.create_message()
+      |> Messages.create_test_message()
 
     Messages.get_message!(message.id)
     |> Repo.preload([:conversation, :customer, [user: :profile]])

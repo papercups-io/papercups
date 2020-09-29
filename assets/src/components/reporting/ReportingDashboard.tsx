@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import * as API from '../../api';
-import {colors, Alert, Paragraph, Text, Title} from '../common';
+import {colors, Alert, Paragraph, RangePicker, Text, Title} from '../common';
 import logger from '../../logger';
 
 type ReportingDatum = {
@@ -156,18 +156,33 @@ const DemoBarChart = ({data}: {data: any}) => {
 
 type Props = {};
 type State = {
+  fromDate: dayjs.Dayjs;
+  toDate: dayjs.Dayjs;
   messagesByDate: Array<DateCount>;
   conversationsByDate: Array<DateCount>;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
   state: State = {
+    fromDate: dayjs().subtract(30, 'day'),
+    toDate: dayjs(),
     messagesByDate: [],
     conversationsByDate: [],
   };
 
-  async componentDidMount() {
-    const data = await API.fetchReportingData();
+  componentDidMount() {
+    this.refreshReportingData().catch((err) =>
+      logger.error('Failed to fetch reporting data:', err)
+    );
+  }
+
+  refreshReportingData = async () => {
+    const {fromDate, toDate} = this.state;
+    const data = await API.fetchReportingData({
+      from_date: fromDate.toISOString(),
+      to_date: toDate.toISOString(),
+    });
+
     logger.debug('Raw reporting data:', data);
 
     this.setState(
@@ -180,7 +195,7 @@ class ReportingDashboard extends React.Component<Props, State> {
         logger.debug('Formatted daily stats:', this.formatDailyStats());
       }
     );
-  }
+  };
 
   groupCountByDate = (data: Array<DateCount>) => {
     return data
@@ -209,16 +224,39 @@ class ReportingDashboard extends React.Component<Props, State> {
     });
   };
 
+  handleDateRangeUpdated = (range: any) => {
+    const [fromDate, toDate] = range;
+
+    this.setState({
+      fromDate: dayjs(fromDate),
+      toDate: dayjs(toDate),
+    });
+  };
+
   render() {
+    const {fromDate, toDate} = this.state;
+
     return (
       <Box p={4}>
-        <Box mb={4}>
-          <Title level={3}>Reporting</Title>
+        <Flex
+          mb={4}
+          sx={{justifyContent: 'space-between', alignItems: 'flex-end'}}
+        >
+          <Box>
+            <Title level={3}>Reporting</Title>
 
-          <Paragraph>
-            Analytics and statistics around user engagement.
-          </Paragraph>
-        </Box>
+            <Paragraph>
+              Analytics and statistics around user engagement.
+            </Paragraph>
+          </Box>
+
+          <Box mb={3}>
+            <RangePicker
+              value={[fromDate, toDate]}
+              onChange={this.handleDateRangeUpdated}
+            />
+          </Box>
+        </Flex>
 
         <Box mb={4}>
           <Alert
