@@ -42,6 +42,38 @@ defmodule ChatApi.ReportingTest do
              ] = Reporting.messages_by_date(account.id)
     end
 
+    test "count_messages_per_user/1 should return correct number of messages sent per user on team",
+         %{
+           account: account,
+           customer: customer
+         } do
+      account_2 = account_fixture()
+      account_3 = account_fixture()
+      user_2 = user_fixture(account_2)
+      user_3 = user_fixture(account_3)
+      conversation = conversation_fixture(account, customer)
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-01 12:00:00],
+        user_id: user_2.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-02 12:00:00],
+        user_id: user_2.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-03 12:00:00],
+        user_id: user_3.id
+      })
+
+      assert [
+               %{count: 2},
+               %{count: 1}
+             ] = Reporting.messages_count_by_date(account.id)
+    end
+
     test "messages_by_date/1 only fetches messages by the given account id", %{
       account: account,
       customer: customer
