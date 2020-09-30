@@ -29,6 +29,7 @@ defmodule ChatApi.Customers.Customer do
     field(:screen_height, :integer)
     field(:screen_width, :integer)
     field(:lib, :string)
+    field(:time_zone, :string)
 
     # Freeform
     field(:metadata, :map)
@@ -66,7 +67,8 @@ defmodule ChatApi.Customers.Customer do
       :pathname,
       :screen_height,
       :screen_width,
-      :lib
+      :lib,
+      :time_zone
     ])
     |> validate_required([:first_seen, :last_seen, :account_id])
   end
@@ -90,7 +92,8 @@ defmodule ChatApi.Customers.Customer do
       :pathname,
       :screen_height,
       :screen_width,
-      :lib
+      :lib,
+      :time_zone
     ])
   end
 end
