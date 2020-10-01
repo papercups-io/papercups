@@ -8,6 +8,7 @@ defmodule ChatApi.Conversations do
 
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
+  alias ChatApi.Tags.ConversationTag
 
   @doc """
   Returns the list of conversations.
@@ -216,5 +217,32 @@ defmodule ChatApi.Conversations do
   """
   def change_conversation(%Conversation{} = conversation, attrs \\ %{}) do
     Conversation.changeset(conversation, attrs)
+  end
+
+  def list_tags(id) do
+    # TODO: optimize this query
+    Conversation
+    |> Repo.get(id)
+    |> case do
+      nil -> []
+      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
+    end
+  end
+
+  def add_tag(%Conversation{id: id, account_id: account_id} = _conversation, tag_id) do
+    %ConversationTag{}
+    |> ConversationTag.changeset(%{
+      conversation_id: id,
+      tag_id: tag_id,
+      account_id: account_id
+    })
+    |> Repo.insert()
+  end
+
+  def remove_tag(%Conversation{id: id, account_id: account_id} = _conversation, tag_id) do
+    ConversationTag
+    |> where(account_id: ^account_id, conversation_id: ^id, tag_id: ^tag_id)
+    |> Repo.one()
+    |> Repo.delete()
   end
 end

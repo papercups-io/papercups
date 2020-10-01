@@ -7,6 +7,7 @@ defmodule ChatApi.Customers do
   alias ChatApi.Repo
 
   alias ChatApi.Customers.Customer
+  alias ChatApi.Tags.CustomerTag
 
   @doc """
   Returns the list of customers.
@@ -153,5 +154,38 @@ defmodule ChatApi.Customers do
   """
   def change_customer(%Customer{} = customer, attrs \\ %{}) do
     Customer.changeset(customer, attrs)
+  end
+
+  def list_tags(nil), do: []
+
+  def list_tags(%Customer{} = customer) do
+    customer |> Repo.preload(:tags) |> Map.get(:tags)
+  end
+
+  def list_tags(id) do
+    # TODO: optimize this query
+    Customer
+    |> Repo.get(id)
+    |> case do
+      nil -> []
+      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
+    end
+  end
+
+  def add_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
+    %CustomerTag{}
+    |> CustomerTag.changeset(%{
+      customer_id: id,
+      tag_id: tag_id,
+      account_id: account_id
+    })
+    |> Repo.insert()
+  end
+
+  def remove_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
+    CustomerTag
+    |> where(account_id: ^account_id, customer_id: ^id, tag_id: ^tag_id)
+    |> Repo.one()
+    |> Repo.delete()
   end
 end

@@ -10,6 +10,7 @@ defmodule ChatApi.TestFixtureHelpers do
     EventSubscriptions,
     Messages,
     SlackAuthorizations,
+    Tags,
     WidgetSettings,
     UserInvitations
   }
@@ -96,6 +97,21 @@ defmodule ChatApi.TestFixtureHelpers do
 
     Messages.get_message!(message.id)
     |> Repo.preload([:conversation, :customer, [user: :profile]])
+  end
+
+  def tag_fixture(
+        %Accounts.Account{} = account,
+        attrs \\ %{}
+      ) do
+    {:ok, tag} =
+      attrs
+      |> Enum.into(%{
+        name: "some tag name",
+        account_id: account.id
+      })
+      |> Tags.create_tag()
+
+    tag
   end
 
   def slack_conversation_thread_fixture(
