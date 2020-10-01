@@ -139,8 +139,6 @@ class AccountOverview extends React.Component<Props, State> {
   };
 
   handleUpdateWorkingHours = (workingHours: Array<WorkingHours>) => {
-    console.log('Working hours!', workingHours);
-
     return this.handleUpdate({working_hours: workingHours});
   };
 
