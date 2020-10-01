@@ -100,10 +100,12 @@ class WorkingHoursSelector extends React.Component<Props, State> {
   }
 
   handleResetDefaults = () => {
-    const [first = {} as WorkingHours] = this.props.workingHours;
+    const {timezone, workingHours = []} = this.props;
+    const [first = {} as WorkingHours] = workingHours;
 
     this.setState({
       isEditing: false,
+      selectedTimezone: timezone || getDefaultTimezone(),
       selectedDayType: first?.day || DEFAULT_DAY_TYPE,
       selectedStartTime: first?.start_minute || 0,
       selectedEndTime: first?.end_minute || MINS_IN_A_DAY - 1,
