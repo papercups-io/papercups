@@ -35,3 +35,9 @@ export const getCustomerId = () => get('__CUSTOMER_ID__');
 export const setCustomerId = (id: string) => set('__CUSTOMER_ID__', id);
 
 export const removeCustomerId = () => remove('__CUSTOMER_ID__');
+
+export const getBotDemoFaqs = () => get(':__BOT_DEMO_FAQS__');
+
+export const setBotDemoFaqs = (faqs: any) => set(':__BOT_DEMO_FAQS__', faqs);
+
+export const removeBotDemoFaqs = () => remove(':__BOT_DEMO_FAQS__');
