@@ -1,213 +1,24 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import dayjs from 'dayjs';
 import {
-  colors,
   notification,
   Button,
   Divider,
   Input,
   Paragraph,
-  Table,
-  Tag,
   Text,
   Title,
 } from '../common';
 import Spinner from '../Spinner';
-import {SmileTwoTone} from '../icons';
+import AccountUsersTable from './AccountUsersTable';
+import DisabledUsersTable from './DisabledUsersTable';
+import WorkingHoursSelector from './WorkingHoursSelector';
+import {WorkingHours} from './support';
 import * as API from '../../api';
-import {User, Alignment} from '../../types';
+import {User} from '../../types';
 import {BASE_URL} from '../../config';
 import {sleep} from '../../utils';
 import logger from '../../logger';
-
-const AccountUsersTable = ({
-  loading,
-  users,
-  currentUser,
-  isAdmin,
-  onDisableUser,
-}: {
-  loading?: boolean;
-  users: Array<User>;
-  currentUser: User;
-  isAdmin?: boolean;
-  onDisableUser: (user: User) => void;
-}) => {
-  // TODO: how should we sort the users?
-  const data = users.map((u) => {
-    return {...u, key: u.id};
-  });
-
-  const columns = [
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      render: (value: string, record: User) => {
-        if (currentUser && record.id === currentUser.id) {
-          return (
-            <Flex sx={{alignItems: 'center'}}>
-              <Text strong>{value}</Text>
-              <SmileTwoTone
-                style={{fontSize: 16, marginLeft: 4}}
-                twoToneColor={colors.primary}
-              />
-            </Flex>
-          );
-        }
-
-        return value;
-      },
-    },
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: (value: string, record: User) => {
-        const {full_name: fullName, display_name: displayName} = record;
-
-        return fullName || displayName || '--';
-      },
-    },
-    {
-      title: 'Member since',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (value: string) => {
-        const formatted = dayjs(value).format('MMMM DD, YYYY');
-
-        return formatted;
-      },
-    },
-    {
-      title: 'Role',
-      dataIndex: 'role',
-      key: 'role',
-      render: (value: string) => {
-        switch (value) {
-          case 'admin':
-            return <Tag color={colors.green}>Admin</Tag>;
-          case 'user':
-            return <Tag>Member</Tag>;
-          default:
-            return '--';
-        }
-      },
-    },
-    {
-      title: '',
-      dataIndex: 'action',
-      key: 'action',
-      align: Alignment.Right,
-      render: (value: string, record: User) => {
-        if (!isAdmin) {
-          return null;
-        }
-
-        // Current user cannot disable themselves
-        if (currentUser && record.id === currentUser.id) {
-          return null;
-        }
-
-        return (
-          <Button danger onClick={() => onDisableUser(record)}>
-            Disable
-          </Button>
-        );
-      },
-    },
-  ];
-
-  return (
-    <Table
-      loading={loading}
-      dataSource={data}
-      columns={columns}
-      pagination={false}
-    />
-  );
-};
-
-const DisabledUsersTable = ({
-  loading,
-  users,
-  isAdmin,
-  onEnableUser,
-}: {
-  loading?: boolean;
-  users: Array<User>;
-  isAdmin?: boolean;
-  onEnableUser: (user: User) => void;
-}) => {
-  // TODO: how should we sort the users?
-  const data = users.map((u) => {
-    return {...u, key: u.id};
-  });
-
-  const columns = [
-    {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-      render: (value: string, record: User) => {
-        return value;
-      },
-    },
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: (value: string, record: User) => {
-        const {full_name: fullName, display_name: displayName} = record;
-
-        return fullName || displayName || '--';
-      },
-    },
-    {
-      title: 'Member since',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (value: string) => {
-        const formatted = dayjs(value).format('MMMM DD, YYYY');
-
-        return formatted;
-      },
-    },
-    {
-      title: 'Disabled on',
-      dataIndex: 'disabled_at',
-      key: 'disabled_at',
-      render: (value: string) => {
-        const formatted = dayjs(value).format('MMMM DD, YYYY');
-
-        return formatted;
-      },
-    },
-    {
-      title: '',
-      dataIndex: 'action',
-      key: 'action',
-      align: Alignment.Right,
-      render: (value: string, record: User) => {
-        if (!isAdmin) {
-          return null;
-        }
-
-        return <Button onClick={() => onEnableUser(record)}>Enable</Button>;
-      },
-    },
-  ];
-
-  return (
-    <Table
-      loading={loading}
-      dataSource={data}
-      columns={columns}
-      pagination={false}
-    />
-  );
-};
 
 type Props = {};
 type State = {
@@ -303,14 +114,15 @@ class AccountOverview extends React.Component<Props, State> {
     );
   };
 
-  handleUpdate = () => {
-    const {companyName} = this.state;
-
-    return API.updateAccountInfo({company_name: companyName})
+  handleUpdate = (updates: {
+    company_name?: string;
+    working_hours?: Array<WorkingHours>;
+  }) => {
+    return API.updateAccountInfo(updates)
       .then((account) => {
         logger.debug('Successfully updated company name!', account);
 
-        this.setState({isEditing: false});
+        this.setState({account, isEditing: false});
       })
       .catch((err) => {
         logger.error('Failed to update company name!', err);
@@ -318,6 +130,18 @@ class AccountOverview extends React.Component<Props, State> {
         return this.fetchLatestAccountInfo();
       })
       .then(() => this.setState({isEditing: false}));
+  };
+
+  handleUpdateCompanyName = () => {
+    const {companyName} = this.state;
+
+    return this.handleUpdate({company_name: companyName});
+  };
+
+  handleUpdateWorkingHours = (workingHours: Array<WorkingHours>) => {
+    console.log('Working hours!', workingHours);
+
+    return this.handleUpdate({working_hours: workingHours});
   };
 
   handleDisableUser = async (user: User) => {
@@ -400,7 +224,7 @@ class AccountOverview extends React.Component<Props, State> {
       return null;
     }
 
-    const {id: token, users = []} = account;
+    const {id: token, users = [], working_hours: workingHours = []} = account;
     const isAdmin = this.hasAdminRole();
 
     return (
@@ -434,7 +258,7 @@ class AccountOverview extends React.Component<Props, State> {
                 </Button>
               </Box>
               <Box>
-                <Button type="primary" onClick={this.handleUpdate}>
+                <Button type="primary" onClick={this.handleUpdateCompanyName}>
                   Save
                 </Button>
               </Box>
@@ -446,6 +270,23 @@ class AccountOverview extends React.Component<Props, State> {
           )}
         </Box>
 
+        <Divider />
+
+        <Box mb={4}>
+          <Title level={4}>Working hours</Title>
+
+          <Paragraph>
+            <Text>
+              Set your working hours so your users know when you're available to
+              chat.
+            </Text>
+          </Paragraph>
+
+          <WorkingHoursSelector
+            workingHours={workingHours}
+            onSave={this.handleUpdateWorkingHours}
+          />
+        </Box>
         <Divider />
 
         {isAdmin && (
