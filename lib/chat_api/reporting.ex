@@ -4,13 +4,22 @@ defmodule ChatApi.Reporting do
   """
 
   import Ecto.Query, warn: false
-  alias ChatApi.{Repo, Conversations.Conversation, Messages.Message}
+  alias ChatApi.{Repo, Conversations.Conversation, Messages.Message, Users.User}
 
   # TODO: filter by records created between a given `from_date` and `to_date`
   def messages_by_date(account_id) do
     Message
     |> where(account_id: ^account_id)
     |> count_grouped_by_date()
+    |> Repo.all()
+  end
+
+  def count_messages_per_user(account_id) do
+    Message
+    |> where(account_id: ^account_id)
+    |> join(:inner, [m], u in User, on: m.user_id == u.id)
+    |> select([m, u], %{user: %{id: u.id, email: u.email}, count: count(m.user_id)})
+    |> group_by([m, u], [m.user_id, u.id])
     |> Repo.all()
   end
 
