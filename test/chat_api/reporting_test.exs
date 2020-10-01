@@ -47,10 +47,8 @@ defmodule ChatApi.ReportingTest do
            account: account,
            customer: customer
          } do
-      account_2 = account_fixture()
-      account_3 = account_fixture()
-      user_2 = user_fixture(account_2)
-      user_3 = user_fixture(account_3)
+      user_2 = user_fixture(account)
+      user_3 = user_fixture(account)
       conversation = conversation_fixture(account, customer)
 
       message_fixture(account, conversation, %{
@@ -71,7 +69,7 @@ defmodule ChatApi.ReportingTest do
       assert [
                %{count: 2},
                %{count: 1}
-             ] = Reporting.messages_count_by_date(account.id)
+             ] = Reporting.count_messages_per_user(account.id)
     end
 
     test "messages_by_date/1 only fetches messages by the given account id", %{
