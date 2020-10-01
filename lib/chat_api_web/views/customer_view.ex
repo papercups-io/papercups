@@ -45,7 +45,8 @@ defmodule ChatApiWeb.CustomerView do
       browser: customer.browser,
       os: customer.os,
       ip: customer.ip,
-      metadata: customer.metadata
+      metadata: customer.metadata,
+      time_zone: customer.time_zone
     }
   end
 end
