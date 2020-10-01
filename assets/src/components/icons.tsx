@@ -4,6 +4,7 @@ import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import CreditCardOutlined from '@ant-design/icons/CreditCardOutlined';
 import CreditCardTwoTone from '@ant-design/icons/CreditCardTwoTone';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
+import DeleteTwoTone from '@ant-design/icons/DeleteTwoTone';
 import DownOutlined from '@ant-design/icons/DownOutlined';
 import InfoCircleOutlined from '@ant-design/icons/InfoCircleOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
@@ -29,6 +30,7 @@ export {
   CreditCardOutlined,
   CreditCardTwoTone,
   DeleteOutlined,
+  DeleteTwoTone,
   DownOutlined,
   InfoCircleOutlined,
   LoadingOutlined,

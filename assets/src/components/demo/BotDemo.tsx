@@ -12,11 +12,13 @@ import {
   Text,
   TextArea,
   Title,
+  Tooltip,
 } from '../common';
-import {RightCircleOutlined} from '../icons';
+import {DeleteOutlined, RightCircleOutlined} from '../icons';
 import {BASE_URL} from '../../config';
 import * as API from '../../api';
 import logger from '../../logger';
+import {getBotDemoFaqs, setBotDemoFaqs} from '../../storage';
 // Import widget from separate package
 import ChatWidget from '@papercups-io/chat-widget';
 
@@ -35,6 +37,10 @@ const DEFAULT_FAQS: Array<FAQ> = [
     q: 'How does Papercups work?',
     a:
       'You can embed our chat widget on your website or mobile app so you can talk with your users :) ',
+  },
+  {
+    q: 'Do you support live chat?',
+    a: 'Yes! Try chatting with us at http://papercups.io :)',
   },
   {
     q: 'What is the pricing?',
@@ -60,6 +66,7 @@ type State = {
   faqs: Array<FAQ>;
   newQuestion: string;
   newAnswer: string;
+  hovered: number | null;
 };
 
 class Demo extends React.Component<Props, State> {
@@ -68,9 +75,10 @@ class Demo extends React.Component<Props, State> {
 
     this.state = {
       currentUser: null,
-      faqs: DEFAULT_FAQS,
+      faqs: getBotDemoFaqs() || DEFAULT_FAQS,
       newQuestion: '',
       newAnswer: '',
+      hovered: null,
     };
   }
 
@@ -123,11 +131,14 @@ class Demo extends React.Component<Props, State> {
       });
     }
 
-    this.setState({
-      faqs: [{q: q, a: a}, ...this.state.faqs],
-      newQuestion: '',
-      newAnswer: '',
-    });
+    this.setState(
+      {
+        faqs: [{q: q, a: a}, ...this.state.faqs],
+        newQuestion: '',
+        newAnswer: '',
+      },
+      () => setBotDemoFaqs(this.state.faqs)
+    );
 
     notification.success({
       message: 'Successfully added training data!',
@@ -135,6 +146,13 @@ class Demo extends React.Component<Props, State> {
       placement: 'topLeft',
       duration: 8,
     });
+  };
+
+  handleRemoveQuestion = (index: number) => {
+    this.setState(
+      {faqs: this.state.faqs.filter((item, idx) => idx !== index)},
+      () => setBotDemoFaqs(this.state.faqs)
+    );
   };
 
   handleNlpDemo = (message: any) => {
@@ -151,7 +169,7 @@ class Demo extends React.Component<Props, State> {
   };
 
   render() {
-    const {newQuestion, newAnswer, faqs = []} = this.state;
+    const {newQuestion, newAnswer, hovered, faqs = []} = this.state;
     const customer = this.getCustomerMetadata();
 
     return (
@@ -215,9 +233,32 @@ class Demo extends React.Component<Props, State> {
 
         <Box mb={4}>
           {faqs.map(({q, a}, key) => {
+            const isHovered = key === hovered;
+
             return (
-              <Box key={key} mb={4}>
-                <Title level={4}>{q}</Title>
+              <Box
+                key={key}
+                mb={4}
+                onMouseEnter={() => this.setState({hovered: key})}
+                onMouseLeave={() => this.setState({hovered: null})}
+              >
+                <Flex
+                  sx={{alignItems: 'baseline', justifyContent: 'space-between'}}
+                >
+                  <Title level={4}>{q}</Title>
+
+                  {isHovered && (
+                    <Tooltip title="Remove question">
+                      <Button
+                        danger
+                        shape="circle"
+                        type="link"
+                        icon={<DeleteOutlined />}
+                        onClick={() => this.handleRemoveQuestion(key)}
+                      />
+                    </Tooltip>
+                  )}
+                </Flex>
                 <Text>{a}</Text>
               </Box>
             );
