@@ -635,6 +635,91 @@ export const enableAccountUser = async (
     .then((res) => res.body.data);
 };
 
+export const fetchAllTags = (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/tags`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createTag = (name: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/tags`)
+    .send({tag: {name}})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const addConversationTag = (
+  conversationId: string,
+  tagId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/conversations/${conversationId}/tags`)
+    .send({tag_id: tagId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const removeConversationTag = (
+  conversationId: string,
+  tagId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/conversations/${conversationId}/tags/${tagId}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const addCustomerTag = (
+  customerId: string,
+  tagId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/customers/${customerId}/tags`)
+    .send({tag_id: tagId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const removeCustomerTag = (
+  customerId: string,
+  tagId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/customers/${customerId}/tags/${tagId}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 type ReportingFilters = {
   from_date?: string | null;
   to_date?: string | null;

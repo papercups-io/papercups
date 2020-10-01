@@ -29,6 +29,7 @@ defmodule ChatApi.Repo.Migrations.CreateTags do
       timestamps()
     end
 
+    create(unique_index(:conversation_tags, [:account_id, :conversation_id, :tag_id]))
     create(index(:conversation_tags, [:account_id]))
     create(index(:conversation_tags, [:creator_id]))
     create(index(:conversation_tags, [:conversation_id]))
@@ -45,6 +46,7 @@ defmodule ChatApi.Repo.Migrations.CreateTags do
       timestamps()
     end
 
+    create(unique_index(:customer_tags, [:account_id, :customer_id, :tag_id]))
     create(index(:customer_tags, [:account_id]))
     create(index(:customer_tags, [:creator_id]))
     create(index(:customer_tags, [:customer_id]))

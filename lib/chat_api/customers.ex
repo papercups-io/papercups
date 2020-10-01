@@ -172,20 +172,31 @@ defmodule ChatApi.Customers do
     end
   end
 
-  def add_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
-    %CustomerTag{}
-    |> CustomerTag.changeset(%{
-      customer_id: id,
-      tag_id: tag_id,
-      account_id: account_id
-    })
-    |> Repo.insert()
-  end
-
-  def remove_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
+  def get_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
     CustomerTag
     |> where(account_id: ^account_id, customer_id: ^id, tag_id: ^tag_id)
     |> Repo.one()
+  end
+
+  def add_tag(%Customer{id: id, account_id: account_id} = customer, tag_id) do
+    case get_tag(customer, tag_id) do
+      nil ->
+        %CustomerTag{}
+        |> CustomerTag.changeset(%{
+          customer_id: id,
+          tag_id: tag_id,
+          account_id: account_id
+        })
+        |> Repo.insert()
+
+      tag ->
+        {:ok, tag}
+    end
+  end
+
+  def remove_tag(%Customer{} = customer, tag_id) do
+    customer
+    |> get_tag(tag_id)
     |> Repo.delete()
   end
 end

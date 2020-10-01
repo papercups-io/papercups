@@ -229,20 +229,31 @@ defmodule ChatApi.Conversations do
     end
   end
 
-  def add_tag(%Conversation{id: id, account_id: account_id} = _conversation, tag_id) do
-    %ConversationTag{}
-    |> ConversationTag.changeset(%{
-      conversation_id: id,
-      tag_id: tag_id,
-      account_id: account_id
-    })
-    |> Repo.insert()
-  end
-
-  def remove_tag(%Conversation{id: id, account_id: account_id} = _conversation, tag_id) do
+  def get_tag(%Conversation{id: id, account_id: account_id} = _conversation, tag_id) do
     ConversationTag
     |> where(account_id: ^account_id, conversation_id: ^id, tag_id: ^tag_id)
     |> Repo.one()
+  end
+
+  def add_tag(%Conversation{id: id, account_id: account_id} = conversation, tag_id) do
+    case get_tag(conversation, tag_id) do
+      nil ->
+        %ConversationTag{}
+        |> ConversationTag.changeset(%{
+          conversation_id: id,
+          tag_id: tag_id,
+          account_id: account_id
+        })
+        |> Repo.insert()
+
+      tag ->
+        {:ok, tag}
+    end
+  end
+
+  def remove_tag(%Conversation{} = conversation, tag_id) do
+    conversation
+    |> get_tag(tag_id)
     |> Repo.delete()
   end
 end
