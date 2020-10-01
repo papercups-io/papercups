@@ -46,7 +46,7 @@ defmodule ChatApiWeb.CustomerView do
       os: customer.os,
       ip: customer.ip,
       metadata: customer.metadata,
-      time_zone: customer.time_zone
+      time_zone: customer.time_zone,
       tags: render_tags(customer.tags)
     }
   end
