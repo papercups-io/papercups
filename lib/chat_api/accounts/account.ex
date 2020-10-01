@@ -2,6 +2,7 @@ defmodule ChatApi.Accounts.Account do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias ChatApi.Accounts.WorkingHours
   alias ChatApi.Customers.Customer
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
@@ -12,6 +13,7 @@ defmodule ChatApi.Accounts.Account do
   @foreign_key_type :binary_id
   schema "accounts" do
     field(:company_name, :string)
+    field(:time_zone, :string)
     field(:subscription_plan, :string, default: "starter")
 
     field(:stripe_customer_id, :string)
@@ -25,6 +27,8 @@ defmodule ChatApi.Accounts.Account do
     has_many(:users, User)
     has_one(:widget_settings, WidgetSetting)
 
+    embeds_many(:working_hours, WorkingHours, on_replace: :delete)
+
     timestamps()
   end
 
@@ -33,12 +37,19 @@ defmodule ChatApi.Accounts.Account do
     account
     |> cast(attrs, [
       :company_name,
+      :time_zone,
       :subscription_plan,
       :stripe_customer_id,
       :stripe_subscription_id,
       :stripe_product_id,
       :stripe_default_payment_method_id
     ])
+    |> cast_embed(:working_hours, with: &working_hours_changeset/2)
     |> validate_required([:company_name])
+  end
+
+  defp working_hours_changeset(schema, params) do
+    schema
+    |> cast(params, [:day, :start_minute, :end_minute])
   end
 end

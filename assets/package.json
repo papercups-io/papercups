@@ -23,7 +23,7 @@
     "@types/superagent": "^4.1.8",
     "@types/theme-ui": "^0.3.4",
     "antd": "^4.3.5",
-    "dayjs": "^1.8.29",
+    "dayjs": "^1.9.1",
     "lodash": "^4.17.20",
     "logrocket": "^1.0.10",
     "phoenix": "^1.5.3",
