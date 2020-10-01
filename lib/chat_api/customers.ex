@@ -36,7 +36,9 @@ defmodule ChatApi.Customers do
       ** (Ecto.NoResultsError)
 
   """
-  def get_customer!(id), do: Repo.get!(Customer, id)
+  def get_customer!(id) do
+    Customer |> Repo.get!(id) |> Repo.preload(:tags)
+  end
 
   def find_by_external_id(external_id, account_id) when is_binary(external_id) do
     Customer

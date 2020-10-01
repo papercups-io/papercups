@@ -61,7 +61,7 @@ defmodule ChatApi.TestFixtureHelpers do
       |> Enum.into(attrs)
       |> Customers.create_customer()
 
-    customer
+    customer |> Repo.preload([:tags])
   end
 
   def conversation_fixture(
@@ -78,7 +78,7 @@ defmodule ChatApi.TestFixtureHelpers do
       |> Enum.into(attrs)
       |> Conversations.create_test_conversation()
 
-    conversation |> Repo.preload([:customer, messages: [user: :profile]])
+    conversation |> Repo.preload([:customer, :tags, messages: [user: :profile]])
   end
 
   def message_fixture(

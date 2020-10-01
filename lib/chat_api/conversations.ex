@@ -86,7 +86,9 @@ defmodule ChatApi.Conversations do
 
   """
   def get_conversation!(id) do
-    Conversation |> Repo.get!(id) |> Repo.preload([:customer, messages: [user: :profile]])
+    Conversation
+    |> Repo.get!(id)
+    |> Repo.preload([:customer, :tags, messages: [user: :profile]])
   end
 
   def get_conversation(id) do
