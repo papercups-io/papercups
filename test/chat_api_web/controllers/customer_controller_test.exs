@@ -12,7 +12,8 @@ defmodule ChatApiWeb.CustomerControllerTest do
     last_seen: ~D[2020-01-02],
     name: "Test User",
     email: "user@test.com",
-    phone: "+16501235555"
+    phone: "+16501235555",
+    time_zone: "America/New_York"
   }
 
   @invalid_attrs %{
@@ -145,11 +146,13 @@ defmodule ChatApiWeb.CustomerControllerTest do
 
       assert %{
                "email" => email,
-               "name" => name
+               "name" => name,
+               "time_zone" => time_zone
              } = json_response(resp, 200)["data"]
 
       assert email == @update_attrs.email
       assert name == @update_attrs.name
+      assert time_zone == @update_attrs.time_zone
     end
 
     test "ensures external_id is a string", %{

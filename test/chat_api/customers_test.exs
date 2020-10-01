@@ -15,7 +15,8 @@ defmodule ChatApi.CustomersTest do
       last_seen: ~D[2020-01-02],
       name: "Test User",
       email: "user@test.com",
-      phone: "+16501235555"
+      phone: "+16501235555",
+      time_zone: "America/New_York"
     }
     @invalid_attrs %{
       first_seen: 3
@@ -56,6 +57,7 @@ defmodule ChatApi.CustomersTest do
       assert customer.email == @update_attrs.email
       assert customer.name == @update_attrs.name
       assert customer.phone == @update_attrs.phone
+      assert customer.time_zone == @update_attrs.time_zone
     end
 
     test "update_customer_metadata/2 only updates customizable fields", %{customer: customer} do
@@ -67,6 +69,7 @@ defmodule ChatApi.CustomersTest do
       assert customer.email == @update_attrs.email
       assert customer.name == @update_attrs.name
       assert customer.phone == @update_attrs.phone
+      assert customer.time_zone == @update_attrs.time_zone
 
       # `account_id` should not be customizable through this API
       assert customer.account_id != new_account.id
