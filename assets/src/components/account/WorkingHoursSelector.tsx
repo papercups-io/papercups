@@ -2,7 +2,7 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {range} from 'lodash';
 import {Button, Select} from '../common';
-import {WorkingHours} from './support';
+import {WorkingHours, timezones, getDefaultTimezone} from './support';
 import logger from '../../logger';
 
 const MINS_IN_A_DAY = 24 * 60;
@@ -61,18 +61,24 @@ const generateTimeOptions = () => {
 
 const filterSelectOption = (input: string, option: any) => {
   const label = option && option.label ? String(option.label) : '';
+  const sanitized = label.toLowerCase().replace(/_/, ' ');
 
-  return label.toLowerCase().indexOf(input.toLowerCase()) >= 0;
+  return sanitized.indexOf(input.toLowerCase()) >= 0;
 };
 
 type Props = {
+  timezone: string | null;
   workingHours: Array<WorkingHours>;
   onCancel?: () => void;
-  onSave: (data: Array<WorkingHours>) => Promise<void>;
+  onSave: (data: {
+    time_zone: string;
+    working_hours: Array<WorkingHours>;
+  }) => Promise<void>;
 };
 
 type State = {
   isEditing: boolean;
+  selectedTimezone: string;
   selectedDayType: string;
   selectedStartTime: number;
   selectedEndTime: number;
@@ -86,6 +92,7 @@ class WorkingHoursSelector extends React.Component<Props, State> {
 
     this.state = {
       isEditing: false,
+      selectedTimezone: props.timezone || getDefaultTimezone(),
       selectedDayType: first?.day || DEFAULT_DAY_TYPE,
       selectedStartTime: first?.start_minute || 0,
       selectedEndTime: first?.end_minute || MINS_IN_A_DAY - 1,
@@ -104,17 +111,25 @@ class WorkingHoursSelector extends React.Component<Props, State> {
   };
 
   handleUpdate = () => {
-    const {selectedDayType, selectedStartTime, selectedEndTime} = this.state;
+    const {
+      selectedTimezone,
+      selectedDayType,
+      selectedStartTime,
+      selectedEndTime,
+    } = this.state;
 
     // Saving as array because in the near future we will support multiple working hours
     this.props
-      .onSave([
-        {
-          day: selectedDayType,
-          start_minute: selectedStartTime,
-          end_minute: selectedEndTime,
-        },
-      ])
+      .onSave({
+        time_zone: selectedTimezone,
+        working_hours: [
+          {
+            day: selectedDayType,
+            start_minute: selectedStartTime,
+            end_minute: selectedEndTime,
+          },
+        ],
+      })
       .then(() => this.setState({isEditing: false}))
       .catch((err) => {
         logger.error('Error updating working hours:', err);
@@ -125,6 +140,10 @@ class WorkingHoursSelector extends React.Component<Props, State> {
 
   handleStartEditing = () => {
     this.setState({isEditing: true});
+  };
+
+  handleSelectTimezone = (selectedTimezone: string) => {
+    this.setState({selectedTimezone});
   };
 
   handleSelectDayType = (selectedDayType: string) => {
@@ -142,14 +161,32 @@ class WorkingHoursSelector extends React.Component<Props, State> {
   render() {
     const {
       isEditing,
+      selectedTimezone,
       selectedDayType,
       selectedStartTime,
       selectedEndTime,
     } = this.state;
 
-    // TODO: include selector for time zone!
     return (
       <Box>
+        <Flex mb={3} sx={{alignItems: 'center'}}>
+          <Box mr={2}>
+            <label>Default time zone:</label>
+          </Box>
+          <Select
+            showSearch
+            style={{width: 280}}
+            size="small"
+            value={selectedTimezone}
+            disabled={!isEditing}
+            onChange={this.handleSelectTimezone}
+            filterOption={filterSelectOption}
+            options={timezones.map(({tzCode, offset}) => {
+              return {value: tzCode, label: `(GMT${offset}) ${tzCode}`};
+            })}
+          />
+        </Flex>
+
         <Flex mx={-2} mb={3} sx={{alignItems: 'center'}}>
           <Box mx={2}>
             <Select

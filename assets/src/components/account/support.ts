@@ -1,3 +1,8 @@
+import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(timezone);
+
 type Timezone = {
   offset: string;
   label: string;
@@ -8,6 +13,10 @@ export type WorkingHours = {
   day: string;
   start_minute: number;
   end_minute: number;
+};
+
+export const getDefaultTimezone = () => {
+  return dayjs.tz.guess();
 };
 
 export const timezones: Array<Timezone> = [

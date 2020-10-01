@@ -114,8 +114,9 @@ class AccountOverview extends React.Component<Props, State> {
     );
   };
 
-  handleUpdate = (updates: {
+  handleUpdate = async (updates: {
     company_name?: string;
+    time_zone?: string;
     working_hours?: Array<WorkingHours>;
   }) => {
     return API.updateAccountInfo(updates)
@@ -136,10 +137,6 @@ class AccountOverview extends React.Component<Props, State> {
     const {companyName} = this.state;
 
     return this.handleUpdate({company_name: companyName});
-  };
-
-  handleUpdateWorkingHours = (workingHours: Array<WorkingHours>) => {
-    return this.handleUpdate({working_hours: workingHours});
   };
 
   handleDisableUser = async (user: User) => {
@@ -222,7 +219,12 @@ class AccountOverview extends React.Component<Props, State> {
       return null;
     }
 
-    const {id: token, users = [], working_hours: workingHours = []} = account;
+    const {
+      id: token,
+      time_zone: timezone,
+      users = [],
+      working_hours: workingHours = [],
+    } = account;
     const isAdmin = this.hasAdminRole();
 
     return (
@@ -281,8 +283,9 @@ class AccountOverview extends React.Component<Props, State> {
           </Paragraph>
 
           <WorkingHoursSelector
+            timezone={timezone}
             workingHours={workingHours}
-            onSave={this.handleUpdateWorkingHours}
+            onSave={this.handleUpdate}
           />
         </Box>
         <Divider />
