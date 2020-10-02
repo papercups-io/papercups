@@ -51,6 +51,7 @@ defmodule ChatApiWeb.CustomerView do
     }
   end
 
+  # TODO: figure out a better way to handle this
   defp render_tags([_ | _] = tags) do
     render_many(tags, TagView, "tag.json")
   end
