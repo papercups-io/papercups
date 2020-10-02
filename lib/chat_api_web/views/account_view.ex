@@ -25,6 +25,7 @@ defmodule ChatApiWeb.AccountView do
       id: account.id,
       company_name: account.company_name,
       time_zone: account.time_zone,
+      subscription_plan: account.subscription_plan,
       working_hours: render_many(account.working_hours, WorkingHoursView, "working_hours.json")
     }
   end
@@ -34,6 +35,7 @@ defmodule ChatApiWeb.AccountView do
       id: account.id,
       company_name: account.company_name,
       time_zone: account.time_zone,
+      subscription_plan: account.subscription_plan,
       users: render_many(account.users, UserView, "user.json"),
       widget_settings: render_one(account.widget_settings, WidgetSettingsView, "basic.json"),
       working_hours: render_many(account.working_hours, WorkingHoursView, "working_hours.json")
