@@ -151,4 +151,22 @@ defmodule ChatApiWeb.ConversationController do
       send_resp(conn, :no_content, "")
     end
   end
+
+  @spec add_tag(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def add_tag(conn, %{"conversation_id" => id, "tag_id" => tag_id}) do
+    conversation = Conversations.get_conversation!(id)
+
+    with {:ok, _result} <- Conversations.add_tag(conversation, tag_id) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
+
+  @spec remove_tag(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def remove_tag(conn, %{"conversation_id" => id, "tag_id" => tag_id}) do
+    conversation = Conversations.get_conversation!(id)
+
+    with {:ok, _result} <- Conversations.remove_tag(conversation, tag_id) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
 end

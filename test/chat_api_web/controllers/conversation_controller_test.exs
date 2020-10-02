@@ -99,4 +99,45 @@ defmodule ChatApiWeb.ConversationControllerTest do
       end)
     end
   end
+
+  # TODO: add some more tests!
+  describe "adding/removing tags" do
+    test "adds a tag", %{authed_conn: authed_conn, conversation: conversation, account: account} do
+      tag = tag_fixture(account, %{name: "Test Tag"})
+
+      resp =
+        post(authed_conn, Routes.conversation_path(authed_conn, :add_tag, conversation),
+          tag_id: tag.id
+        )
+
+      assert json_response(resp, 200)["data"]["ok"]
+      resp = get(authed_conn, Routes.conversation_path(authed_conn, :show, conversation.id))
+
+      assert %{
+               "tags" => tags
+             } = json_response(resp, 200)["data"]
+
+      assert [%{"name" => "Test Tag"}] = tags
+    end
+
+    test "removes a tag", %{
+      authed_conn: authed_conn,
+      conversation: conversation,
+      account: account
+    } do
+      tag = tag_fixture(account, %{name: "Test Tag"})
+
+      resp =
+        post(authed_conn, Routes.conversation_path(authed_conn, :add_tag, conversation),
+          tag_id: tag.id
+        )
+
+      assert json_response(resp, 200)["data"]["ok"]
+
+      resp =
+        delete(authed_conn, Routes.conversation_path(authed_conn, :remove_tag, conversation, tag))
+
+      assert json_response(resp, 200)["data"]["ok"]
+    end
+  end
 end

@@ -2,9 +2,12 @@ defmodule ChatApi.Customers.Customer do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias ChatApi.Conversations.Conversation
-  alias ChatApi.Messages.Message
-  alias ChatApi.Accounts.Account
+  alias ChatApi.{
+    Accounts.Account,
+    Conversations.Conversation,
+    Messages.Message,
+    Tags.CustomerTag
+  }
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -37,6 +40,9 @@ defmodule ChatApi.Customers.Customer do
     has_many(:messages, Message)
     has_many(:conversations, Conversation)
     belongs_to(:account, Account)
+
+    has_many(:customer_tags, CustomerTag)
+    has_many(:tags, through: [:customer_tags, :tag])
 
     timestamps()
   end

@@ -131,6 +131,36 @@ defmodule ChatApiWeb.CustomerControllerTest do
     end
   end
 
+  # TODO: add some more tests!
+  describe "adding/removing tags" do
+    test "adds a tag", %{authed_conn: authed_conn, customer: customer, account: account} do
+      tag = tag_fixture(account, %{name: "Test Tag"})
+
+      resp =
+        post(authed_conn, Routes.customer_path(authed_conn, :add_tag, customer), tag_id: tag.id)
+
+      assert json_response(resp, 200)["data"]["ok"]
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :show, customer.id))
+
+      assert %{
+               "tags" => tags
+             } = json_response(resp, 200)["data"]
+
+      assert [%{"name" => "Test Tag"}] = tags
+    end
+
+    test "removes a tag", %{authed_conn: authed_conn, customer: customer, account: account} do
+      tag = tag_fixture(account, %{name: "Test Tag"})
+
+      resp =
+        post(authed_conn, Routes.customer_path(authed_conn, :add_tag, customer), tag_id: tag.id)
+
+      assert json_response(resp, 200)["data"]["ok"]
+      resp = delete(authed_conn, Routes.customer_path(authed_conn, :remove_tag, customer, tag))
+      assert json_response(resp, 200)["data"]["ok"]
+    end
+  end
+
   describe "update customer metadata" do
     test "renders customer when data is valid", %{
       conn: conn,

@@ -7,6 +7,7 @@ defmodule ChatApi.Customers do
   alias ChatApi.Repo
 
   alias ChatApi.Customers.Customer
+  alias ChatApi.Tags.CustomerTag
 
   @doc """
   Returns the list of customers.
@@ -35,7 +36,9 @@ defmodule ChatApi.Customers do
       ** (Ecto.NoResultsError)
 
   """
-  def get_customer!(id), do: Repo.get!(Customer, id)
+  def get_customer!(id) do
+    Customer |> Repo.get!(id) |> Repo.preload(:tags)
+  end
 
   def find_by_external_id(external_id, account_id) when is_binary(external_id) do
     Customer
@@ -153,5 +156,49 @@ defmodule ChatApi.Customers do
   """
   def change_customer(%Customer{} = customer, attrs \\ %{}) do
     Customer.changeset(customer, attrs)
+  end
+
+  def list_tags(nil), do: []
+
+  def list_tags(%Customer{} = customer) do
+    customer |> Repo.preload(:tags) |> Map.get(:tags)
+  end
+
+  def list_tags(id) do
+    # TODO: optimize this query
+    Customer
+    |> Repo.get(id)
+    |> case do
+      nil -> []
+      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
+    end
+  end
+
+  def get_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
+    CustomerTag
+    |> where(account_id: ^account_id, customer_id: ^id, tag_id: ^tag_id)
+    |> Repo.one()
+  end
+
+  def add_tag(%Customer{id: id, account_id: account_id} = customer, tag_id) do
+    case get_tag(customer, tag_id) do
+      nil ->
+        %CustomerTag{}
+        |> CustomerTag.changeset(%{
+          customer_id: id,
+          tag_id: tag_id,
+          account_id: account_id
+        })
+        |> Repo.insert()
+
+      tag ->
+        {:ok, tag}
+    end
+  end
+
+  def remove_tag(%Customer{} = customer, tag_id) do
+    customer
+    |> get_tag(tag_id)
+    |> Repo.delete()
   end
 end

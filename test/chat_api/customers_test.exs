@@ -30,7 +30,9 @@ defmodule ChatApi.CustomersTest do
     end
 
     test "list_customers/1 returns all customers", %{account: account, customer: customer} do
-      assert Customers.list_customers(account.id) == [customer]
+      customer_ids = Customers.list_customers(account.id) |> Enum.map(& &1.id)
+
+      assert customer_ids == [customer.id]
     end
 
     test "get_customer!/1 returns the customer with given id", %{customer: customer} do

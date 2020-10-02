@@ -1,6 +1,6 @@
 defmodule ChatApiWeb.ConversationView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.{ConversationView, MessageView, CustomerView}
+  alias ChatApiWeb.{ConversationView, MessageView, CustomerView, TagView}
 
   def render("index.json", %{conversations: conversations}) do
     %{data: render_many(conversations, ConversationView, "expanded.json")}
@@ -42,7 +42,14 @@ defmodule ChatApiWeb.ConversationView do
       customer_id: conversation.customer_id,
       assignee_id: conversation.assignee_id,
       customer: render_one(conversation.customer, CustomerView, "customer.json"),
-      messages: render_many(conversation.messages, MessageView, "expanded.json")
+      messages: render_many(conversation.messages, MessageView, "expanded.json"),
+      tags: render_tags(conversation.tags)
     }
   end
+
+  defp render_tags([_ | _] = tags) do
+    render_many(tags, TagView, "tag.json")
+  end
+
+  defp render_tags(_tags), do: []
 end
