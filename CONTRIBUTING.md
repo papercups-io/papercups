@@ -14,7 +14,7 @@ If this is your first time contributing, we've tagged some issues to make it eas
 
 ## Creating a PR
 
-Just create a new pull request if you want to make an update. We would prefer that you open an issue describing the update first if possible!
+Just create a new pull request if you want to make an update. We would prefer that you open an issue describing the update first if possible! It helps you to create your own branch to impliment updates in the main application.
 
 For now, please request Alex (@reichert621) to review.
 
@@ -22,7 +22,7 @@ If you want to speak to us before doing lots of work, just email founders@paperc
 
 ## Issues
 
-Spotted a bug? Has deployment gone wrong? Do you have user feedback? [Raise an issue](https://github.com/papercups-io/papercups/issues/new?assignees=&labels=bug&template=bug_report.md&title=) for the fastest response.
+Spotted a bug? Has deployment gone wrong? Do you have user feedback? [Raise an issue](https://github.com/papercups-io/papercups/issues/new?assignees=&labels=bug&template=bug_report.md&title=) for the fastest response. Please don't spam us with issues either, we're currently an open source project trying our best to solve your problems.
 
 ## Feature requests
 
