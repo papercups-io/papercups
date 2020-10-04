@@ -133,13 +133,13 @@ class GettingStartedOverview extends React.Component<Props, State> {
 <script>
   window.Papercups = {
     config: {
-      accountId: '${accountId}',
-      title: '${title}',
-      subtitle: '${subtitle}',
-      primaryColor: '${color}',
-      greeting: '${greeting || ''}',
-      newMessagePlaceholder: '${newMessagePlaceholder || ''}',
-      baseUrl: '${BASE_URL}'
+      accountId: "${accountId}",
+      title: "${title}",
+      subtitle: "${subtitle}",
+      primaryColor: "${color}",
+      greeting: "${greeting || ''}",
+      newMessagePlaceholder: "${newMessagePlaceholder || ''}",
+      baseUrl: "${BASE_URL}"
     },
   };
 </script>
@@ -163,8 +163,8 @@ class GettingStartedOverview extends React.Component<Props, State> {
     } = this.state;
 
     return `
-import React from 'react';
-import ChatWidget from '@papercups-io/chat-widget';
+import React from "react";
+import ChatWidget from "@papercups-io/chat-widget";
 
 const ExamplePage = () => {
   return (
@@ -175,13 +175,13 @@ const ExamplePage = () => {
         if you would like it to render on every page
       */}
       <ChatWidget
-        title='${title}'
-        subtitle= '${subtitle}'
-        primaryColor='${color}'
-        greeting='${greeting || ''}'
-        newMessagePlaceholder='${newMessagePlaceholder}'
-        accountId='${accountId}'
-        baseUrl='${BASE_URL}'
+        title="${title}"
+        subtitle= "${subtitle}"
+        primaryColor="${color}"
+        greeting="${greeting || ''}"
+        newMessagePlaceholder="${newMessagePlaceholder}"
+        accountId="${accountId}"
+        baseUrl="${BASE_URL}"
       />
     </>
   );
