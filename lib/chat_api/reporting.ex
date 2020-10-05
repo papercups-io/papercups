@@ -51,4 +51,30 @@ defmodule ChatApi.Reporting do
     |> select([r], %{date: fragment("date(?)", field(r, ^field)), count: count(r.id)})
     |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
   end
+
+  def count_messages_by_weekday(account_id) do
+    Message
+    |> where(account_id: ^account_id)
+    |> where([m], not is_nil(m.customer_id))
+    |> count_grouped_by_date()
+    |> select_merge([m], %{day: fragment("to_char(date(?), 'Day')", m.inserted_at)})
+    |> Repo.all()
+    |> Enum.group_by(&String.trim(&1.day))
+    |> compute_weekday_aggregates()
+  end
+
+  defp compute_weekday_aggregates(grouped) do
+    Enum.map(weekdays(), fn weekday ->
+      records = Map.get(grouped, weekday, [])
+      total = Enum.reduce(records, 0, fn x, acc -> x.count + acc end)
+
+      %{
+        day: weekday,
+        average: total / max(length(records), 1),
+        total: total
+      }
+    end)
+  end
+
+  defp weekdays, do: ~w(Monday Tuesday Wednesday Thursday Friday Saturday Sunday)
 end

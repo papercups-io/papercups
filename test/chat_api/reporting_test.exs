@@ -195,4 +195,140 @@ defmodule ChatApi.ReportingTest do
              ] = Reporting.count_received_messages_by_date()
     end
   end
+
+  describe "count_messages_by_weekday/1" do
+    setup do
+      account = account_fixture()
+      customer = customer_fixture(account)
+
+      {:ok, account: account, customer: customer}
+    end
+
+    test "correctly calculates total and avg of customer messages per day",
+         %{
+           account: account,
+           customer: customer
+         } do
+      conversation = conversation_fixture(account, customer)
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-28 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-29 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-29 12:01:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-30 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-10-01 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-10-02 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-10-03 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-10-04 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-10-05 12:00:00],
+        customer_id: customer.id
+      })
+
+      assert [
+               %{day: "Monday", average: 1.0, total: 2},
+               %{day: "Tuesday", average: 2.0, total: 2},
+               %{day: "Wednesday", average: 1.0, total: 1},
+               %{day: "Thursday", average: 1.0, total: 1},
+               %{day: "Friday", average: 1.0, total: 1},
+               %{day: "Saturday", average: 1.0, total: 1},
+               %{day: "Sunday", average: 1.0, total: 1}
+             ] = Reporting.count_messages_by_weekday(account.id)
+    end
+
+    test "includes zero day counts for weekdays with no messages", %{
+      account: account,
+      customer: customer
+    } do
+      conversation = conversation_fixture(account, customer)
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-28 12:00:00],
+        customer_id: customer.id
+      })
+
+      assert [
+               %{day: "Monday", average: 1.0, total: 1},
+               %{day: "Tuesday", average: 0.0, total: 0},
+               %{day: "Wednesday", average: 0.0, total: 0},
+               %{day: "Thursday", average: 0.0, total: 0},
+               %{day: "Friday", average: 0.0, total: 0},
+               %{day: "Saturday", average: 0.0, total: 0},
+               %{day: "Sunday", average: 0.0, total: 0}
+             ] = Reporting.count_messages_by_weekday(account.id)
+    end
+
+    test "doesn't count messages without a customer", %{
+      account: account,
+      customer: customer
+    } do
+      conversation = conversation_fixture(account, customer)
+
+      message_fixture(account, conversation, %{inserted_at: ~N[2020-09-28 12:00:00]})
+
+      assert [
+               %{day: "Monday", average: 0.0, total: 0},
+               %{day: "Tuesday", average: 0.0, total: 0},
+               %{day: "Wednesday", average: 0.0, total: 0},
+               %{day: "Thursday", average: 0.0, total: 0},
+               %{day: "Friday", average: 0.0, total: 0},
+               %{day: "Saturday", average: 0.0, total: 0},
+               %{day: "Sunday", average: 0.0, total: 0}
+             ] = Reporting.count_messages_by_weekday(account.id)
+    end
+
+    test "doesn't count messages from other accounts", %{
+      account: account,
+      customer: customer
+    } do
+      different_account = account_fixture()
+      conversation = conversation_fixture(different_account, customer)
+
+      message_fixture(different_account, conversation, %{
+        inserted_at: ~N[2020-09-28 12:00:00],
+        customer_id: customer.id
+      })
+
+      assert [
+               %{day: "Monday", average: 0.0, total: 0},
+               %{day: "Tuesday", average: 0.0, total: 0},
+               %{day: "Wednesday", average: 0.0, total: 0},
+               %{day: "Thursday", average: 0.0, total: 0},
+               %{day: "Friday", average: 0.0, total: 0},
+               %{day: "Saturday", average: 0.0, total: 0},
+               %{day: "Sunday", average: 0.0, total: 0}
+             ] = Reporting.count_messages_by_weekday(account.id)
+    end
+  end
 end
