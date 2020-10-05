@@ -52,7 +52,7 @@ defmodule ChatApi.Reporting do
     |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
   end
 
-  def messages_by_weekday(account_id) do
+  def count_messages_by_weekday(account_id) do
     Message
     |> where(account_id: ^account_id)
     |> where([m], not is_nil(m.customer_id))

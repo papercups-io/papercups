@@ -194,8 +194,17 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-03], count: 1}
              ] = Reporting.count_received_messages_by_date()
     end
+  end
 
-    test "messages_by_weekday/1 correctly calculates total and avg of customer messages per day",
+  describe "count_messages_by_weekday/1" do
+    setup do
+      account = account_fixture()
+      customer = customer_fixture(account)
+
+      {:ok, account: account, customer: customer}
+    end
+
+    test "correctly calculates total and avg of customer messages per day",
          %{
            account: account,
            customer: customer
@@ -255,10 +264,10 @@ defmodule ChatApi.ReportingTest do
                %{day: "Friday", average: 1.0, total: 1},
                %{day: "Saturday", average: 1.0, total: 1},
                %{day: "Sunday", average: 1.0, total: 1}
-             ] = Reporting.messages_by_weekday(account.id)
+             ] = Reporting.count_messages_by_weekday(account.id)
     end
 
-    test "messages_by_weekday/1 includes zero day counts for weekdays with no messages", %{
+    test "includes zero day counts for weekdays with no messages", %{
       account: account,
       customer: customer
     } do
@@ -277,10 +286,10 @@ defmodule ChatApi.ReportingTest do
                %{day: "Friday", average: 0.0, total: 0},
                %{day: "Saturday", average: 0.0, total: 0},
                %{day: "Sunday", average: 0.0, total: 0}
-             ] = Reporting.messages_by_weekday(account.id)
+             ] = Reporting.count_messages_by_weekday(account.id)
     end
 
-    test "messages_by_weekday/1 doesn't count messages without a customer", %{
+    test "doesn't count messages without a customer", %{
       account: account,
       customer: customer
     } do
@@ -296,10 +305,10 @@ defmodule ChatApi.ReportingTest do
                %{day: "Friday", average: 0.0, total: 0},
                %{day: "Saturday", average: 0.0, total: 0},
                %{day: "Sunday", average: 0.0, total: 0}
-             ] = Reporting.messages_by_weekday(account.id)
+             ] = Reporting.count_messages_by_weekday(account.id)
     end
 
-    test "messages_by_weekday/1 doesn't count messages from other accounts", %{
+    test "doesn't count messages from other accounts", %{
       account: account,
       customer: customer
     } do
@@ -319,7 +328,7 @@ defmodule ChatApi.ReportingTest do
                %{day: "Friday", average: 0.0, total: 0},
                %{day: "Saturday", average: 0.0, total: 0},
                %{day: "Sunday", average: 0.0, total: 0}
-             ] = Reporting.messages_by_weekday(account.id)
+             ] = Reporting.count_messages_by_weekday(account.id)
     end
   end
 end
