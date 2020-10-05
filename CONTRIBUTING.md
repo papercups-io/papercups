@@ -23,6 +23,7 @@ If you want to speak to us before doing lots of work, just email founders@paperc
 ## Issues
 
 Spotted a bug? Has deployment gone wrong? Do you have user feedback? [Raise an issue](https://github.com/papercups-io/papercups/issues/new?assignees=&labels=bug&template=bug_report.md&title=) for the fastest response.
+If you want to solve any issue you can contribute using gitcoin
 
 ## Feature requests
 
