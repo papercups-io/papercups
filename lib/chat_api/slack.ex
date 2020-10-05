@@ -59,6 +59,25 @@ defmodule ChatApi.Slack do
     end
   end
 
+  def log(message) do
+    case System.get_env("PAPERCUPS_SLACK_WEBHOOK_URL") do
+      "https://hooks.slack.com/services/" <> _rest = url ->
+        log(message, url)
+
+      _ ->
+        Logger.info("Slack log: #{inspect(message)}")
+    end
+  end
+
+  def log(message, webhook_url) do
+    [
+      Tesla.Middleware.JSON,
+      {Tesla.Middleware.Headers, [{"content-type", "application/json"}]}
+    ]
+    |> Tesla.client()
+    |> Tesla.post(webhook_url, %{"text" => message})
+  end
+
   def should_execute?(access_token) do
     Mix.env() != :test && is_valid_access_token?(access_token)
   end
