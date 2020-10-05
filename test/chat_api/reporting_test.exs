@@ -93,7 +93,7 @@ defmodule ChatApi.ReportingTest do
       conversation = conversation_fixture(account, customer)
 
       message_fixture(account, conversation, %{
-        inserted_at: ~N[2120-09-02 12:00:00]
+        inserted_at: ~N[2020-09-02 12:00:00]
       })
 
       message_fixture(account, conversation, %{
@@ -163,8 +163,6 @@ defmodule ChatApi.ReportingTest do
                  ~N[2020-09-02 11:00:00],
                  ~N[2020-09-03 13:00:00]
                )
-           %{date: ~D[2020-09-03], count: 1}
-             ] = Reporting.conversations_by_date(account.id,  ~N[2020-09-02 11:00:00], ~N[2020-09-03 13:00:00])
     end
 
     test "count_sent_messages_by_date/0 groups by date correctly", %{
