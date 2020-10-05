@@ -31,6 +31,20 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  def count_sent_messages_by_date() do
+    Message
+    |> where([message], not is_nil(message.user_id))
+    |> count_grouped_by_date()
+    |> Repo.all()
+  end
+
+  def count_received_messages_by_date() do
+    Message
+    |> where([message], not is_nil(message.customer_id))
+    |> count_grouped_by_date()
+    |> Repo.all()
+  end
+
   def count_grouped_by_date(query, field \\ :inserted_at) do
     query
     |> group_by([r], fragment("date(?)", field(r, ^field)))

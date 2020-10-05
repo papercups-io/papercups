@@ -115,5 +115,84 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-03], count: 1}
              ] = Reporting.conversations_by_date(account.id)
     end
+
+    test "count_sent_messages_by_date/0 groups by date correctly", %{
+      account: account,
+      customer: customer
+    } do
+      user_2 = user_fixture(account)
+      user_3 = user_fixture(account)
+      conversation = conversation_fixture(account, customer)
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-01 12:00:00],
+        user_id: user_2.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-02 12:00:00],
+        user_id: user_2.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-03 12:00:00],
+        user_id: user_3.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-03 12:00:00],
+        user_id: user_3.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-03 12:00:00],
+        customer_id: customer.id
+      })
+
+      assert [
+               %{date: ~D[2020-09-01], count: 1},
+               %{date: ~D[2020-09-02], count: 1},
+               %{date: ~D[2020-09-03], count: 2}
+             ] = Reporting.count_sent_messages_by_date()
+    end
+
+    test "count_received_messages_by_date/0 groups by date correctly", %{
+      account: account,
+      customer: customer
+    } do
+      user_2 = user_fixture(account)
+      conversation = conversation_fixture(account, customer)
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-01 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-02 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-03 12:00:00],
+        customer_id: customer.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-03 12:00:00],
+        user_id: user_2.id
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-03 12:00:00],
+        user_id: user_2.id
+      })
+
+      assert [
+               %{date: ~D[2020-09-01], count: 1},
+               %{date: ~D[2020-09-02], count: 1},
+               %{date: ~D[2020-09-03], count: 1}
+             ] = Reporting.count_received_messages_by_date()
+    end
   end
 end
