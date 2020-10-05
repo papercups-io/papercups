@@ -116,7 +116,7 @@ defmodule ChatApi.ReportingTest do
              ] = Reporting.conversations_by_date(account.id)
     end
 
-    test "count_sent_messages/0 groups by date correctly", %{
+    test "count_sent_messages_by_date/0 groups by date correctly", %{
       account: account,
       customer: customer
     } do
@@ -153,10 +153,10 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-01], count: 1},
                %{date: ~D[2020-09-02], count: 1},
                %{date: ~D[2020-09-03], count: 2}
-             ] = Reporting.count_sent_messages()
+             ] = Reporting.count_sent_messages_by_date()
     end
 
-    test "count_received_messages/0 groups by date correctly", %{
+    test "count_received_messages_by_date/0 groups by date correctly", %{
       account: account,
       customer: customer
     } do
@@ -192,7 +192,7 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-01], count: 1},
                %{date: ~D[2020-09-02], count: 1},
                %{date: ~D[2020-09-03], count: 1}
-             ] = Reporting.count_received_messages()
+             ] = Reporting.count_received_messages_by_date()
     end
   end
 end
