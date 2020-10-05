@@ -1,6 +1,6 @@
 defmodule ChatApiWeb.CustomerView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.CustomerView
+  alias ChatApiWeb.{CustomerView, TagView}
 
   def render("index.json", %{customers: customers}) do
     %{data: render_many(customers, CustomerView, "customer.json")}
@@ -46,7 +46,15 @@ defmodule ChatApiWeb.CustomerView do
       os: customer.os,
       ip: customer.ip,
       metadata: customer.metadata,
-      time_zone: customer.time_zone
+      time_zone: customer.time_zone,
+      tags: render_tags(customer.tags)
     }
   end
+
+  # TODO: figure out a better way to handle this
+  defp render_tags([_ | _] = tags) do
+    render_many(tags, TagView, "tag.json")
+  end
+
+  defp render_tags(_tags), do: []
 end

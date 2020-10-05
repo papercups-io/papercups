@@ -85,6 +85,12 @@ defmodule ChatApiWeb.Router do
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
     resources("/customers", CustomerController, except: [:new, :edit, :create])
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
+    resources("/tags", TagController, except: [:new, :edit])
+
+    post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
+    delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
+    post("/customers/:customer_id/tags", CustomerController, :add_tag)
+    delete("/customers/:customer_id/tags/:tag_id", CustomerController, :remove_tag)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
   end
 

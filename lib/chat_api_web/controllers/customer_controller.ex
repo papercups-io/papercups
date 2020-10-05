@@ -6,6 +6,7 @@ defmodule ChatApiWeb.CustomerController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
   def index(conn, _params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
       customers = Customers.list_customers(account_id)
@@ -13,6 +14,7 @@ defmodule ChatApiWeb.CustomerController do
     end
   end
 
+  @spec create(Plug.Conn.t(), map) :: Plug.Conn.t()
   def create(conn, %{"customer" => customer_params}) do
     params =
       customer_params
@@ -30,11 +32,13 @@ defmodule ChatApiWeb.CustomerController do
     end
   end
 
+  @spec show(Plug.Conn.t(), map) :: Plug.Conn.t()
   def show(conn, %{"id" => id}) do
     customer = Customers.get_customer!(id)
     render(conn, "show.json", customer: customer)
   end
 
+  @spec identify(Plug.Conn.t(), map) :: Plug.Conn.t()
   def identify(conn, %{
         "external_id" => external_id,
         "account_id" => account_id
@@ -52,6 +56,7 @@ defmodule ChatApiWeb.CustomerController do
     end
   end
 
+  @spec update(Plug.Conn.t(), map) :: Plug.Conn.t()
   def update(conn, %{"id" => id, "customer" => customer_params}) do
     customer = Customers.get_customer!(id)
 
@@ -60,6 +65,7 @@ defmodule ChatApiWeb.CustomerController do
     end
   end
 
+  @spec update_metadata(Plug.Conn.t(), map) :: Plug.Conn.t()
   def update_metadata(conn, %{"id" => id, "metadata" => metadata}) do
     customer = Customers.get_customer!(id)
 
@@ -76,11 +82,30 @@ defmodule ChatApiWeb.CustomerController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
     customer = Customers.get_customer!(id)
 
     with {:ok, %Customer{}} <- Customers.delete_customer(customer) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  @spec add_tag(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def add_tag(conn, %{"customer_id" => id, "tag_id" => tag_id}) do
+    customer = Customers.get_customer!(id)
+
+    with {:ok, _result} <- Customers.add_tag(customer, tag_id) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
+
+  @spec remove_tag(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def remove_tag(conn, %{"customer_id" => id, "tag_id" => tag_id}) do
+    customer = Customers.get_customer!(id)
+
+    with {:ok, _result} <- Customers.remove_tag(customer, tag_id) do
+      json(conn, %{data: %{ok: true}})
     end
   end
 end
