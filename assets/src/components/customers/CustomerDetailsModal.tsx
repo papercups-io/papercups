@@ -19,6 +19,7 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
     updated_at: lastUpdatedAt,
     current_url: lastSeenUrl,
     ip: lastIpAddress,
+    metadata,
   } = customer;
 
   return (
@@ -103,6 +104,46 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
           </Paragraph>
         </Box>
       </Flex>
+
+      <Box mb={2}>
+        <Box>
+          <Text strong>Metadata</Text>
+        </Box>
+        {Object.entries(metadata).map(([key, value]: any) => {
+          // Note: the array below contains the date formats that will be captured and formatted by dayjs
+          // This approach is based on the examples found here: https://day.js.org/docs/en/parse/string-format
+          const dateFormatsArr = [
+            'YYYY-MM-DD',
+            'MM-DD-YYYY',
+            'MM-DD-YY',
+            'DD-MM-YYYY',
+            'DD-MM-YY',
+            'YYYY/MM/DD',
+            'MM/DD/YYYY',
+            'MM/DD/YY',
+            'DD/MM/YYYY',
+            'DD/MM/YY',
+          ];
+          if (dayjs(value, dateFormatsArr).isValid() === true) {
+            const formattedDate = dayjs.utc(value).format('MMMM DD, YYYY');
+            return (
+              <Paragraph key={key}>
+                {key.charAt(0).toUpperCase() +
+                  key.slice(1).split('_').join(' ')}
+                : {formattedDate}
+              </Paragraph>
+            );
+          } else {
+            return (
+              <Paragraph key={key}>
+                {key.charAt(0).toUpperCase() +
+                  key.slice(1).split('_').join(' ')}
+                : {value.toString()}
+              </Paragraph>
+            );
+          }
+        })}
+      </Box>
     </Box>
   );
 };
