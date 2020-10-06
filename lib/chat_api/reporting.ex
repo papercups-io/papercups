@@ -6,75 +6,73 @@ defmodule ChatApi.Reporting do
   import Ecto.Query, warn: false
   alias ChatApi.{Repo, Conversations.Conversation, Messages.Message, Users.User}
 
-  def messages_by_date(account_id) do
+  def count_messages_by_date(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> count_grouped_by_date()
     |> Repo.all()
   end
 
-  def messages_by_date(account_id, from_date, to_date) do
-    Message
+  def count_messages_by_date(account_id, from_date, to_date),
+    do: count_messages_by_date(account_id, %{from_date: from_date, to_date: to_date})
+
+  def count_conversations_by_date(account_id, filters \\ %{}) do
+    Conversation
     |> where(account_id: ^account_id)
-    |> where([m], m.inserted_at > ^from_date and m.inserted_at < ^to_date)
+    |> where(^filter_where(filters))
     |> count_grouped_by_date()
     |> Repo.all()
   end
 
-  def count_messages_per_user(account_id) do
+  def count_conversations_by_date(account_id, from_date, to_date),
+    do: count_conversations_by_date(account_id, %{from_date: from_date, to_date: to_date})
+
+  def count_messages_per_user(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> join(:inner, [m], u in User, on: m.user_id == u.id)
     |> select([m, u], %{user: %{id: u.id, email: u.email}, count: count(m.user_id)})
     |> group_by([m, u], [m.user_id, u.id])
     |> Repo.all()
   end
 
-  def conversations_by_date(account_id) do
-    Conversation
-    |> where(account_id: ^account_id)
-    |> count_grouped_by_date()
-    |> Repo.all()
-  end
-
-  def conversations_by_date(account_id, from_date, to_date) do
-    Conversation
-    |> where(account_id: ^account_id)
-    |> where([c], c.inserted_at > ^from_date and c.inserted_at < ^to_date)
-    |> count_grouped_by_date()
-    |> Repo.all()
-  end
-
-  def count_sent_messages_by_date() do
+  def count_sent_messages_by_date(account_id, filters \\ %{}) do
     Message
+    |> where(account_id: ^account_id)
     |> where([message], not is_nil(message.user_id))
+    |> where(^filter_where(filters))
     |> count_grouped_by_date()
     |> Repo.all()
   end
 
-  def count_received_messages_by_date() do
+  def count_received_messages_by_date(account_id, filters \\ %{}) do
     Message
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> where([message], not is_nil(message.customer_id))
     |> count_grouped_by_date()
     |> Repo.all()
   end
 
-  def count_grouped_by_date(query, field \\ :inserted_at) do
-    query
-    |> group_by([r], fragment("date(?)", field(r, ^field)))
-    |> select([r], %{date: fragment("date(?)", field(r, ^field)), count: count(r.id)})
-    |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
-  end
-
-  def count_messages_by_weekday(account_id) do
+  def count_messages_by_weekday(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
     |> where([m], not is_nil(m.customer_id))
+    |> where(^filter_where(filters))
     |> count_grouped_by_date()
     |> select_merge([m], %{day: fragment("to_char(date(?), 'Day')", m.inserted_at)})
     |> Repo.all()
     |> Enum.group_by(&String.trim(&1.day))
     |> compute_weekday_aggregates()
+  end
+
+  defp count_grouped_by_date(query, field \\ :inserted_at) do
+    query
+    |> group_by([r], fragment("date(?)", field(r, ^field)))
+    |> select([r], %{date: fragment("date(?)", field(r, ^field)), count: count(r.id)})
+    |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
   end
 
   defp compute_weekday_aggregates(grouped) do
@@ -87,6 +85,24 @@ defmodule ChatApi.Reporting do
         average: total / max(length(records), 1),
         total: total
       }
+    end)
+  end
+
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  defp filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {:account_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.account_id == ^value)
+
+      {:from_date, value}, dynamic ->
+        dynamic([r], ^dynamic and r.inserted_at > ^value)
+
+      {:to_date, value}, dynamic ->
+        dynamic([r], ^dynamic and r.inserted_at < ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
     end)
   end
 

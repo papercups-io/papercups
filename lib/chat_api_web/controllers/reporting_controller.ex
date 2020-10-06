@@ -13,12 +13,16 @@ defmodule ChatApiWeb.ReportingController do
         "to_date" => to_date
       }) do
     Logger.info("Fetching reporting from #{from_date} to #{to_date}")
+    filters = %{from_date: from_date, to_date: to_date}
 
     json(conn, %{
       data: %{
-        # TODO: incorporate the `from_date` and `to_date` into the methods below
-        messages_by_date: Reporting.messages_by_date(account_id, from_date, to_date),
-        conversations_by_date: Reporting.conversations_by_date(account_id, from_date, to_date)
+        messages_by_date: Reporting.count_messages_by_date(account_id, filters),
+        conversations_by_date: Reporting.count_conversations_by_date(account_id, filters),
+        messages_per_user: Reporting.count_messages_per_user(account_id, filters),
+        messages_by_weekday: Reporting.count_messages_by_weekday(account_id, filters),
+        sent_messages_by_date: Reporting.count_sent_messages_by_date(account_id, filters),
+        received_messages_by_date: Reporting.count_received_messages_by_date(account_id, filters)
       }
     })
   end
