@@ -210,10 +210,13 @@ class ReportingDashboard extends React.Component<Props, State> {
   handleDateRangeUpdated = (range: any) => {
     const [fromDate, toDate] = range;
 
-    this.setState({
-      fromDate: dayjs(fromDate),
-      toDate: dayjs(toDate),
-    });
+    this.setState(
+      {
+        fromDate: dayjs(fromDate),
+        toDate: dayjs(toDate),
+      },
+      () => this.refreshReportingData()
+    );
   };
 
   render() {
