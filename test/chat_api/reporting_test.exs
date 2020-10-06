@@ -86,6 +86,35 @@ defmodule ChatApi.ReportingTest do
       assert [] = Reporting.messages_by_date(different_account.id)
     end
 
+    test "messages_by_date/3 fetches conversations between two dates", %{
+      account: account,
+      customer: customer
+    } do
+      conversation = conversation_fixture(account, customer)
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-02 12:00:00]
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-02 12:00:00]
+      })
+
+      message_fixture(account, conversation, %{
+        inserted_at: ~N[2020-09-03 12:00:00]
+      })
+
+      assert [
+               %{date: ~D[2020-09-02], count: 2},
+               %{date: ~D[2020-09-03], count: 1}
+             ] =
+               Reporting.messages_by_date(
+                 account.id,
+                 ~N[2020-09-02 11:00:00],
+                 ~N[2020-09-03 13:00:00]
+               )
+    end
+
     test "conversations_by_date/1 retrieves the number of conversations created per day", %{
       account: account,
       customer: customer
@@ -114,6 +143,26 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-02], count: 1},
                %{date: ~D[2020-09-03], count: 1}
              ] = Reporting.conversations_by_date(account.id)
+    end
+
+    test "conversations_by_date/3 fetches conversations between two dates", %{
+      account: account,
+      customer: customer
+    } do
+      conversation_fixture(account, customer, %{inserted_at: ~N[2020-09-01 12:00:00]})
+      conversation_fixture(account, customer, %{inserted_at: ~N[2020-09-02 12:00:00]})
+      conversation_fixture(account, customer, %{inserted_at: ~N[2020-09-03 12:00:00]})
+      conversation_fixture(account, customer, %{inserted_at: ~N[2020-09-04 12:00:00]})
+
+      assert [
+               %{date: ~D[2020-09-02], count: 1},
+               %{date: ~D[2020-09-03], count: 1}
+             ] =
+               Reporting.conversations_by_date(
+                 account.id,
+                 ~N[2020-09-02 11:00:00],
+                 ~N[2020-09-03 13:00:00]
+               )
     end
 
     test "count_sent_messages_by_date/0 groups by date correctly", %{
