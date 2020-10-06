@@ -287,6 +287,7 @@ class Demo extends React.Component<Props, State> {
           customer={customer}
           baseUrl={BASE_URL}
           defaultIsOpen
+          onChatLoaded={() => logger.debug('Chat loaded!')}
           onChatClosed={() => logger.debug('Chat closed!')}
           onChatOpened={() => logger.debug('Chat opened!')}
           onMessageReceived={(message: any) =>
