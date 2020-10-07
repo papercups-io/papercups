@@ -2,25 +2,15 @@ import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {
-  colors,
-  Button,
-  Drawer,
-  Popover,
-  Select,
-  Text,
-  Title,
-  Tooltip,
-} from '../common';
+import {colors, Button, Drawer, Select, Text, Title, Tooltip} from '../common';
 import {
   CheckOutlined,
   StarOutlined,
   StarFilled,
   UploadOutlined,
   UserOutlined,
-  InfoCircleOutlined,
 } from '../icons';
-import {CustomerDetailsContent} from '../customers/CustomerDetailsModal';
+import ConversationDetailsSidebar from './ConversationDetailsSidebar';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -35,68 +25,15 @@ const hasCustomerMetadata = (customer: any) => {
   return true;
 };
 
-const CustomerMetadataPopoverContent = ({customer}: {customer: any}) => {
+const CustomerMetadataSubheader = ({
+  customer,
+  conversation,
+}: {
+  customer: any;
+  conversation: any;
+}) => {
   const [isDrawerVisible, setDrawerVisible] = React.useState(false);
 
-  if (!hasCustomerMetadata(customer)) {
-    return null;
-  }
-
-  const {current_url, browser, os} = customer;
-
-  return (
-    <Box
-      sx={{
-        maxWidth: 480,
-        wordBreak: 'break-all',
-      }}
-    >
-      {current_url && (
-        <Box mb={1}>
-          <Text strong>Current URL: </Text>
-          <a href={current_url} target="_blank" rel="noopener noreferrer">
-            {current_url}
-          </a>
-        </Box>
-      )}
-      {browser && (
-        <Box mb={1}>
-          <Text strong>Browser: </Text>
-          <Text>{browser}</Text>
-        </Box>
-      )}
-      {os && (
-        <Box mb={1}>
-          <Text strong>OS: </Text>
-          <Text>{os}</Text>
-        </Box>
-      )}
-
-      <Box mt={3}>
-        <Button block onClick={() => setDrawerVisible(true)}>
-          View more
-        </Button>
-      </Box>
-
-      <Drawer
-        title="Customer details"
-        placement="right"
-        width={400}
-        onClose={() => setDrawerVisible(false)}
-        visible={isDrawerVisible}
-        footer={
-          <Button block onClick={() => setDrawerVisible(false)}>
-            Back
-          </Button>
-        }
-      >
-        <CustomerDetailsContent customer={customer} />
-      </Drawer>
-    </Box>
-  );
-};
-
-const CustomerMetadataSubheader = ({customer}: {customer: any}) => {
   if (!hasCustomerMetadata(customer)) {
     return null;
   }
@@ -107,56 +44,69 @@ const CustomerMetadataSubheader = ({customer}: {customer: any}) => {
     browser,
     os,
     ip,
-    updated_at: lastUpdatedAt,
+    time_zone: timezone,
   } = customer;
+  const formattedTimezone =
+    timezone && timezone.length ? timezone.split('_').join(' ') : null;
 
   return (
-    <Flex>
-      <Flex
-        sx={{
-          flex: 1,
-          maxWidth: '80%',
-          overflow: 'hidden',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {current_url && (
-          <Box
-            pr={3}
-            mr={3}
-            sx={{
-              maxWidth: 240,
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              borderRight: '1px solid rgba(0,0,0,.06)',
-            }}
-          >
-            <a href={current_url} target="_blank" rel="noopener noreferrer">
-              {pathname && pathname.length > 1 ? pathname : current_url}
-            </a>
-          </Box>
-        )}
-        {(browser || os) && (
-          <Box>
-            <Text type="secondary">
-              {[browser, os, ip].filter(Boolean).join(' · ')}
-            </Text>
-          </Box>
-        )}
+    <>
+      <Flex>
+        <Flex
+          sx={{
+            flex: 1,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {current_url && (
+            <Box
+              pr={3}
+              mr={3}
+              sx={{
+                maxWidth: 240,
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                borderRight: '1px solid rgba(0,0,0,.06)',
+              }}
+            >
+              <a href={current_url} target="_blank" rel="noopener noreferrer">
+                {pathname && pathname.length > 1 ? pathname : current_url}
+              </a>
+            </Box>
+          )}
+          {(browser || os) && (
+            <Box mr={3}>
+              <Text type="secondary">
+                {[browser, os, formattedTimezone || ip]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            </Box>
+          )}
+        </Flex>
+        <Box>
+          <Button size="small" onClick={() => setDrawerVisible(true)}>
+            View details
+          </Button>
+        </Box>
       </Flex>
-      <Box
-        pl={3}
-        ml={3}
-        sx={{
-          borderLeft: '1px solid rgba(0,0,0,.06)',
-        }}
+
+      <Drawer
+        placement="right"
+        width={240}
+        closable={false}
+        bodyStyle={{padding: 0, display: 'flex'}}
+        visible={isDrawerVisible}
+        onClose={() => setDrawerVisible(false)}
       >
-        <Text type="secondary">
-          Last seen {dayjs.utc(lastUpdatedAt).format('MMM DD, YYYY')}
-        </Text>
-      </Box>
-    </Flex>
+        <ConversationDetailsSidebar
+          customer={customer}
+          conversation={conversation}
+        />
+      </Drawer>
+    </>
   );
 };
 
@@ -220,19 +170,6 @@ const ConversationHeader = ({
             >
               {name || email || 'Anonymous User'}
             </Title>
-
-            {hasCustomerMetadata(customer) && (
-              <Box ml={2} mt={1}>
-                <Popover
-                  content={
-                    <CustomerMetadataPopoverContent customer={customer} />
-                  }
-                  placement="bottom"
-                >
-                  <InfoCircleOutlined />
-                </Popover>
-              </Box>
-            )}
           </Flex>
           {hasBothNameAndEmail && (
             <Box style={{marginLeft: 1, lineHeight: 1.2}}>
@@ -341,7 +278,10 @@ const ConversationHeader = ({
             borderTop: '1px solid rgba(0,0,0,.06)',
           }}
         >
-          <CustomerMetadataSubheader customer={customer} />
+          <CustomerMetadataSubheader
+            customer={customer}
+            conversation={conversation}
+          />
         </Box>
       )}
     </header>
