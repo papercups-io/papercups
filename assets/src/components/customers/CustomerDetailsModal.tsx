@@ -7,6 +7,38 @@ import {Button, Modal, Paragraph, Text} from '../common';
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
+function CustomerMetadataSection({
+  metadata,
+}: {
+  metadata: Record<string, string>;
+}) {
+  if (!metadata) {
+    return null;
+  }
+  return (
+    <React.Fragment>
+      <Box mb={2}>
+        <Box>
+          <Text strong>Custom metadata</Text>
+        </Box>
+      </Box>
+      <Flex sx={{justifyContent: 'space-between', flexWrap: 'wrap'}}>
+        {Object.entries(metadata).map(([title, value]) => {
+          return (
+            <Box mb={2} sx={{flex: '0 50%'}} key={title}>
+              <Box>
+                <Text strong>{title}</Text>
+              </Box>
+
+              <Paragraph>{value as string}</Paragraph>
+            </Box>
+          );
+        })}
+      </Flex>
+    </React.Fragment>
+  );
+}
+
 export const CustomerDetailsContent = ({customer}: {customer: any}) => {
   const {
     email,
@@ -19,6 +51,7 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
     updated_at: lastUpdatedAt,
     current_url: lastSeenUrl,
     ip: lastIpAddress,
+    metadata,
   } = customer;
 
   return (
@@ -103,6 +136,8 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
           </Paragraph>
         </Box>
       </Flex>
+
+      <CustomerMetadataSection metadata={metadata} />
     </Box>
   );
 };
