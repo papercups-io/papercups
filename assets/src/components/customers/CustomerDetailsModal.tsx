@@ -30,7 +30,7 @@ function CustomerMetadataSection({
                 <Text strong>{title}</Text>
               </Box>
 
-              <Paragraph>{value as string}</Paragraph>
+              <Paragraph>{value}</Paragraph>
             </Box>
           );
         })}
