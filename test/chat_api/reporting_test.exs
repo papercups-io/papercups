@@ -11,7 +11,7 @@ defmodule ChatApi.ReportingTest do
       {:ok, account: account, customer: customer}
     end
 
-    test "messages_by_date/1 retrieves the number of messages created per day", %{
+    test "count_messages_by_date/1 retrieves the number of messages created per day", %{
       account: account,
       customer: customer
     } do
@@ -23,10 +23,11 @@ defmodule ChatApi.ReportingTest do
         message_fixture(account, conversation, %{inserted_at: inserted_at})
       end
 
-      assert [%{count: ^count, date: ~D[2020-09-01]}] = Reporting.messages_by_date(account.id)
+      assert [%{count: ^count, date: ~D[2020-09-01]}] =
+               Reporting.count_messages_by_date(account.id)
     end
 
-    test "messages_by_date/1 groups by date correctly", %{
+    test "count_messages_by_date/1 groups by date correctly", %{
       account: account,
       customer: customer
     } do
@@ -39,7 +40,7 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-01], count: 1},
                %{date: ~D[2020-09-02], count: 1},
                %{date: ~D[2020-09-03], count: 1}
-             ] = Reporting.messages_by_date(account.id)
+             ] = Reporting.count_messages_by_date(account.id)
     end
 
     test "count_messages_per_user/1 should return correct number of messages sent per user on team",
@@ -72,21 +73,21 @@ defmodule ChatApi.ReportingTest do
              ] = Reporting.count_messages_per_user(account.id)
     end
 
-    test "messages_by_date/1 only fetches messages by the given account id", %{
+    test "count_messages_by_date/1 only fetches messages by the given account id", %{
       account: account,
       customer: customer
     } do
       conversation = conversation_fixture(account, customer)
       message_fixture(account, conversation, %{inserted_at: ~N[2020-09-01 12:00:00]})
 
-      assert [%{date: ~D[2020-09-01], count: 1}] = Reporting.messages_by_date(account.id)
+      assert [%{date: ~D[2020-09-01], count: 1}] = Reporting.count_messages_by_date(account.id)
 
       different_account = account_fixture()
 
-      assert [] = Reporting.messages_by_date(different_account.id)
+      assert [] = Reporting.count_messages_by_date(different_account.id)
     end
 
-    test "messages_by_date/3 fetches conversations between two dates", %{
+    test "count_messages_by_date/3 fetches conversations between two dates", %{
       account: account,
       customer: customer
     } do
@@ -108,14 +109,14 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-02], count: 2},
                %{date: ~D[2020-09-03], count: 1}
              ] =
-               Reporting.messages_by_date(
+               Reporting.count_messages_by_date(
                  account.id,
                  ~N[2020-09-02 11:00:00],
                  ~N[2020-09-03 13:00:00]
                )
     end
 
-    test "conversations_by_date/1 retrieves the number of conversations created per day", %{
+    test "count_conversations_by_date/1 retrieves the number of conversations created per day", %{
       account: account,
       customer: customer
     } do
@@ -127,10 +128,10 @@ defmodule ChatApi.ReportingTest do
       end
 
       assert [%{count: ^count, date: ~D[2020-09-01]}] =
-               Reporting.conversations_by_date(account.id)
+               Reporting.count_conversations_by_date(account.id)
     end
 
-    test "conversations_by_date/1 groups by date correctly", %{
+    test "count_conversations_by_date/1 groups by date correctly", %{
       account: account,
       customer: customer
     } do
@@ -142,10 +143,10 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-01], count: 1},
                %{date: ~D[2020-09-02], count: 1},
                %{date: ~D[2020-09-03], count: 1}
-             ] = Reporting.conversations_by_date(account.id)
+             ] = Reporting.count_conversations_by_date(account.id)
     end
 
-    test "conversations_by_date/3 fetches conversations between two dates", %{
+    test "count_conversations_by_date/3 fetches conversations between two dates", %{
       account: account,
       customer: customer
     } do
@@ -158,14 +159,14 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-02], count: 1},
                %{date: ~D[2020-09-03], count: 1}
              ] =
-               Reporting.conversations_by_date(
+               Reporting.count_conversations_by_date(
                  account.id,
                  ~N[2020-09-02 11:00:00],
                  ~N[2020-09-03 13:00:00]
                )
     end
 
-    test "count_sent_messages_by_date/0 groups by date correctly", %{
+    test "count_sent_messages_by_date/1 groups by date correctly", %{
       account: account,
       customer: customer
     } do
@@ -202,10 +203,10 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-01], count: 1},
                %{date: ~D[2020-09-02], count: 1},
                %{date: ~D[2020-09-03], count: 2}
-             ] = Reporting.count_sent_messages_by_date()
+             ] = Reporting.count_sent_messages_by_date(account.id)
     end
 
-    test "count_received_messages_by_date/0 groups by date correctly", %{
+    test "count_received_messages_by_date/1 groups by date correctly", %{
       account: account,
       customer: customer
     } do
@@ -241,7 +242,7 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-01], count: 1},
                %{date: ~D[2020-09-02], count: 1},
                %{date: ~D[2020-09-03], count: 1}
-             ] = Reporting.count_received_messages_by_date()
+             ] = Reporting.count_received_messages_by_date(account.id)
     end
   end
 

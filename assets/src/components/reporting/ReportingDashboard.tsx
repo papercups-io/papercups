@@ -1,140 +1,15 @@
 import React from 'react';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
 import * as API from '../../api';
-import {colors, Alert, Paragraph, RangePicker, Text, Title} from '../common';
+import {Alert, Paragraph, RangePicker, Text, Title} from '../common';
+import MessagesPerDayChart from './MessagesPerDayChart';
+import {ReportingDatum} from './support';
 import logger from '../../logger';
-
-type ReportingDatum = {
-  date: string;
-  messages: number | null;
-  conversations: number | null;
-  sent?: number | null;
-  received?: number | null;
-};
 
 type DateCount = {
   count: number;
   date: string;
-};
-
-// Fake data for testing
-// TODO: replace with real data from API below!
-const FAKE_DATA: Array<ReportingDatum> = [
-  {
-    date: 'Sept 1',
-    messages: 40,
-    sent: 18,
-    received: 22,
-    conversations: 24,
-  },
-  {
-    date: 'Sept 2',
-    messages: 30,
-    sent: 11,
-    received: 19,
-    conversations: 13,
-  },
-  {
-    date: 'Sept 3',
-    messages: 20,
-    sent: 5,
-    received: 15,
-    conversations: 9,
-  },
-  {
-    date: 'Sept 4',
-    messages: 27,
-    sent: 10,
-    received: 17,
-    conversations: 19,
-  },
-  {
-    date: 'Sept 5',
-    messages: 90,
-    sent: 26,
-    received: 64,
-    conversations: 30,
-  },
-  {
-    date: 'Sept 6',
-    messages: 23,
-    sent: 5,
-    received: 18,
-    conversations: 8,
-  },
-  {
-    date: 'Sept 7',
-    messages: 34,
-    sent: 9,
-    received: 25,
-    conversations: 12,
-  },
-];
-
-// TODO: display messages and conversations per day in this chart
-const MessagesPerDayChart = ({data}: {data: any}) => {
-  return (
-    <ResponsiveContainer>
-      <LineChart
-        data={data}
-        margin={{
-          top: 8,
-          bottom: 8,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis width={40} />
-        <Tooltip />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="conversations"
-          stroke={colors.magenta}
-          activeDot={{r: 8}}
-        />
-        <Line type="monotone" dataKey="messages" stroke={colors.primary} />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-};
-
-// TODO: display messages and conversations in this chart with messages broken
-// down by "sent" vs "received" (where "sent" is outbound, "received" is inbound)
-const MessagesSentVsReceivedChart = ({data}: {data: any}) => {
-  return (
-    <ResponsiveContainer>
-      <BarChart
-        data={data}
-        margin={{
-          top: 8,
-          bottom: 8,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis width={40} />
-        <Tooltip />
-        <Legend />
-        <Bar dataKey="sent" stackId="messages" fill={colors.green} />
-        <Bar dataKey="received" stackId="messages" fill={colors.primary} />
-        <Bar dataKey="conversations" fill={colors.magenta} />
-      </BarChart>
-    </ResponsiveContainer>
-  );
 };
 
 type Props = {};
@@ -168,16 +43,10 @@ class ReportingDashboard extends React.Component<Props, State> {
 
     logger.debug('Raw reporting data:', data);
 
-    this.setState(
-      {
-        messagesByDate: data?.messages_by_date || [],
-        conversationsByDate: data?.conversations_by_date || [],
-      },
-      () => {
-        // TODO: remove this after implementing daily stats chart
-        logger.debug('Formatted daily stats:', this.formatDailyStats());
-      }
-    );
+    this.setState({
+      messagesByDate: data?.messages_by_date || [],
+      conversationsByDate: data?.conversations_by_date || [],
+    });
   };
 
   groupCountByDate = (data: Array<DateCount>) => {
@@ -210,10 +79,13 @@ class ReportingDashboard extends React.Component<Props, State> {
   handleDateRangeUpdated = (range: any) => {
     const [fromDate, toDate] = range;
 
-    this.setState({
-      fromDate: dayjs(fromDate),
-      toDate: dayjs(toDate),
-    });
+    this.setState(
+      {
+        fromDate: dayjs(fromDate),
+        toDate: dayjs(toDate),
+      },
+      () => this.refreshReportingData()
+    );
   };
 
   render() {
@@ -257,16 +129,42 @@ class ReportingDashboard extends React.Component<Props, State> {
         <Flex mx={-3} sx={{maxWidth: 1080}}>
           <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
             <Box mb={2}>
-              <Text strong>Messages per day</Text>
+              <Text strong>New messages per day</Text>
             </Box>
-            <MessagesPerDayChart data={FAKE_DATA} />
+            <MessagesPerDayChart data={this.formatDailyStats()} />
           </Box>
+          {/*
+          // TODO: implement me!
+
           <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
             <Box mb={2}>
               <Text strong>Messages sent vs received</Text>
             </Box>
-            <MessagesSentVsReceivedChart data={FAKE_DATA} />
+            <MessagesSentVsReceivedChart data={...} />
           </Box>
+          */}
+
+          {/*
+          // TODO: implement me!
+
+          <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
+            <Box mb={2}>
+              <Text strong>Messages by day of week</Text>
+            </Box>
+            <MessagesByDayOfWeekChart data={...} />
+          </Box>
+          */}
+
+          {/*
+          // TODO: implement me!
+
+          <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
+            <Box mb={2}>
+              <Text strong>Messages per user</Text>
+            </Box>
+            <MessagesPerUserChart data={...} />
+          </Box>
+          */}
         </Flex>
       </Box>
     );
