@@ -11,6 +11,7 @@ If this is your first time contributing, we've tagged some issues to make it eas
 - [Good first issues](https://github.com/papercups-io/papercups/labels/good%20first%20issue)
 - Looking to do some work in TypeScript/React? Check out our [frontend issues](https://github.com/papercups-io/papercups/labels/frontend)!
 - Looking to hack on some Elixir? Check out our [backend issues](https://github.com/papercups-io/papercups/labels/backend)!
+- [Issues for Hacktober Fest](https://github.com/papercups-io/papercups/labels/hacktoberfest) :rocket:
 
 ## Creating a PR
 
