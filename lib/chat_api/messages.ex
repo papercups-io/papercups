@@ -203,6 +203,8 @@ defmodule ChatApi.Messages do
     Logger.info("Sending notification: :new_message_email")
     # TODO: use Oban instead?
     Task.start(fn ->
+      # TODO: update params to just accept a full `message` object/struct,
+      # so that we can include some info about the customer in the email as well
       ChatApi.Emails.send_new_message_alerts(body, account_id, conversation_id)
     end)
 
