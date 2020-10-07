@@ -214,6 +214,9 @@ class ReportingDashboard extends React.Component<Props, State> {
       fromDate: dayjs(fromDate),
       toDate: dayjs(toDate),
     });
+    this.refreshReportingData().catch((err) =>
+      logger.error('Failed to fetch reporting data:', err)
+    );
   };
 
   render() {
