@@ -333,6 +333,8 @@ defmodule ChatApi.Slack do
   end
 
   def get_conversation_primary_user_id(conversation) do
+    # FIXME: this includes disabled users!
+    # TODO: do a round robin here instead of just getting the first user every time?
     conversation
     |> Map.get(:account)
     |> Map.get(:users)
