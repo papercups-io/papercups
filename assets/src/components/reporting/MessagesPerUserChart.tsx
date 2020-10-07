@@ -6,8 +6,6 @@ import {FAKE_DATA_USERS} from './support';
 
 const COLORS = [colors.green, colors.gold, colors.red, colors.volcano];
 
-// down by "sent" vs "received" (where "sent" is outbound, "received" is inbound)
-
 const renderActiveShape = (props: any) => {
   const RADIAN = Math.PI / 180;
   const {
@@ -31,6 +29,7 @@ const renderActiveShape = (props: any) => {
   const ex = mx + (cos >= 0 ? 1 : -1) * 22;
   const ey = my;
   const textAnchor = cos >= 0 ? 'start' : 'end';
+
   return (
     <g>
       <Sector
@@ -62,14 +61,16 @@ const renderActiveShape = (props: any) => {
         y={ey}
         textAnchor={textAnchor}
         fill={'#686D76'}
-      >{`${name}`}</text>
+      >
+        {name}
+      </text>
       <text
         x={ex + (cos >= 0 ? 1 : -1) * 12}
         y={ey}
         dy={30}
         textAnchor={textAnchor}
         fill={fill}
-      >{`Messages : ${value}`}</text>
+      >{`Messages: ${value}`}</text>
     </g>
   );
 };
@@ -95,12 +96,8 @@ const MessagesPerUserChart = ({data = FAKE_DATA_USERS}: {data: any}) => {
           paddingAngle={5}
           dataKey="value"
           activeShape={renderActiveShape}
-          onMouseEnter={(data, index) => {
-            setActiveindex(index);
-          }}
-          onMouseLeave={(data, index) => {
-            setActiveindex(-1);
-          }}
+          onMouseEnter={(data, index) => setActiveindex(index)}
+          onMouseLeave={(data, index) => setActiveindex(-1)}
           activeIndex={activeindex}
         >
           {data.map((entry: any, index: number) => (

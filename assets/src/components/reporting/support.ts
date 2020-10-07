@@ -8,70 +8,26 @@ export type ReportingDatum = {
 
 // Fake data for testing
 // TODO: replace with real data from API below!
-export const FAKE_DATA_USERS: Array<ReportingDatum> = [
+export const FAKE_DATA_USERS: Array<any> = [
   {
-    name: 'asdf@gmail.com',
+    name: 'alex@gmail.com',
     value: 4,
   },
   {
-    name: 'dddads@gmail.com',
+    name: 'kam@gmail.com',
     value: 6,
   },
   {
-    name: 'dsads@gmail.com',
+    name: 'joe@gmail.com',
     value: 6,
   },
   {
-    name: 'ttggdads@gmail.com',
-    value: 6,
+    name: 'stepan@gmail.com',
+    value: 7,
   },
   {
-    name: 'asdf@gmail.com',
+    name: 'emily@gmail.com',
     value: 4,
-  },
-  {
-    name: 'dddads@gmail.com',
-    value: 6,
-  },
-  {
-    name: 'dsads@gmail.com',
-    value: 6,
-  },
-  {
-    name: 'ttggdads@gmail.com',
-    value: 6,
-  },
-  {
-    name: 'asdf@gmail.com',
-    value: 4,
-  },
-  {
-    name: 'dddads@gmail.com',
-    value: 6,
-  },
-  {
-    name: 'dsads@gmail.com',
-    value: 6,
-  },
-  {
-    name: 'ttggdads@gmail.com',
-    value: 6,
-  },
-  {
-    name: 'asdf@gmail.com',
-    value: 4,
-  },
-  {
-    name: 'dddads@gmail.com',
-    value: 6,
-  },
-  {
-    name: 'dsads@gmail.com',
-    value: 6,
-  },
-  {
-    name: 'ttggdads@gmail.com',
-    value: 6,
   },
 ];
 export const FAKE_DATA: Array<ReportingDatum> = [
