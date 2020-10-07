@@ -154,7 +154,7 @@ class ReportingDashboard extends React.Component<Props, State> {
             <MessagesPerDayChart data={this.formatDailyStats()} />
           </Box>
 
-          <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
+          <Box mb={4} mx={10} sx={{height: 320, flex: 1}}>
             <Box mb={2}>
               <Text strong>Messages per user</Text>
             </Box>
@@ -179,17 +179,6 @@ class ReportingDashboard extends React.Component<Props, State> {
               <Text strong>Messages by day of week</Text>
             </Box>
             <MessagesByDayOfWeekChart data={...} />
-          </Box>
-          */}
-
-          {/*
-          // TODO: implement me!
-
-          <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
-            <Box mb={2}>
-              <Text strong>Messages per user</Text>
-            </Box>
-            <MessagesPerUserChart data={...} />
           </Box>
           */}
         </Flex>

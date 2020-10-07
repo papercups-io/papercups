@@ -6,7 +6,6 @@ import {FAKE_DATA_USERS} from './support';
 
 const COLORS = [colors.green, colors.gold, colors.red, colors.volcano];
 
-// TODO: display messages and conversations in this chart with messages broken
 // down by "sent" vs "received" (where "sent" is outbound, "received" is inbound)
 
 const renderActiveShape = (props: any) => {
