@@ -1,5 +1,5 @@
 ARG MIX_ENV=dev
-FROM elixir:1.10 as dev
+FROM elixir:1.11 as dev
 WORKDIR /usr/src/app
 ENV LANG=C.UTF-8
 
