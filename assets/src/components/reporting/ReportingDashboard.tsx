@@ -4,6 +4,7 @@ import {Box, Flex} from 'theme-ui';
 import * as API from '../../api';
 import {Alert, Paragraph, RangePicker, Text, Title} from '../common';
 import MessagesPerDayChart from './MessagesPerDayChart';
+import MessagesPerUserChart from './MessagesPerUserChart';
 import {ReportingDatum} from './support';
 import logger from '../../logger';
 
@@ -12,12 +13,21 @@ type DateCount = {
   date: string;
 };
 
+type MessageCount = {
+  count: number;
+  user: {
+    email: string;
+    id: number;
+  };
+};
+
 type Props = {};
 type State = {
   fromDate: dayjs.Dayjs;
   toDate: dayjs.Dayjs;
   messagesByDate: Array<DateCount>;
   conversationsByDate: Array<DateCount>;
+  messagesPerUser: Array<MessageCount>;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
@@ -26,6 +36,7 @@ class ReportingDashboard extends React.Component<Props, State> {
     toDate: dayjs(),
     messagesByDate: [],
     conversationsByDate: [],
+    messagesPerUser: [],
   };
 
   componentDidMount() {
@@ -46,7 +57,16 @@ class ReportingDashboard extends React.Component<Props, State> {
     this.setState({
       messagesByDate: data?.messages_by_date || [],
       conversationsByDate: data?.conversations_by_date || [],
+      messagesPerUser: data?.messages_per_user || [],
     });
+  };
+
+  formatUserStats = () => {
+    const {messagesPerUser = []} = this.state;
+    return messagesPerUser.map((data) => ({
+      name: data.user.email,
+      value: data.count,
+    }));
   };
 
   groupCountByDate = (data: Array<DateCount>) => {
@@ -132,6 +152,13 @@ class ReportingDashboard extends React.Component<Props, State> {
               <Text strong>New messages per day</Text>
             </Box>
             <MessagesPerDayChart data={this.formatDailyStats()} />
+          </Box>
+
+          <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
+            <Box mb={2}>
+              <Text strong>Messages per user</Text>
+            </Box>
+            <MessagesPerUserChart data={this.formatUserStats()} />
           </Box>
           {/*
           // TODO: implement me!
