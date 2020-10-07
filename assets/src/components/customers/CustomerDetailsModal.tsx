@@ -2,10 +2,42 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import {capitalize} from 'lodash';
 import {Button, Modal, Paragraph, Text} from '../common';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
+
+export const CustomerMetadataSection = ({
+  metadata,
+}: {
+  metadata: Record<string, string>;
+}) => {
+  return !metadata ? null : (
+    <React.Fragment>
+      <Box mb={2}>
+        <Box>
+          <Text strong>Custom metadata</Text>
+        </Box>
+      </Box>
+
+      <Flex sx={{justifyContent: 'space-between', flexWrap: 'wrap'}}>
+        {Object.entries(metadata).map(([key, value]: any) => {
+          const label = capitalize(key).split('_').join(' ');
+          return (
+            <Box mb={2} sx={{flex: '0 50%'}} key={key}>
+              <Box>
+                <Text strong>{label}</Text>
+              </Box>
+
+              <Paragraph>{value.toString()}</Paragraph>
+            </Box>
+          );
+        })}
+      </Flex>
+    </React.Fragment>
+  );
+};
 
 export const CustomerDetailsContent = ({customer}: {customer: any}) => {
   const {
@@ -105,45 +137,7 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
         </Box>
       </Flex>
 
-      <Box mb={2}>
-        <Box>
-          <Text strong>Metadata</Text>
-        </Box>
-        {Object.entries(metadata).map(([key, value]: any) => {
-          // Note: the array below contains the date formats that will be captured and formatted by dayjs
-          // This approach is based on the examples found here: https://day.js.org/docs/en/parse/string-format
-          const dateFormatsArr = [
-            'YYYY-MM-DD',
-            'MM-DD-YYYY',
-            'MM-DD-YY',
-            'DD-MM-YYYY',
-            'DD-MM-YY',
-            'YYYY/MM/DD',
-            'MM/DD/YYYY',
-            'MM/DD/YY',
-            'DD/MM/YYYY',
-            'DD/MM/YY',
-          ];
-          if (dayjs(value, dateFormatsArr).isValid() === true) {
-            const formattedDate = dayjs.utc(value).format('MMMM DD, YYYY');
-            return (
-              <Paragraph key={key}>
-                {key.charAt(0).toUpperCase() +
-                  key.slice(1).split('_').join(' ')}
-                : {formattedDate}
-              </Paragraph>
-            );
-          } else {
-            return (
-              <Paragraph key={key}>
-                {key.charAt(0).toUpperCase() +
-                  key.slice(1).split('_').join(' ')}
-                : {value.toString()}
-              </Paragraph>
-            );
-          }
-        })}
-      </Box>
+      <CustomerMetadataSection metadata={metadata} />
     </Box>
   );
 };
