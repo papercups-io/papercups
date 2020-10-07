@@ -6,7 +6,8 @@ defmodule ChatApi.SlackTest do
   alias ChatApi.{
     Conversations,
     Slack,
-    SlackConversationThreads
+    SlackConversationThreads,
+    Users
   }
 
   describe "slack" do
@@ -158,6 +159,23 @@ defmodule ChatApi.SlackTest do
       conversation = Conversations.get_conversation!(id)
 
       assert conversation.assignee_id == primary_user.id
+    end
+
+    test "fetch_valid_user/1 reject disabled users and fetch the oldest user.",
+         %{account: account} do
+      {:ok, disabled_user} =
+        account
+        |> user_fixture()
+        |> Users.disable_user()
+
+      primary_user = user_fixture(account)
+
+      # Make sure that secondary_user is inserted later.
+      :timer.sleep(100)
+      secondary_user = user_fixture(account)
+
+      users = [disabled_user, secondary_user, primary_user]
+      assert primary_user.id === Slack.fetch_valid_user(users)
     end
 
     test "create_new_slack_conversation_thread/2 raises if no primary user exists", %{

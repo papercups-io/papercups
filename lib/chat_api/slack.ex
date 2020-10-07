@@ -338,11 +338,18 @@ defmodule ChatApi.Slack do
     conversation
     |> Map.get(:account)
     |> Map.get(:users)
+    |> fetch_valid_user()
+  end
+
+  def fetch_valid_user([]),
+    do: raise("No users associated with the conversation's account")
+
+  def fetch_valid_user(users) do
+    users
+    |> Enum.reject(& &1.disabled_at)
+    |> Enum.sort_by(& &1.inserted_at)
     |> List.first()
-    |> case do
-      nil -> raise "No users associated with the conversation's account"
-      user -> user.id
-    end
+    |> Map.get(:id)
   end
 
   def is_valid_access_token?(token) do
