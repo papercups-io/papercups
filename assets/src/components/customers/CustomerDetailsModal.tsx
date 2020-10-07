@@ -72,7 +72,7 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
         </Box>
 
         {lastSeenUrl ? (
-          <a href="lastSeenUrl" target="_blank" rel="noopener noreferrer">
+          <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
             {lastSeenUrl}
           </a>
         ) : (

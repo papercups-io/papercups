@@ -1,4 +1,5 @@
 import ApiOutlined from '@ant-design/icons/ApiOutlined';
+import CalendarOutlined from '@ant-design/icons/CalendarOutlined';
 import CheckCircleTwoTone from '@ant-design/icons/CheckCircleTwoTone';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
 import CreditCardOutlined from '@ant-design/icons/CreditCardOutlined';
@@ -6,10 +7,12 @@ import CreditCardTwoTone from '@ant-design/icons/CreditCardTwoTone';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import DeleteTwoTone from '@ant-design/icons/DeleteTwoTone';
 import DownOutlined from '@ant-design/icons/DownOutlined';
+import GlobalOutlined from '@ant-design/icons/GlobalOutlined';
 import InfoCircleOutlined from '@ant-design/icons/InfoCircleOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
+import PhoneOutlined from '@ant-design/icons/PhoneOutlined';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
 import RightCircleOutlined from '@ant-design/icons/RightCircleOutlined';
 import SendOutlined from '@ant-design/icons/SendOutlined';
@@ -25,6 +28,7 @@ import UserOutlined from '@ant-design/icons/UserOutlined';
 
 export {
   ApiOutlined,
+  CalendarOutlined,
   CheckCircleTwoTone,
   CheckOutlined,
   CreditCardOutlined,
@@ -32,10 +36,12 @@ export {
   DeleteOutlined,
   DeleteTwoTone,
   DownOutlined,
+  GlobalOutlined,
   InfoCircleOutlined,
   LoadingOutlined,
   LogoutOutlined,
   MailOutlined,
+  PhoneOutlined,
   PlusOutlined,
   RightCircleOutlined,
   SendOutlined,
