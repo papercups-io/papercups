@@ -199,7 +199,9 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
               <GlobalOutlined /> {formattedTimezone}
             </Box>
           )}
-          <Box mb={1}>{[os, browser].join(' · ') || 'Unknown'}</Box>
+          <Box mb={1}>
+            {[os, browser].filter(Boolean).join(' · ') || 'Unknown'}
+          </Box>
           <Box mb={1}>
             <Text type="secondary">IP:</Text> {lastIpAddress || 'Unknown'}
           </Box>
