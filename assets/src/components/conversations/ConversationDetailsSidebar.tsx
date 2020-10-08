@@ -155,9 +155,11 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
           </Box>
           <Box mb={1}>
             {lastSeenUrl ? (
-              <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
-                {pathname && pathname.length > 1 ? pathname : lastSeenUrl}
-              </a>
+              <Tooltip title={lastSeenUrl}>
+                <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
+                  {pathname && pathname.length > 1 ? pathname : lastSeenUrl}
+                </a>
+              </Tooltip>
             ) : (
               <Text>Unknown URL</Text>
             )}
