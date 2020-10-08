@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 import {colors, Layout, notification, Sider, Text, Title} from '../common';
 import {sleep} from '../../utils';
 import ConversationHeader from './ConversationHeader';
@@ -7,6 +7,7 @@ import ConversationItem from './ConversationItem';
 import ConversationClosing from './ConversationClosing';
 import ConversationMessages from './ConversationMessages';
 import ConversationFooter from './ConversationFooter';
+import ConversationDetailsSidebar from './ConversationDetailsSidebar';
 
 type Props = {
   title?: string;
@@ -380,27 +381,52 @@ class ConversationsContainer extends React.Component<Props, State> {
             onReopenConversation={this.handleReopenConversation}
             onDeleteConversation={this.handleDeleteConversation}
           />
-
-          <ConversationMessages
-            messages={messages}
-            currentUser={currentUser}
-            customer={selectedCustomer}
-            loading={loading}
-            isClosing={isClosingSelected}
-            showGetStarted={showGetStarted}
-            setScrollRef={(el) => (this.scrollToEl = el)}
-          />
-
-          {selectedConversation && (
-            // NB: the `key` forces a rerender so the input can clear
-            // any text from the last conversation and trigger autofocus
-            <ConversationFooter
-              key={selectedConversation.id}
-              onSendMessage={this.handleSendMessage}
+          <Flex
+            sx={{
+              position: 'relative',
+              flex: 1,
+              flexDirection: 'column',
+              minHeight: 0,
+              minWidth: 640,
+              pr: 240, // TODO: animate this if we make it toggle-able
+            }}
+          >
+            <ConversationMessages
+              messages={messages}
+              currentUser={currentUser}
+              customer={selectedCustomer}
+              loading={loading}
+              isClosing={isClosingSelected}
+              showGetStarted={showGetStarted}
+              setScrollRef={(el) => (this.scrollToEl = el)}
             />
-          )}
 
-          {/* <Box sx={{width: 240, border: '1px solid black'}}>Test?</Box> */}
+            {selectedConversation && (
+              // NB: the `key` forces a rerender so the input can clear
+              // any text from the last conversation and trigger autofocus
+              <ConversationFooter
+                key={selectedConversation.id}
+                onSendMessage={this.handleSendMessage}
+              />
+            )}
+
+            {selectedConversation && (
+              <Box
+                sx={{
+                  width: 240,
+                  height: '100%',
+                  overflowY: 'scroll',
+                  position: 'absolute',
+                  right: 0,
+                }}
+              >
+                <ConversationDetailsSidebar
+                  customer={selectedCustomer}
+                  conversation={selectedConversation}
+                />
+              </Box>
+            )}
+          </Flex>
         </Layout>
       </Layout>
     );

@@ -43,8 +43,10 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
     <Box
       sx={{
         width: '100%',
+        minHeight: '100%',
         bg: 'rgb(245, 245, 245)',
         border: `1px solid rgba(0,0,0,.06)`,
+        boxShadow: 'inset rgba(0, 0, 0, 0.1) 0px 0px 4px',
         flex: 1,
       }}
     >
@@ -118,18 +120,17 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
             <PhoneOutlined style={{color: colors.primary}} />
             <Box ml={2}>{phone || 'Unknown'}</Box>
           </Flex>
-          <Flex
-            mb={1}
-            sx={{
-              alignItems: 'center',
-              maxWidth: '100%',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-            }}
-          >
+          <Flex mb={1} sx={{alignItems: 'center'}}>
             <UserOutlined style={{color: colors.primary}} />
-            <Box ml={2}>
+            <Box
+              ml={2}
+              sx={{
+                maxWidth: '100%',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+              }}
+            >
               <Text type="secondary">ID:</Text>{' '}
               <Tooltip title={externalId || customerId} placement="left">
                 {externalId || customerId}

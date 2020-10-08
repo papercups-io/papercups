@@ -268,7 +268,8 @@ const ConversationHeader = ({
         </Flex>
       </Flex>
 
-      {hasCustomerMetadata(customer) && (
+      {/* NB: just hiding this for now */}
+      {false && hasCustomerMetadata(customer) && (
         <Box
           py={2}
           mx={4}
