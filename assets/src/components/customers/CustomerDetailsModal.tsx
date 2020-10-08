@@ -15,7 +15,11 @@ export const CustomerMetadataSection = ({
 }) => {
   return !metadata ? null : (
     <React.Fragment>
-      <Box mb={2}>
+      <Box
+        mb={2}
+        py={2}
+        sx={{borderTop: '1px solid #f0f0f0', borderBottom: '1px solid #f0f0f0'}}
+      >
         <Box>
           <Text strong>Custom metadata</Text>
         </Box>

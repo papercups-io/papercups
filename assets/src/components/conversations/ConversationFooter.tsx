@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Footer, TextArea} from '../common';
+import {colors, Button, TextArea} from '../common';
 
 const ConversationFooter = ({
   onSendMessage,
@@ -27,7 +27,7 @@ const ConversationFooter = ({
   };
 
   return (
-    <Footer style={{padding: 0}}>
+    <Box style={{flex: '0 0 auto'}}>
       <Box px={4} pt={0} pb={4} backgroundColor={colors.white}>
         <Box
           p={2}
@@ -57,7 +57,7 @@ const ConversationFooter = ({
           </form>
         </Box>
       </Box>
-    </Footer>
+    </Box>
   );
 };
 
