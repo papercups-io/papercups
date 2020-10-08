@@ -4,6 +4,7 @@ defmodule ChatApi.Tags.Tag do
 
   alias ChatApi.Accounts.Account
   alias ChatApi.Tags.{ConversationTag, CustomerTag}
+  alias ChatApi.Users.User
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
