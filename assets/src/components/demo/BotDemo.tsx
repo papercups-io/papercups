@@ -269,7 +269,10 @@ class Demo extends React.Component<Props, State> {
 
         <Flex mb={4} sx={{alignItems: 'center'}}>
           <Box mr={3}>
-            <Text strong>Ready to get started?</Text>
+            <Text strong>
+              Our chatbot is still in beta at the moment. Sign up at
+              papercups.io to be notified of its release
+            </Text>
           </Box>
           <Link to="/register">
             <Button type="primary" icon={<RightCircleOutlined />}>
