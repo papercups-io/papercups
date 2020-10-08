@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   useLocation,
   Switch,
@@ -51,14 +51,29 @@ const Dashboard = (props: RouteComponentProps) => {
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
 
+  const [notificationMessage, setNotificationMessage] = useState('Papercups');
+
+  const INTERVAL = 2000; //Set flashing interval
+
+  const _toggleNotificationMessage = () => {
+    if (notificationMessage.startsWith('New message')) {
+      setNotificationMessage('Papercups');
+    } else {
+      setNotificationMessage(`New message${totalNumUnread === 1 ? '' : 's'}`);
+    }
+  };
+
+  useEffect(() => {
+    const interval = setInterval(_toggleNotificationMessage, INTERVAL);
+    return () => clearInterval(interval);
+  });
+
   return (
     <Layout>
       <Helmet>
         <title>
           {totalNumUnread
-            ? `(${totalNumUnread}) New message${
-                totalNumUnread === 1 ? '' : 's'
-              }!`
+            ? `(${totalNumUnread}) ${notificationMessage}`
             : 'Papercups'}
         </title>
       </Helmet>
