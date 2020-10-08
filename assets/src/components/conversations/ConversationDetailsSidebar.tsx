@@ -14,6 +14,22 @@ import {
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
+const DetailsSectionCard = ({children}: {children: any}) => {
+  return (
+    <Box
+      my={2}
+      p={2}
+      sx={{
+        bg: colors.white,
+        border: '1px solid rgba(0,0,0,.06)',
+        borderRadius: 4,
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
+
 type Props = {
   customer: any;
   conversation: any;
@@ -35,7 +51,9 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
     current_url: lastSeenUrl,
     time_zone: timezone,
     ip: lastIpAddress,
+    metadata = {},
   } = customer;
+  const hasMetadata = !!metadata && Object.keys(metadata).length > 0;
   const formattedTimezone =
     timezone && timezone.length ? timezone.split('_').join(' ') : null;
 
@@ -77,22 +95,14 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
           </Tag>
         </Box>
 
-        {/*
-          <Box
-            mt={2}
-            p={2}
-            sx={{
-              bg: colors.white,
-              border: '1px solid rgba(0,0,0,.06)',
-              borderRadius: 4,
-            }}
-          >
+        {false && (
+          <DetailsSectionCard>
             <Box mb={2}>
               <Text strong>Tags</Text>
             </Box>
             <Box>Conversation tags</Box>
-          </Box>
-          */}
+          </DetailsSectionCard>
+        )}
       </Box>
 
       <Box px={2} py={3}>
@@ -100,18 +110,11 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
           <Text strong>Customer details</Text>
         </Box>
 
-        <Box
-          my={2}
-          p={2}
-          sx={{
-            bg: colors.white,
-            border: '1px solid rgba(0,0,0,.06)',
-            borderRadius: 4,
-          }}
-        >
+        <DetailsSectionCard>
           <Box mb={2}>
             <Text strong>{name || 'Anonymous User'}</Text>
           </Box>
+
           <Flex mb={1} sx={{alignItems: 'center'}}>
             <MailOutlined style={{color: colors.primary}} />
             <Box ml={2}>{email || 'Unknown'}</Box>
@@ -137,17 +140,9 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
               </Tooltip>
             </Box>
           </Flex>
-        </Box>
+        </DetailsSectionCard>
 
-        <Box
-          my={2}
-          p={2}
-          sx={{
-            bg: colors.white,
-            border: '1px solid rgba(0,0,0,.06)',
-            borderRadius: 4,
-          }}
-        >
+        <DetailsSectionCard>
           <Box mb={2}>
             <Text strong>Last seen</Text>
           </Box>
@@ -167,17 +162,9 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
               <Text>Unknown URL</Text>
             )}
           </Box>
-        </Box>
+        </DetailsSectionCard>
 
-        <Box
-          my={2}
-          p={2}
-          sx={{
-            bg: colors.white,
-            border: '1px solid rgba(0,0,0,.06)',
-            borderRadius: 4,
-          }}
-        >
+        <DetailsSectionCard>
           <Box mb={2}>
             <Text strong>First seen</Text>
           </Box>
@@ -185,17 +172,25 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
             <CalendarOutlined />{' '}
             {createdAt ? dayjs.utc(createdAt).format('MMMM DD, YYYY') : 'N/A'}
           </Box>
-        </Box>
+        </DetailsSectionCard>
 
-        <Box
-          my={2}
-          p={2}
-          sx={{
-            bg: colors.white,
-            border: '1px solid rgba(0,0,0,.06)',
-            borderRadius: 4,
-          }}
-        >
+        {hasMetadata && (
+          <DetailsSectionCard>
+            <Box mb={2}>
+              <Text strong>Metadata</Text>
+            </Box>
+
+            {Object.entries(metadata).map(([key, value]) => {
+              return (
+                <Box key={key} mb={1}>
+                  <Text type="secondary">{key}:</Text> {String(value)}
+                </Box>
+              );
+            })}
+          </DetailsSectionCard>
+        )}
+
+        <DetailsSectionCard>
           <Box mb={2}>
             <Text strong>Device</Text>
           </Box>
@@ -208,24 +203,16 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
           <Box mb={1}>
             <Text type="secondary">IP:</Text> {lastIpAddress || 'Unknown'}
           </Box>
-        </Box>
+        </DetailsSectionCard>
 
-        {/*
-          <Box
-            my={2}
-            p={2}
-            sx={{
-              bg: colors.white,
-              border: '1px solid rgba(0,0,0,.06)',
-              borderRadius: 4,
-            }}
-          >
+        {false && (
+          <DetailsSectionCard>
             <Box mb={2}>
               <Text strong>Tags</Text>
             </Box>
             <Box>Customer tags</Box>
-          </Box>
-          */}
+          </DetailsSectionCard>
+        )}
       </Box>
     </Box>
   );
