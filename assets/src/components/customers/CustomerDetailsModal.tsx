@@ -2,10 +2,42 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import {capitalize} from 'lodash';
 import {Button, Modal, Paragraph, Text} from '../common';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
+
+export const CustomerMetadataSection = ({
+  metadata,
+}: {
+  metadata: Record<string, string>;
+}) => {
+  return !metadata ? null : (
+    <React.Fragment>
+      <Box mb={2}>
+        <Box>
+          <Text strong>Custom metadata</Text>
+        </Box>
+      </Box>
+
+      <Flex sx={{justifyContent: 'space-between', flexWrap: 'wrap'}}>
+        {Object.entries(metadata).map(([key, value]: any) => {
+          const label = capitalize(key).split('_').join(' ');
+          return (
+            <Box mb={2} sx={{flex: '0 50%'}} key={key}>
+              <Box>
+                <Text strong>{label}</Text>
+              </Box>
+
+              <Paragraph>{value.toString()}</Paragraph>
+            </Box>
+          );
+        })}
+      </Flex>
+    </React.Fragment>
+  );
+};
 
 export const CustomerDetailsContent = ({customer}: {customer: any}) => {
   const {
@@ -19,6 +51,7 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
     updated_at: lastUpdatedAt,
     current_url: lastSeenUrl,
     ip: lastIpAddress,
+    metadata,
   } = customer;
 
   return (
@@ -103,6 +136,8 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
           </Paragraph>
         </Box>
       </Flex>
+
+      <CustomerMetadataSection metadata={metadata} />
     </Box>
   );
 };
