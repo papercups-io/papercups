@@ -33,34 +33,36 @@ const DetailsSectionCard = ({children}: {children: any}) => {
   );
 };
 
+// TODO: find a way to clean this up a bit...
+// Maybe experiment with `useReducer`, or just avoid using hooks in general?
 const CustomerTags = ({customerId}: {customerId: string}) => {
   const [isLoading, setLoading] = React.useState(false);
   const [isEditing, setEditing] = React.useState(false);
   const [isUpdating, setUpdating] = React.useState(false);
-  const [customerTags, setCustomerTags] = React.useState([]);
+  const [currentTags, setCurrentTags] = React.useState([]);
   const [updatedTags, setUpdatedTags] = React.useState([]);
   const [tagOptions, setTagOptions] = React.useState([]);
 
-  // eslint-disable-next-line
   React.useEffect(() => {
     setLoading(true);
 
-    refreshCustomerTags().then(() => setLoading(false));
+    refreshLatestTags().then(() => setLoading(false));
+    // eslint-disable-next-line
   }, [customerId]);
 
   function handleStartEditing() {
     setEditing(true);
   }
 
-  function refreshCustomerTags() {
+  function refreshLatestTags() {
     return Promise.all([API.fetchCustomer(customerId), API.fetchAllTags()])
       .then(([customer, tags]) => {
-        const {tags: customerTags = []} = customer;
-        const formattedTags = customerTags.map((tag: any) => {
+        const {tags: currentTags = []} = customer;
+        const formattedTags = currentTags.map((tag: any) => {
           return {id: tag.id, label: tag.name, value: tag.name};
         });
 
-        setCustomerTags(customerTags);
+        setCurrentTags(currentTags);
         setUpdatedTags(formattedTags);
         setTagOptions(tags);
       })
@@ -69,7 +71,7 @@ const CustomerTags = ({customerId}: {customerId: string}) => {
       });
   }
 
-  function handleChangeCustomerTags(values: Array<string>, tags: any) {
+  function handleChangeTags(values: Array<string>, tags: any) {
     const updated = tags.map((t: any, idx: number) => {
       const value = values[idx];
 
@@ -79,10 +81,10 @@ const CustomerTags = ({customerId}: {customerId: string}) => {
     setUpdatedTags(updated);
   }
 
-  function handleUpdateCustomerTags() {
+  function handleUpdateTags() {
     setUpdating(true);
 
-    const initialIds = customerTags.map((t: any) => t.id);
+    const initialIds = currentTags.map((t: any) => t.id);
     const remainingIds = updatedTags
       .filter((t: any) => !!t.id)
       .map((t: any) => t.id);
@@ -115,7 +117,7 @@ const CustomerTags = ({customerId}: {customerId: string}) => {
       .catch((err) => {
         logger.error('Failed to update customer tags:', err);
       })
-      .then(() => refreshCustomerTags())
+      .then(() => refreshLatestTags())
       .then(() => {
         setEditing(false);
         setUpdating(false);
@@ -136,7 +138,7 @@ const CustomerTags = ({customerId}: {customerId: string}) => {
             style={{width: '100%'}}
             placeholder="Add tags"
             value={updatedTags.map((t: any) => t.value)}
-            onChange={handleChangeCustomerTags}
+            onChange={handleChangeTags}
             options={tagOptions.map((tag: any) => {
               const {id, name} = tag;
 
@@ -145,8 +147,8 @@ const CustomerTags = ({customerId}: {customerId: string}) => {
           />
         ) : (
           <Flex sx={{flexWrap: 'wrap'}}>
-            {customerTags && customerTags.length ? (
-              customerTags.map((tag: any, idx: number) => {
+            {currentTags && currentTags.length ? (
+              currentTags.map((tag: any, idx: number) => {
                 const options = ['magenta', 'red', 'volcano', 'purple', 'blue'];
                 const color = options[idx % 5];
                 const {id, name} = tag;
@@ -171,7 +173,7 @@ const CustomerTags = ({customerId}: {customerId: string}) => {
             size="small"
             type="primary"
             loading={isUpdating}
-            onClick={handleUpdateCustomerTags}
+            onClick={handleUpdateTags}
           >
             Done
           </Button>
@@ -181,7 +183,7 @@ const CustomerTags = ({customerId}: {customerId: string}) => {
             loading={isUpdating}
             onClick={handleStartEditing}
           >
-            {customerTags && customerTags.length ? 'Edit' : 'Add'}
+            {currentTags && currentTags.length ? 'Edit' : 'Add'}
           </Button>
         )}
       </Box>
