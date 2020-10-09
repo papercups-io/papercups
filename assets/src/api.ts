@@ -750,3 +750,18 @@ export const fetchReportingData = async (
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const sendProductFeedback = (
+  message: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/feedback`)
+    .send({message: message})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
