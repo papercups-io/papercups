@@ -64,8 +64,7 @@ const Dashboard = (props: RouteComponentProps) => {
   };
 
   useEffect(() => {
-    const interval = setInterval(_toggleNotificationMessage, INTERVAL);
-    return () => clearInterval(interval);
+    const interval = setTimeout(_toggleNotificationMessage, INTERVAL);
   });
 
   return (
