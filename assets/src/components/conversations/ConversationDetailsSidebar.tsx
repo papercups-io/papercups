@@ -2,7 +2,7 @@ import React from 'react';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Select, Tag, Text, Tooltip} from '../common';
+import {colors, Tag, Text, Tooltip} from '../common';
 import {
   CalendarOutlined,
   GlobalOutlined,
@@ -10,9 +10,7 @@ import {
   PhoneOutlined,
   UserOutlined,
 } from '../icons';
-import Spinner from '../Spinner';
-import * as API from '../../api';
-import logger from '../../logger';
+import SidebarCustomerTags from './SidebarCustomerTags';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -29,164 +27,6 @@ const DetailsSectionCard = ({children}: {children: any}) => {
       }}
     >
       {children}
-    </Box>
-  );
-};
-
-// TODO: find a way to clean this up a bit...
-// Maybe experiment with `useReducer`, or just avoid using hooks in general?
-const CustomerTags = ({customerId}: {customerId: string}) => {
-  const [isLoading, setLoading] = React.useState(false);
-  const [isEditing, setEditing] = React.useState(false);
-  const [isUpdating, setUpdating] = React.useState(false);
-  const [currentTags, setCurrentTags] = React.useState([]);
-  const [updatedTags, setUpdatedTags] = React.useState([]);
-  const [tagOptions, setTagOptions] = React.useState([]);
-
-  React.useEffect(() => {
-    setLoading(true);
-
-    refreshLatestTags().then(() => setLoading(false));
-    // eslint-disable-next-line
-  }, [customerId]);
-
-  function handleStartEditing() {
-    setEditing(true);
-  }
-
-  function refreshLatestTags() {
-    return Promise.all([API.fetchCustomer(customerId), API.fetchAllTags()])
-      .then(([customer, tags]) => {
-        const {tags: currentTags = []} = customer;
-        const formattedTags = currentTags.map((tag: any) => {
-          return {id: tag.id, label: tag.name, value: tag.name};
-        });
-
-        setCurrentTags(currentTags);
-        setUpdatedTags(formattedTags);
-        setTagOptions(tags);
-      })
-      .catch((err) => {
-        logger.error('Failed to fetch customer details:', err);
-      });
-  }
-
-  function handleChangeTags(values: Array<string>, tags: any) {
-    const updated = tags.map((t: any, idx: number) => {
-      const value = values[idx];
-
-      return {...t, value, label: value};
-    });
-
-    setUpdatedTags(updated);
-  }
-
-  function handleUpdateTags() {
-    setUpdating(true);
-
-    const initialIds = currentTags.map((t: any) => t.id);
-    const remainingIds = updatedTags
-      .filter((t: any) => !!t.id)
-      .map((t: any) => t.id);
-    const newTagsToCreate = updatedTags
-      .filter((t: any) => !t.id)
-      .map((t: any) => t.value);
-    const tagIdsToAdd = remainingIds.filter(
-      (tagId) => tagId && initialIds.indexOf(tagId) === -1
-    );
-    const tagIdsToRemove = initialIds.filter(
-      (tagId) => remainingIds.indexOf(tagId) === -1
-    );
-
-    const promises = [
-      ...newTagsToCreate.map((name) =>
-        API.createTag(name).then(({id: tagId}) =>
-          API.addCustomerTag(customerId, tagId)
-        )
-      ),
-      ...tagIdsToAdd.map((tagId) => API.addCustomerTag(customerId, tagId)),
-      ...tagIdsToRemove.map((tagId) =>
-        API.removeCustomerTag(customerId, tagId)
-      ),
-    ];
-
-    Promise.all(promises)
-      .then((results) => {
-        logger.debug('Successfully updated customer tags:', results);
-      })
-      .catch((err) => {
-        logger.error('Failed to update customer tags:', err);
-      })
-      .then(() => refreshLatestTags())
-      .then(() => {
-        setEditing(false);
-        setUpdating(false);
-      });
-  }
-
-  if (isLoading) {
-    return <Spinner size={16} />;
-  }
-
-  return (
-    <Box>
-      <Box mb={1}>
-        {/* TODO: figure out a nicer design for this */}
-        {isEditing ? (
-          <Select
-            mode="tags"
-            style={{width: '100%'}}
-            placeholder="Add tags"
-            value={updatedTags.map((t: any) => t.value)}
-            onChange={handleChangeTags}
-            options={tagOptions.map((tag: any) => {
-              const {id, name} = tag;
-
-              return {id, key: id, label: name, value: name};
-            })}
-          />
-        ) : (
-          <Flex sx={{flexWrap: 'wrap'}}>
-            {currentTags && currentTags.length ? (
-              currentTags.map((tag: any, idx: number) => {
-                const options = ['magenta', 'red', 'volcano', 'purple', 'blue'];
-                const color = options[idx % 5];
-                const {id, name} = tag;
-
-                return (
-                  <Box key={id} my={1}>
-                    <Tag key={id} color={color}>
-                      {name}
-                    </Tag>
-                  </Box>
-                );
-              })
-            ) : (
-              <Text type="secondary">None</Text>
-            )}
-          </Flex>
-        )}
-      </Box>
-      <Box mb={1}>
-        {isEditing ? (
-          <Button
-            size="small"
-            type="primary"
-            loading={isUpdating}
-            onClick={handleUpdateTags}
-          >
-            Done
-          </Button>
-        ) : (
-          <Button
-            size="small"
-            loading={isUpdating}
-            onClick={handleStartEditing}
-          >
-            {currentTags && currentTags.length ? 'Edit' : 'Add'}
-          </Button>
-        )}
-      </Box>
     </Box>
   );
 };
@@ -374,7 +214,7 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
           <Box mb={2}>
             <Text strong>Tags</Text>
           </Box>
-          <CustomerTags customerId={customerId} />
+          <SidebarCustomerTags customerId={customerId} />
         </DetailsSectionCard>
       </Box>
     </Box>
