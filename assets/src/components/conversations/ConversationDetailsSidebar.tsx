@@ -10,6 +10,7 @@ import {
   PhoneOutlined,
   UserOutlined,
 } from '../icons';
+import SidebarCustomerTags from './SidebarCustomerTags';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -209,14 +210,12 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
           </Box>
         </DetailsSectionCard>
 
-        {false && (
-          <DetailsSectionCard>
-            <Box mb={2}>
-              <Text strong>Tags</Text>
-            </Box>
-            <Box>Customer tags</Box>
-          </DetailsSectionCard>
-        )}
+        <DetailsSectionCard>
+          <Box mb={2}>
+            <Text strong>Tags</Text>
+          </Box>
+          <SidebarCustomerTags customerId={customerId} />
+        </DetailsSectionCard>
       </Box>
     </Box>
   );
