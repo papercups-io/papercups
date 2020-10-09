@@ -25,13 +25,13 @@ const initial: State = {
 
 type Action = {
   type:
-    | 'loading:start'
-    | 'loading:stop'
-    | 'editing:start'
-    | 'updating:start'
-    | 'updating:done'
-    | 'tags:init'
-    | 'tags:update';
+    | 'loading/start'
+    | 'loading/stop'
+    | 'editing/start'
+    | 'updating/start'
+    | 'updating/done'
+    | 'tags/init'
+    | 'tags/update';
   payload?: any;
 };
 
@@ -39,24 +39,24 @@ const reducer = (state: State, action: Action) => {
   const {type, payload} = action;
 
   switch (type) {
-    case 'loading:start':
+    case 'loading/start':
       return {...state, loading: true};
-    case 'loading:stop':
+    case 'loading/stop':
       return {...state, loading: false};
-    case 'editing:start':
+    case 'editing/start':
       return {...state, editing: true};
-    case 'updating:start':
+    case 'updating/start':
       return {...state, updating: true};
-    case 'updating:done':
+    case 'updating/done':
       return {...state, updating: false, editing: false};
-    case 'tags:init':
+    case 'tags/init':
       return {
         ...state,
         current: payload.current,
         updated: payload.updated,
         options: payload.options,
       };
-    case 'tags:update':
+    case 'tags/update':
       return {...state, updated: payload};
     default:
       return state;
@@ -69,21 +69,21 @@ const SidebarCustomerTags = ({customerId}: {customerId: string}) => {
   const [state, dispatch] = React.useReducer(reducer, initial);
 
   React.useEffect(() => {
-    dispatch({type: 'loading:start'});
+    dispatch({type: 'loading/start'});
 
-    refreshLatestTags().then(() => dispatch({type: 'loading:stop'}));
+    refreshLatestTags().then(() => dispatch({type: 'loading/stop'}));
     // eslint-disable-next-line
   }, [customerId]);
 
   function handleStartEditing() {
-    dispatch({type: 'editing:start'});
+    dispatch({type: 'editing/start'});
   }
 
   async function refreshLatestTags() {
     return Promise.all([API.fetchCustomer(customerId), API.fetchAllTags()])
       .then(([customer, tags]) => {
         dispatch({
-          type: 'tags:init',
+          type: 'tags/init',
           payload: {
             current: customer.tags,
             updated: customer.tags.map((tag: any) => {
@@ -105,11 +105,11 @@ const SidebarCustomerTags = ({customerId}: {customerId: string}) => {
       return {...t, value, label: value};
     });
 
-    dispatch({type: 'tags:update', payload: updated});
+    dispatch({type: 'tags/update', payload: updated});
   }
 
   function handleUpdateTags() {
-    dispatch({type: 'updating:start'});
+    dispatch({type: 'updating/start'});
 
     const {current = [], updated = []} = state;
     const currentIds = current.map((t: any) => t.id);
@@ -148,7 +148,7 @@ const SidebarCustomerTags = ({customerId}: {customerId: string}) => {
         logger.error('Failed to update customer tags:', err);
       })
       .then(() => refreshLatestTags())
-      .then(() => dispatch({type: 'updating:done'}));
+      .then(() => dispatch({type: 'updating/done'}));
   }
 
   if (state.loading) {
