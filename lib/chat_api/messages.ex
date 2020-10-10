@@ -196,7 +196,8 @@ defmodule ChatApi.Messages do
         %Message{
           body: body,
           account_id: account_id,
-          conversation_id: conversation_id
+          conversation_id: conversation_id,
+          customer_id: customer_id
         } = message,
         :new_message_email
       ) do
@@ -205,7 +206,7 @@ defmodule ChatApi.Messages do
     Task.start(fn ->
       # TODO: update params to just accept a full `message` object/struct,
       # so that we can include some info about the customer in the email as well
-      ChatApi.Emails.send_new_message_alerts(body, account_id, conversation_id)
+      ChatApi.Emails.send_new_message_alerts(message)
     end)
 
     message
