@@ -47,7 +47,7 @@ const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
   const {unreadByCategory: unread} = useConversations();
-  const [notificationMessage, setNotificationMessage] = useState('Papercups');
+  const [htmlTitle, setHtmlTitle] = useState('Papercups');
 
   const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
   const totalNumUnread = (unread && unread.all) || 0;
@@ -56,27 +56,29 @@ const Dashboard = (props: RouteComponentProps) => {
   const logout = () => auth.logout().then(() => props.history.push('/login'));
 
   const toggleNotificationMessage = () => {
-    if (notificationMessage.startsWith('New message')) {
-      setNotificationMessage('Papercups');
+    if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups')) {
+      setHtmlTitle(
+        `(${totalNumUnread}) New message${totalNumUnread === 1 ? '' : 's'}!`
+      );
     } else {
-      setNotificationMessage(`New message${totalNumUnread === 1 ? '' : 's'}`);
+      setHtmlTitle('Papercups');
     }
   };
 
   useEffect(() => {
+    let timeout;
+
     if (totalNumUnread > 0) {
-      setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
+      timeout = setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
+    } else {
+      clearTimeout(timeout);
     }
   });
 
   return (
     <Layout>
-      <Helmet>
-        <title>
-          {totalNumUnread
-            ? `(${totalNumUnread}) ${notificationMessage}`
-            : 'Papercups'}
-        </title>
+      <Helmet defer={false}>
+        <title>{totalNumUnread ? htmlTitle : 'Papercups'}</title>
       </Helmet>
 
       <Sider
