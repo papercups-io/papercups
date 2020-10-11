@@ -192,6 +192,7 @@ defmodule ChatApi.Messages do
     message
   end
 
+  @spec notify(Message.t(), atom()) :: Message.t()
   def notify(
         %Message{
           body: body,

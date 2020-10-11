@@ -7,12 +7,13 @@ defmodule ChatApi.Emails do
   alias ChatApi.Emails.Email
   alias ChatApi.Users.{User, UserSettings}
 
-  def send_new_message_alerts(message_obj) do
-    message_obj
+  @spec send_new_message_alerts(Message.t()) :: [any]
+  def send_new_message_alerts(message) do
+    message
     |> Map.get(:account_id)
     |> get_users_to_email()
     |> Enum.map(fn email ->
-      email |> Email.new_message_alert(message_obj) |> deliver()
+      email |> Email.new_message_alert(message) |> deliver()
     end)
   end
 
