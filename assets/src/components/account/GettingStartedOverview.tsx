@@ -20,6 +20,10 @@ type State = {
   greeting?: string;
   newMessagePlaceholder?: string;
   currentUser: User | null;
+  showAgentAvailability: boolean;
+  agentAvailableText?: string;
+  agentUnavailableText?: string;
+  requireEmailUpfront: boolean;
 };
 
 class GettingStartedOverview extends React.Component<Props, State> {
@@ -31,6 +35,10 @@ class GettingStartedOverview extends React.Component<Props, State> {
     subtitle: 'Ask us anything in the chat window below 😊',
     greeting: '',
     newMessagePlaceholder: 'Start typing...',
+    showAgentAvailability: false,
+    agentAvailableText: `We're online right now!`,
+    agentUnavailableText: `We're away at the moment.`,
+    requireEmailUpfront: false,
   };
 
   async componentDidMount() {
@@ -49,6 +57,10 @@ class GettingStartedOverview extends React.Component<Props, State> {
         subtitle,
         greeting,
         new_message_placeholder: newMessagePlaceholder,
+        show_agent_availability: showAgentAvailability,
+        agent_available_text: agentAvailableText,
+        agent_unavailable_text: agentUnavailableText,
+        require_email_upfront: requireEmailUpfront,
       } = widgetSettings;
 
       this.setState({
@@ -59,6 +71,13 @@ class GettingStartedOverview extends React.Component<Props, State> {
         subtitle: subtitle || this.state.subtitle,
         title: title || `Welcome to ${company}`,
         newMessagePlaceholder: newMessagePlaceholder || 'Start typing...',
+        showAgentAvailability:
+          showAgentAvailability || this.state.showAgentAvailability,
+        agentAvailableText: agentAvailableText || this.state.agentAvailableText,
+        agentUnavailableText:
+          agentUnavailableText || this.state.agentUnavailableText,
+        requireEmailUpfront:
+          requireEmailUpfront || this.state.requireEmailUpfront,
       });
     } else {
       this.setState({accountId, currentUser, title: `Welcome to ${company}`});
@@ -97,6 +116,31 @@ class GettingStartedOverview extends React.Component<Props, State> {
     );
   };
 
+  handleShowAgentAvailability = (e: any) => {
+    this.setState(
+      {showAgentAvailability: e},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleAgentAvailableText = (e: any) => {
+    this.setState(
+      {agentAvailableText: e.target.value},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleAgentUnavailableText = (e: any) => {
+    this.setState(
+      {agentUnavailableText: e.target.value},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleRequireEmailUpfront = (e: any) => {
+    this.setState({requireEmailUpfront: e}, this.debouncedUpdateWidgetSettings);
+  };
+
   handleChangeColor = (color: any) => {
     this.setState({color: color.hex}, this.debouncedUpdateWidgetSettings);
   };
@@ -108,6 +152,10 @@ class GettingStartedOverview extends React.Component<Props, State> {
       subtitle,
       greeting,
       newMessagePlaceholder,
+      showAgentAvailability,
+      agentAvailableText,
+      agentUnavailableText,
+      requireEmailUpfront,
     } = this.state;
 
     API.updateWidgetSettings({
@@ -116,6 +164,10 @@ class GettingStartedOverview extends React.Component<Props, State> {
       subtitle,
       greeting,
       new_message_placeholder: newMessagePlaceholder,
+      show_agent_availability: showAgentAvailability,
+      agent_available_text: agentAvailableText,
+      agent_unavailable_text: agentUnavailableText,
+      require_email_upfront: requireEmailUpfront,
     })
       .then((res) => logger.debug('Updated widget settings:', res))
       .catch((err) => logger.error('Error updating widget settings:', err));
@@ -129,6 +181,10 @@ class GettingStartedOverview extends React.Component<Props, State> {
       color,
       greeting,
       newMessagePlaceholder,
+      showAgentAvailability,
+      agentAvailableText,
+      agentUnavailableText,
+      requireEmailUpfront,
     } = this.state;
 
     return `
@@ -141,6 +197,10 @@ class GettingStartedOverview extends React.Component<Props, State> {
       primaryColor: "${color}",
       greeting: "${greeting || ''}",
       newMessagePlaceholder: "${newMessagePlaceholder || ''}",
+      showAgentAvailability: ${showAgentAvailability},
+      agentAvailableText: "${agentAvailableText}",
+      agentUnavailableText: "${agentUnavailableText}",
+      requireEmailUpfront: ${requireEmailUpfront},
       baseUrl: "${BASE_URL}"
     },
   };
@@ -162,6 +222,10 @@ class GettingStartedOverview extends React.Component<Props, State> {
       color,
       greeting,
       newMessagePlaceholder,
+      showAgentAvailability,
+      agentAvailableText,
+      agentUnavailableText,
+      requireEmailUpfront,
     } = this.state;
 
     return `
@@ -177,12 +241,16 @@ const ExamplePage = () => {
         if you would like it to render on every page
       */}
       <ChatWidget
+        accountId="${accountId}"
         title="${title}"
-        subtitle= "${subtitle}"
+        subtitle="${subtitle}"
         primaryColor="${color}"
         greeting="${greeting || ''}"
         newMessagePlaceholder="${newMessagePlaceholder}"
-        accountId="${accountId}"
+        showAgentAvailability={${showAgentAvailability}}
+        agentAvailableText="${agentAvailableText}"
+        agentUnavailableText="${agentUnavailableText}"
+        requireEmailUpfront={${requireEmailUpfront}}
         baseUrl="${BASE_URL}"
       />
     </>
@@ -209,12 +277,16 @@ const ExamplePage = () => {
 
   render() {
     const {
+      accountId,
       color,
       title,
       subtitle,
       greeting,
       newMessagePlaceholder,
-      accountId,
+      showAgentAvailability,
+      agentAvailableText,
+      agentUnavailableText,
+      requireEmailUpfront,
     } = this.state;
 
     if (!accountId) {
@@ -273,7 +345,9 @@ const ExamplePage = () => {
             />
           </Box>
           <Box mb={3}>
-            <label htmlFor="greeting">Set a greeting (refresh to view):</label>
+            <label htmlFor="greeting">
+              Set a greeting (requires page refresh to view):
+            </label>
             <Input
               id="greeting"
               type="text"
@@ -303,11 +377,63 @@ const ExamplePage = () => {
               onChangeComplete={this.handleChangeColor}
             />
           </Box>
+          <Box mb={1}>
+            <label htmlFor="show_agent_availability">
+              Show agent availability? (requires page refresh to view)
+            </label>
+          </Box>
+          <Box mb={3}>
+            <Switch
+              checked={showAgentAvailability}
+              onChange={this.handleShowAgentAvailability}
+            />
+          </Box>
+          <Box mb={3}>
+            <label htmlFor="agent_available_text">
+              Set the text displayed when agents are available:
+            </label>
+            <Input
+              id="agent_available_text"
+              type="text"
+              placeholder="We're online right now!"
+              value={agentAvailableText}
+              onChange={this.handleAgentAvailableText}
+              onBlur={this.updateWidgetSettings}
+            />
+          </Box>
+          <Box mb={3}>
+            <label htmlFor="agent_unavailable_text">
+              Set the text displayed when agents are unavailable:
+            </label>
+            <Input
+              id="agent_unavailable_text"
+              type="text"
+              placeholder="We're away at the moment."
+              value={agentUnavailableText}
+              onChange={this.handleAgentUnavailableText}
+              onBlur={this.updateWidgetSettings}
+            />
+          </Box>
+          <Box mb={1}>
+            <label htmlFor="require_email_upfront">
+              Require unidentified customers to provide their email?
+            </label>
+          </Box>
+          <Box mb={3}>
+            <Switch
+              checked={requireEmailUpfront}
+              onChange={this.handleRequireEmailUpfront}
+            />
+          </Box>
           <ChatWidget
             title={title || 'Welcome!'}
             subtitle={subtitle}
             primaryColor={color}
             greeting={greeting}
+            showAgentAvailability={showAgentAvailability}
+            agentAvailableText={agentAvailableText}
+            agentUnavailableText={agentUnavailableText}
+            requireEmailUpfront={requireEmailUpfront}
             newMessagePlaceholder={newMessagePlaceholder}
             accountId={accountId}
             customer={customer}
