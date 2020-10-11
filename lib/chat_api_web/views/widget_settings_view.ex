@@ -22,7 +22,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
       show_agent_availability: widget_settings.show_agent_availability,
       agent_available_text: widget_settings.agent_available_text,
       agent_unavailable_text: widget_settings.agent_unavailable_text,
-		  require_email_upfront: widget_settings.require_email_upfront,
+      require_email_upfront: widget_settings.require_email_upfront,
       base_url: widget_settings.base_url
     }
   end
@@ -38,7 +38,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
       show_agent_availability: widget_settings.show_agent_availability,
       agent_available_text: widget_settings.agent_available_text,
       agent_unavailable_text: widget_settings.agent_unavailable_text,
-		  require_email_upfront: widget_settings.require_email_upfront,
+      require_email_upfront: widget_settings.require_email_upfront,
       base_url: widget_settings.base_url,
       account: render_one(widget_settings.account, AccountView, "basic.json")
     }
