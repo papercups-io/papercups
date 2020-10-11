@@ -35,6 +35,8 @@ import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
+const TITLE_FLASH_INTERVAL = 2000;
+
 const hasValidStripeKey = () => {
   const key = process.env.REACT_APP_STRIPE_PUBLIC_KEY;
 
@@ -45,15 +47,13 @@ const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
   const {unreadByCategory: unread} = useConversations();
+  const [notificationMessage, setNotificationMessage] = useState('Papercups');
+
   const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
   const totalNumUnread = (unread && unread.all) || 0;
   const shouldDisplayBilling = hasValidStripeKey();
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
-
-  const [notificationMessage, setNotificationMessage] = useState('Papercups');
-
-  const INTERVAL = 2000; //Set flashing interval
 
   const toggleNotificationMessage = () => {
     if (notificationMessage.startsWith('New message')) {
@@ -65,7 +65,7 @@ const Dashboard = (props: RouteComponentProps) => {
 
   useEffect(() => {
     if (totalNumUnread > 0) {
-      setTimeout(toggleNotificationMessage, INTERVAL);
+      setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
     }
   });
 

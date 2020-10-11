@@ -5,6 +5,7 @@ defmodule ChatApi.Emails do
 
   alias ChatApi.Repo
   alias ChatApi.Emails.Email
+  alias ChatApi.Messages.Message
   alias ChatApi.Users.{User, UserSettings}
 
   @spec send_new_message_alerts(Message.t()) :: [any]

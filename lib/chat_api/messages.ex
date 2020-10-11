@@ -192,16 +192,7 @@ defmodule ChatApi.Messages do
     message
   end
 
-  @spec notify(Message.t(), atom()) :: Message.t()
-  def notify(
-        %Message{
-          body: body,
-          account_id: account_id,
-          conversation_id: conversation_id,
-          customer_id: customer_id
-        } = message,
-        :new_message_email
-      ) do
+  def notify(%Message{} = message, :new_message_email) do
     Logger.info("Sending notification: :new_message_email")
     # TODO: use Oban instead?
     Task.start(fn ->
