@@ -18,6 +18,7 @@ defmodule ChatApi.Emails.Email do
   # TODO: Move conversation id out the mailer should only care about the message
   def new_message_alert(to_address, message) do
     conversation_id = Map.get(message, :conversation_id)
+
     link =
       "<a href=\"https://#{@backend_url}/conversations/#{conversation_id}\">View in dashboard</a>"
 
@@ -34,7 +35,10 @@ defmodule ChatApi.Emails.Email do
         ""
       end
 
-    html = "A new message has arrived" <> customer_email_string <> ":<br />" <> "<b>#{msg}</b>" <> "<br /><br />" <> link
+    html =
+      "A new message has arrived" <>
+        customer_email_string <> ":<br />" <> "<b>#{msg}</b>" <> "<br /><br />" <> link
+
     text = "A new message has arrived" <> customer_email_string <> ": #{msg}"
 
     new()
