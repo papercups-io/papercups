@@ -55,7 +55,7 @@ const Dashboard = (props: RouteComponentProps) => {
 
   const INTERVAL = 2000; //Set flashing interval
 
-  const _toggleNotificationMessage = () => {
+  const toggleNotificationMessage = () => {
     if (notificationMessage.startsWith('New message')) {
       setNotificationMessage('Papercups');
     } else {
@@ -64,7 +64,9 @@ const Dashboard = (props: RouteComponentProps) => {
   };
 
   useEffect(() => {
-    const interval = setTimeout(_toggleNotificationMessage, INTERVAL);
+    if (totalNumUnread > 0) {
+      setTimeout(toggleNotificationMessage, INTERVAL);
+    }
   });
 
   return (
