@@ -80,8 +80,8 @@ defmodule ChatApi.Billing do
   end
 
   # TODO: handle errors better?
-  @spec get_stripe_price_ids_by_product(binary | Stripe.Product.t()) ::
-          {:ok, list} | {:error, Stripe.Error.t()}
+  @spec get_stripe_price_ids_by_product(Stripe.Product.t()) ::
+          {:ok, [binary()]} | {:error, Stripe.Error.t()}
   def get_stripe_price_ids_by_product(product) do
     case Stripe.Price.list(%{product: product.id}) do
       {:ok, %{data: prices}} ->
