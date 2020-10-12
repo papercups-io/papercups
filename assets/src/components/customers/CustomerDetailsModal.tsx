@@ -56,8 +56,8 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
     current_url: lastSeenUrl,
     ip: lastIpAddress,
     metadata,
+    time_zone,
   } = customer;
-
   return (
     <Box>
       <Box mb={2}>
@@ -84,15 +84,22 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
           <Paragraph>{phone || 'Unknown'}</Paragraph>
         </Box>
       </Flex>
+      <Flex>
+        <Box mb={2} sx={{flex: 1}}>
+          <Box>
+            <Text strong>ID</Text>
+          </Box>
 
-      <Box mb={2}>
-        <Box>
-          <Text strong>ID</Text>
+          <Paragraph>{externalId || 'Unknown'}</Paragraph>
         </Box>
+        <Box mb={2} sx={{flex: 1}}>
+          <Box>
+            <Text strong>Time zone</Text>
+          </Box>
 
-        <Paragraph>{externalId || 'Unknown'}</Paragraph>
-      </Box>
-
+          <Paragraph>{time_zone || 'Unknown'}</Paragraph>
+        </Box>
+      </Flex>
       <Box mb={2}>
         <Box>
           <Text strong>Device information</Text>
