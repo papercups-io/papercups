@@ -56,8 +56,8 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
     current_url: lastSeenUrl,
     ip: lastIpAddress,
     metadata,
+    time_zone,
   } = customer;
-
   return (
     <Box>
       <Box mb={2}>
@@ -101,6 +101,14 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
         <Paragraph>
           {[lastIpAddress, os, browser].join(' · ') || 'N/A'}
         </Paragraph>
+      </Box>
+
+      <Box mb={2}>
+        <Box>
+          <Text strong>Time zone</Text>
+        </Box>
+
+        <Paragraph>{time_zone || 'N/A'}</Paragraph>
       </Box>
 
       <Box mb={2}>
