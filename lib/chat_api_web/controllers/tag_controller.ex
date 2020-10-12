@@ -6,12 +6,14 @@ defmodule ChatApiWeb.TagController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(%{assigns: %{current_user: %{account_id: account_id}}} = conn, _params) do
     tags = Tags.list_tags(account_id)
 
     render(conn, "index.json", tags: tags)
   end
 
+  @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(%{assigns: %{current_user: %{account_id: account_id, id: creator_id}}} = conn, %{
         "tag" => tag_params
       }) do

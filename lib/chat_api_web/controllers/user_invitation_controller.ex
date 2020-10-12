@@ -8,6 +8,7 @@ defmodule ChatApiWeb.UserInvitationController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, _params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
       user_invitations = UserInvitations.list_user_invitations(account_id)
@@ -15,6 +16,7 @@ defmodule ChatApiWeb.UserInvitationController do
     end
   end
 
+  @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"user_invitation" => _user_invitation_params} = _) do
     current_user = Pow.Plug.current_user(conn)
 
@@ -33,6 +35,7 @@ defmodule ChatApiWeb.UserInvitationController do
     render(conn, "show.json", user_invitation: user_invitation)
   end
 
+  @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id, "user_invitation" => user_invitation_params}) do
     user_invitation = UserInvitations.get_user_invitation!(id)
 
@@ -42,6 +45,7 @@ defmodule ChatApiWeb.UserInvitationController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
     user_invitation = UserInvitations.get_user_invitation!(id)
 
