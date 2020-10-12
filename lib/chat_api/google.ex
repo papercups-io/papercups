@@ -22,7 +22,7 @@ defmodule ChatApi.Google do
     Repo.all(GoogleAuthorization)
   end
 
-  @spec get_google_authorization!(integer()) :: GoogleAuthorization.t()
+  @spec get_google_authorization!(binary()) :: GoogleAuthorization.t()
   @doc """
   Gets a single google_authorization.
 
@@ -111,7 +111,7 @@ defmodule ChatApi.Google do
     GoogleAuthorization.changeset(google_authorization, attrs)
   end
 
-  @spec get_authorization_by_account(integer()) :: GoogleAuthorization.t() | nil
+  @spec get_authorization_by_account(binary()) :: GoogleAuthorization.t() | nil
   def get_authorization_by_account(account_id) do
     GoogleAuthorization
     |> where(account_id: ^account_id)
@@ -119,7 +119,7 @@ defmodule ChatApi.Google do
     |> Repo.one()
   end
 
-  @spec create_or_update_authorization(integer(), map) ::
+  @spec create_or_update_authorization(binary(), map()) ::
           {:ok, GoogleAuthorization.t()} | {:error, Ecto.Changeset.t()}
   def create_or_update_authorization(account_id, params) do
     existing = get_authorization_by_account(account_id)

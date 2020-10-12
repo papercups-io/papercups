@@ -22,7 +22,7 @@ defmodule ChatApi.Tags do
     Repo.all(Tag)
   end
 
-  @spec list_tags(integer()) :: [Tag.t()]
+  @spec list_tags(binary()) :: [Tag.t()]
   def list_tags(account_id) do
     Tag |> where(account_id: ^account_id) |> Repo.all()
   end

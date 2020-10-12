@@ -31,7 +31,7 @@ defmodule ChatApi.StripeClient do
     payment_method
   end
 
-  @spec find_or_create_customer(integer(), map()) :: binary() | nil
+  @spec find_or_create_customer(binary(), map()) :: binary() | nil
   @doc """
   Find or create the Stripe customer token for the given account
   """

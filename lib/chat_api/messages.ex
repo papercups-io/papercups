@@ -10,7 +10,7 @@ defmodule ChatApi.Messages do
 
   require Logger
 
-  @spec list_messages(integer()) :: [Message.t()]
+  @spec list_messages(binary()) :: [Message.t()]
   @doc """
   Returns the list of messages.
 
@@ -24,7 +24,7 @@ defmodule ChatApi.Messages do
     Message |> where(account_id: ^account_id) |> preload(:conversation) |> Repo.all()
   end
 
-  @spec list_by_conversation(integer(), integer(), keyword) :: [Message.t()]
+  @spec list_by_conversation(binary(), binary(), keyword()) :: [Message.t()]
   def list_by_conversation(conversation_id, account_id, limit: limit) do
     Message
     |> where(account_id: ^account_id, conversation_id: ^conversation_id)
@@ -34,7 +34,7 @@ defmodule ChatApi.Messages do
     |> Repo.all()
   end
 
-  @spec count_messages_by_account(integer()) :: integer()
+  @spec count_messages_by_account(binary()) :: integer()
   def count_messages_by_account(account_id) do
     query =
       from(m in Message,
@@ -45,7 +45,7 @@ defmodule ChatApi.Messages do
     Repo.one(query)
   end
 
-  @spec get_message!(integer()) :: Message.t()
+  @spec get_message!(binary()) :: Message.t()
   @doc """
   Gets a single message.
 
@@ -103,7 +103,7 @@ defmodule ChatApi.Messages do
   def get_message_type(%Message{user_id: nil}), do: :customer
   def get_message_type(_message), do: :unknown
 
-  @spec send_webhook_notifications(integer(), map) :: [EventSubscriptions.tesla_reponse()]
+  @spec send_webhook_notifications(binary(), map()) :: [EventSubscriptions.tesla_reponse()]
   def send_webhook_notifications(account_id, payload) do
     EventSubscriptions.notify_event_subscriptions(account_id, %{
       "event" => "message:created",
@@ -181,7 +181,7 @@ defmodule ChatApi.Messages do
   # Notifications
   # TODO: move more of these to be queued up in Oban
 
-  @spec notify(Message.t(), term()) :: Message.t()
+  @spec notify(Message.t(), atom()) :: Message.t()
   def notify(
         %Message{body: body, conversation_id: conversation_id} = message,
         :slack

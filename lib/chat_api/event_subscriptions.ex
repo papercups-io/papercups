@@ -10,7 +10,7 @@ defmodule ChatApi.EventSubscriptions do
 
   @type tesla_reponse() :: {:ok, Tesla.Env.t()} | {:error, any()}
 
-  @spec list_event_subscriptions(integer()) :: [EventSubscription.t()]
+  @spec list_event_subscriptions(binary()) :: [EventSubscription.t()]
   @doc """
   Returns the list of event_subscriptions.
 
@@ -24,7 +24,7 @@ defmodule ChatApi.EventSubscriptions do
     EventSubscription |> where(account_id: ^account_id) |> Repo.all()
   end
 
-  @spec list_verified_event_subscriptions(integer()) :: [EventSubscription.t()]
+  @spec list_verified_event_subscriptions(binary()) :: [EventSubscription.t()]
   def list_verified_event_subscriptions(account_id) do
     EventSubscription
     |> where(account_id: ^account_id)
@@ -32,7 +32,7 @@ defmodule ChatApi.EventSubscriptions do
     |> Repo.all()
   end
 
-  @spec get_event_subscription!(integer()) :: EventSubscription.t() | nil
+  @spec get_event_subscription!(binary()) :: EventSubscription.t() | nil
   @doc """
   Gets a single event_subscription.
 
@@ -121,7 +121,7 @@ defmodule ChatApi.EventSubscriptions do
     EventSubscription.changeset(event_subscription, attrs)
   end
 
-  @spec notify_event_subscriptions(integer(), map()) :: [tesla_reponse()]
+  @spec notify_event_subscriptions(binary(), map()) :: [tesla_reponse()]
   def notify_event_subscriptions(account_id, event) do
     account_id
     |> list_verified_event_subscriptions()

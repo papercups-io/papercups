@@ -20,12 +20,12 @@ defmodule ChatApi.Users do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
-  @spec find_by_id!(integer()) :: User.t()
+  @spec find_by_id!(binary()) :: User.t()
   def find_by_id!(user_id) do
     Repo.get!(User, user_id)
   end
 
-  @spec find_by_id(integer(), integer()) :: User.t() | nil
+  @spec find_by_id(binary(), binary()) :: User.t() | nil
   def find_by_id(user_id, account_id) do
     User |> where(account_id: ^account_id, id: ^user_id) |> Repo.one()
   end
@@ -86,42 +86,42 @@ defmodule ChatApi.Users do
     |> Repo.insert()
   end
 
-  @spec set_admin_role(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  @spec set_admin_role(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
   def set_admin_role(user) do
     user
     |> User.role_changeset(%{role: "admin"})
     |> Repo.update()
   end
 
-  @spec set_user_role(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  @spec set_user_role(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
   def set_user_role(user) do
     user
     |> User.role_changeset(%{role: "user"})
     |> Repo.update()
   end
 
-  @spec archive_user(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  @spec archive_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
   def archive_user(user) do
     user
     |> User.disabled_at_changeset(%{archived_at: DateTime.utc_now()})
     |> Repo.update()
   end
 
-  @spec disable_user(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  @spec disable_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
   def disable_user(user) do
     user
     |> User.disabled_at_changeset(%{disabled_at: DateTime.utc_now()})
     |> Repo.update()
   end
 
-  @spec enable_user(%User{}) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  @spec enable_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
   def enable_user(user) do
     user
     |> User.disabled_at_changeset(%{disabled_at: nil})
     |> Repo.update()
   end
 
-  @spec get_user_profile(integer()) :: UserProfile.t() | nil
+  @spec get_user_profile(binary()) :: UserProfile.t() | nil
   @doc """
   Gets a single user_profile.
 
@@ -161,7 +161,7 @@ defmodule ChatApi.Users do
     end
   end
 
-  @spec get_user_info(integer()) :: User.t() | nil
+  @spec get_user_info(binary()) :: User.t() | nil
   def get_user_info(user_id) do
     User
     |> where(id: ^user_id)
@@ -169,7 +169,7 @@ defmodule ChatApi.Users do
     |> Repo.preload([:profile, :settings])
   end
 
-  @spec update_user_profile(integer(), map()) ::
+  @spec update_user_profile(binary(), map()) ::
           {:ok, UserProfile.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a user_profile.
@@ -221,7 +221,7 @@ defmodule ChatApi.Users do
     UserProfile.changeset(user_profile, attrs)
   end
 
-  @spec get_user_settings(integer()) :: UserSettings.t() | nil
+  @spec get_user_settings(binary()) :: UserSettings.t() | nil
   @doc """
   Gets a single user_settings.
 
@@ -256,7 +256,7 @@ defmodule ChatApi.Users do
     end
   end
 
-  @spec update_user_settings(integer(), map()) ::
+  @spec update_user_settings(binary(), map()) ::
           {:ok, UserSettings.t()} | {:error, Ecto.Changet.t()}
   @doc """
   Updates a user_settings.

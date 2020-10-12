@@ -9,7 +9,7 @@ defmodule ChatApi.Customers do
   alias ChatApi.Customers.Customer
   alias ChatApi.Tags.CustomerTag
 
-  @spec list_customers(integer) :: [Customer.t()]
+  @spec list_customers(binary()) :: [Customer.t()]
   @doc """
   Returns the list of customers.
 
@@ -23,7 +23,7 @@ defmodule ChatApi.Customers do
     Customer |> where(account_id: ^account_id) |> Repo.all()
   end
 
-  @spec get_customer!(integer) :: Customer.t() | nil
+  @spec get_customer!(binary()) :: Customer.t() | nil
   @doc """
   Gets a single customer.
 
@@ -42,7 +42,7 @@ defmodule ChatApi.Customers do
     Customer |> Repo.get!(id) |> Repo.preload(:tags)
   end
 
-  @spec find_by_external_id(binary(), integer()) :: Customer.t() | nil
+  @spec find_by_external_id(binary(), binary()) :: Customer.t() | nil
   def find_by_external_id(external_id, account_id) when is_binary(external_id) do
     Customer
     |> where(account_id: ^account_id, external_id: ^external_id)
@@ -51,7 +51,7 @@ defmodule ChatApi.Customers do
     |> Repo.one()
   end
 
-  @spec find_by_external_id(integer(), integer()) :: Customer.t() | nil
+  @spec find_by_external_id(integer(), binary()) :: Customer.t() | nil
   def find_by_external_id(external_id, account_id) when is_integer(external_id) do
     external_id |> to_string() |> find_by_external_id(account_id)
   end
@@ -172,7 +172,7 @@ defmodule ChatApi.Customers do
     Customer.changeset(customer, attrs)
   end
 
-  @spec list_tags(nil | Customer.t()) :: nil | Customer.t()
+  @spec list_tags(nil | binary | Customer.t()) :: nil | Customer.t()
   def list_tags(nil), do: []
 
   def list_tags(%Customer{} = customer) do
@@ -189,14 +189,14 @@ defmodule ChatApi.Customers do
     end
   end
 
-  @spec get_tag(Customer.t(), integer()) :: nil | CustomerTag.t()
+  @spec get_tag(Customer.t(), binary()) :: nil | CustomerTag.t()
   def get_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
     CustomerTag
     |> where(account_id: ^account_id, customer_id: ^id, tag_id: ^tag_id)
     |> Repo.one()
   end
 
-  @spec add_tag(Customer.t(), integer()) :: {:ok, CustomerTag.t()} | {:error, Ecto.Changeset.t()}
+  @spec add_tag(Customer.t(), binary()) :: {:ok, CustomerTag.t()} | {:error, Ecto.Changeset.t()}
   def add_tag(%Customer{id: id, account_id: account_id} = customer, tag_id) do
     case get_tag(customer, tag_id) do
       nil ->
@@ -213,7 +213,7 @@ defmodule ChatApi.Customers do
     end
   end
 
-  @spec remove_tag(Customer.t(), integer()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
+  @spec remove_tag(Customer.t(), binary()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   def remove_tag(%Customer{} = customer, tag_id) do
     customer
     |> get_tag(tag_id)

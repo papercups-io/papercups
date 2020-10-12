@@ -11,7 +11,7 @@ defmodule ChatApi.UserInvitations do
   # number of days the invite is valid
   @days_from_now 3
 
-  @spec list_user_invitations(integer()) :: [UserInvitation.t()]
+  @spec list_user_invitations(binary()) :: [UserInvitation.t()]
   @doc """
   Returns the list of user_invitations.
 
@@ -25,7 +25,7 @@ defmodule ChatApi.UserInvitations do
     UserInvitation |> where(account_id: ^account_id) |> Repo.all()
   end
 
-  @spec get_user_invitation!(integer()) :: UserInvitation.t()
+  @spec get_user_invitation!(binary()) :: UserInvitation.t()
   @doc """
   Gets a single user_invitation.
 

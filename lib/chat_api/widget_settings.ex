@@ -22,7 +22,7 @@ defmodule ChatApi.WidgetSettings do
     Repo.all(WidgetSetting)
   end
 
-  @spec get_widget_setting!(integer()) :: WidgetSetting.t()
+  @spec get_widget_setting!(binary()) :: WidgetSetting.t()
   @doc """
   Gets a single widget_setting.
 
@@ -39,7 +39,7 @@ defmodule ChatApi.WidgetSettings do
   """
   def get_widget_setting!(id), do: Repo.get!(WidgetSetting, id)
 
-  @spec get_settings_by_account(integer()) :: WidgetSetting.t() | {:error, Ecto.Changeset.t()}
+  @spec get_settings_by_account(binary()) :: WidgetSetting.t() | {:error, Ecto.Changeset.t()}
   def get_settings_by_account(account_id) do
     existing_settings =
       WidgetSetting
@@ -89,7 +89,7 @@ defmodule ChatApi.WidgetSettings do
     |> Repo.update()
   end
 
-  @spec update_widget_metadata(integer(), map()) ::
+  @spec update_widget_metadata(binary(), map()) ::
           {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
   def update_widget_metadata(account_id, metadata) do
     attrs = Map.take(metadata, ["host", "pathname", "last_seen_at"])

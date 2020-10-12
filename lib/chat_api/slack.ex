@@ -47,7 +47,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec retrieve_user_info(integer(), binary()) :: {:ok, nil} | tesla_reponse()
+  @spec retrieve_user_info(binary(), binary()) :: {:ok, nil} | tesla_reponse()
   def retrieve_user_info(user_id, access_token) do
     if should_execute?(access_token) do
       get("/users.info",
@@ -89,7 +89,7 @@ defmodule ChatApi.Slack do
     Mix.env() != :test && is_valid_access_token?(access_token)
   end
 
-  @spec get_user_email(integer(), binary()) :: nil | binary()
+  @spec get_user_email(binary(), binary()) :: nil | binary()
   def get_user_email(user_id, access_token) do
     with {:ok, response} <- retrieve_user_info(user_id, access_token) do
       try do
@@ -105,7 +105,7 @@ defmodule ChatApi.Slack do
 
   # Look for a match between the Slack sender and internal Papercups users
   # to try to identify the sender; falls back to the default assignee id.
-  @spec get_sender_id(map(), integer()) :: integer()
+  @spec get_sender_id(Conversations.Conversation.t(), binary()) :: binary()
   def get_sender_id(conversation, user_id) do
     %{account_id: account_id, assignee_id: assignee_id} = conversation
     %{access_token: access_token} = get_slack_authorization(account_id)
@@ -129,7 +129,7 @@ defmodule ChatApi.Slack do
     )
   end
 
-  @spec send_conversation_message_alert(integer(), binary(), keyword()) ::
+  @spec send_conversation_message_alert(binary(), binary(), keyword()) ::
           tesla_reponse() | nil | :ok
   def send_conversation_message_alert(conversation_id, text, type: type) do
     # Check if a Slack thread already exists for this conversation.
@@ -181,7 +181,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec get_conversation_account_id(integer()) :: integer() | nil
+  @spec get_conversation_account_id(binary()) :: binary() | nil
   def get_conversation_account_id(conversation_id) do
     with %{account_id: account_id} <- Conversations.get_conversation!(conversation_id) do
       account_id
@@ -191,7 +191,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec get_slack_authorization(integer()) :: map() | SlackAuthorizations.t()
+  @spec get_slack_authorization(binary()) :: map() | SlackAuthorizations.t()
   def get_slack_authorization(account_id) do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
       # Supports a fallback access token as an env variable to make it easier to

@@ -74,7 +74,7 @@ defmodule ChatApi.Emails do
     |> deliver(access_token: access_token)
   end
 
-  @spec get_users_to_email(integer()) :: [User.t()]
+  @spec get_users_to_email(binary()) :: [User.t()]
   def get_users_to_email(account_id) do
     query =
       from(u in User,

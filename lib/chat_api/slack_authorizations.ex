@@ -22,7 +22,7 @@ defmodule ChatApi.SlackAuthorizations do
     Repo.all(SlackAuthorization)
   end
 
-  @spec get_slack_authorization!(integer()) :: SlackAuthorization.t()
+  @spec get_slack_authorization!(binary()) :: SlackAuthorization.t()
   @doc """
   Gets a single slack_authorization.
 
@@ -39,7 +39,7 @@ defmodule ChatApi.SlackAuthorizations do
   """
   def get_slack_authorization!(id), do: Repo.get!(SlackAuthorization, id)
 
-  @spec get_authorization_by_account(integer()) :: SlackAuthorization.t() | nil
+  @spec get_authorization_by_account(binary()) :: SlackAuthorization.t() | nil
   def get_authorization_by_account(account_id) do
     SlackAuthorization
     |> where(account_id: ^account_id)
@@ -47,7 +47,7 @@ defmodule ChatApi.SlackAuthorizations do
     |> Repo.one()
   end
 
-  @spec create_or_update(integer(), map()) ::
+  @spec create_or_update(binary(), map()) ::
           {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
   def create_or_update(account_id, params) do
     existing = get_authorization_by_account(account_id)

@@ -22,7 +22,7 @@ defmodule ChatApi.SlackConversationThreads do
     Repo.all(SlackConversationThread)
   end
 
-  @spec get_slack_conversation_thread!(integer()) :: SlackConversationThread.t()
+  @spec get_slack_conversation_thread!(binary()) :: SlackConversationThread.t()
   @doc """
   Gets a single slack_conversation_thread.
 
@@ -39,7 +39,7 @@ defmodule ChatApi.SlackConversationThreads do
   """
   def get_slack_conversation_thread!(id), do: Repo.get!(SlackConversationThread, id)
 
-  @spec get_thread_by_conversation_id(integer()) :: SlackConversationThread.t() | nil
+  @spec get_thread_by_conversation_id(binary()) :: SlackConversationThread.t() | nil
   def get_thread_by_conversation_id(conversation_id) do
     SlackConversationThread
     |> where(conversation_id: ^conversation_id)

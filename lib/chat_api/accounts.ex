@@ -22,7 +22,7 @@ defmodule ChatApi.Accounts do
     Repo.all(Account)
   end
 
-  @spec get_account!(integer) :: Account.t() | nil
+  @spec get_account!(binary()) :: Account.t()
   @doc """
   Gets a single account.
 
