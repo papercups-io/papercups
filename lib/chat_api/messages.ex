@@ -98,7 +98,7 @@ defmodule ChatApi.Messages do
     end
   end
 
-  @spec get_message_type(Message.t()) :: term()
+  @spec get_message_type(Message.t()) :: atom()
   def get_message_type(%Message{customer_id: nil}), do: :agent
   def get_message_type(%Message{user_id: nil}), do: :customer
   def get_message_type(_message), do: :unknown

@@ -13,7 +13,7 @@ defmodule ChatApi.Users do
     User |> where(email: ^email) |> Repo.one()
   end
 
-  @spec find_user_by_email(binary() | nil, integer()) :: User.t() | nil
+  @spec find_user_by_email(binary() | nil, binary()) :: User.t() | nil
   def find_user_by_email(nil, _account_id), do: nil
 
   def find_user_by_email(email, account_id) do

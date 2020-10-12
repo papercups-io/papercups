@@ -27,7 +27,7 @@ defmodule ChatApi.Tags do
     Tag |> where(account_id: ^account_id) |> Repo.all()
   end
 
-  @spec get_tag!(integer()) :: Tag.t()
+  @spec get_tag!(binary()) :: Tag.t()
   @doc """
   Gets a single tag.
 

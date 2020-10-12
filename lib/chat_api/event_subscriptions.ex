@@ -69,7 +69,7 @@ defmodule ChatApi.EventSubscriptions do
     |> Repo.insert()
   end
 
-  @spec update_event_subscription(EventSubscription.t(), map) ::
+  @spec update_event_subscription(EventSubscription.t(), map()) ::
           {:ok, EventSubscription.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a event_subscription.

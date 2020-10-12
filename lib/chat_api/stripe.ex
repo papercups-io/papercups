@@ -8,9 +8,9 @@ defmodule ChatApi.StripeClient do
   alias ChatApi.Accounts.Account
 
   @spec add_payment_method(
-          Stripe.id() | Stripe.Customer.t(),
-          Stripe.id() | Stripe.PaymentMethod.t(),
-          integer()
+          binary(),
+          binary(),
+          binary()
         ) ::
           {:ok, Stripe.PaymentMethod.t()} | {:error, Stripe.Error.t()}
   @doc """

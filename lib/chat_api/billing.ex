@@ -15,6 +15,7 @@ defmodule ChatApi.Billing do
           subscription: nil | Stripe.Subscription.t(),
           product: nil | Stripe.Product.t(),
           payment_method: nil | Stripe.PaymentMethod.t(),
+          subscription_plan: nil | binary(),
           num_messages: integer(),
           num_users: non_neg_integer()
         }
@@ -45,7 +46,7 @@ defmodule ChatApi.Billing do
   # Otherwise, if the id exists, attempt to retrieve it
   @spec retrieve_stripe_resource(
           atom(),
-          nil | binary | Stripe.Product.t() | Stripe.Subscription.t() | Stripe.PaymentMethod.t()
+          binary()
         ) ::
           {:ok, nil}
           | {:ok, Stripe.Product.t()}
@@ -105,7 +106,7 @@ defmodule ChatApi.Billing do
     end
   end
 
-  @spec create_subscription_plan(Account.t(), binary) ::
+  @spec create_subscription_plan(Account.t(), binary()) ::
           {:ok, Account.t()} | {:error, Ecto.Changeset.t()} | {:error, Stripe.Error.t()}
   def create_subscription_plan(account, plan) do
     with {:ok, product} <- find_stripe_product_by_plan(plan),
@@ -126,7 +127,7 @@ defmodule ChatApi.Billing do
     end
   end
 
-  @spec update_subscription_plan(Account.t(), binary) ::
+  @spec update_subscription_plan(Account.t(), binary()) ::
           {:ok, Account.t()}
           | {:error, Ecto.Changeset.t()}
           | {:error, :not_found}

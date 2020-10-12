@@ -172,7 +172,7 @@ defmodule ChatApi.Customers do
     Customer.changeset(customer, attrs)
   end
 
-  @spec list_tags(nil | binary | Customer.t()) :: nil | Customer.t()
+  @spec list_tags(nil | binary() | Customer.t()) :: nil | Customer.t()
   def list_tags(nil), do: []
 
   def list_tags(%Customer{} = customer) do

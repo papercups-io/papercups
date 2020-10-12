@@ -21,7 +21,7 @@ defmodule ChatApi.Slack do
 
   @type tesla_reponse() :: {:ok, Tesla.Env.t()} | {:error, any()}
 
-  @spec send_message(binary(), binary()) :: tesla_reponse()
+  @spec send_message(map(), binary()) :: tesla_reponse() | {:ok, nil}
   @doc """
   `message` looks like:
 
@@ -191,7 +191,9 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec get_slack_authorization(binary()) :: map() | SlackAuthorizations.t()
+  @spec get_slack_authorization(binary()) ::
+          %{access_token: binary(), channel: binary()}
+          | SlackAuthorizations.SlackAuthorization.t()
   def get_slack_authorization(account_id) do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
       # Supports a fallback access token as an env variable to make it easier to
@@ -318,7 +320,7 @@ defmodule ChatApi.Slack do
     raise "Unrecognized params for Slack payload: #{text} #{inspect(params)}"
   end
 
-  @spec create_new_slack_conversation_thread(integer(), map()) ::
+  @spec create_new_slack_conversation_thread(binary(), map()) ::
           {:ok, SlackConversationThreads.t()} | {:error, Ecto.Changeset.t()}
   def create_new_slack_conversation_thread(conversation_id, response) do
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
@@ -337,7 +339,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec assign_and_broadcast_conversation_updated(map(), integer()) :: :ok | {:error, term()}
+  @spec assign_and_broadcast_conversation_updated(map(), binary()) :: :ok | {:error, term()}
   def assign_and_broadcast_conversation_updated(conversation, primary_user_id) do
     %{id: conversation_id, account_id: account_id} = conversation
 
@@ -352,7 +354,7 @@ defmodule ChatApi.Slack do
     })
   end
 
-  @spec get_conversation_primary_user_id(map()) :: integer()
+  @spec get_conversation_primary_user_id(Conversations.Conversation.t()) :: binary()
   def get_conversation_primary_user_id(conversation) do
     # FIXME: this includes disabled users!
     # TODO: do a round robin here instead of just getting the first user every time?
@@ -362,7 +364,7 @@ defmodule ChatApi.Slack do
     |> fetch_valid_user()
   end
 
-  @spec fetch_valid_user(list()) :: integer()
+  @spec fetch_valid_user(list()) :: binary()
   def fetch_valid_user([]),
     do: raise("No users associated with the conversation's account")
 
@@ -407,7 +409,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec get_default_access_token() :: binary | nil
+  @spec get_default_access_token() :: binary() | nil
   defp get_default_access_token() do
     token = System.get_env("SLACK_BOT_ACCESS_TOKEN")
 
