@@ -32,6 +32,13 @@ defmodule ChatApi.Users.User do
     |> validate_required([:account_id])
   end
 
+  def test_changeset(changeset, attrs \\ %{}) do
+    changeset
+    |> pow_changeset(attrs)
+    |> cast(attrs, [:inserted_at, :account_id, :role])
+    |> validate_required([:account_id])
+  end
+
   @spec role_changeset(Ecto.Schema.t() | Ecto.Changeset.t(), map()) :: Ecto.Changeset.t()
   def role_changeset(user_or_changeset, attrs) do
     user_or_changeset

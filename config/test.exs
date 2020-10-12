@@ -7,7 +7,7 @@ use Mix.Config
 # Run `mix help test` for more information.
 config :chat_api, ChatApi.Repo,
   username: "postgres",
-  password: "postgres",
+  password: "password",
   database: "chat_api_test#{System.get_env("MIX_TEST_PARTITION")}",
   hostname: "localhost",
   port: System.get_env("DATABASE_PORT") || 5432,

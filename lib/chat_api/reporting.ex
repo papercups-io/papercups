@@ -57,6 +57,19 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  @spec count_user_created_by_date(binary(), binary(), binary()) :: [aggregate_by_date()]
+  def count_user_created_by_date(account_id, from_date, to_date),
+    do: count_user_created_by_date(account_id, %{from_date: from_date, to_date: to_date})
+
+  @spec count_user_created_by_date(binary(), map()) :: [aggregate_by_date()]
+  def count_user_created_by_date(account_id, filters \\ %{}) do
+    User
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> count_grouped_by_date()
+    |> Repo.all()
+  end
+
   @spec count_received_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_received_messages_by_date(account_id, filters \\ %{}) do
     Message

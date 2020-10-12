@@ -86,6 +86,13 @@ defmodule ChatApi.Users do
     |> Repo.insert()
   end
 
+  @spec create_test_user(map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def create_test_user(params) do
+    %User{}
+    |> User.test_changeset(params)
+    |> Repo.insert()
+  end
+
   @spec set_admin_role(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
   def set_admin_role(user) do
     user

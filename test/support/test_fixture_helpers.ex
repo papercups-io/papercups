@@ -35,7 +35,7 @@ defmodule ChatApi.TestFixtureHelpers do
         password: @password,
         password_confirmation: @password
       })
-      |> Users.create_user()
+      |> Users.create_test_user()
 
     user
     |> Repo.preload([:profile, :conversations, :account, :settings])

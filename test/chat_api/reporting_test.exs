@@ -206,6 +206,19 @@ defmodule ChatApi.ReportingTest do
              ] = Reporting.count_sent_messages_by_date(account.id)
     end
 
+    test "count_user_created_by_date/1 groups by date correctly", %{
+      account: account
+    } do
+      user_fixture(account, %{inserted_at: ~N[2020-09-03 12:00:00]})
+      user_fixture(account, %{inserted_at: ~N[2020-09-03 12:00:00]})
+      user_fixture(account, %{inserted_at: ~N[2020-09-04 12:00:00]})
+
+      assert [
+               %{date: ~D[2020-09-03], count: 2},
+               %{date: ~D[2020-09-04], count: 1}
+             ] = Reporting.count_user_created_by_date(account.id)
+    end
+
     test "count_received_messages_by_date/1 groups by date correctly", %{
       account: account,
       customer: customer
