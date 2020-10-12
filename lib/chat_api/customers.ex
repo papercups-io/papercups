@@ -213,7 +213,8 @@ defmodule ChatApi.Customers do
     end
   end
 
-  @spec remove_tag(Customer.t(), binary()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
+  @spec remove_tag(Customer.t(), binary()) ::
+          {:ok, CustomerTag.t()} | {:error, Ecto.Changeset.t()}
   def remove_tag(%Customer{} = customer, tag_id) do
     customer
     |> get_tag(tag_id)
