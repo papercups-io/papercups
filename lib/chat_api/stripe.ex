@@ -7,6 +7,12 @@ defmodule ChatApi.StripeClient do
   alias ChatApi.{Accounts, Repo}
   alias ChatApi.Accounts.Account
 
+  @spec add_payment_method(
+          binary(),
+          binary(),
+          binary()
+        ) ::
+          {:ok, Stripe.PaymentMethod.t()} | {:error, Stripe.Error.t()}
   @doc """
   Add a payment method to an account via Stripe
   """
@@ -25,6 +31,7 @@ defmodule ChatApi.StripeClient do
     payment_method
   end
 
+  @spec find_or_create_customer(binary(), map()) :: binary() | nil
   @doc """
   Find or create the Stripe customer token for the given account
   """

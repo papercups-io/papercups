@@ -8,6 +8,7 @@ defmodule ChatApi.WidgetSettings do
 
   alias ChatApi.WidgetSettings.WidgetSetting
 
+  @spec list_widget_settings() :: [WidgetSetting.t()]
   @doc """
   Returns the list of widget_settings.
 
@@ -21,6 +22,7 @@ defmodule ChatApi.WidgetSettings do
     Repo.all(WidgetSetting)
   end
 
+  @spec get_widget_setting!(binary()) :: WidgetSetting.t()
   @doc """
   Gets a single widget_setting.
 
@@ -37,6 +39,7 @@ defmodule ChatApi.WidgetSettings do
   """
   def get_widget_setting!(id), do: Repo.get!(WidgetSetting, id)
 
+  @spec get_settings_by_account(binary()) :: WidgetSetting.t() | {:error, Ecto.Changeset.t()}
   def get_settings_by_account(account_id) do
     existing_settings =
       WidgetSetting
@@ -66,6 +69,8 @@ defmodule ChatApi.WidgetSettings do
     end
   end
 
+  @spec update_widget_setting(WidgetSettings.t(), map()) ::
+          {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a widget_setting.
 
@@ -84,6 +89,8 @@ defmodule ChatApi.WidgetSettings do
     |> Repo.update()
   end
 
+  @spec update_widget_metadata(binary(), map()) ::
+          {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
   def update_widget_metadata(account_id, metadata) do
     attrs = Map.take(metadata, ["host", "pathname", "last_seen_at"])
 
@@ -91,6 +98,8 @@ defmodule ChatApi.WidgetSettings do
     |> update_widget_setting(attrs)
   end
 
+  @spec delete_widget_setting(WidgetSettings.t()) ::
+          {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a widget_setting.
 
@@ -107,6 +116,7 @@ defmodule ChatApi.WidgetSettings do
     Repo.delete(widget_setting)
   end
 
+  @spec change_widget_setting(WidgetSettings.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking widget_setting changes.
 

@@ -8,6 +8,7 @@ defmodule ChatApi.Accounts do
 
   alias ChatApi.Accounts.Account
 
+  @spec list_accounts() :: [Account.t()]
   @doc """
   Returns the list of accounts.
 
@@ -21,6 +22,7 @@ defmodule ChatApi.Accounts do
     Repo.all(Account)
   end
 
+  @spec get_account!(binary()) :: Account.t()
   @doc """
   Gets a single account.
 
@@ -39,6 +41,7 @@ defmodule ChatApi.Accounts do
     Account |> Repo.get!(id) |> Repo.preload([[users: :profile], :widget_settings])
   end
 
+  @spec create_account(map()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a account.
 
@@ -56,6 +59,7 @@ defmodule ChatApi.Accounts do
     |> Repo.insert()
   end
 
+  @spec update_account(Account.t(), map()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a account.
 
@@ -74,6 +78,7 @@ defmodule ChatApi.Accounts do
     |> Repo.update()
   end
 
+  @spec delete_account(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a account.
 
@@ -90,6 +95,7 @@ defmodule ChatApi.Accounts do
     Repo.delete(account)
   end
 
+  @spec change_account(Account.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking account changes.
 

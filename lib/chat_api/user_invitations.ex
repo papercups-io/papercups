@@ -11,6 +11,7 @@ defmodule ChatApi.UserInvitations do
   # number of days the invite is valid
   @days_from_now 3
 
+  @spec list_user_invitations(binary()) :: [UserInvitation.t()]
   @doc """
   Returns the list of user_invitations.
 
@@ -24,6 +25,7 @@ defmodule ChatApi.UserInvitations do
     UserInvitation |> where(account_id: ^account_id) |> Repo.all()
   end
 
+  @spec get_user_invitation!(binary()) :: UserInvitation.t()
   @doc """
   Gets a single user_invitation.
 
@@ -42,6 +44,7 @@ defmodule ChatApi.UserInvitations do
     Repo.get!(UserInvitation, id) |> Repo.preload(:account)
   end
 
+  @spec create_user_invitation(map()) :: {:ok, UserInvitation.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a user_invitation.
 
@@ -61,7 +64,8 @@ defmodule ChatApi.UserInvitations do
     |> Repo.insert()
   end
 
-  @spec update_user_invitation(UserInvitation.t(), map()) :: any
+  @spec update_user_invitation(UserInvitation.t(), map()) ::
+          {:ok, UserInvitation.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a user_invitation.
 
@@ -80,6 +84,8 @@ defmodule ChatApi.UserInvitations do
     |> Repo.update()
   end
 
+  @spec delete_user_invitation(UserInvitation.t()) ::
+          {:ok, UserInvitation.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a user_invitation.
 
@@ -96,6 +102,7 @@ defmodule ChatApi.UserInvitations do
     Repo.delete(user_invitation)
   end
 
+  @spec change_user_invitation(UserInvitation.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user_invitation changes.
 
@@ -109,6 +116,8 @@ defmodule ChatApi.UserInvitations do
     UserInvitation.changeset(user_invitation, attrs)
   end
 
+  @spec expire_user_invitation(UserInvitation.t()) ::
+          {:ok, UserInvitation.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Sets a user invitation as expired
 
@@ -123,6 +132,7 @@ defmodule ChatApi.UserInvitations do
     |> update_user_invitation(%{expires_at: DateTime.utc_now() |> DateTime.truncate(:second)})
   end
 
+  @spec expired?(UserInvitation.t()) :: boolean()
   @doc """
   Checks if the user invitation has expired
 

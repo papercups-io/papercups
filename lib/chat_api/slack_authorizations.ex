@@ -8,6 +8,7 @@ defmodule ChatApi.SlackAuthorizations do
 
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
+  @spec list_slack_authorizations() :: [SlackAuthorization.t()]
   @doc """
   Returns the list of slack_authorizations.
 
@@ -21,6 +22,7 @@ defmodule ChatApi.SlackAuthorizations do
     Repo.all(SlackAuthorization)
   end
 
+  @spec get_slack_authorization!(binary()) :: SlackAuthorization.t()
   @doc """
   Gets a single slack_authorization.
 
@@ -37,6 +39,7 @@ defmodule ChatApi.SlackAuthorizations do
   """
   def get_slack_authorization!(id), do: Repo.get!(SlackAuthorization, id)
 
+  @spec get_authorization_by_account(binary()) :: SlackAuthorization.t() | nil
   def get_authorization_by_account(account_id) do
     SlackAuthorization
     |> where(account_id: ^account_id)
@@ -44,6 +47,8 @@ defmodule ChatApi.SlackAuthorizations do
     |> Repo.one()
   end
 
+  @spec create_or_update(binary(), map()) ::
+          {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
   def create_or_update(account_id, params) do
     existing = get_authorization_by_account(account_id)
 
@@ -54,6 +59,8 @@ defmodule ChatApi.SlackAuthorizations do
     end
   end
 
+  @spec create_slack_authorization(map()) ::
+          {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a slack_authorization.
 
@@ -72,6 +79,8 @@ defmodule ChatApi.SlackAuthorizations do
     |> Repo.insert()
   end
 
+  @spec update_slack_authorization(SlackAuthorization.t(), map()) ::
+          {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a slack_authorization.
 
@@ -90,6 +99,8 @@ defmodule ChatApi.SlackAuthorizations do
     |> Repo.update()
   end
 
+  @spec delete_slack_authorization(SlackAuthorization.t()) ::
+          {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a slack_authorization.
 
@@ -106,6 +117,7 @@ defmodule ChatApi.SlackAuthorizations do
     Repo.delete(slack_authorization)
   end
 
+  @spec change_slack_authorization(SlackAuthorization.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking slack_authorization changes.
 

@@ -8,6 +8,7 @@ defmodule ChatApi.SlackConversationThreads do
 
   alias ChatApi.SlackConversationThreads.SlackConversationThread
 
+  @spec list_slack_conversation_threads() :: [SlackConversationThread.t()]
   @doc """
   Returns the list of slack_conversation_threads.
 
@@ -21,6 +22,7 @@ defmodule ChatApi.SlackConversationThreads do
     Repo.all(SlackConversationThread)
   end
 
+  @spec get_slack_conversation_thread!(binary()) :: SlackConversationThread.t()
   @doc """
   Gets a single slack_conversation_thread.
 
@@ -37,6 +39,7 @@ defmodule ChatApi.SlackConversationThreads do
   """
   def get_slack_conversation_thread!(id), do: Repo.get!(SlackConversationThread, id)
 
+  @spec get_thread_by_conversation_id(binary()) :: SlackConversationThread.t() | nil
   def get_thread_by_conversation_id(conversation_id) do
     SlackConversationThread
     |> where(conversation_id: ^conversation_id)
@@ -44,6 +47,7 @@ defmodule ChatApi.SlackConversationThreads do
     |> Repo.one()
   end
 
+  @spec get_by_slack_thread_ts(binary(), binary()) :: SlackConversationThread.t() | nil
   def get_by_slack_thread_ts(slack_thread_ts, slack_channel) do
     SlackConversationThread
     |> where(slack_thread_ts: ^slack_thread_ts)
@@ -52,6 +56,8 @@ defmodule ChatApi.SlackConversationThreads do
     |> Repo.one()
   end
 
+  @spec create_slack_conversation_thread(map()) ::
+          {:ok, SlackConversationThread.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a slack_conversation_thread.
 
@@ -70,6 +76,8 @@ defmodule ChatApi.SlackConversationThreads do
     |> Repo.insert()
   end
 
+  @spec update_slack_conversation_thread(SlackConversationThread.t(), map()) ::
+          {:ok, SlackConversationThread.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a slack_conversation_thread.
 
@@ -91,6 +99,8 @@ defmodule ChatApi.SlackConversationThreads do
     |> Repo.update()
   end
 
+  @spec delete_slack_conversation_thread(SlackConversationThread.t()) ::
+          {:ok, SlackConversationThread.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a slack_conversation_thread.
 
@@ -107,6 +117,7 @@ defmodule ChatApi.SlackConversationThreads do
     Repo.delete(slack_conversation_thread)
   end
 
+  @spec change_slack_conversation_thread(SlackConverationThread.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking slack_conversation_thread changes.
 

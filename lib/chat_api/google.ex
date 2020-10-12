@@ -8,6 +8,7 @@ defmodule ChatApi.Google do
 
   alias ChatApi.Google.GoogleAuthorization
 
+  @spec list_google_authorizations() :: [GoogleAuthorization.t()]
   @doc """
   Returns the list of google_authorizations.
 
@@ -21,6 +22,7 @@ defmodule ChatApi.Google do
     Repo.all(GoogleAuthorization)
   end
 
+  @spec get_google_authorization!(binary()) :: GoogleAuthorization.t()
   @doc """
   Gets a single google_authorization.
 
@@ -37,6 +39,8 @@ defmodule ChatApi.Google do
   """
   def get_google_authorization!(id), do: Repo.get!(GoogleAuthorization, id)
 
+  @spec create_google_authorization(map()) ::
+          {:ok, GoogleAuthorization.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a google_authorization.
 
@@ -55,6 +59,8 @@ defmodule ChatApi.Google do
     |> Repo.insert()
   end
 
+  @spec update_google_authorization(GoogleAuthorization.t(), map()) ::
+          {:ok, GoogleAuthorization.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a google_authorization.
 
@@ -73,6 +79,8 @@ defmodule ChatApi.Google do
     |> Repo.update()
   end
 
+  @spec delete_google_authorization(GoogleAuthorization.t()) ::
+          {:ok, GoogleAuthorization.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a google_authorization.
 
@@ -89,6 +97,7 @@ defmodule ChatApi.Google do
     Repo.delete(google_authorization)
   end
 
+  @spec change_google_authorization(GoogleAuthorization.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking google_authorization changes.
 
@@ -102,6 +111,7 @@ defmodule ChatApi.Google do
     GoogleAuthorization.changeset(google_authorization, attrs)
   end
 
+  @spec get_authorization_by_account(binary()) :: GoogleAuthorization.t() | nil
   def get_authorization_by_account(account_id) do
     GoogleAuthorization
     |> where(account_id: ^account_id)
@@ -109,6 +119,8 @@ defmodule ChatApi.Google do
     |> Repo.one()
   end
 
+  @spec create_or_update_authorization(binary(), map()) ::
+          {:ok, GoogleAuthorization.t()} | {:error, Ecto.Changeset.t()}
   def create_or_update_authorization(account_id, params) do
     existing = get_authorization_by_account(account_id)
 
