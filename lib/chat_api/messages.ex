@@ -10,6 +10,7 @@ defmodule ChatApi.Messages do
 
   require Logger
 
+  @spec list_messages(integer()) :: [Message.t()]
   @doc """
   Returns the list of messages.
 
@@ -23,6 +24,7 @@ defmodule ChatApi.Messages do
     Message |> where(account_id: ^account_id) |> preload(:conversation) |> Repo.all()
   end
 
+  @spec list_by_conversation(integer(), integer(), keyword) :: [Message.t()]
   def list_by_conversation(conversation_id, account_id, limit: limit) do
     Message
     |> where(account_id: ^account_id, conversation_id: ^conversation_id)
@@ -32,6 +34,7 @@ defmodule ChatApi.Messages do
     |> Repo.all()
   end
 
+  @spec count_messages_by_account(integer()) :: integer()
   def count_messages_by_account(account_id) do
     query =
       from(m in Message,
@@ -42,6 +45,7 @@ defmodule ChatApi.Messages do
     Repo.one(query)
   end
 
+  @spec get_message!(integer()) :: Message.t()
   @doc """
   Gets a single message.
 
@@ -60,6 +64,7 @@ defmodule ChatApi.Messages do
     Message |> Repo.get!(id) |> Repo.preload([:conversation, :customer, [user: :profile]])
   end
 
+  @spec create_message(map()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a message.
 
@@ -78,12 +83,14 @@ defmodule ChatApi.Messages do
     |> Repo.insert()
   end
 
+  @spec create_test_message(map()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}
   def create_test_message(attrs \\ %{}) do
     %Message{}
     |> Message.test_changeset(attrs)
     |> Repo.insert()
   end
 
+  @spec create_and_fetch!(map()) :: Message.t() | {:error, Ecto.Changeset.t()}
   def create_and_fetch!(attrs \\ %{}) do
     case create_message(attrs) do
       {:ok, message} -> get_message!(message.id)
@@ -91,10 +98,12 @@ defmodule ChatApi.Messages do
     end
   end
 
+  @spec get_message_type(Message.t()) :: term()
   def get_message_type(%Message{customer_id: nil}), do: :agent
   def get_message_type(%Message{user_id: nil}), do: :customer
   def get_message_type(_message), do: :unknown
 
+  @spec send_webhook_notifications(integer(), map) :: [EventSubscriptions.tesla_reponse()]
   def send_webhook_notifications(account_id, payload) do
     EventSubscriptions.notify_event_subscriptions(account_id, %{
       "event" => "message:created",
@@ -102,12 +111,15 @@ defmodule ChatApi.Messages do
     })
   end
 
+  @spec get_conversation_topic(Message.t()) :: binary()
   def get_conversation_topic(%{conversation_id: conversation_id} = _message),
     do: "conversation:" <> conversation_id
 
+  @spec format(Message.t()) :: map()
   def format(%Message{} = message),
     do: ChatApiWeb.MessageView.render("expanded.json", message: message)
 
+  @spec broadcast_to_conversation!(Message.t()) :: Message.t()
   def broadcast_to_conversation!(%Message{} = message) do
     message
     |> get_conversation_topic()
@@ -116,6 +128,7 @@ defmodule ChatApi.Messages do
     message
   end
 
+  @spec update_message(Message.t(), map()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a message.
 
@@ -134,6 +147,7 @@ defmodule ChatApi.Messages do
     |> Repo.update()
   end
 
+  @spec delete_message(Message.t()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a message.
 
@@ -150,6 +164,7 @@ defmodule ChatApi.Messages do
     Repo.delete(message)
   end
 
+  @spec change_message(Message.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking message changes.
 
@@ -166,7 +181,7 @@ defmodule ChatApi.Messages do
   # Notifications
   # TODO: move more of these to be queued up in Oban
 
-  @spec notify(Message.t(), atom()) :: Message.t()
+  @spec notify(Message.t(), term()) :: Message.t()
   def notify(
         %Message{body: body, conversation_id: conversation_id} = message,
         :slack

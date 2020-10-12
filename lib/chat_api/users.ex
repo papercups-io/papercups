@@ -8,32 +8,40 @@ defmodule ChatApi.Users do
 
   alias ChatApi.Users.{User, UserProfile, UserSettings}
 
+  @spec find_user_by_email(binary()) :: User.t() | nil
   def find_user_by_email(email) do
     User |> where(email: ^email) |> Repo.one()
   end
 
+  @spec find_user_by_email(binary() | nil, integer()) :: User.t() | nil
   def find_user_by_email(nil, _account_id), do: nil
 
   def find_user_by_email(email, account_id) do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
+  @spec find_by_id!(integer()) :: User.t()
   def find_by_id!(user_id) do
     Repo.get!(User, user_id)
   end
 
+  @spec find_by_id(integer(), integer()) :: User.t() | nil
   def find_by_id(user_id, account_id) do
     User |> where(account_id: ^account_id, id: ^user_id) |> Repo.one()
   end
 
+  @spec find_by_email_confirmation_token(binary()) :: User.t() | nil
   def find_by_email_confirmation_token(token) do
     User |> where(email_confirmation_token: ^token) |> Repo.one()
   end
 
+  @spec find_by_password_reset_token(binary()) :: User.t() | nil
   def find_by_password_reset_token(token) do
     User |> where(password_reset_token: ^token) |> Repo.one()
   end
 
+  @spec send_password_reset_email(User.t()) ::
+          ChatApi.Emails.deliver_result() | {:error, Ecto.Changeset.t()}
   def send_password_reset_email(user) do
     token = :crypto.strong_rand_bytes(64) |> Base.encode32() |> binary_part(0, 64)
 
@@ -46,6 +54,7 @@ defmodule ChatApi.Users do
     end
   end
 
+  @spec verify_email(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def verify_email(user) do
     user
     |> User.email_verification_changeset(%{
@@ -55,6 +64,7 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
+  @spec update_password(User.t(), map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def update_password(user, params) do
     updates = Map.merge(params, %{"password_reset_token" => nil})
 
@@ -111,6 +121,7 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
+  @spec get_user_profile(integer()) :: UserProfile.t() | nil
   @doc """
   Gets a single user_profile.
 
@@ -150,6 +161,7 @@ defmodule ChatApi.Users do
     end
   end
 
+  @spec get_user_info(integer()) :: User.t() | nil
   def get_user_info(user_id) do
     User
     |> where(id: ^user_id)
@@ -157,6 +169,8 @@ defmodule ChatApi.Users do
     |> Repo.preload([:profile, :settings])
   end
 
+  @spec update_user_profile(integer(), map()) ::
+          {:ok, UserProfile.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a user_profile.
 
@@ -175,6 +189,8 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
+  @spec delete_user_profile(UserProfile.t()) ::
+          {:ok, UserProfile.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a user_profile.
 
@@ -191,6 +207,7 @@ defmodule ChatApi.Users do
     Repo.delete(user_profile)
   end
 
+  @spec change_user_profile(UserProfile.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user_profile changes.
 
@@ -204,6 +221,7 @@ defmodule ChatApi.Users do
     UserProfile.changeset(user_profile, attrs)
   end
 
+  @spec get_user_settings(integer()) :: UserSettings.t() | nil
   @doc """
   Gets a single user_settings.
 
@@ -238,6 +256,8 @@ defmodule ChatApi.Users do
     end
   end
 
+  @spec update_user_settings(integer(), map()) ::
+          {:ok, UserSettings.t()} | {:error, Ecto.Changet.t()}
   @doc """
   Updates a user_settings.
 
@@ -256,6 +276,8 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
+  @spec delete_user_settings(UserSettings.t()) ::
+          {:ok, UserSettings.t()} | {:error, Ecto.Changet.t()}
   @doc """
   Deletes a user_settings.
 
@@ -272,6 +294,7 @@ defmodule ChatApi.Users do
     Repo.delete(user_settings)
   end
 
+  @spec change_user_settings(UserSettings.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user_settings changes.
 

@@ -6,6 +6,7 @@ defmodule ChatApi.Reporting do
   import Ecto.Query, warn: false
   alias ChatApi.{Repo, Conversations.Conversation, Messages.Message, Users.User}
 
+  @spec count_messages_by_date(integer(), map()) :: [Message.t()]
   def count_messages_by_date(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -14,9 +15,11 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  @spec count_messages_by_date(integer(), binary(), binary()) :: [Message.t()]
   def count_messages_by_date(account_id, from_date, to_date),
     do: count_messages_by_date(account_id, %{from_date: from_date, to_date: to_date})
 
+  @spec count_conversations_by_date(integer(), map()) :: [Conversation.t()]
   def count_conversations_by_date(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
@@ -25,9 +28,11 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  @spec count_conversations_by_date(integer(), binary(), binary()) :: [Conversation.t()]
   def count_conversations_by_date(account_id, from_date, to_date),
     do: count_conversations_by_date(account_id, %{from_date: from_date, to_date: to_date})
 
+  @spec count_messages_per_user(integer(), map()) :: [%Message{}]
   def count_messages_per_user(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -38,6 +43,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  @spec count_sent_messages_by_date(integer(), map()) :: [Message.t()]
   def count_sent_messages_by_date(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -47,6 +53,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  @spec count_received_messages_by_date(integer(), map()) :: [Message.t()]
   def count_received_messages_by_date(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -56,6 +63,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  @spec count_messages_by_weekday(integer(), map()) :: [Message.t()]
   def count_messages_by_weekday(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)

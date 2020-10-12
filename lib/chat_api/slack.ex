@@ -19,6 +19,9 @@ defmodule ChatApi.Slack do
   plug Tesla.Middleware.JSON
   plug Tesla.Middleware.Logger
 
+  @type tesla_reponse() :: {:ok, Tesla.Env.t()} | {:error, any()}
+
+  @spec send_message(binary(), binary()) :: tesla_reponse()
   @doc """
   `message` looks like:
 
@@ -44,6 +47,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec retrieve_user_info(integer(), binary()) :: {:ok, nil} | tesla_reponse()
   def retrieve_user_info(user_id, access_token) do
     if should_execute?(access_token) do
       get("/users.info",
@@ -59,6 +63,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec log(binary()) :: :ok | tesla_reponse()
   def log(message) do
     case System.get_env("PAPERCUPS_SLACK_WEBHOOK_URL") do
       "https://hooks.slack.com/services/" <> _rest = url ->
@@ -69,6 +74,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec log(binary(), binary()) :: tesla_reponse()
   def log(message, webhook_url) do
     [
       Tesla.Middleware.JSON,
@@ -78,10 +84,12 @@ defmodule ChatApi.Slack do
     |> Tesla.post(webhook_url, %{"text" => message})
   end
 
+  @spec should_execute?(binary()) :: boolean()
   def should_execute?(access_token) do
     Mix.env() != :test && is_valid_access_token?(access_token)
   end
 
+  @spec get_user_email(integer(), binary()) :: nil | binary()
   def get_user_email(user_id, access_token) do
     with {:ok, response} <- retrieve_user_info(user_id, access_token) do
       try do
@@ -97,6 +105,7 @@ defmodule ChatApi.Slack do
 
   # Look for a match between the Slack sender and internal Papercups users
   # to try to identify the sender; falls back to the default assignee id.
+  @spec get_sender_id(map(), integer()) :: integer()
   def get_sender_id(conversation, user_id) do
     %{account_id: account_id, assignee_id: assignee_id} = conversation
     %{access_token: access_token} = get_slack_authorization(account_id)
@@ -110,6 +119,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec get_access_token(binary()) :: tesla_reponse()
   def get_access_token(code) do
     client_id = System.get_env("PAPERCUPS_SLACK_CLIENT_ID")
     client_secret = System.get_env("PAPERCUPS_SLACK_CLIENT_SECRET")
@@ -119,6 +129,8 @@ defmodule ChatApi.Slack do
     )
   end
 
+  @spec send_conversation_message_alert(integer(), binary(), keyword()) ::
+          tesla_reponse() | nil | :ok
   def send_conversation_message_alert(conversation_id, text, type: type) do
     # Check if a Slack thread already exists for this conversation.
     # If one exists, send followup messages as replies; otherwise, start a new thread
@@ -169,6 +181,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec get_conversation_account_id(integer()) :: integer() | nil
   def get_conversation_account_id(conversation_id) do
     with %{account_id: account_id} <- Conversations.get_conversation!(conversation_id) do
       account_id
@@ -178,6 +191,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec get_slack_authorization(integer()) :: map() | SlackAuthorizations.t()
   def get_slack_authorization(account_id) do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
       # Supports a fallback access token as an env variable to make it easier to
@@ -189,6 +203,7 @@ defmodule ChatApi.Slack do
 
   # TODO: not sure the most idiomatic way to handle this, but basically this
   # just formats how we show the name/email of the customer if they exist
+  @spec identify_customer(Customer.t()) :: binary()
   def identify_customer(%Customer{} = %{email: email, name: name}) do
     case [name, email] do
       [nil, nil] -> "Anonymous User"
@@ -198,6 +213,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec get_message_text(map()) :: binary()
   def get_message_text(%{
         customer: customer,
         text: text,
@@ -235,6 +251,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec get_message_payload(binary(), map()) :: map()
   def get_message_payload(text, %{
         channel: channel,
         customer: %{
@@ -301,6 +318,8 @@ defmodule ChatApi.Slack do
     raise "Unrecognized params for Slack payload: #{text} #{inspect(params)}"
   end
 
+  @spec create_new_slack_conversation_thread(integer(), map()) ::
+          {:ok, SlackConversationThreads.t()} | {:error, Ecto.Changeset.t()}
   def create_new_slack_conversation_thread(conversation_id, response) do
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
          primary_user_id <- get_conversation_primary_user_id(conversation) do
@@ -318,6 +337,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec assign_and_broadcast_conversation_updated(map(), integer()) :: :ok | {:error, term()}
   def assign_and_broadcast_conversation_updated(conversation, primary_user_id) do
     %{id: conversation_id, account_id: account_id} = conversation
 
@@ -332,6 +352,7 @@ defmodule ChatApi.Slack do
     })
   end
 
+  @spec get_conversation_primary_user_id(map()) :: integer()
   def get_conversation_primary_user_id(conversation) do
     # FIXME: this includes disabled users!
     # TODO: do a round robin here instead of just getting the first user every time?
@@ -341,6 +362,7 @@ defmodule ChatApi.Slack do
     |> fetch_valid_user()
   end
 
+  @spec fetch_valid_user(list()) :: integer()
   def fetch_valid_user([]),
     do: raise("No users associated with the conversation's account")
 
@@ -352,6 +374,7 @@ defmodule ChatApi.Slack do
     |> Map.get(:id)
   end
 
+  @spec is_valid_access_token?(binary()) :: boolean()
   def is_valid_access_token?(token) do
     case token do
       "xoxb-" <> _rest -> true
@@ -359,6 +382,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec extract_slack_conversation_thread_info(map()) :: map()
   def extract_slack_conversation_thread_info(%{body: body}) do
     if Map.get(body, "ok") do
       %{
@@ -372,6 +396,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec extract_slack_user_email(map()) :: binary()
   def extract_slack_user_email(%{body: body}) do
     if Map.get(body, "ok") do
       get_in(body, ["user", "profile", "email"])
@@ -382,6 +407,7 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec get_default_access_token() :: binary | nil
   defp get_default_access_token() do
     token = System.get_env("SLACK_BOT_ACCESS_TOKEN")
 

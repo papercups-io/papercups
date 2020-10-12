@@ -11,6 +11,15 @@ defmodule ChatApi.Billing do
 
   @trial_period_days 30
 
+  @type billing_info() :: %{
+          subscription: nil | Stripe.Subscription.t(),
+          product: nil | Stripe.Product.t(),
+          payment_method: nil | Stripe.PaymentMethod.t(),
+          num_messages: integer(),
+          num_users: non_neg_integer()
+        }
+
+  @spec get_billing_info(Account.t()) :: billing_info() | {:error, Stripe.Error.t()}
   @doc """
   Get billing info from Stripe for the given account
   """
@@ -34,6 +43,14 @@ defmodule ChatApi.Billing do
   # TODO: is this the proper way to handle this?
   # Basically, if the resource id is nil, we just want to return nil;
   # Otherwise, if the id exists, attempt to retrieve it
+  @spec retrieve_stripe_resource(
+          atom(),
+          nil | binary | Stripe.Product.t() | Stripe.Subscription.t() | Stripe.PaymentMethod.t()
+        ) ::
+          {:ok, nil}
+          | {:ok, Stripe.Product.t()}
+          | {:ok, Stripe.Subscription.t()}
+          | {:ok, Stripe.PaymentMethod.t()}
   def retrieve_stripe_resource(_resource, nil), do: {:ok, nil}
 
   def retrieve_stripe_resource(:subscription, subscription_id),
@@ -46,6 +63,7 @@ defmodule ChatApi.Billing do
     do: Stripe.PaymentMethod.retrieve(payment_method_id)
 
   # TODO: handle errors better?
+  @spec find_stripe_product_by_plan(binary()) :: {:ok, Stripe.Product.t()} | {:error, atom()}
   def find_stripe_product_by_plan(plan) do
     case Stripe.Product.list(%{active: true}) do
       {:ok, %{data: products}} ->
@@ -62,6 +80,8 @@ defmodule ChatApi.Billing do
   end
 
   # TODO: handle errors better?
+  @spec get_stripe_price_ids_by_product(binary | Stripe.Product.t()) ::
+          {:ok, list} | {:error, Stripe.Error.t()}
   def get_stripe_price_ids_by_product(product) do
     case Stripe.Price.list(%{product: product.id}) do
       {:ok, %{data: prices}} ->
@@ -73,6 +93,8 @@ defmodule ChatApi.Billing do
   end
 
   # TODO: handle errors better?
+  @spec get_subscription_items_to_delete(binary() | Stripe.Subscription.t()) ::
+          {:ok, [Stripe.Subscription.t()]} | {:error, Stripe.Error.t()}
   def get_subscription_items_to_delete(subscription_id) do
     case Stripe.Subscription.retrieve(subscription_id) do
       {:ok, %{items: %{data: items}}} ->
@@ -83,6 +105,8 @@ defmodule ChatApi.Billing do
     end
   end
 
+  @spec create_subscription_plan(Account.t(), binary) ::
+          {:ok, Account.t()} | {:error, Ecto.Changeset.t()} | {:error, Stripe.Error.t()}
   def create_subscription_plan(account, plan) do
     with {:ok, product} <- find_stripe_product_by_plan(plan),
          {:ok, items} <- get_stripe_price_ids_by_product(product),
@@ -102,6 +126,11 @@ defmodule ChatApi.Billing do
     end
   end
 
+  @spec update_subscription_plan(Account.t(), binary) ::
+          {:ok, Account.t()}
+          | {:error, Ecto.Changeset.t()}
+          | {:error, :not_found}
+          | {:error, Stripe.Error.t()}
   def update_subscription_plan(account, plan) do
     # TODO: just replace existing item ids with updated price ids?
     # See https://stripe.com/docs/billing/subscriptions/fixed-price#change-price
