@@ -6,7 +6,11 @@ defmodule ChatApi.Reporting do
   import Ecto.Query, warn: false
   alias ChatApi.{Repo, Conversations.Conversation, Messages.Message, Users.User}
 
-  @spec count_messages_by_date(binary(), map()) :: [Message.t()]
+  @type aggregate_by_date() :: %{date: binary(), count: integer()}
+  @type aggregate_by_user() :: %{user: %{id: integer(), email: binary()}, count: integer()}
+  @type aggregate_by_weekday() :: %{weekday: binary(), average: float(), total: integer()}
+
+  @spec count_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_messages_by_date(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -15,11 +19,11 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec count_messages_by_date(binary(), binary(), binary()) :: [Message.t()]
+  @spec count_messages_by_date(binary(), binary(), binary()) :: [aggregate_by_date()]
   def count_messages_by_date(account_id, from_date, to_date),
     do: count_messages_by_date(account_id, %{from_date: from_date, to_date: to_date})
 
-  @spec count_conversations_by_date(binary(), map()) :: [Conversation.t()]
+  @spec count_conversations_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_conversations_by_date(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
@@ -28,11 +32,11 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec count_conversations_by_date(binary(), binary(), binary()) :: [Conversation.t()]
+  @spec count_conversations_by_date(binary(), binary(), binary()) :: [aggregate_by_date()]
   def count_conversations_by_date(account_id, from_date, to_date),
     do: count_conversations_by_date(account_id, %{from_date: from_date, to_date: to_date})
 
-  @spec count_messages_per_user(binary(), map()) :: [Message.t()]
+  @spec count_messages_per_user(binary(), map()) :: [aggregate_by_user()]
   def count_messages_per_user(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -43,7 +47,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec count_sent_messages_by_date(binary(), map()) :: [Message.t()]
+  @spec count_sent_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_sent_messages_by_date(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -53,7 +57,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec count_received_messages_by_date(binary(), map()) :: [Message.t()]
+  @spec count_received_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_received_messages_by_date(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -63,7 +67,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec count_messages_by_weekday(binary(), map()) :: [Message.t()]
+  @spec count_messages_by_weekday(binary(), map()) :: [aggregate_by_weekday()]
   def count_messages_by_weekday(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
