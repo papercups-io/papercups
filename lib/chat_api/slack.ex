@@ -19,9 +19,7 @@ defmodule ChatApi.Slack do
   plug Tesla.Middleware.JSON
   plug Tesla.Middleware.Logger
 
-  @type tesla_reponse() :: {:ok, Tesla.Env.t()} | {:error, any()}
-
-  @spec send_message(map(), binary()) :: tesla_reponse() | {:ok, nil}
+  @spec send_message(map(), binary()) :: Tesla.Env.result() | {:ok, nil}
   @doc """
   `message` looks like:
 
@@ -47,7 +45,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec retrieve_user_info(binary(), binary()) :: {:ok, nil} | tesla_reponse()
+  @spec retrieve_user_info(binary(), binary()) :: {:ok, nil} | Tesla.Env.result()
   def retrieve_user_info(user_id, access_token) do
     if should_execute?(access_token) do
       get("/users.info",
@@ -63,7 +61,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec log(binary()) :: :ok | tesla_reponse()
+  @spec log(binary()) :: :ok | Tesla.Env.result()
   def log(message) do
     case System.get_env("PAPERCUPS_SLACK_WEBHOOK_URL") do
       "https://hooks.slack.com/services/" <> _rest = url ->
@@ -74,7 +72,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec log(binary(), binary()) :: tesla_reponse()
+  @spec log(binary(), binary()) :: Tesla.Env.result()
   def log(message, webhook_url) do
     [
       Tesla.Middleware.JSON,
@@ -119,7 +117,7 @@ defmodule ChatApi.Slack do
     end
   end
 
-  @spec get_access_token(binary()) :: tesla_reponse()
+  @spec get_access_token(binary()) :: Tesla.Env.result()
   def get_access_token(code) do
     client_id = System.get_env("PAPERCUPS_SLACK_CLIENT_ID")
     client_secret = System.get_env("PAPERCUPS_SLACK_CLIENT_SECRET")
@@ -130,7 +128,7 @@ defmodule ChatApi.Slack do
   end
 
   @spec send_conversation_message_alert(binary(), binary(), keyword()) ::
-          tesla_reponse() | nil | :ok
+          Tesla.Env.result() | nil | :ok
   def send_conversation_message_alert(conversation_id, text, type: type) do
     # Check if a Slack thread already exists for this conversation.
     # If one exists, send followup messages as replies; otherwise, start a new thread

@@ -103,7 +103,7 @@ defmodule ChatApi.Messages do
   def get_message_type(%Message{user_id: nil}), do: :customer
   def get_message_type(_message), do: :unknown
 
-  @spec send_webhook_notifications(binary(), map()) :: [EventSubscriptions.tesla_reponse()]
+  @spec send_webhook_notifications(binary(), map()) :: [Tesla.Env.result()]
   def send_webhook_notifications(account_id, payload) do
     EventSubscriptions.notify_event_subscriptions(account_id, %{
       "event" => "message:created",

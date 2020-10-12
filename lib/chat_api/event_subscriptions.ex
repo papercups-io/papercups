@@ -8,8 +8,6 @@ defmodule ChatApi.EventSubscriptions do
 
   alias ChatApi.EventSubscriptions.EventSubscription
 
-  @type tesla_reponse() :: {:ok, Tesla.Env.t()} | {:error, any()}
-
   @spec list_event_subscriptions(binary()) :: [EventSubscription.t()]
   @doc """
   Returns the list of event_subscriptions.
@@ -121,7 +119,7 @@ defmodule ChatApi.EventSubscriptions do
     EventSubscription.changeset(event_subscription, attrs)
   end
 
-  @spec notify_event_subscriptions(binary(), map()) :: [tesla_reponse()]
+  @spec notify_event_subscriptions(binary(), map()) :: [Tesla.Env.result()]
   def notify_event_subscriptions(account_id, event) do
     account_id
     |> list_verified_event_subscriptions()
@@ -130,7 +128,7 @@ defmodule ChatApi.EventSubscriptions do
     end)
   end
 
-  @spec notify_webhook_url(binary(), map()) :: tesla_reponse()
+  @spec notify_webhook_url(binary(), map()) :: Tesla.Env.result()
   def notify_webhook_url(url, event) do
     [
       Tesla.Middleware.JSON,
