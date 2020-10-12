@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   useLocation,
   Switch,
@@ -35,6 +35,8 @@ import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
+const TITLE_FLASH_INTERVAL = 2000;
+
 const hasValidStripeKey = () => {
   const key = process.env.REACT_APP_STRIPE_PUBLIC_KEY;
 
@@ -45,22 +47,38 @@ const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
   const {unreadByCategory: unread} = useConversations();
+  const [htmlTitle, setHtmlTitle] = useState('Papercups');
+
   const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
   const totalNumUnread = (unread && unread.all) || 0;
   const shouldDisplayBilling = hasValidStripeKey();
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
 
+  const toggleNotificationMessage = () => {
+    if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups')) {
+      setHtmlTitle(
+        `(${totalNumUnread}) New message${totalNumUnread === 1 ? '' : 's'}!`
+      );
+    } else {
+      setHtmlTitle('Papercups');
+    }
+  };
+
+  useEffect(() => {
+    let timeout;
+
+    if (totalNumUnread > 0) {
+      timeout = setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
+    } else {
+      clearTimeout(timeout);
+    }
+  });
+
   return (
     <Layout>
-      <Helmet>
-        <title>
-          {totalNumUnread
-            ? `(${totalNumUnread}) New message${
-                totalNumUnread === 1 ? '' : 's'
-              }!`
-            : 'Papercups'}
-        </title>
+      <Helmet defer={false}>
+        <title>{totalNumUnread ? htmlTitle : 'Papercups'}</title>
       </Helmet>
 
       <Sider

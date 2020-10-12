@@ -38,6 +38,13 @@ export type Conversation = {
   read?: boolean;
   status?: string;
   assignee_id?: number;
+  tags?: Array<Tag>;
+};
+
+export type Tag = {
+  id: string;
+  name: string;
+  description?: string;
 };
 
 export enum Alignment {

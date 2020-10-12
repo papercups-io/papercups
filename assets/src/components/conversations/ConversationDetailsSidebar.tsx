@@ -10,7 +10,10 @@ import {
   PhoneOutlined,
   UserOutlined,
 } from '../icons';
-import SidebarCustomerTags from './SidebarCustomerTags';
+import {
+  SidebarCustomerTags,
+  SidebarConversationTags,
+} from './SidebarTagSection';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -69,43 +72,6 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
         flex: 1,
       }}
     >
-      <Box px={2} py={3} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
-        <Box px={2} mb={3}>
-          <Text strong>Conversation details</Text>
-        </Box>
-
-        <Box
-          px={2}
-          mb={1}
-          sx={{
-            maxWidth: '100%',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          <Text type="secondary">ID:</Text>{' '}
-          <Tooltip title={conversationId.toLowerCase()} placement="left">
-            {conversationId.toLowerCase()}
-          </Tooltip>
-        </Box>
-        <Box px={2} mb={1}>
-          <Text type="secondary">Status:</Text>{' '}
-          <Tag color={status === 'open' ? colors.primary : colors.red}>
-            {status}
-          </Tag>
-        </Box>
-
-        {false && (
-          <DetailsSectionCard>
-            <Box mb={2}>
-              <Text strong>Tags</Text>
-            </Box>
-            <Box>Conversation tags</Box>
-          </DetailsSectionCard>
-        )}
-      </Box>
-
       <Box px={2} py={3}>
         <Box px={2} mb={3}>
           <Text strong>Customer details</Text>
@@ -215,6 +181,41 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
             <Text strong>Tags</Text>
           </Box>
           <SidebarCustomerTags customerId={customerId} />
+        </DetailsSectionCard>
+      </Box>
+
+      <Box px={2} py={3} sx={{borderTop: '1px solid rgba(0,0,0,.06)'}}>
+        <Box px={2} mb={3}>
+          <Text strong>Conversation details</Text>
+        </Box>
+
+        <Box
+          px={2}
+          mb={1}
+          sx={{
+            maxWidth: '100%',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          <Text type="secondary">ID:</Text>{' '}
+          <Tooltip title={conversationId.toLowerCase()} placement="left">
+            {conversationId.toLowerCase()}
+          </Tooltip>
+        </Box>
+        <Box px={2} mb={3}>
+          <Text type="secondary">Status:</Text>{' '}
+          <Tag color={status === 'open' ? colors.primary : colors.red}>
+            {status}
+          </Tag>
+        </Box>
+
+        <DetailsSectionCard>
+          <Box mb={2}>
+            <Text strong>Tags</Text>
+          </Box>
+          <SidebarConversationTags conversationId={conversationId} />
         </DetailsSectionCard>
       </Box>
     </Box>

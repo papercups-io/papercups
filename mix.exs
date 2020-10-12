@@ -38,7 +38,7 @@ defmodule ChatApi.MixProject do
       {:customerio, "~> 0.2"},
       {:swoosh, "~> 1.0"},
       {:gen_smtp, "~> 0.13"},
-      {:phoenix, "~> 1.5.3"},
+      {:phoenix, "~> 1.5.5"},
       {:phoenix_ecto, "~> 4.1"},
       {:ecto_sql, "~> 3.4"},
       {:postgrex, ">= 0.0.0"},
