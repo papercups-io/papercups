@@ -12,6 +12,7 @@ defmodule ChatApiWeb.SlackController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def oauth(conn, %{"code" => code}) do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
 
@@ -70,6 +71,7 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def authorization(conn, _payload) do
     with %{account_id: account_id} <- conn.assigns.current_user do
       auth = SlackAuthorizations.get_authorization_by_account(account_id)
@@ -91,6 +93,7 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec webhook(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def webhook(conn, payload) do
     Logger.debug("Payload from Slack webhook: #{inspect(payload)}")
 

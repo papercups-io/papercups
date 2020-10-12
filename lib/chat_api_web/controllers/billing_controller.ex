@@ -5,6 +5,7 @@ defmodule ChatApiWeb.BillingController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, _params) do
     with %{account_id: account_id} <- conn.assigns.current_user,
          account <- Accounts.get_account!(account_id),
@@ -13,6 +14,7 @@ defmodule ChatApiWeb.BillingController do
     end
   end
 
+  @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"plan" => plan}) do
     with %{account_id: account_id} <- conn.assigns.current_user,
          account <- Accounts.get_account!(account_id),
@@ -23,6 +25,7 @@ defmodule ChatApiWeb.BillingController do
     end
   end
 
+  @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"plan" => plan}) do
     with %{account_id: account_id} <- conn.assigns.current_user,
          account <- Accounts.get_account!(account_id),
@@ -33,6 +36,7 @@ defmodule ChatApiWeb.BillingController do
     end
   end
 
+  @spec notify_slack(Plug.Conn.t(), map()) :: Plug.Conn.t()
   defp notify_slack(conn, plan) do
     with %{email: email} <- conn.assigns.current_user do
       # Putting in an async Task for now, since we don't care if this succeeds

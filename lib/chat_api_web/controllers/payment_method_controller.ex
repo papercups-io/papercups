@@ -5,6 +5,7 @@ defmodule ChatApiWeb.PaymentMethodController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"payment_method" => payment_method_params}) do
     with user <- conn.assigns.current_user,
          %{account_id: account_id} <- user,
