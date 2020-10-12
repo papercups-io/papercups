@@ -6,6 +6,7 @@ defmodule ChatApiWeb.EventSubscriptionController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, _params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
       event_subscriptions = EventSubscriptions.list_event_subscriptions(account_id)
@@ -13,6 +14,7 @@ defmodule ChatApiWeb.EventSubscriptionController do
     end
   end
 
+  @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"event_subscription" => event_subscription_params}) do
     with %{account_id: account_id} <- conn.assigns.current_user,
          params <- Map.merge(event_subscription_params, %{"account_id" => account_id}),
@@ -37,11 +39,13 @@ defmodule ChatApiWeb.EventSubscriptionController do
     end
   end
 
+  @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, %{"id" => id}) do
     event_subscription = EventSubscriptions.get_event_subscription!(id)
     render(conn, "show.json", event_subscription: event_subscription)
   end
 
+  @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id, "event_subscription" => event_subscription_params}) do
     event_subscription = EventSubscriptions.get_event_subscription!(id)
 
@@ -54,6 +58,7 @@ defmodule ChatApiWeb.EventSubscriptionController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
     event_subscription = EventSubscriptions.get_event_subscription!(id)
 
@@ -63,6 +68,7 @@ defmodule ChatApiWeb.EventSubscriptionController do
     end
   end
 
+  @spec verify(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def verify(conn, %{"url" => url}) do
     verified = EventSubscriptions.is_valid_webhook_url?(url)
 

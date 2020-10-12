@@ -6,7 +6,7 @@ defmodule ChatApiWeb.AccountController do
 
   action_fallback ChatApiWeb.FallbackController
 
-  @spec create(any, map) :: any
+  @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"account" => account_params}) do
     with {:ok, %Account{} = account} <- Accounts.create_account(account_params) do
       conn
@@ -16,6 +16,7 @@ defmodule ChatApiWeb.AccountController do
     end
   end
 
+  @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, _params) do
     with current_user <- Pow.Plug.current_user(conn),
          %{account_id: id} <- current_user do
@@ -24,6 +25,7 @@ defmodule ChatApiWeb.AccountController do
     end
   end
 
+  @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"account" => account_params}) do
     with current_user <- Pow.Plug.current_user(conn),
          %{account_id: id} <- current_user do
@@ -35,6 +37,7 @@ defmodule ChatApiWeb.AccountController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, _params) do
     with current_user <- Pow.Plug.current_user(conn),
          %{account_id: id} <- current_user do
@@ -46,6 +49,7 @@ defmodule ChatApiWeb.AccountController do
     end
   end
 
+  @spec me(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def me(conn, _params) do
     case conn.assigns.current_user do
       %{account_id: account_id} ->
