@@ -75,9 +75,9 @@ defmodule ChatApiWeb.GmailController do
       )
       |> case do
         {:ok, result} ->
-          notify_slack(conn)
-          json(conn, %{ok: true, data: result})
-
+          conn
+          |> notify_slack()
+          |> json(%{ok: true, data: result})
         error ->
           Logger.error("Error sending email via gmail: #{inspect(error)}")
 

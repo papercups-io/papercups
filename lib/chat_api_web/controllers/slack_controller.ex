@@ -60,8 +60,10 @@ defmodule ChatApiWeb.SlackController do
         }
 
         SlackAuthorizations.create_or_update(account_id, params)
-        notify_slack(conn)
-        json(conn, %{data: %{ok: true}})
+
+        conn
+        |> notify_slack()
+        |> json(%{data: %{ok: true}})
       else
         _ ->
           raise "Unrecognized OAuth response"
