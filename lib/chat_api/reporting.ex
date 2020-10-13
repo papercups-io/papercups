@@ -4,7 +4,14 @@ defmodule ChatApi.Reporting do
   """
 
   import Ecto.Query, warn: false
-  alias ChatApi.{Repo, Conversations.Conversation, Messages.Message, Users.User, Customers.Customer}
+
+  alias ChatApi.{
+    Repo,
+    Conversations.Conversation,
+    Messages.Message,
+    Users.User,
+    Customers.Customer
+  }
 
   def count_messages_by_date(account_id, filters \\ %{}) do
     Message

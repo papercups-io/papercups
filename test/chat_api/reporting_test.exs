@@ -443,14 +443,15 @@ defmodule ChatApi.ReportingTest do
       })
 
       assert [
-          %{date: ~D[2020-10-10], count: 1},
-          %{date: ~D[2020-10-11], count: 1},
-          %{date: ~D[2020-10-12], count: 1},
-        ] = Reporting.count_customers_by_date(
-          account.id,
-          ~N[2020-10-10 11:00:00],
-          ~N[2020-10-12 13:00:00]
-        )
+               %{date: ~D[2020-10-10], count: 1},
+               %{date: ~D[2020-10-11], count: 1},
+               %{date: ~D[2020-10-12], count: 1}
+             ] =
+               Reporting.count_customers_by_date(
+                 account.id,
+                 ~N[2020-10-10 11:00:00],
+                 ~N[2020-10-12 13:00:00]
+               )
     end
   end
 end
