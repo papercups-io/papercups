@@ -60,7 +60,7 @@ defmodule ChatApiWeb.SlackController do
         }
 
         SlackAuthorizations.create_or_update(account_id, params)
-
+        notify_slack(conn)
         json(conn, %{data: %{ok: true}})
       else
         _ ->
@@ -152,4 +152,17 @@ defmodule ChatApiWeb.SlackController do
       _ -> {:error, "Not found"}
     end
   end
+
+  @spec notify_slack(Conn.t()) :: Conn.t()
+  defp notify_slack(conn) do
+    with %{email: email} <- conn.assigns.current_user do
+      # Putting in an async Task for now, since we don't care if this succeeds
+      # or fails (and we also don't want it to block anything)
+      Task.start(fn ->
+        ChatApi.Slack.log("#{email} successfully linked Slack!")
+      end)
+    end
+    conn
+  end
+
 end
