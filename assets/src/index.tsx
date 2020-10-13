@@ -7,7 +7,10 @@ import './index.css';
 import App from './App';
 import {isDev} from './config';
 import {AuthProvider} from './components/auth/AuthProvider';
+import * as Storytime from './lib/storytime';
 import * as serviceWorker from './serviceWorker';
+
+Storytime.initialize('TEST_ACCOUNT_ID', 'TEST_CUSTOMER_ID');
 
 const {
   REACT_APP_SENTRY_DSN,

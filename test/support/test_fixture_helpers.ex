@@ -3,7 +3,8 @@ defmodule ChatApi.TestFixtureHelpers do
   alias ChatApi.{
     Repo,
     Accounts,
-    Users,
+    BrowserSessions,
+    BrowserReplayEvents,
     Customers,
     Conversations,
     SlackConversationThreads,
@@ -12,6 +13,8 @@ defmodule ChatApi.TestFixtureHelpers do
     SlackAuthorizations,
     Tags,
     WidgetSettings,
+    Users,
+    Users.User,
     UserInvitations
   }
 
@@ -170,6 +173,36 @@ defmodule ChatApi.TestFixtureHelpers do
       |> SlackAuthorizations.create_slack_authorization()
 
     slack_authorization
+  end
+
+  def browser_session_fixture(%Accounts.Account{} = account, attrs \\ %{}) do
+    {:ok, browser_session} =
+      attrs
+      |> Enum.into(%{
+        finished_at: "2011-05-18T16:01:01Z",
+        started_at: "2011-05-18T15:01:01Z",
+        metadata: %{},
+        account_id: account.id
+      })
+      |> BrowserSessions.create_browser_session()
+
+    browser_session
+  end
+
+  def browser_replay_event_fixture(
+        %BrowserSessions.BrowserSession{} = browser_session,
+        attrs \\ %{}
+      ) do
+    {:ok, browser_replay_event} =
+      attrs
+      |> Enum.into(%{
+        event: %{},
+        browser_session_id: browser_session.id,
+        account_id: browser_session.account_id
+      })
+      |> BrowserReplayEvents.create_browser_replay_event()
+
+    browser_replay_event
   end
 
   defp counter do

@@ -44,6 +44,7 @@ defmodule ChatApiWeb.Router do
     post("/verify_email", UserController, :verify_email)
     post("/reset_password", UserController, :create_password_reset)
     put("/reset_password", UserController, :reset_password)
+    post("/browser_sessions", BrowserSessionController, :create)
 
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)
@@ -86,6 +87,7 @@ defmodule ChatApiWeb.Router do
     resources("/customers", CustomerController, except: [:new, :edit, :create])
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
+    resources "/browser_sessions", BrowserSessionController, except: [:create, :new, :edit]
 
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)

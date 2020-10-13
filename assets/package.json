@@ -40,9 +40,10 @@
     "react-syntax-highlighter": "^12.2.1",
     "recharts": "^1.8.5",
     "remark-breaks": "^2.0.0",
+    "rrweb": "^0.9.7",
     "superagent": "^5.3.1",
     "theme-ui": "^0.3.1",
-    "typescript": "~3.7.2"
+    "typescript": "~3.9.7"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -745,6 +745,20 @@ export const removeCustomerTag = (
     .then((res) => res.body.data);
 };
 
+export const fetchBrowserSession = async (
+  id: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/browser_sessions/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 type ReportingFilters = {
   from_date?: string | null;
   to_date?: string | null;
