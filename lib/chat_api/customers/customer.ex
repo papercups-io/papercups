@@ -103,8 +103,8 @@ defmodule ChatApi.Customers.Customer do
     ])
   end
 
-  def test_changeset(message, attrs) do
-    message
+  def test_changeset(customer, attrs) do
+    customer
     |> cast(attrs, [:inserted_at])
     |> changeset(attrs)
   end
