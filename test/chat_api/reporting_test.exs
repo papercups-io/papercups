@@ -381,4 +381,77 @@ defmodule ChatApi.ReportingTest do
              ] = Reporting.count_messages_by_weekday(account.id)
     end
   end
+
+  describe "count_customers_by_date/1" do
+    setup do
+      account = account_fixture()
+
+      {:ok, account: account}
+    end
+
+    test "it groups by date correctly", %{
+      account: account
+    } do
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-12 12:00:00]
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-11 12:00:00]
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-10 12:00:00]
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-12 12:00:00]
+      })
+
+      assert [
+               %{date: ~D[2020-10-10], count: 1},
+               %{date: ~D[2020-10-11], count: 1},
+               %{date: ~D[2020-10-12], count: 2}
+             ] = Reporting.count_customers_by_date(account.id)
+    end
+  end
+
+  describe "count_customers_by_date/3" do
+    setup do
+      account = account_fixture()
+
+      {:ok, account: account}
+    end
+
+    test "Fetches customers between two dates", %{
+      account: account
+    } do
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-12 12:00:00]
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-11 12:00:00]
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-10 12:00:00]
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-13 12:00:00]
+      })
+
+      assert [
+               %{date: ~D[2020-10-10], count: 1},
+               %{date: ~D[2020-10-11], count: 1},
+               %{date: ~D[2020-10-12], count: 1}
+             ] =
+               Reporting.count_customers_by_date(
+                 account.id,
+                 ~N[2020-10-10 11:00:00],
+                 ~N[2020-10-12 13:00:00]
+               )
+    end
+  end
 end

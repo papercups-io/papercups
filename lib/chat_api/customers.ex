@@ -9,6 +9,7 @@ defmodule ChatApi.Customers do
   alias ChatApi.Customers.Customer
   alias ChatApi.Tags.CustomerTag
 
+  @spec list_customers(binary()) :: [Customer.t()]
   @doc """
   Returns the list of customers.
 
@@ -22,6 +23,7 @@ defmodule ChatApi.Customers do
     Customer |> where(account_id: ^account_id) |> Repo.all()
   end
 
+  @spec get_customer!(binary()) :: Customer.t() | nil
   @doc """
   Gets a single customer.
 
@@ -40,6 +42,7 @@ defmodule ChatApi.Customers do
     Customer |> Repo.get!(id) |> Repo.preload(:tags)
   end
 
+  @spec find_by_external_id(binary(), binary()) :: Customer.t() | nil
   def find_by_external_id(external_id, account_id) when is_binary(external_id) do
     Customer
     |> where(account_id: ^account_id, external_id: ^external_id)
@@ -48,10 +51,12 @@ defmodule ChatApi.Customers do
     |> Repo.one()
   end
 
+  @spec find_by_external_id(integer(), binary()) :: Customer.t() | nil
   def find_by_external_id(external_id, account_id) when is_integer(external_id) do
     external_id |> to_string() |> find_by_external_id(account_id)
   end
 
+  @spec create_customer(map()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a customer.
 
@@ -70,6 +75,14 @@ defmodule ChatApi.Customers do
     |> Repo.insert()
   end
 
+  @spec create_test_customer(map()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
+  def create_test_customer(attrs \\ %{}) do
+    %Customer{}
+    |> Customer.test_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @spec update_customer(Customer.t(), map) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a customer.
 
@@ -88,6 +101,8 @@ defmodule ChatApi.Customers do
     |> Repo.update()
   end
 
+  @spec update_customer_metadata(Customer.t(), map()) ::
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   def update_customer_metadata(%Customer{} = customer, attrs) do
     customer
     |> Customer.metadata_changeset(attrs)
@@ -96,6 +111,7 @@ defmodule ChatApi.Customers do
 
   # TODO: figure out if any of this can be done in the changeset, or if there's
   # a better way to handle this in general
+  @spec sanitize_metadata(map()) :: map()
   def sanitize_metadata(metadata) do
     metadata
     |> sanitize_metadata_external_id()
@@ -103,6 +119,7 @@ defmodule ChatApi.Customers do
     |> sanitize_ad_hoc_metadata()
   end
 
+  @spec sanitize_metadata_external_id(map()) :: map()
   def sanitize_metadata_external_id(%{"external_id" => external_id} = metadata)
       when is_integer(external_id) do
     Map.merge(metadata, %{"external_id" => to_string(external_id)})
@@ -110,6 +127,7 @@ defmodule ChatApi.Customers do
 
   def sanitize_metadata_external_id(metadata), do: metadata
 
+  @spec sanitize_metadata_current_url(map()) :: map()
   def sanitize_metadata_current_url(%{"current_url" => current_url} = metadata) do
     if String.length(current_url) > 255 do
       # Ensure `current_url` is never longer than 255 characters
@@ -122,6 +140,7 @@ defmodule ChatApi.Customers do
 
   def sanitize_metadata_current_url(metadata), do: metadata
 
+  @spec sanitize_ad_hoc_metadata(map()) :: map()
   def sanitize_ad_hoc_metadata(%{"metadata" => meta} = metadata) when not is_map(meta) do
     # If the ad hoc metadata is invalid (i.e. not a map), just delete it
     Map.delete(metadata, "metadata")
@@ -129,6 +148,7 @@ defmodule ChatApi.Customers do
 
   def sanitize_ad_hoc_metadata(metadata), do: metadata
 
+  @spec delete_customer(Customer.t()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a customer.
 
@@ -145,6 +165,7 @@ defmodule ChatApi.Customers do
     Repo.delete(customer)
   end
 
+  @spec change_customer(Customer.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking customer changes.
 
@@ -158,6 +179,7 @@ defmodule ChatApi.Customers do
     Customer.changeset(customer, attrs)
   end
 
+  @spec list_tags(nil | binary() | Customer.t()) :: nil | [Tag.t()]
   def list_tags(nil), do: []
 
   def list_tags(%Customer{} = customer) do
@@ -174,12 +196,14 @@ defmodule ChatApi.Customers do
     end
   end
 
+  @spec get_tag(Customer.t(), binary()) :: nil | CustomerTag.t()
   def get_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
     CustomerTag
     |> where(account_id: ^account_id, customer_id: ^id, tag_id: ^tag_id)
     |> Repo.one()
   end
 
+  @spec add_tag(Customer.t(), binary()) :: {:ok, CustomerTag.t()} | {:error, Ecto.Changeset.t()}
   def add_tag(%Customer{id: id, account_id: account_id} = customer, tag_id) do
     case get_tag(customer, tag_id) do
       nil ->
@@ -196,6 +220,8 @@ defmodule ChatApi.Customers do
     end
   end
 
+  @spec remove_tag(Customer.t(), binary()) ::
+          {:ok, CustomerTag.t()} | {:error, Ecto.Changeset.t()}
   def remove_tag(%Customer{} = customer, tag_id) do
     customer
     |> get_tag(tag_id)

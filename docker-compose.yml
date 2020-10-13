@@ -2,14 +2,10 @@ version: "3.2"
 
 services:
   web:
-    image: papercups
+    image: papercups/papercups:latest
     ports:
       - "3000:3000"
       - "4000:4000"
-    volumes:
-      - type: bind
-        source: .
-        target: /usr/src/app
     command:
       - ./docker-entrypoint.sh
     depends_on:

@@ -8,6 +8,7 @@ defmodule ChatApi.Tags do
 
   alias ChatApi.Tags.Tag
 
+  @spec list_tags() :: [Tag.t()]
   @doc """
   Returns the list of tags.
 
@@ -21,10 +22,12 @@ defmodule ChatApi.Tags do
     Repo.all(Tag)
   end
 
+  @spec list_tags(binary()) :: [Tag.t()]
   def list_tags(account_id) do
     Tag |> where(account_id: ^account_id) |> Repo.all()
   end
 
+  @spec get_tag!(binary()) :: Tag.t()
   @doc """
   Gets a single tag.
 
@@ -41,6 +44,7 @@ defmodule ChatApi.Tags do
   """
   def get_tag!(id), do: Repo.get!(Tag, id)
 
+  @spec create_tag(map()) :: {:ok, Tag.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a tag.
 
@@ -59,6 +63,7 @@ defmodule ChatApi.Tags do
     |> Repo.insert()
   end
 
+  @spec update_tag(Tag.t(), map()) :: {:ok, Tag.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a tag.
 
@@ -77,6 +82,7 @@ defmodule ChatApi.Tags do
     |> Repo.update()
   end
 
+  @spec delete_tag(Tag.t()) :: {:ok, Tag.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a tag.
 
@@ -93,6 +99,7 @@ defmodule ChatApi.Tags do
     Repo.delete(tag)
   end
 
+  @spec change_tag(Tag.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking tag changes.
 

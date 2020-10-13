@@ -102,4 +102,10 @@ defmodule ChatApi.Customers.Customer do
       :time_zone
     ])
   end
+
+  def test_changeset(customer, attrs) do
+    customer
+    |> cast(attrs, [:inserted_at])
+    |> changeset(attrs)
+  end
 end
