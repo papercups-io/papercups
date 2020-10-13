@@ -70,6 +70,12 @@ defmodule ChatApi.Customers do
     |> Repo.insert()
   end
 
+  def create_test_customer(attrs \\ %{}) do
+    %Customer{}
+    |> Customer.test_changeset(attrs)
+    |> Repo.insert()
+  end
+
   @doc """
   Updates a customer.
 

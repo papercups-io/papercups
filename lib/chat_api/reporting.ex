@@ -4,7 +4,7 @@ defmodule ChatApi.Reporting do
   """
 
   import Ecto.Query, warn: false
-  alias ChatApi.{Repo, Conversations.Conversation, Messages.Message, Users.User}
+  alias ChatApi.{Repo, Conversations.Conversation, Messages.Message, Users.User, Customers.Customer}
 
   def count_messages_by_date(account_id, filters \\ %{}) do
     Message
@@ -27,6 +27,17 @@ defmodule ChatApi.Reporting do
 
   def count_conversations_by_date(account_id, from_date, to_date),
     do: count_conversations_by_date(account_id, %{from_date: from_date, to_date: to_date})
+
+  def count_customers_by_date(account_id, filters \\ %{}) do
+    Customer
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> count_grouped_by_date()
+    |> Repo.all()
+  end
+
+  def count_customers_by_date(account_id, from_date, to_date),
+    do: count_customers_by_date(account_id, %{from_date: from_date, to_date: to_date})
 
   def count_messages_per_user(account_id, filters \\ %{}) do
     Message

@@ -59,7 +59,7 @@ defmodule ChatApi.TestFixtureHelpers do
         account_id: account.id
       }
       |> Enum.into(attrs)
-      |> Customers.create_customer()
+      |> Customers.create_test_customer()
 
     customer |> Repo.preload([:tags])
   end
