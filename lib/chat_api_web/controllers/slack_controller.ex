@@ -162,7 +162,7 @@ defmodule ChatApiWeb.SlackController do
         ChatApi.Slack.log("#{email} successfully linked Slack!")
       end)
     end
+
     conn
   end
-
 end

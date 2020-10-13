@@ -113,7 +113,7 @@ defmodule ChatApiWeb.GmailController do
         ChatApi.Slack.log("#{email} successfully linked Gmail!")
       end)
     end
+
     conn
   end
-
 end
