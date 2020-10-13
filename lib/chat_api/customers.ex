@@ -75,6 +75,13 @@ defmodule ChatApi.Customers do
     |> Repo.insert()
   end
 
+  @spec create_test_customer(map()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
+  def create_test_customer(attrs \\ %{}) do
+    %Customer{}
+    |> Customer.test_changeset(attrs)
+    |> Repo.insert()
+  end
+
   @spec update_customer(Customer.t(), map) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a customer.
