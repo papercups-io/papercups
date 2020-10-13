@@ -7,8 +7,11 @@ defmodule ChatApi.Emails do
   alias ChatApi.Emails.Email
   alias ChatApi.Messages.Message
   alias ChatApi.Users.{User, UserSettings}
+  alias ChatApi.Accounts.Account
 
-  @spec send_new_message_alerts(Message.t()) :: [any]
+  @type deliver_result() :: {:ok, term()} | {:error, binary()} | {:warning, binary()}
+
+  @spec send_new_message_alerts(Message.t()) :: [deliver_result()]
   def send_new_message_alerts(message) do
     message
     |> Map.get(:account_id)
@@ -18,14 +21,17 @@ defmodule ChatApi.Emails do
     end)
   end
 
+  @spec send_welcome_email(binary()) :: deliver_result()
   def send_welcome_email(address) do
     address |> Email.welcome() |> deliver()
   end
 
+  @spec send_password_reset_email(User.t()) :: deliver_result()
   def send_password_reset_email(user) do
     user |> Email.password_reset() |> deliver()
   end
 
+  @spec format_sender_name(User.t(), Account.t()) :: binary
   def format_sender_name(user, account) do
     case user.profile do
       nil -> account.company_name
@@ -33,6 +39,7 @@ defmodule ChatApi.Emails do
     end
   end
 
+  @spec send_conversation_reply_email(keyword()) :: deliver_result()
   def send_conversation_reply_email(
         user: user,
         customer: customer,
@@ -50,6 +57,7 @@ defmodule ChatApi.Emails do
     |> deliver()
   end
 
+  @spec send_via_gmail(keyword()) :: deliver_result()
   def send_via_gmail(
         to: to,
         from: from,
@@ -66,6 +74,7 @@ defmodule ChatApi.Emails do
     |> deliver(access_token: access_token)
   end
 
+  @spec get_users_to_email(binary()) :: [User.t()]
   def get_users_to_email(account_id) do
     query =
       from(u in User,
@@ -78,6 +87,7 @@ defmodule ChatApi.Emails do
     Repo.all(query)
   end
 
+  @spec has_valid_to_addresses?(Email.t()) :: boolean()
   def has_valid_to_addresses?(email) do
     if disable_validity_check?() do
       true
@@ -88,6 +98,7 @@ defmodule ChatApi.Emails do
     end
   end
 
+  @spec deliver(Email.t()) :: deliver_result()
   def deliver(email) do
     # Using try catch here because if someone is self hosting and doesn't need the email service it would error out
     # TODO: Find a better solution besides try catch probably in config.exs setup an empty mailer that doesn't do anything
@@ -108,6 +119,7 @@ defmodule ChatApi.Emails do
   end
 
   # TODO: figure out how to clean this up
+  @spec deliver(Email.t(), keyword()) :: deliver_result()
   def deliver(email, access_token: access_token) do
     try do
       if has_valid_to_addresses?(email) do

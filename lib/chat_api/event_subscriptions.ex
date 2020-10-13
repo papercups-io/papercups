@@ -8,6 +8,7 @@ defmodule ChatApi.EventSubscriptions do
 
   alias ChatApi.EventSubscriptions.EventSubscription
 
+  @spec list_event_subscriptions(binary()) :: [EventSubscription.t()]
   @doc """
   Returns the list of event_subscriptions.
 
@@ -21,6 +22,7 @@ defmodule ChatApi.EventSubscriptions do
     EventSubscription |> where(account_id: ^account_id) |> Repo.all()
   end
 
+  @spec list_verified_event_subscriptions(binary()) :: [EventSubscription.t()]
   def list_verified_event_subscriptions(account_id) do
     EventSubscription
     |> where(account_id: ^account_id)
@@ -28,6 +30,7 @@ defmodule ChatApi.EventSubscriptions do
     |> Repo.all()
   end
 
+  @spec get_event_subscription!(binary()) :: EventSubscription.t() | nil
   @doc """
   Gets a single event_subscription.
 
@@ -44,6 +47,8 @@ defmodule ChatApi.EventSubscriptions do
   """
   def get_event_subscription!(id), do: Repo.get!(EventSubscription, id)
 
+  @spec create_event_subscription(map()) ::
+          {:ok, EventSubscription.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Creates a event_subscription.
 
@@ -62,6 +67,8 @@ defmodule ChatApi.EventSubscriptions do
     |> Repo.insert()
   end
 
+  @spec update_event_subscription(EventSubscription.t(), map()) ::
+          {:ok, EventSubscription.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a event_subscription.
 
@@ -80,6 +87,8 @@ defmodule ChatApi.EventSubscriptions do
     |> Repo.update()
   end
 
+  @spec delete_event_subscription(EventSubscription.t()) ::
+          {:ok, EventSubscription.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a event_subscription.
 
@@ -96,6 +105,7 @@ defmodule ChatApi.EventSubscriptions do
     Repo.delete(event_subscription)
   end
 
+  @spec change_event_subscription(EventSubscription.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking event_subscription changes.
 
@@ -109,6 +119,7 @@ defmodule ChatApi.EventSubscriptions do
     EventSubscription.changeset(event_subscription, attrs)
   end
 
+  @spec notify_event_subscriptions(binary(), map()) :: [Tesla.Env.result()]
   def notify_event_subscriptions(account_id, event) do
     account_id
     |> list_verified_event_subscriptions()
@@ -117,6 +128,7 @@ defmodule ChatApi.EventSubscriptions do
     end)
   end
 
+  @spec notify_webhook_url(binary(), map()) :: Tesla.Env.result()
   def notify_webhook_url(url, event) do
     [
       Tesla.Middleware.JSON,
@@ -126,6 +138,7 @@ defmodule ChatApi.EventSubscriptions do
     |> Tesla.post(url, event)
   end
 
+  @spec is_valid_uri?(binary() | URI.t()) :: boolean()
   def is_valid_uri?(str) do
     case URI.parse(str) do
       %URI{scheme: nil} -> false
@@ -135,6 +148,7 @@ defmodule ChatApi.EventSubscriptions do
     end
   end
 
+  @spec is_valid_webhook_url?(binary() | URI.t()) :: boolean()
   def is_valid_webhook_url?(url) do
     if is_valid_uri?(url) do
       # Generate random string (TODO: maybe this should be its own utility method)
