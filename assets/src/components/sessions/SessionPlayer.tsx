@@ -27,10 +27,10 @@ class LiveViewPage extends React.Component<Props, State> {
 
   // TODO: move a bunch of logic from here into separate functions
   async componentDidMount() {
-    const {session: sessionId} = this.props.match.params;
-    const session = await API.fetchBrowserSession(sessionId);
+    // const {session: sessionId} = this.props.match.params;
+    // const session = await API.fetchBrowserSession(sessionId);
 
-    logger.debug('Session:', session);
+    // logger.debug('Session:', session);
 
     const events: Array<any> = []; // TODO: fetch previous events from server?
     const root = document.getElementById('SessionPlayer') as Element;
