@@ -36,7 +36,7 @@ defmodule ChatApiWeb.BillingController do
     end
   end
 
-  @spec notify_slack(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  @spec notify_slack(Plug.Conn.t(), binary()) :: Plug.Conn.t()
   defp notify_slack(conn, plan) do
     with %{email: email} <- conn.assigns.current_user do
       # Putting in an async Task for now, since we don't care if this succeeds
