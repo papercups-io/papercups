@@ -7,7 +7,7 @@ defmodule ChatApiWeb.SlackControllerTest do
 
   setup %{conn: conn} do
     account = account_fixture()
-    user = user_fixture(account)
+    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
     auth = slack_authorization_fixture(account)
     customer = customer_fixture(account)
     conversation = conversation_fixture(account, customer)

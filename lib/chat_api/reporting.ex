@@ -43,7 +43,6 @@ defmodule ChatApi.Reporting do
   def count_conversations_by_date(account_id, from_date, to_date),
     do: count_conversations_by_date(account_id, %{from_date: from_date, to_date: to_date})
 
-
   @spec count_customers_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_customers_by_date(account_id, filters \\ %{}) do
     Customer
