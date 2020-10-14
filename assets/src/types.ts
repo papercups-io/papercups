@@ -13,6 +13,21 @@ export type Customer = {
   id: number;
   email?: string;
   name?: string;
+  browser?: string;
+  created_at?: string;
+  current_url?: string;
+  external_id?: any;
+  first_seen?: any;
+  host?: string;
+  ip?: string;
+  last_seen?: string;
+  metadata?: object;
+  os?: string;
+  pathname?: string;
+  phone?: number;
+  tags?: Array<Tag>;
+  time_zone?: string;
+  updated_at?: string;
 };
 
 // NB: actual message records will look slightly different
@@ -29,8 +44,10 @@ export type Message = {
 
 // NB: actual conversation records will look different
 export type Conversation = {
-  id: string;
-  customer: string;
+  id: any;
+  account_id: string;
+  customer_id: string;
+  customer: Customer;
   date: string;
   preview: string;
   messages?: Array<Message>;

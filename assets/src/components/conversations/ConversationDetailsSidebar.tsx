@@ -15,6 +15,8 @@ import {
   SidebarConversationTags,
 } from './SidebarTagSection';
 
+import {Conversation, Customer} from '../../types';
+
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
@@ -35,8 +37,8 @@ const DetailsSectionCard = ({children}: {children: any}) => {
 };
 
 type Props = {
-  customer: any;
-  conversation: any;
+  customer: Customer;
+  conversation: Conversation;
 };
 
 const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
@@ -180,7 +182,7 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
           <Box mb={2}>
             <Text strong>Tags</Text>
           </Box>
-          <SidebarCustomerTags customerId={customerId} />
+          <SidebarCustomerTags customerId={customerId.toString()} />
         </DetailsSectionCard>
       </Box>
 

@@ -5,7 +5,7 @@ import {Button, colors, Result} from '../common';
 import {SmileOutlined} from '../icons';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
-
+import {Customer, Message} from '../../types';
 const EmptyMessagesPlaceholder = () => {
   return (
     <Box my={4}>
@@ -45,9 +45,9 @@ const ConversationMessages = ({
   showGetStarted,
   setScrollRef,
 }: {
-  messages: Array<any>;
+  messages: Array<Message>;
   currentUser: any;
-  customer: any;
+  customer: Customer;
   loading: boolean;
   isClosing: boolean;
   showGetStarted: boolean;
@@ -75,10 +75,10 @@ const ConversationMessages = ({
       ) : (
         <Box p={4} backgroundColor={colors.white} sx={{minHeight: '100%'}}>
           {messages.length ? (
-            messages.map((msg: any, key: number) => {
+            messages.map((msg: Message, key: number) => {
               // Slight hack
               const next = messages[key + 1];
-              const isMe = msg.user_id && msg.user_id === currentUser.id;
+              const isMe = !!msg.user_id && msg.user_id === currentUser.id;
               const isLastInGroup = next
                 ? msg.customer_id !== next.customer_id
                 : true;
