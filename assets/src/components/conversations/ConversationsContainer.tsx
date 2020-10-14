@@ -2,6 +2,7 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {colors, Layout, notification, Sider, Text, Title} from '../common';
 import {sleep} from '../../utils';
+import {Conversation, Message, User} from '../../types';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationClosing from './ConversationClosing';
@@ -12,13 +13,13 @@ import ConversationDetailsSidebar from './ConversationDetailsSidebar';
 type Props = {
   title?: string;
   account: any;
-  currentUser: any;
+  currentUser: User;
   currentlyOnline?: any;
   loading: boolean;
   showGetStarted: boolean;
   conversationIds: Array<string>;
-  conversationsById: {[key: string]: any};
-  messagesByConversation: {[key: string]: any};
+  conversationsById: {[key: string]: Conversation};
+  messagesByConversation: {[key: string]: Array<Message>};
   fetch: () => Promise<Array<string>>;
   onSelectConversation: (id: string | null, fn?: () => void) => void;
   onUpdateConversation: (id: string, params: any) => Promise<void>;
@@ -410,7 +411,7 @@ class ConversationsContainer extends React.Component<Props, State> {
               />
             )}
 
-            {selectedConversation && (
+            {selectedCustomer && selectedConversation && (
               <Box
                 sx={{
                   width: 240,

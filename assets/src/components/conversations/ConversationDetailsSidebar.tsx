@@ -14,7 +14,6 @@ import {
   SidebarCustomerTags,
   SidebarConversationTags,
 } from './SidebarTagSection';
-
 import {Conversation, Customer} from '../../types';
 
 // TODO: create date utility methods so we don't have to do this everywhere
@@ -182,7 +181,7 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
           <Box mb={2}>
             <Text strong>Tags</Text>
           </Box>
-          <SidebarCustomerTags customerId={customerId.toString()} />
+          <SidebarCustomerTags customerId={customerId} />
         </DetailsSectionCard>
       </Box>
 
@@ -203,7 +202,7 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
         >
           <Text type="secondary">ID:</Text>{' '}
           <Tooltip title={conversationId.toLowerCase()} placement="left">
-            {conversationId.toLowerCase()}
+            <Text>{conversationId.toLowerCase()}</Text>
           </Tooltip>
         </Box>
         <Box px={2} mb={3}>
