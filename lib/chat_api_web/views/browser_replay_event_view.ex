@@ -17,7 +17,8 @@ defmodule ChatApiWeb.BrowserReplayEventView do
     %{
       id: browser_replay_event.id,
       account_id: browser_replay_event.account_id,
-      event: browser_replay_event.event
+      event: browser_replay_event.event,
+      timestamp: browser_replay_event.timestamp
     }
   end
 end

@@ -9,7 +9,7 @@ defmodule ChatApi.BrowserReplayEvents.BrowserReplayEvent do
   @foreign_key_type :binary_id
   schema "browser_replay_events" do
     field(:event, :map)
-    field(:timestamp, :utc_datetime)
+    field(:timestamp, :utc_datetime_usec)
 
     belongs_to(:account, Account)
     belongs_to(:browser_session, BrowserSession)

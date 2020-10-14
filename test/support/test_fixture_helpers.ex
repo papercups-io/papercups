@@ -14,7 +14,6 @@ defmodule ChatApi.TestFixtureHelpers do
     Tags,
     WidgetSettings,
     Users,
-    Users.User,
     UserInvitations
   }
 
@@ -186,7 +185,9 @@ defmodule ChatApi.TestFixtureHelpers do
       })
       |> BrowserSessions.create_browser_session()
 
-    browser_session
+    browser_session.id
+    |> BrowserSessions.get_browser_session!()
+    |> Repo.preload([:browser_replay_events])
   end
 
   def browser_replay_event_fixture(

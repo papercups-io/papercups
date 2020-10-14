@@ -1,9 +1,12 @@
 import {Socket} from 'phoenix';
 import {record} from 'rrweb';
+import request from 'superagent';
 import {SOCKET_URL} from '../socket';
 
 const socket = new Socket(SOCKET_URL);
-const blocklist: Array<string> = ['/player'];
+// TODO: figure out a better way to prevent recording on certain pages
+// const blocklist: Array<string> = ['/player', '/sessions'];
+const blocklist: Array<string> = [];
 
 socket.connect();
 
@@ -11,8 +14,20 @@ const shouldEmitEvent = (pathName: string) => {
   return blocklist.every((p) => pathName.indexOf(p) === -1);
 };
 
+export const createBrowserSession = async (accountId: string) => {
+  return request
+    .post(`/api/browser_sessions`)
+    .send({
+      browser_session: {
+        account_id: accountId,
+        started_at: new Date(),
+      },
+    })
+    .then((res) => res.body.data);
+};
+
 // TODO: use public key to match account, then use secret key on server
-export const initialize = (
+export const initialize = async (
   accountId: string,
   customerId: string,
   publicKey?: string
@@ -25,8 +40,10 @@ export const initialize = (
   socket.onError(console.error);
 
   // TODO: create a session token every time
-
-  const channel = socket.channel(`event:${accountId}`, {
+  const {id: sessionId} = await createBrowserSession(accountId);
+  // const sessionId = '15f2836c-6d88-4719-9528-d8db45ebb9bc';
+  console.log('Session!', sessionId);
+  const channel = socket.channel(`events:${accountId}:${sessionId}`, {
     customerId,
   });
 

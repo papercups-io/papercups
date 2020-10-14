@@ -10,7 +10,10 @@ import {AuthProvider} from './components/auth/AuthProvider';
 import * as Storytime from './lib/storytime';
 import * as serviceWorker from './serviceWorker';
 
-Storytime.initialize('TEST_ACCOUNT_ID', 'TEST_CUSTOMER_ID');
+Storytime.initialize(
+  'eb504736-0f20-4978-98ff-1a82ae60b266',
+  'TEST_CUSTOMER_ID'
+);
 
 const {
   REACT_APP_SENTRY_DSN,

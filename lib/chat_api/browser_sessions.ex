@@ -10,7 +10,10 @@ defmodule ChatApi.BrowserSessions do
 
   @spec list_browser_sessions(binary()) :: [BrowserSession.t()]
   def list_browser_sessions(account_id) do
-    BrowserSession |> where(account_id: ^account_id) |> Repo.all()
+    BrowserSession
+    |> where(account_id: ^account_id)
+    |> order_by(desc: :inserted_at)
+    |> Repo.all()
   end
 
   @doc """
@@ -27,7 +30,9 @@ defmodule ChatApi.BrowserSessions do
       ** (Ecto.NoResultsError)
 
   """
-  def get_browser_session!(id), do: Repo.get!(BrowserSession, id)
+  def get_browser_session!(id) do
+    BrowserSession |> Repo.get!(id) |> Repo.preload([:browser_replay_events])
+  end
 
   @doc """
   Creates a browser_session.

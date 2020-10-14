@@ -4,7 +4,7 @@ defmodule ChatApi.Repo.Migrations.CreateBrowserReplayEvents do
   def change do
     create table(:browser_replay_events, primary_key: false) do
       add(:id, :binary_id, primary_key: true)
-      add(:timestamp, :utc_datetime)
+      add(:timestamp, :utc_datetime_usec)
       add(:event, :map)
 
       add(:account_id, references(:accounts, null: false, type: :uuid, on_delete: :delete_all))

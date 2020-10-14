@@ -26,6 +26,6 @@ defmodule ChatApi.BrowserSessions.BrowserSession do
   def changeset(browser_session, attrs) do
     browser_session
     |> cast(attrs, [:account_id, :customer_id, :metadata, :started_at, :finished_at])
-    |> validate_required([:account_id, :started_at])
+    |> validate_required([:account_id])
   end
 end

@@ -5,7 +5,7 @@ defmodule ChatApiWeb.EventChannelTest do
     {:ok, _, socket} =
       ChatApiWeb.UserSocket
       |> socket("user_id", %{some: :assign})
-      |> subscribe_and_join(ChatApiWeb.EventChannel, "event:lobby")
+      |> subscribe_and_join(ChatApiWeb.EventChannel, "events:account:session")
 
     %{socket: socket}
   end

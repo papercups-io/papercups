@@ -32,7 +32,8 @@ defmodule ChatApi.BrowserSessionsTest do
 
     test "list_browser_sessions/0 returns all browser_sessions", %{account: account} do
       browser_session = browser_session_fixture(account)
-      assert BrowserSessions.list_browser_sessions(account.id) == [browser_session]
+      sessions = BrowserSessions.list_browser_sessions(account.id)
+      assert Enum.map(sessions, & &1.id) == [browser_session.id]
     end
 
     test "get_browser_session!/1 returns the browser_session with given id", %{account: account} do

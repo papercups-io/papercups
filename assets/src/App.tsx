@@ -17,7 +17,6 @@ import BotDemo from './components/demo/BotDemo';
 import Dashboard from './components/Dashboard';
 import Pricing from './components/billing/PricingOverview';
 import Sandbox from './components/Sandbox';
-import SessionPlayer from './components/sessions/SessionPlayer';
 import './App.css';
 
 const App = () => {
@@ -46,7 +45,6 @@ const App = () => {
           />
           <Route path="/pricing" component={Pricing} />
           <Route path="/sandbox" component={Sandbox} />
-          <Route path="/player/:session" component={SessionPlayer} />
           <Route path="*" render={() => <Redirect to="/login" />} />
         </Switch>
       </Router>
@@ -71,7 +69,6 @@ const App = () => {
         <Route path="/bot/demo" component={BotDemo} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/sandbox" component={Sandbox} />
-        <Route path="/player/:session" component={SessionPlayer} />
         <Route path="/" component={Dashboard} />
         <Route path="*" render={() => <Redirect to="/conversations" />} />
       </Switch>

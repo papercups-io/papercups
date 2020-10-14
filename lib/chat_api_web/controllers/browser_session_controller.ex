@@ -21,7 +21,7 @@ defmodule ChatApiWeb.BrowserSessionController do
       conn
       |> put_status(:created)
       |> put_resp_header("location", Routes.browser_session_path(conn, :show, browser_session))
-      |> render("show.json", browser_session: browser_session)
+      |> render("create.json", browser_session: browser_session)
     end
   end
 
@@ -37,7 +37,7 @@ defmodule ChatApiWeb.BrowserSessionController do
 
     with {:ok, %BrowserSession{} = browser_session} <-
            BrowserSessions.update_browser_session(browser_session, browser_session_params) do
-      render(conn, "show.json", browser_session: browser_session)
+      render(conn, "create.json", browser_session: browser_session)
     end
   end
 
