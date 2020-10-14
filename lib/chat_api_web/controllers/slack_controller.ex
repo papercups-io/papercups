@@ -61,7 +61,9 @@ defmodule ChatApiWeb.SlackController do
 
         SlackAuthorizations.create_or_update(account_id, params)
 
-        json(conn, %{data: %{ok: true}})
+        conn
+        |> notify_slack()
+        |> json(%{data: %{ok: true}})
       else
         _ ->
           raise "Unrecognized OAuth response"
@@ -151,5 +153,18 @@ defmodule ChatApiWeb.SlackController do
       %{conversation: conversation} -> {:ok, conversation}
       _ -> {:error, "Not found"}
     end
+  end
+
+  @spec notify_slack(Conn.t()) :: Conn.t()
+  defp notify_slack(conn) do
+    with %{email: email} <- conn.assigns.current_user do
+      # Putting in an async Task for now, since we don't care if this succeeds
+      # or fails (and we also don't want it to block anything)
+      Task.start(fn ->
+        ChatApi.Slack.log("#{email} successfully linked Slack!")
+      end)
+    end
+
+    conn
   end
 end
