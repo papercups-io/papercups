@@ -11,11 +11,11 @@ import {
   UserOutlined,
 } from '../icons';
 import ConversationDetailsSidebar from './ConversationDetailsSidebar';
-
+import {Customer, Conversation, User} from '../../types';
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
-const hasCustomerMetadata = (customer: any) => {
+const hasCustomerMetadata = (customer: Customer) => {
   const {current_url, browser, os} = customer;
 
   if (!current_url && !browser && !os) {
@@ -29,8 +29,8 @@ const CustomerMetadataSubheader = ({
   customer,
   conversation,
 }: {
-  customer: any;
-  conversation: any;
+  customer: Customer;
+  conversation: Conversation;
 }) => {
   const [isDrawerVisible, setDrawerVisible] = React.useState(false);
 
@@ -120,8 +120,8 @@ const ConversationHeader = ({
   onReopenConversation,
   onDeleteConversation,
 }: {
-  conversation: any;
-  users: Array<any>;
+  conversation: Conversation;
+  users: Array<User>;
   onAssignUser: (conversationId: string, userId: string) => void;
   onMarkPriority: (conversationId: string) => void;
   onRemovePriority: (conversationId: string) => void;
@@ -133,13 +133,12 @@ const ConversationHeader = ({
     // No point in showing the header if no conversation exists
     return null;
   }
-
   const {
     id: conversationId,
     assignee_id,
     status,
     priority,
-    customer = {},
+    customer,
   } = conversation;
   const {name, email} = customer;
   const assigneeId = assignee_id ? String(assignee_id) : undefined;
@@ -188,14 +187,14 @@ const ConversationHeader = ({
                 onAssignUser(conversationId, String(userId))
               }
             >
-              {users.map((user: any) => {
+              {users.map((user: User) => {
                 const value = String(user.id);
 
                 return (
                   <Select.Option key={value} value={value}>
                     <Flex sx={{alignItems: 'center'}}>
                       <UserOutlined style={{marginRight: 8, fontSize: 12}} />
-                      <Box>{user.name || user.email}</Box>
+                      <Box>{user.full_name || user.email}</Box>
                     </Flex>
                   </Select.Option>
                 );
