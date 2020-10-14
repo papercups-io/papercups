@@ -5,7 +5,8 @@ import {Button, colors, Result} from '../common';
 import {SmileOutlined} from '../icons';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
-import {Customer, Message} from '../../types';
+import {Customer, Message, User} from '../../types';
+
 const EmptyMessagesPlaceholder = () => {
   return (
     <Box my={4}>
@@ -46,8 +47,8 @@ const ConversationMessages = ({
   setScrollRef,
 }: {
   messages: Array<Message>;
-  currentUser: any;
-  customer: Customer;
+  currentUser: User;
+  customer: Customer | null;
   loading: boolean;
   isClosing: boolean;
   showGetStarted: boolean;

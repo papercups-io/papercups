@@ -10,7 +10,7 @@ import ChatMessageBox from './ChatMessageBox';
 
 dayjs.extend(utc);
 
-const getSenderIdentifier = (customer?: Customer, user?: User) => {
+const getSenderIdentifier = (customer?: Customer | null, user?: User) => {
   if (user) {
     const {display_name, full_name, email} = user;
 
@@ -82,7 +82,7 @@ const SenderAvatar = ({
 
 type Props = {
   message: Message;
-  customer?: Customer;
+  customer?: Customer | null;
   isMe?: boolean;
   isLastInGroup?: boolean;
   shouldDisplayTimestamp?: boolean;

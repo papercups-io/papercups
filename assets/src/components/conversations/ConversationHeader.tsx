@@ -10,8 +10,9 @@ import {
   UploadOutlined,
   UserOutlined,
 } from '../icons';
-import ConversationDetailsSidebar from './ConversationDetailsSidebar';
 import {Customer, Conversation, User} from '../../types';
+import ConversationDetailsSidebar from './ConversationDetailsSidebar';
+
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
@@ -120,7 +121,7 @@ const ConversationHeader = ({
   onReopenConversation,
   onDeleteConversation,
 }: {
-  conversation: Conversation;
+  conversation?: Conversation | null;
   users: Array<User>;
   onAssignUser: (conversationId: string, userId: string) => void;
   onMarkPriority: (conversationId: string) => void;
@@ -280,7 +281,7 @@ const ConversationHeader = ({
         >
           <CustomerMetadataSubheader
             customer={customer}
-            conversation={conversation}
+            conversation={conversation as Conversation}
           />
         </Box>
       )}

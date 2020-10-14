@@ -10,7 +10,7 @@ export type User = {
 };
 
 export type Customer = {
-  id: number;
+  id: string;
   email?: string;
   name?: string;
   browser?: string;
@@ -38,16 +38,17 @@ export type Message = {
   seen_at?: string;
   customer_id?: string;
   conversation_id: string;
-  user_id?: string;
+  user_id?: number;
   user?: User;
 };
 
 // NB: actual conversation records will look different
 export type Conversation = {
-  id: any;
+  id: string;
   account_id: string;
   customer_id: string;
   customer: Customer;
+  created_at?: string;
   date: string;
   preview: string;
   messages?: Array<Message>;
