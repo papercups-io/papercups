@@ -121,7 +121,7 @@ const ConversationHeader = ({
   onReopenConversation,
   onDeleteConversation,
 }: {
-  conversation?: Conversation | null;
+  conversation: Conversation | null;
   users: Array<User>;
   onAssignUser: (conversationId: string, userId: string) => void;
   onMarkPriority: (conversationId: string) => void;
