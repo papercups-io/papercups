@@ -25,6 +25,7 @@ import TeamOutlined from '@ant-design/icons/TeamOutlined';
 import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
+import VideoCameraOutlined from '@ant-design/icons/VideoCameraOutlined';
 
 export {
   ApiOutlined,
@@ -54,4 +55,5 @@ export {
   UploadOutlined,
   UpOutlined,
   UserOutlined,
+  VideoCameraOutlined,
 };

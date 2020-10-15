@@ -17,6 +17,7 @@ import {
   LogoutOutlined,
   CreditCardOutlined,
   TeamOutlined,
+  VideoCameraOutlined,
 } from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
@@ -99,7 +100,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Box py={3} sx={{flex: 1}}>
             <Menu
               selectedKeys={[section, key]}
-              defaultOpenKeys={[section, 'account', 'conversations']}
+              defaultOpenKeys={[section, 'conversations']}
               mode="inline"
               theme="dark"
             >
@@ -175,14 +176,20 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/conversations/closed">Closed</Link>
                 </Menu.Item>
               </Menu.SubMenu>
-              <Menu.SubMenu key="" icon={<TeamOutlined />} title="Customers">
-                <Menu.Item key="customers">
-                  <Link to="/customers">Overview</Link>
-                </Menu.Item>
-                <Menu.Item key="sessions">
-                  <Link to="/sessions">Sessions</Link>
-                </Menu.Item>
-              </Menu.SubMenu>
+              <Menu.Item
+                title="Customers"
+                icon={<TeamOutlined />}
+                key="customers"
+              >
+                <Link to="/customers">Customers</Link>
+              </Menu.Item>
+              <Menu.Item
+                title="Sessions"
+                icon={<VideoCameraOutlined />}
+                key="sessions"
+              >
+                <Link to="/sessions">Sessions</Link>
+              </Menu.Item>
               <Menu.Item
                 title="Integrations"
                 icon={<ApiOutlined />}

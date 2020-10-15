@@ -50,6 +50,11 @@ body {
 }
 
 /* Replayer */
+#SessionPlayer .replayer-wrapper {
+  left: auto !important;
+  top: auto !important;
+}
+
 .replayer-wrapper > iframe {
   border: none;
   border-radius: 4px;

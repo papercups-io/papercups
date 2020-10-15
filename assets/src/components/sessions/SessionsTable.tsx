@@ -2,12 +2,12 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {Button, Table} from '../common';
+import {Badge, Button, Table} from '../common';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
-const Sessions = ({sessions}: {sessions: Array<any>}) => {
+const SessionsTable = ({sessions}: {sessions: Array<any>}) => {
   const data = sessions.map((session) => {
     return {key: session.id, ...session};
   });
@@ -33,7 +33,11 @@ const Sessions = ({sessions}: {sessions: Array<any>}) => {
       dataIndex: 'finished_at',
       key: 'finished_at',
       render: (value: string) => {
-        return value ? dayjs(value).format('MMMM DD, h:mm a') : '--';
+        return value ? (
+          dayjs(value).format('MMMM DD, h:mm a')
+        ) : (
+          <Badge status="processing" text="Online now!" />
+        );
       },
     },
 
@@ -56,4 +60,4 @@ const Sessions = ({sessions}: {sessions: Array<any>}) => {
   return <Table dataSource={data} columns={columns} />;
 };
 
-export default Sessions;
+export default SessionsTable;
