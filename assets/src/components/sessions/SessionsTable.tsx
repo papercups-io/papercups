@@ -2,12 +2,14 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import {BrowserSession} from '../../types';
+import {formatDiffDuration} from '../../utils';
 import {Badge, Button, Table} from '../common';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
-const SessionsTable = ({sessions}: {sessions: Array<any>}) => {
+const SessionsTable = ({sessions}: {sessions: Array<BrowserSession>}) => {
   const data = sessions.map((session) => {
     return {key: session.id, ...session};
   });
@@ -40,7 +42,24 @@ const SessionsTable = ({sessions}: {sessions: Array<any>}) => {
         );
       },
     },
+    {
+      title: 'Duration',
+      dataIndex: 'duration',
+      key: 'duration',
+      render: (v: string, record: BrowserSession) => {
+        const {started_at, finished_at} = record;
 
+        if (!finished_at) {
+          return '--';
+        }
+
+        const startedAt = dayjs(started_at);
+        const finishedAt = dayjs(finished_at);
+        const duration = formatDiffDuration(startedAt, finishedAt);
+
+        return duration || '--';
+      },
+    },
     {
       title: '',
       dataIndex: 'action',
@@ -50,7 +69,7 @@ const SessionsTable = ({sessions}: {sessions: Array<any>}) => {
 
         return (
           <Link to={`/sessions/${sessionId}`}>
-            <Button>View</Button>
+            <Button>View replay</Button>
           </Link>
         );
       },

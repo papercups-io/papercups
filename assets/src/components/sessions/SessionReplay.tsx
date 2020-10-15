@@ -1,10 +1,11 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router-dom';
+import {RouteComponentProps, Link} from 'react-router-dom';
 import {Channel, Socket} from 'phoenix';
 import {Box, Flex} from 'theme-ui';
 import {Replayer} from 'rrweb';
 import qs from 'query-string';
-import {Title} from '../common';
+import {Alert, Button, Paragraph, Text, Title} from '../common';
+import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';
 import Spinner from '../Spinner';
@@ -134,8 +135,25 @@ class SessionReplay extends React.Component<Props, State> {
 
     return (
       <Box p={4}>
-        <Box mb={4}>
-          <Title level={3}>Session Replay</Title>
+        <Box mb={3} sx={{maxWidth: 960}}>
+          <Paragraph>
+            <Link to="/sessions">
+              <Button icon={<ArrowLeftOutlined />}>
+                Back to browser sessions
+              </Button>
+            </Link>
+          </Paragraph>
+
+          <Alert
+            message={
+              <Text>
+                Note: This is an experimental feature! Let us know if you see
+                any issues.
+              </Text>
+            }
+            type="warning"
+            showIcon
+          />
         </Box>
 
         <Flex>

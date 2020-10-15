@@ -32,7 +32,6 @@ if (REACT_APP_STORYTIME_ENABLED) {
   Storytime.init({
     accountId: REACT_APP_ADMIN_ACCOUNT_ID,
     customerId: getCustomerId(),
-    blocklist: [],
     host: BASE_URL,
   });
 }

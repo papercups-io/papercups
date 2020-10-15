@@ -2,6 +2,7 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {Alert, Paragraph, Text, Title} from '../common';
 import * as API from '../../api';
+import {BrowserSession} from '../../types';
 import Spinner from '../Spinner';
 import SessionsTable from './SessionsTable';
 import logger from '../../logger';
@@ -9,7 +10,7 @@ import logger from '../../logger';
 type Props = {};
 type State = {
   loading: boolean;
-  sessions: Array<any>;
+  sessions: Array<BrowserSession>;
 };
 
 class SessionsOverview extends React.Component<Props, State> {

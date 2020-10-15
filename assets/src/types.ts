@@ -65,6 +65,13 @@ export type Tag = {
   description?: string;
 };
 
+export type BrowserSession = {
+  id: string;
+  started_at: string;
+  finished_at?: string;
+  metadata?: any;
+};
+
 export enum Alignment {
   Right = 'right',
   Left = 'left',

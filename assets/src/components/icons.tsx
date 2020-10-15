@@ -1,4 +1,5 @@
 import ApiOutlined from '@ant-design/icons/ApiOutlined';
+import ArrowLeftOutlined from '@ant-design/icons/ArrowLeftOutlined';
 import CalendarOutlined from '@ant-design/icons/CalendarOutlined';
 import CheckCircleTwoTone from '@ant-design/icons/CheckCircleTwoTone';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
@@ -29,6 +30,7 @@ import VideoCameraOutlined from '@ant-design/icons/VideoCameraOutlined';
 
 export {
   ApiOutlined,
+  ArrowLeftOutlined,
   CalendarOutlined,
   CheckCircleTwoTone,
   CheckOutlined,

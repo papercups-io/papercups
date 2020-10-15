@@ -13,13 +13,14 @@ export default function RrWebPlayer({events}: {events: eventWithTime[]}) {
         // eslint-disable-next-line
         // @ts-ignore
         props: {
-          width: 900,
+          width: 960,
+          height: 480,
           events,
           autoPlay: true,
         },
       });
     }
-  }, []);
+  }, [events]);
 
   return <div ref={target} id="rrweb-player"></div>;
 }
