@@ -27,7 +27,6 @@ export const formatDiffDuration = (start: dayjs.Dayjs, finish: dayjs.Dayjs) => {
   const mins = Math.floor(diff / 60) % 60;
   const hrs = Math.floor(mins / 60);
   const format = (n: number) => String(n).padStart(2, '0');
-  console.log({diff, seconds, mins, hrs});
 
   return `${format(hrs)}:${format(mins)}:${format(seconds)}`;
 };
