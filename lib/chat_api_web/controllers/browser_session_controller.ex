@@ -60,4 +60,15 @@ defmodule ChatApiWeb.BrowserSessionController do
       render(conn, "create.json", browser_session: browser_session)
     end
   end
+
+  @spec restart(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def restart(conn, %{"id" => id}) do
+    browser_session = BrowserSessions.get_browser_session!(id)
+    updates = %{finished_at: nil}
+
+    with {:ok, %BrowserSession{} = browser_session} <-
+           BrowserSessions.update_browser_session(browser_session, updates) do
+      render(conn, "create.json", browser_session: browser_session)
+    end
+  end
 end
