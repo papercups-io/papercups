@@ -20,7 +20,7 @@ type State = {
 class LiveSessionViewer extends React.Component<Props, State> {
   socket: Socket | null = null;
   channel: Channel | null = null;
-  replayer!: Replayer;
+  replayer!: Replayer; // TODO: start off as null?
   container: any;
 
   state: State = {loading: true, events: [], scale: 1};
@@ -56,7 +56,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
       )
     );
 
-    this.channel = this.socket.channel(`events:${accountId}:${sessionId}`, {});
+    this.channel = this.socket.channel(
+      `events:admin:${accountId}:${sessionId}`,
+      {}
+    );
 
     this.channel.on('replay:event:emitted', (data) => {
       logger.log('New event emitted!', data);
@@ -84,6 +87,16 @@ class LiveSessionViewer extends React.Component<Props, State> {
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleWindowResize);
+
+    if (this.replayer && this.replayer.pause) {
+      this.replayer.pause();
+    }
+
+    if (this.channel && this.channel.leave) {
+      logger.debug('Existing channel:', this.channel);
+
+      this.channel.leave();
+    }
   }
 
   setIframeScale = (cb?: () => void) => {

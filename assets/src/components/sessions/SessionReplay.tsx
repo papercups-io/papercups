@@ -1,10 +1,9 @@
 import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
-import {Channel, Socket} from 'phoenix';
 import {Box, Flex} from 'theme-ui';
 import {Replayer} from 'rrweb';
 import qs from 'query-string';
-import {Alert, Button, Paragraph, Text, Title} from '../common';
+import {Alert, Button, Paragraph, Text} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';
@@ -21,8 +20,6 @@ type State = {
 };
 
 class SessionReplay extends React.Component<Props, State> {
-  socket: Socket | null = null;
-  channel: Channel | null = null;
   replayer!: Replayer;
   container: any;
 

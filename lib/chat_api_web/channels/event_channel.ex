@@ -2,6 +2,23 @@ defmodule ChatApiWeb.EventChannel do
   use ChatApiWeb, :channel
 
   @impl true
+  def join("events:admin:" <> keys, _payload, socket) do
+    case String.split(keys, ":") do
+      [account_id, browser_session_id] ->
+        if authorized?(socket, account_id) do
+          {:ok,
+           socket
+           |> assign(:account_id, account_id)
+           |> assign(:browser_session_id, browser_session_id)}
+        else
+          {:error, %{reason: "unauthorized"}}
+        end
+
+      _ ->
+        {:error, %{reason: "unauthorized"}}
+    end
+  end
+
   def join("events:" <> keys, _payload, socket) do
     case String.split(keys, ":") do
       [account_id, browser_session_id] ->
@@ -22,18 +39,23 @@ defmodule ChatApiWeb.EventChannel do
     {:reply, {:ok, payload}, socket}
   end
 
-  # It is also common to receive messages from the client and
-  # broadcast to everyone in the current topic.
   @impl true
   def handle_in("replay:event:emitted", payload, socket) do
-    # TODO: create session, connect to one channel, send data in
-    # Then, as admin, connect to other channel, listen for data
-    # Admin channel is secured
-    # Broadcast events in realtime, but save in queue (in batches?)
-    # `customer_id` is optional for now? Only apply it once known. Session ID is enough?
     enqueue_process_browser_replay_event(payload, socket)
-    broadcast(socket, "replay:event:emitted", payload)
+    broadcast_to_admin(socket, "replay:event:emitted", payload)
+
     {:noreply, socket}
+  end
+
+  defp broadcast_to_admin(socket, event, payload) do
+    [
+      "events",
+      "admin",
+      socket.assigns.account_id,
+      socket.assigns.browser_session_id
+    ]
+    |> Enum.join(":")
+    |> ChatApiWeb.Endpoint.broadcast!(event, payload)
   end
 
   defp enqueue_process_browser_replay_event(payload, socket) do
@@ -50,6 +72,15 @@ defmodule ChatApiWeb.EventChannel do
 
       _ ->
         nil
+    end
+  end
+
+  defp authorized?(socket, account_id) do
+    with %{current_user: current_user} <- socket.assigns,
+         %{account_id: acct} <- current_user do
+      acct == account_id
+    else
+      _ -> false
     end
   end
 end

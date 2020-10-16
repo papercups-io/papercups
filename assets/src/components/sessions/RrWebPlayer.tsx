@@ -8,7 +8,7 @@ export default function RrWebPlayer({events}: {events: eventWithTime[]}) {
 
   useEffect(() => {
     if (target.current) {
-      new rrwebPlayer({
+      const player = new rrwebPlayer({
         target: target.current,
         // eslint-disable-next-line
         // @ts-ignore
@@ -19,6 +19,8 @@ export default function RrWebPlayer({events}: {events: eventWithTime[]}) {
           autoPlay: true,
         },
       });
+
+      return () => player.pause();
     }
   }, [events]);
 
