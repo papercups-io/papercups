@@ -7,7 +7,6 @@ import {Storytime} from '@papercups-io/storytime';
 import './index.css';
 import App from './App';
 import {BASE_URL, isDev} from './config';
-import {getCustomerId} from './storage';
 import {AuthProvider} from './components/auth/AuthProvider';
 import * as serviceWorker from './serviceWorker';
 
@@ -31,7 +30,6 @@ if (REACT_APP_LOGROCKET_ID && !isDev) {
 if (REACT_APP_STORYTIME_ENABLED) {
   Storytime.init({
     accountId: REACT_APP_ADMIN_ACCOUNT_ID,
-    customerId: getCustomerId(),
     host: BASE_URL,
   });
 }
