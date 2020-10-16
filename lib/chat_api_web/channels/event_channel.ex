@@ -23,6 +23,7 @@ defmodule ChatApiWeb.EventChannel do
 
   def join("events:" <> keys, _payload, socket) do
     case String.split(keys, ":") do
+      # TODO: check that these IDs are valid (i.e. exist in DB)
       [account_id, browser_session_id] ->
         {:ok,
          socket
