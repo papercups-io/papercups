@@ -6,6 +6,8 @@ defmodule ChatApiWeb.EventChannel do
     case String.split(keys, ":") do
       [account_id, browser_session_id] ->
         if authorized?(socket, account_id) do
+          send(self(), :after_join)
+
           {:ok,
            socket
            |> assign(:account_id, account_id)
@@ -32,6 +34,13 @@ defmodule ChatApiWeb.EventChannel do
     end
   end
 
+  @impl true
+  def handle_info(:after_join, socket) do
+    broadcast_to_session(socket, "admin:watching")
+
+    {:noreply, socket}
+  end
+
   # Channels can be used in a request/response fashion
   # by sending replies to requests from the client.
   @impl true
@@ -45,6 +54,16 @@ defmodule ChatApiWeb.EventChannel do
     broadcast_to_admin(socket, "replay:event:emitted", payload)
 
     {:noreply, socket}
+  end
+
+  defp broadcast_to_session(socket, event, payload \\ %{}) do
+    [
+      "events",
+      socket.assigns.account_id,
+      socket.assigns.browser_session_id
+    ]
+    |> Enum.join(":")
+    |> ChatApiWeb.Endpoint.broadcast!(event, payload)
   end
 
   defp broadcast_to_admin(socket, event, payload) do

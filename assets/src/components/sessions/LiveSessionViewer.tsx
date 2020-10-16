@@ -72,9 +72,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
       .receive('ok', (res) => {
         logger.debug('Joined channel successfully', res);
 
-        const [start] = events;
-        events.forEach((event: any) => this.replayer.addEvent(event));
-        this.replayer.startLive(start?.timestamp ?? null);
+        // const [start] = events;
+        // events.forEach((event: any) => this.replayer.addEvent(event));
+        // this.replayer.startLive(start?.timestamp ?? null);
+        this.replayer.startLive();
 
         setTimeout(() => this.setIframeScale(), 100);
       })
