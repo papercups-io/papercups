@@ -48,3 +48,15 @@ body {
 .Text--white a {
   color: #fff;
 }
+
+/* Replayer */
+#SessionPlayer .replayer-wrapper {
+  left: auto !important;
+  top: auto !important;
+}
+
+.replayer-wrapper > iframe {
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 24px 48px rgba(17, 16, 62, 0.12);
+}

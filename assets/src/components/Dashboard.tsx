@@ -17,6 +17,7 @@ import {
   LogoutOutlined,
   CreditCardOutlined,
   TeamOutlined,
+  VideoCameraOutlined,
 } from './icons';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
@@ -33,6 +34,9 @@ import ClosedConversations from './conversations/ClosedConversations';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
+import SessionsOverview from './sessions/SessionsOverview';
+import SessionReplay from './sessions/SessionReplay';
+import LiveSessionViewer from './sessions/LiveSessionViewer';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
 const TITLE_FLASH_INTERVAL = 2000;
@@ -96,7 +100,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Box py={3} sx={{flex: 1}}>
             <Menu
               selectedKeys={[section, key]}
-              defaultOpenKeys={[section, 'account', 'conversations']}
+              defaultOpenKeys={[section, 'conversations']}
               mode="inline"
               theme="dark"
             >
@@ -180,6 +184,13 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Link to="/customers">Customers</Link>
               </Menu.Item>
               <Menu.Item
+                title="Sessions"
+                icon={<VideoCameraOutlined />}
+                key="sessions"
+              >
+                <Link to="/sessions">Sessions</Link>
+              </Menu.Item>
+              <Menu.Item
                 title="Integrations"
                 icon={<ApiOutlined />}
                 key="integrations"
@@ -237,6 +248,9 @@ const Dashboard = (props: RouteComponentProps) => {
             <Route path="/billing" component={BillingOverview} />
           )}
           <Route path="/reporting" component={ReportingDashboard} />
+          <Route path="/sessions/live/:session" component={LiveSessionViewer} />
+          <Route path="/sessions/:session" component={SessionReplay} />
+          <Route path="/sessions" component={SessionsOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>

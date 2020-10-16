@@ -1,4 +1,5 @@
 import ApiOutlined from '@ant-design/icons/ApiOutlined';
+import ArrowLeftOutlined from '@ant-design/icons/ArrowLeftOutlined';
 import CalendarOutlined from '@ant-design/icons/CalendarOutlined';
 import CheckCircleTwoTone from '@ant-design/icons/CheckCircleTwoTone';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
@@ -25,9 +26,11 @@ import TeamOutlined from '@ant-design/icons/TeamOutlined';
 import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
+import VideoCameraOutlined from '@ant-design/icons/VideoCameraOutlined';
 
 export {
   ApiOutlined,
+  ArrowLeftOutlined,
   CalendarOutlined,
   CheckCircleTwoTone,
   CheckOutlined,
@@ -54,4 +57,5 @@ export {
   UploadOutlined,
   UpOutlined,
   UserOutlined,
+  VideoCameraOutlined,
 };

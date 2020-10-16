@@ -5,6 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "@papercups-io/chat-widget": "^1.1.0",
+    "@papercups-io/storytime": "^1.0.2",
     "@sentry/react": "^5.20.1",
     "@stripe/react-stripe-js": "^1.1.2",
     "@stripe/stripe-js": "^1.9.0",
@@ -40,9 +41,11 @@
     "react-syntax-highlighter": "^12.2.1",
     "recharts": "^1.8.5",
     "remark-breaks": "^2.0.0",
+    "rrweb": "^0.9.7",
+    "rrweb-player": "^0.6.2",
     "superagent": "^5.3.1",
     "theme-ui": "^0.3.1",
-    "typescript": "~3.7.2"
+    "typescript": "~3.9.7"
   },
   "scripts": {
     "start": "react-scripts start",
