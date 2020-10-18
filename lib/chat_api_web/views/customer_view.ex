@@ -1,9 +1,20 @@
 defmodule ChatApiWeb.CustomerView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.{CustomerView, TagView}
+  alias ChatApiWeb.{CustomerView, TagView, CSVHelpers}
+
+  @customer_csv_ordered_fields ~w(id name email created_atm updated_at)a ++
+                                 ~w(first_seen last_seen phone external_id) ++
+                                 ~w(host pathname current_url browser) ++
+                                 ~w(os ip metadata time_zone)a
 
   def render("index.json", %{customers: customers}) do
     %{data: render_many(customers, CustomerView, "customer.json")}
+  end
+
+  def render("index.csv", %{customers: customers}) do
+    customers
+    |> render_many(CustomerView, "customer.json")
+    |> CSVHelpers.dump_csv_rfc4180(@customer_csv_ordered_fields)
   end
 
   def render("show.json", %{customer: customer}) do

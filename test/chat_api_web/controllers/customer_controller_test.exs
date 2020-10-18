@@ -41,6 +41,15 @@ defmodule ChatApiWeb.CustomerControllerTest do
 
       assert ids == [customer.id]
     end
+
+    test "lists all customers in csv format", %{authed_conn: authed_conn, customer: customer} do
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :index) <> "?format=csv")
+      csv = response(resp, 200)
+
+      assert is_binary(csv)
+      assert csv =~ "\"#{customer.id}\","
+      assert get_resp_header(resp, "content-type") == ["text/csv; charset=utf-8"]
+    end
   end
 
   describe "create customer" do

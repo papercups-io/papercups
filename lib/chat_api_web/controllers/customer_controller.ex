@@ -7,10 +7,10 @@ defmodule ChatApiWeb.CustomerController do
   action_fallback ChatApiWeb.FallbackController
 
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def index(conn, _params) do
+  def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
       customers = Customers.list_customers(account_id)
-      render(conn, "index.json", customers: customers)
+      render(conn, "index.#{resp_format(params)}", customers: customers)
     end
   end
 
@@ -108,4 +108,12 @@ defmodule ChatApiWeb.CustomerController do
       json(conn, %{data: %{ok: true}})
     end
   end
+
+  ###
+  # Helpers
+  ###
+
+  @spec resp_format(map()) :: String.t()
+  defp resp_format(%{"format" => "csv"}), do: "csv"
+  defp resp_format(_), do: "json"
 end
