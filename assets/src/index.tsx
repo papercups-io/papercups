@@ -27,7 +27,7 @@ if (REACT_APP_LOGROCKET_ID && !isDev) {
   LogRocket.init(REACT_APP_LOGROCKET_ID);
 }
 
-if (REACT_APP_STORYTIME_ENABLED) {
+if (REACT_APP_STORYTIME_ENABLED && !isDev) {
   Storytime.init({
     accountId: REACT_APP_ADMIN_ACCOUNT_ID,
     host: BASE_URL,
