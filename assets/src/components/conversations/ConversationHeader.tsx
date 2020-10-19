@@ -2,7 +2,16 @@ import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {colors, Button, Drawer, Select, Text, Title, Tooltip} from '../common';
+import {
+  colors,
+  Button,
+  Popconfirm,
+  Drawer,
+  Select,
+  Text,
+  Title,
+  Tooltip,
+} from '../common';
 import {
   CheckOutlined,
   StarOutlined,
@@ -12,6 +21,7 @@ import {
 } from '../icons';
 import {Customer, Conversation, User} from '../../types';
 import ConversationDetailsSidebar from './ConversationDetailsSidebar';
+import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -230,15 +240,6 @@ const ConversationHeader = ({
                   />
                 </Tooltip>
               </Box>
-              {/*
-
-              FIXME: there's an issue deleting conversations that have associated
-              Slack conversations:
-                ** (Ecto.ConstraintError) constraint error when attempting to delete struct:
-                * slack_conversation_threads_conversation_id_fkey (foreign_key_constraint)
-
-              Need to fix that before uncommenting this.
-
               <Box mx={1}>
                 <Popconfirm
                   title="Are you sure you want to delete this conversation?"
@@ -252,8 +253,6 @@ const ConversationHeader = ({
                   </Tooltip>
                 </Popconfirm>
               </Box>
-
-              */}
             </Fragment>
           ) : (
             <Box mx={1}>
