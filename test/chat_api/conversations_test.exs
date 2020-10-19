@@ -98,13 +98,20 @@ defmodule ChatApi.ConversationsTest do
         account_id: valid_create_attrs().account_id
       }
 
-      assert {:ok, %SlackConversationThread{}} =
+      assert {:ok, %SlackConversationThread{} = slack_conversation_thread} =
                SlackConversationThreads.create_slack_conversation_thread(
                  slack_conversation_thread_attrs
                )
 
       assert {:ok, %Conversation{}} = Conversations.delete_conversation(conversation)
-      assert_raise Ecto.NoResultsError, fn -> Conversations.get_conversation!(conversation.id) end
+
+      assert_raise Ecto.NoResultsError, fn ->
+        Conversations.get_conversation!(conversation.id)
+      end
+
+      assert_raise Ecto.NoResultsError, fn ->
+        SlackConversationThreads.get_slack_conversation_thread!(slack_conversation_thread.id)
+      end
     end
 
     test "change_conversation/1 returns a conversation changeset", %{conversation: conversation} do
