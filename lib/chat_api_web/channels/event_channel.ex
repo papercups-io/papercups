@@ -1,12 +1,23 @@
 defmodule ChatApiWeb.EventChannel do
   use ChatApiWeb, :channel
 
+  alias ChatApiWeb.Presence
+
   @impl true
   def join("events:admin:" <> keys, _payload, socket) do
     case String.split(keys, ":") do
+      [account_id, "all"] ->
+        if authorized?(socket, account_id) do
+          send(self(), :after_join_admin_all)
+
+          {:ok, socket |> assign(:account_id, account_id)}
+        else
+          {:error, %{reason: "unauthorized"}}
+        end
+
       [account_id, browser_session_id] ->
         if authorized?(socket, account_id) do
-          send(self(), :after_join)
+          send(self(), :after_join_admin_session)
 
           {:ok,
            socket
@@ -25,6 +36,8 @@ defmodule ChatApiWeb.EventChannel do
     case String.split(keys, ":") do
       # TODO: check that these IDs are valid (i.e. exist in DB)
       [account_id, browser_session_id] ->
+        send(self(), :after_join_customer_session)
+
         {:ok,
          socket
          |> assign(:account_id, account_id)
@@ -36,8 +49,31 @@ defmodule ChatApiWeb.EventChannel do
   end
 
   @impl true
-  def handle_info(:after_join, socket) do
+  def handle_info(:after_join_admin_session, socket) do
     broadcast_to_session(socket, "admin:watching")
+
+    {:noreply, socket}
+  end
+
+  def handle_info(:after_join_admin_all, socket) do
+    push(socket, "presence_state", Presence.list(socket))
+
+    {:noreply, socket}
+  end
+
+  def handle_info(:after_join_customer_session, socket) do
+    topic = get_admin_all_topic(socket)
+    key = "session:" <> socket.assigns.browser_session_id
+
+    # Add tracking to admin topic so we can track who is online
+    {:ok, _} =
+      Presence.track(self(), topic, key, %{
+        online_at: inspect(System.system_time(:second)),
+        account_id: socket.assigns.account_id,
+        session_id: socket.assigns.browser_session_id
+      })
+
+    ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
 
     {:noreply, socket}
   end
@@ -57,17 +93,7 @@ defmodule ChatApiWeb.EventChannel do
     {:noreply, socket}
   end
 
-  defp broadcast_to_session(socket, event, payload \\ %{}) do
-    [
-      "events",
-      socket.assigns.account_id,
-      socket.assigns.browser_session_id
-    ]
-    |> Enum.join(":")
-    |> ChatApiWeb.Endpoint.broadcast!(event, payload)
-  end
-
-  defp broadcast_to_admin(socket, event, payload) do
+  defp get_admin_session_topic(socket) do
     [
       "events",
       "admin",
@@ -75,6 +101,36 @@ defmodule ChatApiWeb.EventChannel do
       socket.assigns.browser_session_id
     ]
     |> Enum.join(":")
+  end
+
+  defp get_admin_all_topic(socket) do
+    [
+      "events",
+      "admin",
+      socket.assigns.account_id,
+      "all"
+    ]
+    |> Enum.join(":")
+  end
+
+  defp get_customer_session_topic(socket) do
+    [
+      "events",
+      socket.assigns.account_id,
+      socket.assigns.browser_session_id
+    ]
+    |> Enum.join(":")
+  end
+
+  defp broadcast_to_session(socket, event, payload \\ %{}) do
+    socket
+    |> get_customer_session_topic()
+    |> ChatApiWeb.Endpoint.broadcast!(event, payload)
+  end
+
+  defp broadcast_to_admin(socket, event, payload) do
+    socket
+    |> get_admin_session_topic()
     |> ChatApiWeb.Endpoint.broadcast!(event, payload)
   end
 

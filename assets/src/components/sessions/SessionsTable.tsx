@@ -1,63 +1,87 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+import {Box} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {BrowserSession} from '../../types';
-import {formatDiffDuration} from '../../utils';
-import {Badge, Button, Table} from '../common';
+import {BrowserSession, Customer} from '../../types';
+import {Badge, Button, Table, Text, Tooltip} from '../common';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
-const SessionsTable = ({sessions}: {sessions: Array<BrowserSession>}) => {
+const SessionsTable = ({
+  loading,
+  sessions,
+}: {
+  loading?: boolean;
+  sessions: Array<BrowserSession>;
+}) => {
   const data = sessions.map((session) => {
     return {key: session.id, ...session};
   });
   const columns = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      render: (id: string) => {
-        return <Link to={`/sessions/${id}`}>{id}</Link>;
+      title: 'Visitor',
+      dataIndex: 'customer',
+      key: 'customer',
+      render: (customer: Customer | null) => {
+        if (!customer) {
+          return 'Anonymous User';
+        }
+
+        return customer.email || customer.name || 'Anonymous User';
       },
     },
     {
       title: 'Started at',
       dataIndex: 'started_at',
       key: 'started_at',
-      render: (value: string) => {
-        return value ? dayjs(value).format('MMMM DD, h:mm a') : '--';
-      },
-    },
-    {
-      title: 'Finished at',
-      dataIndex: 'finished_at',
-      key: 'finished_at',
-      render: (value: string) => {
-        return value ? (
-          dayjs(value).format('MMMM DD, h:mm a')
-        ) : (
-          <Badge status="processing" text="Online now!" />
+      render: (value: string, record: any) => {
+        const {metadata = {}} = record;
+        const {pathname, current_url} = metadata;
+        const formatted = value ? dayjs(value).format('MMMM DD, h:mm a') : '--';
+
+        return (
+          <Box>
+            <Text>{formatted}</Text>
+            <Box sx={{fontSize: 12, lineHeight: 1.4}}>
+              {pathname && (
+                <Text type="secondary">
+                  {' '}
+                  on
+                  <Tooltip title={current_url} placement="right">
+                    <Text code>{pathname}</Text>
+                  </Tooltip>
+                </Text>
+              )}
+            </Box>
+          </Box>
         );
       },
     },
     {
-      title: 'Duration',
-      dataIndex: 'duration',
-      key: 'duration',
-      render: (v: string, record: BrowserSession) => {
-        const {started_at, finished_at} = record;
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: () => {
+        return <Badge status="processing" text="Online now!" />;
+      },
+    },
+    {
+      title: 'Device info',
+      dataIndex: 'info',
+      key: 'info',
+      render: (value: string, record: any) => {
+        const {metadata = {}} = record;
+        const {browser, os} = metadata;
 
-        if (!finished_at) {
-          return '--';
-        }
-
-        const startedAt = dayjs(started_at);
-        const finishedAt = dayjs(finished_at);
-        const duration = formatDiffDuration(startedAt, finishedAt);
-
-        return duration || '--';
+        return (
+          <Text>
+            <Text type="secondary">{browser}</Text>
+            {browser && os ? ' · ' : ''}
+            {os && <Text type="secondary">{os}</Text>}
+          </Text>
+        );
       },
     },
     {
@@ -68,15 +92,15 @@ const SessionsTable = ({sessions}: {sessions: Array<BrowserSession>}) => {
         const {id: sessionId} = record;
 
         return (
-          <Link to={`/sessions/${sessionId}`}>
-            <Button>View replay</Button>
+          <Link to={`/sessions/live/${sessionId}`}>
+            <Button>View live</Button>
           </Link>
         );
       },
     },
   ];
 
-  return <Table dataSource={data} columns={columns} />;
+  return <Table loading={loading} dataSource={data} columns={columns} />;
 };
 
 export default SessionsTable;
