@@ -21,7 +21,7 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL, isDev} from '../config';
+import {BASE_URL} from '../config';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
