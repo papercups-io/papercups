@@ -240,24 +240,19 @@ const ConversationHeader = ({
                   />
                 </Tooltip>
               </Box>
-              {
-                <Box mx={1}>
-                  <Popconfirm
-                    title="Are you sure you want to delete this conversation?"
-                    okText="Yes"
-                    cancelText="No"
-                    placement="leftBottom"
-                    onConfirm={() => onDeleteConversation(conversationId)}
-                  >
-                    <Tooltip
-                      title="Delete conversation"
-                      placement="bottomRight"
-                    >
-                      <Button icon={<DeleteOutlined />} />
-                    </Tooltip>
-                  </Popconfirm>
-                </Box>
-              }
+              <Box mx={1}>
+                <Popconfirm
+                  title="Are you sure you want to delete this conversation?"
+                  okText="Yes"
+                  cancelText="No"
+                  placement="leftBottom"
+                  onConfirm={() => onDeleteConversation(conversationId)}
+                >
+                  <Tooltip title="Delete conversation" placement="bottomRight">
+                    <Button icon={<DeleteOutlined />} />
+                  </Tooltip>
+                </Popconfirm>
+              </Box>
             </Fragment>
           ) : (
             <Box mx={1}>
