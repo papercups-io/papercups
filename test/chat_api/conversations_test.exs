@@ -1,10 +1,11 @@
 defmodule ChatApi.ConversationsTest do
   use ChatApi.DataCase, async: true
 
-  alias ChatApi.Conversations
+  alias ChatApi.{Conversations, SlackConversationThreads}
 
   describe "conversations" do
     alias ChatApi.Conversations.Conversation
+    alias ChatApi.SlackConversationThreads.SlackConversationThread
 
     @valid_attrs %{status: "open"}
     @update_attrs %{status: "closed"}
@@ -81,6 +82,27 @@ defmodule ChatApi.ConversationsTest do
     end
 
     test "delete_conversation/1 deletes the conversation", %{conversation: conversation} do
+      assert {:ok, %Conversation{}} = Conversations.delete_conversation(conversation)
+      assert_raise Ecto.NoResultsError, fn -> Conversations.get_conversation!(conversation.id) end
+    end
+
+    test "delete_conversation/1 deletes the conversation if associated slack_conversation_threads exist",
+         %{conversation: conversation} do
+      assert {:ok, %Conversation{} = conversation} =
+               Conversations.create_conversation(valid_create_attrs())
+
+      slack_conversation_thread_attrs = %{
+        slack_channel: "some slack_channel",
+        slack_thread_ts: "some slack_thread_ts",
+        conversation_id: conversation.id,
+        account_id: valid_create_attrs().account_id
+      }
+
+      assert {:ok, %SlackConversationThread{}} =
+               SlackConversationThreads.create_slack_conversation_thread(
+                 slack_conversation_thread_attrs
+               )
+
       assert {:ok, %Conversation{}} = Conversations.delete_conversation(conversation)
       assert_raise Ecto.NoResultsError, fn -> Conversations.get_conversation!(conversation.id) end
     end
