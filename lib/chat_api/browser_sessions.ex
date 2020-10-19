@@ -18,6 +18,17 @@ defmodule ChatApi.BrowserSessions do
     |> Repo.preload([:customer])
   end
 
+  @spec list_browser_sessions(binary(), list()) :: [BrowserSession.t()]
+  def list_browser_sessions(account_id, ids) do
+    # TODO: include customer and count of events
+    BrowserSession
+    |> where(account_id: ^account_id)
+    |> where([s], s.id in ^ids)
+    |> order_by(desc: :inserted_at)
+    |> Repo.all()
+    |> Repo.preload([:customer])
+  end
+
   @doc """
   Gets a single browser_session.
 

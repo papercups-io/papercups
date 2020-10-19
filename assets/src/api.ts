@@ -1,4 +1,5 @@
 import request from 'superagent';
+import qs from 'query-string';
 import {getAuthTokens} from './storage';
 import {Conversation, User} from './types';
 
@@ -745,13 +746,17 @@ export const removeCustomerTag = (
     .then((res) => res.body.data);
 };
 
-export const fetchBrowserSessions = async (token = getAccessToken()) => {
+export const fetchBrowserSessions = async (
+  sessionIds: Array<string> = [],
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/browser_sessions`)
+    .query(qs.stringify({ids: sessionIds}, {arrayFormat: 'bracket'}))
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

@@ -1,13 +1,15 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router-dom';
+import {Link, RouteComponentProps} from 'react-router-dom';
 import {throttle} from 'lodash';
 import {Channel, Socket} from 'phoenix';
 import {Box, Flex} from 'theme-ui';
-import {Replayer} from 'rrweb';
-import {Title} from '../common';
+import {Replayer, ReplayerEvents} from 'rrweb';
+import {Alert, Button, Paragraph, Text} from '../common';
+import {ArrowLeftOutlined} from '../icons';
 import {SOCKET_URL} from '../../socket';
 import * as API from '../../api';
 import logger from '../../logger';
+import Spinner from '../Spinner';
 import 'rrweb/dist/replay/rrweb-replay.min.css';
 
 type Props = RouteComponentProps<{session: string}> & {};
@@ -28,18 +30,18 @@ class LiveSessionViewer extends React.Component<Props, State> {
   // TODO: move a bunch of logic from here into separate functions
   async componentDidMount() {
     const {session: sessionId} = this.props.match.params;
-    const session = await API.fetchBrowserSession(sessionId);
-
-    logger.info('Session:', {session});
-
+    const {id: accountId} = await API.fetchAccountInfo();
     const root = document.getElementById('SessionPlayer') as Element;
-    const {account_id: accountId, browser_replay_events = []} = session;
-    const events = browser_replay_events
-      .map((e: any) => e.event)
-      .sort((a: any, b: any) => a.timestamp - b.timestamp);
 
-    this.setState({events, loading: false});
     this.replayer = new Replayer([], {root: root, liveMode: true});
+
+    this.replayer.on(ReplayerEvents.FullsnapshotRebuilded, () =>
+      this.setIframeScale()
+    );
+    // TODO: do we want to scale the iframe here as well?
+    this.replayer.on(ReplayerEvents.Resize, (...args: any) =>
+      logger.debug(args)
+    );
 
     // Socket connection below only necessary for live view
     this.socket = new Socket(SOCKET_URL, {
@@ -72,9 +74,6 @@ class LiveSessionViewer extends React.Component<Props, State> {
       .receive('ok', (res) => {
         logger.debug('Joined channel successfully', res);
 
-        // const [start] = events;
-        // events.forEach((event: any) => this.replayer.addEvent(event));
-        // this.replayer.startLive(start?.timestamp ?? null);
         this.replayer.startLive();
 
         setTimeout(() => this.setIframeScale(), 100);
@@ -84,6 +83,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
       });
 
     window.addEventListener('resize', this.handleWindowResize);
+    this.setState({loading: false});
   }
 
   componentWillUnmount() {
@@ -113,7 +113,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
     } = this.container;
     const scaleX = containerWidth / iframeWidth;
     const scaleY = containerHeight / iframeHeight;
-    logger.debug({
+    logger.debug('Setting iframe scale:', {
       containerWidth,
       containerHeight,
       iframeWidth,
@@ -136,12 +136,43 @@ class LiveSessionViewer extends React.Component<Props, State> {
     return (
       <Box p={4}>
         <Box mb={4}>
-          <Title level={3}>Live view</Title>
+          <Box mb={3} sx={{maxWidth: 960}}>
+            <Paragraph>
+              <Link to="/sessions">
+                <Button icon={<ArrowLeftOutlined />}>
+                  Back to all sessions
+                </Button>
+              </Link>
+            </Paragraph>
+
+            <Alert
+              message={
+                <Text>
+                  Note: This is an experimental feature! Let us know if you
+                  notice any issues or bugs.
+                </Text>
+              }
+              type="warning"
+              showIcon
+            />
+          </Box>
         </Box>
 
-        <Flex className="rr-block">
+        <Flex className="rr-block" sx={{maxWidth: 960}}>
           <Box sx={{flex: 2, border: 'none'}}>
             {/* TODO: figure out the best way to style this */}
+            {loading && (
+              <Flex
+                sx={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
+                }}
+              >
+                <Spinner size={40} />
+              </Flex>
+            )}
             <Box
               mx={2}
               style={{
