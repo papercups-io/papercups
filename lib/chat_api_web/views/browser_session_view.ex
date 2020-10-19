@@ -21,8 +21,7 @@ defmodule ChatApiWeb.BrowserSessionView do
       customer_id: browser_session.customer_id,
       metadata: browser_session.metadata,
       started_at: browser_session.started_at,
-      finished_at: browser_session.finished_at,
-      customer: render_one(browser_session.customer, CustomerView, "basic.json")
+      finished_at: browser_session.finished_at
     }
   end
 
