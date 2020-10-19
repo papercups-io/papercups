@@ -47,6 +47,7 @@ defmodule ChatApiWeb.Router do
     post("/browser_sessions", BrowserSessionController, :create)
     post("/browser_sessions/:id/finish", BrowserSessionController, :finish)
     post("/browser_sessions/:id/restart", BrowserSessionController, :restart)
+    get("/browser_sessions/:id/exists", BrowserSessionController, :exists)
 
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)

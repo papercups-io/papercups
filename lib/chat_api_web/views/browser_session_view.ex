@@ -1,6 +1,6 @@
 defmodule ChatApiWeb.BrowserSessionView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.{BrowserSessionView, BrowserReplayEventView}
+  alias ChatApiWeb.{BrowserSessionView, BrowserReplayEventView, CustomerView}
 
   def render("index.json", %{browser_sessions: browser_sessions}) do
     %{data: render_many(browser_sessions, BrowserSessionView, "basic.json")}
@@ -33,6 +33,7 @@ defmodule ChatApiWeb.BrowserSessionView do
       metadata: browser_session.metadata,
       started_at: browser_session.started_at,
       finished_at: browser_session.finished_at,
+      customer: render_one(browser_session.customer, CustomerView, "basic.json"),
       browser_replay_events:
         render_many(
           browser_session.browser_replay_events,

@@ -10,10 +10,12 @@ defmodule ChatApi.BrowserSessions do
 
   @spec list_browser_sessions(binary()) :: [BrowserSession.t()]
   def list_browser_sessions(account_id) do
+    # TODO: include customer and count of events
     BrowserSession
     |> where(account_id: ^account_id)
     |> order_by(desc: :inserted_at)
     |> Repo.all()
+    |> Repo.preload([:customer])
   end
 
   @doc """
@@ -31,7 +33,7 @@ defmodule ChatApi.BrowserSessions do
 
   """
   def get_browser_session!(id) do
-    BrowserSession |> Repo.get!(id) |> Repo.preload([:browser_replay_events])
+    BrowserSession |> Repo.get!(id) |> Repo.preload([:browser_replay_events, :customer])
   end
 
   @doc """
@@ -97,5 +99,15 @@ defmodule ChatApi.BrowserSessions do
   """
   def change_browser_session(%BrowserSession{} = browser_session, attrs \\ %{}) do
     BrowserSession.changeset(browser_session, attrs)
+  end
+
+  def exists?(id) do
+    count =
+      BrowserSession
+      |> where(id: ^id)
+      |> select([p], count(p.id))
+      |> Repo.one()
+
+    count > 0
   end
 end
