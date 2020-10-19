@@ -179,7 +179,7 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
 
         <DetailsSectionCard>
           <Box mb={2}>
-            <Text strong>Tags</Text>
+            <Text strong>Customer Tags</Text>
           </Box>
           <SidebarCustomerTags customerId={customerId} />
         </DetailsSectionCard>
@@ -214,7 +214,7 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
 
         <DetailsSectionCard>
           <Box mb={2}>
-            <Text strong>Tags</Text>
+            <Text strong>Conversation Tags</Text>
           </Box>
           <SidebarConversationTags conversationId={conversationId} />
         </DetailsSectionCard>
