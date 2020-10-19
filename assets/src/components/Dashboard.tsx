@@ -9,6 +9,8 @@ import {
 } from 'react-router-dom';
 import {Helmet} from 'react-helmet';
 import {Box, Flex} from 'theme-ui';
+// import {Storytime} from '../lib/storytime'; // For testing
+import {Storytime} from '@papercups-io/storytime';
 import {colors, Badge, Layout, Menu, Sider} from './common';
 import {
   ApiOutlined,
@@ -19,6 +21,7 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
+import {BASE_URL, isDev} from '../config';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -39,10 +42,16 @@ import SessionReplay from './sessions/SessionReplay';
 import LiveSessionViewer from './sessions/LiveSessionViewer';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
+const {
+  REACT_APP_STRIPE_PUBLIC_KEY,
+  REACT_APP_STORYTIME_ENABLED,
+  REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
+} = process.env;
+
 const TITLE_FLASH_INTERVAL = 2000;
 
 const hasValidStripeKey = () => {
-  const key = process.env.REACT_APP_STRIPE_PUBLIC_KEY;
+  const key = REACT_APP_STRIPE_PUBLIC_KEY;
 
   return key && key.startsWith('pk_');
 };
@@ -68,6 +77,19 @@ const Dashboard = (props: RouteComponentProps) => {
       setHtmlTitle('Papercups');
     }
   };
+
+  useEffect(() => {
+    if (REACT_APP_STORYTIME_ENABLED) {
+      const promise = Storytime.init({
+        accountId: REACT_APP_ADMIN_ACCOUNT_ID,
+        host: BASE_URL,
+      });
+
+      return () => {
+        promise.then((st) => st.finish());
+      };
+    }
+  }, []);
 
   useEffect(() => {
     let timeout;

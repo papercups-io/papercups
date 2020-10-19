@@ -3,18 +3,15 @@ import ReactDOM from 'react-dom';
 import * as Sentry from '@sentry/react';
 import LogRocket from 'logrocket';
 import posthog from 'posthog-js';
-import {Storytime} from '@papercups-io/storytime';
 import './index.css';
 import App from './App';
-import {BASE_URL, isDev} from './config';
+import {isDev} from './config';
 import {AuthProvider} from './components/auth/AuthProvider';
 import * as serviceWorker from './serviceWorker';
 
 const {
   REACT_APP_SENTRY_DSN,
   REACT_APP_LOGROCKET_ID,
-  REACT_APP_STORYTIME_ENABLED,
-  REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
   REACT_APP_POSTHOG_TOKEN = 'cQo4wipp5ipWWXhTN8kTacBItgqo457yDRtzCMOr-Tw',
   REACT_APP_POSTHOG_API_HOST = 'https://app.posthog.com',
 } = process.env;
@@ -25,13 +22,6 @@ if (REACT_APP_SENTRY_DSN && !isDev) {
 
 if (REACT_APP_LOGROCKET_ID && !isDev) {
   LogRocket.init(REACT_APP_LOGROCKET_ID);
-}
-
-if (REACT_APP_STORYTIME_ENABLED && !isDev) {
-  Storytime.init({
-    accountId: REACT_APP_ADMIN_ACCOUNT_ID,
-    host: BASE_URL,
-  });
 }
 
 if (REACT_APP_POSTHOG_TOKEN && !isDev) {

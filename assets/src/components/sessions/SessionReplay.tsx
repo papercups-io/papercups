@@ -153,7 +153,7 @@ class SessionReplay extends React.Component<Props, State> {
           />
         </Box>
 
-        <Flex>
+        <Flex className="rr-block">
           <Box sx={{flex: 2, border: 'none'}}>
             {showExperimentalPlayer ? (
               // TODO: figure out the best way to style this

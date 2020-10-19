@@ -139,7 +139,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
           <Title level={3}>Live view</Title>
         </Box>
 
-        <Flex>
+        <Flex className="rr-block">
           <Box sx={{flex: 2, border: 'none'}}>
             {/* TODO: figure out the best way to style this */}
             <Box

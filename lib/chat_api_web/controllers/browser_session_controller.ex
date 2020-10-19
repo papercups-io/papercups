@@ -71,4 +71,9 @@ defmodule ChatApiWeb.BrowserSessionController do
       render(conn, "create.json", browser_session: browser_session)
     end
   end
+
+  @spec exists(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def exists(conn, %{"id" => id}) do
+    json(conn, %{data: BrowserSessions.exists?(id)})
+  end
 end
