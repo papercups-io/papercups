@@ -44,14 +44,16 @@ const ConversationMessages = ({
   loading,
   isClosing,
   showGetStarted,
+  sx = {},
   setScrollRef,
 }: {
   messages: Array<Message>;
   currentUser: User;
   customer: Customer | null;
-  loading: boolean;
-  isClosing: boolean;
-  showGetStarted: boolean;
+  loading?: boolean;
+  isClosing?: boolean;
+  showGetStarted?: boolean;
+  sx?: any;
   setScrollRef: (el: any) => void;
 }) => {
   return (
@@ -74,7 +76,10 @@ const ConversationMessages = ({
           <Spinner size={40} />
         </Flex>
       ) : (
-        <Box p={4} backgroundColor={colors.white} sx={{minHeight: '100%'}}>
+        <Box
+          backgroundColor={colors.white}
+          sx={{minHeight: '100%', p: 4, ...sx}}
+        >
           {messages.length ? (
             messages.map((msg: Message, key: number) => {
               // Slight hack

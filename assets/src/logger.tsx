@@ -71,13 +71,13 @@ export class Logger {
   listen() {
     window.onerror = (msg, url, lineNo, columnNo, error) => {
       const stack = error?.stack || '';
-      const line = stack.split('\n')[1].trim();
+      const line = stack.split('\n')[1]?.trim();
       this.error(msg, line);
     };
 
     window.addEventListener('unhandledrejection', (event) => {
       const {message, stack} = event.reason;
-      const line = stack.split('\n')[1].trim();
+      const line = stack.split('\n')[1]?.trim();
       this.error(message, line);
     });
   }
