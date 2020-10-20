@@ -22,8 +22,21 @@ class ConversationSidebar extends React.Component<Props, any> {
   scrollToEl: any;
 
   componentDidMount() {
-    this.scrollToEl.scrollIntoView();
+    this.scrollIntoView();
   }
+
+  componentDidUpdate(prev: Props) {
+    const {messages: previousMessages} = prev;
+    const {messages} = this.props;
+
+    if (messages.length > previousMessages.length) {
+      this.scrollIntoView();
+    }
+  }
+
+  scrollIntoView = () => {
+    this.scrollToEl && this.scrollToEl.scrollIntoView();
+  };
 
   handleSendMessage = (message: string) => {
     const {id: conversationId} = this.props.conversation;
@@ -33,7 +46,7 @@ class ConversationSidebar extends React.Component<Props, any> {
     }
 
     this.props.onSendMessage(message, conversationId, () => {
-      this.scrollToEl.scrollIntoView();
+      this.scrollIntoView();
     });
   };
 
