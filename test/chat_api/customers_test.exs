@@ -16,7 +16,11 @@ defmodule ChatApi.CustomersTest do
       name: "Test User",
       email: "user@test.com",
       phone: "+16501235555",
-      time_zone: "America/New_York"
+      time_zone: "America/New_York",
+      current_url:
+        "http://test.com/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe",
+      pathname:
+        "/test/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe"
     }
     @invalid_attrs %{
       first_seen: 3
@@ -60,6 +64,8 @@ defmodule ChatApi.CustomersTest do
       assert customer.name == @update_attrs.name
       assert customer.phone == @update_attrs.phone
       assert customer.time_zone == @update_attrs.time_zone
+      assert customer.current_url == @update_attrs.current_url
+      assert customer.pathname == @update_attrs.pathname
     end
 
     test "update_customer_metadata/2 only updates customizable fields", %{customer: customer} do
