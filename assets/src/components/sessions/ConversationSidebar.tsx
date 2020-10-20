@@ -103,6 +103,7 @@ const ConversationsSidebarWrapper = ({
     fetchConversationById(conversationId).then(() =>
       onSelectConversation(conversationId)
     );
+    // eslint-disable-next-line
   }, [conversationId]);
 
   if (loading) {
