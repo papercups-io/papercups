@@ -5,7 +5,6 @@ import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
-import 'rrweb/dist/replay/rrweb-replay.min.css';
 
 type Props = {
   conversation: Conversation;
