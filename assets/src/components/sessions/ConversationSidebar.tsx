@@ -109,8 +109,12 @@ const ConversationsSidebarWrapper = ({
     return null;
   }
 
-  const conversation = conversationsById[conversationId];
-  const messages = messagesByConversation[conversationId];
+  const conversation = conversationsById[conversationId] || null;
+  const messages = messagesByConversation[conversationId] || null;
+
+  if (!conversation || !messages) {
+    return null;
+  }
 
   return (
     <ConversationSidebar
