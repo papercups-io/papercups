@@ -10,12 +10,17 @@ import {SOCKET_URL} from '../../socket';
 import * as API from '../../api';
 import logger from '../../logger';
 import Spinner from '../Spinner';
+import ConversationDetailsSidebar from '../conversations/ConversationDetailsSidebar';
+import ConversationSidebar from './ConversationSidebar';
+import {Conversation, Customer} from '../../types';
 import 'rrweb/dist/replay/rrweb-replay.min.css';
 
 type Props = RouteComponentProps<{session: string}> & {};
 type State = {
   loading: boolean;
   events: Array<any>;
+  customer: Customer | null;
+  conversation: Conversation | null;
   scale: number;
 };
 
@@ -25,23 +30,36 @@ class LiveSessionViewer extends React.Component<Props, State> {
   replayer!: Replayer; // TODO: start off as null?
   container: any;
 
-  state: State = {loading: true, events: [], scale: 1};
+  state: State = {
+    loading: true,
+    events: [],
+    customer: null,
+    conversation: null,
+    scale: 1,
+  };
 
   // TODO: move a bunch of logic from here into separate functions
   async componentDidMount() {
     const {session: sessionId} = this.props.match.params;
-    const {id: accountId} = await API.fetchAccountInfo();
+    const {
+      customer,
+      account_id: accountId,
+      customer_id: customerId,
+    } = await API.fetchBrowserSession(sessionId);
+    const conversation = await this.findExistingConversation(
+      accountId,
+      customerId
+    );
+
+    this.setState({customer, conversation});
+
     const root = document.getElementById('SessionPlayer') as Element;
 
     this.replayer = new Replayer([], {root: root, liveMode: true});
-
-    this.replayer.on(ReplayerEvents.FullsnapshotRebuilded, () =>
-      this.setIframeScale()
-    );
-    // TODO: do we want to scale the iframe here as well?
-    this.replayer.on(ReplayerEvents.Resize, (...args: any) =>
-      logger.debug(args)
-    );
+    this.replayer.on(ReplayerEvents.FullsnapshotRebuilded, () => {
+      logger.debug('Full snapshot done!');
+      this.setIframeScale(() => this.setState({loading: false}));
+    });
 
     // Socket connection below only necessary for live view
     this.socket = new Socket(SOCKET_URL, {
@@ -64,8 +82,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
     );
 
     this.channel.on('replay:event:emitted', (data) => {
-      logger.log('New event emitted!', data);
-
+      logger.debug('New event emitted!', data);
       this.replayer.addEvent(data.event);
     });
 
@@ -83,7 +100,6 @@ class LiveSessionViewer extends React.Component<Props, State> {
       });
 
     window.addEventListener('resize', this.handleWindowResize);
-    this.setState({loading: false});
   }
 
   componentWillUnmount() {
@@ -100,9 +116,30 @@ class LiveSessionViewer extends React.Component<Props, State> {
     }
   }
 
+  findExistingConversation = async (
+    accountId: string,
+    customerId?: string | null
+  ) => {
+    if (!customerId) {
+      return null;
+    }
+
+    const conversations = await API.fetchCustomerConversations(
+      customerId,
+      accountId
+    );
+    const [recent] = conversations;
+
+    if (recent && recent.id) {
+      return recent;
+    }
+
+    return null;
+  };
+
   setIframeScale = (cb?: () => void) => {
     if (!this.replayer || !this.replayer.iframe) {
-      return 1;
+      this.setState({scale: 1}, cb);
     }
 
     const iframeWidth = Number(this.replayer.iframe.width);
@@ -123,76 +160,106 @@ class LiveSessionViewer extends React.Component<Props, State> {
     });
     const scale = scaleX < scaleY ? scaleX : scaleY;
 
-    this.setState({scale: scale || 1}, cb);
+    if (Number.isFinite(scale)) {
+      this.setState({scale: scale || 1}, cb);
+    } else {
+      this.setState({scale: 1}, cb);
+    }
   };
 
   handleWindowResize = () => {
+    logger.debug('Handling resize...');
     this.setIframeScale();
   };
 
   render() {
-    const {loading, scale = 1} = this.state;
+    const {loading, scale = 1, conversation, customer} = this.state;
+    const hasAdditionalDetails = !!(conversation || customer);
 
     return (
-      <Box p={4}>
-        <Box mb={4}>
-          <Box mb={3} sx={{maxWidth: 960}}>
-            <Paragraph>
-              <Link to="/sessions">
-                <Button icon={<ArrowLeftOutlined />}>
-                  Back to all sessions
-                </Button>
-              </Link>
-            </Paragraph>
+      <Flex>
+        <Box
+          p={4}
+          mr={hasAdditionalDetails ? 360 : 0}
+          sx={{maxWidth: 960, width: '100%', flex: 1}}
+        >
+          <Box mb={4}>
+            <Box mb={3}>
+              <Paragraph>
+                <Link to="/sessions">
+                  <Button icon={<ArrowLeftOutlined />}>
+                    Back to all sessions
+                  </Button>
+                </Link>
+              </Paragraph>
 
-            <Alert
-              message={
-                <Text>
-                  Note: This is an experimental feature! Let us know if you
-                  notice any issues or bugs.
-                </Text>
-              }
-              type="warning"
-              showIcon
-            />
-          </Box>
-        </Box>
-
-        <Flex className="rr-block" sx={{maxWidth: 960}}>
-          <Box sx={{flex: 2, border: 'none'}}>
-            {/* TODO: figure out the best way to style this */}
-            {loading && (
-              <Flex
-                sx={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  height: '100%',
-                }}
-              >
-                <Spinner size={40} />
-              </Flex>
-            )}
-            <Box
-              mx={2}
-              style={{
-                position: 'relative',
-                height: 480,
-                visibility: loading ? 'hidden' : 'visible',
-              }}
-              ref={(el) => (this.container = el)}
-            >
-              <div
-                id="SessionPlayer"
-                style={{
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'top left',
-                }}
-              ></div>
+              <Alert
+                message={
+                  <Text>
+                    Note: This is an experimental feature! Let us know if you
+                    notice any issues or bugs.
+                  </Text>
+                }
+                type="warning"
+                showIcon
+              />
             </Box>
           </Box>
-        </Flex>
-      </Box>
+
+          <Flex className="rr-block" sx={{maxWidth: 960}}>
+            <Box sx={{flex: 2, border: 'none'}}>
+              {/* TODO: figure out the best way to style this */}
+              {loading && (
+                <Flex
+                  sx={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                  }}
+                >
+                  <Spinner size={40} />
+                </Flex>
+              )}
+              <Box
+                mx={2}
+                style={{
+                  position: 'relative',
+                  height: 480,
+                  visibility: loading ? 'hidden' : 'visible',
+                }}
+                ref={(el) => (this.container = el)}
+              >
+                <div
+                  id="SessionPlayer"
+                  style={{
+                    transform: `scale(${scale})`,
+                    transformOrigin: 'top left',
+                  }}
+                ></div>
+              </Box>
+            </Box>
+          </Flex>
+        </Box>
+
+        {hasAdditionalDetails && (
+          <Box
+            sx={{
+              width: 360,
+              height: '100%',
+              overflowY: conversation ? null : 'scroll',
+              position: 'absolute',
+              right: 0,
+            }}
+          >
+            {conversation ? (
+              <ConversationSidebar conversationId={conversation.id} />
+            ) : customer ? (
+              <ConversationDetailsSidebar customer={customer} />
+            ) : null}
+          </Box>
+        )}
+      </Flex>
     );
   }
 }

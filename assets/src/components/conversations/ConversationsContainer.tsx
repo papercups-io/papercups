@@ -50,7 +50,7 @@ class ConversationsContainer extends React.Component<Props, State> {
         this.handleSelectConversation(first);
         this.setupKeyboardShortcuts();
       })
-      .then(() => this.scrollToEl.scrollIntoView());
+      .then(() => this.scrollIntoView());
   }
 
   componentWillUnmount() {
@@ -71,7 +71,7 @@ class ConversationsContainer extends React.Component<Props, State> {
     const messages = messagesByConversation[selected] || [];
 
     if (messages.length > prevMessages.length) {
-      this.scrollToEl.scrollIntoView();
+      this.scrollIntoView();
     }
   }
 
@@ -81,6 +81,10 @@ class ConversationsContainer extends React.Component<Props, State> {
 
   removeKeyboardShortcuts = () => {
     window.removeEventListener('keydown', this.handleKeyboardShortcut);
+  };
+
+  scrollIntoView = () => {
+    this.scrollToEl && this.scrollToEl.scrollIntoView();
   };
 
   handleKeyboardShortcut = (e: any) => {
@@ -194,7 +198,7 @@ class ConversationsContainer extends React.Component<Props, State> {
 
   handleSelectConversation = (id: string | null) => {
     this.setState({selected: id}, () => {
-      this.scrollToEl.scrollIntoView();
+      this.scrollIntoView();
     });
 
     this.props.onSelectConversation(id);
@@ -276,7 +280,7 @@ class ConversationsContainer extends React.Component<Props, State> {
     }
 
     this.props.onSendMessage(message, conversationId, () => {
-      this.scrollToEl.scrollIntoView();
+      this.scrollIntoView();
     });
   };
 

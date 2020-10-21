@@ -35,13 +35,7 @@ const DetailsSectionCard = ({children}: {children: any}) => {
   );
 };
 
-type Props = {
-  customer: Customer;
-  conversation: Conversation;
-};
-
-const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
-  const {id: conversationId, status} = conversation;
+const CustomerDetails = ({customer}: {customer: Customer}) => {
   const {
     email,
     name,
@@ -63,6 +57,168 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
     timezone && timezone.length ? timezone.split('_').join(' ') : null;
 
   return (
+    <Box px={2} py={3}>
+      <Box px={2} mb={3}>
+        <Text strong>Customer details</Text>
+      </Box>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>{name || 'Anonymous User'}</Text>
+        </Box>
+
+        <Flex mb={1} sx={{alignItems: 'center'}}>
+          <MailOutlined style={{color: colors.primary}} />
+          <Box ml={2}>{email || 'Unknown'}</Box>
+        </Flex>
+        <Flex mb={1} sx={{alignItems: 'center'}}>
+          <PhoneOutlined style={{color: colors.primary}} />
+          <Box ml={2}>{phone || 'Unknown'}</Box>
+        </Flex>
+        <Flex mb={1} sx={{alignItems: 'center'}}>
+          <UserOutlined style={{color: colors.primary}} />
+          <Box
+            ml={2}
+            sx={{
+              maxWidth: '100%',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <Text type="secondary">ID:</Text>{' '}
+            <Tooltip title={externalId || customerId} placement="left">
+              {externalId || customerId}
+            </Tooltip>
+          </Box>
+        </Flex>
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Last seen</Text>
+        </Box>
+        <Box mb={1}>
+          <CalendarOutlined />{' '}
+          {lastUpdatedAt
+            ? dayjs.utc(lastUpdatedAt).format('MMMM DD, YYYY')
+            : 'N/A'}{' '}
+          <Text type="secondary">at</Text>
+        </Box>
+        <Box mb={1}>
+          {lastSeenUrl ? (
+            <Tooltip title={lastSeenUrl}>
+              <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
+                {pathname && pathname.length > 1 ? pathname : lastSeenUrl}
+              </a>
+            </Tooltip>
+          ) : (
+            <Text>Unknown URL</Text>
+          )}
+        </Box>
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>First seen</Text>
+        </Box>
+        <Box>
+          <CalendarOutlined />{' '}
+          {createdAt ? dayjs.utc(createdAt).format('MMMM DD, YYYY') : 'N/A'}
+        </Box>
+      </DetailsSectionCard>
+
+      {hasMetadata && (
+        <DetailsSectionCard>
+          <Box mb={2}>
+            <Text strong>Metadata</Text>
+          </Box>
+
+          {Object.entries(metadata).map(([key, value]) => {
+            return (
+              <Box key={key} mb={1}>
+                <Text type="secondary">{key}:</Text> {String(value)}
+              </Box>
+            );
+          })}
+        </DetailsSectionCard>
+      )}
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Device</Text>
+        </Box>
+        {formattedTimezone && (
+          <Box mb={1}>
+            <GlobalOutlined /> {formattedTimezone}
+          </Box>
+        )}
+        <Box mb={1}>
+          {[os, browser].filter(Boolean).join(' · ') || 'Unknown'}
+        </Box>
+        <Box mb={1}>
+          <Text type="secondary">IP:</Text> {lastIpAddress || 'Unknown'}
+        </Box>
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Customer Tags</Text>
+        </Box>
+        <SidebarCustomerTags customerId={customerId} />
+      </DetailsSectionCard>
+    </Box>
+  );
+};
+
+const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
+  const {id: conversationId, status} = conversation;
+
+  return (
+    <Box px={2} py={3} sx={{borderTop: '1px solid rgba(0,0,0,.06)'}}>
+      <Box px={2} mb={3}>
+        <Text strong>Conversation details</Text>
+      </Box>
+
+      <Box
+        px={2}
+        mb={1}
+        sx={{
+          maxWidth: '100%',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        <Text type="secondary">ID:</Text>{' '}
+        <Tooltip title={conversationId.toLowerCase()} placement="left">
+          <Text>{conversationId.toLowerCase()}</Text>
+        </Tooltip>
+      </Box>
+      <Box px={2} mb={3}>
+        <Text type="secondary">Status:</Text>{' '}
+        <Tag color={status === 'open' ? colors.primary : colors.red}>
+          {status}
+        </Tag>
+      </Box>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Conversation Tags</Text>
+        </Box>
+        <SidebarConversationTags conversationId={conversationId} />
+      </DetailsSectionCard>
+    </Box>
+  );
+};
+
+type Props = {
+  customer: Customer;
+  conversation?: Conversation;
+};
+
+const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
+  return (
     <Box
       sx={{
         width: '100%',
@@ -73,152 +229,8 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
         flex: 1,
       }}
     >
-      <Box px={2} py={3}>
-        <Box px={2} mb={3}>
-          <Text strong>Customer details</Text>
-        </Box>
-
-        <DetailsSectionCard>
-          <Box mb={2}>
-            <Text strong>{name || 'Anonymous User'}</Text>
-          </Box>
-
-          <Flex mb={1} sx={{alignItems: 'center'}}>
-            <MailOutlined style={{color: colors.primary}} />
-            <Box ml={2}>{email || 'Unknown'}</Box>
-          </Flex>
-          <Flex mb={1} sx={{alignItems: 'center'}}>
-            <PhoneOutlined style={{color: colors.primary}} />
-            <Box ml={2}>{phone || 'Unknown'}</Box>
-          </Flex>
-          <Flex mb={1} sx={{alignItems: 'center'}}>
-            <UserOutlined style={{color: colors.primary}} />
-            <Box
-              ml={2}
-              sx={{
-                maxWidth: '100%',
-                overflow: 'hidden',
-                whiteSpace: 'nowrap',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              <Text type="secondary">ID:</Text>{' '}
-              <Tooltip title={externalId || customerId} placement="left">
-                {externalId || customerId}
-              </Tooltip>
-            </Box>
-          </Flex>
-        </DetailsSectionCard>
-
-        <DetailsSectionCard>
-          <Box mb={2}>
-            <Text strong>Last seen</Text>
-          </Box>
-          <Box mb={1}>
-            <CalendarOutlined />{' '}
-            {lastUpdatedAt
-              ? dayjs.utc(lastUpdatedAt).format('MMMM DD, YYYY')
-              : 'N/A'}{' '}
-            <Text type="secondary">at</Text>
-          </Box>
-          <Box mb={1}>
-            {lastSeenUrl ? (
-              <Tooltip title={lastSeenUrl}>
-                <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
-                  {pathname && pathname.length > 1 ? pathname : lastSeenUrl}
-                </a>
-              </Tooltip>
-            ) : (
-              <Text>Unknown URL</Text>
-            )}
-          </Box>
-        </DetailsSectionCard>
-
-        <DetailsSectionCard>
-          <Box mb={2}>
-            <Text strong>First seen</Text>
-          </Box>
-          <Box>
-            <CalendarOutlined />{' '}
-            {createdAt ? dayjs.utc(createdAt).format('MMMM DD, YYYY') : 'N/A'}
-          </Box>
-        </DetailsSectionCard>
-
-        {hasMetadata && (
-          <DetailsSectionCard>
-            <Box mb={2}>
-              <Text strong>Metadata</Text>
-            </Box>
-
-            {Object.entries(metadata).map(([key, value]) => {
-              return (
-                <Box key={key} mb={1}>
-                  <Text type="secondary">{key}:</Text> {String(value)}
-                </Box>
-              );
-            })}
-          </DetailsSectionCard>
-        )}
-
-        <DetailsSectionCard>
-          <Box mb={2}>
-            <Text strong>Device</Text>
-          </Box>
-          {formattedTimezone && (
-            <Box mb={1}>
-              <GlobalOutlined /> {formattedTimezone}
-            </Box>
-          )}
-          <Box mb={1}>
-            {[os, browser].filter(Boolean).join(' · ') || 'Unknown'}
-          </Box>
-          <Box mb={1}>
-            <Text type="secondary">IP:</Text> {lastIpAddress || 'Unknown'}
-          </Box>
-        </DetailsSectionCard>
-
-        <DetailsSectionCard>
-          <Box mb={2}>
-            <Text strong>Customer Tags</Text>
-          </Box>
-          <SidebarCustomerTags customerId={customerId} />
-        </DetailsSectionCard>
-      </Box>
-
-      <Box px={2} py={3} sx={{borderTop: '1px solid rgba(0,0,0,.06)'}}>
-        <Box px={2} mb={3}>
-          <Text strong>Conversation details</Text>
-        </Box>
-
-        <Box
-          px={2}
-          mb={1}
-          sx={{
-            maxWidth: '100%',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          <Text type="secondary">ID:</Text>{' '}
-          <Tooltip title={conversationId.toLowerCase()} placement="left">
-            <Text>{conversationId.toLowerCase()}</Text>
-          </Tooltip>
-        </Box>
-        <Box px={2} mb={3}>
-          <Text type="secondary">Status:</Text>{' '}
-          <Tag color={status === 'open' ? colors.primary : colors.red}>
-            {status}
-          </Tag>
-        </Box>
-
-        <DetailsSectionCard>
-          <Box mb={2}>
-            <Text strong>Conversation Tags</Text>
-          </Box>
-          <SidebarConversationTags conversationId={conversationId} />
-        </DetailsSectionCard>
-      </Box>
+      <CustomerDetails customer={customer} />
+      {conversation && <ConversationDetails conversation={conversation} />}
     </Box>
   );
 };
