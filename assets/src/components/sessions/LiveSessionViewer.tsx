@@ -207,7 +207,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
           </Box>
 
           <Flex className="rr-block" sx={{maxWidth: 960}}>
-            <Box sx={{flex: 2, border: 'none'}}>
+            <Box sx={{flex: 1, border: 'none'}}>
               {/* TODO: figure out the best way to style this */}
               {loading && (
                 <Flex

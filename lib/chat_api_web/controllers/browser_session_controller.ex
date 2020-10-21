@@ -15,7 +15,7 @@ defmodule ChatApiWeb.BrowserSessionController do
             BrowserSessions.list_browser_sessions(account_id, ids)
 
           _ ->
-            BrowserSessions.list_browser_sessions(account_id)
+            BrowserSessions.list_browser_sessions(account_id, [])
         end
 
       render(conn, "index.json", browser_sessions: browser_sessions)
@@ -73,6 +73,17 @@ defmodule ChatApiWeb.BrowserSessionController do
   def restart(conn, %{"id" => id}) do
     browser_session = BrowserSessions.get_browser_session!(id)
     updates = %{finished_at: nil}
+
+    with {:ok, %BrowserSession{} = browser_session} <-
+           BrowserSessions.update_browser_session(browser_session, updates) do
+      render(conn, "create.json", browser_session: browser_session)
+    end
+  end
+
+  @spec identify(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def identify(conn, %{"id" => id, "customer_id" => customer_id}) do
+    browser_session = BrowserSessions.get_browser_session!(id)
+    updates = %{customer_id: customer_id}
 
     with {:ok, %BrowserSession{} = browser_session} <-
            BrowserSessions.update_browser_session(browser_session, updates) do
