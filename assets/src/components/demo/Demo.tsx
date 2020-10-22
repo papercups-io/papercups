@@ -17,8 +17,8 @@ import {BASE_URL} from '../../config';
 import * as API from '../../api';
 import logger from '../../logger';
 // Testing widget in separate package
-import {Storytime} from '../../lib/storytime'; // For testing
-// import {Storytime} from '@papercups-io/storytime';
+// import {Storytime} from '../../lib/storytime'; // For testing
+import {Storytime} from '@papercups-io/storytime';
 import ChatWidget from '@papercups-io/chat-widget';
 
 type Props = RouteComponentProps & {};

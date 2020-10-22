@@ -9,8 +9,8 @@ import {
 } from 'react-router-dom';
 import {Helmet} from 'react-helmet';
 import {Box, Flex} from 'theme-ui';
-import {Storytime} from '../lib/storytime'; // For testing
-// import {Storytime} from '@papercups-io/storytime';
+// import {Storytime} from '../lib/storytime'; // For testing
+import {Storytime} from '@papercups-io/storytime';
 import {colors, Badge, Layout, Menu, Sider} from './common';
 import {
   ApiOutlined,
