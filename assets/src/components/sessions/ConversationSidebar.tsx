@@ -109,6 +109,7 @@ const ConversationsSidebarWrapper = ({
     return null;
   }
 
+  // TODO: fix case where conversation is closed!
   const conversation = conversationsById[conversationId] || null;
   const messages = messagesByConversation[conversationId] || null;
 

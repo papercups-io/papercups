@@ -45,8 +45,10 @@ defmodule ChatApiWeb.Router do
     post("/reset_password", UserController, :create_password_reset)
     put("/reset_password", UserController, :reset_password)
     post("/browser_sessions", BrowserSessionController, :create)
+    # TODO: figure out how to design these APIs
     post("/browser_sessions/:id/finish", BrowserSessionController, :finish)
     post("/browser_sessions/:id/restart", BrowserSessionController, :restart)
+    post("/browser_sessions/:id/identify", BrowserSessionController, :identify)
     get("/browser_sessions/:id/exists", BrowserSessionController, :exists)
 
     # TODO: figure out a better name?
