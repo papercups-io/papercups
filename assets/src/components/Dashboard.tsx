@@ -21,7 +21,7 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL} from '../config';
+import {BASE_URL, isDev} from '../config';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -85,6 +85,7 @@ const Dashboard = (props: RouteComponentProps) => {
       const storytime = Storytime.init({
         accountId: REACT_APP_ADMIN_ACCOUNT_ID,
         baseUrl: BASE_URL,
+        debug: isDev,
         customer: {
           email,
           external_id: id,

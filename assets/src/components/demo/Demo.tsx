@@ -13,7 +13,7 @@ import {
   Title,
 } from '../common';
 import {RightCircleOutlined} from '../icons';
-import {BASE_URL} from '../../config';
+import {BASE_URL, isDev} from '../../config';
 import * as API from '../../api';
 import logger from '../../logger';
 // Testing widget in separate package
@@ -62,6 +62,7 @@ class Demo extends React.Component<Props, State> {
             accountId: this.state.accountId,
             baseUrl: BASE_URL,
             customer: this.getCustomerMetadata(),
+            debug: isDev,
           });
         }
       })
