@@ -593,8 +593,14 @@ export class ConversationsProvider extends React.Component<Props, State> {
     const conversation = await API.fetchConversation(conversationId);
     const conversations = [conversation];
     const {conversationIds} = this.formatConversationState(conversations);
+    const isClosed = conversation && conversation.status === 'closed';
 
-    this.updateConversationState(conversations, 'all');
+    if (isClosed) {
+      this.updateConversationState(conversations, 'closed');
+      this.handleJoinMultipleConversations(conversationIds);
+    } else {
+      this.updateConversationState(conversations, 'all');
+    }
 
     return conversationIds;
   };
