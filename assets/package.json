@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
-    "@papercups-io/chat-widget": "^1.1.1-beta.1",
+    "@papercups-io/chat-widget": "^1.1.1-beta.2",
     "@papercups-io/storytime": "^1.0.3",
     "@sentry/react": "^5.20.1",
     "@stripe/react-stripe-js": "^1.1.2",
