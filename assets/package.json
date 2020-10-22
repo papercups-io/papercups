@@ -37,7 +37,7 @@
     "react-helmet": "^6.1.0",
     "react-markdown": "^4.3.1",
     "react-router-dom": "^5.2.0",
-    "react-scripts": "^3.4.3",
+    "react-scripts": "^3.4.1",
     "react-syntax-highlighter": "^12.2.1",
     "recharts": "^1.8.5",
     "remark-breaks": "^2.0.0",
