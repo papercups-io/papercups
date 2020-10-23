@@ -6,21 +6,19 @@ defmodule ChatApi.WidgetSettingsTest do
   describe "widget_settings" do
     alias ChatApi.WidgetSettings.WidgetSetting
 
-    def valid_attrs() do
-      %{
-        color: "some color",
-        subtitle: "some subtitle",
-        title: "some title"
-      }
-    end
+    @valid_attrs %{
+      color: "some color",
+      subtitle: "some subtitle",
+      title: "some title"
+    }
 
-    def update_attrs() do
-      %{
-        color: "some updated color",
-        subtitle: "some updated subtitle",
-        title: "some updated title"
-      }
-    end
+    @update_attrs %{
+      color: "some updated color",
+      subtitle: "some updated subtitle",
+      title: "some updated title",
+      pathname:
+        "/test/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe"
+    }
 
     @valid_metadata %{"host" => "app.papercups.io", "pathname" => "/"}
 
@@ -49,11 +47,12 @@ defmodule ChatApi.WidgetSettingsTest do
       setting: widget_setting
     } do
       assert {:ok, %WidgetSetting{} = widget_setting} =
-               WidgetSettings.update_widget_setting(widget_setting, update_attrs())
+               WidgetSettings.update_widget_setting(widget_setting, @update_attrs)
 
-      assert widget_setting.color == "some updated color"
-      assert widget_setting.subtitle == "some updated subtitle"
-      assert widget_setting.title == "some updated title"
+      assert widget_setting.color == @update_attrs.color
+      assert widget_setting.subtitle == @update_attrs.subtitle
+      assert widget_setting.title == @update_attrs.title
+      assert widget_setting.pathname == @update_attrs.pathname
     end
 
     test "update_widget_metadata/2 with valid data updates the metadata if no settings exist yet",
