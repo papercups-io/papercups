@@ -1,6 +1,7 @@
 import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+import qs from 'query-string';
 import {Button, Input, Text, Title} from '../common';
 import {useAuth} from './AuthProvider';
 import logger from '../../logger';
@@ -13,6 +14,7 @@ type State = {
   email: string;
   password: string;
   error: any;
+  redirect: string;
 };
 
 class Login extends React.Component<Props, State> {
@@ -21,10 +23,13 @@ class Login extends React.Component<Props, State> {
     email: '',
     password: '',
     error: null,
+    redirect: '/conversations',
   };
 
   componentDidMount() {
-    //
+    const {redirect = '/conversations'} = qs.parse(this.props.location.search);
+
+    this.setState({redirect: String(redirect)});
   }
 
   handleChangeEmail = (e: any) => {
@@ -39,12 +44,12 @@ class Login extends React.Component<Props, State> {
     e.preventDefault();
 
     this.setState({loading: true, error: null});
-    const {email, password} = this.state;
+    const {email, password, redirect} = this.state;
 
     // TODO: handle login through API
     this.props
       .onSubmit({email, password})
-      .then(() => this.props.history.push('/conversations'))
+      .then(() => this.props.history.push(redirect))
       .catch((err) => {
         logger.error('Error!', err);
         const error =
