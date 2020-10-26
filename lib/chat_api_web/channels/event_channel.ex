@@ -50,7 +50,19 @@ defmodule ChatApiWeb.EventChannel do
 
   @impl true
   def handle_info(:after_join_admin_session, socket) do
-    broadcast_to_session(socket, "admin:watching")
+    topic = get_customer_session_topic(socket)
+    key = "session:" <> socket.assigns.browser_session_id
+
+    # Track if an admin is watching so we know when to pipe events through
+    {:ok, _} =
+      Presence.track(self(), topic, key, %{
+        online_at: inspect(System.system_time(:second)),
+        account_id: socket.assigns.account_id,
+        session_id: socket.assigns.browser_session_id,
+        admin: true
+      })
+
+    ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
 
     {:noreply, socket}
   end
@@ -120,12 +132,6 @@ defmodule ChatApiWeb.EventChannel do
       socket.assigns.browser_session_id
     ]
     |> Enum.join(":")
-  end
-
-  defp broadcast_to_session(socket, event, payload \\ %{}) do
-    socket
-    |> get_customer_session_topic()
-    |> ChatApiWeb.Endpoint.broadcast!(event, payload)
   end
 
   defp broadcast_to_admin(socket, event, payload) do

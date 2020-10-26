@@ -58,6 +58,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
     this.replayer = new Replayer([], {root: root, liveMode: true});
     this.replayer.on(ReplayerEvents.FullsnapshotRebuilded, () => {
       logger.debug('Full snapshot done!');
+      // TODO: don't wait until this point to set `loading: false`...
+      // we should probably do something like:
+      // loading -> connecting to socket -> listening for events -> etc
+
       this.setIframeScale(() => this.setState({loading: false}));
     });
 
@@ -230,6 +234,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
                 }}
                 ref={(el) => (this.container = el)}
               >
+                {/*
+                  TODO: see https://github.com/rrweb-io/rrweb-player/blob/master/src/Player.svelte
+                  for an example of how we could possibly style this better...
+                */}
                 <div
                   id="SessionPlayer"
                   style={{
