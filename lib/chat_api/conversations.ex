@@ -212,6 +212,18 @@ defmodule ChatApi.Conversations do
     Repo.one(query) > 0
   end
 
+  @spec archive_conversation(Conversation.t() | binary()) ::
+          {:error, Ecto.Changeset.t()} | {:ok, Conversation.t()}
+  def archive_conversation(%Conversation{} = conversation) do
+    update_conversation(conversation, %{archived_at: DateTime.utc_now()})
+  end
+
+  def archive_conversation(conversation_id) do
+    conversation = get_conversation!(conversation_id)
+
+    archive_conversation(conversation)
+  end
+
   @spec delete_conversation(Conversation.t()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
   @doc """
