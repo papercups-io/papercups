@@ -22,7 +22,7 @@ defmodule ChatApi.ConversationsTest do
       customer = customer_fixture(account)
       conversation = conversation_fixture(account, customer)
 
-      {:ok, account: account, conversation: conversation}
+      {:ok, account: account, conversation: conversation, customer: customer}
     end
 
     test "list_conversations/0 returns all conversations", %{
@@ -42,6 +42,43 @@ defmodule ChatApi.ConversationsTest do
       _conversation = conversation_fixture(different_account, different_customer)
 
       result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
+
+      assert result_ids == [conversation.id]
+    end
+
+    test "list_conversations_by_account/1 returns all not archived conversations for an account",
+         %{
+           account: account,
+           conversation: conversation,
+           customer: customer
+         } do
+      _archived_conversation =
+        conversation_fixture(account, customer) |> Conversations.archive_conversation()
+
+      result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
+
+      assert result_ids == [conversation.id]
+    end
+
+    test "find_by_customer/1 returns all conversations for a customer", %{
+      account: account,
+      conversation: conversation,
+      customer: customer
+    } do
+      result_ids = Enum.map(Conversations.find_by_customer(customer.id, account.id), & &1.id)
+
+      assert result_ids == [conversation.id]
+    end
+
+    test "find_by_customer/1 returns all not archived conversations for a customer", %{
+      account: account,
+      conversation: conversation,
+      customer: customer
+    } do
+      _archived_conversation =
+        conversation_fixture(account, customer) |> Conversations.archive_conversation()
+
+      result_ids = Enum.map(Conversations.find_by_customer(customer.id, account.id), & &1.id)
 
       assert result_ids == [conversation.id]
     end
@@ -116,6 +153,15 @@ defmodule ChatApi.ConversationsTest do
 
     test "change_conversation/1 returns a conversation changeset", %{conversation: conversation} do
       assert %Ecto.Changeset{} = Conversations.change_conversation(conversation)
+    end
+
+    test "archive_conversation/1 sets the archive_at field of a conversation", %{
+      conversation: conversation
+    } do
+      assert {:ok, %Conversation{} = conversation} =
+               Conversations.archive_conversation(conversation)
+
+      assert %DateTime{} = conversation.archived_at
     end
   end
 end
