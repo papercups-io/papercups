@@ -41,6 +41,28 @@ defmodule ChatApiWeb.CustomerControllerTest do
 
       assert ids == [customer.id]
     end
+
+    test "lists all customers in csv format", %{authed_conn: authed_conn, customer: customer} do
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :index) <> "?format=csv")
+      csv = response(resp, 200)
+
+      assert is_binary(csv)
+      [headers, row1] = String.split(csv, "\r\n")
+
+      assert headers ==
+               "id,name,email,created_at,updated_at,first_seen,last_seen,phone," <>
+                 "external_id,host,pathname,current_url,browser,os,ip,time_zone"
+
+      assert row1 ==
+               "\"#{customer.id}\",\"#{customer.name}\",\"#{customer.email}\"," <>
+                 "\"#{customer.inserted_at}\",\"#{customer.updated_at}\",\"#{customer.first_seen}\"," <>
+                 "\"#{customer.last_seen}\",\"#{customer.phone}\",\"#{customer.external_id}\"," <>
+                 "\"#{customer.host}\",\"#{customer.pathname}\",\"#{customer.current_url}\"," <>
+                 "\"#{customer.browser}\",\"#{customer.os}\",\"#{customer.ip}\"," <>
+                 "\"#{customer.time_zone}\""
+
+      assert get_resp_header(resp, "content-type") == ["text/csv; charset=utf-8"]
+    end
   end
 
   describe "create customer" do

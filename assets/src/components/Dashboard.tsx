@@ -21,7 +21,7 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL} from '../config';
+import {BASE_URL, isDev} from '../config';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -59,7 +59,7 @@ const hasValidStripeKey = () => {
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
-  const {unreadByCategory: unread} = useConversations();
+  const {currentUser, unreadByCategory: unread} = useConversations();
   const [htmlTitle, setHtmlTitle] = useState('Papercups');
 
   const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
@@ -79,17 +79,22 @@ const Dashboard = (props: RouteComponentProps) => {
   };
 
   useEffect(() => {
-    if (REACT_APP_STORYTIME_ENABLED) {
-      const promise = Storytime.init({
+    if (REACT_APP_STORYTIME_ENABLED && currentUser) {
+      const {id, email} = currentUser;
+      // TODO: figure out a better way to initialize this?
+      const storytime = Storytime.init({
         accountId: REACT_APP_ADMIN_ACCOUNT_ID,
-        host: BASE_URL,
+        baseUrl: BASE_URL,
+        debug: isDev,
+        customer: {
+          email,
+          external_id: id,
+        },
       });
 
-      return () => {
-        promise.then((st) => st.finish());
-      };
+      return () => storytime.finish();
     }
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     let timeout;

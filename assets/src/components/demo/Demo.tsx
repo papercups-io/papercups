@@ -13,10 +13,12 @@ import {
   Title,
 } from '../common';
 import {RightCircleOutlined} from '../icons';
-import {BASE_URL} from '../../config';
+import {BASE_URL, isDev} from '../../config';
 import * as API from '../../api';
 import logger from '../../logger';
 // Testing widget in separate package
+// import {Storytime} from '../../lib/storytime'; // For testing
+import {Storytime} from '@papercups-io/storytime';
 import ChatWidget from '@papercups-io/chat-widget';
 
 type Props = RouteComponentProps & {};
@@ -29,6 +31,8 @@ type State = {
 };
 
 class Demo extends React.Component<Props, State> {
+  storytime: Storytime | null = null;
+
   constructor(props: Props) {
     super(props);
 
@@ -51,7 +55,24 @@ class Demo extends React.Component<Props, State> {
       .then((currentUser) => this.setState({currentUser}))
       .catch((err) => {
         // Not logged in, no big deal
+      })
+      .then(() => {
+        if (process.env.REACT_APP_STORYTIME_ENABLED) {
+          this.storytime = Storytime.init({
+            accountId: this.state.accountId,
+            baseUrl: BASE_URL,
+            customer: this.getCustomerMetadata(),
+            debug: isDev,
+          });
+        }
+      })
+      .catch((err) => {
+        logger.error('Error setting up Storytime!', err);
       });
+  }
+
+  componentWillUnmount() {
+    this.storytime && this.storytime.finish();
   }
 
   handleChangeTitle = (e: any) => {

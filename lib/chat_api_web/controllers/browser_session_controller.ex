@@ -7,9 +7,17 @@ defmodule ChatApiWeb.BrowserSessionController do
   action_fallback ChatApiWeb.FallbackController
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def index(conn, _params) do
+  def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      browser_sessions = BrowserSessions.list_browser_sessions(account_id)
+      browser_sessions =
+        case params do
+          %{"ids" => ids} when is_list(ids) ->
+            BrowserSessions.list_browser_sessions(account_id, ids)
+
+          _ ->
+            BrowserSessions.list_browser_sessions(account_id, [])
+        end
+
       render(conn, "index.json", browser_sessions: browser_sessions)
     end
   end
@@ -65,6 +73,17 @@ defmodule ChatApiWeb.BrowserSessionController do
   def restart(conn, %{"id" => id}) do
     browser_session = BrowserSessions.get_browser_session!(id)
     updates = %{finished_at: nil}
+
+    with {:ok, %BrowserSession{} = browser_session} <-
+           BrowserSessions.update_browser_session(browser_session, updates) do
+      render(conn, "create.json", browser_session: browser_session)
+    end
+  end
+
+  @spec identify(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def identify(conn, %{"id" => id, "customer_id" => customer_id}) do
+    browser_session = BrowserSessions.get_browser_session!(id)
+    updates = %{customer_id: customer_id}
 
     with {:ok, %BrowserSession{} = browser_session} <-
            BrowserSessions.update_browser_session(browser_session, updates) do

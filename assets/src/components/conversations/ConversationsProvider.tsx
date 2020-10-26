@@ -36,6 +36,8 @@ export const ConversationsContext = React.createContext<{
   fetchMyConversations: () => Promise<Array<string>>;
   fetchPriorityConversations: () => Promise<Array<string>>;
   fetchClosedConversations: () => Promise<Array<string>>;
+  // TODO: should this be different?
+  fetchConversationById: (conversationId: string) => Promise<Array<string>>;
 }>({
   loading: true,
   account: null,
@@ -59,6 +61,7 @@ export const ConversationsContext = React.createContext<{
   fetchMyConversations: () => Promise.resolve([]),
   fetchPriorityConversations: () => Promise.resolve([]),
   fetchClosedConversations: () => Promise.resolve([]),
+  fetchConversationById: () => Promise.resolve([]),
 });
 
 export const useConversations = () => useContext(ConversationsContext);
@@ -584,6 +587,24 @@ export class ConversationsProvider extends React.Component<Props, State> {
     return conversationIds;
   };
 
+  fetchConversationById = async (
+    conversationId: string
+  ): Promise<Array<string>> => {
+    const conversation = await API.fetchConversation(conversationId);
+    const conversations = [conversation];
+    const {conversationIds} = this.formatConversationState(conversations);
+    const isClosed = conversation && conversation.status === 'closed';
+
+    if (isClosed) {
+      this.updateConversationState(conversations, 'closed');
+      this.handleJoinMultipleConversations(conversationIds);
+    } else {
+      this.updateConversationState(conversations, 'all');
+    }
+
+    return conversationIds;
+  };
+
   fetchMyConversations = async (): Promise<Array<string>> => {
     const {currentUser} = this.state;
 
@@ -673,6 +694,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
           onSendMessage: this.handleSendMessage,
 
           fetchAllConversations: this.fetchAllConversations,
+          fetchConversationById: this.fetchConversationById,
           fetchMyConversations: this.fetchMyConversations,
           fetchPriorityConversations: this.fetchPriorityConversations,
           fetchClosedConversations: this.fetchClosedConversations,

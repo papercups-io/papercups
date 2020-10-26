@@ -1,5 +1,7 @@
 ARG MIX_ENV=dev
 FROM elixir:1.10 as dev
+ENV MIX_HOME=/opt/mix
+
 WORKDIR /usr/src/app
 ENV LANG=C.UTF-8
 
@@ -17,6 +19,9 @@ RUN mix do deps.get, deps.compile
 
 COPY assets/package.json assets/package-lock.json ./assets/
 RUN npm install --prefix=assets
+
+# Temporary fix because of https://github.com/facebook/create-react-app/issues/8413
+ENV GENERATE_SOURCEMAP=false
 
 COPY priv priv
 COPY assets assets

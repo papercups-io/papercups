@@ -3,8 +3,10 @@ import {Box, Flex} from 'theme-ui';
 import {colors, Button, TextArea} from '../common';
 
 const ConversationFooter = ({
+  sx = {},
   onSendMessage,
 }: {
+  sx?: any;
   onSendMessage: (message: string) => void;
 }) => {
   const [message, setMessage] = React.useState('');
@@ -28,7 +30,7 @@ const ConversationFooter = ({
 
   return (
     <Box style={{flex: '0 0 auto'}}>
-      <Box px={4} pt={0} pb={4} backgroundColor={colors.white}>
+      <Box sx={{bg: colors.white, px: 4, pt: 0, pb: 4, ...sx}}>
         <Box
           p={2}
           sx={{
