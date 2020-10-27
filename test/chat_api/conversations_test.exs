@@ -60,7 +60,7 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [conversation.id]
     end
 
-    test "find_by_customer/1 returns all conversations for a customer", %{
+    test "find_by_customer/2 returns all conversations for a customer", %{
       account: account,
       conversation: conversation,
       customer: customer
@@ -70,7 +70,7 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [conversation.id]
     end
 
-    test "find_by_customer/1 returns all not archived conversations for a customer", %{
+    test "find_by_customer/2 returns all not archived conversations for a customer", %{
       account: account,
       conversation: conversation,
       customer: customer
