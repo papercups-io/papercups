@@ -40,7 +40,7 @@ import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import SessionsOverview from './sessions/SessionsOverview';
-import SessionReplay from './sessions/SessionReplay';
+import InstallingStorytime from './sessions/InstallingStorytime';
 import LiveSessionViewer from './sessions/LiveSessionViewer';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
@@ -213,19 +213,24 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/conversations/closed">Closed</Link>
                 </Menu.Item>
               </Menu.SubMenu>
+              <Menu.SubMenu
+                key="sessions"
+                icon={<VideoCameraOutlined />}
+                title="Sessions"
+              >
+                <Menu.Item key="list">
+                  <Link to="/sessions/list">Live sessions</Link>
+                </Menu.Item>
+                <Menu.Item key="getting-started">
+                  <Link to="/sessions/getting-started">Getting started</Link>
+                </Menu.Item>
+              </Menu.SubMenu>
               <Menu.Item
                 title="Customers"
                 icon={<TeamOutlined />}
                 key="customers"
               >
                 <Link to="/customers">Customers</Link>
-              </Menu.Item>
-              <Menu.Item
-                title="Sessions"
-                icon={<VideoCameraOutlined />}
-                key="sessions"
-              >
-                <Link to="/sessions">Sessions</Link>
               </Menu.Item>
               <Menu.Item
                 title="Integrations"
@@ -296,8 +301,12 @@ const Dashboard = (props: RouteComponentProps) => {
           )}
           <Route path="/reporting" component={ReportingDashboard} />
           <Route path="/sessions/live/:session" component={LiveSessionViewer} />
-          <Route path="/sessions/:session" component={SessionReplay} />
-          <Route path="/sessions" component={SessionsOverview} />
+          <Route path="/sessions/list" component={SessionsOverview} />
+          <Route
+            path="/sessions/getting-started"
+            component={InstallingStorytime}
+          />
+          <Route path="/sessions*" component={SessionsOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
