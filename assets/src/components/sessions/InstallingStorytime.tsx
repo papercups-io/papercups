@@ -108,7 +108,7 @@ const st = Storytime.init({
         }}
       >
         <Box mb={4}>
-          <Title>Getting Started</Title>
+          <Title>Set up Storytime</Title>
           <Paragraph>
             <Text>
               Before you can start viewing your customers' sessions, you'll need

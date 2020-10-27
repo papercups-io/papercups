@@ -221,8 +221,8 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="list">
                   <Link to="/sessions/list">Live sessions</Link>
                 </Menu.Item>
-                <Menu.Item key="getting-started">
-                  <Link to="/sessions/getting-started">Getting started</Link>
+                <Menu.Item key="setup">
+                  <Link to="/sessions/setup">Set up Storytime</Link>
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
@@ -302,10 +302,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/reporting" component={ReportingDashboard} />
           <Route path="/sessions/live/:session" component={LiveSessionViewer} />
           <Route path="/sessions/list" component={SessionsOverview} />
-          <Route
-            path="/sessions/getting-started"
-            component={InstallingStorytime}
-          />
+          <Route path="/sessions/setup" component={InstallingStorytime} />
           <Route path="/sessions*" component={SessionsOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
