@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  RouteComponentProps,
   BrowserRouter as Router,
   Switch,
   Route,
@@ -45,7 +46,12 @@ const App = () => {
           />
           <Route path="/pricing" component={Pricing} />
           <Route path="/sandbox" component={Sandbox} />
-          <Route path="*" render={() => <Redirect to="/login" />} />
+          <Route
+            path="*"
+            render={(props: RouteComponentProps<{}>) => (
+              <Redirect to={`/login?redirect=${props.location.pathname}`} />
+            )}
+          />
         </Switch>
       </Router>
     );

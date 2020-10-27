@@ -130,6 +130,7 @@ class Register extends React.Component<Props, State> {
   };
 
   render() {
+    const {location} = this.props;
     const {
       loading,
       inviteToken,
@@ -227,7 +228,8 @@ class Register extends React.Component<Props, State> {
             )}
 
             <Box mt={error ? 3 : 4}>
-              Already have an account? <Link to="/login">Log in!</Link>
+              Already have an account?{' '}
+              <Link to={`/login${location.search}`}>Log in!</Link>
             </Box>
           </form>
         </Box>
