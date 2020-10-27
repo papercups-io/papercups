@@ -27,7 +27,7 @@ import {BASE_URL, isDev} from '../config';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
-import GettingStartedWithChat from './account/GettingStartedOverview';
+import GettingStartedOverview from './account/GettingStartedOverview';
 import {
   ConversationsProvider,
   useConversations,
@@ -40,7 +40,7 @@ import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import SessionsOverview from './sessions/SessionsOverview';
-import GettingStartedWithStorytime from './sessions/GettingStartedOverview';
+import InstallingStorytime from './sessions/InstallingStorytime';
 import LiveSessionViewer from './sessions/LiveSessionViewer';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
@@ -282,7 +282,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/account/profile" component={UserProfile} />
           <Route
             path="/account/getting-started"
-            component={GettingStartedWithChat}
+            component={GettingStartedOverview}
           />
           <Route path="/account*" component={AccountOverview} />
           <Route path="/customers" component={CustomersPage} />
@@ -304,7 +304,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/sessions/list" component={SessionsOverview} />
           <Route
             path="/sessions/getting-started"
-            component={GettingStartedWithStorytime}
+            component={InstallingStorytime}
           />
           <Route path="/sessions*" component={SessionsOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />

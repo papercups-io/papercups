@@ -1,12 +1,11 @@
 import React from 'react';
-import {Box} from 'theme-ui';
+import {Box, Image} from 'theme-ui';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import * as API from '../../api';
 import {User} from '../../types';
-import {Paragraph, Input, colors, Text, Title} from '../common';
+import {Paragraph, colors, Text, Title} from '../common';
 import {BASE_URL} from '../../config';
-import logger from '../../logger';
 
 type Props = {};
 type State = {
@@ -14,7 +13,7 @@ type State = {
   currentUser: User | null;
 };
 
-class GettingStartedOverview extends React.Component<Props, State> {
+class InstallingStorytime extends React.Component<Props, State> {
   state: State = {
     accountId: null,
     currentUser: null,
@@ -116,6 +115,10 @@ const st = Storytime.init({
               to install our plugin on your website.
             </Text>
           </Paragraph>
+
+          <Box>
+            <Image src="https://user-images.githubusercontent.com/5264279/96898977-56c27d00-145e-11eb-907b-ca8db13a0fa0.gif" />
+          </Box>
         </Box>
 
         <Box mb={4}>
@@ -206,4 +209,4 @@ const st = Storytime.init({
   }
 }
 
-export default GettingStartedOverview;
+export default InstallingStorytime;
