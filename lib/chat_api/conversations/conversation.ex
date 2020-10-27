@@ -17,6 +17,8 @@ defmodule ChatApi.Conversations.Conversation do
     field(:status, :string, default: "open")
     field(:priority, :string, default: "not_priority")
     field(:read, :boolean, default: false)
+    field(:archived_at, :utc_datetime)
+
     has_many(:messages, Message)
     belongs_to(:assignee, User, foreign_key: :assignee_id, references: :id, type: :integer)
     belongs_to(:account, Account)
@@ -31,7 +33,15 @@ defmodule ChatApi.Conversations.Conversation do
   @doc false
   def changeset(conversation, attrs) do
     conversation
-    |> cast(attrs, [:status, :priority, :read, :assignee_id, :account_id, :customer_id])
+    |> cast(attrs, [
+      :status,
+      :priority,
+      :read,
+      :assignee_id,
+      :account_id,
+      :customer_id,
+      :archived_at
+    ])
     |> validate_required([:status, :account_id])
   end
 
