@@ -190,7 +190,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
           <Box mb={4}>
             <Box mb={3}>
               <Paragraph>
-                <Link to="/sessions">
+                <Link to="/sessions/list">
                   <Button icon={<ArrowLeftOutlined />}>
                     Back to all sessions
                   </Button>

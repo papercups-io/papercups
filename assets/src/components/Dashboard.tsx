@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom';
 import {Helmet} from 'react-helmet';
 import {Box, Flex} from 'theme-ui';
+import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
 // import {Storytime} from '../lib/storytime'; // For testing
 import {Storytime} from '@papercups-io/storytime';
 import {colors, Badge, Layout, Menu, Sider} from './common';
@@ -18,6 +19,7 @@ import {
   UserOutlined,
   LogoutOutlined,
   CreditCardOutlined,
+  SmileOutlined,
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
@@ -38,7 +40,7 @@ import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import SessionsOverview from './sessions/SessionsOverview';
-import SessionReplay from './sessions/SessionReplay';
+import InstallingStorytime from './sessions/InstallingStorytime';
 import LiveSessionViewer from './sessions/LiveSessionViewer';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
@@ -54,6 +56,14 @@ const hasValidStripeKey = () => {
   const key = REACT_APP_STRIPE_PUBLIC_KEY;
 
   return key && key.startsWith('pk_');
+};
+
+const shouldDisplayChat = (pathname: string) => {
+  if (pathname === '/account/getting-started') {
+    return false;
+  }
+
+  return true;
 };
 
 const Dashboard = (props: RouteComponentProps) => {
@@ -203,19 +213,24 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/conversations/closed">Closed</Link>
                 </Menu.Item>
               </Menu.SubMenu>
+              <Menu.SubMenu
+                key="sessions"
+                icon={<VideoCameraOutlined />}
+                title="Sessions"
+              >
+                <Menu.Item key="list">
+                  <Link to="/sessions/list">Live sessions</Link>
+                </Menu.Item>
+                <Menu.Item key="setup">
+                  <Link to="/sessions/setup">Set up Storytime</Link>
+                </Menu.Item>
+              </Menu.SubMenu>
               <Menu.Item
                 title="Customers"
                 icon={<TeamOutlined />}
                 key="customers"
               >
                 <Link to="/customers">Customers</Link>
-              </Menu.Item>
-              <Menu.Item
-                title="Sessions"
-                icon={<VideoCameraOutlined />}
-                key="sessions"
-              >
-                <Link to="/sessions">Sessions</Link>
               </Menu.Item>
               <Menu.Item
                 title="Integrations"
@@ -237,7 +252,17 @@ const Dashboard = (props: RouteComponentProps) => {
           </Box>
 
           <Box py={3}>
-            <Menu mode="inline" theme="dark">
+            <Menu mode="inline" theme="dark" selectable={false}>
+              {shouldDisplayChat(pathname) && (
+                <Menu.Item
+                  title="Chat with us!"
+                  icon={<SmileOutlined />}
+                  key="chat"
+                  onClick={Papercups.toggle}
+                >
+                  Chat with us!
+                </Menu.Item>
+              )}
               <Menu.Item
                 title="Log out"
                 icon={<LogoutOutlined />}
@@ -276,11 +301,21 @@ const Dashboard = (props: RouteComponentProps) => {
           )}
           <Route path="/reporting" component={ReportingDashboard} />
           <Route path="/sessions/live/:session" component={LiveSessionViewer} />
-          <Route path="/sessions/:session" component={SessionReplay} />
-          <Route path="/sessions" component={SessionsOverview} />
+          <Route path="/sessions/list" component={SessionsOverview} />
+          <Route path="/sessions/setup" component={InstallingStorytime} />
+          <Route path="/sessions*" component={SessionsOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
+
+      <ChatWidget
+        title="Need help with anything?"
+        subtitle="Ask us in the chat window below 😊"
+        greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
+        primaryColor="#1890ff"
+        accountId="eb504736-0f20-4978-98ff-1a82ae60b266"
+        hideToggleButton
+      />
     </Layout>
   );
 };

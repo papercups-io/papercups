@@ -1,3 +1,23 @@
+### Monday, 26 October
+
+- Our new screen-sharing product — **Storytime** — is now in beta! 🚀 🔥 🎉 [0]
+  - _Repo: https://github.com/papercups-io/storytime_
+  - _Website: http://storytime.papercups.io/_
+- You can now **hide the widget toggle button** and **open it programmatically** [1]
+
+_[0] Storytime:_
+> <img width="800" alt="Storytime" src="https://user-images.githubusercontent.com/5264279/96898977-56c27d00-145e-11eb-907b-ca8db13a0fa0.gif">
+
+_[1] Hidden chat widget:_
+> <img width="800" alt="Hidden chat widget" src="https://user-images.githubusercontent.com/5264279/97244402-04bb8780-17cf-11eb-9a30-08333a1d71ea.gif">
+
+### Monday, 19 October
+
+- Fixed issues with running app in Docker
+- Added an API endpoint to **export customer data in CSV format**
+- Added ability to **delete closed conversations**
+- Improved tests, fixed some bugs, and added better type checking 🎉 
+
 ### Friday, 9 October
 
 - We released our **FAQ chatbot** demo 🤖 [0]

@@ -95,11 +95,11 @@ class SessionsOverview extends React.Component<Props, State> {
     return (
       <Box p={4}>
         <Box mb={5}>
-          <Title level={3}>Browser Sessions (beta)</Title>
+          <Title level={3}>Live Sessions (beta)</Title>
 
           <Box mb={4}>
             <Paragraph>
-              View how recent vistors have interacted with your website.
+              View how vistors are interacting with your website.
             </Paragraph>
 
             <Alert
