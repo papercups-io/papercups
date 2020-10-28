@@ -10,9 +10,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import {colors} from '../common';
-import {FAKE_DATA} from './support';
 
-const MessagesSentVsReceivedChart = ({data = FAKE_DATA}: {data?: any}) => {
+const MessagesByDayOfWeekChart = ({data}: {data: any}) => {
   return (
     <ResponsiveContainer>
       <BarChart
@@ -23,15 +22,15 @@ const MessagesSentVsReceivedChart = ({data = FAKE_DATA}: {data?: any}) => {
         }}
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
+        <XAxis dataKey="day" />
         <YAxis width={40} />
         <Tooltip />
         <Legend />
-        <Bar dataKey="sent" stackId="messages" fill={colors.green} />
-        <Bar dataKey="received" stackId="messages" fill={colors.primary} />
+        <Bar dataKey="average" stackId="messages" fill={colors.magenta} />
+        <Bar dataKey="total" stackId="messages" fill={colors.primary} />
       </BarChart>
     </ResponsiveContainer>
   );
 };
 
-export default MessagesSentVsReceivedChart;
+export default MessagesByDayOfWeekChart;

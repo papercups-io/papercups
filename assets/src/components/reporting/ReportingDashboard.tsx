@@ -5,12 +5,20 @@ import * as API from '../../api';
 import {Alert, Paragraph, RangePicker, Text, Title} from '../common';
 import MessagesPerDayChart from './MessagesPerDayChart';
 import MessagesPerUserChart from './MessagesPerUserChart';
+import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
+import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
 import {ReportingDatum} from './support';
 import logger from '../../logger';
 
 type DateCount = {
   count: number;
   date: string;
+};
+
+type WeekdayCount = {
+  average: number;
+  total: number;
+  day: string;
 };
 
 type MessageCount = {
@@ -28,6 +36,9 @@ type State = {
   messagesByDate: Array<DateCount>;
   conversationsByDate: Array<DateCount>;
   messagesPerUser: Array<MessageCount>;
+  receivedMessagesByDate: Array<DateCount>;
+  sentMessagesByDate: Array<DateCount>;
+  messagesByWeekday: Array<WeekdayCount>;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
@@ -37,6 +48,9 @@ class ReportingDashboard extends React.Component<Props, State> {
     messagesByDate: [],
     conversationsByDate: [],
     messagesPerUser: [],
+    receivedMessagesByDate: [],
+    sentMessagesByDate: [],
+    messagesByWeekday: [],
   };
 
   componentDidMount() {
@@ -58,11 +72,15 @@ class ReportingDashboard extends React.Component<Props, State> {
       messagesByDate: data?.messages_by_date || [],
       conversationsByDate: data?.conversations_by_date || [],
       messagesPerUser: data?.messages_per_user || [],
+      receivedMessagesByDate: data?.received_messages_by_date || [],
+      sentMessagesByDate: data?.sent_messages_by_date || [],
+      messagesByWeekday: data?.messages_by_weekday || [],
     });
   };
 
   formatUserStats = () => {
     const {messagesPerUser = []} = this.state;
+
     return messagesPerUser.map((data) => ({
       name: data.user.email,
       value: data.count,
@@ -79,20 +97,40 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatDailyStats = (): Array<ReportingDatum> => {
-    const {messagesByDate = [], conversationsByDate = []} = this.state;
+    const {
+      messagesByDate = [],
+      conversationsByDate = [],
+      receivedMessagesByDate = [],
+      sentMessagesByDate = [],
+    } = this.state;
     const messageCountByDate = this.groupCountByDate(messagesByDate);
     const conversationCountByDate = this.groupCountByDate(conversationsByDate);
+    const receivedCountByDate = this.groupCountByDate(receivedMessagesByDate);
+    const sentCountByDate = this.groupCountByDate(sentMessagesByDate);
     const keys = [
       ...Object.keys(messageCountByDate),
       ...Object.keys(conversationCountByDate),
+      ...Object.keys(receivedCountByDate),
+      ...Object.keys(sentCountByDate),
     ];
+    const uniqs = [...new Set(keys)];
 
-    return keys.map((date) => {
+    return uniqs.map((date) => {
       return {
         date,
         messages: messageCountByDate[date] || 0,
         conversations: conversationCountByDate[date] || 0,
+        sent: sentCountByDate[date] || 0,
+        received: receivedCountByDate[date] || 0,
       };
+    });
+  };
+
+  formatDayOfWeekStats = () => {
+    const {messagesByWeekday = []} = this.state;
+
+    return messagesByWeekday.map((data: WeekdayCount) => {
+      return {...data, day: data.day.slice(0, 3)};
     });
   };
 
@@ -110,6 +148,9 @@ class ReportingDashboard extends React.Component<Props, State> {
 
   render() {
     const {fromDate, toDate} = this.state;
+    const dailyStats = this.formatDailyStats();
+    const userStats = this.formatUserStats();
+    const dayOfWeekStats = this.formatDayOfWeekStats();
 
     return (
       <Box p={4}>
@@ -146,42 +187,39 @@ class ReportingDashboard extends React.Component<Props, State> {
           />
         </Box>
 
-        <Flex mx={-3} sx={{maxWidth: 1080}}>
-          <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
-            <Box mb={2}>
-              <Text strong>New messages per day</Text>
+        <Box sx={{maxWidth: 1080}}>
+          <Flex mx={-3}>
+            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+              <Box mb={2}>
+                <Text strong>New messages per day</Text>
+              </Box>
+              <MessagesPerDayChart data={dailyStats} />
             </Box>
-            <MessagesPerDayChart data={this.formatDailyStats()} />
-          </Box>
 
-          <Box mb={4} mx={10} sx={{height: 320, flex: 1}}>
-            <Box mb={2}>
-              <Text strong>Messages per user</Text>
+            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+              <Box mb={2}>
+                <Text strong>Messages sent vs received</Text>
+              </Box>
+              <MessagesSentVsReceivedChart data={dailyStats} />
             </Box>
-            <MessagesPerUserChart data={this.formatUserStats()} />
-          </Box>
-          {/*
-          // TODO: implement me!
+          </Flex>
 
-          <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
-            <Box mb={2}>
-              <Text strong>Messages sent vs received</Text>
+          <Flex mx={-3}>
+            <Box mb={4} mx={10} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+              <Box mb={2}>
+                <Text strong>Messages per user</Text>
+              </Box>
+              <MessagesPerUserChart data={userStats} />
             </Box>
-            <MessagesSentVsReceivedChart data={...} />
-          </Box>
-          */}
 
-          {/*
-          // TODO: implement me!
-
-          <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
-            <Box mb={2}>
-              <Text strong>Messages by day of week</Text>
+            <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
+              <Box mb={2}>
+                <Text strong>Messages by day of week</Text>
+              </Box>
+              <MessagesByDayOfWeekChart data={dayOfWeekStats} />
             </Box>
-            <MessagesByDayOfWeekChart data={...} />
-          </Box>
-          */}
-        </Flex>
+          </Flex>
+        </Box>
       </Box>
     );
   }
