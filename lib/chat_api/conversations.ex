@@ -225,6 +225,7 @@ defmodule ChatApi.Conversations do
 
   def list_conversations_to_archive() do
     Conversation
+    |> where([c], is_nil(c.archived_at))
     |> where(status: "closed")
     |> where([c], c.updated_at < from_now(14, "day"))
     |> Repo.all()
