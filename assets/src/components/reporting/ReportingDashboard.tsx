@@ -113,8 +113,9 @@ class ReportingDashboard extends React.Component<Props, State> {
       ...Object.keys(receivedCountByDate),
       ...Object.keys(sentCountByDate),
     ];
+    const uniqs = [...new Set(keys)];
 
-    return keys.map((date) => {
+    return uniqs.map((date) => {
       return {
         date,
         messages: messageCountByDate[date] || 0,
