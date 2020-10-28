@@ -223,6 +223,13 @@ defmodule ChatApi.Conversations do
     archive_conversation(conversation)
   end
 
+  def list_conversations_to_archive() do
+    Conversation
+    |> where(status: "closed")
+    |> where([c], c.updated_at < from_now(14, "day"))
+    |> Repo.all()
+  end
+
   @spec delete_conversation(Conversation.t()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
   @doc """

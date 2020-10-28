@@ -73,7 +73,6 @@ defmodule ChatApi.TestFixtureHelpers do
       ) do
     {:ok, conversation} =
       %{
-        status: "open",
         account_id: account.id,
         customer_id: customer.id
       }

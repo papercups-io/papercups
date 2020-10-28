@@ -47,7 +47,7 @@ defmodule ChatApi.Conversations.Conversation do
 
   def test_changeset(conversation, attrs) do
     conversation
-    |> cast(attrs, [:inserted_at])
+    |> cast(attrs, [:inserted_at, :updated_at, :status])
     |> changeset(attrs)
   end
 end

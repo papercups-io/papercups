@@ -163,5 +163,17 @@ defmodule ChatApi.ConversationsTest do
 
       assert %DateTime{} = conversation.archived_at
     end
+
+    test "list_conversations_to_archive/0 returns conversations which have been closed for more than 14 days",
+         %{conversation: conversation, account: account, customer: customer} do
+      date_time = DateTime.add(DateTime.utc_now(), -(14 * 24 * 60 * 60))
+
+      ready_to_archive_conversation =
+        conversation_fixture(account, customer, %{updated_at: date_time, status: "closed"})
+
+      result_ids = Enum.map(Conversations.list_conversations_to_archive(), fn r -> r.id end)
+
+      assert result_ids == [ready_to_archive_conversation.id]
+    end
   end
 end
