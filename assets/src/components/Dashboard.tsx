@@ -17,6 +17,7 @@ import {
   ApiOutlined,
   MailOutlined,
   UserOutlined,
+  LineChartOutlined,
   LogoutOutlined,
   CreditCardOutlined,
   SmileOutlined,
@@ -231,6 +232,13 @@ const Dashboard = (props: RouteComponentProps) => {
                 key="customers"
               >
                 <Link to="/customers">Customers</Link>
+              </Menu.Item>
+              <Menu.Item
+                title="Reporting"
+                icon={<LineChartOutlined />}
+                key="reporting"
+              >
+                <Link to="/reporting">Reporting</Link>
               </Menu.Item>
               <Menu.Item
                 title="Integrations"
