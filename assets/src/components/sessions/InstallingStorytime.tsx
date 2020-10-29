@@ -82,6 +82,14 @@ import {Storytime} from '@papercups-io/storytime';
 
 const st = Storytime.init({
   accountId: '${accountId}',
+
+  // Optionally pass in metadata to identify the customer
+  // customer: {
+  //  name: 'Test User',
+  //  email: 'test@test.com',
+  //  external_id: '123',
+  // },
+
   // Optionally specify the base URL
   baseUrl: '${BASE_URL}',
 });
