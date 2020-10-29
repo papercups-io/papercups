@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import {Box} from 'theme-ui';
 import {Channel, Socket, Presence} from 'phoenix';
 import {Papercups} from '@papercups-io/chat-widget';
-import {Alert, Paragraph, Text, Title} from '../common';
+import {Alert, Button, Paragraph, Text, Title} from '../common';
 import * as API from '../../api';
 import {SOCKET_URL} from '../../socket';
 import {BrowserSession} from '../../types';
@@ -132,8 +132,14 @@ class SessionsOverview extends React.Component<Props, State> {
                 message={
                   <Text>
                     This page is still a work in progress &mdash;{' '}
-                    <a onClick={Papercups.toggle}>let us know</a> if you need
-                    any help getting started!
+                    <Button
+                      style={{padding: 0, height: 16}}
+                      type="link"
+                      onClick={Papercups.toggle}
+                    >
+                      let us know
+                    </Button>{' '}
+                    if you need any help getting started!
                   </Text>
                 }
                 type="info"
