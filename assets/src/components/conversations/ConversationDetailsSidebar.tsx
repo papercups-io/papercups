@@ -1,20 +1,24 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
-import {colors, Tag, Text, Tooltip} from '../common';
+import {colors, Badge, Button, Tag, Text, Tooltip} from '../common';
 import {
   CalendarOutlined,
   GlobalOutlined,
   MailOutlined,
   PhoneOutlined,
   UserOutlined,
+  VideoCameraOutlined,
 } from '../icons';
 import {
   SidebarCustomerTags,
   SidebarConversationTags,
 } from './SidebarTagSection';
+import * as API from '../../api';
 import {Conversation, Customer} from '../../types';
+import logger from '../../logger';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -35,7 +39,43 @@ const DetailsSectionCard = ({children}: {children: any}) => {
   );
 };
 
-const CustomerDetails = ({customer}: {customer: Customer}) => {
+const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
+  const [loading, setLoading] = React.useState(false);
+  const [session, setLiveSession] = React.useState<any>();
+
+  React.useEffect(() => {
+    setLoading(true);
+
+    API.fetchBrowserSessions({customerId, isActive: true, limit: 5})
+      .then(([session]) => setLiveSession(session))
+      .catch((err) => logger.error('Error retrieving sessions:', err))
+      .then(() => setLoading(false));
+  }, [customerId]);
+
+  const sessionId = session && session.id;
+
+  return (
+    <Link to={sessionId ? `/sessions/live/${sessionId}` : '/sessions'}>
+      <Button
+        type="primary"
+        icon={<VideoCameraOutlined />}
+        block
+        ghost
+        loading={loading}
+      >
+        View live
+      </Button>
+    </Link>
+  );
+};
+
+const CustomerDetails = ({
+  customer,
+  isOnline,
+}: {
+  customer: Customer;
+  isOnline?: boolean;
+}) => {
   const {
     email,
     name,
@@ -94,29 +134,41 @@ const CustomerDetails = ({customer}: {customer: Customer}) => {
         </Flex>
       </DetailsSectionCard>
 
-      <DetailsSectionCard>
-        <Box mb={2}>
-          <Text strong>Last seen</Text>
-        </Box>
-        <Box mb={1}>
-          <CalendarOutlined />{' '}
-          {lastUpdatedAt
-            ? dayjs.utc(lastUpdatedAt).format('MMMM DD, YYYY')
-            : 'N/A'}{' '}
-          <Text type="secondary">at</Text>
-        </Box>
-        <Box mb={1}>
-          {lastSeenUrl ? (
-            <Tooltip title={lastSeenUrl}>
-              <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
-                {pathname && pathname.length > 1 ? pathname : lastSeenUrl}
-              </a>
-            </Tooltip>
-          ) : (
-            <Text>Unknown URL</Text>
-          )}
-        </Box>
-      </DetailsSectionCard>
+      {isOnline ? (
+        <DetailsSectionCard>
+          <Flex mb={2} sx={{justifyContent: 'space-between'}}>
+            <Text strong>Last seen</Text>
+            <Badge status="processing" text="Online now!" />
+          </Flex>
+          <Box mb={1}>
+            <CustomerActiveSessions customerId={customerId} />
+          </Box>
+        </DetailsSectionCard>
+      ) : (
+        <DetailsSectionCard>
+          <Box mb={2}>
+            <Text strong>Last seen</Text>
+          </Box>
+          <Box mb={1}>
+            <CalendarOutlined />{' '}
+            {lastUpdatedAt
+              ? dayjs.utc(lastUpdatedAt).format('MMMM DD, YYYY')
+              : 'N/A'}{' '}
+            <Text type="secondary">at</Text>
+          </Box>
+          <Box mb={1}>
+            {lastSeenUrl ? (
+              <Tooltip title={lastSeenUrl}>
+                <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
+                  {pathname && pathname.length > 1 ? pathname : lastSeenUrl}
+                </a>
+              </Tooltip>
+            ) : (
+              <Text>Unknown URL</Text>
+            )}
+          </Box>
+        </DetailsSectionCard>
+      )}
 
       <DetailsSectionCard>
         <Box mb={2}>
@@ -215,9 +267,14 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
 type Props = {
   customer: Customer;
   conversation?: Conversation;
+  isOnline?: boolean;
 };
 
-const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
+const ConversationDetailsSidebar = ({
+  customer,
+  conversation,
+  isOnline,
+}: Props) => {
   return (
     <Box
       sx={{
@@ -229,7 +286,7 @@ const ConversationDetailsSidebar = ({customer, conversation}: Props) => {
         flex: 1,
       }}
     >
-      <CustomerDetails customer={customer} />
+      <CustomerDetails customer={customer} isOnline={isOnline} />
       {conversation && <ConversationDetails conversation={conversation} />}
     </Box>
   );

@@ -746,8 +746,15 @@ export const removeCustomerTag = (
     .then((res) => res.body.data);
 };
 
+type BrowserSessionFilters = {
+  sessionIds?: Array<string>;
+  customerId?: string;
+  isActive?: boolean;
+  limit?: number;
+};
+
 export const fetchBrowserSessions = async (
-  sessionIds: Array<string> = [],
+  {customerId, isActive, limit = 100, sessionIds = []}: BrowserSessionFilters,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -756,7 +763,40 @@ export const fetchBrowserSessions = async (
 
   return request
     .get(`/api/browser_sessions`)
-    .query(qs.stringify({ids: sessionIds}, {arrayFormat: 'bracket'}))
+    .query(
+      qs.stringify(
+        {
+          ids: sessionIds,
+          customer_id: customerId,
+          active: isActive,
+          limit,
+        },
+        {arrayFormat: 'bracket'}
+      )
+    )
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const countBrowserSessions = async (
+  {customerId, isActive}: BrowserSessionFilters,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/browser_sessions/count`)
+    .query(
+      qs.stringify(
+        {
+          customer_id: customerId,
+          active: isActive,
+        },
+        {arrayFormat: 'bracket'}
+      )
+    )
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
