@@ -155,6 +155,15 @@ defmodule ChatApi.ConversationsTest do
       assert %Ecto.Changeset{} = Conversations.change_conversation(conversation)
     end
 
+    test "archive_conversation/1 sets the archive_at field of a conversation", %{
+      conversation: conversation
+    } do
+      assert {:ok, %Conversation{} = conversation} =
+               Conversations.archive_conversation(conversation)
+
+      assert %DateTime{} = conversation.archived_at
+    end
+
     test "archive_conversations/1 archives conversations which have been closed for more than the given or default 14 days",
          %{conversation: _conversation, account: account, customer: customer} do
       past = DateTime.add(DateTime.utc_now(), -(14 * 24 * 60 * 60))
