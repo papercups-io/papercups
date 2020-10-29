@@ -66,7 +66,8 @@ config :chat_api, Oban,
   queues: [default: 10, events: 50, mailers: 20],
   crontab: [
     # Hourly example worker
-    {"0 * * * *", ChatApi.Workers.Example}
+    {"0 * * * *", ChatApi.Workers.Example},
+    {"0 * * * *", ChatApi.Workers.ArchiveConversations}
   ]
 
 # Configure Mailgun
