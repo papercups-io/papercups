@@ -227,7 +227,7 @@ defmodule ChatApi.Conversations do
     Conversation
     |> where([c], is_nil(c.archived_at))
     |> where(status: "closed")
-    |> where([c], c.updated_at < from_now(14, "day"))
+    |> where([c], c.updated_at < ago(14, "day"))
     |> Repo.all()
   end
 
