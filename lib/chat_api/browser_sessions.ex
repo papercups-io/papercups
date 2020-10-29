@@ -54,7 +54,7 @@ defmodule ChatApi.BrowserSessions do
     BrowserSession
     |> where(id: ^id)
     |> where(account_id: ^account_id)
-    |> Repo.one()
+    |> Repo.one!()
     |> Repo.preload([:browser_replay_events, :customer])
   end
 
