@@ -190,6 +190,10 @@ class ConversationsContainer extends React.Component<Props, State> {
   };
 
   isCustomerOnline = (customerId: string) => {
+    if (!customerId) {
+      return false;
+    }
+
     const {currentlyOnline = {}} = this.props;
     const key = `customer:${customerId}`;
 
@@ -311,6 +315,9 @@ class ConversationsContainer extends React.Component<Props, State> {
     const isClosingSelected =
       !!selectedConversationId &&
       closing.indexOf(selectedConversationId) !== -1;
+    const isSelectedCustomerOnline = selectedCustomer
+      ? this.isCustomerOnline(selectedCustomer.id)
+      : false;
 
     return (
       <Layout style={{background: colors.white}}>
@@ -427,6 +434,7 @@ class ConversationsContainer extends React.Component<Props, State> {
               >
                 <ConversationDetailsSidebar
                   customer={selectedCustomer}
+                  isOnline={isSelectedCustomerOnline}
                   conversation={selectedConversation}
                 />
               </Box>

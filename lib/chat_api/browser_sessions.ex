@@ -8,25 +8,26 @@ defmodule ChatApi.BrowserSessions do
 
   alias ChatApi.BrowserSessions.BrowserSession
 
-  @spec list_browser_sessions(binary()) :: [BrowserSession.t()]
-  def list_browser_sessions(account_id) do
-    # TODO: include customer and count of events
+  @spec list_browser_sessions(binary(), map()) :: [BrowserSession.t()]
+  def list_browser_sessions(account_id, filters \\ %{}) do
+    limit = filters |> Map.get("limit", "100") |> String.to_integer()
+
     BrowserSession
     |> where(account_id: ^account_id)
-    |> order_by(desc: :inserted_at)
+    |> where(^filter_where(filters))
+    |> order_by(desc: :updated_at)
+    |> limit(^limit)
     |> Repo.all()
     |> Repo.preload([:customer])
   end
 
-  @spec list_browser_sessions(binary(), list()) :: [BrowserSession.t()]
-  def list_browser_sessions(account_id, ids) do
-    # TODO: include customer and count of events
+  @spec count_browser_sessions(binary(), map()) :: number()
+  def count_browser_sessions(account_id, filters \\ %{}) do
     BrowserSession
     |> where(account_id: ^account_id)
-    |> where([s], s.id in ^ids)
-    |> order_by(desc: :inserted_at)
-    |> Repo.all()
-    |> Repo.preload([:customer])
+    |> where(^filter_where(filters))
+    |> select([p], count(p.id))
+    |> Repo.one()
   end
 
   @doc """
@@ -43,8 +44,18 @@ defmodule ChatApi.BrowserSessions do
       ** (Ecto.NoResultsError)
 
   """
+  @spec get_browser_session!(binary()) :: BrowserSession.t()
   def get_browser_session!(id) do
     BrowserSession |> Repo.get!(id) |> Repo.preload([:browser_replay_events, :customer])
+  end
+
+  @spec get_browser_session!(binary(), binary()) :: BrowserSession.t()
+  def get_browser_session!(id, account_id) do
+    BrowserSession
+    |> where(id: ^id)
+    |> where(account_id: ^account_id)
+    |> Repo.one!()
+    |> Repo.preload([:browser_replay_events, :customer])
   end
 
   @doc """
@@ -120,5 +131,27 @@ defmodule ChatApi.BrowserSessions do
       |> Repo.one()
 
     count > 0
+  end
+
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
+  def filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"customer_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.customer_id == ^value)
+
+      {"ids", list}, dynamic ->
+        dynamic([p], ^dynamic and p.id in ^list)
+
+      {"active", "true"}, dynamic ->
+        dynamic([p], ^dynamic and is_nil(p.finished_at))
+
+      {"active", "false"}, dynamic ->
+        dynamic([p], ^dynamic and not is_nil(p.finished_at))
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end

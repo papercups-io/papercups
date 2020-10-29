@@ -83,7 +83,7 @@ defmodule ChatApiWeb.BrowserSessionControllerTest do
       conn = get(authed_conn, Routes.browser_session_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => ^id,
                "finished_at" => "2011-05-18T15:01:01Z",
                "metadata" => %{},
                "started_at" => "2011-05-18T15:01:01Z"

@@ -84,6 +84,7 @@ defmodule ChatApiWeb.Router do
     post("/users/:id/enable", UserController, :enable)
     post("/payment_methods", PaymentMethodController, :create)
     get("/payment_methods", PaymentMethodController, :show)
+    get("/browser_sessions/count", BrowserSessionController, :count)
 
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/accounts", AccountController, only: [:update, :delete])
@@ -92,7 +93,7 @@ defmodule ChatApiWeb.Router do
     resources("/customers", CustomerController, except: [:new, :edit, :create])
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
-    resources "/browser_sessions", BrowserSessionController, except: [:create, :new, :edit]
+    resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
 
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
