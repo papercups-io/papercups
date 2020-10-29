@@ -223,12 +223,17 @@ defmodule ChatApi.Conversations do
     archive_conversation(conversation)
   end
 
-  def archive_conversations(days_closed \\ 14) do
+  @spec archive_conversations(Ecto.Query.t()) :: {number, nil}
+  def archive_conversations(%Ecto.Query{} = query) do
+    Repo.update_all(query, set: [archived_at: DateTime.utc_now()])
+  end
+
+  @spec query_conversations_closed_for([{:days, number | Decimal.t()}, ...]) :: Ecto.Query.t()
+  def query_conversations_closed_for(days: days) do
     Conversation
     |> where([c], is_nil(c.archived_at))
     |> where(status: "closed")
-    |> where([c], c.updated_at < ago(^days_closed, "day"))
-    |> Repo.update_all(set: [archived_at: DateTime.utc_now()])
+    |> where([c], c.updated_at < ago(^days, "day"))
   end
 
   @spec delete_conversation(Conversation.t()) ::
