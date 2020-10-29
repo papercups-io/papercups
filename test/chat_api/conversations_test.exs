@@ -124,7 +124,7 @@ defmodule ChatApi.ConversationsTest do
     end
 
     test "delete_conversation/1 deletes the conversation if associated slack_conversation_threads exist",
-         %{conversation: conversation} do
+         %{conversation: _conversation} do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.create_conversation(valid_create_attrs())
 
@@ -155,28 +155,26 @@ defmodule ChatApi.ConversationsTest do
       assert %Ecto.Changeset{} = Conversations.change_conversation(conversation)
     end
 
-    test "archive_conversation/1 sets the archive_at field of a conversation", %{
-      conversation: conversation
-    } do
-      assert {:ok, %Conversation{} = conversation} =
-               Conversations.archive_conversation(conversation)
-
-      assert %DateTime{} = conversation.archived_at
-    end
-
-    test "list_conversations_to_archive/0 returns conversations which have been closed for more than 14 days",
-         %{conversation: conversation, account: account, customer: customer} do
+    test "archive_conversations/1 archives conversations which have been closed for more than the given or default 14 days",
+         %{conversation: _conversation, account: account, customer: customer} do
       past = DateTime.add(DateTime.utc_now(), -(14 * 24 * 60 * 60))
 
       closed_conversation =
-        conversation_fixture(account, customer, %{updated_at: DateTime.utc_now(), status: "closed"})
+        conversation_fixture(account, customer, %{
+          updated_at: DateTime.utc_now(),
+          status: "closed"
+        })
 
       ready_to_archive_conversation =
         conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
 
-      result_ids = Enum.map(Conversations.list_conversations_to_archive(), fn r -> r.id end)
+      assert {1, nil} = Conversations.archive_conversations()
 
-      assert result_ids == [ready_to_archive_conversation.id]
+      archived_conversation = Conversations.get_conversation!(ready_to_archive_conversation.id)
+      assert archived_conversation.archived_at
+
+      closed_conversation = Conversations.get_conversation!(closed_conversation.id)
+      refute closed_conversation.archived_at
     end
   end
 end

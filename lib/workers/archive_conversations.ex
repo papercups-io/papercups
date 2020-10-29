@@ -1,11 +1,16 @@
 defmodule ChatApi.Workers.ArchiveConversations do
   use Oban.Worker, queue: :default
 
+  require Logger
+
   alias ChatApi.Conversations
 
   @impl Oban.Worker
   def perform(%Oban.Job{} = _job) do
-    Conversations.list_conversations_to_archive()
-    |> Enum.each(&Conversations.archive_conversation/1)
+    {n, nil} = Conversations.archive_conversations()
+
+    Logger.info("Archived #{n} conversations")
+
+    :ok
   end
 end

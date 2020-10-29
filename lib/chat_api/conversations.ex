@@ -223,12 +223,12 @@ defmodule ChatApi.Conversations do
     archive_conversation(conversation)
   end
 
-  def list_conversations_to_archive() do
+  def archive_conversations(days_closed \\ 14) do
     Conversation
     |> where([c], is_nil(c.archived_at))
     |> where(status: "closed")
-    |> where([c], c.updated_at < ago(14, "day"))
-    |> Repo.all()
+    |> where([c], c.updated_at < ago(^days_closed, "day"))
+    |> Repo.update_all(set: [archived_at: DateTime.utc_now()])
   end
 
   @spec delete_conversation(Conversation.t()) ::
