@@ -26,7 +26,7 @@ defmodule ChatApiWeb.RegistrationController do
             # # obvious that a user invitation expires after one use.
             # ChatApi.UserInvitations.expire_user_invitation(invite)
             conn
-            |> send_registration_event()
+            |> send_registration_event(params["company_name"])
             |> enqueue_welcome_email()
             |> notify_slack()
             |> send_api_token()
@@ -53,7 +53,7 @@ defmodule ChatApiWeb.RegistrationController do
       |> case do
         {:ok, %{conn: conn}} ->
           conn
-          |> send_registration_event()
+          |> send_registration_event(user_params["company_name"])
           |> enqueue_welcome_email()
           |> notify_slack()
           |> send_api_token()
@@ -110,21 +110,21 @@ defmodule ChatApiWeb.RegistrationController do
     conn
   end
 
-  @spec send_registration_event(Conn.t()) :: Conn.t()
-  defp send_registration_event(conn) do
-    send_registration_event(conn, customer_io_enabled?())
+  @spec send_registration_event(Conn.t(), String.t()) :: Conn.t()
+  defp send_registration_event(conn, company_name) do
+    send_registration_event(conn, company_name, customer_io_enabled?())
   end
 
   @spec send_registration_event(Conn.t(), boolean()) :: Conn.t()
   # If CustomerIO is not enabled, just pass through
-  defp send_registration_event(conn, false), do: conn
+  defp send_registration_event(conn, _company_name, false), do: conn
 
-  defp send_registration_event(conn, true) do
+  defp send_registration_event(conn, company_name, true) do
     case conn.assigns.current_user do
       %{email: email, id: user_id} ->
         now = :os.system_time(:seconds)
 
-        case Customerio.identify(user_id, %{email: email, created_at: now}) do
+        case Customerio.identify(user_id, %{email: email, created_at: now, company_name: company_name}) do
           {:ok, _} -> nil
           {:error, result} -> Logger.error(inspect(result))
         end
