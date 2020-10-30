@@ -1,3 +1,26 @@
+### Friday, 30 October
+
+- We released v1 of our **Reporting Dashboard** 📈 🚀 📊  [0]
+- [Beta] Adding support for another variant of the **chat icon** [1]
+  - _See it live on our [website](http://papercups.io/)!_
+- Added docs for **getting started with Storytime** [2]
+  - _Storytime allows you to view your users' screen live while chatting with them_
+- Added a link to **view the live user session** from the Conversation UI [3]
+- We now **archive stale conversations** that have been closed for over 14 days
+  - Thanks for the help @daskycodes! 🎉 
+
+_[0] Reporting Dashboard:_
+> <img width="800" alt="Reporting Dashboard" src="https://user-images.githubusercontent.com/5264279/97723684-70894300-1aa2-11eb-90ae-60a49685a4c8.png">
+
+_[1] New chat icon variant:_
+> <img width="400" alt="Chat icon" src="https://user-images.githubusercontent.com/5264279/97723887-a62e2c00-1aa2-11eb-9c63-ee7282120397.png">
+
+_[2] Setting up Storytime:_
+> <img width="800" alt="Setting up Storytime" src="https://user-images.githubusercontent.com/5264279/97306773-4f6fea80-1835-11eb-9d80-2cbcfc8881a5.png">
+
+_[3] View live session:_
+> <img width="800" alt="View live session" src="https://user-images.githubusercontent.com/5264279/97623079-898ae900-19fb-11eb-8f07-ae5d0fc03e5f.png">
+
 ### Monday, 26 October
 
 - Our new screen-sharing product — **Storytime** — is now in beta! 🚀 🔥 🎉 [0]
