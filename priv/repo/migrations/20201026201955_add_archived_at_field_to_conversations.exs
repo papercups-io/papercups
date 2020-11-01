@@ -3,7 +3,7 @@ defmodule ChatApi.Repo.Migrations.AddArchivedAtFieldToConversations do
 
   def change do
     alter table(:conversations) do
-      add :archived_at, :utc_datetime
+      add(:archived_at, :utc_datetime)
     end
   end
 end
