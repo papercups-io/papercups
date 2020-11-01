@@ -16,6 +16,7 @@ defmodule ChatApi.Reporting do
   @type aggregate_by_date() :: %{date: binary(), count: integer()}
   @type aggregate_by_user() :: %{user: %{id: integer(), email: binary()}, count: integer()}
   @type aggregate_by_weekday() :: %{weekday: binary(), average: float(), total: integer()}
+  @type aggregate_by_field() :: %{field: binary(), count: integer()}
 
   @spec count_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_messages_by_date(account_id, filters \\ %{}) do
@@ -120,14 +121,7 @@ defmodule ChatApi.Reporting do
     end)
   end
 
-  # get_customer_breakdown(account_id, :browser, %{from_date: ..., to_date: ...})
-  ## =>
-  # [
-  #  %{browser: "Chrome", count: 25},
-  #  %{browser: "Firefox", count: 12},
-  #  # etc
-  # ]
-  # @spec get_customer_breakdown(binary(), map()) :: [aggregate_by_date()]
+  @spec get_customer_breakdown(binary(), binary(), map()) :: [aggregate_by_field()]
   def get_customer_breakdown(account_id, field, filters \\ %{}) do
     Customer
     |> where(account_id: ^account_id)
@@ -137,12 +131,6 @@ defmodule ChatApi.Reporting do
     |> select([r], %{:field => field(r, ^field), :count => count(r.id)})
     |> order_by([r], desc: count(r.id))
     |> Repo.all()
-
-    # |> Enum.map(fn() -> ["#{field}": field] end)
-    # Enum.group_by(~w{ant buffalo cat dingo}, &String.length/1, fn x -> count end)
-    # `field` will be `:os`, `:browser`, `:time_zone`, etc (fields on the Customer model)
-    # filter_where(filters)
-    # `filters` should include a `from_date` and `to_date`
   end
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
