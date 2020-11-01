@@ -120,6 +120,31 @@ defmodule ChatApi.Reporting do
     end)
   end
 
+  # get_customer_breakdown(account_id, :browser, %{from_date: ..., to_date: ...})
+  ## =>
+  # [
+  #  %{browser: "Chrome", count: 25},
+  #  %{browser: "Firefox", count: 12},
+  #  # etc
+  # ]
+  # @spec get_customer_breakdown(binary(), map()) :: [aggregate_by_date()]
+  def get_customer_breakdown(account_id, field, filters \\ %{}) do
+    Customer
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> group_by([r], field(r, ^field))
+    # |> select([r], {field(r, ^field), count(r.id)})
+    |> select([r], %{:field => field(r, ^field), :count => count(r.id)})
+    |> order_by([r], desc: count(r.id))
+    |> Repo.all()
+
+    # |> Enum.map(fn() -> ["#{field}": field] end)
+    # Enum.group_by(~w{ant buffalo cat dingo}, &String.length/1, fn x -> count end)
+    # `field` will be `:os`, `:browser`, `:time_zone`, etc (fields on the Customer model)
+    # filter_where(filters)
+    # `filters` should include a `from_date` and `to_date`
+  end
+
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   defp filter_where(params) do
     Enum.reduce(params, dynamic(true), fn
