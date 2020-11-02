@@ -247,6 +247,7 @@ defmodule ChatApi.Slack do
     case type do
       :agent -> "*:female-technologist: Agent*: #{text}"
       :customer -> "*:wave: #{identify_customer(customer)}*: #{text}"
+      :convo_update -> "_#{text}_"
       _ -> raise "Unrecognized sender type: " <> type
     end
   end

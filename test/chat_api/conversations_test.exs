@@ -106,6 +106,7 @@ defmodule ChatApi.ConversationsTest do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.update_conversation(conversation, @update_attrs)
 
+      # assert_received Conversation.send_conversation_state_update("closed")
       assert conversation.status == "closed"
     end
 

@@ -152,6 +152,14 @@ defmodule ChatApi.Conversations do
 
   """
   def update_conversation(%Conversation{} = conversation, attrs) do
+    # %{"priority" => "not_priority"}
+    # %{"priority" => "priority"}
+    # %{"status" => "closed"}
+    # %{"status" => "open"}
+    IO.inspect(attrs, label: "->>>>>>>>>>>>>> attrs: ")
+    IO.inspect(conversation, label: "->>>>>>>>>>>>>> conversation: ")
+    # send_conversation_state_update(attrs)
+
     conversation
     |> Conversation.changeset(attrs)
     |> Repo.update()
@@ -311,4 +319,15 @@ defmodule ChatApi.Conversations do
     |> get_tag(tag_id)
     |> Repo.delete()
   end
+
+  # defp send_conversation_state_update(conversation, attrs) do
+  #   case attrs do
+  #     %{status: status} ->
+  #       ChatApi.Slack.send_conversation_state_update(conversation_id, "This conversation has been closed.")
+  #       ChatApi.Slack.send_conversation_state_update(conversation_id, "This conversation has been reopened.")
+  #     %{priority: priority} ->
+  #       ChatApi.Slack.send_conversation_state_update(conversation_id, "This conversation has been prioritized.")
+  #       ChatApi.Slack.send_conversation_state_update(conversation_id, "This conversation has been de-prioritized.")
+  #   end
+  # end
 end
