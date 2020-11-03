@@ -6,7 +6,7 @@ defmodule ChatApi.Conversations do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
-  alias ChatApi.Conversations.Conversation
+  alias ChatApi.Conversations.{Conversation, Helpers}
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
 
@@ -152,7 +152,7 @@ defmodule ChatApi.Conversations do
 
   """
   def update_conversation(%Conversation{} = conversation, attrs) do
-    send_conversation_state_update(conversation, attrs)
+    Helpers.send_conversation_state_update(conversation, attrs)
 
     conversation
     |> Conversation.changeset(attrs)
@@ -216,6 +216,8 @@ defmodule ChatApi.Conversations do
   @spec archive_conversation(Conversation.t() | binary()) ::
           {:error, Ecto.Changeset.t()} | {:ok, Conversation.t()}
   def archive_conversation(%Conversation{} = conversation) do
+    Helpers.send_conversation_state_update(conversation, %{"status" => "archived"})
+
     update_conversation(conversation, %{archived_at: DateTime.utc_now()})
   end
 
@@ -253,6 +255,8 @@ defmodule ChatApi.Conversations do
 
   """
   def delete_conversation(%Conversation{} = conversation) do
+    Helpers.send_conversation_state_update(conversation, %{"status" => "deleted"})
+
     Repo.delete(conversation)
   end
 
@@ -312,18 +316,5 @@ defmodule ChatApi.Conversations do
     conversation
     |> get_tag(tag_id)
     |> Repo.delete()
-  end
-
-  defp send_conversation_state_update(conversation, attrs) do
-    case attrs do
-      %{"status" => "open"} ->
-        ChatApi.Slack.send_conversation_message_alert(conversation.id, "This conversation has been reopened.", type: :convo_update)
-      %{"status" => "closed"} ->
-        ChatApi.Slack.send_conversation_message_alert(conversation.id, "This conversation has been closed.", type: :convo_update)
-      %{"priority" => "priority"} ->
-        ChatApi.Slack.send_conversation_message_alert(conversation.id, "This conversation has been prioritized.", type: :convo_update)
-      %{"priority" => "not_priority"} ->
-        ChatApi.Slack.send_conversation_message_alert(conversation.id, "This conversation has been de-prioritized.", type: :convo_update)
-    end
   end
 end
