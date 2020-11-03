@@ -293,6 +293,7 @@ defmodule ChatApi.ReportingTest do
                  from_date: ~N[2020-10-11 11:00:00],
                  to_date: ~N[2020-10-12 13:00:00]
                })
+               |> Enum.sort_by(& &1.browser, :asc)
     end
 
     test "it slices time correctly", %{
@@ -307,6 +308,7 @@ defmodule ChatApi.ReportingTest do
                  from_date: ~N[2020-10-11 12:00:00],
                  to_date: ~N[2020-10-12 13:00:00]
                })
+               |> Enum.sort_by(& &1.browser, :asc)
     end
 
     test "it can query by other fields", %{
