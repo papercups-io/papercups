@@ -130,14 +130,15 @@ defmodule ChatApi.Slack do
   @spec send_conversation_message_alert(binary(), binary(), keyword()) ::
           Tesla.Env.result() | nil | :ok
   def send_conversation_message_alert(conversation_id, text, type: type) do
-    # Check if a Slack thread already exists for this conversation.
-    # If one exists, send followup messages as replies; otherwise, start a new thread
-    thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id)
-
     %{account_id: account_id, customer: customer} =
       Conversations.get_conversation_with!(conversation_id, :customer)
 
-    %{access_token: access_token, channel: channel} = get_slack_authorization(account_id)
+    %{access_token: access_token, channel: channel, channel_id: channel_id} =
+      get_slack_authorization(account_id)
+
+    # Check if a Slack thread already exists for this conversation.
+    # If one exists, send followup messages as replies; otherwise, start a new thread
+    thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id)
 
     # TODO: use a struct here?
     %{

@@ -28,9 +28,9 @@ defmodule ChatApi.SlackConversationThreadsTest do
       account = account_fixture()
       customer = customer_fixture(account)
       conversation = conversation_fixture(account, customer)
-
       slack_conversation_thread = slack_conversation_thread_fixture(conversation)
-      {:ok, slack_conversation_thread: slack_conversation_thread}
+
+      {:ok, conversation: conversation, slack_conversation_thread: slack_conversation_thread}
     end
 
     test "list_slack_conversation_threads/0 returns all slack_conversation_threads", %{
@@ -114,6 +114,38 @@ defmodule ChatApi.SlackConversationThreadsTest do
                SlackConversationThreads.change_slack_conversation_thread(
                  slack_conversation_thread
                )
+    end
+
+    test "get_by_slack_thread_ts/2 finds a slack_conversation_thread by thread_ts and channel",
+         %{
+           conversation: conversation
+         } do
+      slack_conversation_thread =
+        slack_conversation_thread_fixture(conversation, %{
+          slack_thread_ts: "ts1",
+          slack_channel: "ch1"
+        })
+
+      result = SlackConversationThreads.get_by_slack_thread_ts("ts1", "ch1")
+
+      assert result.id == slack_conversation_thread.id
+      refute SlackConversationThreads.get_by_slack_thread_ts("ts2", "ch1")
+      refute SlackConversationThreads.get_by_slack_thread_ts("ts1", "ch2")
+    end
+
+    test "get_thread_by_conversation_id/2 finds a slack_conversation_thread by conversation_id and channel",
+         %{
+           conversation: conversation
+         } do
+      slack_conversation_thread =
+        slack_conversation_thread_fixture(conversation, %{
+          slack_channel: "ch1"
+        })
+
+      result = SlackConversationThreads.get_thread_by_conversation_id(conversation.id, "ch1")
+
+      assert result.id == slack_conversation_thread.id
+      refute SlackConversationThreads.get_thread_by_conversation_id(conversation.id, "ch2")
     end
   end
 end

@@ -39,10 +39,11 @@ defmodule ChatApi.SlackConversationThreads do
   """
   def get_slack_conversation_thread!(id), do: Repo.get!(SlackConversationThread, id)
 
-  @spec get_thread_by_conversation_id(binary()) :: SlackConversationThread.t() | nil
-  def get_thread_by_conversation_id(conversation_id) do
+  @spec get_thread_by_conversation_id(binary(), binary()) :: SlackConversationThread.t() | nil
+  def get_thread_by_conversation_id(conversation_id, slack_channel) do
     SlackConversationThread
     |> where(conversation_id: ^conversation_id)
+    |> where(slack_channel: ^slack_channel)
     |> preload(:conversation)
     |> Repo.one()
   end
