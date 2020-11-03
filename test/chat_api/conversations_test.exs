@@ -118,38 +118,6 @@ defmodule ChatApi.ConversationsTest do
       assert conversation = Conversations.get_conversation!(conversation.id)
     end
 
-    test "update_conversation/2 with valid conversation state change sends alert to Slack", %{
-      conversation: conversation
-    } do
-
-      Conversations.update_conversation(conversation, @update_attrs)
-      assert ChatApi.Slack.get_message_text(%{
-               text: "Test message",
-               conversation_id: conversation.id,
-               customer: customer,
-               type: :customer,
-               thread: thread
-             }) ==
-               "*:wave: #{customer.email}*: Test message"
-      assert_called(ChapApt.Slack, :send_conversation_state_update, [
-        conversation.id,
-        "This conversation has been closed.",
-        :convo_update
-      ])
-    end
-
-    test "update_conversation/2 with invalid conversation state handles error", %{
-      conversation: conversation
-    } do
-
-      Conversations.update_conversation(conversation, @invalid_attrs)
-      assert_called(ChapApt.Slack, :send_conversation_state_update, [
-        conversation.id,
-        "This conversation has been closed.",
-        :convo_update
-      ])
-    end
-
     test "delete_conversation/1 deletes the conversation", %{conversation: conversation} do
       assert {:ok, %Conversation{}} = Conversations.delete_conversation(conversation)
       assert_raise Ecto.NoResultsError, fn -> Conversations.get_conversation!(conversation.id) end
