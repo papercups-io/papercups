@@ -69,8 +69,9 @@ class SessionsOverview extends React.Component<Props, State> {
         .list()
         .map(({metas}) => {
           const [info] = metas;
+          const {session_id: sessionId, active = true} = info;
 
-          return info.session_id;
+          return active ? sessionId : null;
         })
         .filter((sessionId) => !!sessionId);
 
