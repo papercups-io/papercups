@@ -1,9 +1,7 @@
 defmodule ChatApi.Conversations.HelpersTest do
   use ChatApi.DataCase
 
-  import ExUnit.CaptureLog
-
-  alias ChatApi.Conversations.Helpers
+  alias ChatApi.{Conversations, Conversations.Helpers}
 
   describe "ChatApi.Conversations.Helpers" do
     setup do
@@ -30,6 +28,23 @@ defmodule ChatApi.Conversations.HelpersTest do
 
       assert Helpers.send_conversation_state_update(conversation, %{"priority" => "BOOM"}) ==
                {:error, "state_invalid"}
+    end
+
+    test "send_multiple_archived_updates/2 sends archived updates to multiple conversations",
+         %{account: account, customer: customer} do
+      past = DateTime.add(DateTime.utc_now(), -(14 * 24 * 60 * 60))
+
+      conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
+      conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
+      conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
+
+      archived_conversations = Conversations.query_conversations_closed_for(days: 14)
+
+      assert Helpers.send_multiple_archived_updates(ChatApi.Repo.all(archived_conversations)) == [
+               ok: "This conversation has been archived.",
+               ok: "This conversation has been archived.",
+               ok: "This conversation has been archived."
+             ]
     end
   end
 end

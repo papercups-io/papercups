@@ -3,8 +3,8 @@ defmodule ChatApi.Conversations.Helpers do
 
   alias ChatApi.Slack
 
-  def send_conversation_state_update(conversation, attrs) do
-    conversation_state_message = get_conversation_state_message(attrs)
+  def send_conversation_state_update(conversation, state) do
+    conversation_state_message = get_conversation_state_message(state)
 
     if conversation_state_message do
       Slack.send_conversation_message_alert(
@@ -17,6 +17,14 @@ defmodule ChatApi.Conversations.Helpers do
     else
       {:error, "state_invalid"}
     end
+  end
+
+  def send_multiple_archived_updates(conversations) do
+    state = %{"status" => "archived"}
+
+    Enum.map(conversations, fn conversation ->
+      send_conversation_state_update(conversation, state)
+    end)
   end
 
   defp get_conversation_state_message(state) do
