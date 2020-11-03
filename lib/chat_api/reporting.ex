@@ -121,7 +121,7 @@ defmodule ChatApi.Reporting do
     end)
   end
 
-  @spec get_customer_breakdown(binary(), binary(), map()) :: [aggregate_by_field()]
+  @spec get_customer_breakdown(binary(), atom(), map()) :: [aggregate_by_field()]
   def get_customer_breakdown(account_id, field, filters \\ %{}) do
     Customer
     |> where(account_id: ^account_id)
@@ -130,7 +130,7 @@ defmodule ChatApi.Reporting do
     |> select([r], {field(r, ^field), count(r.id)})
     |> order_by([r], desc: count(r.id))
     |> Repo.all()
-    |>  Enum.map(fn {value, count} -> %{field => value, :count => count} end)
+    |> Enum.map(fn {value, count} -> %{field => value, :count => count} end)
   end
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
