@@ -43,7 +43,7 @@ defmodule ChatApi.ConversationsTest do
 
       result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
 
-      assert result_ids == false # [conversation.id]
+      assert result_ids == [conversation.id]
     end
 
     test "list_conversations_by_account/1 returns all not archived conversations for an account",
