@@ -105,7 +105,7 @@ defmodule ChatApiWeb.EventChannel do
     {:noreply, socket}
   end
 
-  def handle_in("session:active", payload, socket) do
+  def handle_in("session:active", _payload, socket) do
     topic = get_admin_all_topic(socket)
     key = "session:" <> socket.assigns.browser_session_id
 
@@ -119,7 +119,7 @@ defmodule ChatApiWeb.EventChannel do
     {:noreply, socket}
   end
 
-  def handle_in("session:inactive", payload, socket) do
+  def handle_in("session:inactive", _payload, socket) do
     topic = get_admin_all_topic(socket)
     key = "session:" <> socket.assigns.browser_session_id
 
