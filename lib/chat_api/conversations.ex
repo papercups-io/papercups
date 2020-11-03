@@ -152,13 +152,7 @@ defmodule ChatApi.Conversations do
 
   """
   def update_conversation(%Conversation{} = conversation, attrs) do
-    # %{"priority" => "not_priority"}
-    # %{"priority" => "priority"}
-    # %{"status" => "closed"}
-    # %{"status" => "open"}
-    IO.inspect(attrs, label: "->>>>>>>>>>>>>> attrs: ")
-    IO.inspect(conversation, label: "->>>>>>>>>>>>>> conversation: ")
-    # send_conversation_state_update(attrs)
+    send_conversation_state_update(conversation, attrs)
 
     conversation
     |> Conversation.changeset(attrs)
@@ -320,14 +314,16 @@ defmodule ChatApi.Conversations do
     |> Repo.delete()
   end
 
-  # defp send_conversation_state_update(conversation, attrs) do
-  #   case attrs do
-  #     %{status: status} ->
-  #       ChatApi.Slack.send_conversation_state_update(conversation_id, "This conversation has been closed.")
-  #       ChatApi.Slack.send_conversation_state_update(conversation_id, "This conversation has been reopened.")
-  #     %{priority: priority} ->
-  #       ChatApi.Slack.send_conversation_state_update(conversation_id, "This conversation has been prioritized.")
-  #       ChatApi.Slack.send_conversation_state_update(conversation_id, "This conversation has been de-prioritized.")
-  #   end
-  # end
+  defp send_conversation_state_update(conversation, attrs) do
+    case attrs do
+      %{"status" => "open"} ->
+        ChatApi.Slack.send_conversation_message_alert(conversation.id, "This conversation has been reopened.", type: :convo_update)
+      %{"status" => "closed"} ->
+        ChatApi.Slack.send_conversation_message_alert(conversation.id, "This conversation has been closed.", type: :convo_update)
+      %{"priority" => "priority"} ->
+        ChatApi.Slack.send_conversation_message_alert(conversation.id, "This conversation has been prioritized.", type: :convo_update)
+      %{"priority" => "not_priority"} ->
+        ChatApi.Slack.send_conversation_message_alert(conversation.id, "This conversation has been de-prioritized.", type: :convo_update)
+    end
+  end
 end
