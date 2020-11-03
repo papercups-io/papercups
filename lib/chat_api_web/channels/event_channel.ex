@@ -82,7 +82,8 @@ defmodule ChatApiWeb.EventChannel do
       Presence.track(self(), topic, key, %{
         online_at: inspect(System.system_time(:second)),
         account_id: socket.assigns.account_id,
-        session_id: socket.assigns.browser_session_id
+        session_id: socket.assigns.browser_session_id,
+        active: true
       })
 
     ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
@@ -97,10 +98,37 @@ defmodule ChatApiWeb.EventChannel do
     {:reply, {:ok, payload}, socket}
   end
 
-  @impl true
   def handle_in("replay:event:emitted", payload, socket) do
     enqueue_process_browser_replay_event(payload, socket)
     broadcast_to_admin(socket, "replay:event:emitted", payload)
+
+    {:noreply, socket}
+  end
+
+  def handle_in("session:active", payload, socket) do
+    topic = get_admin_all_topic(socket)
+    key = "session:" <> socket.assigns.browser_session_id
+
+    {:ok, _} =
+      Presence.update(self(), topic, key, fn current ->
+        Map.merge(current, %{active: true})
+      end)
+
+    ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
+
+    {:noreply, socket}
+  end
+
+  def handle_in("session:inactive", payload, socket) do
+    topic = get_admin_all_topic(socket)
+    key = "session:" <> socket.assigns.browser_session_id
+
+    {:ok, _} =
+      Presence.update(self(), topic, key, fn current ->
+        Map.merge(current, %{active: false})
+      end)
+
+    ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
 
     {:noreply, socket}
   end
