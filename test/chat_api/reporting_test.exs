@@ -285,9 +285,9 @@ defmodule ChatApi.ReportingTest do
       account: account
     } do
       assert [
-               %{field: "Chrome", count: 2},
-               %{field: "Firefox", count: 1},
-               %{field: "Safari", count: 1}
+               %{browser: "Chrome", count: 2},
+               %{browser: "Firefox", count: 1},
+               %{browser: "Safari", count: 1}
              ] =
                Reporting.get_customer_breakdown(account.id, :browser, %{
                  from_date: ~N[2020-10-11 11:00:00],
@@ -299,9 +299,9 @@ defmodule ChatApi.ReportingTest do
       account: account
     } do
       assert [
-               %{field: "Chrome", count: 1},
-               %{field: "Firefox", count: 1},
-               %{field: "Safari", count: 1}
+               %{browser: "Chrome", count: 1},
+               %{browser: "Firefox", count: 1},
+               %{browser: "Safari", count: 1}
              ] =
                Reporting.get_customer_breakdown(account.id, :browser, %{
                  from_date: ~N[2020-10-11 12:00:00],
@@ -313,9 +313,9 @@ defmodule ChatApi.ReportingTest do
       account: account
     } do
       assert [
-               %{field: "MacOS", count: 2},
-               %{field: "Linux", count: 1},
-               %{field: "Windows", count: 1}
+               %{os: "MacOS", count: 2},
+               %{os: "Linux", count: 1},
+               %{os: "Windows", count: 1}
              ] =
                Reporting.get_customer_breakdown(account.id, :os, %{
                  from_date: ~N[2020-10-10 12:00:00],

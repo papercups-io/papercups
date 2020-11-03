@@ -127,10 +127,10 @@ defmodule ChatApi.Reporting do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> group_by([r], field(r, ^field))
-    # |> select([r], {field(r, ^field), count(r.id)})
-    |> select([r], %{:field => field(r, ^field), :count => count(r.id)})
+    |> select([r], {field(r, ^field), count(r.id)})
     |> order_by([r], desc: count(r.id))
     |> Repo.all()
+    |>  Enum.map(fn {value, count} -> %{field => value, :count => count} end)
   end
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
