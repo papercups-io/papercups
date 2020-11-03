@@ -33,10 +33,7 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [conversation.id]
     end
 
-    test "list_conversations_by_account/1 returns all conversations for an account", %{
-      account: account,
-      conversation: conversation
-    } do
+    test "list_conversations_by_account/1 returns all conversations for an account", %{ account: account, conversation: conversation } do
       different_account = account_fixture()
       different_customer = customer_fixture(different_account)
       _conversation = conversation_fixture(different_account, different_customer)
