@@ -16,6 +16,7 @@ type State = {
   error: any;
   sessions: Array<BrowserSession>;
   sessionIds: Array<string>;
+  sessionStatusMetadataById: {[id: string]: any};
   numSessions: number;
 };
 
@@ -28,6 +29,7 @@ class SessionsOverview extends React.Component<Props, State> {
     error: null,
     sessions: [],
     sessionIds: [],
+    sessionStatusMetadataById: {},
     numSessions: 0,
   };
 
@@ -65,19 +67,27 @@ class SessionsOverview extends React.Component<Props, State> {
     const presence = new Presence(this.channel);
 
     presence.onSync(() => {
-      const sessionIds = presence
-        .list()
-        .map(({metas}) => {
-          const [info] = metas;
-          const {session_id: sessionId, active = true} = info;
+      const records = presence.list().map(({metas}) => {
+        const [info] = metas;
 
-          return active ? sessionId : null;
-        })
-        .filter((sessionId) => !!sessionId);
+        return info;
+      });
+      const sessions = records.map((info) => {
+        const {session_id: sessionId, active = true, ts} = info;
+
+        return {sessionId, active, ts};
+      });
+      const sessionIds = sessions.map((s) => s.sessionId);
 
       this.setState(
         {
           sessionIds: sessionIds,
+          sessionStatusMetadataById: sessions.reduce(
+            (acc, {sessionId, active, ts}) => {
+              return {...acc, [sessionId]: {active, ts}};
+            },
+            {}
+          ),
         },
         () => this.refreshBrowserSessions(sessionIds)
       );
@@ -100,10 +110,19 @@ class SessionsOverview extends React.Component<Props, State> {
     }
   };
 
+  getSessionActiveMetadata = (sessionId: string): object => {
+    const {sessionStatusMetadataById = {}} = this.state;
+
+    return sessionStatusMetadataById[sessionId] || {};
+  };
+
   render() {
     const {loading, numSessions, sessions = []} = this.state;
     const shouldRequireSetup =
       !loading && numSessions === 0 && sessions.length === 0;
+    const formatted = sessions.map((s) => {
+      return {...s, ...this.getSessionActiveMetadata(s.id)};
+    });
 
     return (
       <Box p={4}>
@@ -149,7 +168,7 @@ class SessionsOverview extends React.Component<Props, State> {
             )}
           </Box>
 
-          <SessionsTable loading={loading} sessions={sessions} />
+          <SessionsTable loading={loading} sessions={formatted} />
         </Box>
       </Box>
     );

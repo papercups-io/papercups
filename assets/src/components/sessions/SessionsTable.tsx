@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {BrowserSession, Customer} from '../../types';
 import {Badge, Button, Table, Text, Tooltip} from '../common';
+import {formatRelativeTime} from '../../utils';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -36,7 +37,7 @@ const SessionsTable = ({
       title: 'Started at',
       dataIndex: 'started_at',
       key: 'started_at',
-      render: (value: string, record: any) => {
+      render: (value: string, record: BrowserSession) => {
         const {metadata = {}} = record;
         const {pathname, current_url} = metadata;
         const formatted = value ? dayjs(value).format('MMMM DD, h:mm a') : '--';
@@ -61,17 +62,32 @@ const SessionsTable = ({
     },
     {
       title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: () => {
-        return <Badge status="processing" text="Online now!" />;
+      dataIndex: 'active',
+      key: 'active',
+      render: (isActive: boolean, record: BrowserSession) => {
+        const {ts} = record;
+        const date = ts ? dayjs.utc(ts) : null;
+        const since = date ? formatRelativeTime(date) : 'N/A';
+
+        return (
+          <Box>
+            {isActive ? (
+              <Badge status="processing" text="Online now!" />
+            ) : (
+              <Badge status="default" text="Inactive" />
+            )}
+            <Box sx={{fontSize: 12, lineHeight: 1.4}}>
+              <Text type="secondary">{since}</Text>
+            </Box>
+          </Box>
+        );
       },
     },
     {
       title: 'Device info',
       dataIndex: 'info',
       key: 'info',
-      render: (value: string, record: any) => {
+      render: (value: string, record: BrowserSession) => {
         const {metadata = {}} = record;
         const {browser, os} = metadata;
 
@@ -88,7 +104,7 @@ const SessionsTable = ({
       title: '',
       dataIndex: 'action',
       key: 'action',
-      render: (value: string, record: any) => {
+      render: (value: string, record: BrowserSession) => {
         const {id: sessionId} = record;
 
         return (

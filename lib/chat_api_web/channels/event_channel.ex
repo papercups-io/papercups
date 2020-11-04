@@ -83,7 +83,8 @@ defmodule ChatApiWeb.EventChannel do
         online_at: inspect(System.system_time(:second)),
         account_id: socket.assigns.account_id,
         session_id: socket.assigns.browser_session_id,
-        active: true
+        active: true,
+        ts: DateTime.utc_now()
       })
 
     ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
@@ -111,7 +112,7 @@ defmodule ChatApiWeb.EventChannel do
 
     {:ok, _} =
       Presence.update(self(), topic, key, fn current ->
-        Map.merge(current, %{active: true})
+        Map.merge(current, %{active: true, ts: DateTime.utc_now()})
       end)
 
     ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
@@ -125,7 +126,7 @@ defmodule ChatApiWeb.EventChannel do
 
     {:ok, _} =
       Presence.update(self(), topic, key, fn current ->
-        Map.merge(current, %{active: false})
+        Map.merge(current, %{active: false, ts: DateTime.utc_now()})
       end)
 
     ChatApiWeb.Endpoint.broadcast!(topic, "presence_state", Presence.list(topic))
