@@ -3,7 +3,8 @@ import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {capitalize} from 'lodash';
-import {Button, Modal, Paragraph, Text} from '../common';
+import {Button, Modal, Paragraph, Text, Input} from '../common';
+import * as API from '../../api';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -45,11 +46,8 @@ export const CustomerMetadataSection = ({
 
 export const CustomerDetailsContent = ({customer}: {customer: any}) => {
   const {
-    email,
-    name,
     browser,
     os,
-    phone,
     external_id: externalId,
     created_at: createdAt,
     updated_at: lastUpdatedAt,
@@ -58,32 +56,9 @@ export const CustomerDetailsContent = ({customer}: {customer: any}) => {
     metadata,
     time_zone,
   } = customer;
+
   return (
     <Box>
-      <Box mb={2}>
-        <Box>
-          <Text strong>Name</Text>
-        </Box>
-
-        <Paragraph>{name || 'Unknown'}</Paragraph>
-      </Box>
-
-      <Flex sx={{justifyContent: 'space-between'}}>
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>Email</Text>
-          </Box>
-
-          <Paragraph>{email || 'Unknown'}</Paragraph>
-        </Box>
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>Phone</Text>
-          </Box>
-
-          <Paragraph>{phone || 'Unknown'}</Paragraph>
-        </Box>
-      </Flex>
       <Flex>
         <Box mb={2} sx={{flex: 1}}>
           <Box>
@@ -157,20 +132,147 @@ type Props = {
   customer: any;
   isVisible?: boolean;
   onClose: () => void;
+  onUpdate: (updatedData: any) => void;
 };
 
-const CustomerDetailsModal = ({customer, isVisible, onClose}: Props) => {
-  return (
-    <Modal
-      title="Customer details"
-      visible={isVisible}
-      onCancel={onClose}
-      onOk={onClose}
-      footer={<Button onClick={onClose}>Close</Button>}
-    >
-      <CustomerDetailsContent customer={customer} />
-    </Modal>
-  );
+type State = {
+  email: string;
+  name: string;
+  phone: string;
+  isEditing: boolean;
 };
+
+class CustomerDetailsModal extends React.Component<Props, State> {
+  state: State = {
+    email: this.props.customer.email,
+    name: this.props.customer.name,
+    phone: this.props.customer.phone,
+    isEditing: false,
+  };
+
+  onEdit: any = () => {
+    this.setState({isEditing: true});
+  };
+
+  onCancelEdit: any = () => {
+    this.setState({
+      email: this.props.customer.email,
+      name: this.props.customer.name,
+      phone: this.props.customer.phone,
+      isEditing: false,
+    });
+  };
+
+  handleChangeName: any = (e: any) => {
+    this.setState({name: e.target.value});
+  };
+
+  handleChangeEmail = (e: any) => {
+    this.setState({email: e.target.value});
+  };
+
+  handleChangePhone = (e: any) => {
+    this.setState({phone: e.target.value});
+  };
+
+  onSave: any = () => {
+    const {name, email, phone} = this.state;
+    const id = this.props.customer.key;
+    this.props.onUpdate({name, email, phone, id});
+
+    return API.updateCustomer(id, {
+      name: name,
+      email: email,
+      phone: phone,
+    }).then(() => this.setState({isEditing: false}));
+  };
+
+  onModalClose: any = () => {
+    this.setState({
+      email: this.props.customer.email,
+      name: this.props.customer.name,
+      phone: this.props.customer.phone,
+      isEditing: false,
+    });
+    this.props.onClose();
+  };
+
+  render() {
+    const {name, email, phone, isEditing} = this.state;
+    return (
+      <Modal
+        title="Customer details"
+        visible={this.props.isVisible}
+        onCancel={this.onModalClose}
+        onOk={this.onModalClose}
+        footer={
+          !this.state.isEditing
+            ? [
+                <Button onClick={this.onModalClose}>Close</Button>,
+                <Button onClick={this.onEdit}>Edit</Button>,
+              ]
+            : [
+                <Button onClick={this.onCancelEdit}>Cancel</Button>,
+                <Button onClick={this.onSave}>Save</Button>,
+              ]
+        }
+      >
+        <Box mb={2}>
+          <Box>
+            <Text strong>Name</Text>
+          </Box>
+          {!isEditing ? (
+            <Paragraph>{name || 'Unknown'}</Paragraph>
+          ) : (
+            <Input
+              id="name"
+              type="text"
+              value={name}
+              onChange={this.handleChangeName}
+              placeholder="Full Name"
+            />
+          )}
+        </Box>
+
+        <Flex sx={{justifyContent: 'space-between'}}>
+          <Box mb={2} sx={{flex: 1}}>
+            <Box>
+              <Text strong>Email</Text>
+            </Box>
+            {!isEditing ? (
+              <Paragraph>{email || 'Unknown'}</Paragraph>
+            ) : (
+              <Input
+                id="email"
+                type="text"
+                value={email}
+                onChange={this.handleChangeEmail}
+                placeholder="E-Mail Address"
+              />
+            )}
+          </Box>
+          <Box mb={2} sx={{flex: 1}}>
+            <Box>
+              <Text strong>Phone</Text>
+            </Box>
+            {!isEditing ? (
+              <Paragraph>{phone || 'Unknown'}</Paragraph>
+            ) : (
+              <Input
+                id="phone"
+                type="text"
+                value={phone}
+                onChange={this.handleChangePhone}
+                placeholder="Phone No."
+              />
+            )}
+          </Box>
+        </Flex>
+
+        <CustomerDetailsContent customer={this.props.customer} />
+      </Modal>
+    );
+  }
+}
 
 export default CustomerDetailsModal;
