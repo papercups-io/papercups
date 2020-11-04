@@ -67,7 +67,6 @@ const SessionsTable = ({
       render: (isActive: boolean, record: BrowserSession) => {
         const {ts} = record;
         const date = ts ? dayjs.utc(ts) : null;
-        const since = date ? formatRelativeTime(date) : 'N/A';
 
         return (
           <Box>
@@ -76,9 +75,11 @@ const SessionsTable = ({
             ) : (
               <Badge status="default" text="Inactive" />
             )}
-            <Box sx={{fontSize: 12, lineHeight: 1.4}}>
-              <Text type="secondary">{since}</Text>
-            </Box>
+            {date ? (
+              <Box sx={{fontSize: 12, lineHeight: 1.4}}>
+                <Text type="secondary">{formatRelativeTime(date)}</Text>
+              </Box>
+            ) : null}
           </Box>
         );
       },
