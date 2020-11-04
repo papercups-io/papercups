@@ -73,6 +73,7 @@ class SessionsOverview extends React.Component<Props, State> {
         return info;
       });
       const sessions = records.map((info) => {
+        // Default to active=true for backwards compatibility
         const {session_id: sessionId, active = true, ts} = info;
 
         return {sessionId, active, ts};
