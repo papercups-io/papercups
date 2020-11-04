@@ -70,6 +70,9 @@ export type BrowserSession = {
   started_at: string;
   finished_at?: string;
   metadata?: any;
+  // Client-side properties
+  active?: boolean;
+  ts?: string | Date;
 };
 
 export enum Alignment {
