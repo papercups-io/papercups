@@ -1,0 +1,72 @@
+name: Papercups
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+
+  mix-test:
+    name: Mix Test
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
+      ELIXIR_ENV: test
+      DATABASE_HOST: localhost
+      DATABASE_USER: postgres
+      DATABASE_PORT: 5432
+      DATABASE_PASSWORD: postgres
+    services:
+      postgres:
+        image: postgres:10.4
+        env:
+          POSTGRES_PASSWORD: "postgres"
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Initial setup
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: '1.10.4'
+          otp-version: '22.2.6'
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run tests
+        run: mix test
+
+  mix-format:
+    name: Mix Format
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Initial setup
+      uses: actions/setup-elixir@v1
+      with:
+        elixir-version: '1.10.4'
+        otp-version: '22.2.6'
+
+    - name: Install dependencies
+      run: mix deps.get
+
+    - name: Run format check
+      run: mix format --check-formatted
+
