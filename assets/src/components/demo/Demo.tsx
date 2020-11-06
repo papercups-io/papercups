@@ -99,7 +99,7 @@ class Demo extends React.Component<Props, State> {
     // TODO: include name if available
     return {
       email: email,
-      external_id: String(id),
+      external_id: [id, email].join('|'),
       metadata: {
         // Just testing that ad hoc metadata works :)
         ts: +new Date(),
