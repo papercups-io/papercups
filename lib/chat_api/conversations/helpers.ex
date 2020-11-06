@@ -35,22 +35,22 @@ defmodule ChatApi.Conversations.Helpers do
   defp get_conversation_state_message(state) do
     case state do
       %{"status" => "open"} ->
-        "This conversation has been reopened."
+        ":outbox_tray: This conversation has been reopened."
 
       %{"status" => "closed"} ->
-        "This conversation has been closed."
+        ":white_check_mark: This conversation has been closed."
 
       %{"status" => "archived"} ->
-        "This conversation has been archived."
+        ":file_cabinet: This conversation has been archived."
 
       %{"status" => "deleted"} ->
-        "This conversation has been deleted."
+        ":wastebasket: This conversation has been deleted."
 
       %{"priority" => "priority"} ->
-        "This conversation has been prioritized."
+        ":star: This conversation has been prioritized."
 
       %{"priority" => "not_priority"} ->
-        "This conversation has been de-prioritized."
+        ":ok_hand: This conversation has been de-prioritized."
 
       _ ->
         nil

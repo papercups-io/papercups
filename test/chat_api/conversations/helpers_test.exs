@@ -15,10 +15,10 @@ defmodule ChatApi.Conversations.HelpersTest do
     test "send_conversation_state_update/2 sends a state update Slack when given a valid status or priority",
          %{conversation: conversation} do
       assert Helpers.send_conversation_state_update(conversation, %{"status" => "open"}) ==
-               {:ok, "This conversation has been reopened."}
+               {:ok, ":outbox_tray: This conversation has been reopened."}
 
       assert Helpers.send_conversation_state_update(conversation, %{"priority" => "priority"}) ==
-               {:ok, "This conversation has been prioritized."}
+               {:ok, ":star: This conversation has been prioritized."}
     end
 
     test "send_conversation_state_update/2 does not send an update to Slack when given an invalid status or priority",
@@ -41,9 +41,9 @@ defmodule ChatApi.Conversations.HelpersTest do
       archived_conversations = Conversations.query_conversations_closed_for(days: 14)
 
       assert Helpers.send_multiple_archived_updates(ChatApi.Repo.all(archived_conversations)) == [
-               ok: "This conversation has been archived.",
-               ok: "This conversation has been archived.",
-               ok: "This conversation has been archived."
+               ok: ":file_cabinet: This conversation has been archived.",
+               ok: ":file_cabinet: This conversation has been archived.",
+               ok: ":file_cabinet: This conversation has been archived."
              ]
     end
   end
