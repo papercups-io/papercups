@@ -103,7 +103,7 @@ class Demo extends React.Component<Props, State> {
     return {
       email: email,
       // TODO: use special external_id here for bot demo?
-      external_id: String(id),
+      external_id: [id, email].join('|'),
       metadata: {
         ts: +new Date(),
       },

@@ -246,6 +246,86 @@ defmodule ChatApi.ReportingTest do
     end
   end
 
+  describe "get_customer_breakdown/1" do
+    setup do
+      account = account_fixture()
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-12 12:00:00],
+        browser: "Chrome",
+        timezone: "UTC",
+        os: "Windows"
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-11 12:00:00],
+        browser: "Chrome",
+        timezone: "UTC-1",
+        os: "Linux"
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-12 12:00:00],
+        browser: "Firefox",
+        timezone: "UTC-1",
+        os: "MacOS"
+      })
+
+      customer_fixture(account, %{
+        inserted_at: ~N[2020-10-12 12:00:00],
+        browser: "Safari",
+        timezone: "UTC-10",
+        os: "MacOS"
+      })
+
+      {:ok, account: account}
+    end
+
+    test "it groups by field correctly", %{
+      account: account
+    } do
+      assert [
+               %{browser: "Chrome", count: 2},
+               %{browser: "Firefox", count: 1},
+               %{browser: "Safari", count: 1}
+             ] =
+               Reporting.get_customer_breakdown(account.id, :browser, %{
+                 from_date: ~N[2020-10-11 11:00:00],
+                 to_date: ~N[2020-10-12 13:00:00]
+               })
+               |> Enum.sort_by(& &1.browser, :asc)
+    end
+
+    test "it slices time correctly", %{
+      account: account
+    } do
+      assert [
+               %{browser: "Chrome", count: 1},
+               %{browser: "Firefox", count: 1},
+               %{browser: "Safari", count: 1}
+             ] =
+               Reporting.get_customer_breakdown(account.id, :browser, %{
+                 from_date: ~N[2020-10-11 12:00:00],
+                 to_date: ~N[2020-10-12 13:00:00]
+               })
+               |> Enum.sort_by(& &1.browser, :asc)
+    end
+
+    test "it can query by other fields", %{
+      account: account
+    } do
+      assert [
+               %{os: "MacOS", count: 2},
+               %{os: "Linux", count: 1},
+               %{os: "Windows", count: 1}
+             ] =
+               Reporting.get_customer_breakdown(account.id, :os, %{
+                 from_date: ~N[2020-10-10 12:00:00],
+                 to_date: ~N[2020-10-12 13:00:00]
+               })
+    end
+  end
+
   describe "count_messages_by_weekday/1" do
     setup do
       account = account_fixture()

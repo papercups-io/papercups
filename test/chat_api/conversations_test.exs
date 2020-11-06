@@ -70,7 +70,7 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [conversation.id]
     end
 
-    test "find_by_customer/2 returns all not archived conversations for a customer", %{
+    test "find_by_customer/2 does not include archived conversations for a customer", %{
       account: account,
       conversation: conversation,
       customer: customer
@@ -81,6 +81,18 @@ defmodule ChatApi.ConversationsTest do
       result_ids = Enum.map(Conversations.find_by_customer(customer.id, account.id), & &1.id)
 
       assert result_ids == [conversation.id]
+    end
+
+    test "find_by_customer/2 does not include closed conversations for a customer", %{
+      account: account,
+      customer: customer
+    } do
+      closed = conversation_fixture(account, customer, %{status: "closed"})
+      results = Conversations.find_by_customer(customer.id, account.id)
+      ids = Enum.map(results, & &1.id)
+
+      refute Enum.member?(ids, closed.id)
+      assert Enum.all?(results, fn conv -> conv.status == "open" end)
     end
 
     test "get_conversation!/1 returns the conversation with given id", %{
@@ -115,7 +127,7 @@ defmodule ChatApi.ConversationsTest do
       assert {:error, %Ecto.Changeset{}} =
                Conversations.update_conversation(conversation, @invalid_attrs)
 
-      assert conversation = Conversations.get_conversation!(conversation.id)
+      assert _conversation = Conversations.get_conversation!(conversation.id)
     end
 
     test "delete_conversation/1 deletes the conversation", %{conversation: conversation} do

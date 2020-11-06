@@ -323,9 +323,10 @@ const Dashboard = (props: RouteComponentProps) => {
           greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
           primaryColor="#1890ff"
           accountId="eb504736-0f20-4978-98ff-1a82ae60b266"
+          baseUrl={BASE_URL}
           hideToggleButton
           customer={{
-            external_id: currentUser.id,
+            external_id: [currentUser.id, currentUser.email].join('|'),
             email: currentUser.email,
           }}
         />

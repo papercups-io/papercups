@@ -16,6 +16,7 @@ defmodule ChatApi.Reporting do
   @type aggregate_by_date() :: %{date: binary(), count: integer()}
   @type aggregate_by_user() :: %{user: %{id: integer(), email: binary()}, count: integer()}
   @type aggregate_by_weekday() :: %{weekday: binary(), average: float(), total: integer()}
+  @type aggregate_by_field() :: %{field: binary(), count: integer()}
 
   @spec count_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_messages_by_date(account_id, filters \\ %{}) do
@@ -118,6 +119,18 @@ defmodule ChatApi.Reporting do
         total: total
       }
     end)
+  end
+
+  @spec get_customer_breakdown(binary(), atom(), map()) :: [aggregate_by_field()]
+  def get_customer_breakdown(account_id, field, filters \\ %{}) do
+    Customer
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> group_by([r], field(r, ^field))
+    |> select([r], {field(r, ^field), count(r.id)})
+    |> order_by([r], desc: count(r.id))
+    |> Repo.all()
+    |> Enum.map(fn {value, count} -> %{field => value, :count => count} end)
   end
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries

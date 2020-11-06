@@ -67,6 +67,7 @@ defmodule ChatApiWeb.CustomerController do
 
   @spec update_metadata(Plug.Conn.t(), map) :: Plug.Conn.t()
   def update_metadata(conn, %{"id" => id, "metadata" => metadata}) do
+    # TODO: include account_id
     customer = Customers.get_customer!(id)
 
     updates =
@@ -89,6 +90,12 @@ defmodule ChatApiWeb.CustomerController do
     with {:ok, %Customer{}} <- Customers.delete_customer(customer) do
       send_resp(conn, :no_content, "")
     end
+  end
+
+  @spec exists(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def exists(conn, %{"id" => id}) do
+    # TODO: include account_id
+    json(conn, %{data: Customers.exists?(id)})
   end
 
   @spec add_tag(Plug.Conn.t(), map) :: Plug.Conn.t()

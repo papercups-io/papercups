@@ -179,6 +179,17 @@ defmodule ChatApi.Customers do
     Customer.changeset(customer, attrs)
   end
 
+  @spec exists?(binary()) :: boolean()
+  def exists?(id) do
+    count =
+      Customer
+      |> where(id: ^id)
+      |> select([p], count(p.id))
+      |> Repo.one()
+
+    count > 0
+  end
+
   @spec list_tags(nil | binary() | Customer.t()) :: nil | [Tag.t()]
   def list_tags(nil), do: []
 

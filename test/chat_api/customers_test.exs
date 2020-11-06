@@ -50,7 +50,7 @@ defmodule ChatApi.CustomersTest do
               %Customer{
                 first_seen: ~D[2020-01-01],
                 last_seen: ~D[2020-01-01]
-              } = customer} = Customers.create_customer(attrs)
+              } = _customer} = Customers.create_customer(attrs)
     end
 
     test "create_customer/1 with invalid data returns error changeset" do
@@ -117,14 +117,14 @@ defmodule ChatApi.CustomersTest do
       external_id = "cus_123"
       _customer = customer_fixture(account, %{external_id: external_id})
 
-      assert customer = Customers.find_by_external_id(external_id, account.id)
+      assert _customer = Customers.find_by_external_id(external_id, account.id)
     end
 
     test "find_by_external_id/2 works with integer external_ids", %{account: account} do
       external_id = "123"
       _customer = customer_fixture(account, %{external_id: external_id})
 
-      assert customer = Customers.find_by_external_id(123, account.id)
+      assert _customer = Customers.find_by_external_id(123, account.id)
     end
   end
 end

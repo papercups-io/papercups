@@ -201,7 +201,7 @@ const ExamplePage = () => {
     // TODO: include name if available
     return {
       email: email,
-      external_id: String(id),
+      external_id: [id, email].join('|'),
     };
   };
 
