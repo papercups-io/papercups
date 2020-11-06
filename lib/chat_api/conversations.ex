@@ -6,7 +6,7 @@ defmodule ChatApi.Conversations do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
-  alias ChatApi.Conversations.{Conversation, Helpers}
+  alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
 
@@ -152,8 +152,6 @@ defmodule ChatApi.Conversations do
 
   """
   def update_conversation(%Conversation{} = conversation, attrs) do
-    Helpers.send_conversation_state_update(conversation, attrs)
-
     conversation
     |> Conversation.changeset(attrs)
     |> Repo.update()
@@ -255,8 +253,6 @@ defmodule ChatApi.Conversations do
 
   """
   def delete_conversation(%Conversation{} = conversation) do
-    Helpers.send_conversation_state_update(conversation, %{"status" => "deleted"})
-
     Repo.delete(conversation)
   end
 

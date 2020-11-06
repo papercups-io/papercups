@@ -3,7 +3,7 @@ defmodule ChatApiWeb.ConversationController do
   use PhoenixSwagger
 
   alias ChatApi.Conversations
-  alias ChatApi.Conversations.Conversation
+  alias ChatApi.Conversations.{Conversation, Helpers}
 
   action_fallback(ChatApiWeb.FallbackController)
 
@@ -139,6 +139,7 @@ defmodule ChatApiWeb.ConversationController do
 
     with {:ok, %Conversation{} = conversation} <-
            Conversations.update_conversation(conversation, conversation_params) do
+      Helpers.send_conversation_state_update(conversation, conversation_params)
       render(conn, "update.json", conversation: conversation)
     end
   end
@@ -148,6 +149,7 @@ defmodule ChatApiWeb.ConversationController do
     conversation = Conversations.get_conversation!(id)
 
     with {:ok, %Conversation{}} <- Conversations.delete_conversation(conversation) do
+      Helpers.send_conversation_state_update(conversation, %{"status" => "deleted"})
       send_resp(conn, :no_content, "")
     end
   end
