@@ -5,7 +5,8 @@ defmodule ChatApi.Conversations.Helpers do
 
   alias ChatApi.Slack
 
-  @spec send_conversation_state_update(Conversation.t, map()) :: {:ok, String.t} | {:error, String.t}
+  @spec send_conversation_state_update(Conversation.t(), map()) ::
+          {:ok, String.t()} | {:error, String.t()}
   def send_conversation_state_update(conversation, state) do
     conversation_state_message = get_conversation_state_message(state)
 
@@ -22,7 +23,7 @@ defmodule ChatApi.Conversations.Helpers do
     end
   end
 
-  @spec send_multiple_archived_updates([Conversation.t]) :: list()
+  @spec send_multiple_archived_updates([Conversation.t()]) :: list()
   def send_multiple_archived_updates(conversations) do
     state = %{"status" => "archived"}
 
