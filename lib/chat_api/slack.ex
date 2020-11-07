@@ -191,7 +191,7 @@ defmodule ChatApi.Slack do
   end
 
   @spec get_slack_authorization(binary()) ::
-          %{access_token: binary(), channel: binary()}
+          %{access_token: binary(), channel: binary(), channel_id: binary()}
           | SlackAuthorizations.SlackAuthorization.t()
   def get_slack_authorization(account_id) do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
