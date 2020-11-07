@@ -25,13 +25,14 @@ defmodule ChatApi.Conversations.Helpers do
 
   @spec send_multiple_archived_updates([Conversation.t()]) :: list()
   def send_multiple_archived_updates(conversations) do
-    state = %{"status" => "archived"}
+    state = %{"state" => "archived"}
 
     Enum.map(conversations, fn conversation ->
       send_conversation_state_update(conversation, state)
     end)
   end
 
+  @spec get_conversation_state_message(map()) :: String.t()
   defp get_conversation_state_message(state) do
     case state do
       %{"status" => "open"} ->
@@ -40,10 +41,10 @@ defmodule ChatApi.Conversations.Helpers do
       %{"status" => "closed"} ->
         ":white_check_mark: This conversation has been closed."
 
-      %{"status" => "archived"} ->
+      %{"state" => "archived"} ->
         ":file_cabinet: This conversation has been archived."
 
-      %{"status" => "deleted"} ->
+      %{"state" => "deleted"} ->
         ":wastebasket: This conversation has been deleted."
 
       %{"priority" => "priority"} ->

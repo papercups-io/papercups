@@ -197,7 +197,7 @@ defmodule ChatApi.Slack do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
       # Supports a fallback access token as an env variable to make it easier to
       # test locally (assumes the existence of a "bots" channel in your workspace)
-      nil -> %{access_token: get_default_access_token(), channel: "#bots"}
+      nil -> %{access_token: get_default_access_token(), channel: "#bots", channel_id: "1"}
       auth -> auth
     end
   end

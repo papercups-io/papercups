@@ -19,6 +19,9 @@ defmodule ChatApi.Conversations.HelpersTest do
 
       assert Helpers.send_conversation_state_update(conversation, %{"priority" => "priority"}) ==
                {:ok, ":star: This conversation has been prioritized."}
+
+      assert Helpers.send_conversation_state_update(conversation, %{"state" => "deleted"}) ==
+               {:ok, ":wastebasket: This conversation has been deleted."}
     end
 
     test "send_conversation_state_update/2 does not send an update to Slack when given an invalid status or priority",
@@ -27,6 +30,9 @@ defmodule ChatApi.Conversations.HelpersTest do
                {:error, "state_invalid"}
 
       assert Helpers.send_conversation_state_update(conversation, %{"priority" => "BOOM"}) ==
+               {:error, "state_invalid"}
+
+      assert Helpers.send_conversation_state_update(conversation, %{"state" => "BOOM"}) ==
                {:error, "state_invalid"}
     end
 
