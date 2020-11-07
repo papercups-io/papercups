@@ -139,7 +139,10 @@ defmodule ChatApiWeb.ConversationController do
 
     with {:ok, %Conversation{} = conversation} <-
            Conversations.update_conversation(conversation, conversation_params) do
-      Helpers.send_conversation_state_update(conversation, conversation_params)
+      Task.start(fn ->
+        Helpers.send_conversation_state_update(conversation, conversation_params)
+      end)
+
       render(conn, "update.json", conversation: conversation)
     end
   end
