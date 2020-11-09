@@ -6,12 +6,6 @@ defmodule ChatApi.WidgetSettingsTest do
   describe "widget_settings" do
     alias ChatApi.WidgetSettings.WidgetSetting
 
-    @valid_attrs %{
-      color: "some color",
-      subtitle: "some subtitle",
-      title: "some title"
-    }
-
     @update_attrs %{
       color: "some updated color",
       subtitle: "some updated subtitle",

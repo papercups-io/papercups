@@ -3,7 +3,7 @@ defmodule ChatApiWeb.ConversationController do
   use PhoenixSwagger
 
   alias ChatApi.Conversations
-  alias ChatApi.Conversations.Conversation
+  alias ChatApi.Conversations.{Conversation, Helpers}
 
   action_fallback(ChatApiWeb.FallbackController)
 
@@ -139,6 +139,10 @@ defmodule ChatApiWeb.ConversationController do
 
     with {:ok, %Conversation{} = conversation} <-
            Conversations.update_conversation(conversation, conversation_params) do
+      Task.start(fn ->
+        Helpers.send_conversation_state_update(conversation, conversation_params)
+      end)
+
       render(conn, "update.json", conversation: conversation)
     end
   end
@@ -147,7 +151,11 @@ defmodule ChatApiWeb.ConversationController do
   def delete(conn, %{"id" => id}) do
     conversation = Conversations.get_conversation!(id)
 
-    with {:ok, %Conversation{}} <- Conversations.delete_conversation(conversation) do
+    # Sending a message to Slack first before deleting since there's no conversation to
+    # send to after it's deleted.
+    with {:ok, _} <-
+           Helpers.send_conversation_state_update(conversation, %{"state" => "deleted"}),
+         {:ok, %Conversation{}} <- Conversations.delete_conversation(conversation) do
       send_resp(conn, :no_content, "")
     end
   end

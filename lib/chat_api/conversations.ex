@@ -6,7 +6,7 @@ defmodule ChatApi.Conversations do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
-  alias ChatApi.Conversations.Conversation
+  alias ChatApi.Conversations.{Conversation, Helpers}
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
 
@@ -215,6 +215,8 @@ defmodule ChatApi.Conversations do
   @spec archive_conversation(Conversation.t() | binary()) ::
           {:error, Ecto.Changeset.t()} | {:ok, Conversation.t()}
   def archive_conversation(%Conversation{} = conversation) do
+    Helpers.send_conversation_state_update(conversation, %{"status" => "archived"})
+
     update_conversation(conversation, %{archived_at: DateTime.utc_now()})
   end
 
