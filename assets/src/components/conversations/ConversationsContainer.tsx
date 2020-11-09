@@ -1,6 +1,15 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Layout, notification, Sider, Text, Title} from '../common';
+import {
+  Button,
+  colors,
+  Layout,
+  notification,
+  Sider,
+  Text,
+  Title,
+  Tooltip,
+} from '../common';
 import {sleep} from '../../utils';
 import {Conversation, Message, User} from '../../types';
 import ConversationHeader from './ConversationHeader';
@@ -9,6 +18,7 @@ import ConversationClosing from './ConversationClosing';
 import ConversationMessages from './ConversationMessages';
 import ConversationFooter from './ConversationFooter';
 import ConversationDetailsSidebar from './ConversationDetailsSidebar';
+import {CheckOutlined} from '../icons';
 
 type Props = {
   title?: string;
@@ -35,12 +45,18 @@ type State = {
   loading: boolean;
   selected: string | null;
   closing: Array<string>;
+  selectedConversations: Array<string>;
 };
 
 class ConversationsContainer extends React.Component<Props, State> {
   scrollToEl: any = null;
 
-  state: State = {loading: true, selected: null, closing: []};
+  state: State = {
+    loading: true,
+    selected: null,
+    closing: [],
+    selectedConversations: [],
+  };
 
   componentDidMount() {
     this.props
@@ -208,6 +224,22 @@ class ConversationsContainer extends React.Component<Props, State> {
     this.props.onSelectConversation(id);
   };
 
+  handleCheckedConversation = (id: string) => {
+    let list = this.state.selectedConversations;
+    if (list.includes(id)) {
+      this.setState({
+        selectedConversations: list.filter((item) => item !== id),
+      });
+    } else {
+      list.push(id);
+      this.setState({selectedConversations: list});
+    }
+  };
+
+  onCloseConversations = () => {
+    alert('banana');
+  };
+
   handleCloseConversation = async (conversationId: string) => {
     this.setState({closing: [...this.state.closing, conversationId]});
 
@@ -289,7 +321,11 @@ class ConversationsContainer extends React.Component<Props, State> {
   };
 
   render() {
-    const {selected: selectedConversationId, closing = []} = this.state;
+    const {
+      selected: selectedConversationId,
+      closing = [],
+      selectedConversations,
+    } = this.state;
     const {
       title,
       account,
@@ -311,6 +347,7 @@ class ConversationsContainer extends React.Component<Props, State> {
       ? selectedConversation.customer
       : null;
 
+    const hasCheckedConversations = selectedConversations.length > 0;
     const loading = this.props.loading || this.state.loading;
     const isClosingSelected =
       !!selectedConversationId &&
@@ -333,9 +370,24 @@ class ConversationsContainer extends React.Component<Props, State> {
           }}
         >
           <Box p={3} sx={{borderBottom: '1px solid #f0f0f0'}}>
-            <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
-              {title || 'Conversations'}
-            </Title>
+            <Flex sx={{alignItems: 'center'}}>
+              <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
+                {title || 'Conversations'}
+              </Title>
+              {hasCheckedConversations && (
+                <Box ml={2}>
+                  <Tooltip
+                    title="Close selected conversations"
+                    placement="bottomRight"
+                  >
+                    <Button
+                      icon={<CheckOutlined />}
+                      onClick={this.onCloseConversations}
+                    />
+                  </Tooltip>
+                </Box>
+              )}
+            </Flex>
           </Box>
 
           <Box>
@@ -370,6 +422,8 @@ class ConversationsContainer extends React.Component<Props, State> {
                     isCustomerOnline={isCustomerOnline}
                     color={color}
                     onSelectConversation={this.handleSelectConversation}
+                    selectedConversations={this.state.selectedConversations}
+                    onCheckedConversation={this.handleCheckedConversation}
                   />
                 );
               })

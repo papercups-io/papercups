@@ -2,7 +2,7 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {colors, Badge, Text} from '../common';
+import {Badge, Checkbox, colors, Text} from '../common';
 import {SmileTwoTone, StarFilled} from '../icons';
 import {formatRelativeTime} from '../../utils';
 import {Conversation, Message} from '../../types';
@@ -33,6 +33,8 @@ const ConversationItem = ({
   isHighlighted,
   isCustomerOnline,
   onSelectConversation,
+  selectedConversations,
+  onCheckedConversation,
 }: {
   conversation: Conversation;
   messages: Array<Message>;
@@ -40,12 +42,15 @@ const ConversationItem = ({
   isHighlighted?: boolean;
   isCustomerOnline?: boolean;
   onSelectConversation: (id: string) => void;
+  selectedConversations: Array<string>;
+  onCheckedConversation: (id: string) => void;
 }) => {
   const formatted = formatConversation(conversation, messages);
   const {id, priority, status, customer, date, preview, read} = formatted;
   const {name, email} = customer;
   const isPriority = priority === 'priority';
   const isClosed = status === 'closed';
+  const isChecked = selectedConversations.includes(id);
 
   return (
     <Box
@@ -103,6 +108,17 @@ const ConversationItem = ({
         ) : (
           <Text strong>{preview}</Text>
         )}
+        <Box mr={2}>
+          <Checkbox
+            checked={isChecked}
+            onClick={(ev) => {
+              ev.stopPropagation();
+            }}
+            onChange={() => {
+              onCheckedConversation(id);
+            }}
+          />
+        </Box>
       </Box>
     </Box>
   );
