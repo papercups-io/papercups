@@ -52,6 +52,10 @@ We :heart:  contributions big or small. See [CONTRIBUTING.md](https://github.com
 
 Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)! :wave:
 
+## Contributors
+
+[//]: contributor-faces
+
 ## License
 
 MIT © Papercups
