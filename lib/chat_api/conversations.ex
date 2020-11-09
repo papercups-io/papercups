@@ -215,8 +215,6 @@ defmodule ChatApi.Conversations do
   @spec archive_conversation(Conversation.t() | binary()) ::
           {:error, Ecto.Changeset.t()} | {:ok, Conversation.t()}
   def archive_conversation(%Conversation{} = conversation) do
-    Helpers.send_conversation_state_update(conversation, %{"status" => "archived"})
-
     update_conversation(conversation, %{archived_at: DateTime.utc_now()})
   end
 

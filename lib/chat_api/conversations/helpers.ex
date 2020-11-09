@@ -8,18 +8,20 @@ defmodule ChatApi.Conversations.Helpers do
   @spec send_conversation_state_update(Conversation.t(), map()) ::
           {:ok, String.t()} | {:error, String.t()}
   def send_conversation_state_update(conversation, state) do
-    conversation_state_message = get_conversation_state_message(state)
+    case get_conversation_state_message(state) do
+      nil ->
+        # TODO: should we use an atom here (e.g. :invalid_state),
+        # or a more descriptive string (e.g. "Invalid state: #{inspect(state)}")?
+        {:error, "state_invalid"}
 
-    if conversation_state_message do
-      Slack.send_conversation_message_alert(
-        conversation.id,
-        conversation_state_message,
-        type: :conversation_update
-      )
+      conversation_state_message ->
+        Slack.send_conversation_message_alert(
+          conversation.id,
+          conversation_state_message,
+          type: :conversation_update
+        )
 
-      {:ok, conversation_state_message}
-    else
-      {:error, "state_invalid"}
+        {:ok, conversation_state_message}
     end
   end
 
@@ -32,7 +34,7 @@ defmodule ChatApi.Conversations.Helpers do
     end)
   end
 
-  @spec get_conversation_state_message(map()) :: String.t()
+  @spec get_conversation_state_message(map()) :: String.t() | nil
   defp get_conversation_state_message(state) do
     case state do
       %{"status" => "open"} ->
