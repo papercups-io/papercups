@@ -189,6 +189,7 @@ class Demo extends React.Component<Props, State> {
           greeting="Hello :) have any questions or feedback? Alex or Kam will reply as soon as they can!"
           customer={customer}
           baseUrl={BASE_URL}
+          iconVariant="filled"
           defaultIsOpen
           showAgentAvailability
           onChatLoaded={() => logger.debug('Chat loaded!')}
