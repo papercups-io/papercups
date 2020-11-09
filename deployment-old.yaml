@@ -1,0 +1,212 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "2"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"papercups"},"name":"papercups","namespace":"default"},"spec":{"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"papercups"}},"template":{"metadata":{"labels":{"app":"papercups"}},"spec":{"containers":[{"command":["/usr/src/app/docker-entrypoint.sh"],"env":[{"name":"DOMAIN","value":"domain.com"},{"name":"DATABASE_URL","value":"ecto://postgres:postgres@db/postgres"},{"name":"BACKEND_URL","value":"https://chat.domain.com"},{"name":"PAPERCUPS_SLACK_CLIENT_ID","value":"xxxxxxxx"},{"name":"PAPERCUPS_SLACK_CLIENT_SECRET","value":"xxxxxxxx"}],"image":"papercups/papercups:latest","imagePullPolicy":"Always","name":"papercups","ports":[{"containerPort":3000},{"containerPort":4000}],"resources":{"limits":{"cpu":"200m","memory":"256Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}}],"terminationGracePeriodSeconds":120}}}}
+  creationTimestamp: "2020-10-22T20:05:24Z"
+  generation: 2
+  labels:
+    app: papercups
+  managedFields:
+  - apiVersion: apps/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+        f:labels:
+          .: {}
+          f:app: {}
+      f:spec:
+        f:progressDeadlineSeconds: {}
+        f:replicas: {}
+        f:revisionHistoryLimit: {}
+        f:selector:
+          f:matchLabels:
+            .: {}
+            f:app: {}
+        f:strategy:
+          f:rollingUpdate:
+            .: {}
+            f:maxSurge: {}
+            f:maxUnavailable: {}
+          f:type: {}
+        f:template:
+          f:metadata:
+            f:labels:
+              .: {}
+              f:app: {}
+          f:spec:
+            f:containers:
+              k:{"name":"papercups"}:
+                .: {}
+                f:command: {}
+                f:env:
+                  .: {}
+                  k:{"name":"BACKEND_URL"}:
+                    .: {}
+                    f:name: {}
+                    f:value: {}
+                  k:{"name":"DATABASE_URL"}:
+                    .: {}
+                    f:name: {}
+                    f:value: {}
+                  k:{"name":"DOMAIN"}:
+                    .: {}
+                    f:name: {}
+                    f:value: {}
+                  k:{"name":"PAPERCUPS_SLACK_CLIENT_ID"}:
+                    .: {}
+                    f:name: {}
+                    f:value: {}
+                  k:{"name":"PAPERCUPS_SLACK_CLIENT_SECRET"}:
+                    .: {}
+                    f:name: {}
+                    f:value: {}
+                f:image: {}
+                f:imagePullPolicy: {}
+                f:name: {}
+                f:ports:
+                  .: {}
+                  k:{"containerPort":3000,"protocol":"TCP"}:
+                    .: {}
+                    f:containerPort: {}
+                    f:protocol: {}
+                  k:{"containerPort":4000,"protocol":"TCP"}:
+                    .: {}
+                    f:containerPort: {}
+                    f:protocol: {}
+                f:resources:
+                  .: {}
+                  f:limits:
+                    .: {}
+                    f:cpu: {}
+                    f:memory: {}
+                  f:requests:
+                    .: {}
+                    f:cpu: {}
+                    f:memory: {}
+                f:terminationMessagePath: {}
+                f:terminationMessagePolicy: {}
+            f:dnsPolicy: {}
+            f:restartPolicy: {}
+            f:schedulerName: {}
+            f:securityContext: {}
+            f:terminationGracePeriodSeconds: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2020-10-22T21:59:08Z"
+  - apiVersion: apps/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:deployment.kubernetes.io/revision: {}
+      f:status:
+        f:availableReplicas: {}
+        f:conditions:
+          .: {}
+          k:{"type":"Available"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:lastUpdateTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+          k:{"type":"Progressing"}:
+            .: {}
+            f:lastTransitionTime: {}
+            f:lastUpdateTime: {}
+            f:message: {}
+            f:reason: {}
+            f:status: {}
+            f:type: {}
+        f:observedGeneration: {}
+        f:readyReplicas: {}
+        f:replicas: {}
+        f:updatedReplicas: {}
+    manager: kube-controller-manager
+    operation: Update
+    time: "2020-11-06T18:16:22Z"
+  name: papercups
+  namespace: default
+  resourceVersion: "160333"
+  selfLink: /apis/apps/v1/namespaces/default/deployments/papercups
+  uid: ec819ae8-5dda-4609-b53c-45d9218f58ee
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: papercups
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: papercups
+    spec:
+      containers:
+      - command:
+        - /usr/src/app/docker-entrypoint.sh
+        env:
+        - name: DOMAIN
+          value: domain.com
+        - name: DATABASE_URL
+          value: ecto://postgres:postgres@db/postgres
+        - name: BACKEND_URL
+          value: https://chat.domain.com
+        - name: PAPERCUPS_SLACK_CLIENT_ID
+          value: xxxxxxxx
+        - name: PAPERCUPS_SLACK_CLIENT_SECRET
+          value: xxxxxxxx
+        image: papercups/papercups:latest
+        imagePullPolicy: Always
+        name: papercups
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        - containerPort: 4000
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 120
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2020-10-22T20:05:24Z"
+    lastUpdateTime: "2020-10-22T21:59:10Z"
+    message: ReplicaSet "papercups-b45769b7b" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2020-11-06T18:16:22Z"
+    lastUpdateTime: "2020-11-06T18:16:22Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 2
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

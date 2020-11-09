@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: friday-papercups
+  labels:
+    app: papercups
+spec:
+  revisionHistoryLimit: 10
+  replicas: 1
+  selector:
+    matchLabels:
+      app: papercups
+  template:
+    metadata:
+      labels:
+        app: papercups
+    spec:
+      containers:
+      - name: papercups
+        image: papercups/papercups:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/src/app/docker-entrypoint.sh"]
+        env:
+        - name: DOMAIN
+          value: "domain.com"
+        - name: DATABASE_URL
+          value: "ecto://postgres:postgres@db/postgres"
+        - name: BACKEND_URL
+          value: "localhost"
+        # - name: PAPERCUPS_SLACK_CLIENT_ID
+        #   value: "xxxxxxxx"
+        # - name: PAPERCUPS_SLACK_CLIENT_SECRET
+        #   value: "xxxxxxxx"
+        ports:
+        - containerPort: 3000
+        - containerPort: 4000
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        # securityContext:
+        #   runAsUser: 1000
+        #   allowPrivilegeEscalation: false
+      terminationGracePeriodSeconds: 120
