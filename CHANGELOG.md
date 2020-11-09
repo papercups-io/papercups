@@ -1,3 +1,19 @@
+### Monday, 9 November
+
+- Added **conversation state updates** to our **Slack integration** [0]
+  - Huge thanks to **@jalford14** for helping out with this! 🎉 
+- Added a **status indicator to Storytime** so you can distinguish between active and inactive users on your website [1]
+- We now start a new conversation with customers if the last conversation was closed
+- Fixed Slack message threads when you change your Slack integration to a new channel 🐞 
+- [Beta] We have a **[Wordpress plugin](https://github.com/papercups-io/wordpress-plugin)** in the works, let us know if you're interested in using it!
+  - Huge thanks to **@ZmagoD** for setting this up! 🔥
+
+_[0] Slack conversation state updates:_
+> <img width="400" alt="Slack conversation state updates" src="https://user-images.githubusercontent.com/5264279/98575832-af2fb200-2287-11eb-9d7a-a0743dbaacf0.png">
+
+_[1] Storytime status indicator:_
+> <img width="800" alt="Storytime status indicator" src="https://user-images.githubusercontent.com/5264279/98166486-7d989e80-1eb5-11eb-974c-3820a656a18f.png">
+
 ### Friday, 30 October
 
 - We released v1 of our **Reporting Dashboard** 📈 🚀 📊  [0]
