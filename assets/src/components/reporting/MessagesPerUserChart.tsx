@@ -69,7 +69,6 @@ const MessagesPerUserChart = ({data = FAKE_DATA_USERS}: {data?: any}) => {
           }}
         >
           {data.map((entry: any, index: number) => {
-            console.log({entry, index});
             return (
               <Cell
                 key={`cell-${index}`}
