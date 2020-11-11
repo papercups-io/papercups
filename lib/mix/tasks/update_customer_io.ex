@@ -43,11 +43,21 @@ defmodule Mix.Tasks.UpdateCustomerIo do
     query_valid_users()
     |> Repo.all()
     |> Enum.map(fn {user, account, profile} ->
-      format_user(user, account, profile)
+      format_user!(user, account, profile)
     end)
   end
 
-  def format_user(user, account) do
+  def get_most_recent_message(user) do
+    user_id = user.id
+
+    ChatApi.Messages.Message
+    |> where(user_id: ^user_id)
+    |> order_by(desc: :inserted_at)
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  def format_user!(user, account) do
     # TODO: use a struct here?
     %{
       # User fields
@@ -60,16 +70,25 @@ defmodule Mix.Tasks.UpdateCustomerIo do
       plan: account.subscription_plan,
       # Timestamps
       created_at: format_ts!(user.inserted_at),
-      updated_at: format_ts!(user.updated_at)
+      updated_at: format_ts!(user.updated_at),
+      last_message_sent_at: format_last_message_sent_at!(user)
     }
   end
 
-  def format_user(user, account, %{full_name: full_name, display_name: display_name}) do
-    format_user(user, account) |> Map.merge(%{full_name: full_name || display_name})
+  def format_user!(user, account, %{full_name: full_name, display_name: display_name}) do
+    format_user!(user, account) |> Map.merge(%{full_name: full_name || display_name})
   end
 
-  def format_user(user, account, _) do
-    format_user(user, account) |> Map.merge(%{full_name: nil})
+  def format_user!(user, account, _) do
+    format_user!(user, account) |> Map.merge(%{full_name: nil})
+  end
+
+  def format_last_message_sent_at!(user) do
+    case get_most_recent_message(user) do
+      %{sent_at: sent_at} when not is_nil(sent_at) -> format_ts!(sent_at)
+      %{inserted_at: inserted_at} when not is_nil(inserted_at) -> format_ts!(inserted_at)
+      _ -> nil
+    end
   end
 
   def format_ts!(date) do
