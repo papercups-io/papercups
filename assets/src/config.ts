@@ -13,7 +13,7 @@ export const isHostedProd = window.location.hostname === 'app.papercups.io';
 export const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
 
 export const BASE_URL = isDev
-  ? 'http://localhost:4000'
+  ? 'http://localhost:3000'
   : `https://${REACT_URL}`;
 
 // Defaults to Papercups client ID (it's ok for this value to be public)
