@@ -1,9 +1,8 @@
 defmodule Mix.Tasks.ValidateUserEmails do
   use Mix.Task
-
-  alias ChatApi.Repo
-
+  require Logger
   import Ecto.Query, warn: false
+  alias ChatApi.Repo
 
   @shortdoc "Validates user emails with debounce.io"
 
@@ -26,7 +25,7 @@ defmodule Mix.Tasks.ValidateUserEmails do
   end
 
   def handle_known_emails(emails \\ []) do
-    IO.inspect("Handling known emails: #{inspect(emails)}")
+    Logger.info("Handling known emails: #{inspect(emails)}")
 
     emails
     |> Enum.filter(fn email -> ChatApi.Emails.Helpers.valid_format?(email) end)
@@ -52,7 +51,7 @@ defmodule Mix.Tasks.ValidateUserEmails do
   end
 
   def has_valid_email?(%{email: email}) do
-    IO.inspect("Validating email: #{inspect(email)}")
+    Logger.info("Validating email: #{inspect(email)}")
 
     ChatApi.Emails.Debounce.enabled?() &&
       !ChatApi.Emails.Debounce.disposable?(email) &&
