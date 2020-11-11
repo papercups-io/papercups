@@ -40,6 +40,7 @@ defmodule ChatApi.Emails.Helpers do
   end
 
   def valid?(email) do
+    # TODO: not sure how reliable this actually is...
     valid_format?(email) && valid_mx?(email)
   end
 
