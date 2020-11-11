@@ -25,7 +25,7 @@ defmodule ChatApi.Emails.Debounce do
         data["code"] == "4" || data["code"] == "5"
 
       {:error, reason} ->
-        Logger.error(reason)
+        Logger.error(inspect(reason))
 
         false
 
