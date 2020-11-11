@@ -71,6 +71,9 @@ defmodule ChatApi.Emails.Debounce do
     {:error, "Invalid debounce.io API key!"}
   end
 
+  @spec enabled?() :: boolean()
+  def enabled?(), do: has_valid_api_key?()
+
   @spec has_valid_api_key?() :: boolean()
   defp has_valid_api_key?() do
     case System.get_env("PAPERCUPS_DEBOUNCE_API_KEY") do

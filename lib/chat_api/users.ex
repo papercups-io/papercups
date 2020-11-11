@@ -64,6 +64,15 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
+  @spec set_has_valid_email(User.t(), boolean()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def set_has_valid_email(user, has_valid_email) do
+    user
+    |> User.email_verification_changeset(%{
+      has_valid_email: has_valid_email
+    })
+    |> Repo.update()
+  end
+
   @spec update_password(User.t(), map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def update_password(user, params) do
     updates = Map.merge(params, %{"password_reset_token" => nil})

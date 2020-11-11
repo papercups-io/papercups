@@ -121,22 +121,8 @@ defmodule ChatApiWeb.RegistrationController do
 
   defp send_registration_event(conn, company_name, true) do
     case conn.assigns.current_user do
-      %{email: email, id: user_id} ->
-        now = :os.system_time(:seconds)
-
-        case Customerio.identify(user_id, %{
-               email: email,
-               created_at: now,
-               company_name: company_name
-             }) do
-          {:ok, _} -> nil
-          {:error, result} -> Logger.error(inspect(result))
-        end
-
-        case Customerio.track(user_id, "sign_up", %{signed_up_at: now}) do
-          {:ok, _} -> nil
-          {:error, result} -> Logger.error(inspect(result))
-        end
+      %{email: _email, id: _id} = user ->
+        ChatApi.Emails.CustomerIO.handle_registration_event(user, company_name)
 
         conn
 
