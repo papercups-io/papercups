@@ -6,7 +6,7 @@ defmodule ChatApi.Conversations do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
-  alias ChatApi.Conversations.{Conversation, Helpers}
+  alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
 
