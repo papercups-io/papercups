@@ -36,7 +36,7 @@ defmodule ChatApiWeb.TagControllerTest do
       resp = get(authed_conn, Routes.tag_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "name" => "some name"
              } = json_response(resp, 200)["data"]
     end
@@ -57,7 +57,7 @@ defmodule ChatApiWeb.TagControllerTest do
       conn = get(authed_conn, Routes.tag_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "name" => "some updated name"
              } = json_response(conn, 200)["data"]
     end

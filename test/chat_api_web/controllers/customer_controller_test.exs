@@ -79,7 +79,7 @@ defmodule ChatApiWeb.CustomerControllerTest do
       resp = get(authed_conn, Routes.customer_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id
+               "id" => _id
              } = json_response(resp, 200)["data"]
     end
 
@@ -128,7 +128,7 @@ defmodule ChatApiWeb.CustomerControllerTest do
       resp = get(authed_conn, Routes.customer_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id
+               "id" => _id
              } = json_response(resp, 200)["data"]
     end
 

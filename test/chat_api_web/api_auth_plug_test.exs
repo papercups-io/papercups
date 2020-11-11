@@ -33,8 +33,8 @@ defmodule ChatApiWeb.APIAuthPlugTest do
 
     assert {%{
               private: %{
-                api_auth_token: renewed_access_token,
-                api_renew_token: renewed_renewal_token
+                api_auth_token: _renewed_access_token,
+                api_renew_token: _renewed_renewal_token
               }
             }, ^user} = APIAuthPlug.renew(with_auth_header(conn, renewal_token), @pow_config)
 

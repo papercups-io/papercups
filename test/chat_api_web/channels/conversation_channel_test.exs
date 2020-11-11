@@ -20,7 +20,7 @@ defmodule ChatApiWeb.ConversationChannelTest do
   test "shout broadcasts to conversation:lobby", %{socket: socket, account: account} do
     msg = %{body: "Hello world!", account_id: account.id}
     push(socket, "shout", msg)
-    assert_broadcast "shout", msg
+    assert_broadcast "shout", _msg
   end
 
   test "broadcasts are pushed to the client", %{socket: socket} do
