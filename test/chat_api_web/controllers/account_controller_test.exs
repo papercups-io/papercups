@@ -35,7 +35,7 @@ defmodule ChatApiWeb.AccountControllerTest do
       resp = get(authed_conn, Routes.account_path(authed_conn, :me))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "company_name" => "some company_name"
              } = json_response(resp, 200)["data"]
     end
@@ -63,7 +63,7 @@ defmodule ChatApiWeb.AccountControllerTest do
       conn = get(authed_conn, Routes.account_path(authed_conn, :me))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "company_name" => "some updated company_name"
              } = json_response(conn, 200)["data"]
     end

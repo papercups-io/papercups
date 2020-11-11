@@ -34,7 +34,7 @@ defmodule ChatApiWeb.NotificationChannelTest do
 
     push(socket, "shout", msg)
 
-    assert_push("shout", msg)
+    assert_push("shout", _msg)
   end
 
   test "broadcasts are pushed to the client", %{socket: socket} do

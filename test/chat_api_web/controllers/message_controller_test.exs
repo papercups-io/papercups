@@ -60,7 +60,7 @@ defmodule ChatApiWeb.MessageControllerTest do
       conn = get(authed_conn, Routes.message_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "body" => "some body"
              } = json_response(conn, 200)["data"]
     end
@@ -86,7 +86,7 @@ defmodule ChatApiWeb.MessageControllerTest do
       conn = get(authed_conn, Routes.message_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "body" => "some updated body"
              } = json_response(conn, 200)["data"]
     end

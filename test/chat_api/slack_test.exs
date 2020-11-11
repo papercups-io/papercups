@@ -91,7 +91,7 @@ defmodule ChatApi.SlackTest do
       text = "Hello world"
 
       assert %{
-               "blocks" => blocks,
+               "blocks" => _blocks,
                "channel" => ^channel
              } =
                Slack.get_message_payload(text, %{

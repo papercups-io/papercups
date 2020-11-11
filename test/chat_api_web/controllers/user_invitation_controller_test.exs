@@ -31,8 +31,8 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
       conn = get(authed_conn, Routes.user_invitation_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
-               "account_id" => account_id
+               "id" => _id,
+               "account_id" => _account_id
                #  "expires_at" => "2010-04-17",
                #  "token" => "some token"
              } = json_response(conn, 200)["data"]
@@ -56,8 +56,8 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
       conn = get(authed_conn, Routes.user_invitation_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
-               "account_id" => account_id
+               "id" => _id,
+               "account_id" => _account_id
                #  "expires_at" => "2011-05-18",
                #  "token" => "some updated token"
              } = json_response(conn, 200)["data"]

@@ -51,7 +51,7 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
       resp = get(authed_conn, Routes.event_subscription_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "scope" => "some scope",
                "webhook_url" => "some webhook_url"
              } = json_response(resp, 200)["data"]
@@ -82,7 +82,7 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
       conn = get(authed_conn, Routes.event_subscription_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "scope" => "some updated scope",
                "webhook_url" => "some updated webhook_url"
              } = json_response(conn, 200)["data"]

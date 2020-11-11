@@ -41,7 +41,7 @@ defmodule ChatApiWeb.ConversationControllerTest do
       conn = get(authed_conn, Routes.conversation_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "status" => "open"
              } = json_response(conn, 200)["data"]
     end
@@ -71,7 +71,7 @@ defmodule ChatApiWeb.ConversationControllerTest do
       conn = get(authed_conn, Routes.conversation_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => _id,
                "status" => "closed"
              } = json_response(conn, 200)["data"]
     end
