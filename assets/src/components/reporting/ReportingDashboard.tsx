@@ -2,7 +2,7 @@ import React from 'react';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import * as API from '../../api';
-import {Alert, Divider, Paragraph, RangePicker, Text, Title} from '../common';
+import {Divider, Paragraph, RangePicker, Text, Title} from '../common';
 import MessagesPerDayChart from './MessagesPerDayChart';
 import MessagesPerUserChart from './MessagesPerUserChart';
 import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
@@ -103,8 +103,8 @@ class ReportingDashboard extends React.Component<Props, State> {
 
   formatCustomerBreakdownStats = (stats: Array<any>, field: string) => {
     return stats.map((data) => ({
-      name: data[field],
-      value: data.count,
+      name: data[field] || 'Unknown',
+      value: data.count || 0,
     }));
   };
 
@@ -190,8 +190,6 @@ class ReportingDashboard extends React.Component<Props, State> {
       customerBreakdownByTimezone,
       'time_zone'
     );
-
-    console.log({browserStats, osStats, timezoneStats});
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
