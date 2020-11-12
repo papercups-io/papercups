@@ -107,6 +107,8 @@ const Dashboard = (props: RouteComponentProps) => {
     }
   }, [currentUser]);
 
+  // TODO: isolate this so it doesn't trigger a rerender of the entire dashboard
+  // every 2 seconds (i.e. the TITLE_FLASH_INTERVAL)
   useEffect(() => {
     let timeout;
 

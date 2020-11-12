@@ -2,11 +2,12 @@ import React from 'react';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import * as API from '../../api';
-import {Alert, Paragraph, RangePicker, Text, Title} from '../common';
+import {Alert, Divider, Paragraph, RangePicker, Text, Title} from '../common';
 import MessagesPerDayChart from './MessagesPerDayChart';
 import MessagesPerUserChart from './MessagesPerUserChart';
 import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
 import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
+import CustomerBreakdownChart from './CustomerBreakdownChart';
 import {ReportingDatum} from './support';
 import logger from '../../logger';
 
@@ -29,6 +30,10 @@ type MessageCount = {
   };
 };
 
+interface CustomerBreakdownCount {
+  count: number;
+}
+
 type Props = {};
 type State = {
   fromDate: dayjs.Dayjs;
@@ -39,6 +44,9 @@ type State = {
   receivedMessagesByDate: Array<DateCount>;
   sentMessagesByDate: Array<DateCount>;
   messagesByWeekday: Array<WeekdayCount>;
+  customerBreakdownByBrowser: Array<CustomerBreakdownCount>;
+  customerBreakdownByOs: Array<CustomerBreakdownCount>;
+  customerBreakdownByTimezone: Array<CustomerBreakdownCount>;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
@@ -51,6 +59,9 @@ class ReportingDashboard extends React.Component<Props, State> {
     receivedMessagesByDate: [],
     sentMessagesByDate: [],
     messagesByWeekday: [],
+    customerBreakdownByBrowser: [],
+    customerBreakdownByOs: [],
+    customerBreakdownByTimezone: [],
   };
 
   componentDidMount() {
@@ -75,6 +86,9 @@ class ReportingDashboard extends React.Component<Props, State> {
       receivedMessagesByDate: data?.received_messages_by_date || [],
       sentMessagesByDate: data?.sent_messages_by_date || [],
       messagesByWeekday: data?.messages_by_weekday || [],
+      customerBreakdownByBrowser: data?.customer_breakdown_by_browser || [],
+      customerBreakdownByOs: data?.customer_breakdown_by_os || [],
+      customerBreakdownByTimezone: data?.customer_breakdown_by_time_zone || [],
     });
   };
 
@@ -83,6 +97,13 @@ class ReportingDashboard extends React.Component<Props, State> {
 
     return messagesPerUser.map((data) => ({
       name: data.user.email,
+      value: data.count,
+    }));
+  };
+
+  formatCustomerBreakdownStats = (stats: Array<any>, field: string) => {
+    return stats.map((data) => ({
+      name: data[field],
       value: data.count,
     }));
   };
@@ -147,13 +168,33 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   render() {
-    const {fromDate, toDate} = this.state;
+    const {
+      fromDate,
+      toDate,
+      customerBreakdownByBrowser = [],
+      customerBreakdownByOs = [],
+      customerBreakdownByTimezone = [],
+    } = this.state;
     const dailyStats = this.formatDailyStats();
     const userStats = this.formatUserStats();
     const dayOfWeekStats = this.formatDayOfWeekStats();
+    const browserStats = this.formatCustomerBreakdownStats(
+      customerBreakdownByBrowser,
+      'browser'
+    );
+    const osStats = this.formatCustomerBreakdownStats(
+      customerBreakdownByOs,
+      'os'
+    );
+    const timezoneStats = this.formatCustomerBreakdownStats(
+      customerBreakdownByTimezone,
+      'time_zone'
+    );
+
+    console.log({browserStats, osStats, timezoneStats});
 
     return (
-      <Box p={4}>
+      <Box p={4} sx={{maxWidth: 1080}}>
         <Flex
           mb={4}
           sx={{justifyContent: 'space-between', alignItems: 'flex-end'}}
@@ -174,21 +215,8 @@ class ReportingDashboard extends React.Component<Props, State> {
           </Box>
         </Flex>
 
-        <Box mb={4}>
-          <Alert
-            message={
-              <Text>
-                This page is a work in progress! It's something we plan to set
-                up for Hacktober Fest.
-              </Text>
-            }
-            type="warning"
-            showIcon
-          />
-        </Box>
-
-        <Box sx={{maxWidth: 1080}}>
-          <Flex mx={-3}>
+        <Box>
+          <Flex mx={-3} mb={4}>
             <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
               <Box mb={2}>
                 <Text strong>New messages per day</Text>
@@ -204,19 +232,48 @@ class ReportingDashboard extends React.Component<Props, State> {
             </Box>
           </Flex>
 
-          <Flex mx={-3}>
-            <Box mb={4} mx={10} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+          <Flex mx={-3} mb={4}>
+            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
               <Box mb={2}>
                 <Text strong>Messages per user</Text>
               </Box>
               <MessagesPerUserChart data={userStats} />
             </Box>
 
-            <Box mb={4} mx={3} sx={{height: 320, flex: 1}}>
+            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
               <Box mb={2}>
                 <Text strong>Messages by day of week</Text>
               </Box>
               <MessagesByDayOfWeekChart data={dayOfWeekStats} />
+            </Box>
+          </Flex>
+
+          <Divider />
+
+          <Box my={4}>
+            <Title level={3}>Customer breakdown</Title>
+          </Box>
+
+          <Flex mx={-3} mb={4}>
+            <Box mb={4} mx={3} sx={{height: 280, maxWidth: '30%', flex: 1}}>
+              <Box mb={2}>
+                <Text strong>By browser</Text>
+              </Box>
+              <CustomerBreakdownChart data={browserStats} />
+            </Box>
+
+            <Box mb={4} mx={3} sx={{height: 280, maxWidth: '30%', flex: 1}}>
+              <Box mb={2}>
+                <Text strong>By operating system</Text>
+              </Box>
+              <CustomerBreakdownChart data={osStats} />
+            </Box>
+
+            <Box mb={4} mx={3} sx={{height: 280, maxWidth: '30%', flex: 1}}>
+              <Box mb={2}>
+                <Text strong>By timezone</Text>
+              </Box>
+              <CustomerBreakdownChart data={timezoneStats} />
             </Box>
           </Flex>
         </Box>
