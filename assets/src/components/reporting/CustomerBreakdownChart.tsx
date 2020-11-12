@@ -33,6 +33,10 @@ const CustomerBreakdownChart = ({data = FAKE_DATA_USERS}: {data?: any}) => {
           dataKey="value"
           isAnimationActive={false}
           data={data}
+          startAngle={180}
+          endAngle={0}
+          cx="50%"
+          cy="70%"
           outerRadius={80}
           fill={colors.primary}
           label={(props: any) => {
