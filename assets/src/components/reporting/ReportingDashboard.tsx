@@ -102,10 +102,26 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatCustomerBreakdownStats = (stats: Array<any>, field: string) => {
-    return stats.map((data) => ({
-      name: data[field] || 'Unknown',
-      value: data.count || 0,
-    }));
+    const formatted = stats
+      .map((data) => ({
+        name: data[field] || 'Unknown',
+        value: data.count || 0,
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    if (formatted.length <= 10) {
+      return formatted;
+    }
+
+    const top = formatted.slice(0, 9);
+    const other = formatted.slice(9).reduce(
+      (acc, data) => {
+        return {...acc, value: acc.value + (data.value || 0)};
+      },
+      {name: 'Other', value: 0}
+    );
+
+    return top.concat(other);
   };
 
   groupCountByDate = (data: Array<DateCount>) => {

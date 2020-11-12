@@ -8,7 +8,6 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import {colors} from '../common';
-import {FAKE_DATA_USERS} from './support';
 
 const COLORS = [
   colors.primary,
@@ -18,7 +17,7 @@ const COLORS = [
   colors.volcano,
 ];
 
-const CustomerBreakdownChart = ({data = FAKE_DATA_USERS}: {data?: any}) => {
+const CustomerBreakdownChart = ({data}: {data: any}) => {
   return (
     <ResponsiveContainer>
       <PieChart
