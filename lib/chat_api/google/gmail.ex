@@ -12,8 +12,9 @@ defmodule ChatApi.Google.Gmail do
     end
   end
 
-  def list_messages(refresh_token) do
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/messages"
+  def list_messages(refresh_token, query \\ []) do
+    q = query |> Enum.map_join(" ", fn {k, v} -> "#{k}:#{v}" end) |> URI.encode()
+    scope = "https://gmail.googleapis.com/gmail/v1/users/me/messages?q=#{q}"
     client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
     %{body: result} = OAuth2.Client.get!(client, scope)
 
@@ -28,8 +29,9 @@ defmodule ChatApi.Google.Gmail do
     result
   end
 
-  def list_threads(refresh_token) do
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/threads"
+  def list_threads(refresh_token, query \\ []) do
+    q = query |> Enum.map_join(" ", fn {k, v} -> "#{k}:#{v}" end) |> URI.encode()
+    scope = "https://gmail.googleapis.com/gmail/v1/users/me/threads?q=#{q}"
     client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
     %{body: result} = OAuth2.Client.get!(client, scope)
 
@@ -46,5 +48,27 @@ defmodule ChatApi.Google.Gmail do
 
   def decode_message_body(text) do
     text |> String.replace("-", "+") |> Base.decode64()
+  end
+
+  # Example use case:
+  #
+  # ChatApi.Google.Gmail.list_threads(token, in: "sent", subject: "October product updates")
+  #   |> Map.get("threads")
+  #   |> Enum.map(fn thread ->
+  #     thread
+  #     |> Map.get("id")
+  #     |> ChatApi.Google.Gmail.get_thread(token)
+  #     |> ChatApi.Google.Gmail.get_original_recipient()
+  #   end)
+  #
+  # => outputs user emails that received the "October product updates" email
+  def get_original_recipient(thread) do
+    thread
+    |> Map.get("messages")
+    |> List.first()
+    |> Map.get("payload")
+    |> Map.get("headers")
+    |> Enum.find(fn h -> h["name"] == "To" end)
+    |> Map.get("value")
   end
 end

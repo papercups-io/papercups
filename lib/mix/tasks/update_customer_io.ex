@@ -76,11 +76,18 @@ defmodule Mix.Tasks.UpdateCustomerIo do
   end
 
   def format_user!(user, account, %{full_name: full_name, display_name: display_name}) do
-    format_user!(user, account) |> Map.merge(%{full_name: full_name || display_name})
+    full_name = full_name || display_name || ""
+    [first_name | _] = String.split(full_name, " ")
+
+    user
+    |> format_user!(account)
+    |> Map.merge(%{full_name: full_name, first_name: first_name})
   end
 
   def format_user!(user, account, _) do
-    format_user!(user, account) |> Map.merge(%{full_name: nil})
+    user
+    |> format_user!(account)
+    |> Map.merge(%{full_name: nil, first_name: nil})
   end
 
   def format_last_message_sent_at!(user) do
