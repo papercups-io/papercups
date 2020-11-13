@@ -56,21 +56,36 @@ type Props = {
 type State = {
   updates: any;
   isEditing: boolean;
+  isSaving: boolean;
 };
 
 class CustomerDetailsModal extends React.Component<Props, State> {
   state: State = {
-    updates: {...this.props.customer},
+    updates: this.getInitialUpdates(),
     isEditing: false,
+    isSaving: false,
   };
 
-  onEdit = () => {
+  getInitialUpdates() {
+    const {customer} = this.props;
+    const editableFieldsWhitelist: Array<keyof Customer> = [
+      'name',
+      'email',
+      'phone',
+    ];
+
+    return editableFieldsWhitelist.reduce((acc, field) => {
+      return {...acc, [field]: customer[field] || null};
+    }, {});
+  }
+
+  handleStartEditing = () => {
     this.setState({isEditing: true});
   };
 
   handleCancelEdit = () => {
     this.setState({
-      updates: {...this.props.customer},
+      updates: this.getInitialUpdates(),
       isEditing: false,
     });
   };
@@ -91,14 +106,12 @@ class CustomerDetailsModal extends React.Component<Props, State> {
     this.handleEditCustomer({phone: e.target.value});
   };
 
-  onSave = async () => {
+  handleSaveUpdates = async () => {
+    this.setState({isSaving: true});
+
     const {customer, onUpdate} = this.props;
+    const {updates} = this.state;
     const {id: customerId} = customer;
-    // TODO: what's the best way to handle this?
-    const editableFieldsWhitelist = ['name', 'email', 'phone'];
-    const updates = editableFieldsWhitelist.reduce((acc, field) => {
-      return {...acc, [field]: this.state.updates[field] || null};
-    }, {});
 
     try {
       const result = await API.updateCustomer(customerId, updates);
@@ -109,6 +122,7 @@ class CustomerDetailsModal extends React.Component<Props, State> {
     }
 
     this.handleCancelEdit();
+    this.setState({isSaving: false});
   };
 
   onModalClose = () => {
@@ -118,7 +132,7 @@ class CustomerDetailsModal extends React.Component<Props, State> {
 
   render() {
     const {customer, isVisible} = this.props;
-    const {isEditing, updates} = this.state;
+    const {isEditing, isSaving, updates} = this.state;
     const {
       browser,
       os,
@@ -146,7 +160,11 @@ class CustomerDetailsModal extends React.Component<Props, State> {
               <Button onClick={this.onModalClose}>Close</Button>
               <Flex>
                 <Button onClick={this.handleCancelEdit}>Cancel</Button>
-                <Button type="primary" onClick={this.onSave}>
+                <Button
+                  loading={isSaving}
+                  type="primary"
+                  onClick={this.handleSaveUpdates}
+                >
                   Save
                 </Button>
               </Flex>
@@ -154,7 +172,7 @@ class CustomerDetailsModal extends React.Component<Props, State> {
           ) : (
             <Flex sx={{justifyContent: 'space-between'}}>
               <Button onClick={this.onModalClose}>Close</Button>
-              <Button type="primary" onClick={this.onEdit}>
+              <Button type="primary" onClick={this.handleStartEditing}>
                 Edit
               </Button>
             </Flex>
