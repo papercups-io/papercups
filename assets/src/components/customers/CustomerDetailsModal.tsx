@@ -5,6 +5,8 @@ import utc from 'dayjs/plugin/utc';
 import {capitalize} from 'lodash';
 import {Button, Modal, Paragraph, Text, Input} from '../common';
 import * as API from '../../api';
+import {Customer} from '../../types';
+import logger from '../../logger';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -12,7 +14,7 @@ dayjs.extend(utc);
 export const CustomerMetadataSection = ({
   metadata,
 }: {
-  metadata: Record<string, string>;
+  metadata?: Record<string, string>;
 }) => {
   return !metadata ? null : (
     <React.Fragment>
@@ -44,232 +46,249 @@ export const CustomerMetadataSection = ({
   );
 };
 
-export const CustomerDetailsContent = ({customer}: {customer: any}) => {
-  const {
-    browser,
-    os,
-    external_id: externalId,
-    created_at: createdAt,
-    updated_at: lastUpdatedAt,
-    current_url: lastSeenUrl,
-    ip: lastIpAddress,
-    metadata,
-    time_zone,
-  } = customer;
-
-  return (
-    <Box>
-      <Flex>
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>ID</Text>
-          </Box>
-
-          <Paragraph>{externalId || 'Unknown'}</Paragraph>
-        </Box>
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>Time zone</Text>
-          </Box>
-
-          <Paragraph>{time_zone || 'Unknown'}</Paragraph>
-        </Box>
-      </Flex>
-      <Box mb={2}>
-        <Box>
-          <Text strong>Device information</Text>
-        </Box>
-
-        <Paragraph>
-          {[lastIpAddress, os, browser].join(' · ') || 'N/A'}
-        </Paragraph>
-      </Box>
-
-      <Box mb={2}>
-        <Box>
-          <Text strong>Last visited URL</Text>
-        </Box>
-
-        {lastSeenUrl ? (
-          <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
-            {lastSeenUrl}
-          </a>
-        ) : (
-          <Paragraph>N/A</Paragraph>
-        )}
-      </Box>
-
-      <Flex sx={{justifyContent: 'space-between'}}>
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>First seen</Text>
-          </Box>
-
-          <Paragraph>
-            {createdAt ? dayjs.utc(createdAt).format('MMMM DD, YYYY') : 'N/A'}
-          </Paragraph>
-        </Box>
-
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>Last seen</Text>
-          </Box>
-
-          <Paragraph>
-            {lastUpdatedAt
-              ? dayjs.utc(lastUpdatedAt).format('MMMM DD, YYYY')
-              : 'N/A'}
-          </Paragraph>
-        </Box>
-      </Flex>
-
-      <CustomerMetadataSection metadata={metadata} />
-    </Box>
-  );
-};
-
 type Props = {
-  customer: any;
+  customer: Customer;
   isVisible?: boolean;
   onClose: () => void;
-  onUpdate: (updatedData: any) => void;
+  onUpdate: (data: any) => Promise<void>;
 };
 
 type State = {
-  email: string;
-  name: string;
-  phone: string;
+  updates: any;
   isEditing: boolean;
 };
 
 class CustomerDetailsModal extends React.Component<Props, State> {
   state: State = {
-    email: this.props.customer.email,
-    name: this.props.customer.name,
-    phone: this.props.customer.phone,
+    updates: {...this.props.customer},
     isEditing: false,
   };
 
-  onEdit: any = () => {
+  onEdit = () => {
     this.setState({isEditing: true});
   };
 
-  onCancelEdit: any = () => {
+  handleCancelEdit = () => {
     this.setState({
-      email: this.props.customer.email,
-      name: this.props.customer.name,
-      phone: this.props.customer.phone,
+      updates: {...this.props.customer},
       isEditing: false,
     });
   };
 
-  handleChangeName: any = (e: any) => {
-    this.setState({name: e.target.value});
+  handleEditCustomer = (updates: any) => {
+    this.setState({updates: {...this.state.updates, ...updates}});
+  };
+
+  handleChangeName = (e: any) => {
+    this.handleEditCustomer({name: e.target.value});
   };
 
   handleChangeEmail = (e: any) => {
-    this.setState({email: e.target.value});
+    this.handleEditCustomer({email: e.target.value});
   };
 
   handleChangePhone = (e: any) => {
-    this.setState({phone: e.target.value});
+    this.handleEditCustomer({phone: e.target.value});
   };
 
-  onSave: any = () => {
-    const {name, email, phone} = this.state;
-    const id = this.props.customer.key;
-    this.props.onUpdate({name, email, phone, id});
+  onSave = async () => {
+    const {customer, onUpdate} = this.props;
+    const {id: customerId} = customer;
+    // TODO: what's the best way to handle this?
+    const editableFieldsWhitelist = ['name', 'email', 'phone'];
+    const updates = editableFieldsWhitelist.reduce((acc, field) => {
+      return {...acc, [field]: this.state.updates[field] || null};
+    }, {});
 
-    return API.updateCustomer(id, {
-      name: name,
-      email: email,
-      phone: phone,
-    }).then(() => this.setState({isEditing: false}));
+    try {
+      const result = await API.updateCustomer(customerId, updates);
+
+      await onUpdate(result);
+    } catch (err) {
+      logger.error('Failed to update customer', err);
+    }
+
+    this.handleCancelEdit();
   };
 
-  onModalClose: any = () => {
-    this.setState({
-      email: this.props.customer.email,
-      name: this.props.customer.name,
-      phone: this.props.customer.phone,
-      isEditing: false,
-    });
+  onModalClose = () => {
+    this.handleCancelEdit();
     this.props.onClose();
   };
 
   render() {
-    const {name, email, phone, isEditing} = this.state;
+    const {customer, isVisible} = this.props;
+    const {isEditing, updates} = this.state;
+    const {
+      browser,
+      os,
+      email,
+      name,
+      phone,
+      external_id: externalId,
+      created_at: createdAt,
+      updated_at: lastUpdatedAt,
+      current_url: lastSeenUrl,
+      ip: lastIpAddress,
+      metadata,
+      time_zone,
+    } = customer;
+
     return (
       <Modal
         title="Customer details"
-        visible={this.props.isVisible}
+        visible={isVisible}
         onCancel={this.onModalClose}
         onOk={this.onModalClose}
         footer={
-          !this.state.isEditing
-            ? [
-                <Button onClick={this.onModalClose}>Close</Button>,
-                <Button onClick={this.onEdit}>Edit</Button>,
-              ]
-            : [
-                <Button onClick={this.onCancelEdit}>Cancel</Button>,
-                <Button onClick={this.onSave}>Save</Button>,
-              ]
+          isEditing ? (
+            <Flex sx={{justifyContent: 'space-between'}}>
+              <Button onClick={this.onModalClose}>Close</Button>
+              <Flex>
+                <Button onClick={this.handleCancelEdit}>Cancel</Button>
+                <Button type="primary" onClick={this.onSave}>
+                  Save
+                </Button>
+              </Flex>
+            </Flex>
+          ) : (
+            <Flex sx={{justifyContent: 'space-between'}}>
+              <Button onClick={this.onModalClose}>Close</Button>
+              <Button type="primary" onClick={this.onEdit}>
+                Edit
+              </Button>
+            </Flex>
+          )
         }
       >
-        <Box mb={2}>
-          <Box>
-            <Text strong>Name</Text>
+        <Box>
+          <Box mb={2}>
+            <Box>
+              <Text strong>Name</Text>
+            </Box>
+            {!isEditing ? (
+              <Paragraph>{name || 'Unknown'}</Paragraph>
+            ) : (
+              <Box pr={2} mb={12}>
+                <Input
+                  style={{marginBottom: -8}}
+                  id="name"
+                  type="text"
+                  size="small"
+                  value={updates.name}
+                  onChange={this.handleChangeName}
+                />
+              </Box>
+            )}
           </Box>
-          {!isEditing ? (
-            <Paragraph>{name || 'Unknown'}</Paragraph>
-          ) : (
-            <Input
-              id="name"
-              type="text"
-              value={name}
-              onChange={this.handleChangeName}
-              placeholder="Full Name"
-            />
-          )}
+
+          <Flex sx={{justifyContent: 'space-between'}}>
+            <Box mb={2} sx={{flex: 1}}>
+              <Box>
+                <Text strong>Email</Text>
+              </Box>
+              {!isEditing ? (
+                <Paragraph>{email || 'Unknown'}</Paragraph>
+              ) : (
+                <Box pr={2} mb={12}>
+                  <Input
+                    id="email"
+                    type="text"
+                    size="small"
+                    value={updates.email}
+                    onChange={this.handleChangeEmail}
+                  />
+                </Box>
+              )}
+            </Box>
+            <Box mb={2} sx={{flex: 1}}>
+              <Box>
+                <Text strong>Phone</Text>
+              </Box>
+              {!isEditing ? (
+                <Paragraph>{phone || 'Unknown'}</Paragraph>
+              ) : (
+                <Box pr={2} mb={12}>
+                  <Input
+                    id="phone"
+                    type="text"
+                    size="small"
+                    value={updates.phone}
+                    onChange={this.handleChangePhone}
+                  />
+                </Box>
+              )}
+            </Box>
+          </Flex>
+
+          <Flex>
+            <Box mb={2} sx={{flex: 1}}>
+              <Box>
+                <Text strong>ID</Text>
+              </Box>
+
+              <Paragraph>{externalId || 'Unknown'}</Paragraph>
+            </Box>
+            <Box mb={2} sx={{flex: 1}}>
+              <Box>
+                <Text strong>Time zone</Text>
+              </Box>
+
+              <Paragraph>{time_zone || 'Unknown'}</Paragraph>
+            </Box>
+          </Flex>
+          <Box mb={2}>
+            <Box>
+              <Text strong>Device information</Text>
+            </Box>
+
+            <Paragraph>
+              {[lastIpAddress, os, browser].join(' · ') || 'N/A'}
+            </Paragraph>
+          </Box>
+
+          <Box mb={2}>
+            <Box>
+              <Text strong>Last visited URL</Text>
+            </Box>
+
+            {lastSeenUrl ? (
+              <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
+                {lastSeenUrl}
+              </a>
+            ) : (
+              <Paragraph>N/A</Paragraph>
+            )}
+          </Box>
+
+          <Flex sx={{justifyContent: 'space-between'}}>
+            <Box mb={2} sx={{flex: 1}}>
+              <Box>
+                <Text strong>First seen</Text>
+              </Box>
+
+              <Paragraph>
+                {createdAt
+                  ? dayjs.utc(createdAt).format('MMMM DD, YYYY')
+                  : 'N/A'}
+              </Paragraph>
+            </Box>
+
+            <Box mb={2} sx={{flex: 1}}>
+              <Box>
+                <Text strong>Last seen</Text>
+              </Box>
+
+              <Paragraph>
+                {lastUpdatedAt
+                  ? dayjs.utc(lastUpdatedAt).format('MMMM DD, YYYY')
+                  : 'N/A'}
+              </Paragraph>
+            </Box>
+          </Flex>
+
+          <CustomerMetadataSection metadata={metadata} />
         </Box>
-
-        <Flex sx={{justifyContent: 'space-between'}}>
-          <Box mb={2} sx={{flex: 1}}>
-            <Box>
-              <Text strong>Email</Text>
-            </Box>
-            {!isEditing ? (
-              <Paragraph>{email || 'Unknown'}</Paragraph>
-            ) : (
-              <Input
-                id="email"
-                type="text"
-                value={email}
-                onChange={this.handleChangeEmail}
-                placeholder="E-Mail Address"
-              />
-            )}
-          </Box>
-          <Box mb={2} sx={{flex: 1}}>
-            <Box>
-              <Text strong>Phone</Text>
-            </Box>
-            {!isEditing ? (
-              <Paragraph>{phone || 'Unknown'}</Paragraph>
-            ) : (
-              <Input
-                id="phone"
-                type="text"
-                value={phone}
-                onChange={this.handleChangePhone}
-                placeholder="Phone No."
-              />
-            )}
-          </Box>
-        </Flex>
-
-        <CustomerDetailsContent customer={this.props.customer} />
       </Modal>
     );
   }

@@ -60,7 +60,3 @@ body {
   border-radius: 4px;
   box-shadow: 0 24px 48px rgba(17, 16, 62, 0.12);
 }
-
-.ant-modal-footer {
-  text-align: left;
-}

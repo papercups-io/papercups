@@ -9,11 +9,15 @@ import CustomerDetailsModal from './CustomerDetailsModal';
 dayjs.extend(utc);
 
 const CustomersTable = ({
+  loading,
   customers,
   currentlyOnline,
+  onUpdate,
 }: {
+  loading?: boolean;
   customers: Array<any>;
   currentlyOnline: any;
+  onUpdate: () => Promise<void>;
 }) => {
   const [selectedCustomerId, setSelectedCustomerId] = React.useState(null);
 
@@ -23,7 +27,7 @@ const CustomersTable = ({
     return currentlyOnline[customerId];
   };
 
-  const initialData = customers
+  const data = customers
     .filter((customer) => !!customer.email) // Only show customers with email for now
     .map((customer) => {
       return {key: customer.id, ...customer};
@@ -38,8 +42,6 @@ const CustomersTable = ({
       // TODO: fix how we set `last_seen`!
       return +new Date(b.last_seen) - +new Date(a.last_seen);
     });
-
-  const [data, setData] = React.useState(initialData);
 
   const columns = [
     {
@@ -121,18 +123,7 @@ const CustomersTable = ({
               customer={record}
               isVisible={selectedCustomerId === record.id}
               onClose={() => setSelectedCustomerId(null)}
-              onUpdate={(updatedCustomer: any) => {
-                const newData = data;
-
-                newData.forEach((customer) => {
-                  if (customer.key === updatedCustomer.id) {
-                    customer.name = updatedCustomer.name;
-                    customer.email = updatedCustomer.email;
-                    customer.phone = updatedCustomer.phone;
-                  }
-                  setData(newData);
-                });
-              }}
+              onUpdate={onUpdate}
             />
           </>
         );
@@ -140,7 +131,7 @@ const CustomersTable = ({
     },
   ];
 
-  return <Table dataSource={data} columns={columns} />;
+  return <Table loading={loading} dataSource={data} columns={columns} />;
 };
 
 export default CustomersTable;
