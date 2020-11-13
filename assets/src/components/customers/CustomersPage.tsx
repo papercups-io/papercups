@@ -12,6 +12,7 @@ type Props = {
 };
 type State = {
   loading: boolean;
+  refreshing: boolean;
   selectedCustomerId: string | null;
   customers: Array<any>;
 };
@@ -19,6 +20,7 @@ type State = {
 class CustomersPage extends React.Component<Props, State> {
   state: State = {
     loading: true,
+    refreshing: false,
     selectedCustomerId: null,
     customers: [],
   };
@@ -35,9 +37,23 @@ class CustomersPage extends React.Component<Props, State> {
     }
   }
 
+  handleRefreshCustomers = async () => {
+    this.setState({refreshing: true});
+
+    try {
+      const customers = await API.fetchCustomers();
+
+      this.setState({customers, refreshing: false});
+    } catch (err) {
+      logger.error('Error refreshing customers!', err);
+
+      this.setState({refreshing: false});
+    }
+  };
+
   render() {
     const {currentlyOnline} = this.props;
-    const {loading, customers = []} = this.state;
+    const {loading, refreshing, customers = []} = this.state;
 
     if (loading) {
       return (
@@ -78,8 +94,10 @@ class CustomersPage extends React.Component<Props, State> {
           </Box>
 
           <CustomersTable
+            loading={refreshing}
             customers={customers}
             currentlyOnline={currentlyOnline}
+            onUpdate={this.handleRefreshCustomers}
           />
         </Box>
       </Box>

@@ -175,6 +175,24 @@ export const fetchCustomer = async (id: string, token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const updateCustomer = async (
+  id : string,
+  updates: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/customers/${id}`)
+    .set('Authorization', token)
+    .send({
+      customer: updates,
+    })
+    .then((res) => res.body.data);
+};
+
 export const createNewConversation = async (
   accountId: string,
   customerId: string
