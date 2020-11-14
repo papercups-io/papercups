@@ -40,7 +40,9 @@ defmodule ChatApi.ConversationsTest do
       different_account = account_fixture()
       different_customer = customer_fixture(different_account)
       _conversation = conversation_fixture(different_account, different_customer)
-      for _n <- 1..10, do: message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
+
+      for _n <- 1..10,
+          do: message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
 
       result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
 
