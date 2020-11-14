@@ -49,20 +49,22 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [conversation.id]
     end
 
-    test "list_conversations_by_account/1 returns all conversations with one message(most recent)", %{
-      account: account,
-      conversation: conversation
-    } do
+    test "list_conversations_by_account/1 returns all conversations with one message(most recent)",
+         %{
+           account: account,
+           conversation: conversation
+         } do
       different_account = account_fixture()
       different_customer = customer_fixture(different_account)
       conversation_fixture(different_account, different_customer)
       secondary_conversation = conversation_fixture(account, different_customer)
 
       for _n <- 1..5,
-        do: message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
+          do: message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
 
       for _n <- 1..3,
-        do: message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
+          do:
+            message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
 
       conversations = Conversations.list_conversations_by_account(account.id)
       assert length(conversations) == 2
