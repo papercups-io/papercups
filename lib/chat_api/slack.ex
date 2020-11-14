@@ -261,7 +261,8 @@ defmodule ChatApi.Slack do
           email: email,
           current_url: current_url,
           browser: browser,
-          os: os
+          os: os,
+          time_zone: time_zone
         },
         thread: nil
       }) do
@@ -297,6 +298,10 @@ defmodule ChatApi.Slack do
             %{
               "type" => "mrkdwn",
               "text" => "*OS:*\n#{os || "N/A"}"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*Timezone:*\n#{time_zone || "N/A"}"
             }
           ]
         }
