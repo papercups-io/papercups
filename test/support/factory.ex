@@ -8,12 +8,6 @@ defmodule ChatApi.Factory do
     }
   end
 
-  def invalid_account_factory do
-    %ChatApi.Accounts.Account{
-      company_name: ""
-    }
-  end
-
   def widget_settings_factory do
     %ChatApi.WidgetSettings.WidgetSetting{
       color: "some color",

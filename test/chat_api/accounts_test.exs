@@ -3,13 +3,12 @@ defmodule ChatApi.AccountsTest do
   use ChatApi.DataCase, async: true
 
   alias ChatApi.{Accounts, WidgetSettings}
+  alias ChatApi.Accounts.Account
 
   describe "accounts" do
-    alias ChatApi.Accounts.Account
-
     @valid_attrs params_for(:account)
     @update_attrs params_for(:account, company_name: "updated company name")
-    @invalid_attrs params_for(:invalid_account)
+    @invalid_attrs params_for(:account, company_name: "")
 
     test "list_accounts/0 returns all accounts" do
       insert_list(3, :account)
@@ -28,9 +27,7 @@ defmodule ChatApi.AccountsTest do
 
     test "create_account/1 with valid data creates a account and widget_setting" do
       assert {:ok, %Account{} = account} = Accounts.create_account(@valid_attrs)
-
       assert account.company_name != nil
-
       assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account(account.id)
     end
 
@@ -42,7 +39,6 @@ defmodule ChatApi.AccountsTest do
       account = insert(:account)
 
       assert {:ok, %Account{} = updated_account} = Accounts.update_account(account, @update_attrs)
-
       assert updated_account.company_name === @update_attrs.company_name
     end
 
