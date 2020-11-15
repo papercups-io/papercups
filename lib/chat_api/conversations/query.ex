@@ -4,7 +4,17 @@ defmodule ChatApi.Conversations.Query do
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
 
-  def query_by_account(account_id, attrs) do
+  def by_customer(customer_id, account_id) do
+    Conversation
+    |> where(customer_id: ^customer_id)
+    |> where(account_id: ^account_id)
+    |> where(status: "open")
+    |> where([c], is_nil(c.archived_at))
+    |> order_by(desc: :inserted_at)
+    |> preload([:customer, messages: [user: :profile]])
+  end
+
+  def by_account(account_id, attrs) do
     Conversation
     |> join(
       :left_lateral,
@@ -24,7 +34,7 @@ defmodule ChatApi.Conversations.Query do
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
-  def filter_where(attrs) do
+  defp filter_where(attrs) do
     Enum.reduce(attrs, dynamic(true), fn
       {"status", value}, dynamic ->
         dynamic([p], ^dynamic and p.status == ^value)

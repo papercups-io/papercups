@@ -34,7 +34,7 @@ defmodule ChatApi.Conversations do
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(account_id, attrs) do
     account_id
-    |> Query.query_by_account(attrs)
+    |> Query.by_account(attrs)
     |> Repo.all()
   end
 
@@ -45,13 +45,8 @@ defmodule ChatApi.Conversations do
 
   @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
   def find_by_customer(customer_id, account_id) do
-    Conversation
-    |> where(customer_id: ^customer_id)
-    |> where(account_id: ^account_id)
-    |> where(status: "open")
-    |> where([c], is_nil(c.archived_at))
-    |> order_by(desc: :inserted_at)
-    |> preload([:customer, messages: [user: :profile]])
+    customer_id
+    |> Query.by_customer(account_id)
     |> Repo.all()
   end
 
