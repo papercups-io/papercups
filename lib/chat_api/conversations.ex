@@ -206,16 +206,18 @@ defmodule ChatApi.Conversations do
     Conversation.changeset(conversation, attrs)
   end
 
+  @spec count_agent_replies(binary()) :: number()
+  def count_agent_replies(conversation_id) do
+    Message
+    |> where(conversation_id: ^conversation_id)
+    |> where([m], not is_nil(m.user_id))
+    |> select([m], count(m.id))
+    |> Repo.one()
+  end
+
   @spec has_agent_replied?(binary()) :: boolean()
   def has_agent_replied?(conversation_id) do
-    count =
-      Message
-      |> where(conversation_id: ^conversation_id)
-      |> where([m], not is_nil(m.user_id))
-      |> select([m], count(m.id))
-      |> Repo.one()
-
-    count > 0
+    count_agent_replies(conversation_id) > 0
   end
 
   @spec list_tags(binary()) :: [Tag.t()]
