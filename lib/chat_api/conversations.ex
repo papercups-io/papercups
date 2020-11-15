@@ -11,15 +11,6 @@ defmodule ChatApi.Conversations do
   alias ChatApi.Tags.{Tag, ConversationTag}
 
   @spec list_conversations() :: [Conversation.t()]
-  @doc """
-  Returns the list of conversations.
-
-  ## Examples
-
-      iex> list_conversations()
-      [%Conversation{}, ...]
-
-  """
   def list_conversations do
     Conversation |> Repo.all() |> Repo.preload([:customer, :messages])
   end
@@ -76,21 +67,12 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
-  @spec get_conversation!(binary()) :: Conversation.t()
   @doc """
   Gets a single conversation.
 
   Raises `Ecto.NoResultsError` if the Conversation does not exist.
-
-  ## Examples
-
-      iex> get_conversation!(123)
-      %Conversation{}
-
-      iex> get_conversation!(456)
-      ** (Ecto.NoResultsError)
-
   """
+  @spec get_conversation!(binary()) :: Conversation.t()
   def get_conversation!(id) do
     Conversation
     |> Repo.get!(id)
@@ -113,18 +95,6 @@ defmodule ChatApi.Conversations do
   end
 
   @spec create_conversation(map()) :: {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Creates a conversation.
-
-  ## Examples
-
-      iex> create_conversation(%{field: value})
-      {:ok, %Conversation{}}
-
-      iex> create_conversation(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
   def create_conversation(attrs \\ %{}) do
     %Conversation{}
     |> Conversation.changeset(attrs)
@@ -140,18 +110,6 @@ defmodule ChatApi.Conversations do
 
   @spec update_conversation(Conversation.t(), map()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Updates a conversation.
-
-  ## Examples
-
-      iex> update_conversation(conversation, %{field: new_value})
-      {:ok, %Conversation{}}
-
-      iex> update_conversation(conversation, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
   def update_conversation(%Conversation{} = conversation, attrs) do
     conversation
     |> Conversation.changeset(attrs)
@@ -239,34 +197,25 @@ defmodule ChatApi.Conversations do
 
   @spec delete_conversation(Conversation.t()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Deletes a conversation.
-
-  ## Examples
-
-      iex> delete_conversation(conversation)
-      {:ok, %Conversation{}}
-
-      iex> delete_conversation(conversation)
-      {:error, %Ecto.Changeset{}}
-
-  """
   def delete_conversation(%Conversation{} = conversation) do
     Repo.delete(conversation)
   end
 
   @spec change_conversation(Conversation.t(), map) :: Ecto.Changeset.t()
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking conversation changes.
-
-  ## Examples
-
-      iex> change_conversation(conversation)
-      %Ecto.Changeset{data: %Conversation{}}
-
-  """
   def change_conversation(%Conversation{} = conversation, attrs \\ %{}) do
     Conversation.changeset(conversation, attrs)
+  end
+
+  @spec has_agent_replied?(binary()) :: boolean()
+  def has_agent_replied?(conversation_id) do
+    count =
+      Message
+      |> where(conversation_id: ^conversation_id)
+      |> where([m], not is_nil(m.user_id))
+      |> select([m], count(m.id))
+      |> Repo.one()
+
+    count > 0
   end
 
   @spec list_tags(binary()) :: [Tag.t()]
