@@ -20,6 +20,12 @@ defmodule ChatApiWeb.Router do
     plug(ChatApiWeb.EnsureUserEnabledPlug)
   end
 
+  pipeline :public_api do
+    plug(ChatApiWeb.IPAddressPlug)
+    plug(:accepts, ["json"])
+    plug(ChatApiWeb.PublicAPIAuthPlug, otp_app: :chat_api)
+  end
+
   # Swagger
   scope "/api/swagger" do
     forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :chat_api, swagger_file: "swagger.json"
@@ -101,6 +107,12 @@ defmodule ChatApiWeb.Router do
     post("/customers/:customer_id/tags", CustomerController, :add_tag)
     delete("/customers/:customer_id/tags/:tag_id", CustomerController, :remove_tag)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
+  end
+
+  scope "/api/v1", ChatApiWeb do
+    pipe_through([:public_api])
+
+    get("/me", SessionController, :me)
   end
 
   # Enables LiveDashboard only for development
