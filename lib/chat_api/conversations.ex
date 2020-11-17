@@ -48,11 +48,13 @@ defmodule ChatApi.Conversations do
     # TODO: raise an exception if nil account is passed in?
     []
   end
-  
+
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(account_id, attrs) do
     Conversation
-    |> join(:left_lateral, [c],
+    |> join(
+      :left_lateral,
+      [c],
       f in fragment(
         "SELECT sent_at FROM messages WHERE conversation_id = ? ORDER BY sent_at DESC LIMIT 1",
         c.id
