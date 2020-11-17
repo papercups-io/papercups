@@ -176,7 +176,7 @@ export const fetchCustomer = async (id: string, token = getAccessToken()) => {
 };
 
 export const updateCustomer = async (
-  id : string,
+  id: string,
   updates: any,
   token = getAccessToken()
 ) => {
