@@ -7,7 +7,6 @@ defmodule ChatApi.Conversations do
   alias ChatApi.Repo
 
   alias ChatApi.Conversations.Conversation
-  alias ChatApi.Conversations.Query
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
 
@@ -23,12 +22,6 @@ defmodule ChatApi.Conversations do
   """
   def list_conversations do
     Conversation |> Repo.all() |> Repo.preload([:customer, :messages])
-  end
-
-  @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
-  def list_conversations_by_account(nil, _) do
-    # TODO: raise an exception if nil account is passed in?
-    []
   end
 
   def list_conversations_by_account_v2(account_id, attrs \\ %{}) do
@@ -50,6 +43,12 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
+  @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
+  def list_conversations_by_account(nil, _) do
+    # TODO: raise an exception if nil account is passed in?
+    []
+  end
+  
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(account_id, attrs) do
     Conversation
