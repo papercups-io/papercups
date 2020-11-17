@@ -59,6 +59,9 @@ defmodule ChatApi.ConversationsTest do
       conversation_fixture(different_account, different_customer)
       secondary_conversation = conversation_fixture(account, different_customer)
 
+      msg = message_fixture(account, conversation, %{sent_at: ~N[2020-11-17 16:35:00]})
+      msg2 = message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-17 16:35:00]})
+
       for _n <- 1..5,
           do: message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
 
@@ -72,6 +75,12 @@ defmodule ChatApi.ConversationsTest do
       assert [%{messages: messages}, %{messages: messages2}] = conversations
       assert length(messages) == 1
       assert length(messages2) == 1
+
+      assert List.first(messages).id == msg.id
+      assert List.first(messages).sent_at == msg.sent_at
+
+      assert List.first(messages2).id == msg2.id
+      assert List.first(messages2).sent_at == msg2.sent_at
     end
 
     test "list_conversations_by_account/1 returns all not archived conversations for an account",
