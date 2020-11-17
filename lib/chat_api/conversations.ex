@@ -31,10 +31,39 @@ defmodule ChatApi.Conversations do
     []
   end
 
+  def list_conversations_by_account_v2(account_id, attrs \\ %{}) do
+    Conversation
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT id FROM messages WHERE conversation_id = ? ORDER BY sent_at DESC LIMIT 1",
+        c.id
+      )
+    )
+    |> join(:left, [c, f], m in Message, on: m.id == f.id)
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(attrs))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by([c, f, m], desc: m.sent_at)
+    |> preload([c, f, m], [:customer, messages: {m, user: :profile}])
+    |> Repo.all()
+  end
+
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(account_id, attrs) do
-    account_id
-    |> Query.by_account(attrs)
+    Conversation
+    |> join(:left_lateral, [c],
+      f in fragment(
+        "SELECT sent_at FROM messages WHERE conversation_id = ? ORDER BY sent_at DESC LIMIT 1",
+        c.id
+      )
+    )
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(attrs))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by([c, f], desc: f)
+    |> preload([:customer, messages: [user: :profile]])
     |> Repo.all()
   end
 
@@ -43,10 +72,34 @@ defmodule ChatApi.Conversations do
     list_conversations_by_account(account_id, %{})
   end
 
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
+  defp filter_where(attrs) do
+    Enum.reduce(attrs, dynamic(true), fn
+      {"status", value}, dynamic ->
+        dynamic([p], ^dynamic and p.status == ^value)
+
+      {"priority", value}, dynamic ->
+        dynamic([p], ^dynamic and p.priority == ^value)
+
+      {"assignee_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.assignee_id == ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
+  end
+
   @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
   def find_by_customer(customer_id, account_id) do
-    customer_id
-    |> Query.by_customer(account_id)
+    Conversation
+    |> where(customer_id: ^customer_id)
+    |> where(account_id: ^account_id)
+    |> where(status: "open")
+    |> where([c], is_nil(c.archived_at))
+    |> order_by(desc: :inserted_at)
+    |> preload([:customer, messages: [user: :profile]])
     |> Repo.all()
   end
 
