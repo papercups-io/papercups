@@ -24,25 +24,6 @@ defmodule ChatApi.Conversations do
     Conversation |> Repo.all() |> Repo.preload([:customer, :messages])
   end
 
-  def list_conversations_by_account_v2(account_id, attrs \\ %{}) do
-    Conversation
-    |> join(
-      :left_lateral,
-      [c],
-      f in fragment(
-        "SELECT id FROM messages WHERE conversation_id = ? ORDER BY sent_at DESC LIMIT 1",
-        c.id
-      )
-    )
-    |> join(:left, [c, f], m in Message, on: m.id == f.id)
-    |> where(account_id: ^account_id)
-    |> where(^filter_where(attrs))
-    |> where([c], is_nil(c.archived_at))
-    |> order_by([c, f, m], desc: m.sent_at)
-    |> preload([c, f, m], [:customer, messages: {m, user: :profile}])
-    |> Repo.all()
-  end
-
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(nil, _) do
     # TODO: raise an exception if nil account is passed in?

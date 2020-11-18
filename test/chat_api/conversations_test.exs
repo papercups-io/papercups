@@ -49,38 +49,6 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [conversation.id]
     end
 
-    test "list_conversations_by_account_v2/2 returns all conversations with one message(most recent)",
-         %{
-           account: account,
-           conversation: conversation
-         } do
-      different_account = account_fixture()
-      different_customer = customer_fixture(different_account)
-      conversation_fixture(different_account, different_customer)
-      secondary_conversation = conversation_fixture(account, different_customer)
-
-      Enum.each(1..5, fn _x ->
-        message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
-        message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
-      end)
-
-      msg = message_fixture(account, conversation, %{sent_at: ~N[2020-11-17 16:35:00]})
-      msg2 = message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-17 16:35:00]})
-
-      conversations = Conversations.list_conversations_by_account_v2(account.id, %{})
-      assert length(conversations) == 2
-
-      assert [%{messages: messages}, %{messages: messages2}] = conversations
-      assert length(messages) == 1
-      assert length(messages2) == 1
-
-      assert List.first(messages).id == msg.id
-      assert List.first(messages).sent_at == msg.sent_at
-
-      assert List.first(messages2).id == msg2.id
-      assert List.first(messages2).sent_at == msg2.sent_at
-    end
-
     test "list_conversations_by_account/1 returns all not archived conversations for an account",
          %{
            account: account,
