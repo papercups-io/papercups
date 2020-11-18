@@ -4,8 +4,8 @@ import {throttle} from 'lodash';
 import {Channel, Socket} from 'phoenix';
 import {Box, Flex} from 'theme-ui';
 import {Replayer, ReplayerEvents} from 'rrweb';
-import {Alert, Button, Paragraph, Text} from '../common';
-import {ArrowLeftOutlined} from '../icons';
+import {Alert, Button, Modal, Paragraph, Text, TextArea} from '../common';
+import {ArrowLeftOutlined, SendOutlined} from '../icons';
 import {SOCKET_URL} from '../../socket';
 import * as API from '../../api';
 import logger from '../../logger';
@@ -21,8 +21,10 @@ type State = {
   events: Array<any>;
   customer: Customer | null;
   conversation: Conversation | null;
-  accountId: string | null;
   scale: number;
+  isConversationModalOpen: boolean;
+  isSendingMessage: boolean;
+  message: string;
 };
 
 class LiveSessionViewer extends React.Component<Props, State> {
@@ -36,8 +38,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
     events: [],
     customer: null,
     conversation: null,
-    accountId: null,
     scale: 1,
+    isConversationModalOpen: false,
+    isSendingMessage: false,
+    message: '',
   };
 
   // TODO: move a bunch of logic from here into separate functions
@@ -53,7 +57,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
       customerId
     );
 
-    this.setState({customer, conversation, accountId});
+    this.setState({customer, conversation});
 
     const root = document.getElementById('SessionPlayer') as Element;
 
@@ -122,23 +126,34 @@ class LiveSessionViewer extends React.Component<Props, State> {
     }
   }
 
-  alex = async () => {
-    const {customer, accountId} = this.state;
-    console.log('?!?!', {customer, accountId});
-    if (!customer || !accountId) {
+  initializeNewConversation = async () => {
+    const {customer, message} = this.state;
+
+    if (!customer) {
       return null;
     }
 
-    const {id: customerId} = customer;
-    // TODO: is accountId necessary if we have an auth token?
-    const conversation = await API.createNewConversation(accountId, customerId);
-    console.log('Created conversation!', conversation);
-    const {id: conversationId} = conversation;
-    const message = await API.createNewMessage(conversationId, {
-      body: 'Hello world!',
-    });
-    console.log('Created message!', message);
+    this.setState({isSendingMessage: true});
+
+    try {
+      const {id: customerId} = customer;
+      const conversation = await API.createNewConversation(customerId);
+      const {id: conversationId} = conversation;
+      await API.createNewMessage(conversationId, {body: message});
+
+      this.setState({conversation});
+    } catch (err) {
+      logger.error('Failed to initialize conversation!', err);
+    }
+
+    this.setState({isConversationModalOpen: false, isSendingMessage: false});
   };
+
+  handleOpenNewConversationModal = () =>
+    this.setState({isConversationModalOpen: true});
+
+  handleCloseNewConversationModal = () =>
+    this.setState({isConversationModalOpen: false});
 
   findExistingConversation = async (
     accountId: string,
@@ -197,7 +212,15 @@ class LiveSessionViewer extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, scale = 1, conversation, customer} = this.state;
+    const {
+      loading,
+      scale = 1,
+      conversation,
+      customer,
+      isConversationModalOpen,
+      isSendingMessage,
+      message,
+    } = this.state;
     const hasAdditionalDetails = !!(conversation || customer);
 
     return (
@@ -210,15 +233,53 @@ class LiveSessionViewer extends React.Component<Props, State> {
           <Box mb={4}>
             <Box mb={3}>
               <Paragraph>
-                <Link to="/sessions/list">
-                  <Button icon={<ArrowLeftOutlined />}>
-                    Back to all sessions
-                  </Button>
-                </Link>
-              </Paragraph>
+                <Flex sx={{justifyContent: 'space-between'}}>
+                  <Link to="/sessions/list">
+                    <Button icon={<ArrowLeftOutlined />}>
+                      Back to all sessions
+                    </Button>
+                  </Link>
 
-              <Paragraph>
-                <Button onClick={this.alex}>Create conversation</Button>
+                  {!loading && !conversation && (
+                    <Button
+                      type="primary"
+                      onClick={this.handleOpenNewConversationModal}
+                    >
+                      Start conversation
+                    </Button>
+                  )}
+                  <Modal
+                    title="Initialize a conversation"
+                    visible={isConversationModalOpen}
+                    onCancel={this.handleCloseNewConversationModal}
+                    footer={[
+                      <Button
+                        key="cancel"
+                        onClick={this.handleCloseNewConversationModal}
+                      >
+                        Cancel
+                      </Button>,
+                      <Button
+                        key="submit"
+                        type="primary"
+                        icon={<SendOutlined />}
+                        loading={isSendingMessage}
+                        onClick={this.initializeNewConversation}
+                      >
+                        Send
+                      </Button>,
+                    ]}
+                  >
+                    <TextArea
+                      className="TextArea--transparent"
+                      placeholder="Enter a message..."
+                      autoSize={{maxRows: 4}}
+                      autoFocus
+                      value={message}
+                      onChange={(e) => this.setState({message: e.target.value})}
+                    />
+                  </Modal>
+                </Flex>
               </Paragraph>
 
               <Alert

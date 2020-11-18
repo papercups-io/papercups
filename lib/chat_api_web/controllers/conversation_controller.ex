@@ -86,25 +86,28 @@ defmodule ChatApiWeb.ConversationController do
   end
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def create(%{assigns: %{current_user: %{account_id: account_id}}} = conn, %{
+        "conversation" => conversation_params
+      }) do
+    with {:ok, %Conversation{} = conversation} <-
+           conversation_params
+           |> Map.merge(%{"account_id" => account_id})
+           |> Conversations.create_conversation() do
+      broadcast_conversation_to_admin!(conversation)
+      broadcast_conversation_to_customer!(conversation)
+
+      conn
+      |> put_status(:created)
+      |> put_resp_header("location", Routes.conversation_path(conn, :show, conversation))
+      |> render("create.json", conversation: conversation)
+    end
+  end
+
   def create(conn, %{"conversation" => conversation_params}) do
     with {:ok, %Conversation{} = conversation} <-
            Conversations.create_conversation(conversation_params) do
-      # TODO: move this broadcasting logic into different method(s)
-      %{id: conversation_id, account_id: account_id, customer_id: customer_id} = conversation
-
-      # Broadcast to admin
-      ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:created", %{
-        "id" => conversation_id
-      })
-
-      # Broadcast to customer
-      ChatApiWeb.Endpoint.broadcast!(
-        "conversation:lobby:" <> customer_id,
-        "conversation:created",
-        %{
-          "id" => conversation_id
-        }
-      )
+      broadcast_conversation_to_admin!(conversation)
+      broadcast_conversation_to_customer!(conversation)
 
       conn
       |> put_status(:created)
@@ -187,5 +190,29 @@ defmodule ChatApiWeb.ConversationController do
     with {:ok, _result} <- Conversations.remove_tag(conversation, tag_id) do
       json(conn, %{data: %{ok: true}})
     end
+  end
+
+  defp broadcast_conversation_to_admin!(
+         %Conversation{id: conversation_id, account_id: account_id} = conversation
+       ) do
+    ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:created", %{
+      "id" => conversation_id
+    })
+
+    conversation
+  end
+
+  defp broadcast_conversation_to_customer!(
+         %Conversation{id: conversation_id, customer_id: customer_id} = conversation
+       ) do
+    ChatApiWeb.Endpoint.broadcast!(
+      "conversation:lobby:" <> customer_id,
+      "conversation:created",
+      %{
+        "id" => conversation_id
+      }
+    )
+
+    conversation
   end
 end

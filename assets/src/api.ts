@@ -194,8 +194,8 @@ export const updateCustomer = async (
 };
 
 export const createNewConversation = async (
-  accountId: string,
   customerId: string,
+  accountId?: string,
   token = getAccessToken()
 ) => {
   if (!token) {
