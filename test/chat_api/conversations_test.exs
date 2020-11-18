@@ -67,7 +67,6 @@ defmodule ChatApi.ConversationsTest do
       msg = message_fixture(account, conversation, %{sent_at: ~N[2020-11-17 16:35:00]})
       msg2 = message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-17 16:35:00]})
 
-
       conversations = Conversations.list_conversations_by_account_v2(account.id, %{})
       assert length(conversations) == 2
 
