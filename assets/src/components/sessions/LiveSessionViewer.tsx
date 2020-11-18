@@ -124,6 +124,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
 
       this.channel.leave();
     }
+
+    if (this.socket && this.socket.disconnect) {
+      this.socket.disconnect();
+    }
   }
 
   initializeNewConversation = async () => {
