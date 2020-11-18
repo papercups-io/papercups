@@ -21,6 +21,7 @@ type State = {
   events: Array<any>;
   customer: Customer | null;
   conversation: Conversation | null;
+  accountId: string | null;
   scale: number;
 };
 
@@ -35,6 +36,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
     events: [],
     customer: null,
     conversation: null,
+    accountId: null,
     scale: 1,
   };
 
@@ -51,7 +53,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
       customerId
     );
 
-    this.setState({customer, conversation});
+    this.setState({customer, conversation, accountId});
 
     const root = document.getElementById('SessionPlayer') as Element;
 
@@ -119,6 +121,24 @@ class LiveSessionViewer extends React.Component<Props, State> {
       this.channel.leave();
     }
   }
+
+  alex = async () => {
+    const {customer, accountId} = this.state;
+    console.log('?!?!', {customer, accountId});
+    if (!customer || !accountId) {
+      return null;
+    }
+
+    const {id: customerId} = customer;
+    // TODO: is accountId necessary if we have an auth token?
+    const conversation = await API.createNewConversation(accountId, customerId);
+    console.log('Created conversation!', conversation);
+    const {id: conversationId} = conversation;
+    const message = await API.createNewMessage(conversationId, {
+      body: 'Hello world!',
+    });
+    console.log('Created message!', message);
+  };
 
   findExistingConversation = async (
     accountId: string,
@@ -195,6 +215,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
                     Back to all sessions
                   </Button>
                 </Link>
+              </Paragraph>
+
+              <Paragraph>
+                <Button onClick={this.alex}>Create conversation</Button>
               </Paragraph>
 
               <Alert

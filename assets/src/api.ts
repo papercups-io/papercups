@@ -195,10 +195,16 @@ export const updateCustomer = async (
 
 export const createNewConversation = async (
   accountId: string,
-  customerId: string
+  customerId: string,
+  token = getAccessToken()
 ) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
   return request
     .post(`/api/conversations`)
+    .set('Authorization', token)
     .send({
       conversation: {
         account_id: accountId,
@@ -386,6 +392,28 @@ export const deleteConversation = async (
   return request
     .delete(`/api/conversations/${conversationId}`)
     .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createNewMessage = async (
+  conversationId: string,
+  message: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/messages`)
+    .set('Authorization', token)
+    .send({
+      message: {
+        conversation_id: conversationId,
+        sent_at: new Date().toISOString(),
+        ...message,
+      },
+    })
     .then((res) => res.body.data);
 };
 

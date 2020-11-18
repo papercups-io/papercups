@@ -89,11 +89,22 @@ defmodule ChatApiWeb.ConversationController do
   def create(conn, %{"conversation" => conversation_params}) do
     with {:ok, %Conversation{} = conversation} <-
            Conversations.create_conversation(conversation_params) do
-      %{id: conversation_id, account_id: account_id} = conversation
+      # TODO: move this broadcasting logic into different method(s)
+      %{id: conversation_id, account_id: account_id, customer_id: customer_id} = conversation
 
+      # Broadcast to admin
       ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:created", %{
         "id" => conversation_id
       })
+
+      # Broadcast to customer
+      ChatApiWeb.Endpoint.broadcast!(
+        "conversation:lobby:" <> customer_id,
+        "conversation:created",
+        %{
+          "id" => conversation_id
+        }
+      )
 
       conn
       |> put_status(:created)
