@@ -25,6 +25,10 @@ defmodule ChatApi.Conversations.Helpers do
     end
   end
 
+  def send_conversations_state_update(conversations, state) do
+    Enum.map(conversations, fn conversation -> send_conversation_state_update(conversation, state) end)
+  end
+
   @spec send_multiple_archived_updates([Conversation.t()]) :: list()
   def send_multiple_archived_updates(conversations) do
     state = %{"state" => "archived"}

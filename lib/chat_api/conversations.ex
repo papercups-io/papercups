@@ -97,6 +97,13 @@ defmodule ChatApi.Conversations do
     |> Repo.preload([:customer, :tags, messages: [user: :profile]])
   end
 
+  @spec get_conversations(list()) :: list(Customer.t()) | list([])
+  def get_conversations(ids) do
+    Conversation
+    |> where([c], c.id in ^ids)
+    |> Repo.all
+  end
+
   @spec get_conversation(binary()) :: Conversation.t() | nil
   def get_conversation(id) do
     Conversation |> Repo.get(id)
@@ -156,6 +163,12 @@ defmodule ChatApi.Conversations do
     conversation
     |> Conversation.changeset(attrs)
     |> Repo.update()
+  end
+
+  @spec update_conversation([Conversation.t()], map()) :: {:ok, [Conversation.t()]} | {:error, Ecto.Changeset.t()}
+  def update_conversations([%Conversation{}] = conversations, attrs) do
+    conversations
+    |> Repo.update_all(set: attrs)
   end
 
   @spec mark_conversation_read(Conversation.t() | binary()) ::

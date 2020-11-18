@@ -147,6 +147,19 @@ defmodule ChatApiWeb.ConversationController do
     end
   end
 
+  def batch_update(conn, %{"ids" => ids, "conversation" => conversation_params}) do
+    conversations = Conversations.get_conversations(ids)
+
+    with {:ok, [%Conversation{}] = conversations} <-
+           Conversations.update_conversations(conversations, conversation_params) do
+      Task.start(fn ->
+        Helpers.send_conversations_state_update(conversations, conversation_params)
+      end)
+
+      render(conn, "index.json", conversationa: conversations)
+    end
+  end
+
   @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
     conversation = Conversations.get_conversation!(id)

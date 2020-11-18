@@ -96,6 +96,7 @@ defmodule ChatApiWeb.Router do
     resources("/tags", TagController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
 
+    post("/conversations/batch_update", ConversationController, :batch_update)
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
     post("/customers/:customer_id/tags", CustomerController, :add_tag)
