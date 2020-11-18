@@ -61,7 +61,7 @@ class Demo extends React.Component<Props, State> {
         // Not logged in, no big deal
       })
       .then(() => {
-        if (process.env.REACT_APP_STORYTIME_ENABLED || true) {
+        if (process.env.REACT_APP_STORYTIME_ENABLED) {
           this.storytime = Storytime.init({
             accountId: this.state.accountId,
             baseUrl: BASE_URL,
@@ -194,7 +194,6 @@ class Demo extends React.Component<Props, State> {
           customer={customer}
           baseUrl={BASE_URL}
           iconVariant="filled"
-          iframeUrlOverride="http://localhost:8080"
           defaultIsOpen
           showAgentAvailability
           onChatLoaded={() => logger.debug('Chat loaded!')}
