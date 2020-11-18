@@ -14,11 +14,19 @@ defmodule ChatApiWeb.ConversationControllerTest do
   setup %{conn: conn} do
     account = account_fixture()
     user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
-    conversation = conversation_fixture(account, customer_fixture(account))
+    customer = customer_fixture(account)
+    conversation = conversation_fixture(account, customer)
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
-    {:ok, conn: conn, authed_conn: authed_conn, account: account, conversation: conversation}
+    {
+      :ok,
+      conn: conn,
+      authed_conn: authed_conn,
+      account: account,
+      customer: customer,
+      conversation: conversation
+    }
   end
 
   describe "index" do
@@ -30,8 +38,12 @@ defmodule ChatApiWeb.ConversationControllerTest do
   end
 
   describe "create conversation" do
-    test "renders conversation when data is valid", %{authed_conn: authed_conn, account: account} do
-      attrs = Map.put(@create_attrs, :account_id, account.id)
+    test "renders conversation when data is valid", %{
+      authed_conn: authed_conn,
+      account: account,
+      customer: customer
+    } do
+      attrs = Map.merge(@create_attrs, %{account_id: account.id, customer_id: customer.id})
 
       conn =
         post(authed_conn, Routes.conversation_path(authed_conn, :create), conversation: attrs)

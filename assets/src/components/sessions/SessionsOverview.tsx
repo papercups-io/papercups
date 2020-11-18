@@ -47,6 +47,16 @@ class SessionsOverview extends React.Component<Props, State> {
     }
   }
 
+  componentWillUnmount() {
+    if (this.channel && this.channel.leave) {
+      this.channel.leave();
+    }
+
+    if (this.socket && this.socket.disconnect) {
+      this.socket.disconnect();
+    }
+  }
+
   connectToSocket = async (accountId: string) => {
     this.socket = new Socket(SOCKET_URL, {
       params: {token: API.getAccessToken()},

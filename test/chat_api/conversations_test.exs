@@ -13,8 +13,9 @@ defmodule ChatApi.ConversationsTest do
 
     def valid_create_attrs do
       account = account_fixture()
+      customer = customer_fixture(account)
 
-      Enum.into(@valid_attrs, %{account_id: account.id})
+      Enum.into(@valid_attrs, %{account_id: account.id, customer_id: customer.id})
     end
 
     setup do
