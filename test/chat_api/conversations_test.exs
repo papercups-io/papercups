@@ -59,15 +59,14 @@ defmodule ChatApi.ConversationsTest do
       conversation_fixture(different_account, different_customer)
       secondary_conversation = conversation_fixture(account, different_customer)
 
+      Enum.each(1..5, fn _x ->
+        message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
+        message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
+      end)
+
       msg = message_fixture(account, conversation, %{sent_at: ~N[2020-11-17 16:35:00]})
       msg2 = message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-17 16:35:00]})
 
-      for _n <- 1..5,
-          do: message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
-
-      for _n <- 1..3,
-          do:
-            message_fixture(account, secondary_conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
 
       conversations = Conversations.list_conversations_by_account_v2(account.id, %{})
       assert length(conversations) == 2
