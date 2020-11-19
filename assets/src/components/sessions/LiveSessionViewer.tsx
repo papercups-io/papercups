@@ -141,9 +141,12 @@ class LiveSessionViewer extends React.Component<Props, State> {
 
     try {
       const {id: customerId} = customer;
-      const conversation = await API.createNewConversation(customerId);
-      const {id: conversationId} = conversation;
-      await API.createNewMessage(conversationId, {body: message});
+      const conversation = await API.createNewConversation(customerId, {
+        message: {
+          body: message,
+          sent_at: new Date().toISOString(),
+        },
+      });
 
       this.setState({conversation});
     } catch (err) {

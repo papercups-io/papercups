@@ -195,7 +195,7 @@ export const updateCustomer = async (
 
 export const createNewConversation = async (
   customerId: string,
-  accountId?: string,
+  params?: object,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -207,8 +207,8 @@ export const createNewConversation = async (
     .set('Authorization', token)
     .send({
       conversation: {
-        account_id: accountId,
         customer_id: customerId,
+        ...params,
       },
     })
     .then((res) => res.body.data);
