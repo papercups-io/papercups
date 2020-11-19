@@ -60,7 +60,7 @@ defmodule ChatApi.MixProject do
       {:mail, "~> 0.2"},
       {:phoenix_swagger, "~> 0.8"},
       {:ex_json_schema, "~> 0.5"},
-      {:ex_machina, "~> 2.4"}
+      {:ex_machina, "~> 2.4", only: [:test]}
     ]
   end
 

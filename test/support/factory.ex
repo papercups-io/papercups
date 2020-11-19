@@ -15,4 +15,8 @@ defmodule ChatApi.Factory do
       title: "some title"
     }
   end
+
+  def browser_session_factory do
+    %ChatApi.BrowserSessions.BrowserSession{}
+  end
 end
