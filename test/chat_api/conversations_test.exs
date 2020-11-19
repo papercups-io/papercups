@@ -41,12 +41,29 @@ defmodule ChatApi.ConversationsTest do
       different_customer = customer_fixture(different_account)
       _conversation = conversation_fixture(different_account, different_customer)
 
-      for _n <- 1..10,
-          do: message_fixture(account, conversation, %{sent_at: ~N[2020-11-14 20:50:26]})
-
       result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
 
       assert result_ids == [conversation.id]
+    end
+
+    test "list_conversations_by_account/1 sorts the conversations by most recent message", %{
+      customer: customer
+    } do
+      account = account_fixture()
+
+      conversation_1 = conversation_fixture(account, customer)
+      conversation_2 = conversation_fixture(account, customer)
+      conversation_3 = conversation_fixture(account, customer)
+
+      message_fixture(account, conversation_1, %{inserted_at: ~N[2020-11-02 20:00:00]})
+      message_fixture(account, conversation_2, %{inserted_at: ~N[2020-11-03 20:00:00]})
+      message_fixture(account, conversation_3, %{inserted_at: ~N[2020-11-01 20:00:00]})
+
+      results = Conversations.list_conversations_by_account(account.id)
+      result_ids = Enum.map(results, & &1.id)
+
+      # Sorted by conversation with most recent message to least recent
+      assert result_ids == [conversation_2.id, conversation_1.id, conversation_3.id]
     end
 
     test "list_conversations_by_account/1 returns all not archived conversations for an account",
