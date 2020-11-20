@@ -138,7 +138,7 @@ const CustomerDetails = ({
         <DetailsSectionCard>
           <Flex mb={2} sx={{justifyContent: 'space-between'}}>
             <Text strong>Last seen</Text>
-            <Badge status="processing" text="Online now!" />
+            <Badge status="processing" text="Online now" />
           </Flex>
           <Box mb={1}>
             <CustomerActiveSessions customerId={customerId} />
