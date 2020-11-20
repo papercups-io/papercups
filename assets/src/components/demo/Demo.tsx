@@ -21,6 +21,10 @@ import logger from '../../logger';
 import {Storytime} from '@papercups-io/storytime';
 import ChatWidget from '@papercups-io/chat-widget';
 
+const {
+  REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
+} = process.env;
+
 type Props = RouteComponentProps & {};
 type State = {
   color: string;
@@ -45,7 +49,7 @@ class Demo extends React.Component<Props, State> {
       color: defaultColor || colors.primary,
       title: defaultTitle || 'Welcome to Papercups!',
       subtitle: defaultSubtitle || 'Ask us anything using the chat window 💭',
-      accountId: 'eb504736-0f20-4978-98ff-1a82ae60b266',
+      accountId: REACT_APP_ADMIN_ACCOUNT_ID,
       currentUser: null,
     };
   }

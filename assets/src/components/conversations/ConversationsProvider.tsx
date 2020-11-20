@@ -200,6 +200,16 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.joinNotificationChannel(accountId, conversationIds);
   }
 
+  componentWillUnmount() {
+    if (this.channel && this.channel.leave) {
+      this.channel.leave();
+    }
+
+    if (this.socket && this.socket.disconnect) {
+      this.socket.disconnect();
+    }
+  }
+
   joinNotificationChannel = (
     accountId: string,
     conversationIds: Array<string>
@@ -212,6 +222,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.socket = new Socket(SOCKET_URL, {
       params: {token: API.getAccessToken()},
     });
+
     this.socket.connect();
     // TODO: attempt refreshing access token?
     this.socket.onError(

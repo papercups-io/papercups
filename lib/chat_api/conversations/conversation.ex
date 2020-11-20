@@ -42,7 +42,7 @@ defmodule ChatApi.Conversations.Conversation do
       :customer_id,
       :archived_at
     ])
-    |> validate_required([:status, :account_id])
+    |> validate_required([:status, :account_id, :customer_id])
   end
 
   def test_changeset(conversation, attrs) do

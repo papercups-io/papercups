@@ -87,11 +87,40 @@ defmodule ChatApi.SlackTest do
       customer: customer,
       thread: thread
     } do
-      channel = thread.slack_channel
       text = "Hello world"
+      customer_email = "*Email:*\n#{customer.email}"
+      channel = thread.slack_channel
 
       assert %{
-               "blocks" => _blocks,
+               "blocks" => [
+                 %{
+                   "text" => %{
+                     "text" => ^text
+                   }
+                 },
+                 %{
+                   "fields" => [
+                     %{
+                       "text" => "*Name:*\nAnonymous User"
+                     },
+                     %{
+                       "text" => ^customer_email
+                     },
+                     %{
+                       "text" => "*URL:*\nN/A"
+                     },
+                     %{
+                       "text" => "*Browser:*\nN/A"
+                     },
+                     %{
+                       "text" => "*OS:*\nN/A"
+                     },
+                     %{
+                       "text" => "*Timezone:*\nN/A"
+                     }
+                   ]
+                 }
+               ],
                "channel" => ^channel
              } =
                Slack.get_message_payload(text, %{

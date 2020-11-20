@@ -99,7 +99,7 @@ const Dashboard = (props: RouteComponentProps) => {
         debug: isDev,
         customer: {
           email,
-          external_id: id,
+          external_id: [id, email].join('|'),
         },
       });
 
@@ -324,8 +324,7 @@ const Dashboard = (props: RouteComponentProps) => {
           subtitle="Ask us in the chat window below 😊"
           greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
           primaryColor="#1890ff"
-          accountId="eb504736-0f20-4978-98ff-1a82ae60b266"
-          baseUrl={BASE_URL}
+          accountId={REACT_APP_ADMIN_ACCOUNT_ID}
           hideToggleButton
           customer={{
             external_id: [currentUser.id, currentUser.email].join('|'),

@@ -10,7 +10,13 @@ defmodule ChatApi.MixProject do
       compilers: [:phoenix, :gettext] ++ Mix.compilers() ++ [:phoenix_swagger],
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      releases: [
+        papercups: [
+          include_executables_for: [:unix],
+          applications: [chat_api: :permanent]
+        ]
+      ]
     ]
   end
 

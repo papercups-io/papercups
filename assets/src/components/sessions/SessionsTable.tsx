@@ -71,7 +71,7 @@ const SessionsTable = ({
         return (
           <Box>
             {isActive ? (
-              <Badge status="processing" text="Online now!" />
+              <Badge status="processing" text="Online now" />
             ) : (
               <Badge status="default" text="Inactive" />
             )}

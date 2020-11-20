@@ -62,6 +62,7 @@ defmodule ChatApiWeb.NotificationChannel do
       |> Map.get(:id)
       |> Messages.get_message!()
       |> broadcast_new_message()
+      |> maybe_update_conversation_assignee()
     end
 
     {:noreply, socket}
@@ -110,6 +111,37 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.notify(:slack)
     |> Messages.notify(:webhooks)
     |> Messages.notify(:conversation_reply_email)
+  end
+
+  defp maybe_update_conversation_assignee(
+         %Messages.Message{conversation_id: conversation_id} = message
+       ) do
+    # Check if this is the first agent reply, in which case
+    # we auto assign the conversation to that user.
+    if Conversations.count_agent_replies(conversation_id) == 1 do
+      update_conversation_assignee(message)
+    end
+
+    message
+  end
+
+  defp update_conversation_assignee(
+         %Messages.Message{
+           account_id: account_id,
+           conversation_id: conversation_id,
+           user_id: assignee_id
+         } = _message
+       ) do
+    # TODO: DRY up this logic with other places we do conversation updates w/ broadcasting
+    {:ok, conversation} =
+      conversation_id
+      |> Conversations.get_conversation!()
+      |> Conversations.update_conversation(%{assignee_id: assignee_id})
+
+    ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
+      "id" => conversation_id,
+      "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
+    })
   end
 
   defp put_new_topics(socket, topics) do

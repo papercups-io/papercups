@@ -13,8 +13,9 @@ defmodule ChatApi.ConversationsTest do
 
     def valid_create_attrs do
       account = account_fixture()
+      customer = customer_fixture(account)
 
-      Enum.into(@valid_attrs, %{account_id: account.id})
+      Enum.into(@valid_attrs, %{account_id: account.id, customer_id: customer.id})
     end
 
     setup do
@@ -165,6 +166,25 @@ defmodule ChatApi.ConversationsTest do
 
     test "change_conversation/1 returns a conversation changeset", %{conversation: conversation} do
       assert %Ecto.Changeset{} = Conversations.change_conversation(conversation)
+    end
+
+    test "has_agent_replied?/1 checks if an agent has replied to the conversation", %{
+      account: account,
+      customer: customer,
+      conversation: conversation
+    } do
+      refute Conversations.has_agent_replied?(conversation.id)
+
+      # Create a message from a customer (i.e. not an agent)
+      message_fixture(account, conversation, %{customer_id: customer.id})
+
+      refute Conversations.has_agent_replied?(conversation.id)
+
+      # Create a message from an agent
+      user = user_fixture(account)
+      message_fixture(account, conversation, %{user_id: user.id})
+
+      assert Conversations.has_agent_replied?(conversation.id)
     end
 
     test "archive_conversation/1 sets the archive_at field of a conversation", %{

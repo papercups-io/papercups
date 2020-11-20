@@ -64,6 +64,7 @@ export class Logger {
   }
 
   error(...args: any) {
+    // TODO: capture these errors in Sentry?
     console.error(...args);
     this.callback('error', ...args);
   }

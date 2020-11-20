@@ -21,7 +21,7 @@ export type Customer = {
   host?: string;
   ip?: string;
   last_seen?: string;
-  metadata?: object;
+  metadata?: any;
   os?: string;
   pathname?: string;
   phone?: number;

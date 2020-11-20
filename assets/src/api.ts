@@ -175,16 +175,40 @@ export const fetchCustomer = async (id: string, token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const createNewConversation = async (
-  accountId: string,
-  customerId: string
+export const updateCustomer = async (
+  id: string,
+  updates: any,
+  token = getAccessToken()
 ) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/customers/${id}`)
+    .set('Authorization', token)
+    .send({
+      customer: updates,
+    })
+    .then((res) => res.body.data);
+};
+
+export const createNewConversation = async (
+  customerId: string,
+  params?: object,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
   return request
     .post(`/api/conversations`)
+    .set('Authorization', token)
     .send({
       conversation: {
-        account_id: accountId,
         customer_id: customerId,
+        ...params,
       },
     })
     .then((res) => res.body.data);
@@ -368,6 +392,28 @@ export const deleteConversation = async (
   return request
     .delete(`/api/conversations/${conversationId}`)
     .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createNewMessage = async (
+  conversationId: string,
+  message: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/messages`)
+    .set('Authorization', token)
+    .send({
+      message: {
+        conversation_id: conversationId,
+        sent_at: new Date().toISOString(),
+        ...message,
+      },
+    })
     .then((res) => res.body.data);
 };
 

@@ -13,6 +13,10 @@ defmodule ChatApiWeb.ConversationChannel do
     end
   end
 
+  def join("conversation:lobby:" <> customer_id, _params, socket) do
+    {:ok, assign(socket, :customer_id, customer_id)}
+  end
+
   def join("conversation:" <> private_conversation_id, payload, socket) do
     if authorized?(payload, private_conversation_id) do
       conversation = Conversations.get_conversation!(private_conversation_id)
