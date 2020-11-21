@@ -30,7 +30,10 @@ defmodule ChatApi.Emails.Email do
         customer_id
         |> ChatApi.Customers.get_customer!()
         |> Map.get(:email)
-        |> (&" from #{&1}").()
+        |> case do
+          nil -> ""
+          email -> " from #{email}"
+        end
       else
         ""
       end
