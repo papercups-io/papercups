@@ -139,7 +139,8 @@ class GettingStartedOverview extends React.Component<Props, State> {
       primaryColor: "${color}",
       greeting: "${greeting || ''}",
       newMessagePlaceholder: "${newMessagePlaceholder || ''}",
-      baseUrl: "${BASE_URL}"
+      baseUrl: "${BASE_URL}",
+      iframeUrlOverride: "https://botcart-chatwindow.herokuapp.com/"
     },
   };
 </script>
