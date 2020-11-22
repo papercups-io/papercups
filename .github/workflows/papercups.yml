@@ -41,8 +41,8 @@ jobs:
       - name: Initial setup
         uses: actions/setup-elixir@v1
         with:
-          elixir-version: '1.10.4'
-          otp-version: '22.2.6'
+          elixir-version: '1.11.2'
+          otp-version: '23.0.3'
 
       - name: Install dependencies
         run: mix deps.get
@@ -59,8 +59,8 @@ jobs:
       - name: Initial setup
         uses: actions/setup-elixir@v1
         with:
-          elixir-version: '1.10.4'
-          otp-version: '22.2.6'
+          elixir-version: '1.11.2'
+          otp-version: '23.0.3'
 
       - name: Install dependencies
         run: mix deps.get

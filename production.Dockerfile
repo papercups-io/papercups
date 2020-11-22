@@ -1,4 +1,4 @@
-FROM elixir:1.10.4-alpine as builder
+FROM elixir:1.11.0-alpine as builder
 
 # build step
 ARG MIX_ENV=prod
@@ -10,7 +10,7 @@ RUN mkdir /app
 WORKDIR /app
 
 RUN apk add --no-cache git nodejs yarn python npm ca-certificates wget gnupg make erlang gcc libc-dev && \
-    npm install npm@latest -g 
+    npm install npm@latest -g
 
 # Client side
 COPY assets/package.json assets/package-lock.json ./assets/
