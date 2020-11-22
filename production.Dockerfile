@@ -1,4 +1,4 @@
-FROM elixir:1.11.0-alpine as builder
+FROM elixir:1.11.2-alpine as builder
 
 # build step
 ARG MIX_ENV=prod
