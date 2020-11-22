@@ -56,6 +56,18 @@ defmodule ChatApiWeb.CustomerController do
     end
   end
 
+  def identify(conn, params) do
+    conn
+    |> put_status(422)
+    |> json(%{
+      error: %{
+        status: 422,
+        message: "The following parameters are required: external_id, account_id",
+        received: Map.keys(params)
+      }
+    })
+  end
+
   @spec update(Plug.Conn.t(), map) :: Plug.Conn.t()
   def update(conn, %{"id" => id, "customer" => customer_params}) do
     customer = Customers.get_customer!(id)

@@ -13,13 +13,35 @@ defmodule ChatApiWeb.WidgetSettingsController do
     render(conn, "show.json", widget_settings: widget_settings)
   end
 
-  @spec update_metadata(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def update_metadata(conn, payload) do
-    with %{"account_id" => account_id, "metadata" => metadata} <- payload do
-      {:ok, widget_settings} = WidgetSettings.update_widget_metadata(account_id, metadata)
+  def show(conn, params) do
+    conn
+    |> put_status(422)
+    |> json(%{
+      error: %{
+        status: 422,
+        message: "The account_id is a required parameter",
+        received: Map.keys(params)
+      }
+    })
+  end
 
+  @spec update_metadata(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def update_metadata(conn, %{"account_id" => account_id, "metadata" => metadata}) do
+    with {:ok, widget_settings} <- WidgetSettings.update_widget_metadata(account_id, metadata) do
       render(conn, "update.json", widget_settings: widget_settings)
     end
+  end
+
+  def update_metadata(conn, params) do
+    conn
+    |> put_status(422)
+    |> json(%{
+      error: %{
+        status: 422,
+        message: "The following parameters are required: account_id, metadata",
+        received: Map.keys(params)
+      }
+    })
   end
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
