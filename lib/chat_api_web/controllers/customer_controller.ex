@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.CustomerController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.Customers
+  alias ChatApi.{Accounts, Customers}
   alias ChatApi.Customers.Customer
 
   action_fallback ChatApiWeb.FallbackController
@@ -43,16 +43,20 @@ defmodule ChatApiWeb.CustomerController do
         "external_id" => external_id,
         "account_id" => account_id
       }) do
-    case Customers.find_by_external_id(external_id, account_id) do
-      %{id: customer_id} ->
-        json(conn, %{
-          data: %{
-            customer_id: customer_id
-          }
-        })
+    if Accounts.exists?(account_id) do
+      case Customers.find_by_external_id(external_id, account_id) do
+        %{id: customer_id} ->
+          json(conn, %{
+            data: %{
+              customer_id: customer_id
+            }
+          })
 
-      _ ->
-        json(conn, %{data: %{customer_id: nil}})
+        _ ->
+          json(conn, %{data: %{customer_id: nil}})
+      end
+    else
+      send_account_not_found_error(conn, account_id)
     end
   end
 
@@ -135,4 +139,17 @@ defmodule ChatApiWeb.CustomerController do
   @spec resp_format(map()) :: String.t()
   defp resp_format(%{"format" => "csv"}), do: "csv"
   defp resp_format(_), do: "json"
+
+  @spec send_account_not_found_error(Plug.Conn.t(), binary()) :: Plug.Conn.t()
+  defp send_account_not_found_error(conn, account_id) do
+    conn
+    |> put_status(404)
+    |> json(%{
+      error: %{
+        status: 404,
+        message: "No account found with ID: #{account_id}. Are you pointing at the correct host?",
+        host: System.get_env("BACKEND_URL") || "localhost"
+      }
+    })
+  end
 end
