@@ -21,38 +21,27 @@ defmodule ChatApi.Conversations do
     []
   end
 
-  def list_conversations_by_account(account_id, params) do
+  def list_conversations_by_account(account_id, attrs) do
     Conversation
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
+        c.id
+      )
+    )
     |> where(account_id: ^account_id)
-    |> where(^filter_where(params))
+    |> where(^filter_where(attrs))
     |> where([c], is_nil(c.archived_at))
-    |> order_by(desc: :inserted_at)
-    |> preload([:customer, [messages: [user: :profile]]])
+    |> order_by([c, f], desc: f)
+    |> preload([:customer, messages: [user: :profile]])
     |> Repo.all()
   end
 
   @spec list_conversations_by_account(binary()) :: [Conversation.t()]
   def list_conversations_by_account(account_id) do
     list_conversations_by_account(account_id, %{})
-  end
-
-  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
-  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
-  def filter_where(params) do
-    Enum.reduce(params, dynamic(true), fn
-      {"status", value}, dynamic ->
-        dynamic([p], ^dynamic and p.status == ^value)
-
-      {"priority", value}, dynamic ->
-        dynamic([p], ^dynamic and p.priority == ^value)
-
-      {"assignee_id", value}, dynamic ->
-        dynamic([p], ^dynamic and p.assignee_id == ^value)
-
-      {_, _}, dynamic ->
-        # Not a where parameter
-        dynamic
-    end)
   end
 
   @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
@@ -262,5 +251,28 @@ defmodule ChatApi.Conversations do
     conversation
     |> get_tag(tag_id)
     |> Repo.delete()
+  end
+
+  #####################
+  # Private methods
+  #####################
+
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
+  defp filter_where(attrs) do
+    Enum.reduce(attrs, dynamic(true), fn
+      {"status", value}, dynamic ->
+        dynamic([p], ^dynamic and p.status == ^value)
+
+      {"priority", value}, dynamic ->
+        dynamic([p], ^dynamic and p.priority == ^value)
+
+      {"assignee_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.assignee_id == ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end
