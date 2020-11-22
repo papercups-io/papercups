@@ -1,24 +1,24 @@
-version: "3.2"
+version: '3.2'
 
 services:
   papercups:
     image: papercups/papercups:latest
     ports:
-      - "3000:3000"
-      - "4000:4000"
+      - '3000:3000'
+      - '4000:4000'
     command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && echo 'running' && /entrypoint.sh run"
     depends_on:
       - db
     environment:
-      DATABASE_URL: "ecto://postgres:postgres@db/postgres"
+      DATABASE_URL: 'ecto://postgres:postgres@db/postgres'
       # PUT YOUR OWN SECRET KEYBASE HERE
       SECRET_KEY_BASE: 'dvPPvOjpgX2Wk8Y3ONrqWsgM9ZtU4sSrs4l/5CFD1sLm4H+CjLU+EidjNGuSz7bz'
-      BACKEND_URL: "localhost"
-      MIX_ENV: "prod"
+      BACKEND_URL: 'localhost'
+      MIX_ENV: 'prod'
   db:
     image: postgres:alpine
     container_name: papercups
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       POSTGRES_PASSWORD: postgres
