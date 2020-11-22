@@ -48,7 +48,7 @@ import ReportingDashboard from './reporting/ReportingDashboard';
 const {
   REACT_APP_STRIPE_PUBLIC_KEY,
   REACT_APP_STORYTIME_ENABLED,
-  REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
+  REACT_APP_ADMIN_ACCOUNT_ID = '1474cfc8-0891-4d0d-bab6-4699ab0411a2',
 } = process.env;
 
 const TITLE_FLASH_INTERVAL = 2000;
@@ -320,11 +320,12 @@ const Dashboard = (props: RouteComponentProps) => {
 
       {currentUser && (
         <ChatWidget
-          title="Need help with anything?"
+          title="Welcome to BotCart?"
           subtitle="Ask us in the chat window below 😊"
           greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
           primaryColor="#1890ff"
           accountId={REACT_APP_ADMIN_ACCOUNT_ID}
+          iframeUrlOverride= "https://botcart-chatwindow.herokuapp.com/"
           hideToggleButton
           customer={{
             external_id: [currentUser.id, currentUser.email].join('|'),
