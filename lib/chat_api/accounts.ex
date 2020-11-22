@@ -108,4 +108,15 @@ defmodule ChatApi.Accounts do
   def change_account(%Account{} = account, attrs \\ %{}) do
     Account.changeset(account, attrs)
   end
+
+  @spec exists?(binary()) :: boolean()
+  def exists?(id) do
+    count =
+      Account
+      |> where(id: ^id)
+      |> select([p], count(p.id))
+      |> Repo.one()
+
+    count > 0
+  end
 end
