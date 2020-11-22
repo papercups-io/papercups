@@ -67,17 +67,11 @@ const shouldDisplayChat = (pathname: string) => {
   return true;
 };
 
-const Dashboard = (props: RouteComponentProps) => {
-  const auth = useAuth();
-  const {pathname} = useLocation();
-  const {currentUser, unreadByCategory: unread} = useConversations();
+// TODO: not sure if this is the best way to handle this, but the goal
+// of this component is to flash the number of unread messages in the
+// tab (i.e. HTML title) so users can see when new messages arrive
+const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
   const [htmlTitle, setHtmlTitle] = useState('Papercups');
-
-  const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
-  const totalNumUnread = (unread && unread.all) || 0;
-  const shouldDisplayBilling = hasValidStripeKey();
-
-  const logout = () => auth.logout().then(() => props.history.push('/login'));
 
   const toggleNotificationMessage = () => {
     if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups')) {
@@ -88,6 +82,34 @@ const Dashboard = (props: RouteComponentProps) => {
       setHtmlTitle('Papercups');
     }
   };
+
+  useEffect(() => {
+    let timeout;
+
+    if (totalNumUnread > 0) {
+      timeout = setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
+    } else {
+      clearTimeout(timeout);
+    }
+  });
+
+  return (
+    <Helmet defer={false}>
+      <title>{totalNumUnread ? htmlTitle : 'Papercups'}</title>
+    </Helmet>
+  );
+};
+
+const Dashboard = (props: RouteComponentProps) => {
+  const auth = useAuth();
+  const {pathname} = useLocation();
+  const {currentUser, unreadByCategory: unread} = useConversations();
+
+  const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
+  const totalNumUnread = (unread && unread.all) || 0;
+  const shouldDisplayBilling = hasValidStripeKey();
+
+  const logout = () => auth.logout().then(() => props.history.push('/login'));
 
   useEffect(() => {
     if (REACT_APP_STORYTIME_ENABLED && currentUser) {
@@ -107,23 +129,9 @@ const Dashboard = (props: RouteComponentProps) => {
     }
   }, [currentUser]);
 
-  // TODO: isolate this so it doesn't trigger a rerender of the entire dashboard
-  // every 2 seconds (i.e. the TITLE_FLASH_INTERVAL)
-  useEffect(() => {
-    let timeout;
-
-    if (totalNumUnread > 0) {
-      timeout = setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
-    } else {
-      clearTimeout(timeout);
-    }
-  });
-
   return (
     <Layout>
-      <Helmet defer={false}>
-        <title>{totalNumUnread ? htmlTitle : 'Papercups'}</title>
-      </Helmet>
+      <DashboardHtmlHead totalNumUnread={totalNumUnread} />
 
       <Sider
         width={220}
