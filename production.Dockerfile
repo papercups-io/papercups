@@ -9,7 +9,7 @@ ENV APP_VERSION=$APP_VER
 RUN mkdir /app
 WORKDIR /app
 
-RUN apk add --no-cache git nodejs=12.18.3 yarn python3 npm ca-certificates wget gnupg make erlang gcc libc-dev && \
+RUN apk add --no-cache git nodejs=12.18.4 yarn python3 npm ca-certificates wget gnupg make erlang gcc libc-dev && \
     npm install npm@latest -g
 
 # Client side
