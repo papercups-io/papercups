@@ -82,6 +82,17 @@ class AccountOverview extends React.Component<Props, State> {
     }
   };
 
+
+  sendEmailToUser = async (email:string) => {
+    try {
+      const {id: token} = await API.generateUserInvitation();
+      // Call api from elixir code
+    } catch (err) {
+      logger.error('Failed to send invite email:', err);
+    }
+  
+  };
+
   focusAndHighlightInput = () => {
     if (!this.input) {
       return;
@@ -310,6 +321,11 @@ class AccountOverview extends React.Component<Props, State> {
                     placeholder="Click the button to generate an invite URL!"
                     value={inviteUrl}
                   ></Input>
+                </Box>
+                <Box>
+                  <Button type="primary" onClick={this.sendEmailToUser}>
+                    Send email to member
+                  </Button>
                 </Box>
                 <Box>
                   <Button type="primary" onClick={this.handleGenerateInviteUrl}>

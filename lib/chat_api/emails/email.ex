@@ -138,6 +138,46 @@ defmodule ChatApi.Emails.Email do
     |> text_body(welcome_email_text())
   end
 
+  def sendInvite(to_address, link) do
+    new()
+    |> to(to_address)
+    |> from({"Papercups", @from_address})
+    |> subject("Hey you have been invited to Papercups!")
+    |> html_body(send_invite_html(link))
+    |> text_body(send_invite_text(link))
+  end
+
+    # TODO: figure out a better way to create templates for these
+  defp send_invite_text(link) do
+    """
+    Hi there!
+
+    Click the link below to register on Papercups:
+
+    #{link}
+
+    Best,
+    Alex & Kam @ Papercups
+    """
+  end
+
+  # TODO: figure out a better way to create templates for these
+  defp send_invite_html(link) do
+    link = "#{link}"
+
+    """
+    <p>Hi there!</p>
+
+    <p>Click the link below to register on Papercups:</p>
+
+    <a href="#{link}"></a>
+
+    <p>
+    Best,<br />
+    Alex & Kam @ Papercups
+    </p>
+    """
+
   # TODO: figure out a better way to create templates for these
   defp welcome_email_text() do
     # TODO: include user's name if available
