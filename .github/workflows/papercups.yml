@@ -2,18 +2,16 @@ name: Papercups
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
 
 jobs:
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Build the Docker image
-      run: docker build . --file production.Dockerfile --tag papercups/papercups:$(date +%s)
+  # build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Build the Docker image
+  #       run: docker build . --file production.Dockerfile --tag papercups/papercups:$(date +%s)
 
   mix-test:
     name: Mix Test
@@ -29,7 +27,7 @@ jobs:
       postgres:
         image: postgres:10.4
         env:
-          POSTGRES_PASSWORD: "postgres"
+          POSTGRES_PASSWORD: 'postgres'
         ports:
           - 5432:5432
         options: >-
@@ -56,17 +54,16 @@ jobs:
     name: Mix Format
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Initial setup
-      uses: actions/setup-elixir@v1
-      with:
-        elixir-version: '1.10.4'
-        otp-version: '22.2.6'
+      - name: Initial setup
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: '1.10.4'
+          otp-version: '22.2.6'
 
-    - name: Install dependencies
-      run: mix deps.get
+      - name: Install dependencies
+        run: mix deps.get
 
-    - name: Run format check
-      run: mix format --check-formatted
-
+      - name: Run format check
+        run: mix format --check-formatted
