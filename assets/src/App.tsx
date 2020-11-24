@@ -36,7 +36,7 @@ const App = () => {
           <Route path="/bot/demo" component={BotDemo} />
           <Route path="/login" component={Login} />
           <Route path="/register/:invite" component={Register} />
-          <Route path="/register" component={Register} />
+          {/* <Route path="/register" component={Register} /> */}
           <Route path="/verify" component={EmailVerification} />
           <Route path="/reset-password" component={RequestPasswordReset} />
           <Route path="/reset" component={PasswordReset} />
