@@ -263,16 +263,7 @@ const Dashboard = (props: RouteComponentProps) => {
 
           <Box py={3}>
             <Menu mode="inline" theme="dark" selectable={false}>
-              {shouldDisplayChat(pathname) && (
-                <Menu.Item
-                  title="Chat with us!"
-                  icon={<SmileOutlined />}
-                  key="chat"
-                  onClick={Papercups.toggle}
-                >
-                  Chat with us!
-                </Menu.Item>
-              )}
+          
               <Menu.Item
                 title="Log out"
                 icon={<LogoutOutlined />}
@@ -317,19 +308,6 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
-
-      {currentUser && (
-        <ChatWidget
-        title="Welcome to BotCart?"
-        subtitle="Ask us in the chat window below 😊"
-        primaryColor="#1890ff"
-        greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
-        accountId="1474cfc8-0891-4d0d-bab6-4699ab0411a2"
-        baseUrl={BASE_URL}
-        iframeUrlOverride={'https://botcart-chatwindow.herokuapp.com/'}
-        defaultIsOpen
-      />
-      )}
     </Layout>
   );
 };
