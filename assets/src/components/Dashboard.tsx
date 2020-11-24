@@ -320,18 +320,19 @@ const Dashboard = (props: RouteComponentProps) => {
 
       {currentUser && (
         <ChatWidget
-          title="Welcome to BotCart?"
-          subtitle="Ask us in the chat window below 😊"
-          greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
-          primaryColor="#1890ff"
-          accountId={REACT_APP_ADMIN_ACCOUNT_ID}
-          iframeUrlOverride= "https://botcart-chatwindow.herokuapp.com/"
-          hideToggleButton
-          customer={{
-            external_id: [currentUser.id, currentUser.email].join('|'),
-            email: currentUser.email,
-          }}
-        />
+        title="Welcome to BotCart?"
+        subtitle="Ask us in the chat window below 😊"
+        primaryColor="#1890ff"
+        greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
+        accountId="1474cfc8-0891-4d0d-bab6-4699ab0411a2"
+        customer={{
+          external_id: [currentUser.id, currentUser.email].join('|'),
+          email: currentUser.email,
+        }}
+        baseUrl={BASE_URL}
+        iframeUrlOverride={'https://botcart-chatwindow.herokuapp.com/'}
+        defaultIsOpen
+      />
       )}
     </Layout>
   );

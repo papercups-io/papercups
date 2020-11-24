@@ -312,7 +312,6 @@ const ExamplePage = () => {
             customer={customer}
             baseUrl={BASE_URL}
             iframeUrlOverride={'https://botcart-chatwindow.herokuapp.com/'}
-
             defaultIsOpen
           />
         </Box>
