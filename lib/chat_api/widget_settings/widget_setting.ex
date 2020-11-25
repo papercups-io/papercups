@@ -40,5 +40,6 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
     ])
     |> validate_required([:account_id])
     |> unique_constraint(:account_id)
+    |> foreign_key_constraint(:account_id)
   end
 end

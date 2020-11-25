@@ -77,6 +77,7 @@ defmodule ChatApi.Customers.Customer do
       :time_zone
     ])
     |> validate_required([:first_seen, :last_seen, :account_id])
+    |> foreign_key_constraint(:account_id)
   end
 
   def metadata_changeset(customer, attrs) do

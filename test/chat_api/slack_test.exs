@@ -200,7 +200,7 @@ defmodule ChatApi.SlackTest do
       primary_user = user_fixture(account)
 
       # Make sure that secondary_user is inserted later.
-      :timer.sleep(500)
+      :timer.sleep(1000)
       secondary_user = user_fixture(account)
 
       users = [disabled_user, secondary_user, primary_user]

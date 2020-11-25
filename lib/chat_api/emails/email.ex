@@ -15,7 +15,8 @@ defmodule ChatApi.Emails.Email do
     |> text_body(message)
   end
 
-  # TODO: Move conversation id out the mailer should only care about the message
+  # TODO: Add some recent messages for context, rather than just a single message
+  # (See the `conversation_reply` method for an example of this)
   def new_message_alert(to_address, message) do
     conversation_id = Map.get(message, :conversation_id)
 
@@ -30,7 +31,10 @@ defmodule ChatApi.Emails.Email do
         customer_id
         |> ChatApi.Customers.get_customer!()
         |> Map.get(:email)
-        |> (&"from #{&1} ").()
+        |> case do
+          nil -> ""
+          email -> " from #{email}"
+        end
       else
         ""
       end
@@ -44,7 +48,7 @@ defmodule ChatApi.Emails.Email do
     new()
     |> to(to_address)
     |> from({"Papercups", @from_address})
-    |> subject("A customer has sent you a message!")
+    |> subject("A customer has sent you a message")
     |> html_body(html)
     |> text_body(text)
   end
