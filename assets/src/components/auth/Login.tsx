@@ -5,6 +5,7 @@ import qs from 'query-string';
 import {Button, Input, Text, Title} from '../common';
 import {useAuth} from './AuthProvider';
 import logger from '../../logger';
+import Blogo from '../../B-logo.svg';
 
 type Props = RouteComponentProps & {
   onSubmit: (params: any) => Promise<void>;
@@ -71,10 +72,27 @@ class Login extends React.Component<Props, State> {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
+          height: '90vh',
         }}
       >
-        <Box sx={{width: '100%', maxWidth: 320}}>
-          <Title level={1}>Welcome back</Title>
+        <Box
+          sx={{width: '100%', maxWidth: 440}}
+          style={{
+            boxShadow: '2px 3px 6px rgba(0, 0, 0, 0.1)',
+            borderRadius: '10px',
+            padding: '2rem 3rem',
+          }}
+        >
+          <Title
+            style={{
+              textAlign: 'center',
+              padding: '1rem 0',
+              fontWeight: 'normal',
+            }}
+            level={1}
+          >
+            Sign In
+          </Title>
 
           <form onSubmit={this.handleSubmit}>
             <Box mb={2}>
@@ -127,6 +145,9 @@ class Login extends React.Component<Props, State> {
               <Link to="/reset-password">Forgot your password?</Link>
             </Box>
           </form>
+          <Box style={{textAlign: 'center', paddingTop: '4rem'}}>
+            <img style={{width: '200px'}} src={Blogo} alt="logo of BotCart" />
+          </Box>
         </Box>
       </Flex>
     );
