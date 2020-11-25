@@ -53,7 +53,7 @@ We :heart:  contributions big or small. See [CONTRIBUTING.md](https://github.com
 
 Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)! :wave:
 
-
+## Thanks for all of our contributors!
 <td>
 <a href="https://github.com/reichert621"><img src="https://avatars0.githubusercontent.com/u/5264279?v=4" title="reichert621" width="80" height="80"></a>
 <a href="https://github.com/cheeseblubber"><img src="https://avatars0.githubusercontent.com/u/4218509?v=4" title="cheeseblubber" width="80" height="80"></a>
