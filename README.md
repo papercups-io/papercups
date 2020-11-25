@@ -33,7 +33,7 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 
 ## Demo
 
-We set up a [simple page](https://app.papercups.io/demo) that demonstrates how Papercups works. 
+We set up a [simple page](https://app.papercups.io/demo) that demonstrates how Papercups works.
 
 Try sending us a message to see what the chat experience is like!
 
@@ -47,13 +47,14 @@ Check out our [blog](https://papercups.io/blog) for more updates and learnings
 
 ## Contributing
 
-We :heart:  contributions big or small. See [CONTRIBUTING.md](https://github.com/papercups-io/papercups/blob/master/CONTRIBUTING.md) for a guide on how to get started.
+We :heart: contributions big or small. See [CONTRIBUTING.md](https://github.com/papercups-io/papercups/blob/master/CONTRIBUTING.md) for a guide on how to get started.
 
 ## Get in touch
 
 Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)! :wave:
 
-## Thanks for all of our contributors!
+## Thanks to all of our contributors!
+
 <td>
 <a href="https://github.com/reichert621"><img src="https://avatars0.githubusercontent.com/u/5264279?v=4" title="reichert621" width="80" height="80"></a>
 <a href="https://github.com/cheeseblubber"><img src="https://avatars0.githubusercontent.com/u/4218509?v=4" title="cheeseblubber" width="80" height="80"></a>
@@ -85,8 +86,6 @@ Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite
 <a href="https://github.com/lorecrafting"><img src="https://avatars1.githubusercontent.com/u/4595918?v=4" title="lorecrafting" width="80" height="80"></a>
 <a href="https://github.com/webdeb"><img src="https://avatars3.githubusercontent.com/u/14992140?v=4" title="webdeb" width="80" height="80"></a>
 </td>
-
-
 
 ## License
 
