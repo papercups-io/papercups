@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   useLocation,
   Switch,
@@ -67,6 +67,85 @@ const shouldDisplayChat = (pathname: string) => {
   return true;
 };
 
+const ShortcutIcon = ({totalNumUnread}: {totalNumUnread: number}) => {
+  
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const icon_link = '/logo.svg'
+  const [data, setData] = useState(icon_link);
+  var x = 0
+  var y = 0
+  const mult = 2
+  const xOffset = 18
+  const yOffset = 1
+  var xExtraOffset = 0
+  var yExtraOffset = 0
+  
+  const numbers = [ 
+      [0,0,0,0,0,0, 0,0,1,1,0,0, 0,0,1,1,0,0, 1,1,1,1,1,1, 1,1,1,1,1,1, 0,0,1,1,0,0, 0,0,1,1,0,0,],
+      [0,0,0,1,0,0, 0,1,1,1,0,0, 0,0,0,1,0,0, 0,0,0,1,0,0, 0,0,0,1,0,0, 0,0,0,1,0,0, 0,0,1,1,1,0,],
+      [0,0,1,1,0,0, 0,1,0,0,1,0, 0,0,0,0,1,0, 0,0,0,1,0,0, 0,0,1,0,0,0, 0,1,0,0,0,0, 0,1,1,1,1,0,],
+      [0,0,1,1,0,0, 0,1,0,0,1,0, 0,0,0,0,1,0, 0,0,1,1,0,0, 0,0,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0,],
+      [0,1,0,0,1,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,1,1,1,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0,],
+      [0,1,1,1,1,0, 0,1,0,0,0,0, 0,1,1,1,0,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0,],
+      [0,0,0,1,1,0, 0,0,1,0,0,0, 0,1,0,0,0,0, 0,1,1,1,0,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0,],
+      [0,1,1,1,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0,],
+      [0,0,1,1,0,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0,],
+      [0,0,1,1,0,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0,],
+  ]
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if(canvas){
+      const ctx = canvas.getContext('2d')
+      if(ctx){
+
+        const image = new Image();
+        image.onload = () => {
+          ctx.clearRect(0,0, canvas.width,    canvas.height);
+          ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width,    canvas.height);
+          if(totalNumUnread){
+            ctx.fillStyle = '#ff4d4f'
+            ctx.beginPath()
+            ctx.arc(24, 8, 8, 0, 2 * Math.PI);
+            ctx.fill()
+            if(totalNumUnread < 10){
+              var grid = numbers[totalNumUnread];
+            }
+            else{
+              var grid = numbers[0];
+              yExtraOffset = -1
+            }
+            ctx.beginPath()
+            ctx.fillStyle = '#ffffff'
+            for(var _i=0; _i< 6 * 7; _i++){
+              if(grid[_i]){
+                ctx.rect(xOffset + xExtraOffset + (_i % 6 * mult), yOffset + yExtraOffset + (Math.floor(_i / 6) * mult), mult, mult)
+              }
+              
+            }
+            ctx.fill()
+            //ctx.textAlign = "center"; 
+            //ctx.font = "16px monospace";
+            //ctx.fillText(String(totalNumUnread), 24, 14);
+          }
+            setData(canvas.toDataURL())
+        };
+        image.src = icon_link;
+      }
+  
+    }
+  })
+  
+  return (
+    <div className="" style={{position:'absolute', zIndex: 1, display: 'none'}}>
+      <canvas ref={canvasRef} width="32" height="32" style={{width: '0', height: '0'}}/>
+      <Helmet defer={false}>
+        <link rel="shortcut icon" href={data}></link>
+      </Helmet>
+    </div>
+    )
+
+}
+
 // TODO: not sure if this is the best way to handle this, but the goal
 // of this component is to flash the number of unread messages in the
 // tab (i.e. HTML title) so users can see when new messages arrive
@@ -131,7 +210,9 @@ const Dashboard = (props: RouteComponentProps) => {
 
   return (
     <Layout>
-      <DashboardHtmlHead totalNumUnread={totalNumUnread} />
+      <ShortcutIcon totalNumUnread={totalNumUnread} />
+
+
 
       <Sider
         width={220}
