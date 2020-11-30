@@ -145,7 +145,12 @@ defmodule ChatApi.UserInvitations do
       false
   """
   def expired?(%UserInvitation{} = user_invitation) do
-    DateTime.utc_now() |> DateTime.truncate(:second) >= user_invitation.expires_at
+    cmp =
+      DateTime.utc_now()
+      |> DateTime.truncate(:second)
+      |> DateTime.compare(user_invitation.expires_at)
+
+    cmp == :gt
   end
 
   defp set_expires_at(invitation) do

@@ -15,26 +15,26 @@ defmodule ChatApiWeb.RegistrationController do
       invite = ChatApi.UserInvitations.get_user_invitation!(user_params["invite_token"])
       params = Enum.into(user_params, %{"account_id" => invite.account.id})
 
-      conn
-      |> Pow.Plug.create_user(params)
-      |> case do
-        {:ok, _user, conn} ->
-          if ChatApi.UserInvitations.expired?(invite) do
-            send_server_error(conn, 403, "Invitation token has expired")
-          else
+      if ChatApi.UserInvitations.expired?(invite) do
+        send_server_error(conn, 403, "Invitation token has expired")
+      else
+        conn
+        |> Pow.Plug.create_user(params)
+        |> case do
+          {:ok, _user, conn} ->
             # # TODO: figure out what we want to do here -- it's not currently
             # # obvious that a user invitation expires after one use.
             # ChatApi.UserInvitations.expire_user_invitation(invite)
             conn
-            |> send_registration_event(params["company_name"])
+            |> send_registration_event(invite.account.company_name)
             |> enqueue_welcome_email()
             |> notify_slack()
             |> send_api_token()
-          end
 
-        {:error, changeset, conn} ->
-          errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
-          send_user_create_errors(conn, errors)
+          {:error, changeset, conn} ->
+            errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
+            send_user_create_errors(conn, errors)
+        end
       end
     rescue
       Ecto.NoResultsError ->

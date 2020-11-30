@@ -57,16 +57,28 @@ defmodule ChatApi.Emails.CustomerIO do
     end
   end
 
+  @spec format_user(Users.User.t(), binary(), integer()) :: map()
+  defp format_user(user, company_name, now) do
+    %{
+      # User fields
+      id: user.id,
+      email: user.email,
+      account_id: user.account_id,
+      role: user.role,
+      # Account fields
+      company_name: company_name,
+      # Timestamps
+      created_at: now,
+      updated_at: now
+    }
+  end
+
   @spec save_new_signup(Users.User.t(), binary()) :: boolean()
   defp save_new_signup(user, company_name) do
     now = :os.system_time(:seconds)
 
     with {:ok, _} <-
-           identify(user.id, %{
-             email: user.email,
-             created_at: now,
-             company_name: company_name
-           }),
+           identify(user.id, format_user(user, company_name, now)),
          {:ok, _} <- track(user.id, "sign_up", %{signed_up_at: now}) do
       Logger.debug("Successfully added user to customer.io")
 
