@@ -3,6 +3,7 @@ defmodule ChatApi.TestFixtureHelpers do
   alias ChatApi.{
     Repo,
     Accounts,
+    ApiKeys,
     BrowserSessions,
     BrowserReplayEvents,
     Customers,
@@ -203,6 +204,20 @@ defmodule ChatApi.TestFixtureHelpers do
       |> BrowserReplayEvents.create_browser_replay_event()
 
     browser_replay_event
+  end
+
+  def personal_api_key_fixture(%Users.User{} = user, attrs \\ %{}) do
+    {:ok, personal_api_key} =
+      attrs
+      |> Enum.into(%{
+        label: "API Key",
+        value: ApiKeys.generate_random_token(),
+        user_id: user.id,
+        account_id: user.account_id
+      })
+      |> ApiKeys.create_personal_api_key()
+
+    personal_api_key
   end
 
   defp counter do
