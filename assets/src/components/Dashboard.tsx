@@ -72,32 +72,14 @@ const ShortcutIcon = ({totalNumUnread}: {totalNumUnread: number}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const icon_link = '/logo.svg'
   const [data, setData] = useState(icon_link);
-  var x = 0
-  var y = 0
-  const mult = 2
-  const xOffset = 18
-  const yOffset = 1
-  var xExtraOffset = 0
-  var yExtraOffset = 0
+
   
-  const numbers = [ 
-      [0,0,0,0,0,0, 0,0,1,1,0,0, 0,0,1,1,0,0, 1,1,1,1,1,1, 1,1,1,1,1,1, 0,0,1,1,0,0, 0,0,1,1,0,0,],
-      [0,0,0,1,0,0, 0,1,1,1,0,0, 0,0,0,1,0,0, 0,0,0,1,0,0, 0,0,0,1,0,0, 0,0,0,1,0,0, 0,0,1,1,1,0,],
-      [0,0,1,1,0,0, 0,1,0,0,1,0, 0,0,0,0,1,0, 0,0,0,1,0,0, 0,0,1,0,0,0, 0,1,0,0,0,0, 0,1,1,1,1,0,],
-      [0,0,1,1,0,0, 0,1,0,0,1,0, 0,0,0,0,1,0, 0,0,1,1,0,0, 0,0,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0,],
-      [0,1,0,0,1,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,1,1,1,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0,],
-      [0,1,1,1,1,0, 0,1,0,0,0,0, 0,1,1,1,0,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0,],
-      [0,0,0,1,1,0, 0,0,1,0,0,0, 0,1,0,0,0,0, 0,1,1,1,0,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0,],
-      [0,1,1,1,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0,],
-      [0,0,1,1,0,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,0,0,],
-      [0,0,1,1,0,0, 0,1,0,0,1,0, 0,1,0,0,1,0, 0,0,1,1,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0, 0,0,0,0,1,0,],
-  ]
+
   useEffect(() => {
     const canvas = canvasRef.current
     if(canvas){
       const ctx = canvas.getContext('2d')
       if(ctx){
-
         const image = new Image();
         image.onload = () => {
           ctx.clearRect(0,0, canvas.width,    canvas.height);
@@ -107,25 +89,6 @@ const ShortcutIcon = ({totalNumUnread}: {totalNumUnread: number}) => {
             ctx.beginPath()
             ctx.arc(24, 8, 8, 0, 2 * Math.PI);
             ctx.fill()
-            if(totalNumUnread < 10){
-              var grid = numbers[totalNumUnread];
-            }
-            else{
-              var grid = numbers[0];
-              yExtraOffset = -1
-            }
-            ctx.beginPath()
-            ctx.fillStyle = '#ffffff'
-            for(var _i=0; _i< 6 * 7; _i++){
-              if(grid[_i]){
-                ctx.rect(xOffset + xExtraOffset + (_i % 6 * mult), yOffset + yExtraOffset + (Math.floor(_i / 6) * mult), mult, mult)
-              }
-              
-            }
-            ctx.fill()
-            //ctx.textAlign = "center"; 
-            //ctx.font = "16px monospace";
-            //ctx.fillText(String(totalNumUnread), 24, 14);
           }
             setData(canvas.toDataURL())
         };
