@@ -10,7 +10,17 @@ import ChatMessageBox from './ChatMessageBox';
 
 dayjs.extend(utc);
 
-const getSenderIdentifier = (customer?: Customer | null, user?: User) => {
+const getCustomerId = (customer?: Customer | null) =>{
+  if(customer){
+    const {id} = customer;
+    return parseInt(id, 32)
+  } else {
+    return 0
+  }
+};
+
+
+export const getSenderIdentifier = (customer?: Customer | null, user?: User | null) => {
   if (user) {
     const {display_name, full_name, email} = user;
 
@@ -24,16 +34,24 @@ const getSenderIdentifier = (customer?: Customer | null, user?: User) => {
   }
 };
 
-const SenderAvatar = ({
+
+export const SenderAvatar = ({
   isAgent,
   name,
   user,
+  color,
+  size
+
 }: {
   isAgent: boolean;
   name: string;
-  user?: User;
+  user?: User | null;
+  color: string;
+  size?: number
+
 }) => {
   const profilePhotoUrl = user && user.profile_photo_url;
+  size = size  !== undefined ? size : 32
 
   if (profilePhotoUrl) {
     return (
@@ -41,8 +59,9 @@ const SenderAvatar = ({
         <Box
           mr={2}
           style={{
-            height: 32,
-            width: 32,
+            height: size,
+            width: size,
+            minWidth: size,
             borderRadius: '50%',
             justifyContent: 'center',
             alignItems: 'center',
@@ -61,9 +80,11 @@ const SenderAvatar = ({
       <Flex
         mr={2}
         sx={{
-          bg: isAgent ? colors.primary : colors.gold,
-          height: 32,
-          width: 32,
+          bg: isAgent ? colors.primary : color,
+          height: size,
+          width: size,
+          minWidth: size,
+
           borderRadius: '50%',
           justifyContent: 'center',
           alignItems: 'center',
@@ -88,7 +109,7 @@ type Props = {
   shouldDisplayTimestamp?: boolean;
 };
 
-const ChatMessage = ({
+export const ChatMessage = ({
   message,
   customer,
   isMe,
@@ -98,10 +119,15 @@ const ChatMessage = ({
   const {body, sent_at, created_at, user, seen_at} = message;
   const isAgent = !!user;
   const tooltip = getSenderIdentifier(customer, user);
+  const customerId = getCustomerId(customer);
+
   const sentAt = dayjs.utc(sent_at || created_at);
   const formattedSentAt = formatRelativeTime(sentAt);
   const seenAt = seen_at ? dayjs.utc(seen_at) : null;
   const formattedSeenAt = seenAt ? formatRelativeTime(seenAt) : null;
+  const {gold, red, green, purple, magenta} = colors;
+  const colorIndex = customerId % 5;
+  const color = [gold, red, green, purple, magenta][colorIndex];
 
   if (isMe) {
     return (
@@ -132,7 +158,7 @@ const ChatMessage = ({
   return (
     <Box pr={4} pl={0} pb={isLastInGroup ? 3 : 2}>
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
-        <SenderAvatar name={tooltip} user={user} isAgent={isAgent} />
+        <SenderAvatar name={tooltip} user={user} isAgent={isAgent} color={color} />
         <ChatMessageBox
           content={body}
           sx={{
@@ -152,4 +178,3 @@ const ChatMessage = ({
   );
 };
 
-export default ChatMessage;
