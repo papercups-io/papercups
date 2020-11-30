@@ -112,6 +112,14 @@ defmodule ChatApiWeb.RegistrationController do
 
   @spec send_registration_event(Conn.t(), String.t()) :: Conn.t()
   defp send_registration_event(conn, company_name) do
+    send_registration_event(conn, company_name, ChatApi.Emails.CustomerIO.enabled?())
+  end
+
+  @spec send_registration_event(Conn.t(), String.t(), boolean()) :: Conn.t()
+  # If CustomerIO is not enabled, just pass through
+  defp send_registration_event(conn, _company_name, false), do: conn
+
+  defp send_registration_event(conn, company_name, true) do
     case conn.assigns.current_user do
       %{email: _email, id: _id} = user ->
         # TODO: should we wrap this in a Task or GenServer process?
