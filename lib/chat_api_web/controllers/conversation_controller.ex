@@ -147,16 +147,29 @@ defmodule ChatApiWeb.ConversationController do
     end
   end
 
-  def batch_update(conn, %{"ids" => ids, "conversation" => conversation_params}) do
-    conversations = Conversations.get_conversations(ids)
+  swagger_path :close_conversations do
+    post("/api/conversations/close_conversations")
+    summary("Close conversations and return the updated conversations")
+    description("Close multiple conversations at once")
 
-    with {:ok, [%Conversation{}] = conversations} <-
-           Conversations.update_conversations(conversations, conversation_params) do
-      Task.start(fn ->
-        Helpers.send_conversations_state_update(conversations, conversation_params)
-      end)
+    parameter("Authorization", :header, :string, "OAuth2 access token", required: true)
 
-      render(conn, "index.json", conversationa: conversations)
+    parameters do
+      status(:ids, :map, "An array of conversations ids for close", example: ["asdf-1234", "asdf-1235"])
+    end
+
+    response(200, "Success")
+    response(401, "Not authenticated")
+  end
+
+  @spec close_conversations(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def close_conversations(conn, params) do
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      %{"ids" => ids } = params
+      
+      with {:ok, [%Conversation{}] = conversations} <- Conversations.close_conversations(account_id, ids) do
+        render(conn, "index.json", conversations: conversations)
+      end
     end
   end
 

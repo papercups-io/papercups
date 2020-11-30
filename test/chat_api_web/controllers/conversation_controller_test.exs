@@ -89,6 +89,23 @@ defmodule ChatApiWeb.ConversationControllerTest do
     end
   end
 
+  describe "close conversations" do
+    test "set the conversations state to closed", %{authed_conn: authed_conn, conversation: %Conversation{id: id} = conversation} do
+      ids = [id]
+
+      conn = post(authed_conn, Routes.conversation_path(authed_conn, :close_conversations), %{"ids" => ids})
+      ids = json_response(conn, 200)["data"] |> Enum.map(& &1["id"])
+      assert ids == [id]
+
+      conn = get(authed_conn, Routes.conversation_path(authed_conn, :show, id))
+
+      assert %{
+               "id" => id,
+               "status" => "closed"
+             } = json_response(conn, 200)["data"]
+    end
+  end
+
   describe "delete conversation" do
     test "deletes chosen conversation", %{authed_conn: authed_conn, conversation: conversation} do
       conn = delete(authed_conn, Routes.conversation_path(authed_conn, :delete, conversation))

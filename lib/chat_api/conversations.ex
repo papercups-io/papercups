@@ -40,6 +40,13 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
+  def close_conversations(account_id, ids) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where([c], c.id in ^ids)
+    |> Repo.update_all(set: [status: "closed"])
+  end
+
   @spec list_conversations_by_account(binary()) :: [Conversation.t()]
   def list_conversations_by_account(account_id) do
     list_conversations_by_account(account_id, %{})
@@ -95,13 +102,6 @@ defmodule ChatApi.Conversations do
     Conversation
     |> Repo.get!(id)
     |> Repo.preload([:customer, :tags, messages: [user: :profile]])
-  end
-
-  @spec get_conversations(list()) :: list(Customer.t()) | list([])
-  def get_conversations(ids) do
-    Conversation
-    |> where([c], c.id in ^ids)
-    |> Repo.all
   end
 
   @spec get_conversation(binary()) :: Conversation.t() | nil
@@ -163,12 +163,6 @@ defmodule ChatApi.Conversations do
     conversation
     |> Conversation.changeset(attrs)
     |> Repo.update()
-  end
-
-  @spec update_conversation([Conversation.t()], map()) :: {:ok, [Conversation.t()]} | {:error, Ecto.Changeset.t()}
-  def update_conversations([%Conversation{}] = conversations, attrs) do
-    conversations
-    |> Repo.update_all(set: attrs)
   end
 
   @spec mark_conversation_read(Conversation.t() | binary()) ::
