@@ -101,6 +101,7 @@ defmodule ChatApiWeb.Router do
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
+    resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
 
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
@@ -110,9 +111,13 @@ defmodule ChatApiWeb.Router do
   end
 
   scope "/api/v1", ChatApiWeb do
-    pipe_through([:public_api])
+    pipe_through([:public_api, :api_protected])
 
     get("/me", SessionController, :me)
+
+    resources("/messages", MessageController, except: [:new, :edit])
+    resources("/conversations", ConversationController, except: [:new, :edit])
+    resources("/customers", CustomerController, except: [:new, :edit])
   end
 
   # Enables LiveDashboard only for development

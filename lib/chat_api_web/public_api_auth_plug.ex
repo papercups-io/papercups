@@ -70,7 +70,7 @@ defmodule ChatApiWeb.PublicAPIAuthPlug do
 
   defp fetch_auth_token(conn, _config) do
     with [token | _rest] <- Conn.get_req_header(conn, "authorization"),
-         "bearer " <> token <- String.downcase(token) do
+         "Bearer " <> token <- token do
       token
     else
       _any -> nil

@@ -41,9 +41,11 @@ defmodule ChatApi.Users do
   end
 
   @spec find_by_api_key(binary()) :: User.t() | nil
-  def find_by_api_key(_api_key) do
-    # TODO: implement me!
-    nil
+  def find_by_api_key(api_key) do
+    case ChatApi.ApiKeys.find_personal_api_key_by_value(api_key) do
+      %{user: %User{} = user} -> user
+      _ -> nil
+    end
   end
 
   @spec send_password_reset_email(User.t()) ::
