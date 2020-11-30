@@ -72,6 +72,15 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
+  @spec validate_email(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def validate_email(user) do
+    user
+    |> User.email_verification_changeset(%{
+      has_valid_email: has_valid_email?(user)
+    })
+    |> Repo.update()
+  end
+
   @spec set_has_valid_email(User.t(), boolean()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def set_has_valid_email(user, has_valid_email) do
     user
@@ -79,6 +88,17 @@ defmodule ChatApi.Users do
       has_valid_email: has_valid_email
     })
     |> Repo.update()
+  end
+
+  @spec has_valid_email?(User.t()) :: boolean() | nil
+  def has_valid_email?(%User{email: email}) do
+    if ChatApi.Emails.Debounce.enabled?() do
+      !ChatApi.Emails.Debounce.disposable?(email) &&
+        ChatApi.Emails.Debounce.valid?(email)
+    else
+      # Use nil to indicate that the validation hasn't occurred yet
+      nil
+    end
   end
 
   @spec update_password(User.t(), map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}

@@ -23,7 +23,7 @@ defmodule Mix.Tasks.UpdateCustomerIo do
   def update_customer_io_users(users) do
     for user <- users do
       # TODO: only execute in production
-      case Customerio.identify(user.id, user) do
+      case ChatApi.Emails.CustomerIO.identify(user.id, user) do
         {:ok, _} -> Logger.info("Successfully updated user #{inspect(user.id)}")
         error -> Logger.error("Error updating user #{inspect(user.id)}: #{inspect(error)}")
       end

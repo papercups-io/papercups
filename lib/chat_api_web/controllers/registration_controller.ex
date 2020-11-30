@@ -112,17 +112,12 @@ defmodule ChatApiWeb.RegistrationController do
 
   @spec send_registration_event(Conn.t(), String.t()) :: Conn.t()
   defp send_registration_event(conn, company_name) do
-    send_registration_event(conn, company_name, customer_io_enabled?())
-  end
-
-  @spec send_registration_event(Conn.t(), boolean()) :: Conn.t()
-  # If CustomerIO is not enabled, just pass through
-  defp send_registration_event(conn, _company_name, false), do: conn
-
-  defp send_registration_event(conn, company_name, true) do
     case conn.assigns.current_user do
       %{email: _email, id: _id} = user ->
-        ChatApi.Emails.CustomerIO.handle_registration_event(user, company_name)
+        # TODO: should we wrap this in a Task or GenServer process?
+        Task.start(fn ->
+          ChatApi.Emails.CustomerIO.handle_registration_event(user, company_name)
+        end)
 
         conn
 
@@ -158,14 +153,6 @@ defmodule ChatApiWeb.RegistrationController do
   defp registration_disabled?() do
     case System.get_env("PAPERCUPS_REGISTRATION_DISABLED") do
       x when x == "1" or x == "true" -> true
-      _ -> false
-    end
-  end
-
-  @spec customer_io_enabled?() :: boolean()
-  defp customer_io_enabled?() do
-    case System.get_env("CUSTOMER_IO_API_KEY") do
-      key when is_binary(key) -> String.length(key) > 0
       _ -> false
     end
   end
