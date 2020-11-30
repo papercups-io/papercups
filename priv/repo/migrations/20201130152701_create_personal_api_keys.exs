@@ -16,5 +16,6 @@ defmodule ChatApi.Repo.Migrations.CreatePersonalApiKeys do
 
     create(index(:personal_api_keys, [:account_id]))
     create(index(:personal_api_keys, [:user_id]))
+    create(unique_index(:personal_api_keys, [:value]))
   end
 end

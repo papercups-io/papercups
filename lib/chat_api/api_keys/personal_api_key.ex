@@ -23,6 +23,7 @@ defmodule ChatApi.ApiKeys.PersonalApiKey do
     personal_api_key
     |> cast(attrs, [:label, :value, :last_used_at, :account_id, :user_id])
     |> validate_required([:label, :value, :account_id, :user_id])
+    |> unique_constraint(:value)
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:user_id)
   end
