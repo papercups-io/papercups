@@ -229,7 +229,6 @@ class LiveSessionViewer extends React.Component<Props, State> {
       message,
     } = this.state;
     const hasAdditionalDetails = !!(conversation || customer);
-
     return (
       <Flex>
         <Box
@@ -246,7 +245,13 @@ class LiveSessionViewer extends React.Component<Props, State> {
                       Back to all sessions
                     </Button>
                   </Link>
-
+                   {customer && (
+                      <a href={customer.current_url} target="_blank" rel="noopener noreferrer">
+                        <Button>
+                          {customer.pathname && customer.pathname.length > 1 ? customer.pathname : customer.current_url}
+                        </Button>
+                      </a>
+                  )}
                   {!loading && !conversation && (
                     <Button
                       type="primary"
