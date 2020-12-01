@@ -45,7 +45,7 @@ defmodule ChatApi.Accounts.Account do
       :stripe_subscription_id,
       :stripe_product_id,
       :stripe_default_payment_method_id,
-      :hide_widget_outside_working_hours,
+      :hide_widget_outside_working_hours
     ])
     |> cast_embed(:working_hours, with: &working_hours_changeset/2)
     |> validate_required([:company_name])
