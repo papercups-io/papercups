@@ -1,5 +1,5 @@
 {
-  "name": "Papercups",
+  "name": "Botcart",
   "description": "An open source customer chat messaging service",
   "repository": "https://github.com/papercups-io/papercups",
   "keywords": ["elixir", "phoenix", "chat"],

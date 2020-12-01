@@ -74,8 +74,7 @@ class Login extends React.Component<Props, State> {
         }}
       >
         <Box sx={{width: '100%', maxWidth: 320}}>
-          <Title level={1}>Welcome back</Title>
-
+          <Title level={1}>Welcome to BotCart</Title>
           <form onSubmit={this.handleSubmit}>
             <Box mb={2}>
               <label htmlFor="email">Email</label>
