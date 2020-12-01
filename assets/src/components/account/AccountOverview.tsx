@@ -3,6 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {
   notification,
   Button,
+  Checkbox,
   Divider,
   Input,
   Paragraph,
@@ -13,7 +14,7 @@ import Spinner from '../Spinner';
 import AccountUsersTable from './AccountUsersTable';
 import DisabledUsersTable from './DisabledUsersTable';
 import WorkingHoursSelector from './WorkingHoursSelector';
-import {WorkingHours} from './support';
+import {WidgetSettings, WorkingHours} from './support';
 import * as API from '../../api';
 import {User} from '../../types';
 import {BASE_URL} from '../../config';
@@ -29,6 +30,17 @@ type State = {
   isLoading: boolean;
   isEditing: boolean;
   isRefreshing: boolean;
+  hideWidgetOutsideWorkingHours: boolean;
+};
+type Account = {
+  id: string;
+  company_name: string;
+  time_zone: string;
+  subscription_plan: string;
+  hide_widget_outside_working_hours: boolean;
+  users: Array<User>;
+  widget_settings: Array<WidgetSettings>;
+  working_hours: Array<WorkingHours>;
 };
 
 class AccountOverview extends React.Component<Props, State> {
@@ -42,6 +54,7 @@ class AccountOverview extends React.Component<Props, State> {
     isLoading: true,
     isEditing: false,
     isRefreshing: false,
+    hideWidgetOutsideWorkingHours: false,
   };
 
   async componentDidMount() {
@@ -53,12 +66,19 @@ class AccountOverview extends React.Component<Props, State> {
     this.setState({currentUser, isLoading: false});
   }
 
+  setAccountState = (account: Account) => {
+    this.setState({
+      account: account,
+      companyName: account.company_name,
+      hideWidgetOutsideWorkingHours: account.hide_widget_outside_working_hours,
+    })
+  }
+
   fetchLatestAccountInfo = async () => {
     const account = await API.fetchAccountInfo();
-    const {company_name: companyName} = account;
     logger.debug('Account info:', account);
 
-    this.setState({account, companyName});
+    this.setAccountState(account);
   };
 
   hasAdminRole = () => {
@@ -118,25 +138,40 @@ class AccountOverview extends React.Component<Props, State> {
     company_name?: string;
     time_zone?: string;
     working_hours?: Array<WorkingHours>;
+    hide_widget_outside_working_hours?: boolean;
   }) => {
     return API.updateAccountInfo(updates)
       .then((account) => {
         logger.debug('Successfully updated company name!', account);
 
-        this.setState({account, isEditing: false});
+        this.setAccountState(account);
       })
       .catch((err) => {
         logger.error('Failed to update company name!', err);
 
         return this.fetchLatestAccountInfo();
       })
-      .then(() => this.setState({isEditing: false}));
+      .finally(() => {
+        this.setState({isEditing: false});
+      })
   };
 
   handleUpdateCompanyName = () => {
     const {companyName} = this.state;
 
     return this.handleUpdate({company_name: companyName});
+  };
+
+  handleUpdateHideWidgetOutsideWorkingHours = () => {
+    this.setState({isRefreshing: true});
+
+    const {hideWidgetOutsideWorkingHours} = this.state;
+
+    return this.handleUpdate({
+      hide_widget_outside_working_hours: !hideWidgetOutsideWorkingHours
+    }).finally(() => {
+      this.setState({isRefreshing: false})
+    });
   };
 
   handleDisableUser = async (user: User) => {
@@ -200,6 +235,7 @@ class AccountOverview extends React.Component<Props, State> {
       isLoading,
       isEditing,
       isRefreshing,
+      hideWidgetOutsideWorkingHours,
     } = this.state;
 
     if (isLoading) {
@@ -288,6 +324,14 @@ class AccountOverview extends React.Component<Props, State> {
             onSave={this.handleUpdate}
           />
         </Box>
+
+        <Checkbox
+          checked={hideWidgetOutsideWorkingHours}
+          onChange={this.handleUpdateHideWidgetOutsideWorkingHours}
+          disabled={isRefreshing}
+        >
+          Hide chat window outside of working hours
+        </Checkbox>
         <Divider />
 
         {isAdmin && (

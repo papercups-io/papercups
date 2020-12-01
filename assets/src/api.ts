@@ -233,13 +233,15 @@ export const updateAccountInfo = async (
     throw new Error('Invalid token!');
   }
 
+  console.log("SENDING REQUETS", updates, token)
+
   return request
     .put(`/api/accounts/me`)
     .set('Authorization', token)
     .send({
       account: updates,
     })
-    .then((res) => res.body.data);
+    .then((res) => res.body.data)
 };
 
 export const fetchUserProfile = async (token = getAccessToken()) => {

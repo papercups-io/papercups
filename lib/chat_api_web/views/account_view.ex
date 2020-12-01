@@ -36,6 +36,7 @@ defmodule ChatApiWeb.AccountView do
       company_name: account.company_name,
       time_zone: account.time_zone,
       subscription_plan: account.subscription_plan,
+      hide_widget_outside_working_hours: account.hide_widget_outside_working_hours,
       users: render_many(account.users, UserView, "user.json"),
       widget_settings: render_one(account.widget_settings, WidgetSettingsView, "basic.json"),
       working_hours: render_many(account.working_hours, WorkingHoursView, "working_hours.json")
