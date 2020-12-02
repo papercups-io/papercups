@@ -6,6 +6,7 @@ defmodule ChatApiWeb.Pow.RedisCache do
   @behaviour Pow.Store.Backend.Base
 
   alias Pow.Config
+  require Logger
 
   @redix_instance_name :redix
 
@@ -67,8 +68,17 @@ defmodule ChatApiWeb.Pow.RedisCache do
       |> to_binary_redis_key()
 
     case Redix.command!(@redix_instance_name, ["GET", key]) do
-      nil -> :not_found
-      value -> :erlang.binary_to_term(value)
+      nil ->
+        Logger.info("Key not found in Redis: #{inspect(key)}")
+
+        :not_found
+
+      value ->
+        result = :erlang.binary_to_term(value)
+
+        Logger.info("Key found in Redis: #{inspect(key)} => #{inspect(result)}")
+
+        result
     end
   end
 

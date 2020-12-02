@@ -45,6 +45,7 @@ defmodule ChatApiWeb.UserSocket do
 
   defp get_credentials(socket, signed_token, config) do
     conn = %Plug.Conn{secret_key_base: socket.endpoint.config(:secret_key_base)}
+    # TODO: update this to use Pow config (to use Redis)
     store_config = [backend: Pow.Store.Backend.EtsCache]
     salt = Atom.to_string(ChatApiWeb.APIAuthPlug)
 
