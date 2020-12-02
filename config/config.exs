@@ -56,6 +56,9 @@ if sentry_dsn != nil do
     root_source_code_path: File.cwd!()
 end
 
+# Configure Pow for authentication
+# TODO: support different `cache_store_backend`s (e.g. EtsCache),
+# depending on whether Redis is or is not available
 config :chat_api, :pow,
   user: ChatApi.Users.User,
   repo: ChatApi.Repo,
