@@ -17,12 +17,22 @@ defmodule ChatApi.Application do
       # Start the Endpoint (http/https)
       ChatApiWeb.Endpoint,
       # Cache store for auth
-      {Redix, {System.get_env("REDIS_URL", "redis://127.0.0.1:6379"), [name: :redix]}},
+      # {Redix, {System.get_env("REDIS_URL", "redis://127.0.0.1:6379"), [name: :redix]}},
       # Start Oban workers
       {Oban, oban_config()}
       # Start a worker by calling: ChatApi.Worker.start_link(arg)
       # {ChatApi.Worker, arg}
     ]
+
+    children =
+      if redis_enabled?() do
+        # Redis cache store for auth
+        # (If you have Redis locally, you can use "redis://127.0.0.1:6379")
+        children ++ [{Redix, {System.get_env("REDIS_URL"), [name: :redix]}}]
+      else
+        # If Redis is not enabled, we just fall back to in-memory caching
+        children
+      end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
@@ -38,7 +48,14 @@ defmodule ChatApi.Application do
   end
 
   # Conditionally disable crontab, queues, or plugins here.
-  defp oban_config do
+  defp oban_config() do
     Application.get_env(:chat_api, Oban)
+  end
+
+  defp redis_enabled?() do
+    case System.get_env("REDIS_URL") do
+      "redis://" <> _rest -> true
+      _ -> false
+    end
   end
 end

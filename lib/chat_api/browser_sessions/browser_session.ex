@@ -27,5 +27,7 @@ defmodule ChatApi.BrowserSessions.BrowserSession do
     browser_session
     |> cast(attrs, [:account_id, :customer_id, :metadata, :started_at, :finished_at])
     |> validate_required([:account_id])
+    |> foreign_key_constraint(:account_id)
+    |> foreign_key_constraint(:customer_id)
   end
 end

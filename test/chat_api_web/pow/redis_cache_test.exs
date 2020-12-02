@@ -13,6 +13,7 @@ defmodule ChatApiWeb.Pow.RedisCacheTest do
     :ok
   end
 
+  @tag :redis
   test "can put, get and delete records" do
     assert RedisCache.get(@default_config, "key") == :not_found
 
@@ -36,6 +37,7 @@ defmodule ChatApiWeb.Pow.RedisCacheTest do
       end)
     end
 
+    @tag :redis
     test "logs error" do
       assert CaptureLog.capture_log(fn ->
                RedisCache.put(@default_config, {"key", "value"})
@@ -45,6 +47,7 @@ defmodule ChatApiWeb.Pow.RedisCacheTest do
     end
   end
 
+  @tag :redis
   test "can put multiple records at once" do
     RedisCache.put(@default_config, [{"key1", "1"}, {"key2", "2"}])
     :timer.sleep(100)
@@ -52,6 +55,7 @@ defmodule ChatApiWeb.Pow.RedisCacheTest do
     assert RedisCache.get(@default_config, "key2") == "2"
   end
 
+  @tag :redis
   test "can match fetch all" do
     assert RedisCache.all(@default_config, :_) == []
 
@@ -69,6 +73,7 @@ defmodule ChatApiWeb.Pow.RedisCacheTest do
     assert RedisCache.all(@default_config, ["namespace", :_]) == [{["namespace", "key"], "value"}]
   end
 
+  @tag :redis
   test "records auto purge" do
     config = Keyword.put(@default_config, :ttl, 100)
 
