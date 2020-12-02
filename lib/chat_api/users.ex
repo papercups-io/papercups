@@ -40,6 +40,14 @@ defmodule ChatApi.Users do
     User |> where(password_reset_token: ^token) |> Repo.one()
   end
 
+  @spec find_by_api_key(binary()) :: User.t() | nil
+  def find_by_api_key(api_key) do
+    case ChatApi.ApiKeys.find_personal_api_key_by_value(api_key) do
+      %{user: %User{} = user} -> user
+      _ -> nil
+    end
+  end
+
   @spec send_password_reset_email(User.t()) ::
           ChatApi.Emails.deliver_result() | {:error, Ecto.Changeset.t()}
   def send_password_reset_email(user) do
@@ -64,6 +72,15 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
+  @spec validate_email(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
+  def validate_email(user) do
+    user
+    |> User.email_verification_changeset(%{
+      has_valid_email: has_valid_email?(user)
+    })
+    |> Repo.update()
+  end
+
   @spec set_has_valid_email(User.t(), boolean()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def set_has_valid_email(user, has_valid_email) do
     user
@@ -71,6 +88,17 @@ defmodule ChatApi.Users do
       has_valid_email: has_valid_email
     })
     |> Repo.update()
+  end
+
+  @spec has_valid_email?(User.t()) :: boolean() | nil
+  def has_valid_email?(%User{email: email}) do
+    if ChatApi.Emails.Debounce.enabled?() do
+      !ChatApi.Emails.Debounce.disposable?(email) &&
+        ChatApi.Emails.Debounce.valid?(email)
+    else
+      # Use nil to indicate that the validation hasn't occurred yet
+      nil
+    end
   end
 
   @spec update_password(User.t(), map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}

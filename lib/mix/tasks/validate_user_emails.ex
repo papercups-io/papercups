@@ -12,7 +12,7 @@ defmodule Mix.Tasks.ValidateUserEmails do
 
   It also accepts as args a list of emails that are known to be valid.
 
-  Ex: $ mix example $(cat path/to/emails.csv)
+  Ex: $ mix validate_user_emails $(cat path/to/emails.csv)
   """
 
   def run(args) do
