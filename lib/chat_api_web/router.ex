@@ -20,6 +20,12 @@ defmodule ChatApiWeb.Router do
     plug(ChatApiWeb.EnsureUserEnabledPlug)
   end
 
+  pipeline :public_api do
+    plug(ChatApiWeb.IPAddressPlug)
+    plug(:accepts, ["json"])
+    plug(ChatApiWeb.PublicAPIAuthPlug, otp_app: :chat_api)
+  end
+
   # Swagger
   scope "/api/swagger" do
     forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :chat_api, swagger_file: "swagger.json"
@@ -95,12 +101,23 @@ defmodule ChatApiWeb.Router do
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
+    resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
 
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
     post("/customers/:customer_id/tags", CustomerController, :add_tag)
     delete("/customers/:customer_id/tags/:tag_id", CustomerController, :remove_tag)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
+  end
+
+  scope "/api/v1", ChatApiWeb do
+    pipe_through([:public_api, :api_protected])
+
+    get("/me", SessionController, :me)
+
+    resources("/messages", MessageController, except: [:new, :edit])
+    resources("/conversations", ConversationController, except: [:new, :edit])
+    resources("/customers", CustomerController, except: [:new, :edit])
   end
 
   # Enables LiveDashboard only for development

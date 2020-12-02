@@ -93,6 +93,7 @@ defmodule ChatApiWeb.APIAuthPlug do
   defp signing_salt(), do: Atom.to_string(__MODULE__)
 
   defp fetch_auth_token(conn, config) do
+    # TODO: if token isn't verified, check personal API keys?
     with [token | _rest] <- Conn.get_req_header(conn, "authorization"),
          {:ok, token} <- Plug.verify_token(conn, signing_salt(), token, config) do
       token

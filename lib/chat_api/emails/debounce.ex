@@ -16,6 +16,8 @@ defmodule ChatApi.Emails.Debounce do
   plug Tesla.Middleware.JSON
   plug Tesla.Middleware.Logger
 
+  # TODO: update these methods to handle errors better (rather than using default values)
+
   @spec valid?(binary()) :: boolean()
   def valid?(email) do
     case validate(email) do
