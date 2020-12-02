@@ -69,40 +69,22 @@ const shouldDisplayChat = (pathname: string) => {
 
 const ShortcutIcon = ({totalNumUnread}: {totalNumUnread: number}) => {
   
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const icon_link = '/logo.svg'
-  const [data, setData] = useState(icon_link);
-
-  
+  const iconLink = '/logo.svg'
+  const iconUnreadLink = '/logo-unread.svg'
+  const [data, setData] = useState(iconLink);
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if(canvas){
-      const ctx = canvas.getContext('2d')
-      if(ctx){
-        const image = new Image();
-        image.onload = () => {
-          ctx.clearRect(0,0, canvas.width,    canvas.height);
-          ctx.drawImage(image, 0, 0, image.width, image.height, 0, 0, canvas.width,    canvas.height);
-          if(totalNumUnread){
-            ctx.fillStyle = '#ff4d4f'
-            ctx.beginPath()
-            ctx.arc(24, 8, 8, 0, 2 * Math.PI);
-            ctx.fill()
-          }
-            setData(canvas.toDataURL())
-        };
-        image.src = icon_link;
-      }
-  
+    if(totalNumUnread){
+      setData(iconUnreadLink)
+    } else{
+      setData(iconLink)
     }
   })
   
   return (
     <div className="" style={{position:'absolute', zIndex: 1, display: 'none'}}>
-      <canvas ref={canvasRef} width="32" height="32" style={{width: '0', height: '0'}}/>
       <Helmet defer={false}>
-        <link rel="shortcut icon" href={data}></link>
+        <link rel="icon" href={data}></link>
       </Helmet>
     </div>
     )
