@@ -59,7 +59,7 @@ end
 config :chat_api, :pow,
   user: ChatApi.Users.User,
   repo: ChatApi.Repo,
-  cache_store_backend: MyAppWeb.Pow.RedisCache
+  cache_store_backend: ChatApiWeb.Pow.RedisCache
 
 config :chat_api, Oban,
   repo: ChatApi.Repo,
