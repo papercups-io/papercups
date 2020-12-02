@@ -17,7 +17,7 @@ defmodule ChatApi.Application do
       # Start the Endpoint (http/https)
       ChatApiWeb.Endpoint,
       # Cache store for auth
-      {Redix, name: :redix},
+      {Redix, {System.get_env("REDIS_URL", "redis://127.0.0.1:6379"), [name: :redix]}},
       # Start Oban workers
       {Oban, oban_config()}
       # Start a worker by calling: ChatApi.Worker.start_link(arg)

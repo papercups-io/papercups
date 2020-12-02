@@ -1,6 +1,6 @@
 defmodule ChatApiWeb.Pow.RedisCache do
-  """
-  From https://github.com/danschultzer/pow/blob/master/guides/redis_cache_store_backend.md
+  @moduledoc """
+    From https://github.com/danschultzer/pow/blob/master/guides/redis_cache_store_backend.md
   """
 
   @behaviour Pow.Store.Backend.Base
