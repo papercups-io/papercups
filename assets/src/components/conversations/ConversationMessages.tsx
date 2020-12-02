@@ -109,7 +109,7 @@ const ConversationMessages = ({
                 shouldDisplayTimestamp = true;
               }
 
-              if(!prev || (prev && msg.customer_id !== prev.customer_id)){
+              if(!next || (next && msg.customer_id !== next.customer_id)){
                 shouldDisplatAvatar = true
               }
 
