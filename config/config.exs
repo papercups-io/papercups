@@ -56,7 +56,9 @@ if sentry_dsn != nil do
     root_source_code_path: File.cwd!()
 end
 
-config :pow, Pow.Postgres.Store, repo: ChatApi.Repo
+config :pow, Pow.Postgres.Store,
+  repo: ChatApi.Repo,
+  schema: ChatApi.Auth.PowSession
 
 config :chat_api, :pow,
   user: ChatApi.Users.User,

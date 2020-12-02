@@ -1,8 +1,8 @@
-defmodule Pow.Postgres.Schema do
+defmodule ChatApi.Auth.PowSession do
   use Ecto.Schema
 
   @primary_key false
-  schema "pow_store" do
+  schema "pow_sessions" do
     field :namespace, :string
     field :key, {:array, :binary}
     field :original_key, :binary
