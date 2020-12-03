@@ -25,6 +25,7 @@ import {
   VideoCameraOutlined,
 } from './icons';
 import {BASE_URL, isDev} from '../config';
+import analytics from '../analytics';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -112,6 +113,12 @@ const Dashboard = (props: RouteComponentProps) => {
   const logout = () => auth.logout().then(() => props.history.push('/login'));
 
   useEffect(() => {
+    if (currentUser && currentUser.id) {
+      const {id, email} = currentUser;
+
+      analytics.identify(id, email);
+    }
+
     if (REACT_APP_STORYTIME_ENABLED && currentUser) {
       const {id, email} = currentUser;
       // TODO: figure out a better way to initialize this?

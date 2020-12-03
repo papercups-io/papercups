@@ -1,32 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import * as Sentry from '@sentry/react';
-import LogRocket from 'logrocket';
-import posthog from 'posthog-js';
 import './index.css';
 import App from './App';
-import {isDev} from './config';
+import analytics from './analytics';
 import {AuthProvider} from './components/auth/AuthProvider';
 import * as serviceWorker from './serviceWorker';
 
-const {
-  REACT_APP_SENTRY_DSN,
-  REACT_APP_LOGROCKET_ID,
-  REACT_APP_POSTHOG_TOKEN = 'cQo4wipp5ipWWXhTN8kTacBItgqo457yDRtzCMOr-Tw',
-  REACT_APP_POSTHOG_API_HOST = 'https://app.posthog.com',
-} = process.env;
-
-if (REACT_APP_SENTRY_DSN && !isDev) {
-  Sentry.init({dsn: REACT_APP_SENTRY_DSN});
-}
-
-if (REACT_APP_LOGROCKET_ID && !isDev) {
-  LogRocket.init(REACT_APP_LOGROCKET_ID);
-}
-
-if (REACT_APP_POSTHOG_TOKEN && !isDev) {
-  posthog.init(REACT_APP_POSTHOG_TOKEN, {api_host: REACT_APP_POSTHOG_API_HOST});
-}
+analytics.init();
 
 ReactDOM.render(
   <AuthProvider>
