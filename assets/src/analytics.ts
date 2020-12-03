@@ -10,9 +10,9 @@ const {
   REACT_APP_POSTHOG_API_HOST = 'https://app.posthog.com',
 } = process.env;
 
-export const isSentryEnabled = REACT_APP_SENTRY_DSN; // && !isDev;
+export const isSentryEnabled = REACT_APP_SENTRY_DSN && !isDev;
 export const isLogRocketEnabled = REACT_APP_LOGROCKET_ID && !isDev;
-export const isPostHogEnabled = REACT_APP_POSTHOG_TOKEN; // && !isDev;
+export const isPostHogEnabled = REACT_APP_POSTHOG_TOKEN && !isDev;
 
 export const init = () => {
   if (isSentryEnabled) {
