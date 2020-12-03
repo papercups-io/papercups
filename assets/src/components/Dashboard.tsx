@@ -61,7 +61,7 @@ const hasValidStripeKey = () => {
 };
 
 const shouldDisplayChat = (pathname: string) => {
-  if (isHostedProd || pathname === '/account/getting-started') {
+  if (!isHostedProd || pathname === '/account/getting-started') {
     return false;
   }
 

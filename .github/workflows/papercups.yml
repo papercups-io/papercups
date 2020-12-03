@@ -27,7 +27,7 @@ jobs:
       postgres:
         image: postgres:10.4
         env:
-          POSTGRES_PASSWORD: 'postgres'
+          POSTGRES_PASSWORD: "postgres"
         ports:
           - 5432:5432
         options: >-
@@ -41,8 +41,8 @@ jobs:
       - name: Initial setup
         uses: actions/setup-elixir@v1
         with:
-          elixir-version: '1.10.4'
-          otp-version: '22.2.6'
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
 
       - name: Install dependencies
         run: mix deps.get
@@ -59,11 +59,29 @@ jobs:
       - name: Initial setup
         uses: actions/setup-elixir@v1
         with:
-          elixir-version: '1.10.4'
-          otp-version: '22.2.6'
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
 
       - name: Install dependencies
         run: mix deps.get
 
       - name: Run format check
         run: mix format --check-formatted
+
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Initial setup
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
+
+      - name: Install dependencies
+        run: npm install --prefix assets
+
+      - name: Run format check
+        run: npm run prettier:check --prefix assets
