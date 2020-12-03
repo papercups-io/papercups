@@ -2,7 +2,8 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {range} from 'lodash';
 import {Button, Select} from '../common';
-import {WorkingHours, timezones, getDefaultTimezone} from './support';
+import {timezones, getDefaultTimezone} from './support';
+import {WorkingHours} from '../../types';
 import logger from '../../logger';
 
 const MINS_IN_A_DAY = 24 * 60;

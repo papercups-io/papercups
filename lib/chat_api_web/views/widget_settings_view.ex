@@ -18,7 +18,8 @@ defmodule ChatApiWeb.WidgetSettingsView do
       color: widget_settings.color,
       greeting: widget_settings.greeting,
       new_message_placeholder: widget_settings.new_message_placeholder,
-      base_url: widget_settings.base_url
+      base_url: widget_settings.base_url,
+      hide_outside_working_hours: widget_settings.hide_outside_working_hours,
     }
   end
 
@@ -30,6 +31,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
       greeting: widget_settings.greeting,
       new_message_placeholder: widget_settings.new_message_placeholder,
       base_url: widget_settings.base_url,
+      hide_outside_working_hours: widget_settings.hide_outside_working_hours,
       account: render_one(widget_settings.account, AccountView, "basic.json")
     }
   end

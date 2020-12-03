@@ -15,7 +15,7 @@ import AccountUsersTable from './AccountUsersTable';
 import DisabledUsersTable from './DisabledUsersTable';
 import WorkingHoursSelector from './WorkingHoursSelector';
 import * as API from '../../api';
-import {Account, User, WidgetSettings, WorkingHours} from '../../types';
+import {Account, User, UpdateWidgetSettings, WorkingHours} from '../../types';
 import {BASE_URL} from '../../config';
 import {sleep} from '../../utils';
 import logger from '../../logger';
@@ -59,7 +59,7 @@ class AccountOverview extends React.Component<Props, State> {
     this.setState({
       account: account,
       companyName: account.company_name,
-      hideWidgetOutsideWorkingHours: account.hide_widget_outside_working_hours,
+      hideWidgetOutsideWorkingHours: account.widget_settings.hide_outside_working_hours,
     })
   }
 
@@ -127,8 +127,17 @@ class AccountOverview extends React.Component<Props, State> {
     company_name?: string;
     time_zone?: string;
     working_hours?: Array<WorkingHours>;
-    hide_widget_outside_working_hours?: boolean;
+    widget_settings?: UpdateWidgetSettings;
   }) => {
+    // thinking to leave this out in favor of a strong typing with required ID?
+    if (updates.widget_settings && !updates.widget_settings.id) {
+      return Promise.reject("Updating widget_settings without passing an ID will result in creating a new WidgetSettings object on the Account")
+        .finally(() => {
+          this.setState({isEditing: false});
+        })
+    }
+
+
     return API.updateAccountInfo(updates)
       .then((account) => {
         logger.debug('Successfully updated company name!', account);
@@ -154,10 +163,13 @@ class AccountOverview extends React.Component<Props, State> {
   handleUpdateHideWidgetOutsideWorkingHours = () => {
     this.setState({isRefreshing: true});
 
-    const {hideWidgetOutsideWorkingHours} = this.state;
+    const widgetSettingsToUpdate = {
+      id: this.state.account.widget_settings.id,
+      hide_outside_working_hours: !this.state.hideWidgetOutsideWorkingHours,
+    }
 
     return this.handleUpdate({
-      hide_widget_outside_working_hours: !hideWidgetOutsideWorkingHours
+      widget_settings: widgetSettingsToUpdate,
     }).finally(() => {
       this.setState({isRefreshing: false})
     });

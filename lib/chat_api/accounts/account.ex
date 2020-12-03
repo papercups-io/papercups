@@ -21,8 +21,6 @@ defmodule ChatApi.Accounts.Account do
     field(:stripe_product_id, :string)
     field(:stripe_default_payment_method_id, :string)
 
-    field(:hide_widget_outside_working_hours, :boolean)
-
     has_many(:customers, Customer)
     has_many(:conversations, Conversation)
     has_many(:messages, Message)
@@ -45,9 +43,9 @@ defmodule ChatApi.Accounts.Account do
       :stripe_subscription_id,
       :stripe_product_id,
       :stripe_default_payment_method_id,
-      :hide_widget_outside_working_hours
     ])
     |> cast_embed(:working_hours, with: &working_hours_changeset/2)
+    |> cast_assoc(:widget_settings, required: false, with: &WidgetSetting.changeset/2)
     |> validate_required([:company_name])
   end
 

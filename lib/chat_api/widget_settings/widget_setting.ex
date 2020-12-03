@@ -18,6 +18,8 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
     field :pathname, :string
     field :last_seen_at, :utc_datetime
 
+    field(:hide_outside_working_hours, :boolean)
+
     belongs_to(:account, Account)
 
     timestamps()
@@ -32,6 +34,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
       :color,
       :greeting,
       :new_message_placeholder,
+      :hide_outside_working_hours,
       :base_url,
       :account_id,
       :host,

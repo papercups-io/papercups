@@ -86,7 +86,6 @@ export type Account = {
   company_name: string;
   time_zone: string;
   subscription_plan: string;
-  hide_widget_outside_working_hours: boolean;
   users: Array<User>;
   widget_settings: WidgetSettings;
   working_hours: Array<WorkingHours>;
@@ -105,6 +104,12 @@ export type WidgetSettings = {
   color: string;
   greeting: string;
   new_message_placeholder: string;
+  hide_outside_working_hours: boolean;
   base_url: string;
 };
 
+export type UpdateWidgetSettings = {
+  // omitting id in an update will result in creating another WidgetSettings under the parent Account
+  id: string;
+  hide_outside_working_hours?: boolean;
+};
