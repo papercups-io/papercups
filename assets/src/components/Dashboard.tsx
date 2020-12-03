@@ -61,11 +61,7 @@ const hasValidStripeKey = () => {
 };
 
 const shouldDisplayChat = (pathname: string) => {
-  if (!isHostedProd || pathname === '/account/getting-started') {
-    return false;
-  }
-
-  return true;
+  return isHostedProd && pathname !== '/account/getting-started';
 };
 
 // TODO: not sure if this is the best way to handle this, but the goal
