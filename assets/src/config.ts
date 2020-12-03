@@ -12,6 +12,7 @@ export const isHostedProd = window.location.hostname === 'app.papercups.io';
 
 export const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
 
+// FIXME: sometimes we should be using localhost:3000
 export const BASE_URL = isDev
   ? 'http://localhost:4000'
   : `https://${REACT_URL}`;

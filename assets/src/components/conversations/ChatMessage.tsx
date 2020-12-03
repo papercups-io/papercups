@@ -6,6 +6,7 @@ import {colors, Text, Tooltip} from '../common';
 import {UserOutlined} from '../icons';
 import {formatRelativeTime} from '../../utils';
 import {Customer, Message, User} from '../../types';
+import {getColorByUuid} from './support';
 import ChatMessageBox from './ChatMessageBox';
 
 dayjs.extend(utc);
@@ -39,7 +40,7 @@ export const SenderAvatar = ({
   isAgent,
   name,
   user,
-  color,
+  color = colors.gold,
   size
 
 }: {
@@ -119,15 +120,13 @@ export const ChatMessage = ({
   const {body, sent_at, created_at, user, seen_at} = message;
   const isAgent = !!user;
   const tooltip = getSenderIdentifier(customer, user);
-  const customerId = getCustomerId(customer);
 
   const sentAt = dayjs.utc(sent_at || created_at);
   const formattedSentAt = formatRelativeTime(sentAt);
   const seenAt = seen_at ? dayjs.utc(seen_at) : null;
   const formattedSeenAt = seenAt ? formatRelativeTime(seenAt) : null;
-  const {gold, red, green, purple, magenta} = colors;
-  const colorIndex = customerId % 5;
-  const color = [gold, red, green, purple, magenta][colorIndex];
+  const customerId = customer && customer.id;
+  const color = getColorByUuid(customerId);
 
   if (isMe) {
     return (
@@ -155,10 +154,16 @@ export const ChatMessage = ({
       </Box>
     );
   }
+
   return (
     <Box pr={4} pl={0} pb={isLastInGroup ? 3 : 2}>
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
-        <SenderAvatar name={tooltip} user={user} isAgent={isAgent} color={color} />
+        <SenderAvatar
+          name={tooltip}
+          user={user}
+          isAgent={isAgent}
+          color={color}
+        />
         <ChatMessageBox
           content={body}
           sx={{
