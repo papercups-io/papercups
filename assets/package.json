@@ -62,7 +62,6 @@
     "deploy": "npm run build",
     "prettier": "prettier --write 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
     "prettier:check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
-
   },
   "eslintConfig": {
     "extends": "react-app"
