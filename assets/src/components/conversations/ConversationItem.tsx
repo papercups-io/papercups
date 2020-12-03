@@ -68,26 +68,50 @@ const ConversationItem = ({
       }}
       onClick={() => onSelectConversation(id)}
     >
-      <Flex mb={2} sx={{justifyContent: 'space-between'}}>
+      <Flex mb={3} sx={{justifyContent: 'space-between'}}>
         <Flex sx={{alignItems: 'center'}}>
-          <Flex
-            mr={2}
-            sx={{
-              bg:  color,
-              height: 32,
-              width: 32,
-              borderRadius: '50%',
-              justifyContent: 'center',
-              alignItems: 'center',
-              color: '#fff',
-            }}
-          >
-            {isPriority ? (
-              <StarFilled style={{fontSize: 16, color: colors.gold}} />
-            ) : (
-              <UserOutlined style={{color: colors.white}} />
-            )}
-          </Flex>
+            {
+              isCustomerOnline ? (
+                <Badge
+                  status="success"
+                  title="Online now"
+                  dot={true}
+                >
+                  <Flex
+                    mr={2}
+                    sx={{
+                      bg:  color,
+                      height: 32,
+                      width: 32,
+                      borderRadius: '50%',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      color: '#fff',
+                    }}
+                  >
+                  <UserOutlined style={{color: colors.white}} />
+                  </Flex>
+                </Badge>
+              ) : (
+                <Flex
+                  mr={2}
+                  sx={{
+                    bg:  color,
+                    height: 32,
+                    width: 32,
+                    borderRadius: '50%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    color: '#fff',
+                  }}
+                >
+                <UserOutlined style={{color: colors.white}} />
+                </Flex>
+
+              )
+             
+            }
+
           <Text
             strong
             style={{
@@ -102,36 +126,34 @@ const ConversationItem = ({
         </Flex>
 
         {read ? (
-          isCustomerOnline ? (
-            <Badge status="success" text="Online" />
-          ) : (
-            <Text type="secondary">{date}</Text>
-          )
+          <Text type="secondary">{date}</Text>
         ) : (
-          <Badge status="processing" />
+          <Badge status="processing" offset={[6, 0]} />
         )}
       </Flex>
-      <Flex sx={{alignItems: 'center'}}>
-        {isAgent ? (
-          <SenderAvatar name={tooltip} user={user} isAgent={isAgent} color={color} size={16} />
-        ) : (
-          ''
-        )}
-        <Box
-          style={{
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {read ? (
-            <Text type="secondary">{preview}</Text>
-          ) : (
-            <Text strong>{preview}</Text>
+      <Flex sx={{justifyContent: 'space-between'}}>
+        <Flex sx={{alignItems: 'center'}}>
+          {isAgent && (
+            <SenderAvatar name={tooltip} user={user} isAgent={isAgent} color={color} size={16} />
           )}
-        </Box>
+          <Box
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {read ? (
+              <Text>{preview}</Text>
+            ) : (
+              <Text strong>{preview}</Text>
+            )}
+          </Box>
 
-
+        </Flex>
+        {isPriority && (
+          <StarFilled style={{fontSize: 16, color: colors.gold}} title="Prioritized" />
+        )}
       </Flex>
     </Box>
   );

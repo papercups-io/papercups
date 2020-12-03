@@ -93,7 +93,14 @@ export const SenderAvatar = ({
         }}
       >
         {isAgent ? (
-          name.slice(0, 1).toUpperCase()
+          <Text style={{
+            fontSize: 12,
+            lineHeight: 1.4,
+            color: colors.white
+
+            }}>
+            {name.slice(0, 1).toUpperCase()}
+          </Text>
         ) : (
           <UserOutlined style={{color: colors.white}} />
         )}
