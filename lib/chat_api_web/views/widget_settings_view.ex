@@ -19,7 +19,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
       greeting: widget_settings.greeting,
       new_message_placeholder: widget_settings.new_message_placeholder,
       base_url: widget_settings.base_url,
-      hide_outside_working_hours: widget_settings.hide_outside_working_hours,
+      hide_outside_working_hours: widget_settings.hide_outside_working_hours
     }
   end
 

@@ -42,7 +42,7 @@ defmodule ChatApi.Accounts.Account do
       :stripe_customer_id,
       :stripe_subscription_id,
       :stripe_product_id,
-      :stripe_default_payment_method_id,
+      :stripe_default_payment_method_id
     ])
     |> cast_embed(:working_hours, with: &working_hours_changeset/2)
     |> cast_assoc(:widget_settings, required: false, with: &WidgetSetting.changeset/2)
