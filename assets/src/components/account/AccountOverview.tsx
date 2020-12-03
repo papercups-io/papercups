@@ -129,15 +129,6 @@ class AccountOverview extends React.Component<Props, State> {
     working_hours?: Array<WorkingHours>;
     widget_settings?: UpdateWidgetSettings;
   }) => {
-    // thinking to leave this out in favor of a strong typing with required ID?
-    if (updates.widget_settings && !updates.widget_settings.id) {
-      return Promise.reject("Updating widget_settings without passing an ID will result in creating a new WidgetSettings object on the Account")
-        .finally(() => {
-          this.setState({isEditing: false});
-        })
-    }
-
-
     return API.updateAccountInfo(updates)
       .then((account) => {
         logger.debug('Successfully updated company name!', account);
