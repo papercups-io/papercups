@@ -24,7 +24,7 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL, isDev} from '../config';
+import {BASE_URL, isDev, isHostedProd} from '../config';
 import analytics from '../analytics';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
@@ -61,7 +61,7 @@ const hasValidStripeKey = () => {
 };
 
 const shouldDisplayChat = (pathname: string) => {
-  if (pathname === '/account/getting-started') {
+  if (isHostedProd || pathname === '/account/getting-started') {
     return false;
   }
 
@@ -333,7 +333,7 @@ const Dashboard = (props: RouteComponentProps) => {
         </Switch>
       </Layout>
 
-      {currentUser && (
+      {isHostedProd && currentUser && (
         <ChatWidget
           title="Need help with anything?"
           subtitle="Ask us in the chat window below 😊"
