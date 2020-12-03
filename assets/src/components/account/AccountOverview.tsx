@@ -14,9 +14,8 @@ import Spinner from '../Spinner';
 import AccountUsersTable from './AccountUsersTable';
 import DisabledUsersTable from './DisabledUsersTable';
 import WorkingHoursSelector from './WorkingHoursSelector';
-import {WidgetSettings, WorkingHours} from './support';
 import * as API from '../../api';
-import {User} from '../../types';
+import {Account, User, WidgetSettings, WorkingHours} from '../../types';
 import {BASE_URL} from '../../config';
 import {sleep} from '../../utils';
 import logger from '../../logger';
@@ -31,16 +30,6 @@ type State = {
   isEditing: boolean;
   isRefreshing: boolean;
   hideWidgetOutsideWorkingHours: boolean;
-};
-type Account = {
-  id: string;
-  company_name: string;
-  time_zone: string;
-  subscription_plan: string;
-  hide_widget_outside_working_hours: boolean;
-  users: Array<User>;
-  widget_settings: Array<WidgetSettings>;
-  working_hours: Array<WorkingHours>;
 };
 
 class AccountOverview extends React.Component<Props, State> {
@@ -330,7 +319,7 @@ class AccountOverview extends React.Component<Props, State> {
           onChange={this.handleUpdateHideWidgetOutsideWorkingHours}
           disabled={isRefreshing}
         >
-          Hide chat window outside of working hours
+          Hide chat outside of working hours
         </Checkbox>
         <Divider />
 

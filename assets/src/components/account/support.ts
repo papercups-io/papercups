@@ -9,23 +9,6 @@ type Timezone = {
   tzCode: string;
 };
 
-export type WorkingHours = {
-  day: string;
-  start_minute: number;
-  end_minute: number;
-};
-
-export type WidgetSettings = {
-  id: string;
-  title: string;
-  subtitle: string;
-  color: string;
-  greeting: string;
-  new_message_placeholder: string;
-  base_url: string;
-};
-
-
 export const getDefaultTimezone = () => {
   return dayjs.tz.guess();
 };

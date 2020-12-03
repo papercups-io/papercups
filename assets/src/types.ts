@@ -80,3 +80,31 @@ export enum Alignment {
   Left = 'left',
   Center = 'center',
 }
+
+export type Account = {
+  id: string;
+  company_name: string;
+  time_zone: string;
+  subscription_plan: string;
+  hide_widget_outside_working_hours: boolean;
+  users: Array<User>;
+  widget_settings: WidgetSettings;
+  working_hours: Array<WorkingHours>;
+};
+
+export type WorkingHours = {
+  day: string;
+  start_minute: number;
+  end_minute: number;
+};
+
+export type WidgetSettings = {
+  id: string;
+  title: string;
+  subtitle: string;
+  color: string;
+  greeting: string;
+  new_message_placeholder: string;
+  base_url: string;
+};
+
