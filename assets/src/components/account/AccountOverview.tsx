@@ -87,13 +87,20 @@ class AccountOverview extends React.Component<Props, State> {
       notification.error({
         message: 'Failed to generate user invitation!',
         description,
-        btn: shouldDisplayBillingLink ? (
-          <a href="/billing">
+        duration: 10, // 10 seconds
+        btn: (
+          <a
+            href={
+              shouldDisplayBillingLink
+                ? '/billing'
+                : 'https://papercups.io/pricing'
+            }
+          >
             <Button type="primary" size="small">
               Upgrade subscription
             </Button>
           </a>
-        ) : null,
+        ),
       });
     }
   };

@@ -23,7 +23,8 @@ defmodule ChatApiWeb.RegistrationController do
           send_server_error(
             conn,
             403,
-            "Your account has reached the capacity for its current subscription plan. Please contact your admin to upgrade the account."
+            "Your account has reached the capacity for its current subscription plan. " <>
+              "Please contact your admin to upgrade the account."
           )
 
         true ->

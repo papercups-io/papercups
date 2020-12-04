@@ -26,7 +26,9 @@ defmodule ChatApiWeb.UserInvitationController do
       |> json(%{
         error: %{
           status: 403,
-          message: "Please upgrade your subscription plan if you want to invite more users."
+          message:
+            "You've hit the user limit for our free tier. " <>
+              "Try the premium plan free for 30 days to invite more users to your account!"
         }
       })
     else
