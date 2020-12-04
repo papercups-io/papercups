@@ -16,7 +16,7 @@ import WorkingHoursSelector from './WorkingHoursSelector';
 import {WorkingHours} from './support';
 import * as API from '../../api';
 import {User} from '../../types';
-import {BASE_URL} from '../../config';
+import {FRONTEND_BASE_URL} from '../../config';
 import {sleep, hasValidStripeKey} from '../../utils';
 import logger from '../../logger';
 
@@ -73,7 +73,7 @@ class AccountOverview extends React.Component<Props, State> {
 
       this.setState(
         {
-          inviteUrl: `${BASE_URL}/register/${token}`,
+          inviteUrl: `${FRONTEND_BASE_URL}/register/${token}`,
         },
         () => this.focusAndHighlightInput()
       );
