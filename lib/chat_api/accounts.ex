@@ -142,6 +142,17 @@ defmodule ChatApi.Accounts do
 
   @spec has_reached_user_capacity?(binary()) :: boolean()
   def has_reached_user_capacity?(account_id) do
+    # NB: if you're self-hosting, you can run the following to upgrade your account:
+    # ```
+    # $ mix set_subscription_plan [YOUR_ACCOUNT_TOKEN] team
+    # ```
+
+    # Or, on Heroku:
+    # ```
+    # $ heroku run "mix set_subscription_plan [YOUR_ACCOUNT_TOKEN] team"
+    # ```
+    #
+    # (These commands would update your account from the "starter" plan to the "team" plan.)
     case get_subscription_plan!(account_id) do
       "starter" -> count_active_users(account_id) >= @starter_plan_max_users
       "team" -> false

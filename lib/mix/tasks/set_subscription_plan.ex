@@ -7,6 +7,18 @@ defmodule Mix.Tasks.SetSubscriptionPlan do
   This task handles setting the subscription plan for an account. For example,
   we may automatically upgrade some of our beta users so they can continue to
   use some of our premium features for free.
+
+  Example:
+  ```
+  $ mix set_subscription_plan [YOUR_ACCOUNT_TOKEN] team
+  ```
+
+  On Heroku:
+  ```
+  $ heroku run "mix set_subscription_plan [YOUR_ACCOUNT_TOKEN] team"
+  ```
+
+  (These commands would update your account from the "starter" plan to the "team" plan.)
   """
 
   def run(args) do
