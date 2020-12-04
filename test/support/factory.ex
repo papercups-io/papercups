@@ -24,11 +24,39 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def conversation_factory do
+    %ChatApi.Conversations.Conversation{
+      account: build(:account),
+      customer: build(:customer)
+    }
+  end
+
+  def customer_factory do
+    %ChatApi.Customers.Customer{
+      first_seen: ~D[2020-01-01],
+      last_seen: ~D[2020-01-01],
+      email: sequence(:email, &"test-#{&1}@test.com"),
+      account: build(:account),
+      customer_tags: [],
+      tags: []
+    }
+  end
+
   def widget_settings_factory do
     %ChatApi.WidgetSettings.WidgetSetting{
       color: "some color",
       subtitle: "some subtitle",
       title: "some title"
+    }
+  end
+
+  def message_factory do
+    %ChatApi.Messages.Message{
+      account: build(:account),
+      conversation: build(:conversation),
+      customer: build(:customer),
+      user: build(:user),
+      body: "some message body"
     }
   end
 

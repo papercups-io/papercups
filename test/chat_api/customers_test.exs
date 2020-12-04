@@ -1,15 +1,12 @@
 defmodule ChatApi.CustomersTest do
   use ChatApi.DataCase, async: true
+  import ChatApi.Factory
 
   alias ChatApi.Customers
 
   describe "customers" do
     alias ChatApi.Customers.Customer
 
-    @valid_attrs %{
-      first_seen: ~D[2020-01-01],
-      last_seen: ~D[2020-01-01]
-    }
     @update_attrs %{
       first_seen: ~D[2020-01-01],
       last_seen: ~D[2020-01-02],
@@ -27,24 +24,31 @@ defmodule ChatApi.CustomersTest do
     }
 
     setup do
-      account = account_fixture()
-      customer = customer_fixture(account)
-
+      account = insert(:account)
+      customer = insert(:customer, account: account)
       {:ok, account: account, customer: customer}
     end
 
-    test "list_customers/1 returns all customers", %{account: account, customer: customer} do
-      customer_ids = Customers.list_customers(account.id) |> Enum.map(& &1.id)
+    test "list_customers/1 returns all customers",
+         %{account: account, customer: customer} do
+      customer_ids =
+        Customers.list_customers(account.id)
+        |> Enum.map(& &1.id)
 
       assert customer_ids == [customer.id]
     end
 
-    test "get_customer!/1 returns the customer with given id", %{customer: customer} do
-      assert Customers.get_customer!(customer.id) == customer
+    test "get_customer!/1 returns the customer with given id",
+         %{customer: customer} do
+      found_customer =
+        Customers.get_customer!(customer.id)
+        |> Repo.preload([:account])
+
+      assert found_customer == customer
     end
 
-    test "create_customer/1 with valid data creates a customer", %{account: account} do
-      attrs = Map.put(@valid_attrs, :account_id, account.id)
+    test "create_customer/1 with valid data creates a customer" do
+      attrs = params_with_assocs(:customer)
 
       assert {:ok,
               %Customer{
@@ -57,7 +61,8 @@ defmodule ChatApi.CustomersTest do
       assert {:error, %Ecto.Changeset{}} = Customers.create_customer(@invalid_attrs)
     end
 
-    test "update_customer/2 with valid data updates the customer", %{customer: customer} do
+    test "update_customer/2 with valid data updates the customer",
+         %{customer: customer} do
       assert {:ok, %Customer{} = customer} = Customers.update_customer(customer, @update_attrs)
 
       assert customer.email == @update_attrs.email
@@ -68,8 +73,9 @@ defmodule ChatApi.CustomersTest do
       assert customer.pathname == @update_attrs.pathname
     end
 
-    test "update_customer_metadata/2 only updates customizable fields", %{customer: customer} do
-      new_account = account_fixture()
+    test "update_customer_metadata/2 only updates customizable fields",
+         %{customer: customer} do
+      new_account = insert(:account)
       attrs = Enum.into(@update_attrs, %{account_id: new_account.id})
 
       assert {:ok, %Customer{} = customer} = Customers.update_customer_metadata(customer, attrs)
@@ -99,9 +105,13 @@ defmodule ChatApi.CustomersTest do
       assert String.length(truncated) <= 255
     end
 
-    test "update_customer/2 with invalid data returns error changeset", %{customer: customer} do
+    test "update_customer/2 with invalid data returns error changeset",
+         %{customer: customer} do
       assert {:error, %Ecto.Changeset{}} = Customers.update_customer(customer, @invalid_attrs)
-      assert customer == Customers.get_customer!(customer.id)
+
+      assert customer ==
+               Customers.get_customer!(customer.id)
+               |> Repo.preload([:account])
     end
 
     test "delete_customer/1 deletes the customer", %{customer: customer} do
@@ -109,20 +119,23 @@ defmodule ChatApi.CustomersTest do
       assert_raise Ecto.NoResultsError, fn -> Customers.get_customer!(customer.id) end
     end
 
-    test "change_customer/1 returns a customer changeset", %{customer: customer} do
+    test "change_customer/1 returns a customer changeset",
+         %{customer: customer} do
       assert %Ecto.Changeset{} = Customers.change_customer(customer)
     end
 
-    test "find_by_external_id/2 returns a customer by external_id", %{account: account} do
+    test "find_by_external_id/2 returns a customer by external_id",
+         %{account: account} do
       external_id = "cus_123"
-      _customer = customer_fixture(account, %{external_id: external_id})
+      _customer = insert(:customer, %{external_id: external_id, account: account})
 
       assert _customer = Customers.find_by_external_id(external_id, account.id)
     end
 
-    test "find_by_external_id/2 works with integer external_ids", %{account: account} do
+    test "find_by_external_id/2 works with integer external_ids",
+         %{account: account} do
       external_id = "123"
-      _customer = customer_fixture(account, %{external_id: external_id})
+      _customer = insert(:customer, %{external_id: external_id, account: account})
 
       assert _customer = Customers.find_by_external_id(123, account.id)
     end
