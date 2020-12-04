@@ -9,6 +9,8 @@ defmodule ChatApi.Accounts do
   alias ChatApi.Accounts.Account
   alias ChatApi.Users.User
 
+  @starter_plan_max_users 5
+
   @spec list_accounts() :: [Account.t()]
   @doc """
   Returns the list of accounts.
@@ -141,7 +143,7 @@ defmodule ChatApi.Accounts do
   @spec has_reached_user_capacity?(binary()) :: boolean()
   def has_reached_user_capacity?(account_id) do
     case get_subscription_plan!(account_id) do
-      "starter" -> count_active_users(account_id) >= 5
+      "starter" -> count_active_users(account_id) >= @starter_plan_max_users
       "team" -> false
       _ -> false
     end

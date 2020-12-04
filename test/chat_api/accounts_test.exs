@@ -1,7 +1,7 @@
 defmodule ChatApi.AccountsTest do
   use ChatApi.DataCase, async: true
 
-  alias ChatApi.{Accounts, WidgetSettings}
+  alias ChatApi.{Accounts, WidgetSettings, Users}
 
   describe "accounts" do
     alias ChatApi.Accounts.Account
@@ -25,7 +25,7 @@ defmodule ChatApi.AccountsTest do
       assert Accounts.get_account!(account.id) == account
     end
 
-    test "create_account/1 with valid data creates a account and widget_setting" do
+    test "create_account/1 with valid data creates an account and widget_setting" do
       assert {:ok, %Account{} = account} = Accounts.create_account(@valid_attrs)
       assert account.company_name == "some company_name"
 
@@ -65,8 +65,62 @@ defmodule ChatApi.AccountsTest do
       assert_raise Ecto.NoResultsError, fn -> Accounts.get_account!(account.id) end
     end
 
-    test "change_account/1 returns a account changeset", %{account: account} do
+    test "change_account/1 returns an account changeset", %{account: account} do
       assert %Ecto.Changeset{} = Accounts.change_account(account)
+    end
+
+    test "get_subscription_plan!/1 returns the account subscription plan", %{account: account} do
+      assert "starter" = Accounts.get_subscription_plan!(account.id)
+
+      assert {:ok, %Account{} = account} =
+               Accounts.update_billing_info(account, %{subscription_plan: "team"})
+
+      assert "team" = Accounts.get_subscription_plan!(account.id)
+    end
+
+    test "count_active_users/1 counts the number of active users on an account", %{
+      account: account
+    } do
+      assert 0 = Accounts.count_active_users(account.id)
+
+      user_1 = user_fixture(account)
+      user_2 = user_fixture(account)
+      _user_3 = user_fixture(account)
+
+      assert 3 = Accounts.count_active_users(account.id)
+
+      Users.disable_user(user_1)
+      Users.archive_user(user_2)
+
+      assert 1 = Accounts.count_active_users(account.id)
+    end
+
+    test "has_reached_user_capacity?/1 returns true for accounts on the 'starter' plan with >= 5 users",
+         %{
+           account: account
+         } do
+      assert "starter" = Accounts.get_subscription_plan!(account.id)
+      refute Accounts.has_reached_user_capacity?(account.id)
+
+      for _n <- 1..5 do
+        user_fixture(account)
+      end
+
+      assert Accounts.has_reached_user_capacity?(account.id)
+    end
+
+    test "has_reached_user_capacity?/1 returns false for accounts on the 'team' plan with >= 5 users",
+         %{
+           account: account
+         } do
+      Accounts.update_billing_info(account, %{subscription_plan: "team"})
+      refute Accounts.has_reached_user_capacity?(account.id)
+
+      for _n <- 1..5 do
+        user_fixture(account)
+      end
+
+      refute Accounts.has_reached_user_capacity?(account.id)
     end
   end
 end
