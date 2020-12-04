@@ -330,7 +330,7 @@ class AccountOverview extends React.Component<Props, State> {
                   <Input
                     ref={(el) => (this.input = el)}
                     type="text"
-                    placeholder="Click the button to generate an invite URL!"
+                    placeholder="Click the button to generate an invite URL"
                     value={inviteUrl}
                   ></Input>
                 </Box>
