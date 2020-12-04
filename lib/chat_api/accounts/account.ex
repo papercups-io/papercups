@@ -37,15 +37,22 @@ defmodule ChatApi.Accounts.Account do
     account
     |> cast(attrs, [
       :company_name,
-      :time_zone,
+      :time_zone
+    ])
+    |> cast_embed(:working_hours, with: &working_hours_changeset/2)
+    |> validate_required([:company_name])
+  end
+
+  def billing_details_changeset(account, attrs) do
+    account
+    |> cast(attrs, [
       :subscription_plan,
       :stripe_customer_id,
       :stripe_subscription_id,
       :stripe_product_id,
       :stripe_default_payment_method_id
     ])
-    |> cast_embed(:working_hours, with: &working_hours_changeset/2)
-    |> validate_required([:company_name])
+    |> validate_required([:subscription_plan])
   end
 
   defp working_hours_changeset(schema, params) do

@@ -41,9 +41,23 @@ defmodule ChatApi.AccountsTest do
       assert account.company_name == "some updated company_name"
     end
 
+    test "update_account/2 does not update billing information fields", %{account: account} do
+      assert {:ok, %Account{} = account} =
+               Accounts.update_account(account, %{subscription_plan: "team"})
+
+      assert account.subscription_plan != "team"
+    end
+
     test "update_account/2 with invalid data returns error changeset", %{account: account} do
       assert {:error, %Ecto.Changeset{}} = Accounts.update_account(account, @invalid_attrs)
       assert account == Accounts.get_account!(account.id)
+    end
+
+    test "update_billing_info/2 updates billing information fields", %{account: account} do
+      assert {:ok, %Account{} = account} =
+               Accounts.update_billing_info(account, %{subscription_plan: "team"})
+
+      assert account.subscription_plan == "team"
     end
 
     test "delete_account/1 deletes the account", %{account: account} do

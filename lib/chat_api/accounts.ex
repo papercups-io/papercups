@@ -79,6 +79,14 @@ defmodule ChatApi.Accounts do
     |> Repo.update()
   end
 
+  @spec update_billing_info(Account.t(), map()) ::
+          {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def update_billing_info(%Account{} = account, attrs) do
+    account
+    |> Account.billing_details_changeset(attrs)
+    |> Repo.update()
+  end
+
   @spec delete_account(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a account.

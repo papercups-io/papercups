@@ -26,7 +26,7 @@ defmodule ChatApi.StripeClient do
 
     Account
     |> Repo.get!(account_id)
-    |> Accounts.update_account(%{stripe_default_payment_method_id: payment_method_id})
+    |> Accounts.update_billing_info(%{stripe_default_payment_method_id: payment_method_id})
 
     payment_method
   end
@@ -40,7 +40,7 @@ defmodule ChatApi.StripeClient do
       %{company_name: name, stripe_customer_id: nil} = account ->
         {:ok, customer} = Stripe.Customer.create(%{name: name, email: user.email})
         stripe_customer_id = customer.id
-        Accounts.update_account(account, %{stripe_customer_id: stripe_customer_id})
+        Accounts.update_billing_info(account, %{stripe_customer_id: stripe_customer_id})
 
         stripe_customer_id
 
