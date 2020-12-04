@@ -7,6 +7,7 @@ defmodule ChatApi.Accounts do
   alias ChatApi.Repo
 
   alias ChatApi.Accounts.Account
+  alias ChatApi.Users.User
 
   @spec list_accounts() :: [Account.t()]
   @doc """
@@ -118,5 +119,32 @@ defmodule ChatApi.Accounts do
       |> Repo.one()
 
     count > 0
+  end
+
+  @spec get_subscription_plan!(binary()) :: binary()
+  def get_subscription_plan!(account_id) do
+    Account
+    |> where(id: ^account_id)
+    |> select([:subscription_plan])
+    |> Repo.one!()
+    |> Map.get(:subscription_plan)
+  end
+
+  @spec has_reached_user_capacity?(binary()) :: boolean()
+  def has_reached_user_capacity?(account_id) do
+    case get_subscription_plan!(account_id) do
+      "starter" -> count_active_users(account_id) >= 5
+      "team" -> false
+      _ -> false
+    end
+  end
+
+  @spec count_active_users(binary()) :: integer()
+  def count_active_users(account_id) do
+    User
+    |> where(account_id: ^account_id)
+    |> where([u], is_nil(u.disabled_at) and is_nil(u.archived_at))
+    |> select([p], count(p.id))
+    |> Repo.one()
   end
 end

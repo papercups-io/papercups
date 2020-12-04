@@ -17,7 +17,7 @@ import {WorkingHours} from './support';
 import * as API from '../../api';
 import {User} from '../../types';
 import {BASE_URL} from '../../config';
-import {sleep} from '../../utils';
+import {sleep, hasValidStripeKey} from '../../utils';
 import logger from '../../logger';
 
 type Props = {};
@@ -78,7 +78,23 @@ class AccountOverview extends React.Component<Props, State> {
         () => this.focusAndHighlightInput()
       );
     } catch (err) {
-      logger.error('Failed to generate user invitation URL:', err);
+      const hasServerErrorMessage = !!err?.response?.body?.error?.message;
+      const shouldDisplayBillingLink =
+        hasServerErrorMessage && hasValidStripeKey();
+      const description =
+        err?.response?.body?.error?.message || err?.message || String(err);
+
+      notification.error({
+        message: 'Failed to generate user invitation!',
+        description,
+        btn: shouldDisplayBillingLink ? (
+          <a href="/billing">
+            <Button type="primary" size="small">
+              Upgrade subscription
+            </Button>
+          </a>
+        ) : null,
+      });
     }
   };
 

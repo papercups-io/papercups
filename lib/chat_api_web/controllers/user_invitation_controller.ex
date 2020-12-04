@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.UserInvitationController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.UserInvitations
+  alias ChatApi.{Accounts, UserInvitations}
   alias ChatApi.UserInvitations.UserInvitation
 
   plug ChatApiWeb.EnsureRolePlug, :admin when action in [:index, :create, :update]
@@ -17,15 +17,26 @@ defmodule ChatApiWeb.UserInvitationController do
   end
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def create(conn, %{"user_invitation" => _user_invitation_params} = _) do
+  def create(conn, _params) do
     current_user = Pow.Plug.current_user(conn)
 
-    with {:ok, %UserInvitation{} = user_invitation} <-
-           UserInvitations.create_user_invitation(%{account_id: current_user.account_id}) do
+    if Accounts.has_reached_user_capacity?(current_user.account_id) do
       conn
-      |> put_status(:created)
-      |> put_resp_header("location", Routes.user_invitation_path(conn, :show, user_invitation))
-      |> render("show.json", user_invitation: user_invitation)
+      |> put_status(403)
+      |> json(%{
+        error: %{
+          status: 403,
+          message: "Please upgrade your subscription plan if you want to invite more users."
+        }
+      })
+    else
+      with {:ok, %UserInvitation{} = user_invitation} <-
+             UserInvitations.create_user_invitation(%{account_id: current_user.account_id}) do
+        conn
+        |> put_status(:created)
+        |> put_resp_header("location", Routes.user_invitation_path(conn, :show, user_invitation))
+        |> render("show.json", user_invitation: user_invitation)
+      end
     end
   end
 
