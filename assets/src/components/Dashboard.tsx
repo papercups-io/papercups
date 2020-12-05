@@ -24,7 +24,8 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL, isDev} from '../config';
+import {BASE_URL, isDev, isHostedProd} from '../config';
+import analytics from '../analytics';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -60,11 +61,7 @@ const hasValidStripeKey = () => {
 };
 
 const shouldDisplayChat = (pathname: string) => {
-  if (pathname === '/account/getting-started') {
-    return false;
-  }
-
-  return true;
+  return isHostedProd && pathname !== '/account/getting-started';
 };
 
 // TODO: not sure if this is the best way to handle this, but the goal
@@ -112,6 +109,12 @@ const Dashboard = (props: RouteComponentProps) => {
   const logout = () => auth.logout().then(() => props.history.push('/login'));
 
   useEffect(() => {
+    if (currentUser && currentUser.id) {
+      const {id, email} = currentUser;
+
+      analytics.identify(id, email);
+    }
+
     if (REACT_APP_STORYTIME_ENABLED && currentUser) {
       const {id, email} = currentUser;
       // TODO: figure out a better way to initialize this?
@@ -326,7 +329,7 @@ const Dashboard = (props: RouteComponentProps) => {
         </Switch>
       </Layout>
 
-      {currentUser && (
+      {isHostedProd && currentUser && (
         <ChatWidget
           title="Need help with anything?"
           subtitle="Ask us in the chat window below 😊"
