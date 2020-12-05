@@ -1,53 +1,40 @@
 defmodule ChatApi.GoogleTest do
   use ChatApi.DataCase
 
+  import ChatApi.Factory
   alias ChatApi.Google
 
   describe "google_authorizations" do
     alias ChatApi.Google.GoogleAuthorization
 
-    @valid_attrs %{client: "some client", refresh_token: "some long refresh token"}
     @update_attrs %{
       client: "some updated client",
       refresh_token: "some updated long refresh token"
     }
     @invalid_attrs %{client: nil}
 
-    # TODO: move to text_fixture_helpers
-    def google_authorization_fixture(attrs \\ %{}) do
-      {:ok, google_authorization} =
-        attrs
-        |> Enum.into(create_valid_params())
-        |> Google.create_google_authorization()
-
-      google_authorization
+    setup do
+      google_authorization = insert(:google_authorization)
+      {:ok, google_authorization: google_authorization}
     end
 
-    def create_valid_params() do
-      account = account_fixture()
-      user = user_fixture(account)
+    test "list_google_authorizations/0 returns all google_authorizations",
+         %{google_authorization: google_authorization} do
+      [found_google_authorization] = Google.list_google_authorizations()
 
-      Map.merge(@valid_attrs, %{
-        user_id: user.id,
-        account_id: account.id
-      })
+      assert found_google_authorization.id == google_authorization.id
     end
 
-    test "list_google_authorizations/0 returns all google_authorizations" do
-      google_authorization = google_authorization_fixture()
-      assert Google.list_google_authorizations() == [google_authorization]
-    end
+    test "get_google_authorization!/1 returns the google_authorization with given id",
+         %{google_authorization: google_authorization} do
+      found_auth = Google.get_google_authorization!(google_authorization.id)
 
-    test "get_google_authorization!/1 returns the google_authorization with given id" do
-      google_authorization = google_authorization_fixture()
-
-      assert Google.get_google_authorization!(google_authorization.id) ==
-               google_authorization
+      assert found_auth.id == google_authorization.id
     end
 
     test "create_google_authorization/1 with valid data creates a google_authorization" do
       assert {:ok, %GoogleAuthorization{} = google_authorization} =
-               Google.create_google_authorization(create_valid_params())
+               Google.create_google_authorization(params_with_assocs(:google_authorization))
 
       assert google_authorization.client == "some client"
     end
@@ -56,9 +43,8 @@ defmodule ChatApi.GoogleTest do
       assert {:error, %Ecto.Changeset{}} = Google.create_google_authorization(@invalid_attrs)
     end
 
-    test "update_google_authorization/2 with valid data updates the google_authorization" do
-      google_authorization = google_authorization_fixture()
-
+    test "update_google_authorization/2 with valid data updates the google_authorization",
+         %{google_authorization: google_authorization} do
       assert {:ok, %GoogleAuthorization{} = google_authorization} =
                Google.update_google_authorization(
                  google_authorization,
@@ -68,22 +54,17 @@ defmodule ChatApi.GoogleTest do
       assert google_authorization.client == "some updated client"
     end
 
-    test "update_google_authorization/2 with invalid data returns error changeset" do
-      google_authorization = google_authorization_fixture()
-
+    test "update_google_authorization/2 with invalid data returns error changeset",
+         %{google_authorization: google_authorization} do
       assert {:error, %Ecto.Changeset{}} =
                Google.update_google_authorization(
                  google_authorization,
                  @invalid_attrs
                )
-
-      assert google_authorization ==
-               Google.get_google_authorization!(google_authorization.id)
     end
 
-    test "delete_google_authorization/1 deletes the google_authorization" do
-      google_authorization = google_authorization_fixture()
-
+    test "delete_google_authorization/1 deletes the google_authorization",
+         %{google_authorization: google_authorization} do
       assert {:ok, %GoogleAuthorization{}} =
                Google.delete_google_authorization(google_authorization)
 
@@ -92,9 +73,8 @@ defmodule ChatApi.GoogleTest do
       end
     end
 
-    test "change_google_authorization/1 returns a google_authorization changeset" do
-      google_authorization = google_authorization_fixture()
-
+    test "change_google_authorization/1 returns a google_authorization changeset",
+         %{google_authorization: google_authorization} do
       assert %Ecto.Changeset{} = Google.change_google_authorization(google_authorization)
     end
   end

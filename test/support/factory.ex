@@ -42,11 +42,21 @@ defmodule ChatApi.Factory do
     }
   end
 
-  def widget_settings_factory do
-    %ChatApi.WidgetSettings.WidgetSetting{
-      color: "some color",
-      subtitle: "some subtitle",
-      title: "some title"
+  def event_subscription_factory do
+    %ChatApi.EventSubscriptions.EventSubscription{
+      account: build(:account),
+      verified: false,
+      webhook_url: "some webhook_url",
+      scope: "some scope"
+    }
+  end
+
+  def google_authorization_factory do
+    %ChatApi.Google.GoogleAuthorization{
+      client: "some client",
+      refresh_token: "some long refresh token",
+      account: build(:account),
+      user: build(:user)
     }
   end
 
@@ -60,11 +70,33 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def tag_factory do
+    %ChatApi.Tags.Tag{
+      account: build(:account),
+      name: sequence("some name")
+    }
+  end
+
+  def user_invitation_factory do
+    %ChatApi.UserInvitations.UserInvitation{
+      account: build(:account),
+      expires_at: DateTime.add(DateTime.utc_now(), :timer.hours(168), :millisecond)
+    }
+  end
+
   def user_factory do
     %ChatApi.Users.User{
       email: sequence(:email, &"company_name-#{&1}@example.com"),
       account: build(:account),
       password: "supersecret123"
+    }
+  end
+
+  def widget_settings_factory do
+    %ChatApi.WidgetSettings.WidgetSetting{
+      color: "some color",
+      subtitle: "some subtitle",
+      title: "some title"
     }
   end
 end
