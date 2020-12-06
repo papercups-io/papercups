@@ -9,8 +9,6 @@ defmodule ChatApi.Accounts do
   alias ChatApi.Accounts.Account
   alias ChatApi.Users.User
 
-  @starter_plan_max_users 5
-
   @spec list_accounts() :: [Account.t()]
   @doc """
   Returns the list of accounts.
@@ -139,6 +137,8 @@ defmodule ChatApi.Accounts do
     |> Repo.one!()
     |> Map.get(:subscription_plan)
   end
+
+  @starter_plan_max_users 2
 
   @spec has_reached_user_capacity?(binary()) :: boolean()
   def has_reached_user_capacity?(account_id) do

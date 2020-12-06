@@ -85,7 +85,9 @@ class AccountOverview extends React.Component<Props, State> {
         err?.response?.body?.error?.message || err?.message || String(err);
 
       notification.error({
-        message: 'Failed to generate user invitation!',
+        message: hasServerErrorMessage
+          ? 'Please upgrade to add more users!'
+          : 'Failed to generate user invitation!',
         description,
         duration: 10, // 10 seconds
         btn: (

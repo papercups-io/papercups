@@ -95,28 +95,28 @@ defmodule ChatApi.AccountsTest do
       assert 1 = Accounts.count_active_users(account.id)
     end
 
-    test "has_reached_user_capacity?/1 returns true for accounts on the 'starter' plan with >= 5 users",
+    test "has_reached_user_capacity?/1 returns true for accounts on the 'starter' plan with >= 2 users",
          %{
            account: account
          } do
       assert "starter" = Accounts.get_subscription_plan!(account.id)
       refute Accounts.has_reached_user_capacity?(account.id)
 
-      for _n <- 1..5 do
+      for _n <- 1..3 do
         user_fixture(account)
       end
 
       assert Accounts.has_reached_user_capacity?(account.id)
     end
 
-    test "has_reached_user_capacity?/1 returns false for accounts on the 'team' plan with >= 5 users",
+    test "has_reached_user_capacity?/1 returns false for accounts on the 'team' plan with >= 2 users",
          %{
            account: account
          } do
       Accounts.update_billing_info(account, %{subscription_plan: "team"})
       refute Accounts.has_reached_user_capacity?(account.id)
 
-      for _n <- 1..5 do
+      for _n <- 1..3 do
         user_fixture(account)
       end
 
