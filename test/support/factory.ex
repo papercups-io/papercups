@@ -8,6 +8,15 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def personal_api_key_factory do
+    %ChatApi.ApiKeys.PersonalApiKey{
+      account: build(:account),
+      user: build(:user),
+      value: sequence("some value"),
+      label: "some label"
+    }
+  end
+
   def browser_replay_event_factory do
     %ChatApi.BrowserReplayEvents.BrowserReplayEvent{
       account: build(:account),
@@ -67,6 +76,33 @@ defmodule ChatApi.Factory do
       customer: build(:customer),
       user: build(:user),
       body: "some message body"
+    }
+  end
+
+  def slack_authorization_factory do
+    %ChatApi.SlackAuthorizations.SlackAuthorization{
+      access_token: "some access_token",
+      app_id: sequence(:app_id, &"some app_id #{&1}"),
+      authed_user_id: sequence(:authed_user_id, &"some authed_user_id #{&1}"),
+      bot_user_id: sequence(:bot_user_id, &"some bot_user_id #{&1}"),
+      channel: "some channel",
+      channel_id: sequence(:channel_id, &"some channel_id #{&1}"),
+      configuration_url: "some configuration_url",
+      scope: "some scope",
+      team_id: sequence(:team_id, &"some team_id #{&1}"),
+      team_name: sequence(:team_name, &"some team_name #{&1}"),
+      token_type: "some token_type",
+      webhook_url: "some webhook_url",
+      account: build(:account)
+    }
+  end
+
+  def slack_conversation_thread_factory do
+    %ChatApi.SlackConversationThreads.SlackConversationThread{
+      account: build(:account),
+      conversation: build(:conversation),
+      slack_thread_ts: sequence("1234.56789"),
+      slack_channel: "bots"
     }
   end
 
