@@ -173,7 +173,7 @@ export const PricingOptions = () => {
 
             <Paragraph>
               <li>Unlimited seats</li>
-              <li>On premise deployment</li>
+              <li>On-premise deployment</li>
               <li>Custom integrations</li>
             </Paragraph>
           </>
@@ -299,7 +299,7 @@ export const PricingOptionsModal = ({
             <Paragraph>
               <ul>
                 <li>Unlimited seats</li>
-                <li>On premise deployment</li>
+                <li>On-premise deployment</li>
                 <li>Custom integrations</li>
               </ul>
             </Paragraph>
