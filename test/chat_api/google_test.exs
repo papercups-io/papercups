@@ -15,6 +15,7 @@ defmodule ChatApi.GoogleTest do
 
     setup do
       google_authorization = insert(:google_authorization)
+
       {:ok, google_authorization: google_authorization}
     end
 

@@ -17,6 +17,7 @@ defmodule ChatApi.EventSubscriptionsTest do
     setup do
       account = insert(:account)
       event_subscription = insert(:event_subscription, account: account)
+
       {:ok, account: account, event_subscription: event_subscription}
     end
 

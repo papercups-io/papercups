@@ -19,7 +19,6 @@ defmodule ChatApi.SlackConversationThreadsTest do
 
     setup do
       conversation = insert(:conversation)
-
       slack_conversation_thread = insert(:slack_conversation_thread, conversation: conversation)
 
       {:ok, conversation: conversation, slack_conversation_thread: slack_conversation_thread}

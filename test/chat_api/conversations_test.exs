@@ -14,7 +14,6 @@ defmodule ChatApi.ConversationsTest do
     setup do
       account = insert(:account)
       customer = insert(:customer, account: account)
-
       conversation = insert(:conversation, account: account, customer: customer)
 
       {:ok, account: account, conversation: conversation, customer: customer}
