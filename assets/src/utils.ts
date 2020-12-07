@@ -1,6 +1,14 @@
 import dayjs from 'dayjs';
 
+const {REACT_APP_STRIPE_PUBLIC_KEY} = process.env;
+
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+export const hasValidStripeKey = () => {
+  const key = REACT_APP_STRIPE_PUBLIC_KEY;
+
+  return key && key.startsWith('pk_');
+};
 
 export const formatRelativeTime = (date: dayjs.Dayjs) => {
   const seconds = dayjs().diff(date, 'second');

@@ -8,7 +8,7 @@ import ChatWidget from '@papercups-io/chat-widget';
 import * as API from '../../api';
 import {User} from '../../types';
 import {Paragraph, Input, colors, Text, Title} from '../common';
-import {BASE_URL} from '../../config';
+import {BASE_URL, FRONTEND_BASE_URL} from '../../config';
 import logger from '../../logger';
 
 type Props = {};
@@ -147,7 +147,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
   type="text/javascript"
   async
   defer
-  src="${BASE_URL}/widget.js"
+  src="${FRONTEND_BASE_URL}/widget.js"
 ></script>
   `.trim();
   };

@@ -2,14 +2,14 @@ defmodule ChatApi.AccountsTest do
   use ChatApi.DataCase, async: true
 
   import ChatApi.Factory
-
-  alias ChatApi.{Accounts, WidgetSettings}
-  alias ChatApi.Accounts.Account
+  alias ChatApi.{Accounts, WidgetSettings, Users}
 
   describe "accounts" do
-    @valid_attrs params_for(:account)
-    @update_attrs params_for(:account, company_name: "updated company name")
-    @invalid_attrs params_for(:account, company_name: "")
+    alias ChatApi.Accounts.Account
+
+    @valid_attrs %{company_name: "some company_name"}
+    @update_attrs %{company_name: "some updated company_name"}
+    @invalid_attrs %{company_name: nil}
 
     setup do
       {:ok, account: insert(:account)}
@@ -40,16 +40,85 @@ defmodule ChatApi.AccountsTest do
 
     test "update_account/2 with valid data updates the account",
          %{account: account} do
-      assert {:ok, %Account{} = updated_account} = Accounts.update_account(account, @update_attrs)
-      assert updated_account.company_name === @update_attrs.company_name
+      assert {:ok, %Account{} = account} = Accounts.update_account(account, @update_attrs)
+      assert account.company_name == "some updated company_name"
+    end
+
+    test "update_account/2 does not update billing information fields",
+         %{account: account} do
+      assert {:ok, %Account{} = account} =
+               Accounts.update_account(account, %{subscription_plan: "team"})
+
+      assert account.subscription_plan != "team"
     end
 
     test "update_account/2 with invalid data returns error changeset",
          %{account: account} do
       assert {:error, %Ecto.Changeset{}} = Accounts.update_account(account, @invalid_attrs)
+      assert account == Accounts.get_account!(account.id)
+    end
 
-      assert account |> Repo.preload([[users: :profile], :widget_settings]) ==
-               Accounts.get_account!(account.id)
+    test "update_billing_info/2 updates billing information fields",
+         %{account: account} do
+      assert {:ok, %Account{} = account} =
+               Accounts.update_billing_info(account, %{subscription_plan: "team"})
+
+      assert account.subscription_plan == "team"
+    end
+
+    test "delete_account/1 deletes the account", %{account: account} do
+      assert {:ok, %Account{}} = Accounts.delete_account(account)
+      assert_raise Ecto.NoResultsError, fn -> Accounts.get_account!(account.id) end
+    end
+
+    test "change_account/1 returns an account changeset", %{account: account} do
+      assert %Ecto.Changeset{} = Accounts.change_account(account)
+    end
+
+    test "get_subscription_plan!/1 returns the account subscription plan",
+         %{account: account} do
+      assert "starter" = Accounts.get_subscription_plan!(account.id)
+
+      assert {:ok, %Account{} = account} =
+               Accounts.update_billing_info(account, %{subscription_plan: "team"})
+
+      assert "team" = Accounts.get_subscription_plan!(account.id)
+    end
+
+    test "count_active_users/1 counts the number of active users on an account",
+         %{account: account} do
+      assert 0 = Accounts.count_active_users(account.id)
+
+      user_1 = insert(:user, account: account)
+      user_2 = insert(:user, account: account)
+      _user_3 = insert(:user, account: account)
+
+      assert 3 = Accounts.count_active_users(account.id)
+
+      Users.disable_user(user_1)
+      Users.archive_user(user_2)
+
+      assert 1 = Accounts.count_active_users(account.id)
+    end
+
+    test "has_reached_user_capacity?/1 returns true for accounts on the 'starter' plan with >= 2 users",
+         %{account: account} do
+      assert "starter" = Accounts.get_subscription_plan!(account.id)
+      refute Accounts.has_reached_user_capacity?(account.id)
+
+      insert_list(3, :users, account: account)
+
+      assert Accounts.has_reached_user_capacity?(account.id)
+    end
+
+    test "has_reached_user_capacity?/1 returns false for accounts on the 'team' plan with >= 2 users",
+         %{account: account} do
+      Accounts.update_billing_info(account, %{subscription_plan: "team"})
+      refute Accounts.has_reached_user_capacity?(account.id)
+
+      insert_list(3, :user, account: account)
+
+      refute Accounts.has_reached_user_capacity?(account.id)
     end
   end
 end
