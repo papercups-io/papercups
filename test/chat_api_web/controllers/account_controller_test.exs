@@ -36,6 +36,7 @@ defmodule ChatApiWeb.AccountControllerTest do
 
       assert %{
                "id" => _id,
+               "object" => "account",
                "company_name" => "some company_name"
              } = json_response(resp, 200)["data"]
     end

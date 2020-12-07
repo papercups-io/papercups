@@ -22,6 +22,7 @@ defmodule ChatApiWeb.AccountView do
 
   def render("basic.json", %{account: account}) do
     %{
+      object: "account",
       id: account.id,
       company_name: account.company_name,
       time_zone: account.time_zone,
@@ -32,6 +33,7 @@ defmodule ChatApiWeb.AccountView do
 
   def render("account.json", %{account: account}) do
     %{
+      object: "account",
       id: account.id,
       company_name: account.company_name,
       time_zone: account.time_zone,
