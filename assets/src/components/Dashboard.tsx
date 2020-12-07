@@ -26,6 +26,7 @@ import {
 } from './icons';
 import {BASE_URL, isDev, isHostedProd} from '../config';
 import analytics from '../analytics';
+import {hasValidStripeKey} from '../utils';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -47,18 +48,11 @@ import LiveSessionViewer from './sessions/LiveSessionViewer';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
 const {
-  REACT_APP_STRIPE_PUBLIC_KEY,
   REACT_APP_STORYTIME_ENABLED,
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
 } = process.env;
 
 const TITLE_FLASH_INTERVAL = 2000;
-
-const hasValidStripeKey = () => {
-  const key = REACT_APP_STRIPE_PUBLIC_KEY;
-
-  return key && key.startsWith('pk_');
-};
 
 const shouldDisplayChat = (pathname: string) => {
   return isHostedProd && pathname !== '/account/getting-started';

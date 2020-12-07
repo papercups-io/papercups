@@ -15,6 +15,38 @@ defmodule ChatApiWeb.RegistrationController do
       invite = ChatApi.UserInvitations.get_user_invitation!(user_params["invite_token"])
       params = Enum.into(user_params, %{"account_id" => invite.account.id})
 
+      cond do
+        ChatApi.UserInvitations.expired?(invite) ->
+          send_server_error(conn, 403, "Invitation token has expired")
+
+        ChatApi.Accounts.has_reached_user_capacity?(invite.account.id) ->
+          send_server_error(
+            conn,
+            403,
+            "Your account has reached the capacity for its current subscription plan. " <>
+              "Please contact your admin to upgrade the account."
+          )
+
+        true ->
+          conn
+          |> Pow.Plug.create_user(params)
+          |> case do
+            {:ok, _user, conn} ->
+              # # TODO: figure out what we want to do here -- it's not currently
+              # # obvious that a user invitation expires after one use.
+              # ChatApi.UserInvitations.expire_user_invitation(invite)
+              conn
+              |> send_registration_event(invite.account.company_name)
+              |> enqueue_welcome_email()
+              |> notify_slack()
+              |> send_api_token()
+
+            {:error, changeset, conn} ->
+              errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
+              send_user_create_errors(conn, errors)
+          end
+      end
+
       if ChatApi.UserInvitations.expired?(invite) do
         send_server_error(conn, 403, "Invitation token has expired")
       else

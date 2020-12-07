@@ -7,6 +7,7 @@ defmodule ChatApi.Accounts do
   alias ChatApi.Repo
 
   alias ChatApi.Accounts.Account
+  alias ChatApi.Users.User
 
   @spec list_accounts() :: [Account.t()]
   @doc """
@@ -78,6 +79,14 @@ defmodule ChatApi.Accounts do
     |> Repo.update()
   end
 
+  @spec update_billing_info(Account.t(), map()) ::
+          {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
+  def update_billing_info(%Account{} = account, attrs) do
+    account
+    |> Account.billing_details_changeset(attrs)
+    |> Repo.update()
+  end
+
   @spec delete_account(Account.t()) :: {:ok, Account.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a account.
@@ -118,5 +127,45 @@ defmodule ChatApi.Accounts do
       |> Repo.one()
 
     count > 0
+  end
+
+  @spec get_subscription_plan!(binary()) :: binary()
+  def get_subscription_plan!(account_id) do
+    Account
+    |> where(id: ^account_id)
+    |> select([:subscription_plan])
+    |> Repo.one!()
+    |> Map.get(:subscription_plan)
+  end
+
+  @starter_plan_max_users 2
+
+  @spec has_reached_user_capacity?(binary()) :: boolean()
+  def has_reached_user_capacity?(account_id) do
+    # NB: if you're self-hosting, you can run the following to upgrade your account:
+    # ```
+    # $ mix set_subscription_plan [YOUR_ACCOUNT_TOKEN] team
+    # ```
+
+    # Or, on Heroku:
+    # ```
+    # $ heroku run "mix set_subscription_plan [YOUR_ACCOUNT_TOKEN] team"
+    # ```
+    #
+    # (These commands would update your account from the "starter" plan to the "team" plan.)
+    case get_subscription_plan!(account_id) do
+      "starter" -> count_active_users(account_id) >= @starter_plan_max_users
+      "team" -> false
+      _ -> false
+    end
+  end
+
+  @spec count_active_users(binary()) :: integer()
+  def count_active_users(account_id) do
+    User
+    |> where(account_id: ^account_id)
+    |> where([u], is_nil(u.disabled_at) and is_nil(u.archived_at))
+    |> select([p], count(p.id))
+    |> Repo.one()
   end
 end

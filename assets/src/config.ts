@@ -12,10 +12,12 @@ export const isHostedProd = window.location.hostname === 'app.papercups.io';
 
 export const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
 
-// FIXME: sometimes we should be using localhost:3000
 export const BASE_URL = isDev
   ? 'http://localhost:4000'
   : `https://${REACT_URL}`;
+
+// In the dev environment, we use port 3000 and proxy API requests to 4000
+export const FRONTEND_BASE_URL = isDev ? 'http://localhost:3000' : BASE_URL;
 
 // Defaults to Papercups client ID (it's ok for this value to be public)
 export const SLACK_CLIENT_ID =

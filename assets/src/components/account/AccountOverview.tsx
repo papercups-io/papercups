@@ -16,8 +16,8 @@ import WorkingHoursSelector from './WorkingHoursSelector';
 import {WorkingHours} from './support';
 import * as API from '../../api';
 import {User} from '../../types';
-import {BASE_URL} from '../../config';
-import {sleep} from '../../utils';
+import {FRONTEND_BASE_URL} from '../../config';
+import {sleep, hasValidStripeKey} from '../../utils';
 import logger from '../../logger';
 
 type Props = {};
@@ -73,12 +73,37 @@ class AccountOverview extends React.Component<Props, State> {
 
       this.setState(
         {
-          inviteUrl: `${BASE_URL}/register/${token}`,
+          inviteUrl: `${FRONTEND_BASE_URL}/register/${token}`,
         },
         () => this.focusAndHighlightInput()
       );
     } catch (err) {
-      logger.error('Failed to generate user invitation URL:', err);
+      const hasServerErrorMessage = !!err?.response?.body?.error?.message;
+      const shouldDisplayBillingLink =
+        hasServerErrorMessage && hasValidStripeKey();
+      const description =
+        err?.response?.body?.error?.message || err?.message || String(err);
+
+      notification.error({
+        message: hasServerErrorMessage
+          ? 'Please upgrade to add more users!'
+          : 'Failed to generate user invitation!',
+        description,
+        duration: 10, // 10 seconds
+        btn: (
+          <a
+            href={
+              shouldDisplayBillingLink
+                ? '/billing'
+                : 'https://papercups.io/pricing'
+            }
+          >
+            <Button type="primary" size="small">
+              Upgrade subscription
+            </Button>
+          </a>
+        ),
+      });
     }
   };
 
@@ -307,7 +332,7 @@ class AccountOverview extends React.Component<Props, State> {
                   <Input
                     ref={(el) => (this.input = el)}
                     type="text"
-                    placeholder="Click the button to generate an invite URL!"
+                    placeholder="Click the button to generate an invite URL"
                     value={inviteUrl}
                   ></Input>
                 </Box>
