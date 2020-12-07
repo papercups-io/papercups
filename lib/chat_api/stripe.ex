@@ -7,6 +7,14 @@ defmodule ChatApi.StripeClient do
   alias ChatApi.{Accounts, Repo}
   alias ChatApi.Accounts.Account
 
+  @spec enabled? :: boolean()
+  def enabled?() do
+    case System.get_env("PAPERCUPS_STRIPE_SECRET") do
+      "sk_" <> _rest -> true
+      _ -> false
+    end
+  end
+
   @spec add_payment_method(
           binary(),
           binary(),
