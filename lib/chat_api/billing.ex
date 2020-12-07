@@ -117,7 +117,7 @@ defmodule ChatApi.Billing do
              items: items,
              trial_period_days: @trial_period_days
            }) do
-      Accounts.update_account(account, %{
+      Accounts.update_billing_info(account, %{
         stripe_subscription_id: subscription.id,
         stripe_product_id: product.id,
         subscription_plan: plan
@@ -143,7 +143,7 @@ defmodule ChatApi.Billing do
            Stripe.Subscription.update(account.stripe_subscription_id, %{
              items: new_items ++ items_to_delete
            }) do
-      Accounts.update_account(account, %{
+      Accounts.update_billing_info(account, %{
         stripe_subscription_id: subscription.id,
         stripe_product_id: product.id,
         subscription_plan: plan
