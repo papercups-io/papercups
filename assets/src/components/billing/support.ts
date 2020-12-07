@@ -61,9 +61,11 @@ export const getPlanInfo = (plan: SubscriptionPlan) => {
       return {
         name: 'Team plan',
         includes: [
-          {feature: '5 seats'},
-          {feature: 'Unlimited messages'},
-          {feature: 'Slack integration'},
+          {feature: '10 seats'},
+          {feature: 'Reply from Slack'},
+          {feature: 'Unlimited data retention'},
+          {feature: 'Website screen sharing'},
+          {feature: 'Private notes'},
           {feature: 'Webhooks'},
         ],
       };
@@ -74,7 +76,8 @@ export const getPlanInfo = (plan: SubscriptionPlan) => {
         includes: [
           {feature: '2 seats'},
           {feature: '100,000 messages'},
-          {feature: 'Slack integration'},
+          {feature: '30 day message retention'},
+          {feature: 'Customizable chat widget'},
         ],
       };
   }

@@ -155,7 +155,6 @@ class Register extends React.Component<Props, State> {
       >
         <Box sx={{width: '100%', maxWidth: 320}}>
           <Title level={1}>Get started</Title>
-
           <form onSubmit={this.handleSubmit}>
             {!inviteToken && (
               <Box mb={2}>

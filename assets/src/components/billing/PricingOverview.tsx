@@ -117,8 +117,8 @@ export const PricingOptions = () => {
             <Paragraph>
               <li>2 seats included</li>
               <li>100,000 messages</li>
+              <li>30 day message retention</li>
               <li>Customizable chat widget</li>
-              <li>Slack integration</li>
             </Paragraph>
           </>
         }
@@ -134,7 +134,7 @@ export const PricingOptions = () => {
         }
         pricing={
           <Text>
-            <Text strong>$40</Text>/month
+            <Text strong>$94</Text>/month
           </Text>
         }
         features={
@@ -144,10 +144,13 @@ export const PricingOptions = () => {
             </Paragraph>
 
             <Paragraph>
-              <li>5 seats included</li>
-              <li>Unlimited messages</li>
-              <li>Additional integrations</li>
+              <li>10 seats included</li>
+              <li>Reply from Slack</li>
+              <li>Unlimited data retention</li>
+              <li>Website screen sharing</li>
+              <li>Private notes</li>
               <li>Webhooks</li>
+              <li>Priority support</li>
             </Paragraph>
           </>
         }
@@ -170,7 +173,7 @@ export const PricingOptions = () => {
 
             <Paragraph>
               <li>Unlimited seats</li>
-              <li>First-class support</li>
+              <li>On-premise deployment</li>
               <li>Custom integrations</li>
             </Paragraph>
           </>
@@ -224,8 +227,8 @@ export const PricingOptionsModal = ({
               <ul>
                 <li>2 seats included</li>
                 <li>100,000 messages</li>
+                <li>30 day message retention</li>
                 <li>Customizable chat widget</li>
-                <li>Slack integration</li>
               </ul>
             </Paragraph>
           </>
@@ -251,7 +254,7 @@ export const PricingOptionsModal = ({
         }
         pricing={
           <Text>
-            <Text strong>$40</Text>/month
+            <Text strong>$94</Text>/month
           </Text>
         }
         features={
@@ -262,10 +265,13 @@ export const PricingOptionsModal = ({
 
             <Paragraph>
               <ul>
-                <li>5 seats included</li>
-                <li>Unlimited messages</li>
-                <li>Additional integrations</li>
+                <li>10 seats included</li>
+                <li>Reply from Slack</li>
+                <li>Unlimited data retention</li>
+                <li>Website screen sharing</li>
+                <li>Private notes</li>
                 <li>Webhooks</li>
+                <li>Priority support</li>
               </ul>
             </Paragraph>
           </>
@@ -294,7 +300,7 @@ export const PricingOptionsModal = ({
             <Paragraph>
               <ul>
                 <li>Unlimited seats</li>
-                <li>First-class support</li>
+                <li>On-premise deployment</li>
                 <li>Custom integrations</li>
               </ul>
             </Paragraph>
