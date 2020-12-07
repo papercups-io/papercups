@@ -117,8 +117,8 @@ export const PricingOptions = () => {
             <Paragraph>
               <li>2 seats included</li>
               <li>100,000 messages</li>
+              <li>30 day message retention</li>
               <li>Customizable chat widget</li>
-              <li>Slack integration</li>
             </Paragraph>
           </>
         }
@@ -144,9 +144,11 @@ export const PricingOptions = () => {
             </Paragraph>
 
             <Paragraph>
-              <li>5 seats included</li>
-              <li>Unlimited messages</li>
-              <li>Additional integrations</li>
+              <li>10 seats included</li>
+              <li>Slack integration</li>
+              <li>Unlimited data retention</li>
+              <li>Website screen sharing</li>
+              <li>Private Notes</li>
               <li>Webhooks</li>
             </Paragraph>
           </>
@@ -224,8 +226,8 @@ export const PricingOptionsModal = ({
               <ul>
                 <li>2 seats included</li>
                 <li>100,000 messages</li>
+                <li>30 day message retention</li>
                 <li>Customizable chat widget</li>
-                <li>Slack integration</li>
               </ul>
             </Paragraph>
           </>
@@ -251,7 +253,7 @@ export const PricingOptionsModal = ({
         }
         pricing={
           <Text>
-            <Text strong>$40</Text>/month
+            <Text strong>$94</Text>/month
           </Text>
         }
         features={
@@ -262,9 +264,11 @@ export const PricingOptionsModal = ({
 
             <Paragraph>
               <ul>
-                <li>5 seats included</li>
-                <li>Unlimited messages</li>
-                <li>Additional integrations</li>
+                <li>10 seats included</li>
+                <li>Slack integration</li>
+                <li>Unlimited data retention</li>
+                <li>Website screen sharing</li>
+                <li>Private Notes</li>
                 <li>Webhooks</li>
               </ul>
             </Paragraph>

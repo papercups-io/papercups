@@ -447,7 +447,7 @@ class BillingOverview extends React.Component<Props, State> {
               <Select.Option value="starter">
                 Starter plan ($0/month)
               </Select.Option>
-              <Select.Option value="team">Team plan ($40/month)</Select.Option>
+              <Select.Option value="team">Team plan ($94/month)</Select.Option>
             </Select>
           </Box>
           {/* TODO: maybe just try Stripe Checkout instead? */}

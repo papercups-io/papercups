@@ -153,9 +153,10 @@ class Register extends React.Component<Props, State> {
           alignItems: 'center',
         }}
       >
+        {/* <Box sx={{ width: '100%', maxWidth: 100 }}> */}
+        <img width="200px" height="50px" src="/papercups_logo.png" />
         <Box sx={{width: '100%', maxWidth: 320}}>
           <Title level={1}>Get started</Title>
-
           <form onSubmit={this.handleSubmit}>
             {!inviteToken && (
               <Box mb={2}>
