@@ -55,7 +55,9 @@ defmodule ChatApi.AccountsTest do
     test "update_account/2 with invalid data returns error changeset",
          %{account: account} do
       assert {:error, %Ecto.Changeset{}} = Accounts.update_account(account, @invalid_attrs)
-      assert account == Accounts.get_account!(account.id)
+
+      found_account = Accounts.get_account!(account.id)
+      assert account.updated_at == found_account.updated_at
     end
 
     test "update_billing_info/2 updates billing information fields",
@@ -106,7 +108,7 @@ defmodule ChatApi.AccountsTest do
       assert "starter" = Accounts.get_subscription_plan!(account.id)
       refute Accounts.has_reached_user_capacity?(account.id)
 
-      insert_list(3, :users, account: account)
+      insert_list(3, :user, account: account)
 
       assert Accounts.has_reached_user_capacity?(account.id)
     end
