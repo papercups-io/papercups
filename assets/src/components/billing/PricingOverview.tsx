@@ -134,7 +134,7 @@ export const PricingOptions = () => {
         }
         pricing={
           <Text>
-            <Text strong>$40</Text>/month
+            <Text strong>$94</Text>/month
           </Text>
         }
         features={
@@ -271,6 +271,7 @@ export const PricingOptionsModal = ({
                 <li>Website screen sharing</li>
                 <li>Private notes</li>
                 <li>Webhooks</li>
+                <li>Priority support</li>
               </ul>
             </Paragraph>
           </>
