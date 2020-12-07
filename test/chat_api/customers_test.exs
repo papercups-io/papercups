@@ -1,7 +1,7 @@
 defmodule ChatApi.CustomersTest do
   use ChatApi.DataCase, async: true
-  import ChatApi.Factory
 
+  import ChatApi.Factory
   alias ChatApi.Customers
 
   describe "customers" do

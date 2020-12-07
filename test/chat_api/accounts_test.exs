@@ -1,6 +1,7 @@
 defmodule ChatApi.AccountsTest do
-  import ChatApi.Factory
   use ChatApi.DataCase, async: true
+
+  import ChatApi.Factory
 
   alias ChatApi.{Accounts, WidgetSettings}
   alias ChatApi.Accounts.Account
@@ -10,15 +11,17 @@ defmodule ChatApi.AccountsTest do
     @update_attrs params_for(:account, company_name: "updated company name")
     @invalid_attrs params_for(:account, company_name: "")
 
-    test "list_accounts/0 returns all accounts" do
-      insert_list(3, :account)
-
-      all_accounts = Accounts.list_accounts()
-      assert length(all_accounts) == 3
+    setup do
+      {:ok, account: insert(:account)}
     end
 
-    test "get_account!/1 returns the account with given id" do
-      account = insert(:account)
+    test "list_accounts/0 returns all accounts", %{account: account} do
+      account_ids = Accounts.list_accounts() |> Enum.map(& &1.id)
+      assert account_ids == [account.id]
+    end
+
+    test "get_account!/1 returns the account with given id",
+         %{account: account} do
       found_account = Accounts.get_account!(account.id)
 
       assert found_account.id === account.id
@@ -35,16 +38,14 @@ defmodule ChatApi.AccountsTest do
       assert {:error, %Ecto.Changeset{}} = Accounts.create_account(@invalid_attrs)
     end
 
-    test "update_account/2 with valid data updates the account" do
-      account = insert(:account)
-
+    test "update_account/2 with valid data updates the account",
+         %{account: account} do
       assert {:ok, %Account{} = updated_account} = Accounts.update_account(account, @update_attrs)
       assert updated_account.company_name === @update_attrs.company_name
     end
 
-    test "update_account/2 with invalid data returns error changeset" do
-      account = insert(:account)
-
+    test "update_account/2 with invalid data returns error changeset",
+         %{account: account} do
       assert {:error, %Ecto.Changeset{}} = Accounts.update_account(account, @invalid_attrs)
 
       assert account |> Repo.preload([[users: :profile], :widget_settings]) ==

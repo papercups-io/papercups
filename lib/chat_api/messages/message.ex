@@ -36,10 +36,4 @@ defmodule ChatApi.Messages.Message do
     ])
     |> validate_required([:body, :account_id, :conversation_id])
   end
-
-  def test_changeset(message, attrs) do
-    message
-    |> cast(attrs, [:inserted_at])
-    |> changeset(attrs)
-  end
 end

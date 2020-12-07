@@ -1,6 +1,7 @@
 defmodule ChatApiWeb.MessageControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.Messages.Message
 
   @update_attrs %{
@@ -9,11 +10,10 @@ defmodule ChatApiWeb.MessageControllerTest do
   @invalid_attrs %{body: nil}
 
   setup %{conn: conn} do
-    account = account_fixture()
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
-    customer = customer_fixture(account)
-    conversation = conversation_fixture(account, customer)
-    message = message_fixture(account, conversation)
+    account = insert(:account)
+    user = insert(:user, account: account)
+    conversation = insert(:conversation, account: account)
+    message = insert(:message, account: account, conversation: conversation)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
@@ -23,8 +23,7 @@ defmodule ChatApiWeb.MessageControllerTest do
      authed_conn: authed_conn,
      account: account,
      message: message,
-     conversation: conversation,
-     customer: customer}
+     conversation: conversation}
   end
 
   describe "index" do
@@ -43,11 +42,12 @@ defmodule ChatApiWeb.MessageControllerTest do
   end
 
   describe "create message" do
-    test "renders message when data is valid", %{
-      authed_conn: authed_conn,
-      account: account,
-      conversation: conversation
-    } do
+    test "renders message when data is valid",
+         %{
+           authed_conn: authed_conn,
+           account: account,
+           conversation: conversation
+         } do
       message = %{
         body: "some body",
         account_id: account.id,
@@ -72,10 +72,8 @@ defmodule ChatApiWeb.MessageControllerTest do
   end
 
   describe "update message" do
-    test "renders message when data is valid", %{
-      authed_conn: authed_conn,
-      message: %Message{id: id} = message
-    } do
+    test "renders message when data is valid",
+         %{authed_conn: authed_conn, message: %Message{id: id} = message} do
       conn =
         put(authed_conn, Routes.message_path(authed_conn, :update, message),
           message: @update_attrs
@@ -91,7 +89,8 @@ defmodule ChatApiWeb.MessageControllerTest do
              } = json_response(conn, 200)["data"]
     end
 
-    test "renders errors when data is invalid", %{authed_conn: authed_conn, message: message} do
+    test "renders errors when data is invalid",
+         %{authed_conn: authed_conn, message: message} do
       conn =
         put(authed_conn, Routes.message_path(authed_conn, :update, message),
           message: @invalid_attrs
@@ -102,7 +101,8 @@ defmodule ChatApiWeb.MessageControllerTest do
   end
 
   describe "delete message" do
-    test "deletes chosen message", %{authed_conn: authed_conn, message: message} do
+    test "deletes chosen message",
+         %{authed_conn: authed_conn, message: message} do
       conn = delete(authed_conn, Routes.message_path(authed_conn, :delete, message))
       assert response(conn, 204)
 

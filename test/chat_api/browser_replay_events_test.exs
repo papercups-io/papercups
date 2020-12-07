@@ -1,6 +1,7 @@
 defmodule ChatApi.BrowserReplayEventsTest do
-  import ChatApi.Factory
   use ChatApi.DataCase
+
+  import ChatApi.Factory
 
   alias ChatApi.BrowserReplayEvents
   alias ChatApi.BrowserReplayEvents.BrowserReplayEvent

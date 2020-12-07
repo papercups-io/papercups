@@ -20,9 +20,9 @@ defmodule ChatApi.GoogleTest do
 
     test "list_google_authorizations/0 returns all google_authorizations",
          %{google_authorization: google_authorization} do
-      [found_google_authorization] = Google.list_google_authorizations()
+      found_google_authorization_ids = Google.list_google_authorizations() |> Enum.map(& &1.id)
 
-      assert found_google_authorization.id == google_authorization.id
+      assert found_google_authorization_ids == [google_authorization.id]
     end
 
     test "get_google_authorization!/1 returns the google_authorization with given id",

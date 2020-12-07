@@ -1,6 +1,7 @@
 defmodule ChatApiWeb.RegistrationControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.{Accounts, Repo, UserInvitations}
 
   @password "secret1234"
@@ -42,7 +43,11 @@ defmodule ChatApiWeb.RegistrationControllerTest do
     end
 
     test "with invalid params", %{conn: conn} do
-      conn = post(conn, Routes.registration_path(conn, :create, @invalid_params))
+      conn =
+        post(
+          conn,
+          Routes.registration_path(conn, :create, @invalid_params)
+        )
 
       assert json = json_response(conn, 500)
       assert json["error"]["message"] == "Couldn't create user"
@@ -69,8 +74,8 @@ defmodule ChatApiWeb.RegistrationControllerTest do
 
   describe("registering with invitation token") do
     setup %{conn: conn} do
-      account = account_fixture()
-      admin_user = user_fixture(account, %{role: "admin"})
+      account = insert(:account)
+      admin_user = insert(:user, account: account, role: "admin")
 
       # conn = put_req_header(conn, "accept", "application/json")
       authed_conn = Pow.Plug.assign_current_user(conn, admin_user, [])
@@ -78,7 +83,8 @@ defmodule ChatApiWeb.RegistrationControllerTest do
       {:ok, authed_conn: authed_conn, account: account, user: admin_user}
     end
 
-    test "create with existing user", %{conn: conn, authed_conn: authed_conn, account: account} do
+    test "create with existing user",
+         %{conn: conn, authed_conn: authed_conn, account: account} do
       existing_conn =
         post(authed_conn, Routes.user_invitation_path(authed_conn, :create),
           user_invitation: %{account_id: account.id}
@@ -105,7 +111,10 @@ defmodule ChatApiWeb.RegistrationControllerTest do
     end
 
     test "error for non-existing invite token", %{conn: conn} do
-      random_number = :rand.uniform(1_000_000_000) |> Integer.to_string()
+      random_number =
+        :rand.uniform(1_000_000_000)
+        |> Integer.to_string()
+
       registration_email = random_number <> "anotheremail@example.com"
 
       params = %{
@@ -124,10 +133,13 @@ defmodule ChatApiWeb.RegistrationControllerTest do
     end
 
     test "error for expired invite token", %{conn: conn, account: account} do
-      {_, user_invitation} = UserInvitations.create_user_invitation(%{account_id: account.id})
+      {:ok, user_invitation} = UserInvitations.create_user_invitation(%{account_id: account.id})
       UserInvitations.expire_user_invitation(user_invitation)
 
-      random_number = :rand.uniform(1_000_000_000) |> Integer.to_string()
+      random_number =
+        :rand.uniform(1_000_000_000)
+        |> Integer.to_string()
+
       registration_email = random_number <> "anotheremail@example.com"
 
       params = %{

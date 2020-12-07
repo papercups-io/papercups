@@ -14,11 +14,11 @@ defmodule ChatApi.UserInvitationsTest do
 
     test "list_user_invitations/1 returns all user_invitations",
          %{account: account, user_invitation: user_invitation} do
-      found_invitations =
+      invitation_ids =
         UserInvitations.list_user_invitations(account.id)
-        |> Repo.preload([:account])
+        |> Enum.map(& &1.id)
 
-      assert [user_invitation] == found_invitations
+      assert invitation_ids == [user_invitation.id]
     end
 
     test "generates dates and token", %{user_invitation: user_invitation} do

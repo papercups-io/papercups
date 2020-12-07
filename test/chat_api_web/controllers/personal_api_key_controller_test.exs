@@ -1,9 +1,11 @@
 defmodule ChatApiWeb.PersonalApiKeyControllerTest do
   use ChatApiWeb.ConnCase
 
+  import ChatApi.Factory
+
   setup %{conn: conn} do
-    account = account_fixture()
-    user = user_fixture(account)
+    account = insert(:account)
+    user = insert(:user, account: account)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
@@ -12,11 +14,14 @@ defmodule ChatApiWeb.PersonalApiKeyControllerTest do
   end
 
   describe "index" do
-    test "lists all personal_api_keys", %{authed_conn: authed_conn, user: user} do
+    test "lists all personal_api_keys",
+         %{authed_conn: authed_conn, user: user, account: account} do
       conn = get(authed_conn, Routes.personal_api_key_path(authed_conn, :index))
       assert json_response(conn, 200)["data"] == []
 
-      personal_api_key = personal_api_key_fixture(user, %{label: "Test API Key"})
+      personal_api_key =
+        insert(:personal_api_key, account: account, user: user, value: "some value")
+
       token = personal_api_key.value
 
       conn = get(authed_conn, Routes.personal_api_key_path(authed_conn, :index))

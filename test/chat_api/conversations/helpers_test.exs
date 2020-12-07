@@ -1,7 +1,7 @@
 defmodule ChatApi.Conversations.HelpersTest do
   use ChatApi.DataCase
-  import ChatApi.Factory
 
+  import ChatApi.Factory
   alias ChatApi.{Conversations, Conversations.Helpers}
 
   describe "ChatApi.Conversations.Helpers" do

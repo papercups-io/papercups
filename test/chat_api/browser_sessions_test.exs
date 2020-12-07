@@ -1,7 +1,7 @@
 defmodule ChatApi.BrowserSessionsTest do
-  import ChatApi.Factory
   use ChatApi.DataCase
 
+  import ChatApi.Factory
   alias ChatApi.BrowserSessions
 
   describe "browser_sessions" do
@@ -27,18 +27,18 @@ defmodule ChatApi.BrowserSessionsTest do
 
     setup do
       account = insert(:account)
-      browser_session = insert(:browser_session, account_id: account.id)
+      browser_session = insert(:browser_session, account: account)
 
       {:ok, account: account, browser_session: browser_session}
     end
 
     test "list_browser_sessions/0 returns all browser_sessions",
-         %{account: account} do
-      # add another 2 sessions
-      insert_list(2, :browser_session, account_id: account.id)
-      sessions = BrowserSessions.list_browser_sessions(account.id)
+         %{account: account, browser_session: browser_session} do
+      session_ids =
+        BrowserSessions.list_browser_sessions(account.id)
+        |> Enum.map(& &1.id)
 
-      assert length(sessions) == 3
+      assert session_ids == [browser_session.id]
     end
 
     test "get_browser_session!/1 returns the browser_session with given id",

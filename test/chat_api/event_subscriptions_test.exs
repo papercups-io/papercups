@@ -1,7 +1,7 @@
 defmodule ChatApi.EventSubscriptionsTest do
   use ChatApi.DataCase, async: true
-  import ChatApi.Factory
 
+  import ChatApi.Factory
   alias ChatApi.EventSubscriptions
 
   describe "event_subscriptions" do
@@ -22,8 +22,11 @@ defmodule ChatApi.EventSubscriptionsTest do
 
     test "list_event_subscriptions/0 returns all event_subscriptions",
          %{event_subscription: event_subscription, account: account} do
-      [found_event] = EventSubscriptions.list_event_subscriptions(account.id)
-      assert Repo.preload(found_event, [:account]) == event_subscription
+      found_event_ids =
+        EventSubscriptions.list_event_subscriptions(account.id)
+        |> Enum.map(& &1.id)
+
+      assert found_event_ids == [event_subscription.id]
     end
 
     test "get_event_subscription!/1 returns the event_subscription with given id",

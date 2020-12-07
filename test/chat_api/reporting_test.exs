@@ -6,9 +6,7 @@ defmodule ChatApi.ReportingTest do
 
   describe "reporting" do
     setup do
-      account = insert(:account)
-
-      {:ok, account: account}
+      {:ok, account: insert(:account)}
     end
 
     test "count_messages_by_date/1 retrieves the number of messages created per day",

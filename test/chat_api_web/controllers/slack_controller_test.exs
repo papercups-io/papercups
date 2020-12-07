@@ -1,17 +1,18 @@
 defmodule ChatApiWeb.SlackControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   import ExUnit.CaptureLog
 
   alias ChatApi.Messages
 
   setup %{conn: conn} do
-    account = account_fixture()
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
-    auth = slack_authorization_fixture(account)
-    customer = customer_fixture(account)
-    conversation = conversation_fixture(account, customer)
-    thread = slack_conversation_thread_fixture(conversation)
+    account = insert(:account)
+    user = insert(:user, account: account)
+    customer = insert(:customer, account: account)
+    conversation = insert(:conversation, account: account, customer: customer)
+    auth = insert(:slack_authorization, account: account)
+    thread = insert(:slack_conversation_thread, conversation: conversation, account: account)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
@@ -20,7 +21,8 @@ defmodule ChatApiWeb.SlackControllerTest do
   end
 
   describe "authorization" do
-    test "gets the authorization details if they exist", %{authed_conn: authed_conn, auth: auth} do
+    test "gets the authorization details if they exist",
+         %{authed_conn: authed_conn, auth: auth} do
       resp = get(authed_conn, Routes.slack_path(authed_conn, :authorization), %{})
 
       assert %{
@@ -33,8 +35,8 @@ defmodule ChatApiWeb.SlackControllerTest do
     end
 
     test "returns nil if the authorization does not exist", %{conn: conn} do
-      new_account = account_fixture()
-      user = user_fixture(new_account)
+      user = insert(:user)
+
       authed_conn = Pow.Plug.assign_current_user(conn, user, [])
       resp = get(authed_conn, Routes.slack_path(authed_conn, :authorization), %{})
 
@@ -43,7 +45,8 @@ defmodule ChatApiWeb.SlackControllerTest do
   end
 
   describe "webhook" do
-    test "sends an event to the webhook", %{conn: conn, thread: thread, auth: auth} do
+    test "sends an event to the webhook",
+         %{conn: conn, thread: thread, auth: auth} do
       account_id = thread.account_id
 
       event_params = %{

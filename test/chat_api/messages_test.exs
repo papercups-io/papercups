@@ -16,9 +16,9 @@ defmodule ChatApi.MessagesTest do
 
     test "list_messages/1 returns all messages", %{message: message} do
       account_id = message.account_id
-      messages = Messages.list_messages(account_id) |> Enum.map(& &1.body)
+      message_ids = Messages.list_messages(account_id) |> Enum.map(& &1.id)
 
-      assert messages == [message.body]
+      assert message_ids == [message.id]
     end
 
     test "get_message!/1 returns the message with given id",

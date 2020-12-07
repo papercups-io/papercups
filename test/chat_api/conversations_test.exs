@@ -1,7 +1,7 @@
 defmodule ChatApi.ConversationsTest do
   use ChatApi.DataCase, async: true
-  import ChatApi.Factory
 
+  import ChatApi.Factory
   alias ChatApi.{Conversations, SlackConversationThreads}
 
   describe "conversations" do
@@ -22,7 +22,7 @@ defmodule ChatApi.ConversationsTest do
 
     test "list_conversations/0 returns all conversations",
          %{conversation: conversation} do
-      result_ids = Enum.map(Conversations.list_conversations(), fn r -> r.id end)
+      result_ids = Conversations.list_conversations() |> Enum.map(& &1.id)
 
       assert result_ids == [conversation.id]
     end

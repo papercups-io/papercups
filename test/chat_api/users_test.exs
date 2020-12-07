@@ -1,7 +1,8 @@
 defmodule ChatApi.UsersTest do
-  import ChatApi.Factory
   use ChatApi.DataCase, async: true
   @moduledoc false
+
+  import ChatApi.Factory
 
   alias ChatApi.Users
   alias ChatApi.Users.User

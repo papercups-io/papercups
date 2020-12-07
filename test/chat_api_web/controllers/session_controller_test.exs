@@ -1,14 +1,18 @@
 defmodule ChatApiWeb.SessionControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
+
   alias ChatApi.Users
   alias ChatApi.Users.User
 
   @invalid_params %{"user" => %{"email" => "test@example.com", "password" => "invalid"}}
 
   setup do
-    account = account_fixture()
-    user = user_fixture(account)
+    {:ok, user} =
+      params_with_assocs(:user)
+      |> with_password_confirmation()
+      |> Users.create_user()
 
     {:ok, user: user}
   end

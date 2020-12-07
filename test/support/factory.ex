@@ -36,7 +36,8 @@ defmodule ChatApi.Factory do
   def conversation_factory do
     %ChatApi.Conversations.Conversation{
       account: build(:account),
-      customer: build(:customer)
+      customer: build(:customer),
+      status: "open"
     }
   end
 
@@ -120,12 +121,17 @@ defmodule ChatApi.Factory do
     }
   end
 
+  @spec user_factory :: ChatApi.Users.User.t()
   def user_factory do
     %ChatApi.Users.User{
       email: sequence(:email, &"company_name-#{&1}@example.com"),
       account: build(:account),
       password: "supersecret123"
     }
+  end
+
+  def with_password_confirmation(user) do
+    Map.put(user, :password_confirmation, user.password)
   end
 
   def widget_settings_factory do

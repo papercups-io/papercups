@@ -108,10 +108,11 @@ defmodule ChatApi.SlackConversationThreadsTest do
     test "get_by_slack_thread_ts/2 finds a slack_conversation_thread by thread_ts and channel",
          %{conversation: conversation} do
       slack_conversation_thread =
-        slack_conversation_thread_fixture(conversation, %{
+        insert(:slack_conversation_thread,
+          conversation: conversation,
           slack_thread_ts: "ts1",
           slack_channel: "ch1"
-        })
+        )
 
       result = SlackConversationThreads.get_by_slack_thread_ts("ts1", "ch1")
 
