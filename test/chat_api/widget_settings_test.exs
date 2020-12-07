@@ -1,6 +1,7 @@
 defmodule ChatApi.WidgetSettingsTest do
   use ChatApi.DataCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.WidgetSettings
 
   describe "widget_settings" do
@@ -17,29 +18,28 @@ defmodule ChatApi.WidgetSettingsTest do
     @valid_metadata %{"host" => "app.papercups.io", "pathname" => "/"}
 
     setup do
-      account = account_fixture()
-      setting = widget_settings_fixture(account)
+      account = insert(:account)
+      setting = insert(:widget_settings, account: account)
 
       {:ok, setting: setting, account: account}
     end
 
-    test "list_widget_settings/0 returns all widget_settings", %{setting: widget_setting} do
+    test "list_widget_settings/0 returns all widget_settings",
+         %{setting: widget_setting} do
       widget_ids = WidgetSettings.list_widget_settings() |> Enum.map(& &1.id)
       assert widget_ids == [widget_setting.id]
     end
 
-    test "get_widget_setting!/1 returns the widget_setting with given id", %{
-      setting: widget_setting
-    } do
+    test "get_widget_setting!/1 returns the widget_setting with given id",
+         %{setting: widget_setting} do
       fetched_widget = WidgetSettings.get_widget_setting!(widget_setting.id)
 
       assert fetched_widget.id == widget_setting.id
       assert fetched_widget.account_id == widget_setting.account_id
     end
 
-    test "update_widget_setting/2 with valid data updates the widget_setting", %{
-      setting: widget_setting
-    } do
+    test "update_widget_setting/2 with valid data updates the widget_setting",
+         %{setting: widget_setting} do
       assert {:ok, %WidgetSetting{} = widget_setting} =
                WidgetSettings.update_widget_setting(widget_setting, @update_attrs)
 
@@ -58,7 +58,8 @@ defmodule ChatApi.WidgetSettingsTest do
       assert widget_setting.pathname == "/"
     end
 
-    test "delete_widget_setting/1 deletes the widget_setting", %{setting: widget_setting} do
+    test "delete_widget_setting/1 deletes the widget_setting",
+         %{setting: widget_setting} do
       assert {:ok, %WidgetSetting{}} = WidgetSettings.delete_widget_setting(widget_setting)
 
       assert_raise Ecto.NoResultsError, fn ->
@@ -66,7 +67,8 @@ defmodule ChatApi.WidgetSettingsTest do
       end
     end
 
-    test "change_widget_setting/1 returns a widget_setting changeset", %{setting: widget_setting} do
+    test "change_widget_setting/1 returns a widget_setting changeset",
+         %{setting: widget_setting} do
       assert %Ecto.Changeset{} = WidgetSettings.change_widget_setting(widget_setting)
     end
   end

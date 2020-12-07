@@ -1,6 +1,7 @@
 defmodule ChatApi.AccountsTest do
   use ChatApi.DataCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.{Accounts, WidgetSettings, Users}
 
   describe "accounts" do
@@ -11,24 +12,25 @@ defmodule ChatApi.AccountsTest do
     @invalid_attrs %{company_name: nil}
 
     setup do
-      account = account_fixture()
-
-      {:ok, account: account}
+      {:ok, account: insert(:account)}
     end
 
     test "list_accounts/0 returns all accounts", %{account: account} do
-      ids = Accounts.list_accounts() |> Enum.map(& &1.id)
-      assert ids == [account.id]
+      account_ids = Accounts.list_accounts() |> Enum.map(& &1.id)
+      assert account_ids == [account.id]
     end
 
-    test "get_account!/1 returns the account with given id", %{account: account} do
-      assert Accounts.get_account!(account.id) == account
+    test "get_account!/1 returns the account with given id",
+         %{account: account} do
+      found_account = Accounts.get_account!(account.id)
+
+      assert found_account.id === account.id
+      assert found_account.company_name === account.company_name
     end
 
-    test "create_account/1 with valid data creates an account and widget_setting" do
+    test "create_account/1 with valid data creates a account and widget_setting" do
       assert {:ok, %Account{} = account} = Accounts.create_account(@valid_attrs)
-      assert account.company_name == "some company_name"
-
+      assert account.company_name != nil
       assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account(account.id)
     end
 
@@ -36,24 +38,30 @@ defmodule ChatApi.AccountsTest do
       assert {:error, %Ecto.Changeset{}} = Accounts.create_account(@invalid_attrs)
     end
 
-    test "update_account/2 with valid data updates the account", %{account: account} do
+    test "update_account/2 with valid data updates the account",
+         %{account: account} do
       assert {:ok, %Account{} = account} = Accounts.update_account(account, @update_attrs)
       assert account.company_name == "some updated company_name"
     end
 
-    test "update_account/2 does not update billing information fields", %{account: account} do
+    test "update_account/2 does not update billing information fields",
+         %{account: account} do
       assert {:ok, %Account{} = account} =
                Accounts.update_account(account, %{subscription_plan: "team"})
 
       assert account.subscription_plan != "team"
     end
 
-    test "update_account/2 with invalid data returns error changeset", %{account: account} do
+    test "update_account/2 with invalid data returns error changeset",
+         %{account: account} do
       assert {:error, %Ecto.Changeset{}} = Accounts.update_account(account, @invalid_attrs)
-      assert account == Accounts.get_account!(account.id)
+
+      found_account = Accounts.get_account!(account.id)
+      assert account.updated_at == found_account.updated_at
     end
 
-    test "update_billing_info/2 updates billing information fields", %{account: account} do
+    test "update_billing_info/2 updates billing information fields",
+         %{account: account} do
       assert {:ok, %Account{} = account} =
                Accounts.update_billing_info(account, %{subscription_plan: "team"})
 
@@ -69,7 +77,8 @@ defmodule ChatApi.AccountsTest do
       assert %Ecto.Changeset{} = Accounts.change_account(account)
     end
 
-    test "get_subscription_plan!/1 returns the account subscription plan", %{account: account} do
+    test "get_subscription_plan!/1 returns the account subscription plan",
+         %{account: account} do
       assert "starter" = Accounts.get_subscription_plan!(account.id)
 
       assert {:ok, %Account{} = account} =
@@ -78,14 +87,13 @@ defmodule ChatApi.AccountsTest do
       assert "team" = Accounts.get_subscription_plan!(account.id)
     end
 
-    test "count_active_users/1 counts the number of active users on an account", %{
-      account: account
-    } do
+    test "count_active_users/1 counts the number of active users on an account",
+         %{account: account} do
       assert 0 = Accounts.count_active_users(account.id)
 
-      user_1 = user_fixture(account)
-      user_2 = user_fixture(account)
-      _user_3 = user_fixture(account)
+      user_1 = insert(:user, account: account)
+      user_2 = insert(:user, account: account)
+      _user_3 = insert(:user, account: account)
 
       assert 3 = Accounts.count_active_users(account.id)
 
@@ -96,29 +104,21 @@ defmodule ChatApi.AccountsTest do
     end
 
     test "has_reached_user_capacity?/1 returns true for accounts on the 'starter' plan with >= 2 users",
-         %{
-           account: account
-         } do
+         %{account: account} do
       assert "starter" = Accounts.get_subscription_plan!(account.id)
       refute Accounts.has_reached_user_capacity?(account.id)
 
-      for _n <- 1..3 do
-        user_fixture(account)
-      end
+      insert_list(3, :user, account: account)
 
       assert Accounts.has_reached_user_capacity?(account.id)
     end
 
     test "has_reached_user_capacity?/1 returns false for accounts on the 'team' plan with >= 2 users",
-         %{
-           account: account
-         } do
+         %{account: account} do
       Accounts.update_billing_info(account, %{subscription_plan: "team"})
       refute Accounts.has_reached_user_capacity?(account.id)
 
-      for _n <- 1..3 do
-        user_fixture(account)
-      end
+      insert_list(3, :user, account: account)
 
       refute Accounts.has_reached_user_capacity?(account.id)
     end

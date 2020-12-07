@@ -90,13 +90,6 @@ defmodule ChatApi.Conversations do
     |> Repo.insert()
   end
 
-  @spec create_test_conversation(map()) :: {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
-  def create_test_conversation(attrs \\ %{}) do
-    %Conversation{}
-    |> Conversation.test_changeset(attrs)
-    |> Repo.insert()
-  end
-
   @spec update_conversation(Conversation.t(), map()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
   def update_conversation(%Conversation{} = conversation, attrs) do

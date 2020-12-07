@@ -83,13 +83,6 @@ defmodule ChatApi.Messages do
     |> Repo.insert()
   end
 
-  @spec create_test_message(map()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}
-  def create_test_message(attrs \\ %{}) do
-    %Message{}
-    |> Message.test_changeset(attrs)
-    |> Repo.insert()
-  end
-
   @spec create_and_fetch!(map()) :: Message.t() | {:error, Ecto.Changeset.t()}
   def create_and_fetch!(attrs \\ %{}) do
     case create_message(attrs) do

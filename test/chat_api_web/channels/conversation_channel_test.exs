@@ -1,8 +1,10 @@
 defmodule ChatApiWeb.ConversationChannelTest do
   use ChatApiWeb.ChannelCase
 
+  import ChatApi.Factory
+
   setup do
-    account = account_fixture()
+    account = insert(:account)
 
     {:ok, _, socket} =
       ChatApiWeb.UserSocket

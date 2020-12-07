@@ -22,7 +22,6 @@ defmodule ChatApiWeb.ChannelCase do
       # Import conveniences for testing with channels
       import Phoenix.ChannelTest
       import ChatApiWeb.ChannelCase
-      import ChatApi.TestFixtureHelpers
 
       # The default endpoint for testing
       @endpoint ChatApiWeb.Endpoint

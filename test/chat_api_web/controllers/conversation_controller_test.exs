@@ -1,21 +1,19 @@
 defmodule ChatApiWeb.ConversationControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.Conversations.Conversation
 
-  @create_attrs %{
-    status: "open"
-  }
   @update_attrs %{
     status: "closed"
   }
   @invalid_attrs %{status: nil}
 
   setup %{conn: conn} do
-    account = account_fixture()
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
-    customer = customer_fixture(account)
-    conversation = conversation_fixture(account, customer)
+    account = insert(:account)
+    user = insert(:user, account: account, email: "test@example.com")
+    customer = insert(:customer, account: account)
+    conversation = insert(:conversation, account: account, customer: customer)
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
@@ -43,7 +41,7 @@ defmodule ChatApiWeb.ConversationControllerTest do
       account: account,
       customer: customer
     } do
-      attrs = Map.merge(@create_attrs, %{account_id: account.id, customer_id: customer.id})
+      attrs = params_for(:conversation, account: account, customer: customer)
 
       conn =
         post(authed_conn, Routes.conversation_path(authed_conn, :create), conversation: attrs)
@@ -114,8 +112,13 @@ defmodule ChatApiWeb.ConversationControllerTest do
 
   # TODO: add some more tests!
   describe "adding/removing tags" do
-    test "adds a tag", %{authed_conn: authed_conn, conversation: conversation, account: account} do
-      tag = tag_fixture(account, %{name: "Test Tag"})
+    test "adds a tag",
+         %{
+           authed_conn: authed_conn,
+           conversation: conversation,
+           account: account
+         } do
+      tag = insert(:tag, account: account, name: "Test Tag")
 
       resp =
         post(authed_conn, Routes.conversation_path(authed_conn, :add_tag, conversation),
@@ -137,7 +140,7 @@ defmodule ChatApiWeb.ConversationControllerTest do
       conversation: conversation,
       account: account
     } do
-      tag = tag_fixture(account, %{name: "Test Tag"})
+      tag = insert(:tag, account: account, name: "Test Tag")
 
       resp =
         post(authed_conn, Routes.conversation_path(authed_conn, :add_tag, conversation),

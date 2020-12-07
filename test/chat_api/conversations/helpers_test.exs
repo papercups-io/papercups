@@ -1,13 +1,14 @@
 defmodule ChatApi.Conversations.HelpersTest do
   use ChatApi.DataCase
 
+  import ChatApi.Factory
   alias ChatApi.{Conversations, Conversations.Helpers}
 
   describe "ChatApi.Conversations.Helpers" do
     setup do
-      account = account_fixture()
-      customer = customer_fixture(account)
-      conversation = conversation_fixture(account, customer)
+      account = insert(:account)
+      customer = insert(:customer, account: account)
+      conversation = insert(:conversation, account: account, customer: customer)
 
       {:ok, conversation: conversation, account: account, customer: customer}
     end
@@ -38,11 +39,14 @@ defmodule ChatApi.Conversations.HelpersTest do
 
     test "send_multiple_archived_updates/2 sends archived updates to multiple conversations",
          %{account: account, customer: customer} do
-      past = DateTime.add(DateTime.utc_now(), -(14 * 24 * 60 * 60))
+      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336))
 
-      conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
-      conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
-      conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
+      insert_list(3, :conversation, %{
+        account: account,
+        customer: customer,
+        updated_at: past,
+        status: "closed"
+      })
 
       archived_conversations = Conversations.query_conversations_closed_for(days: 14)
 
