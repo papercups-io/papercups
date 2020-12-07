@@ -6,7 +6,7 @@ defmodule ChatApi.Accounts do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
-  alias ChatApi.Accounts.Account
+  alias ChatApi.Accounts.{Account, WorkingHours}
   alias ChatApi.Users.User
 
   @spec list_accounts() :: [Account.t()]
@@ -167,5 +167,51 @@ defmodule ChatApi.Accounts do
     |> where([u], is_nil(u.disabled_at) and is_nil(u.archived_at))
     |> select([p], count(p.id))
     |> Repo.one()
+  end
+
+  @spec is_outside_working_hours?(Account.t(), DateTime.t()) :: boolean()
+  def is_outside_working_hours?(%Account{working_hours: working_hours}, datetime)
+      when is_list(working_hours) do
+    midnight = ~T[00:00:00]
+
+    minutes_since_midnight =
+      datetime
+      |> DateTime.to_time()
+      |> Time.diff(midnight)
+      |> Kernel./(60)
+
+    day_of_week = datetime |> DateTime.to_date() |> Date.day_of_week()
+
+    working_hours
+    |> Enum.find(fn wh ->
+      wh
+      |> WorkingHours.day_to_indexes()
+      |> Enum.member?(day_of_week)
+    end)
+    |> case do
+      %WorkingHours{start_minute: start_min, end_minute: end_min} ->
+        minutes_since_midnight < start_min || minutes_since_midnight > end_min
+
+      _ ->
+        true
+    end
+  end
+
+  def is_outside_working_hours?(_account, _datetime) do
+    # For now, just return `false` if no valid working hours are set
+    false
+  end
+
+  @spec is_outside_working_hours?(Account.t()) :: boolean()
+  def is_outside_working_hours?(%Account{time_zone: time_zone} = account)
+      when not is_nil(time_zone) do
+    is_outside_working_hours?(account, DateTime.now!(time_zone))
+  end
+
+  def is_outside_working_hours?(_account) do
+    # For now, if no time zone is found, just assume working hours are not
+    # set and return `false`.
+    # TODO: how should we handle accounts without a valid time zone?
+    false
   end
 end
