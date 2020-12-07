@@ -5,6 +5,11 @@ defmodule Mix.Tasks.GenerateApiKey do
 
   @moduledoc """
   This task generates an API key for the provided user/account
+
+  Example:
+  ```
+  $ mix generate_api_key [YOUR_USER_ID] [YOUR_ACCOUNT_TOKEN]
+  ```
   """
 
   def run(args) do

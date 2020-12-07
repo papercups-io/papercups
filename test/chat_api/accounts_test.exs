@@ -122,5 +122,76 @@ defmodule ChatApi.AccountsTest do
 
       refute Accounts.has_reached_user_capacity?(account.id)
     end
+
+    test "is_outside_working_hours?/2 returns false if no working hours are set",
+         %{
+           account: account
+         } do
+      refute Accounts.is_outside_working_hours?(account)
+    end
+
+    test "is_outside_working_hours?/2 returns false if working hours covers all day everyday",
+         %{
+           account: account
+         } do
+      {:ok, account} =
+        Accounts.update_account(account, %{
+          working_hours: [
+            %{day: "everyday", start_minute: 0, end_minute: 1380}
+          ]
+        })
+
+      refute Accounts.is_outside_working_hours?(account)
+    end
+
+    test "is_outside_working_hours?/2 returns true if day is not included in working hours",
+         %{
+           account: account
+         } do
+      {:ok, account} =
+        Accounts.update_account(account, %{
+          working_hours: [
+            %{day: "monday", start_minute: 0, end_minute: 1380},
+            %{day: "tuesday", start_minute: 0, end_minute: 1380}
+          ]
+        })
+
+      sunday = ~U[2020-12-06 10:00:00Z]
+
+      assert Accounts.is_outside_working_hours?(account, sunday)
+    end
+
+    test "is_outside_working_hours?/2 returns false if day is included in working hours",
+         %{
+           account: account
+         } do
+      {:ok, account} =
+        Accounts.update_account(account, %{
+          working_hours: [
+            %{day: "monday", start_minute: 0, end_minute: 1380},
+            %{day: "tuesday", start_minute: 0, end_minute: 1380}
+          ]
+        })
+
+      tuesday = ~U[2020-12-08 10:00:00Z]
+
+      refute Accounts.is_outside_working_hours?(account, tuesday)
+    end
+
+    test "is_outside_working_hours?/2 returns true if time is outside start_minute/end_minute",
+         %{
+           account: account
+         } do
+      {:ok, account} =
+        Accounts.update_account(account, %{
+          working_hours: [
+            %{day: "everyday", start_minute: 0, end_minute: 30}
+          ]
+        })
+
+      datetime = ~U[2020-12-08 10:40:00Z]
+
+      assert Accounts.is_outside_working_hours?(account, datetime)
+    end
   end
 end

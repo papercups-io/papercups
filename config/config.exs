@@ -29,6 +29,9 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Set up timezone database
+config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
+
 config :tesla, adapter: Tesla.Adapter.Hackney
 
 # Configure Swagger

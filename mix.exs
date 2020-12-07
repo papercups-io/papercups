@@ -68,6 +68,7 @@ defmodule ChatApi.MixProject do
       {:ex_json_schema, "~> 0.5"},
       {:ex_machina, "~> 2.4", only: [:test]},
       {:pow_postgres_store, "~> 1.0.0-rc2"}
+      {:tzdata, "~> 1.0.5"}
     ]
   end
 
