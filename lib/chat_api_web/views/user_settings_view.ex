@@ -13,6 +13,7 @@ defmodule ChatApiWeb.UserSettingsView do
   def render("user_settings.json", %{user_settings: user_settings}) do
     %{
       id: user_settings.id,
+      object: "user_settings",
       user_id: user_settings.user_id,
       email_alert_on_new_message: user_settings.email_alert_on_new_message
     }

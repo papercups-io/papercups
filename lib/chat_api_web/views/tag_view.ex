@@ -13,6 +13,7 @@ defmodule ChatApiWeb.TagView do
   def render("tag.json", %{tag: tag}) do
     %{
       id: tag.id,
+      object: "tag",
       name: tag.name,
       description: tag.description,
       color: tag.color

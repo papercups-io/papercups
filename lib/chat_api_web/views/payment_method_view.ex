@@ -9,6 +9,7 @@ defmodule ChatApiWeb.PaymentMethodView do
   def render("payment_method.json", %{payment_method: payment_method}) do
     %{
       id: payment_method.id,
+      object: "payment_method",
       customer: payment_method.customer,
       brand: payment_method.card.brand,
       country: payment_method.card.country,

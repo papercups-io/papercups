@@ -13,6 +13,7 @@ defmodule ChatApiWeb.EventSubscriptionView do
   def render("event_subscription.json", %{event_subscription: event_subscription}) do
     %{
       id: event_subscription.id,
+      object: "event_subscription",
       created_at: event_subscription.inserted_at,
       updated_at: event_subscription.updated_at,
       webhook_url: event_subscription.webhook_url,

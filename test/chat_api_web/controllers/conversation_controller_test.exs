@@ -54,6 +54,7 @@ defmodule ChatApiWeb.ConversationControllerTest do
 
       assert %{
                "id" => _id,
+               "object" => "conversation",
                "status" => "open"
              } = json_response(conn, 200)["data"]
     end

@@ -13,6 +13,7 @@ defmodule ChatApiWeb.PersonalApiKeyView do
   def render("personal_api_key.json", %{personal_api_key: personal_api_key}) do
     %{
       id: personal_api_key.id,
+      object: "personal_api_key",
       label: personal_api_key.label,
       value: personal_api_key.value,
       last_used_at: personal_api_key.last_used_at,

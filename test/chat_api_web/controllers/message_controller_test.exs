@@ -61,6 +61,7 @@ defmodule ChatApiWeb.MessageControllerTest do
 
       assert %{
                "id" => _id,
+               "object" => "message",
                "body" => "some body"
              } = json_response(conn, 200)["data"]
     end

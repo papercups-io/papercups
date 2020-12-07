@@ -17,6 +17,7 @@ defmodule ChatApiWeb.BrowserSessionView do
   def render("basic.json", %{browser_session: browser_session}) do
     %{
       id: browser_session.id,
+      object: "browser_session",
       account_id: browser_session.account_id,
       customer_id: browser_session.customer_id,
       metadata: browser_session.metadata,
@@ -28,6 +29,7 @@ defmodule ChatApiWeb.BrowserSessionView do
   def render("preview.json", %{browser_session: browser_session}) do
     %{
       id: browser_session.id,
+      object: "browser_session",
       account_id: browser_session.account_id,
       customer_id: browser_session.customer_id,
       metadata: browser_session.metadata,
@@ -40,6 +42,7 @@ defmodule ChatApiWeb.BrowserSessionView do
   def render("expanded.json", %{browser_session: browser_session}) do
     %{
       id: browser_session.id,
+      object: "browser_session",
       account_id: browser_session.account_id,
       customer_id: browser_session.customer_id,
       metadata: browser_session.metadata,

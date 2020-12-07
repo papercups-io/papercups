@@ -60,7 +60,7 @@ defmodule ChatApiWeb.UserProfileControllerTest do
       user_profile = Users.get_user_profile(user.id)
       resp = get(authed_conn, Routes.user_profile_path(authed_conn, :show, %{}))
 
-      assert %{"display_name" => display_name, "full_name" => full_name} =
+      assert %{"display_name" => display_name, "full_name" => full_name, "object" => "user"} =
                json_response(resp, 200)["data"]
 
       assert display_name == user_profile.display_name

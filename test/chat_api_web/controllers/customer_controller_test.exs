@@ -79,7 +79,8 @@ defmodule ChatApiWeb.CustomerControllerTest do
       resp = get(authed_conn, Routes.customer_path(authed_conn, :show, id))
 
       assert %{
-               "id" => _id
+               "id" => _id,
+               "object" => "customer"
              } = json_response(resp, 200)["data"]
     end
 

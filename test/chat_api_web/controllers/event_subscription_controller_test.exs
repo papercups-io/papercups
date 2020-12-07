@@ -52,6 +52,7 @@ defmodule ChatApiWeb.EventSubscriptionControllerTest do
 
       assert %{
                "id" => _id,
+               "object" => "event_subscription",
                "scope" => "some scope",
                "webhook_url" => "some webhook_url"
              } = json_response(resp, 200)["data"]
