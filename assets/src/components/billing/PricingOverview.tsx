@@ -145,11 +145,12 @@ export const PricingOptions = () => {
 
             <Paragraph>
               <li>10 seats included</li>
-              <li>Slack integration</li>
+              <li>Reply from Slack</li>
               <li>Unlimited data retention</li>
               <li>Website screen sharing</li>
-              <li>Private Notes</li>
+              <li>Private notes</li>
               <li>Webhooks</li>
+              <li>Priority support</li>
             </Paragraph>
           </>
         }
@@ -172,7 +173,7 @@ export const PricingOptions = () => {
 
             <Paragraph>
               <li>Unlimited seats</li>
-              <li>First-class support</li>
+              <li>On premise deployment</li>
               <li>Custom integrations</li>
             </Paragraph>
           </>
@@ -265,10 +266,10 @@ export const PricingOptionsModal = ({
             <Paragraph>
               <ul>
                 <li>10 seats included</li>
-                <li>Slack integration</li>
+                <li>Reply from Slack</li>
                 <li>Unlimited data retention</li>
                 <li>Website screen sharing</li>
-                <li>Private Notes</li>
+                <li>Private notes</li>
                 <li>Webhooks</li>
               </ul>
             </Paragraph>
@@ -298,7 +299,7 @@ export const PricingOptionsModal = ({
             <Paragraph>
               <ul>
                 <li>Unlimited seats</li>
-                <li>First-class support</li>
+                <li>On premise deployment</li>
                 <li>Custom integrations</li>
               </ul>
             </Paragraph>
