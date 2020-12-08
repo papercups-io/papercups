@@ -36,6 +36,7 @@ defmodule ChatApiWeb.TagControllerTest do
 
       assert %{
                "id" => _id,
+               "object" => "tag",
                "name" => "some name"
              } = json_response(resp, 200)["data"]
     end

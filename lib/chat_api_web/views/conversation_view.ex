@@ -21,6 +21,7 @@ defmodule ChatApiWeb.ConversationView do
   def render("basic.json", %{conversation: conversation}) do
     %{
       id: conversation.id,
+      object: "conversation",
       created_at: conversation.inserted_at,
       status: conversation.status,
       read: conversation.read,
@@ -34,6 +35,7 @@ defmodule ChatApiWeb.ConversationView do
   def render("expanded.json", %{conversation: conversation}) do
     %{
       id: conversation.id,
+      object: "conversation",
       created_at: conversation.inserted_at,
       status: conversation.status,
       read: conversation.read,

@@ -53,6 +53,7 @@ defmodule ChatApiWeb.BrowserSessionControllerTest do
 
       assert %{
                "id" => ^id,
+               "object" => "browser_session",
                "finished_at" => "2010-04-17T14:00:00Z",
                "metadata" => %{},
                "started_at" => "2010-04-17T14:00:00Z"
@@ -85,6 +86,7 @@ defmodule ChatApiWeb.BrowserSessionControllerTest do
 
       assert %{
                "id" => ^id,
+               "object" => "browser_session",
                "finished_at" => "2011-05-18T15:01:01Z",
                "metadata" => %{},
                "started_at" => "2011-05-18T15:01:01Z"

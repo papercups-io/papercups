@@ -13,6 +13,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
   def render("basic.json", %{widget_settings: widget_settings}) do
     %{
       id: widget_settings.id,
+      object: "widget_settings",
       title: widget_settings.title,
       subtitle: widget_settings.subtitle,
       color: widget_settings.color,
@@ -24,6 +25,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
 
   def render("expanded.json", %{widget_settings: widget_settings}) do
     %{
+      object: "widget_settings",
       title: widget_settings.title,
       subtitle: widget_settings.subtitle,
       color: widget_settings.color,

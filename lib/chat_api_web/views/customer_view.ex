@@ -24,6 +24,7 @@ defmodule ChatApiWeb.CustomerView do
   def render("basic.json", %{customer: customer}) do
     %{
       id: customer.id,
+      object: "customer",
       name: customer.name,
       email: customer.email,
       created_at: customer.inserted_at,
@@ -42,6 +43,7 @@ defmodule ChatApiWeb.CustomerView do
   def render("customer.json", %{customer: customer}) do
     %{
       id: customer.id,
+      object: "customer",
       name: customer.name,
       email: customer.email,
       created_at: customer.inserted_at,

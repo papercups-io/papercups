@@ -16,6 +16,7 @@ defmodule ChatApiWeb.BrowserReplayEventView do
   def render("browser_replay_event.json", %{browser_replay_event: browser_replay_event}) do
     %{
       id: browser_replay_event.id,
+      object: "browser_replay_event",
       account_id: browser_replay_event.account_id,
       event: browser_replay_event.event,
       timestamp: browser_replay_event.timestamp

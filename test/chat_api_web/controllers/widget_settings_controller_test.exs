@@ -30,6 +30,7 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
         })
 
       assert %{
+               "object" => "widget_settings",
                "title" => "Test title",
                "subtitle" => "Test subtitle",
                "color" => "Test color"
@@ -41,6 +42,7 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
         })
 
       assert %{
+               "object" => "widget_settings",
                "title" => "Test title",
                "subtitle" => "Test subtitle",
                "color" => "Updated color"
