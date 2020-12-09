@@ -1,6 +1,8 @@
 defmodule ChatApiWeb.AccountView do
   use ChatApiWeb, :view
 
+  alias ChatApi.{Utils, Accounts}
+
   alias ChatApiWeb.{
     AccountView,
     UserView,
@@ -27,7 +29,11 @@ defmodule ChatApiWeb.AccountView do
       company_name: account.company_name,
       time_zone: account.time_zone,
       subscription_plan: account.subscription_plan,
-      working_hours: render_many(account.working_hours, WorkingHoursView, "working_hours.json")
+      working_hours: render_many(account.working_hours, WorkingHoursView, "working_hours.json"),
+      # TODO: not sure if this logic should be handled on the client instead, but this simplifies things for now
+      is_outside_working_hours: Accounts.is_outside_working_hours?(account),
+      current_minutes_since_midnight:
+        Utils.DateTimeUtils.current_minutes_since_midnight(account.time_zone)
     }
   end
 
@@ -40,7 +46,11 @@ defmodule ChatApiWeb.AccountView do
       subscription_plan: account.subscription_plan,
       users: render_many(account.users, UserView, "user.json"),
       widget_settings: render_one(account.widget_settings, WidgetSettingsView, "basic.json"),
-      working_hours: render_many(account.working_hours, WorkingHoursView, "working_hours.json")
+      working_hours: render_many(account.working_hours, WorkingHoursView, "working_hours.json"),
+      # TODO: not sure if this logic should be handled on the client instead, but this simplifies things for now
+      is_outside_working_hours: Accounts.is_outside_working_hours?(account),
+      current_minutes_since_midnight:
+        Utils.DateTimeUtils.current_minutes_since_midnight(account.time_zone)
     }
   end
 end
