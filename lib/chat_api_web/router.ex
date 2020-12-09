@@ -60,6 +60,7 @@ defmodule ChatApiWeb.Router do
 
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)
+    get("/conversations/shared", ConversationController, :shared)
 
     post("/slack/webhook", SlackController, :webhook)
   end
@@ -103,6 +104,7 @@ defmodule ChatApiWeb.Router do
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
 
+    post("/conversations/:conversation_id/share", ConversationController, :share)
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
     post("/customers/:customer_id/tags", CustomerController, :add_tag)

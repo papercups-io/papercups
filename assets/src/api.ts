@@ -365,6 +365,34 @@ export const fetchConversation = async (
     .then((res) => res.body.data);
 };
 
+export const generateShareConversationToken = async (
+  conversationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/conversations/${conversationId}/share`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchSharedConversation = async (
+  id: string,
+  token: string
+): Promise<Conversation> => {
+  if (!token) {
+    throw new Error('Access denied!');
+  }
+
+  return request
+    .get(`/api/conversations/shared`)
+    .query({token, conversation_id: id})
+    .then((res) => res.body.data);
+};
+
 export const updateConversation = async (
   conversationId: string,
   updates: any,

@@ -75,6 +75,37 @@ defmodule ChatApiWeb.ConversationController do
     render(conn, "index.json", conversations: conversations)
   end
 
+  @spec share(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def share(conn, %{"conversation_id" => conversation_id}) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %{customer_id: customer_id} <- Conversations.get_conversation!(conversation_id) do
+      token = Phoenix.Token.sign(ChatApiWeb.Endpoint, conversation_id, {account_id, customer_id})
+
+      json(conn, %{data: %{ok: true, token: token}})
+    end
+  end
+
+  @spec shared(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def shared(conn, %{"conversation_id" => conversation_id, "token" => token}) do
+    case Phoenix.Token.verify(ChatApiWeb.Endpoint, conversation_id, token, max_age: 86400) do
+      {:ok, {account_id, customer_id}} ->
+        conversation =
+          Conversations.get_shared_conversation!(conversation_id, account_id, customer_id)
+
+        render(conn, "show.json", conversation: conversation)
+
+      {:error, :expired} ->
+        conn
+        |> put_status(403)
+        |> json(%{error: %{status: 403, message: "This link has expired"}})
+
+      _errors ->
+        conn
+        |> put_status(403)
+        |> json(%{error: %{status: 403, message: "Access denied"}})
+    end
+  end
+
   swagger_path :create do
     post("/api/conversations")
     summary("Create a conversation")

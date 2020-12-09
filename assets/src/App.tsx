@@ -18,6 +18,7 @@ import BotDemo from './components/demo/BotDemo';
 import Dashboard from './components/Dashboard';
 import Pricing from './components/billing/PricingOverview';
 import Sandbox from './components/Sandbox';
+import SharedConversation from './components/conversations/SharedConversation';
 import './App.css';
 
 const App = () => {
@@ -46,6 +47,7 @@ const App = () => {
           />
           <Route path="/pricing" component={Pricing} />
           <Route path="/sandbox" component={Sandbox} />
+          <Route path="/share" component={SharedConversation} />
           <Route
             path="*"
             render={(props: RouteComponentProps<{}>) => (
@@ -75,6 +77,7 @@ const App = () => {
         <Route path="/bot/demo" component={BotDemo} />
         <Route path="/pricing" component={Pricing} />
         <Route path="/sandbox" component={Sandbox} />
+        <Route path="/share" component={SharedConversation} />
         <Route path="/" component={Dashboard} />
         <Route path="*" render={() => <Redirect to="/conversations" />} />
       </Switch>
