@@ -4,6 +4,7 @@ defmodule ChatApi.Accounts do
   """
 
   import Ecto.Query, warn: false
+  require Logger
   alias ChatApi.Repo
 
   alias ChatApi.Accounts.{Account, WorkingHours}
@@ -172,15 +173,8 @@ defmodule ChatApi.Accounts do
   @spec is_outside_working_hours?(Account.t(), DateTime.t()) :: boolean()
   def is_outside_working_hours?(%Account{working_hours: working_hours}, datetime)
       when is_list(working_hours) do
-    midnight = ~T[00:00:00]
-
-    minutes_since_midnight =
-      datetime
-      |> DateTime.to_time()
-      |> Time.diff(midnight)
-      |> Kernel./(60)
-
-    day_of_week = datetime |> DateTime.to_date() |> Date.day_of_week()
+    minutes_since_midnight = ChatApi.Utils.DateTimeUtils.minutes_since_midnight(datetime)
+    day_of_week = ChatApi.Utils.DateTimeUtils.day_of_week(datetime)
 
     working_hours
     |> Enum.find(fn wh ->
@@ -205,7 +199,15 @@ defmodule ChatApi.Accounts do
   @spec is_outside_working_hours?(Account.t()) :: boolean()
   def is_outside_working_hours?(%Account{time_zone: time_zone} = account)
       when not is_nil(time_zone) do
-    is_outside_working_hours?(account, DateTime.now!(time_zone))
+    case DateTime.now(time_zone) do
+      {:ok, datetime} ->
+        is_outside_working_hours?(account, datetime)
+
+      {:error, reason} ->
+        Logger.error("Invalid time zone #{inspect(time_zone)} - #{inspect(reason)}")
+
+        false
+    end
   end
 
   def is_outside_working_hours?(_account) do
