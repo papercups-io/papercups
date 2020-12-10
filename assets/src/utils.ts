@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import qs from 'query-string';
 
 const {REACT_APP_STRIPE_PUBLIC_KEY} = process.env;
@@ -112,3 +113,6 @@ export const addVisibilityEventListener = (
 
   return () => document.removeEventListener(event, handler);
 };
+
+// re-export extended dayjs
+export {dayjs as dayjs};

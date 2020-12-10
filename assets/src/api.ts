@@ -1,7 +1,7 @@
 import request from 'superagent';
 import qs from 'query-string';
 import {getAuthTokens} from './storage';
-import {Conversation, User} from './types';
+import {Conversation, CustomerNote, User} from './types';
 
 // TODO: handle this on the server instead
 function now() {
@@ -905,6 +905,20 @@ export const fetchReportingData = async (
   return request
     .get(`/api/reporting`)
     .query(filters)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+/*
+ *  Customer Notes
+ */
+export const fetchCustomerNotes = async (customerId: string, token = getAccessToken()): Promise<Array<CustomerNote>> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/customers/${customerId}/notes`)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

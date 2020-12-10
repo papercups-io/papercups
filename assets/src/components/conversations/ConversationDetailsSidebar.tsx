@@ -1,7 +1,5 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
 import {FRONTEND_BASE_URL} from '../../config';
 import {
@@ -27,12 +25,11 @@ import {
   SidebarConversationTags,
 } from './SidebarTagSection';
 import * as API from '../../api';
-import {Conversation, Customer} from '../../types';
+import {Conversation, Customer, CustomerNote} from '../../types';
+import {dayjs} from '../../utils';
 import logger from '../../logger';
 import Paragraph from 'antd/lib/typography/Paragraph';
 
-// TODO: create date utility methods so we don't have to do this everywhere
-dayjs.extend(utc);
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (
@@ -79,6 +76,38 @@ const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
     </Link>
   );
 };
+
+const CustomerNotes = ({
+  customerId,
+}: {
+  customerId: string;
+}) => {
+  const [loading, setLoading] = React.useState(false);
+  const [notes, setNotes] = React.useState<Array<CustomerNote>>([]);
+
+  React.useEffect(() => {
+    setLoading(true);
+
+    API.fetchCustomerNotes(customerId)
+      .then((notes: Array<CustomerNote>) => setNotes(notes))
+      .catch((err) => logger.error('Error retrieving customer notes:', err))
+      .then(() => setLoading(false));
+  }, [customerId]);
+
+  return (
+    <div>
+      <input type="text" placeholder="Add a note" />
+      <Button type="primary" block ghost loading={loading}>Add</Button>
+      <div>
+      {
+        notes.map(n => (
+          <div>{n.body}</div>
+        ))
+      }
+      </div>
+    </div>
+  )
+}
 
 const CustomerDetails = ({
   customer,
@@ -204,6 +233,16 @@ const CustomerDetails = ({
               </Box>
             );
           })}
+        </DetailsSectionCard>
+      )}
+
+      {hasMetadata && (
+        <DetailsSectionCard>
+          <Box mb={2}>
+            <Text strong>Customer notes</Text>
+          </Box>
+
+          {<CustomerNotes customerId={customerId} />}
         </DetailsSectionCard>
       )}
 
