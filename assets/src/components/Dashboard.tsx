@@ -311,6 +311,16 @@ const Dashboard = (props: RouteComponentProps) => {
             component={PriorityConversations}
           />
           <Route path="/conversations/closed" component={ClosedConversations} />
+          <Route
+            path="/conversations/:id"
+            render={(props: RouteComponentProps<{id: string}>) => {
+              const {id: conversationId} = props.match.params;
+
+              return (
+                <Redirect to={`/conversations/all?cid=${conversationId}`} />
+              );
+            }}
+          />
           {shouldDisplayBilling && (
             <Route path="/billing" component={BillingOverview} />
           )}
