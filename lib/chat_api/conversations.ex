@@ -46,6 +46,7 @@ defmodule ChatApi.Conversations do
 
   @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
   def find_by_customer(customer_id, account_id) do
+    # TODO: make sure messages are sorted properly?
     Conversation
     |> where(customer_id: ^customer_id)
     |> where(account_id: ^account_id)
@@ -63,6 +64,7 @@ defmodule ChatApi.Conversations do
   """
   @spec get_conversation!(binary()) :: Conversation.t()
   def get_conversation!(id) do
+    # TODO: make sure messages are sorted properly?
     Conversation
     |> Repo.get!(id)
     |> Repo.preload([:customer, :tags, messages: [user: :profile]])
@@ -85,6 +87,7 @@ defmodule ChatApi.Conversations do
 
   @spec get_shared_conversation!(binary(), binary(), binary()) :: Conversation.t()
   def get_shared_conversation!(conversation_id, account_id, customer_id) do
+    # TODO: make sure messages are sorted properly?
     Conversation
     |> where(id: ^conversation_id)
     |> where(customer_id: ^customer_id)

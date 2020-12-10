@@ -5,13 +5,14 @@ import qs from 'query-string';
 import {colors} from '../common';
 import ConversationMessages from './ConversationMessages';
 import * as API from '../../api';
-import {Conversation, Message} from '../../types';
+import {Customer, Message} from '../../types';
 import logger from '../../logger';
 
 type Props = RouteComponentProps<{}>;
 type State = {
   loading: boolean;
-  conversation: Conversation | null;
+  customer: Customer | null;
+  messages: Array<Message>;
 };
 
 class SharedConversationContainer extends React.Component<Props, State> {
@@ -20,7 +21,7 @@ class SharedConversationContainer extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    this.state = {loading: true, conversation: null};
+    this.state = {loading: true, customer: null, messages: []};
   }
 
   async componentDidMount() {
@@ -29,12 +30,19 @@ class SharedConversationContainer extends React.Component<Props, State> {
       const q = qs.parse(search);
       const conversationId = String(q?.cid);
       const token = String(q?.token);
-      const conversation = await API.fetchSharedConversation(
+      const {customer, messages = []} = await API.fetchSharedConversation(
         conversationId,
         token
       );
 
-      this.setState({conversation, loading: false});
+      this.setState({
+        customer,
+        messages: messages.sort(
+          (a: Message, b: Message) =>
+            +new Date(a.created_at) - +new Date(b.created_at)
+        ),
+        loading: false,
+      });
     } catch (err) {
       logger.error('Unable to fetch shared conversation:', err);
 
@@ -47,13 +55,11 @@ class SharedConversationContainer extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, conversation} = this.state;
+    const {loading, customer, messages} = this.state;
 
-    if (!conversation) {
+    if (!customer) {
       return null;
     }
-
-    const {customer, messages = []} = conversation;
 
     return (
       <Flex
