@@ -912,7 +912,10 @@ export const fetchReportingData = async (
 /*
  *  Customer Notes
  */
-export const fetchCustomerNotes = async (customerId: string, token = getAccessToken()): Promise<Array<CustomerNote>> => {
+export const fetchCustomerNotes = async (
+  customerId: string,
+  token = getAccessToken()
+): Promise<Array<CustomerNote>> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -923,7 +926,12 @@ export const fetchCustomerNotes = async (customerId: string, token = getAccessTo
     .then((res) => res.body.data);
 };
 
-export const createCustomerNote = async (authorId: number, customerId: string, body: string, token = getAccessToken()) => {
+export const createCustomerNote = async (
+  authorId: number,
+  customerId: string,
+  body: string,
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -940,4 +948,3 @@ export const createCustomerNote = async (authorId: number, customerId: string, b
     })
     .then((res) => res.body.data);
 };
-

@@ -18,7 +18,7 @@ import {
   UserOutlined,
 } from '../icons';
 import {Customer, Conversation, User} from '../../types';
-import {dayjs} from "../../utils";
+import {dayjs} from '../../utils';
 import ConversationDetailsSidebar from './ConversationDetailsSidebar';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 

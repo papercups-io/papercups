@@ -355,7 +355,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
             {conversation ? (
               <ConversationSidebar conversationId={conversation.id} />
             ) : customer ? (
-              <ConversationDetailsSidebar customer={customer} currentUser={{id: -1, email: "anonymous@user.com"}} />
+              <ConversationDetailsSidebar
+                customer={customer}
+                currentUser={{id: -1, email: 'anonymous@user.com'}}
+              />
             ) : null}
           </Box>
         )}
