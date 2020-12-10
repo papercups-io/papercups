@@ -1,0 +1,19 @@
+defmodule ChatApi.Repo.Migrations.CreateNotes do
+  use Ecto.Migration
+
+  def change do
+    create table(:notes, primary_key: false) do
+      add :id, :id, primary_key: true
+      add :body, :text
+      add :author_id, references(:users, on_delete: :nothing, type: :id)
+      add :account_id, references(:accounts, on_delete: :nothing, type: :binary_id)
+      add :customer_id, references(:customers, on_delete: :nothing, type: :binary_id)
+
+      timestamps()
+    end
+
+    create index(:notes, [:author_id])
+    create index(:notes, [:account_id])
+    create index(:notes, [:customer_id])
+  end
+end
