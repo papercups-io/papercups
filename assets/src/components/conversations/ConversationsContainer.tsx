@@ -1,5 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
+import qs from 'query-string';
 import {colors, Layout, notification, Sider, Text, Title} from '../common';
 import {sleep} from '../../utils';
 import {Conversation, Message, User} from '../../types';
@@ -44,11 +45,19 @@ class ConversationsContainer extends React.Component<Props, State> {
   state: State = {loading: true, selected: null, closing: []};
 
   componentDidMount() {
+    const q = qs.parse(window.location.search);
+    const selectedConversationId = q.cid ? String(q.cid) : null;
+
     this.props
       .fetch()
-      .then(([first]) => {
+      .then((ids) => {
+        const [first] = ids;
+        const selectedId = ids.find((id) => id === selectedConversationId)
+          ? selectedConversationId
+          : first;
+
         this.setState({loading: false});
-        this.handleSelectConversation(first);
+        this.handleSelectConversation(selectedId);
         this.setupKeyboardShortcuts();
       })
       .then(() => this.scrollIntoView());

@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import qs from 'query-string';
 
 const {REACT_APP_STRIPE_PUBLIC_KEY} = process.env;
 
@@ -37,6 +38,28 @@ export const formatDiffDuration = (start: dayjs.Dayjs, finish: dayjs.Dayjs) => {
   const format = (n: number) => String(n).padStart(2, '0');
 
   return `${format(hrs)}:${format(mins)}:${format(seconds)}`;
+};
+
+export const isValidUuid = (id: any) => {
+  if (!id || typeof id !== 'string' || !id.length) {
+    return false;
+  }
+
+  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+  return regex.test(id);
+};
+
+export const updateQueryParams = (query: object) => {
+  if (window.history.pushState) {
+    window.history.pushState(
+      null,
+      '',
+      `${window.location.pathname}?${qs.stringify(query)}`
+    );
+  } else {
+    console.warn('`window.history.pushState` is not available!');
+  }
 };
 
 export const getBrowserVisibilityInfo = (document: any) => {

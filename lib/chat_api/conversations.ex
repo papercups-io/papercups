@@ -83,6 +83,17 @@ defmodule ChatApi.Conversations do
     conversation_id |> get_conversation_with!(:customer) |> Map.get(:customer)
   end
 
+  @spec get_shared_conversation!(binary(), binary(), binary()) :: Conversation.t()
+  def get_shared_conversation!(conversation_id, account_id, customer_id) do
+    Conversation
+    |> where(id: ^conversation_id)
+    |> where(customer_id: ^customer_id)
+    |> where(account_id: ^account_id)
+    |> where([c], is_nil(c.archived_at))
+    |> Repo.one!()
+    |> Repo.preload([:customer, :tags, messages: [user: :profile]])
+  end
+
   @spec create_conversation(map()) :: {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
   def create_conversation(attrs \\ %{}) do
     %Conversation{}

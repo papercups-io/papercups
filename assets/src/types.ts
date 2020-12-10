@@ -4,9 +4,10 @@ export type User = {
   display_name?: string;
   full_name?: string;
   profile_photo_url?: string;
-  created_at: string;
+  created_at?: string;
   disabled_at?: string;
   role?: 'user' | 'admin';
+  account_id?: string;
 };
 
 export type Customer = {

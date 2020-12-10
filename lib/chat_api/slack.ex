@@ -231,7 +231,7 @@ defmodule ChatApi.Slack do
         "https://" <> url
       end
 
-    url = base <> "/conversations/" <> conversation_id
+    url = base <> "/conversations/all?cid=" <> conversation_id
     dashboard = "<#{url}|dashboard>"
 
     "*:wave: #{identify_customer(customer)} says*: #{text}" <>
