@@ -34,10 +34,7 @@ class SharedConversationContainer extends React.Component<Props, State> {
         token
       );
 
-      this.setState({conversation, loading: false}, () =>
-        // Slight hack
-        setTimeout(() => this.scrollIntoView(), 200)
-      );
+      this.setState({conversation, loading: false});
     } catch (err) {
       logger.error('Unable to fetch shared conversation:', err);
 
