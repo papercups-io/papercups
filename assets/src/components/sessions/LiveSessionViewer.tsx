@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {throttle} from 'lodash';
-import {Channel, Socket} from 'phoenix';
+import {Channel, Presence, Socket} from 'phoenix';
 import {Box, Flex} from 'theme-ui';
 import {Replayer, ReplayerEvents} from 'rrweb';
 import {Alert, Button, Modal, Paragraph, Text, TextArea} from '../common';
@@ -24,12 +24,14 @@ type State = {
   scale: number;
   isConversationModalOpen: boolean;
   isSendingMessage: boolean;
+  isCustomerActive: boolean;
+  isCustomerConnected: boolean;
   message: string;
 };
 
 class LiveSessionViewer extends React.Component<Props, State> {
   socket: Socket | null = null;
-  channel: Channel | null = null;
+  channels: Array<Channel> = [];
   replayer!: Replayer; // TODO: start off as null?
   container: any;
 
@@ -41,6 +43,8 @@ class LiveSessionViewer extends React.Component<Props, State> {
     scale: 1,
     isConversationModalOpen: false,
     isSendingMessage: false,
+    isCustomerActive: true,
+    isCustomerConnected: true,
     message: '',
   };
 
@@ -86,28 +90,8 @@ class LiveSessionViewer extends React.Component<Props, State> {
       )
     );
 
-    this.channel = this.socket.channel(
-      `events:admin:${accountId}:${sessionId}`,
-      {}
-    );
-
-    this.channel.on('replay:event:emitted', (data) => {
-      logger.debug('New event emitted!', data);
-      this.replayer.addEvent(data.event);
-    });
-
-    this.channel
-      .join()
-      .receive('ok', (res) => {
-        logger.debug('Joined channel successfully', res);
-
-        this.replayer.startLive();
-
-        setTimeout(() => this.setIframeScale(), 100);
-      })
-      .receive('error', (err) => {
-        logger.error('Unable to join', err);
-      });
+    this.listenForNewEvents(accountId, sessionId);
+    this.listenForDisconnection(accountId, sessionId);
 
     window.addEventListener('resize', this.handleWindowResize);
   }
@@ -119,16 +103,80 @@ class LiveSessionViewer extends React.Component<Props, State> {
       this.replayer.pause();
     }
 
-    if (this.channel && this.channel.leave) {
-      logger.debug('Existing channel:', this.channel);
-
-      this.channel.leave();
+    if (this.channels && this.channels.length) {
+      this.channels.map((ch) => ch.leave());
     }
 
     if (this.socket && this.socket.disconnect) {
       this.socket.disconnect();
     }
   }
+
+  listenForNewEvents = (accountId: string, sessionId: string) => {
+    if (!this.socket) {
+      return;
+    }
+
+    const channel = this.socket.channel(
+      `events:admin:${accountId}:${sessionId}`,
+      {}
+    );
+
+    channel.on('replay:event:emitted', (data) => {
+      logger.debug('New event emitted!', data);
+      this.replayer.addEvent(data.event);
+    });
+
+    channel
+      .join()
+      .receive('ok', (res) => {
+        logger.debug('Joined channel successfully', res);
+
+        this.replayer.startLive();
+
+        setTimeout(() => this.setIframeScale(), 100);
+        setTimeout(() => this.setState({loading: false}), 60 * 1000);
+      })
+      .receive('error', (err) => {
+        logger.error('Unable to join', err);
+      });
+
+    this.channels.push(channel);
+  };
+
+  listenForDisconnection = (accountId: string, sessionId: string) => {
+    if (!this.socket) {
+      return;
+    }
+
+    const channel = this.socket.channel(`events:admin:${accountId}:all`, {});
+
+    channel
+      .join()
+      .receive('ok', (res: any) => {
+        logger.debug('Joined session channel successfully!', res);
+      })
+      .receive('error', (err: any) => {
+        logger.debug('Unable to join session channel!', err);
+      });
+
+    const presence = new Presence(channel);
+
+    presence.onSync(() => {
+      const records = presence.list().map(({metas}) => {
+        const [info] = metas;
+
+        return info;
+      });
+      const session = records.find((r) => r.session_id === sessionId);
+      const isCustomerConnected = !!session;
+      const isCustomerActive = isCustomerConnected && session.active;
+
+      this.setState({isCustomerActive, isCustomerConnected});
+    });
+
+    this.channels.push(channel);
+  };
 
   initializeNewConversation = async () => {
     const {customer, message} = this.state;
@@ -218,6 +266,46 @@ class LiveSessionViewer extends React.Component<Props, State> {
     this.setIframeScale();
   };
 
+  renderStatusAlert() {
+    const {loading, isCustomerConnected, isCustomerActive} = this.state;
+
+    if (loading) {
+      return (
+        <Alert
+          message={
+            <Text>Loading the current session... this may take a minute.</Text>
+          }
+          type="info"
+          showIcon
+        />
+      );
+    } else if (!isCustomerConnected) {
+      return (
+        <Alert
+          message={<Text>The customer has disconnected.</Text>}
+          type="error"
+          showIcon
+        />
+      );
+    } else if (!isCustomerActive) {
+      return (
+        <Alert
+          message={<Text>The customer is currently inactive.</Text>}
+          type="warning"
+          showIcon
+        />
+      );
+    } else {
+      return (
+        <Alert
+          message={<Text>The customer is currently active.</Text>}
+          type="success"
+          showIcon
+        />
+      );
+    }
+  }
+
   render() {
     const {
       loading,
@@ -226,6 +314,8 @@ class LiveSessionViewer extends React.Component<Props, State> {
       customer,
       isConversationModalOpen,
       isSendingMessage,
+      isCustomerActive,
+      isCustomerConnected,
       message,
     } = this.state;
     const hasAdditionalDetails = !!(conversation || customer);
@@ -299,6 +389,8 @@ class LiveSessionViewer extends React.Component<Props, State> {
                 type="warning"
                 showIcon
               />
+
+              <Box mt={3}>{this.renderStatusAlert()}</Box>
             </Box>
           </Box>
 
@@ -323,6 +415,7 @@ class LiveSessionViewer extends React.Component<Props, State> {
                   position: 'relative',
                   height: 480,
                   visibility: loading ? 'hidden' : 'visible',
+                  opacity: isCustomerActive && isCustomerConnected ? 1 : 0.6,
                 }}
                 ref={(el) => (this.container = el)}
               >
