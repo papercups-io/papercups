@@ -3,7 +3,7 @@ defmodule ChatApi.Repo.Migrations.CreateNotes do
 
   def change do
     create table(:notes, primary_key: false) do
-      add :id, :id, primary_key: true
+      add :id, :binary_id, primary_key: true
       add :body, :text
       add :author_id, references(:users, on_delete: :nothing, type: :id)
       add :account_id, references(:accounts, on_delete: :nothing, type: :binary_id)
