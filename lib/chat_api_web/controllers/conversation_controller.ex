@@ -87,6 +87,7 @@ defmodule ChatApiWeb.ConversationController do
 
   @spec shared(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def shared(conn, %{"conversation_id" => conversation_id, "token" => token}) do
+    # We set a max_age of 86400, which is the equivalent of 24 hours (after which the token expires)
     case Phoenix.Token.verify(ChatApiWeb.Endpoint, conversation_id, token, max_age: 86400) do
       {:ok, {account_id, customer_id}} ->
         conversation =
