@@ -4,7 +4,7 @@ import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Conversation, Message} from '../../types';
-import {sleep, isWindowHidden} from '../../utils';
+import {sleep, isWindowHidden, updateQueryParams} from '../../utils';
 import {SOCKET_URL} from '../../socket';
 import logger from '../../logger';
 
@@ -456,6 +456,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
       if (conversation && !conversation.read) {
         this.handleConversationRead(id);
       }
+
+      updateQueryParams({cid: id});
     });
   };
 
