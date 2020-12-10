@@ -1,7 +1,5 @@
 import React, {Fragment} from 'react';
 import {Box, Flex} from 'theme-ui';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import {
   colors,
   Button,
@@ -20,11 +18,9 @@ import {
   UserOutlined,
 } from '../icons';
 import {Customer, Conversation, User} from '../../types';
+import {dayjs} from "../../utils";
 import ConversationDetailsSidebar from './ConversationDetailsSidebar';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
-
-// TODO: create date utility methods so we don't have to do this everywhere
-dayjs.extend(utc);
 
 const hasCustomerMetadata = (customer: Customer) => {
   const {current_url, browser, os} = customer;
@@ -39,9 +35,11 @@ const hasCustomerMetadata = (customer: Customer) => {
 const CustomerMetadataSubheader = ({
   customer,
   conversation,
+  currentUser,
 }: {
   customer: Customer;
   conversation: Conversation;
+  currentUser: User;
 }) => {
   const [isDrawerVisible, setDrawerVisible] = React.useState(false);
 
@@ -115,6 +113,7 @@ const CustomerMetadataSubheader = ({
         <ConversationDetailsSidebar
           customer={customer}
           conversation={conversation}
+          currentUser={currentUser}
         />
       </Drawer>
     </>
@@ -124,6 +123,7 @@ const CustomerMetadataSubheader = ({
 const ConversationHeader = ({
   conversation,
   users,
+  currentUser,
   onAssignUser,
   onMarkPriority,
   onRemovePriority,
@@ -133,6 +133,7 @@ const ConversationHeader = ({
 }: {
   conversation: Conversation | null;
   users: Array<User>;
+  currentUser: User;
   onAssignUser: (conversationId: string, userId: string) => void;
   onMarkPriority: (conversationId: string) => void;
   onRemovePriority: (conversationId: string) => void;
@@ -281,6 +282,7 @@ const ConversationHeader = ({
           <CustomerMetadataSubheader
             customer={customer}
             conversation={conversation as Conversation}
+            currentUser={currentUser}
           />
         </Box>
       )}

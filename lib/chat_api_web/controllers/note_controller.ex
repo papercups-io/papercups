@@ -17,7 +17,7 @@ defmodule ChatApiWeb.NoteController do
     with {:ok, %Note{} = note} <- Notes.create_note(note_params) do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", Routes.note_path(conn, :show, note))
+      |> put_resp_header("location", Routes.customer_note_path(conn, :show, note.customer_id, note.id))
       |> render("show.json", note: note)
     end
   end

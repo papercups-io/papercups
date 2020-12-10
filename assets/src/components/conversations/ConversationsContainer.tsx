@@ -393,6 +393,7 @@ class ConversationsContainer extends React.Component<Props, State> {
           <ConversationHeader
             conversation={selectedConversation}
             users={users}
+            currentUser={currentUser}
             onAssignUser={this.handleAssignUser}
             onMarkPriority={this.handleMarkPriority}
             onRemovePriority={this.handleMarkUnpriority}
@@ -443,6 +444,7 @@ class ConversationsContainer extends React.Component<Props, State> {
                   customer={selectedCustomer}
                   isOnline={isSelectedCustomerOnline}
                   conversation={selectedConversation}
+                  currentUser={currentUser}
                 />
               </Box>
             )}

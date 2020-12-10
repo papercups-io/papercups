@@ -25,7 +25,7 @@ import {
   SidebarConversationTags,
 } from './SidebarTagSection';
 import * as API from '../../api';
-import {Conversation, Customer, CustomerNote} from '../../types';
+import {Conversation, Customer, CustomerNote, User} from '../../types';
 import {dayjs} from '../../utils';
 import logger from '../../logger';
 import Paragraph from 'antd/lib/typography/Paragraph';
@@ -79,10 +79,14 @@ const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
 
 const CustomerNotes = ({
   customerId,
+  currentUser,
 }: {
   customerId: string;
+  currentUser: User;
 }) => {
   const [loading, setLoading] = React.useState(false);
+  const [currentNote, setCurrentNote] = React.useState<string>("");
+  const [noteError, setNoteError] = React.useState<boolean>(false);
   const [notes, setNotes] = React.useState<Array<CustomerNote>>([]);
 
   React.useEffect(() => {
@@ -91,13 +95,35 @@ const CustomerNotes = ({
     API.fetchCustomerNotes(customerId)
       .then((notes: Array<CustomerNote>) => setNotes(notes))
       .catch((err) => logger.error('Error retrieving customer notes:', err))
-      .then(() => setLoading(false));
+      .finally(() => setLoading(false));
   }, [customerId]);
+
+  const createCustomerNote = () => {
+    if (currentNote.length < 1 || loading) {
+      // TODO: decide error handling state - suggest border highlight
+      setNoteError(true)
+      return Promise.resolve()
+    }
+
+    setLoading(true)
+    console.log("sending message", currentNote)
+    return API.createCustomerNote(currentUser.id, customerId, currentNote)
+      .catch((err) => logger.error('Error creating customer note:', err))
+      .then((newNote: CustomerNote) => {
+        if (newNote && newNote.id) {
+          setNotes([...notes, newNote])
+          setCurrentNote("")
+        }
+      })
+      .finally(() => setLoading(false))
+  }
+
+  const setNote = (e: React.ChangeEvent<HTMLInputElement>) => {setCurrentNote(e.target.value)}
 
   return (
     <div>
-      <input type="text" placeholder="Add a note" />
-      <Button type="primary" block ghost loading={loading}>Add</Button>
+      <Input type="text" placeholder="Add a note" onChange={setNote} value={currentNote} />
+      <Button type="primary" block ghost loading={loading} onClick={createCustomerNote}>Add</Button>
       <div>
       {
         notes.map(n => (
@@ -112,9 +138,11 @@ const CustomerNotes = ({
 const CustomerDetails = ({
   customer,
   isOnline,
+  currentUser,
 }: {
   customer: Customer;
   isOnline?: boolean;
+  currentUser: User;
 }) => {
   const {
     email,
@@ -242,7 +270,7 @@ const CustomerDetails = ({
             <Text strong>Customer notes</Text>
           </Box>
 
-          {<CustomerNotes customerId={customerId} />}
+          {<CustomerNotes customerId={customerId} currentUser={currentUser} />}
         </DetailsSectionCard>
       )}
 
@@ -367,12 +395,14 @@ type Props = {
   customer: Customer;
   conversation?: Conversation;
   isOnline?: boolean;
+  currentUser: User;
 };
 
 const ConversationDetailsSidebar = ({
   customer,
   conversation,
   isOnline,
+  currentUser,
 }: Props) => {
   return (
     <Box
@@ -385,7 +415,7 @@ const ConversationDetailsSidebar = ({
         flex: 1,
       }}
     >
-      <CustomerDetails customer={customer} isOnline={isOnline} />
+      <CustomerDetails customer={customer} isOnline={isOnline} currentUser={currentUser} />
       {conversation && <ConversationDetails conversation={conversation} />}
     </Box>
   );

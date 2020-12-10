@@ -6,7 +6,7 @@ defmodule ChatApi.Notes.Note do
   @foreign_key_type :binary_id
   schema "notes" do
     field :body, :string
-    field :author_id, :binary_id
+    field :author_id, :integer
     field :account_id, :binary_id
     field :customer_id, :binary_id
 
@@ -16,7 +16,7 @@ defmodule ChatApi.Notes.Note do
   @doc false
   def changeset(note, attrs) do
     note
-    |> cast(attrs, [:body])
-    |> validate_required([:body])
+    |> cast(attrs, [:body, :author_id, :customer_id])
+    |> validate_required([:body, :author_id, :customer_id])
   end
 end

@@ -922,3 +922,22 @@ export const fetchCustomerNotes = async (customerId: string, token = getAccessTo
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const createCustomerNote = async (authorId: number, customerId: string, body: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/customers/${customerId}/notes`)
+    .set('Authorization', token)
+    .send({
+      note: {
+        body: body,
+        customer_id: customerId,
+        author_id: authorId,
+      },
+    })
+    .then((res) => res.body.data);
+};
+
