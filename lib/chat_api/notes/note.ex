@@ -10,6 +10,10 @@ defmodule ChatApi.Notes.Note do
     field :account_id, :binary_id
     field :customer_id, :binary_id
 
+    belongs_to(:account, Account)
+    belongs_to(:customer, Customer)
+    belongs_to(:author, User, foreign_key: :author_id, references: :id, type: :integer)
+
     timestamps()
   end
 
