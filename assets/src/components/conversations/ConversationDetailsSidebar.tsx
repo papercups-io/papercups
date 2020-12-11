@@ -76,11 +76,7 @@ const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
   );
 };
 
-const CustomerNotes = ({
-  customerId,
-}: {
-  customerId: string;
-}) => {
+const CustomerNotes = ({customerId}: {customerId: string}) => {
   const [loading, setLoading] = React.useState(false);
   const [currentNote, setCurrentNote] = React.useState<string>('');
   const [noteError, setNoteError] = React.useState<boolean>(false);
@@ -420,10 +416,7 @@ const ConversationDetailsSidebar = ({
         flex: 1,
       }}
     >
-      <CustomerDetails
-        customer={customer}
-        isOnline={isOnline}
-      />
+      <CustomerDetails customer={customer} isOnline={isOnline} />
       {conversation && <ConversationDetails conversation={conversation} />}
     </Box>
   );
