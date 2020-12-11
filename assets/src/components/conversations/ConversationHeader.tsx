@@ -35,11 +35,9 @@ const hasCustomerMetadata = (customer: Customer) => {
 const CustomerMetadataSubheader = ({
   customer,
   conversation,
-  currentUser,
 }: {
   customer: Customer;
   conversation: Conversation;
-  currentUser: User;
 }) => {
   const [isDrawerVisible, setDrawerVisible] = React.useState(false);
 
@@ -113,7 +111,6 @@ const CustomerMetadataSubheader = ({
         <ConversationDetailsSidebar
           customer={customer}
           conversation={conversation}
-          currentUser={currentUser}
         />
       </Drawer>
     </>
@@ -123,7 +120,6 @@ const CustomerMetadataSubheader = ({
 const ConversationHeader = ({
   conversation,
   users,
-  currentUser,
   onAssignUser,
   onMarkPriority,
   onRemovePriority,
@@ -133,7 +129,6 @@ const ConversationHeader = ({
 }: {
   conversation: Conversation | null;
   users: Array<User>;
-  currentUser: User;
   onAssignUser: (conversationId: string, userId: string) => void;
   onMarkPriority: (conversationId: string) => void;
   onRemovePriority: (conversationId: string) => void;
@@ -282,7 +277,6 @@ const ConversationHeader = ({
           <CustomerMetadataSubheader
             customer={customer}
             conversation={conversation as Conversation}
-            currentUser={currentUser}
           />
         </Box>
       )}

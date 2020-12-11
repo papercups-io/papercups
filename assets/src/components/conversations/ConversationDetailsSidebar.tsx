@@ -78,10 +78,8 @@ const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
 
 const CustomerNotes = ({
   customerId,
-  currentUser,
 }: {
   customerId: string;
-  currentUser: User;
 }) => {
   const [loading, setLoading] = React.useState(false);
   const [currentNote, setCurrentNote] = React.useState<string>('');
@@ -105,8 +103,7 @@ const CustomerNotes = ({
     }
 
     setLoading(true);
-    console.log('sending message', currentNote);
-    return API.createCustomerNote(currentUser.id, customerId, currentNote)
+    return API.createCustomerNote(customerId, currentNote)
       .catch((err) => logger.error('Error creating customer note:', err))
       .then((newNote: CustomerNote) => {
         if (newNote && newNote.id) {
@@ -150,11 +147,9 @@ const CustomerNotes = ({
 const CustomerDetails = ({
   customer,
   isOnline,
-  currentUser,
 }: {
   customer: Customer;
   isOnline?: boolean;
-  currentUser: User;
 }) => {
   const {
     email,
@@ -282,7 +277,7 @@ const CustomerDetails = ({
             <Text strong>Customer notes</Text>
           </Box>
 
-          {<CustomerNotes customerId={customerId} currentUser={currentUser} />}
+          {<CustomerNotes customerId={customerId} />}
         </DetailsSectionCard>
       )}
 
@@ -407,14 +402,12 @@ type Props = {
   customer: Customer;
   conversation?: Conversation;
   isOnline?: boolean;
-  currentUser: User;
 };
 
 const ConversationDetailsSidebar = ({
   customer,
   conversation,
   isOnline,
-  currentUser,
 }: Props) => {
   return (
     <Box
@@ -430,7 +423,6 @@ const ConversationDetailsSidebar = ({
       <CustomerDetails
         customer={customer}
         isOnline={isOnline}
-        currentUser={currentUser}
       />
       {conversation && <ConversationDetails conversation={conversation} />}
     </Box>
