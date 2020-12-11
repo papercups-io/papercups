@@ -7,21 +7,28 @@ defmodule ChatApiWeb.NoteController do
   action_fallback ChatApiWeb.FallbackController
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def index(conn, _params) do
-    notes = Notes.list_notes()
-    render(conn, "index.json", notes: notes)
+  def index(conn, %{"note" => note_params}) do
+    %{customer_id: customer_id} = note_params
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      notes = Notes.list_notes_for_customer(%{account_id: account_id, customer_id: customer_id})
+      render(conn, "index.json", notes: notes)
+    end
   end
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"note" => note_params}) do
-    with {:ok, %Note{} = note} <- Notes.create_note(note_params) do
-      conn
-      |> put_status(:created)
-      |> put_resp_header(
-        "location",
-        Routes.customer_note_path(conn, :show, note.customer_id, note.id)
-      )
-      |> render("show.json", note: note)
+    with %{account_id: account_id, user_id: author_id} <- conn.assigns.current_user do
+      %{body: body, customer_id: customer_id} = note_params
+
+      with {:ok, %Note{} = note} <- Notes.create_note(%{account_id: account_id, customer_id: customer_id, author_id: author_id, body: body}) do
+        conn
+        |> put_status(:created)
+        |> put_resp_header(
+          "location",
+          Routes.note_path(conn, :show, note.customer_id, note.id)
+        )
+        |> render("show.json", note: note)
+      end
     end
   end
 
