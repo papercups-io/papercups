@@ -7,9 +7,9 @@ defmodule ChatApiWeb.NoteController do
   action_fallback ChatApiWeb.FallbackController
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def index(conn, %{"note" => note_params}) do
+  def index(conn, %{"customer_id" => customer_id} = note_params) do
     case note_params do
-      %{"customer_id" => customer_id} ->
+      %{"customer_id" => ^customer_id} ->
         with %{account_id: account_id} <- conn.assigns.current_user do
           notes = Notes.list_notes_for_customer(%{account_id: account_id, customer_id: customer_id})
           render(conn, "index.json", notes: notes)
