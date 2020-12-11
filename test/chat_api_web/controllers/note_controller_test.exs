@@ -42,6 +42,15 @@ defmodule ChatApiWeb.NoteControllerTest do
       assert note_ids == [note.id]
     end
 
+    test "returns informative error when customer_id is missing from the request", %{
+      authed_conn: authed_conn,
+    } do
+      conn = get(authed_conn, Routes.note_path(authed_conn, :index), %{
+                   "note" => %{}
+                 })
+      assert json_response(conn, 400)["error"] == %{"status" => 400, "message" => "Please provide a customer_id"}
+    end
+
     test "returns unauthorized when auth is invalid", %{conn: conn} do
       conn = get(conn, Routes.note_path(conn, :index))
 
