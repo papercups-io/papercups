@@ -6,12 +6,26 @@ defmodule ChatApi.NotesTest do
   describe "notes" do
     alias ChatApi.Notes.Note
 
-    @valid_attrs %{body: "some body"}
+    @user_attrs %{
+      display_name: "some display_name",
+      full_name: "some full_name",
+      profile_photo_url: "some profile_photo_url"
+    }
+
+    @valid_attrs %{body: "some body", author_id: 1, conver}
     @update_attrs %{body: "some updated body"}
     @invalid_attrs %{body: nil}
 
+    setup do
+      account = insert(:account)
+      customer = insert(:customer, account: account)
+      user = insert(:user)}
+
+      {:ok, user: user, account: account, customer: customer}
+    end
+
     def note_fixture(attrs \\ %{}) do
-      {:ok, note} =
+      {:ok, note, user, customer} =
         attrs
         |> Enum.into(@valid_attrs)
         |> Notes.create_note()

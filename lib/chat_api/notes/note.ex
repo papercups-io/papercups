@@ -2,13 +2,14 @@ defmodule ChatApi.Notes.Note do
   use Ecto.Schema
   import Ecto.Changeset
 
+  alias ChatApi.Accounts.Account
+  alias ChatApi.Customers.Customer
+  alias ChatApi.Users.User
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "notes" do
     field :body, :string
-    field :author_id, :integer
-    field :account_id, :binary_id
-    field :customer_id, :binary_id
 
     belongs_to(:account, Account)
     belongs_to(:customer, Customer)
@@ -28,6 +29,6 @@ defmodule ChatApi.Notes.Note do
   def changeset(note, attrs) do
     note
     |> cast(attrs, [:body, :author_id, :account_id, :customer_id])
-    |> validate_required([])
+    |> validate_required([:body])
   end
 end

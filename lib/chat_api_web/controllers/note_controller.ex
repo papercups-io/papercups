@@ -8,7 +8,8 @@ defmodule ChatApiWeb.NoteController do
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, %{"note" => note_params}) do
-    %{customer_id: customer_id} = note_params
+
+    %{"customer_id" => customer_id} = note_params
     with %{account_id: account_id} <- conn.assigns.current_user do
       notes = Notes.list_notes_for_customer(%{account_id: account_id, customer_id: customer_id})
       render(conn, "index.json", notes: notes)
@@ -17,15 +18,18 @@ defmodule ChatApiWeb.NoteController do
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"note" => note_params}) do
-    with %{account_id: account_id, user_id: author_id} <- conn.assigns.current_user do
-      %{body: body, customer_id: customer_id} = note_params
+    %{"body" => body, "customer_id" => customer_id} = note_params
 
-      with {:ok, %Note{} = note} <- Notes.create_note(%{account_id: account_id, customer_id: customer_id, author_id: author_id, body: body}) do
+    with %{account_id: account_id, id: author_id} <- conn.assigns.current_user do
+
+      with {:ok, %Note{} = note} <- Notes.create_note(%{
+        body: body, customer_id: customer_id, account_id: account_id, author_id: author_id
+      }) do
         conn
         |> put_status(:created)
         |> put_resp_header(
           "location",
-          Routes.note_path(conn, :show, note.customer_id, note.id)
+          Routes.note_path(conn, :show, note.id)
         )
         |> render("show.json", note: note)
       end
