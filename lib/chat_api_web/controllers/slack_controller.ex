@@ -3,12 +3,7 @@ defmodule ChatApiWeb.SlackController do
 
   require Logger
 
-  alias ChatApi.{
-    Messages,
-    Slack,
-    SlackAuthorizations,
-    SlackConversationThreads
-  }
+  alias ChatApi.{Messages, Slack}
 
   action_fallback ChatApiWeb.FallbackController
 
@@ -17,7 +12,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
 
     # TODO: improve error handling!
-    {:ok, response} = Slack.get_access_token(code)
+    {:ok, response} = Slack.Client.get_access_token(code)
 
     Logger.info("Slack OAuth response: #{inspect(response)}")
 
@@ -59,7 +54,7 @@ defmodule ChatApiWeb.SlackController do
           webhook_url: webhook_url
         }
 
-        SlackAuthorizations.create_or_update(account_id, params)
+        Slack.create_or_update_authorization(account_id, params)
 
         conn
         |> notify_slack()
@@ -76,7 +71,7 @@ defmodule ChatApiWeb.SlackController do
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def authorization(conn, _payload) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      auth = SlackAuthorizations.get_authorization_by_account(account_id)
+      auth = Slack.get_authorization_by_account(account_id)
 
       case auth do
         nil ->
@@ -130,7 +125,7 @@ defmodule ChatApiWeb.SlackController do
 
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
       %{id: conversation_id, account_id: account_id} = conversation
-      sender_id = Slack.get_sender_id(conversation, user_id)
+      sender_id = Slack.Client.get_sender_id(conversation, user_id)
 
       params = %{
         "body" => text,
@@ -149,7 +144,7 @@ defmodule ChatApiWeb.SlackController do
   defp handle_event(_), do: nil
 
   defp get_thread_conversation(thread_ts, channel) do
-    case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
+    case Slack.get_by_slack_thread_ts(thread_ts, channel) do
       %{conversation: conversation} -> {:ok, conversation}
       _ -> {:error, "Not found"}
     end
@@ -161,7 +156,7 @@ defmodule ChatApiWeb.SlackController do
       # Putting in an async Task for now, since we don't care if this succeeds
       # or fails (and we also don't want it to block anything)
       Task.start(fn ->
-        ChatApi.Slack.log("#{email} successfully linked Slack!")
+        ChatApi.Slack.Client.log("#{email} successfully linked Slack!")
       end)
     end
 

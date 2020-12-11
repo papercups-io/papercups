@@ -1,4 +1,5 @@
-defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
+# TODO: move into ChatApi.Slack namespace
+defmodule ChatApi.Slack.SlackConversationThread do
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -17,11 +18,8 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
     timestamps()
   end
 
-  @spec changeset(
-          {map, map} | %{:__struct__ => atom | %{__changeset__: map}, optional(atom) => any},
-          :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}
-        ) :: Ecto.Changeset.t()
   @doc false
+  @spec changeset(any(), map()) :: Ecto.Changeset.t()
   def changeset(slack_conversation_thread, attrs) do
     slack_conversation_thread
     |> cast(attrs, [:slack_channel, :slack_thread_ts, :conversation_id, :account_id])

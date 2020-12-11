@@ -63,6 +63,7 @@ defmodule ChatApiWeb.Router do
     get("/conversations/shared", ConversationController, :shared)
 
     post("/slack/webhook", SlackController, :webhook)
+    get("/hubspot/oauth", HubspotController, :oauth)
   end
 
   # Protected routes
@@ -79,6 +80,7 @@ defmodule ChatApiWeb.Router do
 
     get("/slack/oauth", SlackController, :oauth)
     get("/slack/authorization", SlackController, :authorization)
+    # get("/hubspot/oauth", HubspotController, :oauth)
     get("/gmail/auth", GmailController, :auth)
     get("/gmail/oauth", GmailController, :callback)
     get("/gmail/authorization", GmailController, :authorization)

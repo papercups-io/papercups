@@ -15,7 +15,7 @@ defmodule ChatApi.Conversations.Helpers do
         {:error, "state_invalid"}
 
       conversation_state_message ->
-        Slack.send_conversation_message_alert(
+        Slack.Client.send_conversation_message_alert(
           conversation.id,
           conversation_state_message,
           type: :conversation_update

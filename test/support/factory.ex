@@ -81,7 +81,7 @@ defmodule ChatApi.Factory do
   end
 
   def slack_authorization_factory do
-    %ChatApi.SlackAuthorizations.SlackAuthorization{
+    %ChatApi.Slack.SlackAuthorization{
       access_token: "some access_token",
       app_id: sequence(:app_id, &"some app_id #{&1}"),
       authed_user_id: sequence(:authed_user_id, &"some authed_user_id #{&1}"),
@@ -99,7 +99,7 @@ defmodule ChatApi.Factory do
   end
 
   def slack_conversation_thread_factory do
-    %ChatApi.SlackConversationThreads.SlackConversationThread{
+    %ChatApi.Slack.SlackConversationThread{
       account: build(:account),
       conversation: build(:conversation),
       slack_thread_ts: sequence("1234.56789"),

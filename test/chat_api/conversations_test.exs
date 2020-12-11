@@ -2,11 +2,11 @@ defmodule ChatApi.ConversationsTest do
   use ChatApi.DataCase, async: true
 
   import ChatApi.Factory
-  alias ChatApi.{Conversations, SlackConversationThreads}
+  alias ChatApi.{Conversations, Slack}
 
   describe "conversations" do
     alias ChatApi.Conversations.Conversation
-    alias ChatApi.SlackConversationThreads.SlackConversationThread
+    alias ChatApi.Slack.SlackConversationThread
 
     @update_attrs %{status: "closed"}
     @invalid_attrs %{status: nil}
@@ -148,9 +148,7 @@ defmodule ChatApi.ConversationsTest do
       }
 
       assert {:ok, %SlackConversationThread{} = slack_conversation_thread} =
-               SlackConversationThreads.create_slack_conversation_thread(
-                 slack_conversation_thread_attrs
-               )
+               Slack.create_slack_conversation_thread(slack_conversation_thread_attrs)
 
       assert {:ok, %Conversation{}} = Conversations.delete_conversation(conversation)
 
@@ -159,7 +157,7 @@ defmodule ChatApi.ConversationsTest do
       end
 
       assert_raise Ecto.NoResultsError, fn ->
-        SlackConversationThreads.get_slack_conversation_thread!(slack_conversation_thread.id)
+        Slack.get_slack_conversation_thread!(slack_conversation_thread.id)
       end
     end
 

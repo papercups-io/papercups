@@ -111,7 +111,7 @@ defmodule ChatApiWeb.GmailController do
       # Putting in an async Task for now, since we don't care if this succeeds
       # or fails (and we also don't want it to block anything)
       Task.start(fn ->
-        ChatApi.Slack.log("#{email} successfully linked Gmail!")
+        ChatApi.Slack.Client.log("#{email} successfully linked Gmail!")
       end)
     end
 

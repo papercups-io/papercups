@@ -2,10 +2,10 @@ defmodule ChatApi.SlackAuthorizationsTest do
   use ChatApi.DataCase
 
   import ChatApi.Factory
-  alias ChatApi.SlackAuthorizations
+  alias ChatApi.Slack
 
   describe "slack_authorizations" do
-    alias ChatApi.SlackAuthorizations.SlackAuthorization
+    alias ChatApi.Slack.SlackAuthorization
 
     @update_attrs %{
       access_token: "some updated access_token",
@@ -43,7 +43,7 @@ defmodule ChatApi.SlackAuthorizationsTest do
     test "list_slack_authorizations/0 returns all slack_authorizations",
          %{slack_authorization: slack_authorization} do
       slack_authorization_ids =
-        SlackAuthorizations.list_slack_authorizations()
+        Slack.list_slack_authorizations()
         |> Enum.map(& &1.id)
 
       assert slack_authorization_ids == [slack_authorization.id]
@@ -52,25 +52,24 @@ defmodule ChatApi.SlackAuthorizationsTest do
     test "get_slack_authorization!/1 returns the slack_authorization with given id",
          %{slack_authorization: slack_authorization} do
       assert slack_authorization ==
-               SlackAuthorizations.get_slack_authorization!(slack_authorization.id)
+               Slack.get_slack_authorization!(slack_authorization.id)
                |> Repo.preload([:account])
     end
 
     test "create_slack_authorization/1 with valid data creates a slack_authorization" do
       attrs = params_with_assocs(:slack_authorization)
 
-      assert {:ok, %SlackAuthorization{}} = SlackAuthorizations.create_slack_authorization(attrs)
+      assert {:ok, %SlackAuthorization{}} = Slack.create_slack_authorization(attrs)
     end
 
     test "create_slack_authorization/1 with invalid data returns error changeset" do
-      assert {:error, %Ecto.Changeset{}} =
-               SlackAuthorizations.create_slack_authorization(@invalid_attrs)
+      assert {:error, %Ecto.Changeset{}} = Slack.create_slack_authorization(@invalid_attrs)
     end
 
     test "update_slack_authorization/2 with valid data updates the slack_authorization",
          %{slack_authorization: slack_authorization} do
       assert {:ok, %SlackAuthorization{} = slack_authorization} =
-               SlackAuthorizations.update_slack_authorization(slack_authorization, @update_attrs)
+               Slack.update_slack_authorization(slack_authorization, @update_attrs)
 
       assert slack_authorization.access_token == "some updated access_token"
       assert slack_authorization.app_id == "some updated app_id"
@@ -89,27 +88,25 @@ defmodule ChatApi.SlackAuthorizationsTest do
     test "update_slack_authorization/2 with invalid data returns error changeset",
          %{slack_authorization: slack_authorization} do
       assert {:error, %Ecto.Changeset{}} =
-               SlackAuthorizations.update_slack_authorization(slack_authorization, @invalid_attrs)
+               Slack.update_slack_authorization(slack_authorization, @invalid_attrs)
 
       assert slack_authorization ==
-               SlackAuthorizations.get_slack_authorization!(slack_authorization.id)
+               Slack.get_slack_authorization!(slack_authorization.id)
                |> Repo.preload([:account])
     end
 
     test "delete_slack_authorization/1 deletes the slack_authorization",
          %{slack_authorization: slack_authorization} do
-      assert {:ok, %SlackAuthorization{}} =
-               SlackAuthorizations.delete_slack_authorization(slack_authorization)
+      assert {:ok, %SlackAuthorization{}} = Slack.delete_slack_authorization(slack_authorization)
 
       assert_raise Ecto.NoResultsError, fn ->
-        SlackAuthorizations.get_slack_authorization!(slack_authorization.id)
+        Slack.get_slack_authorization!(slack_authorization.id)
       end
     end
 
     test "change_slack_authorization/1 returns a slack_authorization changeset",
          %{slack_authorization: slack_authorization} do
-      assert %Ecto.Changeset{} =
-               SlackAuthorizations.change_slack_authorization(slack_authorization)
+      assert %Ecto.Changeset{} = Slack.change_slack_authorization(slack_authorization)
     end
   end
 end

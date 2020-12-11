@@ -1,4 +1,5 @@
-defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
+# TODO: move into ChatApi.Slack namespace
+defmodule ChatApi.Slack.SlackAuthorization do
   use Ecto.Schema
   import Ecto.Changeset
 

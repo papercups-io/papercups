@@ -1,6 +1,6 @@
-defmodule ChatApi.StripeClient do
+defmodule ChatApi.Stripe.Client do
   @moduledoc """
-  The StripeClient context.
+  The Stripe client module
   """
 
   import Ecto.Query, warn: false

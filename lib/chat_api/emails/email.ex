@@ -233,10 +233,7 @@ defmodule ChatApi.Emails.Email do
     """
   end
 
-  @spec changeset(
-          {map, map} | %{:__struct__ => atom | %{__changeset__: map}, optional(atom) => any},
-          :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}
-        ) :: Ecto.Changeset.t()
+  @spec changeset(any(), map()) :: Ecto.Changeset.t()
   def changeset(email, attrs) do
     email
     |> cast(attrs, [:to_address, :message])

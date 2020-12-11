@@ -182,7 +182,7 @@ defmodule ChatApi.Messages do
     Logger.info("Sending notification: :slack")
     # TODO: should we just pass in the message struct here?
     Task.start(fn ->
-      ChatApi.Slack.send_conversation_message_alert(conversation_id, body,
+      ChatApi.Slack.Client.send_conversation_message_alert(conversation_id, body,
         type: get_message_type(message)
       )
     end)

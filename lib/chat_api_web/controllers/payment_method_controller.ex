@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.PaymentMethodController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{Accounts, StripeClient}
+  alias ChatApi.Accounts
 
   action_fallback ChatApiWeb.FallbackController
 
@@ -12,8 +12,8 @@ defmodule ChatApiWeb.PaymentMethodController do
          %{"id" => payment_method_id} <- payment_method_params do
       result =
         account_id
-        |> StripeClient.find_or_create_customer(user)
-        |> StripeClient.add_payment_method(payment_method_id, account_id)
+        |> ChatApi.Stripe.Client.find_or_create_customer(user)
+        |> ChatApi.Stripe.Client.add_payment_method(payment_method_id, account_id)
 
       case result do
         {:ok, payment_method} ->

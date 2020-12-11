@@ -7,7 +7,6 @@ defmodule ChatApi.SlackTest do
   alias ChatApi.{
     Conversations,
     Slack,
-    SlackConversationThreads,
     Users
   }
 
@@ -23,20 +22,20 @@ defmodule ChatApi.SlackTest do
 
     test "get_conversation_account_id/1 returns a valid account_id",
          %{conversation: conversation} do
-      account_id = Slack.get_conversation_account_id(conversation.id)
+      account_id = Slack.Client.get_conversation_account_id(conversation.id)
 
       assert account_id
     end
 
     test "is_valid_access_token?/1 checks the validity of an access token" do
-      assert Slack.is_valid_access_token?("invalid") == false
-      assert Slack.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
+      assert Slack.Client.is_valid_access_token?("invalid") == false
+      assert Slack.Client.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
     end
 
     test "get_message_text/1 returns subject for initial slack thread",
          %{conversation: conversation, customer: customer} do
       text =
-        Slack.get_message_text(%{
+        Slack.Client.get_message_text(%{
           customer: customer,
           text: "Test message",
           conversation_id: conversation.id,
@@ -51,7 +50,7 @@ defmodule ChatApi.SlackTest do
 
     test "get_message_text/1 returns subject for slack reply",
          %{conversation: conversation, customer: customer, thread: thread} do
-      assert Slack.get_message_text(%{
+      assert Slack.Client.get_message_text(%{
                text: "Test message",
                conversation_id: conversation.id,
                customer: customer,
@@ -60,7 +59,7 @@ defmodule ChatApi.SlackTest do
              }) ==
                "*:female-technologist: Agent*: Test message"
 
-      assert Slack.get_message_text(%{
+      assert Slack.Client.get_message_text(%{
                text: "Test message",
                conversation_id: conversation.id,
                customer: customer,
@@ -70,7 +69,7 @@ defmodule ChatApi.SlackTest do
                "*:wave: #{customer.email}*: Test message"
 
       assert_raise ArgumentError, fn ->
-        Slack.get_message_text(%{
+        Slack.Client.get_message_text(%{
           text: "Test message",
           conversation_id: conversation.id,
           customer: customer,
@@ -118,7 +117,7 @@ defmodule ChatApi.SlackTest do
                ],
                "channel" => ^channel
              } =
-               Slack.get_message_payload(text, %{
+               Slack.Client.get_message_payload(text, %{
                  channel: channel,
                  customer: customer,
                  thread: nil
@@ -136,7 +135,7 @@ defmodule ChatApi.SlackTest do
                "text" => ^text,
                "thread_ts" => ^ts
              } =
-               Slack.get_message_payload(text, %{
+               Slack.Client.get_message_payload(text, %{
                  channel: channel,
                  thread: thread,
                  customer: nil
@@ -149,7 +148,7 @@ defmodule ChatApi.SlackTest do
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
 
       assert %{slack_channel: ^channel, slack_thread_ts: ^ts} =
-               Slack.extract_slack_conversation_thread_info(response)
+               Slack.Client.extract_slack_conversation_thread_info(response)
     end
 
     test "extract_slack_conversation_thread_info/1 raises if the slack response has ok=false" do
@@ -157,7 +156,7 @@ defmodule ChatApi.SlackTest do
 
       assert capture_log(fn ->
                assert_raise RuntimeError, fn ->
-                 Slack.extract_slack_conversation_thread_info(response)
+                 Slack.Client.extract_slack_conversation_thread_info(response)
                end
              end) =~ "Error sending Slack message"
     end
@@ -170,9 +169,9 @@ defmodule ChatApi.SlackTest do
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
 
-      {:ok, thread} = Slack.create_new_slack_conversation_thread(id, response)
+      {:ok, thread} = Slack.Client.create_new_slack_conversation_thread(id, response)
 
-      assert %SlackConversationThreads.SlackConversationThread{
+      assert %Slack.SlackConversationThread{
                slack_channel: ^channel,
                slack_thread_ts: ^ts,
                account_id: ^account_id,
@@ -197,7 +196,7 @@ defmodule ChatApi.SlackTest do
       secondary_user = insert(:user, account: account)
 
       users = [disabled_user, secondary_user, primary_user]
-      assert primary_user.id === Slack.fetch_valid_user(users)
+      assert primary_user.id === Slack.Client.fetch_valid_user(users)
     end
 
     test "create_new_slack_conversation_thread/2 raises if no primary user exists",
@@ -207,7 +206,7 @@ defmodule ChatApi.SlackTest do
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
 
       assert_raise RuntimeError, fn ->
-        Slack.create_new_slack_conversation_thread(conversation.id, response)
+        Slack.Client.create_new_slack_conversation_thread(conversation.id, response)
       end
     end
   end
