@@ -13,7 +13,7 @@ defmodule ChatApi.Notes do
 
   ## Examples
 
-      iex> list_notes_for_customer(%{account_id: account_id, customer_id: customer_id})
+      iex> list_notes_for_customer([account_id: account_id, customer_id: customer_id])
       [%Note{}, ...]
 
   """

@@ -33,9 +33,7 @@ defmodule ChatApiWeb.NoteControllerTest do
       note: note
     } do
       conn =
-        get(authed_conn, Routes.note_path(authed_conn, :index), %{
-          "note" => %{customer_id: note.customer_id}
-        })
+        get(authed_conn, Routes.note_path(authed_conn, :index), %{customer_id: note.customer_id})
 
       note_ids = json_response(conn, 200)["data"] |> Enum.map(& &1["id"])
 
@@ -45,9 +43,7 @@ defmodule ChatApiWeb.NoteControllerTest do
     test "returns informative error when customer_id is missing from the request", %{
       authed_conn: authed_conn,
     } do
-      conn = get(authed_conn, Routes.note_path(authed_conn, :index), %{
-                   "note" => %{}
-                 })
+      conn = get(authed_conn, Routes.note_path(authed_conn, :index), %{})
       assert json_response(conn, 400)["error"] == %{"status" => 400, "message" => "Please provide a customer_id"}
     end
 
