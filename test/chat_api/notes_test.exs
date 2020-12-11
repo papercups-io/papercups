@@ -67,7 +67,11 @@ defmodule ChatApi.NotesTest do
       assert note.account_id == account.id
     end
 
-    test "create_note/1 with invalid data returns error changeset" do
+    test "create_note/1 with empty body returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Notes.create_note(%{body: ""})
+    end
+
+    test "create_note/1 with nil body returns error changeset" do
       assert {:error, %Ecto.Changeset{}} = Notes.create_note(@invalid_attrs)
     end
 
