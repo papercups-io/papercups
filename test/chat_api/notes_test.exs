@@ -26,17 +26,17 @@ defmodule ChatApi.NotesTest do
       customer: customer
     } do
       note_ids =
-        Notes.list_notes_for_customer([account_id: account.id, customer_id: customer.id])
+        Notes.list_notes_for_customer(account_id: account.id, customer_id: customer.id)
         |> Enum.map(& &1.id)
 
       assert note_ids == [note.id]
     end
 
     test "list_notes_for_customer/1 returns empty [] when customer cannot be matched", %{
-      account: account,
+      account: account
     } do
       note_ids =
-        Notes.list_notes_for_customer([account_id: account.id, customer_id: UUID.generate()])
+        Notes.list_notes_for_customer(account_id: account.id, customer_id: UUID.generate())
         |> Enum.map(& &1.id)
 
       assert note_ids == []

@@ -11,7 +11,7 @@ defmodule ChatApiWeb.NoteController do
     case note_params do
       %{"customer_id" => customer_id} ->
         with %{account_id: account_id} <- conn.assigns.current_user do
-          notes = Notes.list_notes_for_customer([account_id: account_id, customer_id: customer_id])
+          notes = Notes.list_notes_for_customer(account_id: account_id, customer_id: customer_id)
           render(conn, "index.json", notes: notes)
         end
 
@@ -31,21 +31,21 @@ defmodule ChatApiWeb.NoteController do
   def create(conn, %{"note" => note_params}) do
     %{"body" => body, "customer_id" => customer_id} = note_params
 
-    with %{account_id: account_id, id: author_id} <- conn.assigns.current_user, 
-      {:ok, %Note{} = note} <- Notes.create_note(%{
-         body: body,
-         customer_id: customer_id,
-         account_id: account_id,
-         author_id: author_id
-       }) do
-
-        conn
-        |> put_status(:created)
-        |> put_resp_header(
-          "location",
-          Routes.note_path(conn, :show, note.id)
-        )
-        |> render("show.json", note: note)
+    with %{account_id: account_id, id: author_id} <- conn.assigns.current_user,
+         {:ok, %Note{} = note} <-
+           Notes.create_note(%{
+             body: body,
+             customer_id: customer_id,
+             account_id: account_id,
+             author_id: author_id
+           }) do
+      conn
+      |> put_status(:created)
+      |> put_resp_header(
+        "location",
+        Routes.note_path(conn, :show, note.id)
+      )
+      |> render("show.json", note: note)
     end
   end
 
