@@ -99,9 +99,8 @@ defmodule ChatApiWeb.Router do
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
 
-    resources("/customers", CustomerController, except: [:new, :edit, :create]) do
-      resources("/notes", NoteController, except: [:new, :edit])
-    end
+    resources("/customers", CustomerController, except: [:new, :edit, :create])
+    resources("/notes", NoteController, except: [:new, :edit])
 
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
