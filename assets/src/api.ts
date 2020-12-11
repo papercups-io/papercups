@@ -927,7 +927,6 @@ export const fetchCustomerNotes = async (
 };
 
 export const createCustomerNote = async (
-  authorId: number,
   customerId: string,
   body: string,
   token = getAccessToken()
@@ -943,7 +942,6 @@ export const createCustomerNote = async (
       note: {
         body: body,
         customer_id: customerId,
-        author_id: authorId,
       },
     })
     .then((res) => res.body.data);
