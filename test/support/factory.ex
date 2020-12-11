@@ -82,11 +82,12 @@ defmodule ChatApi.Factory do
 
   def note_factory do
     account = build(:account)
+
     %ChatApi.Notes.Note{
       body: "some customer note",
       customer: build(:customer),
       account: account,
-      author: build(:user, account: account),
+      author: build(:user, account: account)
     }
   end
 

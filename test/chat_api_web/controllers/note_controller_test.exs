@@ -19,18 +19,24 @@ defmodule ChatApiWeb.NoteControllerTest do
     authed_conn = Pow.Plug.assign_current_user(conn, agent, [])
 
     {:ok,
-      conn: conn,
-      authed_conn: authed_conn,
-      account: account,
-      agent: agent,
-      customer: customer,
-      note: note,
-    }
+     conn: conn,
+     authed_conn: authed_conn,
+     account: account,
+     agent: agent,
+     customer: customer,
+     note: note}
   end
 
   describe "index" do
-    test "lists all notes for the specified customer in the current account", %{authed_conn: authed_conn, note: note} do
-      conn = get(authed_conn, Routes.note_path(authed_conn, :index), %{"note" => %{customer_id: note.customer_id}})
+    test "lists all notes for the specified customer in the current account", %{
+      authed_conn: authed_conn,
+      note: note
+    } do
+      conn =
+        get(authed_conn, Routes.note_path(authed_conn, :index), %{
+          "note" => %{customer_id: note.customer_id}
+        })
+
       note_ids = json_response(conn, 200)["data"] |> Enum.map(& &1["id"])
 
       assert note_ids == [note.id]
@@ -46,27 +52,28 @@ defmodule ChatApiWeb.NoteControllerTest do
   describe "create note" do
     test "renders note when data is valid", %{
       authed_conn: authed_conn,
-      customer: customer,
+      customer: customer
     } do
-
       # note is valid
       note_params = %{body: "note body", customer_id: customer.id}
       conn = post(authed_conn, Routes.note_path(authed_conn, :create), note: note_params)
+
       assert %{
-        "id" => created_id,
-        "customer_id" => customer_id,
-        "author_id" => agent_id,
-      } = json_response(conn, 201)["data"]
+               "id" => created_id,
+               "customer_id" => customer_id,
+               "author_id" => agent_id
+             } = json_response(conn, 201)["data"]
 
       # note is fetchable
       conn = get(authed_conn, Routes.note_path(authed_conn, :show, created_id))
       _fetched = json_response(conn, 200)["data"]
+
       assert _fetched = %{
                "id" => created_id,
                "object" => "note",
                "body" => "note body",
                "customer_id" => customer_id,
-               "author_id" => agent_id,
+               "author_id" => agent_id
              }
     end
 
@@ -79,19 +86,20 @@ defmodule ChatApiWeb.NoteControllerTest do
 
   describe "update note" do
     test "renders note when data is valid", %{
-      authed_conn: authed_conn, note: %Note{id: id} = note
+      authed_conn: authed_conn,
+      note: %Note{id: id} = note
     } do
-
       # update note
       conn = put(authed_conn, Routes.note_path(authed_conn, :update, note), note: @update_attrs)
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       # fetch updated note
       conn = get(authed_conn, Routes.note_path(conn, :show, id))
+
       assert %{
-        "id" => _id,
-        "body" => "updated body!"
-      } = json_response(conn, 200)["data"]
+               "id" => _id,
+               "body" => "updated body!"
+             } = json_response(conn, 200)["data"]
     end
 
     test "renders errors when data is invalid", %{authed_conn: authed_conn, note: note} do

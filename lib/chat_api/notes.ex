@@ -18,9 +18,7 @@ defmodule ChatApi.Notes do
 
   """
   @spec list_notes_for_customer(map()) :: [Note.t()]
-  def list_notes_for_customer(
-    %{account_id: account_id, customer_id: customer_id} = _query_params
-  ) do
+  def list_notes_for_customer(%{account_id: account_id, customer_id: customer_id} = _query_params) do
     Note
     |> where(account_id: ^account_id, customer_id: ^customer_id)
     |> order_by(desc: :inserted_at)

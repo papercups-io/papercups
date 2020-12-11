@@ -16,16 +16,18 @@ defmodule ChatApi.NotesTest do
       customer = insert(:customer, account: account)
       note = insert(:note, body: "note_body", account: account, author: agent, customer: customer)
 
-      {:ok,
-        agent: agent,
-        account: account,
-        customer: customer,
-        note: note,
-      }
+      {:ok, agent: agent, account: account, customer: customer, note: note}
     end
 
-    test "list_notes/1 returns all notes for the given account and customer", %{note: note, account: account, customer: customer} do
-      note_ids = Notes.list_notes_for_customer(%{account_id: account.id, customer_id: customer.id}) |> Enum.map(& &1.id)
+    test "list_notes/1 returns all notes for the given account and customer", %{
+      note: note,
+      account: account,
+      customer: customer
+    } do
+      note_ids =
+        Notes.list_notes_for_customer(%{account_id: account.id, customer_id: customer.id})
+        |> Enum.map(& &1.id)
+
       assert note_ids == [note.id]
     end
 
@@ -35,8 +37,19 @@ defmodule ChatApi.NotesTest do
       assert found.body == note.body
     end
 
-    test "create_note/1 with valid data creates a note", %{account: account, customer: customer, agent: agent} do
-      assert {:ok, %Note{} = note} = Notes.create_note(%{body: "some body", account_id: account.id, customer_id: customer.id, author_id: agent.id})
+    test "create_note/1 with valid data creates a note", %{
+      account: account,
+      customer: customer,
+      agent: agent
+    } do
+      assert {:ok, %Note{} = note} =
+               Notes.create_note(%{
+                 body: "some body",
+                 account_id: account.id,
+                 customer_id: customer.id,
+                 author_id: agent.id
+               })
+
       assert note.body == "some body"
       assert note.customer_id == customer.id
       assert note.author_id == agent.id
