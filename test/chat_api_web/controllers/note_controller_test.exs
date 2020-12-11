@@ -75,15 +75,15 @@ defmodule ChatApiWeb.NoteControllerTest do
 
       # note is fetchable
       conn = get(authed_conn, Routes.note_path(authed_conn, :show, created_id))
-      _fetched = json_response(conn, 200)["data"]
+      fetched = json_response(conn, 200)["data"]
 
-      assert _fetched = %{
-               "id" => created_id,
+      assert %{
+               "id" => ^created_id,
                "object" => "note",
                "body" => "note body",
-               "customer_id" => customer_id,
-               "author_id" => agent_id
-             }
+               "customer_id" => ^customer_id,
+               "author_id" => ^agent_id
+             } = fetched
     end
 
     test "renders errors when data is invalid", %{authed_conn: authed_conn} do
@@ -106,7 +106,7 @@ defmodule ChatApiWeb.NoteControllerTest do
       conn = get(authed_conn, Routes.note_path(conn, :show, id))
 
       assert %{
-               "id" => _id,
+               "id" => ^id,
                "body" => "updated body!"
              } = json_response(conn, 200)["data"]
     end

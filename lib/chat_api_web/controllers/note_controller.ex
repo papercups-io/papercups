@@ -32,13 +32,13 @@ defmodule ChatApiWeb.NoteController do
     %{"body" => body, "customer_id" => customer_id} = note_params
 
     with %{account_id: account_id, id: author_id} <- conn.assigns.current_user do
-      with {:ok, %Note{} = note} <-
-             Notes.create_note(%{
-               body: body,
-               customer_id: customer_id,
-               account_id: account_id,
-               author_id: author_id
-             }) do
+      {:ok, %Note{} = note} = Notes.create_note(%{
+         body: body,
+         customer_id: customer_id,
+         account_id: account_id,
+         author_id: author_id
+       })
+
         conn
         |> put_status(:created)
         |> put_resp_header(
@@ -46,7 +46,6 @@ defmodule ChatApiWeb.NoteController do
           Routes.note_path(conn, :show, note.id)
         )
         |> render("show.json", note: note)
-      end
     end
   end
 
