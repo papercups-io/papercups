@@ -18,9 +18,16 @@ defmodule ChatApi.Notes.Note do
   end
 
   @doc false
+  def create_changeset(note, attrs) do
+    note
+    |> cast(attrs, [:body, :author_id, :account_id, :customer_id])
+    |> validate_required([:body, :author_id, :account_id, :customer_id])
+  end
+
+  @doc false
   def changeset(note, attrs) do
     note
-    |> cast(attrs, [:body, :author_id, :customer_id])
-    |> validate_required([:body, :author_id, :customer_id])
+    |> cast(attrs, [:body, :author_id, :account_id, :customer_id])
+    |> validate_required([])
   end
 end

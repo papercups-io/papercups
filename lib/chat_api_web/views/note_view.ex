@@ -13,7 +13,9 @@ defmodule ChatApiWeb.NoteView do
   def render("note.json", %{note: note}) do
     %{
       id: note.id,
-      body: note.body
+      body: note.body,
+      customer_id: note.customer_id,
+      author_id: note.author_id
     }
   end
 end
