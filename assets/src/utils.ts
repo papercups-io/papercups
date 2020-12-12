@@ -115,4 +115,4 @@ export const addVisibilityEventListener = (
 };
 
 // re-export extended dayjs
-export {dayjs as dayjs};
+export {dayjs};
