@@ -66,11 +66,6 @@ export type Tag = {
   description?: string;
 };
 
-export type CustomerNote = {
-  id: string;
-  body: string;
-};
-
 export type BrowserSession = {
   id: string;
   started_at: string;

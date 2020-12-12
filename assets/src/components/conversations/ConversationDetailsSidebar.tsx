@@ -1,5 +1,7 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
 import {FRONTEND_BASE_URL} from '../../config';
 import {
@@ -25,10 +27,12 @@ import {
   SidebarConversationTags,
 } from './SidebarTagSection';
 import * as API from '../../api';
-import {Conversation, Customer, CustomerNote, User} from '../../types';
-import {dayjs} from '../../utils';
+import {Conversation, Customer} from '../../types';
 import logger from '../../logger';
 import Paragraph from 'antd/lib/typography/Paragraph';
+
+// TODO: create date utility methods so we don't have to do this everywhere
+dayjs.extend(utc);
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (
@@ -73,70 +77,6 @@ const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
         View live
       </Button>
     </Link>
-  );
-};
-
-const CustomerNotes = ({customerId}: {customerId: string}) => {
-  const [loading, setLoading] = React.useState(false);
-  const [currentNote, setCurrentNote] = React.useState<string>('');
-  const [noteError, setNoteError] = React.useState<boolean>(false);
-  const [notes, setNotes] = React.useState<Array<CustomerNote>>([]);
-
-  React.useEffect(() => {
-    setLoading(true);
-
-    API.fetchCustomerNotes(customerId)
-      .then((notes: Array<CustomerNote>) => setNotes(notes))
-      .catch((err) => logger.error('Error retrieving customer notes:', err))
-      .finally(() => setLoading(false));
-  }, [customerId]);
-
-  const createCustomerNote = () => {
-    if (currentNote.length < 1 || loading) {
-      // TODO: decide error handling state - suggest border highlight
-      setNoteError(true);
-      return Promise.resolve();
-    }
-
-    setLoading(true);
-    return API.createCustomerNote(customerId, currentNote)
-      .catch((err) => logger.error('Error creating customer note:', err))
-      .then((newNote: CustomerNote) => {
-        if (newNote && newNote.id) {
-          setNotes([...notes, newNote]);
-          setCurrentNote('');
-        }
-      })
-      .finally(() => setLoading(false));
-  };
-
-  const setNote = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentNote(e.target.value);
-  };
-
-  return (
-    <div>
-      <Input
-        type="text"
-        placeholder="Add a note"
-        onChange={setNote}
-        value={currentNote}
-      />
-      <Button
-        type="primary"
-        block
-        ghost
-        loading={loading}
-        onClick={createCustomerNote}
-      >
-        Add
-      </Button>
-      <div>
-        {notes.map((n) => (
-          <div>{n.body}</div>
-        ))}
-      </div>
-    </div>
   );
 };
 
@@ -264,16 +204,6 @@ const CustomerDetails = ({
               </Box>
             );
           })}
-        </DetailsSectionCard>
-      )}
-
-      {hasMetadata && (
-        <DetailsSectionCard>
-          <Box mb={2}>
-            <Text strong>Customer notes</Text>
-          </Box>
-
-          {<CustomerNotes customerId={customerId} />}
         </DetailsSectionCard>
       )}
 
