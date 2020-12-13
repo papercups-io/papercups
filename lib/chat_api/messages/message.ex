@@ -13,6 +13,8 @@ defmodule ChatApi.Messages.Message do
     field(:body, :string)
     field(:sent_at, :utc_datetime)
     field(:seen_at, :utc_datetime)
+    field(:type, :string)
+    field(:private, :boolean)
 
     belongs_to(:conversation, Conversation)
     belongs_to(:account, Account)
