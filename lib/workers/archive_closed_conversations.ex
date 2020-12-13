@@ -1,4 +1,4 @@
-defmodule ChatApi.Workers.ArchiveConversations do
+defmodule ChatApi.Workers.ArchiveClosedConversations do
   @moduledoc """
   A worker that archives stale conversations (e.g. closed for more than 14 days)
   """
