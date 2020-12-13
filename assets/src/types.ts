@@ -40,6 +40,8 @@ export type Message = {
   conversation_id: string;
   user_id?: number;
   user?: User;
+  message_type: string;
+  priv: boolean;
 };
 
 // NB: actual conversation records will look different

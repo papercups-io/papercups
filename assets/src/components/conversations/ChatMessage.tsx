@@ -98,7 +98,15 @@ const ChatMessage = ({
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
-  const {body, sent_at, created_at, user, seen_at} = message;
+  const {
+    body,
+    sent_at,
+    created_at,
+    user,
+    seen_at,
+    message_type,
+    priv,
+  } = message;
   const isAgent = !!user;
   const tooltip = getSenderIdentifier(customer, user);
   const sentAt = dayjs.utc(sent_at || created_at);

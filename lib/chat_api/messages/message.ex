@@ -34,7 +34,9 @@ defmodule ChatApi.Messages.Message do
       :customer_id,
       :user_id,
       :sent_at,
-      :seen_at
+      :seen_at,
+      :type,
+      :private
     ])
     |> validate_required([:body, :account_id, :conversation_id])
   end
