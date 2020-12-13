@@ -75,7 +75,7 @@ config :chat_api, Oban,
   crontab: [
     # Hourly example worker
     {"0 * * * *", ChatApi.Workers.Example},
-    {"0 * * * *", ChatApi.Workers.ArchiveConversations}
+    {"0 * * * *", ChatApi.Workers.ArchiveClosedConversations}
   ]
 
 # Configure Mailgun
