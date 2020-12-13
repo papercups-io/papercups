@@ -15,6 +15,7 @@ import Popover from 'antd/lib/popover';
 import Radio from 'antd/lib/radio';
 import Result from 'antd/lib/result';
 import Select from 'antd/lib/select';
+import Space from 'antd/lib/space';
 import Spin from 'antd/lib/spin';
 import Table from 'antd/lib/table';
 import Tag from 'antd/lib/tag';
@@ -108,6 +109,7 @@ export {
   RangePicker,
   Result,
   Select,
+  Space,
   Spin,
   Table,
   Tag,

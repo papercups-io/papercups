@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, TextArea} from '../common';
+import {colors, Button, TextArea, Radio, Space} from '../common';
 
 const ConversationFooter = ({
   sx = {},
@@ -10,6 +10,7 @@ const ConversationFooter = ({
   onSendMessage: (message: string) => void;
 }) => {
   const [message, setMessage] = React.useState('');
+  const [messageType, setMessageType] = React.useState('reply');
 
   const handleMessageChange = (e: any) => setMessage(e.target.value);
 
@@ -28,12 +29,17 @@ const ConversationFooter = ({
     setMessage('');
   };
 
+  const handleTypeChange = (e: any) => {
+    setMessageType(e.target.value);
+  };
+
   return (
     <Box style={{flex: '0 0 auto'}}>
       <Box sx={{bg: colors.white, px: 4, pt: 0, pb: 4, ...sx}}>
         <Box
           p={2}
           sx={{
+            bg: messageType == 'reply' ? colors.white : '#FEF6D7',
             border: '1px solid #f5f5f5',
             borderRadius: 4,
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
@@ -49,9 +55,23 @@ const ConversationFooter = ({
                 value={message}
                 onKeyDown={handleKeyDown}
                 onChange={handleMessageChange}
+                style={{
+                  backgroundColor:
+                    messageType == 'reply' ? colors.white : '#FEF6D7',
+                }}
               />
             </Box>
             <Flex sx={{justifyContent: 'flex-end'}}>
+              <Radio.Group
+                value={messageType}
+                size="small"
+                onChange={handleTypeChange}
+              >
+                <Space>
+                  <Radio.Button value="reply">Reply</Radio.Button>
+                  <Radio.Button value="note">Note</Radio.Button>
+                </Space>
+              </Radio.Group>
               <Button type="primary" htmlType="submit">
                 Send
               </Button>
