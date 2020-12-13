@@ -12,7 +12,9 @@ type Props = {
   messages: Array<Message>;
   onSendMessage: (
     message: string,
+    messageType: string,
     conversationId: string,
+    priv: boolean,
     cb: () => void
   ) => void;
 };
@@ -39,12 +41,14 @@ class ConversationSidebar extends React.Component<Props, any> {
 
   handleSendMessage = (message: string) => {
     const {id: conversationId} = this.props.conversation;
+    const messageType = 'note';
+    const priv = true;
 
     if (!conversationId) {
       return null;
     }
 
-    this.props.onSendMessage(message, conversationId, () => {
+    this.props.onSendMessage(message, conversationId, messageType, priv, () => {
       this.scrollIntoView();
     });
   };

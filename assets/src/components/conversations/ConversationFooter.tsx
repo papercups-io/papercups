@@ -7,7 +7,7 @@ const ConversationFooter = ({
   onSendMessage,
 }: {
   sx?: any;
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, messageType: string, priv: boolean) => void;
 }) => {
   const [message, setMessage] = React.useState('');
   const [messageType, setMessageType] = React.useState('reply');
@@ -24,8 +24,9 @@ const ConversationFooter = ({
   };
 
   const handleSendMessage = (e?: any) => {
+    const priv = messageType == 'note' ? true : false;
     e && e.preventDefault();
-    onSendMessage(message);
+    onSendMessage(message, messageType, priv);
     setMessage('');
   };
 
@@ -61,7 +62,7 @@ const ConversationFooter = ({
                 }}
               />
             </Box>
-            <Flex sx={{justifyContent: 'flex-end'}}>
+            <Flex sx={{alignItems: 'center'}}>
               <Radio.Group
                 value={messageType}
                 size="small"
@@ -72,7 +73,11 @@ const ConversationFooter = ({
                   <Radio.Button value="note">Note</Radio.Button>
                 </Space>
               </Radio.Group>
-              <Button type="primary" htmlType="submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                style={{marginLeft: 'auto'}}
+              >
                 Send
               </Button>
             </Flex>

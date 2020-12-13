@@ -28,7 +28,9 @@ export const ConversationsContext = React.createContext<{
   onDeleteConversation: (id: string) => Promise<any>;
   onSendMessage: (
     message: string,
+    messageType: string,
     conversationId: string,
+    priv: boolean,
     cb?: () => void
   ) => any;
 
@@ -461,7 +463,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
   handleSendMessage = (
     message: string,
+    messageType: string,
     conversationId: string,
+    priv: boolean,
     cb?: () => void
   ) => {
     if (!this.channel || !message || message.trim().length === 0) {
