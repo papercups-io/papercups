@@ -80,6 +80,17 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def note_factory do
+    account = build(:account)
+
+    %ChatApi.Notes.Note{
+      body: "some customer note",
+      customer: build(:customer),
+      account: account,
+      author: build(:user, account: account)
+    }
+  end
+
   def slack_authorization_factory do
     %ChatApi.SlackAuthorizations.SlackAuthorization{
       access_token: "some access_token",

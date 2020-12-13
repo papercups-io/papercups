@@ -6,6 +6,7 @@ defmodule ChatApi.Customers.Customer do
     Accounts.Account,
     Conversations.Conversation,
     Messages.Message,
+    Notes.Note,
     Tags.CustomerTag
   }
 
@@ -39,6 +40,7 @@ defmodule ChatApi.Customers.Customer do
 
     has_many(:messages, Message)
     has_many(:conversations, Conversation)
+    has_many(:notes, Note)
     belongs_to(:account, Account)
 
     has_many(:customer_tags, CustomerTag)
