@@ -63,6 +63,7 @@ defmodule ChatApiWeb.Router do
     get("/conversations/shared", ConversationController, :shared)
 
     post("/slack/webhook", SlackController, :webhook)
+    # TODO: move to protected route after testing?
     get("/hubspot/oauth", HubspotController, :oauth)
   end
 
@@ -80,7 +81,6 @@ defmodule ChatApiWeb.Router do
 
     get("/slack/oauth", SlackController, :oauth)
     get("/slack/authorization", SlackController, :authorization)
-    # get("/hubspot/oauth", HubspotController, :oauth)
     get("/gmail/auth", GmailController, :auth)
     get("/gmail/oauth", GmailController, :callback)
     get("/gmail/authorization", GmailController, :authorization)
@@ -101,6 +101,7 @@ defmodule ChatApiWeb.Router do
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
     resources("/customers", CustomerController, except: [:new, :edit, :create])
+    resources("/notes", NoteController, except: [:new, :edit])
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
