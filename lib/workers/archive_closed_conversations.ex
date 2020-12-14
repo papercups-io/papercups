@@ -20,7 +20,7 @@ defmodule ChatApi.Workers.ArchiveClosedConversations do
     # |> Repo.all()
     # |> Conversations.Helpers.send_multiple_archived_updates()
 
-    Logger.info("Archived #{n} conversations")
+    Logger.info("Archived #{n} closed conversations")
 
     :ok
   end
