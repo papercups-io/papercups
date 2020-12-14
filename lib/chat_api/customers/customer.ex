@@ -6,7 +6,6 @@ defmodule ChatApi.Customers.Customer do
     Accounts.Account,
     Conversations.Conversation,
     Messages.Message,
-    Notes.Note,
     Tags.CustomerTag
   }
 
@@ -40,7 +39,6 @@ defmodule ChatApi.Customers.Customer do
 
     has_many(:messages, Message)
     has_many(:conversations, Conversation)
-    has_many(:notes, Note)
     belongs_to(:account, Account)
 
     has_many(:customer_tags, CustomerTag)
@@ -49,11 +47,8 @@ defmodule ChatApi.Customers.Customer do
     timestamps()
   end
 
-  @spec changeset(
-          {map, map} | %{:__struct__ => atom | %{__changeset__: map}, optional(atom) => any},
-          :invalid | %{optional(:__struct__) => none, optional(atom | binary) => any}
-        ) :: Ecto.Changeset.t()
   @doc false
+  @spec changeset(any(), map()) :: Ecto.Changeset.t()
   def changeset(customer, attrs) do
     customer
     |> cast(attrs, [
