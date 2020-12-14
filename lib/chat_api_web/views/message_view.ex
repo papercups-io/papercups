@@ -21,7 +21,9 @@ defmodule ChatApiWeb.MessageView do
       customer_id: message.customer_id,
       conversation_id: message.conversation_id,
       account_id: message.account_id,
-      user_id: message.user_id
+      user_id: message.user_id,
+      message_type: message.message_type,
+      priv: message.priv
     }
   end
 
@@ -37,6 +39,8 @@ defmodule ChatApiWeb.MessageView do
       account_id: message.account_id,
       user_id: message.user_id,
       user: render_one(message.user, UserView, "user.json"),
+      message_type: message.message_type,
+      priv: message.priv,
       customer_id: message.customer_id,
       customer: render_one(message.customer, CustomerView, "basic.json")
     }
@@ -54,7 +58,9 @@ defmodule ChatApiWeb.MessageView do
       account_id: message.account_id,
       customer_id: message.customer_id,
       user_id: message.user_id,
-      user: render_one(message.user, UserView, "user.json")
+      user: render_one(message.user, UserView, "user.json"),
+      message_type: message.message_type,
+      priv: message.priv
     }
   end
 end

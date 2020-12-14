@@ -476,8 +476,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
       body: message,
       conversation_id: conversationId,
       sent_at: new Date().toISOString(),
-      type: messageType,
-      private: priv,
+      message_type: messageType,
+      priv: priv,
     });
 
     if (cb && typeof cb === 'function') {

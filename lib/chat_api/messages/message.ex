@@ -13,8 +13,8 @@ defmodule ChatApi.Messages.Message do
     field(:body, :string)
     field(:sent_at, :utc_datetime)
     field(:seen_at, :utc_datetime)
-    field(:type, :string)
-    field(:private, :boolean)
+    field(:message_type, :string)
+    field(:priv, :boolean)
 
     belongs_to(:conversation, Conversation)
     belongs_to(:account, Account)
@@ -35,8 +35,8 @@ defmodule ChatApi.Messages.Message do
       :user_id,
       :sent_at,
       :seen_at,
-      :type,
-      :private
+      :message_type,
+      :priv
     ])
     |> validate_required([:body, :account_id, :conversation_id])
   end
