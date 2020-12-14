@@ -7,7 +7,7 @@ defmodule ChatApi.Workers.ArchiveFreeTierConversations do
 
   @impl Oban.Worker
   def perform(%Oban.Job{}) do
-    conversations_query = Conversations.find_old_freetier_conversations(30)
+    conversations_query = Conversations.find_freetier_conversations_old_by(days: 30)
     {n, _} = Conversations.archive_conversations(conversations_query)
     Logger.info("Archived #{n} old freetier conversations")
   end
