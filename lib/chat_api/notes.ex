@@ -8,15 +8,7 @@ defmodule ChatApi.Notes do
 
   alias ChatApi.Notes.Note
 
-  @doc """
-  Returns the list of notes.
-
-  ## Examples
-
-      iex> list_notes_for_customer([account_id: account_id, customer_id: customer_id])
-      [%Note{}, ...]
-
-  """
+  # TODO: remove and replace with `list_notes_by_account/2`
   @spec list_notes_for_customer(account_id: binary, customer_id: binary) :: [Note.t()]
   def list_notes_for_customer(account_id: account_id, customer_id: customer_id) do
     Note
@@ -25,84 +17,58 @@ defmodule ChatApi.Notes do
     |> Repo.all()
   end
 
-  @doc """
-  Gets a single note.
+  @spec list_notes_by_account(binary(), map()) :: [Note.t()]
+  def list_notes_by_account(account_id, filters) do
+    Note
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> order_by(desc: :inserted_at)
+    |> Repo.all()
+  end
 
-  Raises `Ecto.NoResultsError` if the Note does not exist.
-
-  ## Examples
-
-      iex> get_note!(123)
-      %Note{}
-
-      iex> get_note!(456)
-      ** (Ecto.NoResultsError)
-
-  """
+  @spec get_note!(binary()) :: Note.t()
   def get_note!(id), do: Repo.get!(Note, id)
 
-  @doc """
-  Creates a note.
-
-  ## Examples
-
-      iex> create_note(%{field: value})
-      {:ok, %Note{}}
-
-      iex> create_note(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
+  @spec create_note(map()) :: {:ok, Note.t()} | {:error, Ecto.Changeset.t()}
   def create_note(attrs \\ %{}) do
     %Note{}
     |> Note.changeset(attrs)
     |> Repo.insert()
   end
 
-  @doc """
-  Updates a note.
-
-  ## Examples
-
-      iex> update_note(note, %{field: new_value})
-      {:ok, %Note{}}
-
-      iex> update_note(note, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
+  @spec update_note(Note.t(), map()) :: {:ok, Note.t()} | {:error, Ecto.Changeset.t()}
   def update_note(%Note{} = note, attrs) do
     note
     |> Note.changeset(attrs)
     |> Repo.update()
   end
 
-  @doc """
-  Deletes a note.
-
-  ## Examples
-
-      iex> delete_note(note)
-      {:ok, %Note{}}
-
-      iex> delete_note(note)
-      {:error, %Ecto.Changeset{}}
-
-  """
+  @spec delete_note(Note.t()) :: {:ok, Note.t()} | {:error, Ecto.Changeset.t()}
   def delete_note(%Note{} = note) do
     Repo.delete(note)
   end
 
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking note changes.
-
-  ## Examples
-
-      iex> change_note(note)
-      %Ecto.Changeset{data: %Note{}}
-
-  """
+  @spec change_note(Note.t(), map()) :: Ecto.Changeset.t()
   def change_note(%Note{} = note, attrs \\ %{}) do
     Note.changeset(note, attrs)
+  end
+
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  @spec filter_where(map()) :: Ecto.Query.DynamicExpr.t()
+  defp filter_where(attrs) do
+    Enum.reduce(attrs, dynamic(true), fn
+      {"customer_id", value}, dynamic ->
+        dynamic([n], ^dynamic and n.customer_id == ^value)
+
+      {"account_id", value}, dynamic ->
+        dynamic([n], ^dynamic and n.account_id == ^value)
+
+      {"author_id", value}, dynamic ->
+        dynamic([n], ^dynamic and n.author_id == ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end

@@ -28,27 +28,25 @@ defmodule ChatApiWeb.NoteControllerTest do
   end
 
   describe "index" do
-    test "lists all notes for the specified customer in the current account", %{
+    test "lists all notes in the current account by default", %{
       authed_conn: authed_conn,
       note: note
     } do
-      conn =
-        get(authed_conn, Routes.note_path(authed_conn, :index), %{customer_id: note.customer_id})
-
+      conn = get(authed_conn, Routes.note_path(authed_conn, :index), %{})
       note_ids = json_response(conn, 200)["data"] |> Enum.map(& &1["id"])
 
       assert note_ids == [note.id]
     end
 
-    test "returns informative error when customer_id is missing from the request", %{
+    test "filters by customer_id if provided in the params", %{
       authed_conn: authed_conn
     } do
-      conn = get(authed_conn, Routes.note_path(authed_conn, :index), %{})
+      conn =
+        get(authed_conn, Routes.note_path(authed_conn, :index), %{
+          customer_id: Ecto.UUID.generate()
+        })
 
-      assert json_response(conn, 400)["error"] == %{
-               "status" => 400,
-               "message" => "Please provide a customer_id"
-             }
+      assert json_response(conn, 200)["data"] == []
     end
 
     test "returns unauthorized when auth is invalid", %{conn: conn} do

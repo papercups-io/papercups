@@ -20,6 +20,28 @@ defmodule ChatApi.NotesTest do
       {:ok, agent: agent, account: account, customer: customer, note: note}
     end
 
+    test "list_notes_by_account/2 returns all notes for the given account and customer", %{
+      note: note,
+      account: account,
+      customer: customer
+    } do
+      note_ids =
+        Notes.list_notes_by_account(account.id, %{"customer_id" => customer.id})
+        |> Enum.map(& &1.id)
+
+      assert note_ids == [note.id]
+    end
+
+    test "list_notes_by_account/2 returns an empty list if none are found", %{
+      account: account
+    } do
+      note_ids =
+        Notes.list_notes_by_account(account.id, %{"customer_id" => UUID.generate()})
+        |> Enum.map(& &1.id)
+
+      assert note_ids == []
+    end
+
     test "list_notes_for_customer/1 returns all notes for the given account and customer", %{
       note: note,
       account: account,
