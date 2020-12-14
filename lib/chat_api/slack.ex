@@ -61,6 +61,40 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec list_channels(binary()) :: {:ok, nil} | Tesla.Env.result()
+  def list_channels(access_token) do
+    # TODO: we need channels:read scope to access this
+    if should_execute?(access_token) do
+      get("/conversations.list",
+        query: [types: "public_channel"],
+        headers: [
+          {"Authorization", "Bearer " <> access_token}
+        ]
+      )
+    else
+      Logger.info("Invalid access token")
+
+      {:ok, nil}
+    end
+  end
+
+  @spec retrieve_channel_info(binary(), binary()) :: {:ok, nil} | Tesla.Env.result()
+  def retrieve_channel_info(channel, access_token) do
+    # TODO: we need channels:read scope to access this
+    if should_execute?(access_token) do
+      get("/conversations.info",
+        query: [channel: channel],
+        headers: [
+          {"Authorization", "Bearer " <> access_token}
+        ]
+      )
+    else
+      Logger.info("Invalid access token")
+
+      {:ok, nil}
+    end
+  end
+
   @spec log(binary()) :: :ok | Tesla.Env.result()
   def log(message) do
     case System.get_env("PAPERCUPS_SLACK_WEBHOOK_URL") do
