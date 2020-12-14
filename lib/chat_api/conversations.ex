@@ -200,7 +200,8 @@ defmodule ChatApi.Conversations do
         ),
       on: last_message.conversation_id == c.id,
       where:
-        a.subscription_plan == "starter" and c.priority == "not_priority" and
+        is_nil(c.archived_at) and
+          a.subscription_plan == "starter" and c.priority == "not_priority" and
           last_message.insert_date < ago(^days, "day")
   end
 
