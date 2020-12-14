@@ -1,7 +1,10 @@
 defmodule ChatApi.ConversationsTest do
   use ChatApi.DataCase, async: true
 
+  import Ecto.Changeset, only: [change: 2]
   import ChatApi.Factory
+
+  alias ChatApi.Repo
   alias ChatApi.{Conversations, SlackConversationThreads}
 
   describe "conversations" do
@@ -224,6 +227,27 @@ defmodule ChatApi.ConversationsTest do
 
       closed_conversation = Conversations.get_conversation!(closed_conversation.id)
       refute closed_conversation.archived_at
+    end
+
+    test "archive_conversations/1 archives freetier conversation created x days ago" do
+      conv1 = insert(:conversation)
+      msg = build(:message, conversation: conv1) |> insert()
+
+      # just another conversation
+      conv2 = insert(:conversation)
+      build(:message, conversation: conv2) |> insert()
+
+      one_month_ago =
+        DateTime.add(DateTime.utc_now(), -2_592_000)
+        |> DateTime.truncate(:second)
+        |> DateTime.to_naive()
+
+      # from Ecto.Changeset, edit conv1 to have its last message, 30 days ago
+      change(msg, %{inserted_at: one_month_ago}) |> Repo.update!()
+
+      assert {1, _} =
+               Conversations.find_freetier_conversations_old_by(days: 30)
+               |> Conversations.archive_conversations()
     end
   end
 end
