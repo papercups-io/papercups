@@ -121,12 +121,12 @@ const ChatMessage = ({
       <Box pr={0} pl={4} pb={isLastInGroup ? 3 : 2}>
         <Flex sx={{justifyContent: 'flex-end'}}>
           <ChatMessageBox
-            className="Text--white"
+            className={message_type == 'note' ? 'Text--black' : 'Text--white'}
             content={body}
             sx={{
               px: 3,
               py: 2,
-              background: colors.primary,
+              background: message_type == 'note' ? '#FEF6D7' : colors.primary,
             }}
           />
         </Flex>
