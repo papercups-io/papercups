@@ -1,5 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
+import qs from 'query-string';
 import {colors, Layout, notification, Sider, Text, Title} from '../common';
 import {sleep} from '../../utils';
 import {Conversation, Message, User} from '../../types';
@@ -9,6 +10,7 @@ import ConversationClosing from './ConversationClosing';
 import ConversationMessages from './ConversationMessages';
 import ConversationFooter from './ConversationFooter';
 import ConversationDetailsSidebar from './ConversationDetailsSidebar';
+import {getColorByUuid} from './support';
 
 type Props = {
   title?: string;
@@ -43,11 +45,19 @@ class ConversationsContainer extends React.Component<Props, State> {
   state: State = {loading: true, selected: null, closing: []};
 
   componentDidMount() {
+    const q = qs.parse(window.location.search);
+    const selectedConversationId = q.cid ? String(q.cid) : null;
+
     this.props
       .fetch()
-      .then(([first]) => {
+      .then((ids) => {
+        const [first] = ids;
+        const selectedId = ids.find((id) => id === selectedConversationId)
+          ? selectedConversationId
+          : first;
+
         this.setState({loading: false});
-        this.handleSelectConversation(first);
+        this.handleSelectConversation(selectedId);
         this.setupKeyboardShortcuts();
       })
       .then(() => this.scrollIntoView());
@@ -347,10 +357,7 @@ class ConversationsContainer extends React.Component<Props, State> {
                 const isCustomerOnline = this.isCustomerOnline(customerId);
                 const isHighlighted = conversationId === selectedConversationId;
                 const isClosing = closing.indexOf(conversationId) !== -1;
-                const {gold, red, green, purple, magenta} = colors;
-                // TODO: come up with a better way to make colors/avatars consistent
-                const colorIndex = parseInt(customerId, 32) % 5;
-                const color = [gold, red, green, purple, magenta][colorIndex];
+                const color = getColorByUuid(customerId);
 
                 if (isClosing) {
                   return (

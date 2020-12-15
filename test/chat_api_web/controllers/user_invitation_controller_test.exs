@@ -1,13 +1,15 @@
 defmodule ChatApiWeb.UserInvitationControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.UserInvitations.UserInvitation
 
   @invalid_attrs %{account_id: nil, expires_at: nil}
 
   setup %{conn: conn} do
-    account = account_fixture()
-    user = user_fixture(account, %{role: "admin"})
+    account = insert(:account)
+    user = insert(:user, account: account, role: "admin")
+
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
@@ -22,7 +24,8 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
   end
 
   describe "create user_invitation" do
-    test "renders user_invitation when data is valid", %{authed_conn: authed_conn} do
+    test "renders user_invitation when data is valid",
+         %{authed_conn: authed_conn} do
       conn =
         post(authed_conn, Routes.user_invitation_path(authed_conn, :create), user_invitation: %{})
 
@@ -42,10 +45,11 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
   describe "update user_invitation" do
     setup [:create_user_invitation]
 
-    test "renders user_invitation when data is valid", %{
-      authed_conn: authed_conn,
-      user_invitation: %UserInvitation{id: id} = user_invitation
-    } do
+    test "renders user_invitation when data is valid",
+         %{
+           authed_conn: authed_conn,
+           user_invitation: %UserInvitation{id: id} = user_invitation
+         } do
       conn =
         put(authed_conn, Routes.user_invitation_path(authed_conn, :update, user_invitation),
           user_invitation: %{}
@@ -95,7 +99,7 @@ defmodule ChatApiWeb.UserInvitationControllerTest do
   end
 
   defp create_user_invitation(%{account: account}) do
-    user_invitation = user_invitation_fixture(account)
+    user_invitation = insert(:user_invitation, account: account)
     %{user_invitation: user_invitation}
   end
 end

@@ -1,6 +1,7 @@
 defmodule ChatApiWeb.UserSettingsControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.Users
 
   @create_attrs %{
@@ -11,8 +12,7 @@ defmodule ChatApiWeb.UserSettingsControllerTest do
   }
 
   setup %{conn: conn} do
-    account = account_fixture()
-    user = user_fixture(account)
+    user = insert(:user)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
@@ -21,9 +21,7 @@ defmodule ChatApiWeb.UserSettingsControllerTest do
   end
 
   describe "update user_settings" do
-    test "updates a user's settings", %{
-      authed_conn: authed_conn
-    } do
+    test "updates a user's settings", %{authed_conn: authed_conn} do
       resp =
         put(authed_conn, Routes.user_settings_path(authed_conn, :update),
           user_settings: @create_attrs
@@ -47,7 +45,8 @@ defmodule ChatApiWeb.UserSettingsControllerTest do
   end
 
   describe "show user_settings" do
-    test "retrieves the user's settings", %{authed_conn: authed_conn, user: user} do
+    test "retrieves the user's settings",
+         %{authed_conn: authed_conn, user: user} do
       user_settings = Users.get_user_settings(user.id)
       resp = get(authed_conn, Routes.user_settings_path(authed_conn, :show, %{}))
 

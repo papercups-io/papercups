@@ -1,6 +1,7 @@
 defmodule ChatApiWeb.UserProfileControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.Users
 
   @create_attrs %{
@@ -15,8 +16,7 @@ defmodule ChatApiWeb.UserProfileControllerTest do
   }
 
   setup %{conn: conn} do
-    account = account_fixture()
-    user = user_fixture(account)
+    user = insert(:user)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
@@ -25,9 +25,8 @@ defmodule ChatApiWeb.UserProfileControllerTest do
   end
 
   describe "update user_profile" do
-    test "updates a user's profile", %{
-      authed_conn: authed_conn
-    } do
+    test "updates a user's profile",
+         %{authed_conn: authed_conn} do
       resp =
         put(authed_conn, Routes.user_profile_path(authed_conn, :update),
           user_profile: @create_attrs
@@ -60,7 +59,7 @@ defmodule ChatApiWeb.UserProfileControllerTest do
       user_profile = Users.get_user_profile(user.id)
       resp = get(authed_conn, Routes.user_profile_path(authed_conn, :show, %{}))
 
-      assert %{"display_name" => display_name, "full_name" => full_name} =
+      assert %{"display_name" => display_name, "full_name" => full_name, "object" => "user"} =
                json_response(resp, 200)["data"]
 
       assert display_name == user_profile.display_name

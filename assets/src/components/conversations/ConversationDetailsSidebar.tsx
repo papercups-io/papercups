@@ -3,7 +3,17 @@ import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
-import {colors, Badge, Button, Tag, Text, Tooltip} from '../common';
+import {FRONTEND_BASE_URL} from '../../config';
+import {
+  colors,
+  notification,
+  Badge,
+  Button,
+  Input,
+  Tag,
+  Text,
+  Tooltip,
+} from '../common';
 import {
   CalendarOutlined,
   GlobalOutlined,
@@ -19,6 +29,7 @@ import {
 import * as API from '../../api';
 import {Conversation, Customer} from '../../types';
 import logger from '../../logger';
+import Paragraph from 'antd/lib/typography/Paragraph';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -223,8 +234,51 @@ const CustomerDetails = ({
   );
 };
 
+const autoSelectAndCopyInput = (el: any) => {
+  const input = el.target || el.currentTarget;
+
+  if (!input || !input.focus || !input.select) {
+    return;
+  }
+
+  input.focus();
+  input.select();
+
+  if (document.queryCommandSupported('copy')) {
+    document.execCommand('copy');
+  }
+};
+
+const openShareConversationUrlNotification = (url: string) => {
+  return notification.open({
+    message: 'Share this conversation',
+    description: (
+      <Box>
+        <Paragraph>Use the URL below to share this conversation.</Paragraph>
+        <Box mb={3}>
+          <Input type="text" value={url} onFocus={autoSelectAndCopyInput} />
+        </Box>
+        <Text type="secondary">This link will only be valid for 24 hours.</Text>
+      </Box>
+    ),
+    duration: null,
+  });
+};
+
 const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
   const {id: conversationId, status} = conversation;
+
+  const share = () => {
+    API.generateShareConversationToken(conversationId)
+      .then(({token}) => {
+        const url = `${FRONTEND_BASE_URL}/share?cid=${conversationId}&token=${token}`;
+
+        return openShareConversationUrlNotification(url);
+      })
+      .catch((err) => {
+        logger.error('Failed to generate share token!', err);
+      });
+  };
 
   return (
     <Box px={2} py={3} sx={{borderTop: '1px solid rgba(0,0,0,.06)'}}>
@@ -260,6 +314,12 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
         </Box>
         <SidebarConversationTags conversationId={conversationId} />
       </DetailsSectionCard>
+
+      <Box px={2} mt={3} mb={3}>
+        <Button type="primary" block ghost onClick={share}>
+          Share conversation
+        </Button>
+      </Box>
     </Box>
   );
 };

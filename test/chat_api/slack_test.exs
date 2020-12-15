@@ -2,6 +2,7 @@ defmodule ChatApi.SlackTest do
   use ChatApi.DataCase
 
   import ExUnit.CaptureLog
+  import ChatApi.Factory
 
   alias ChatApi.{
     Conversations,
@@ -12,15 +13,16 @@ defmodule ChatApi.SlackTest do
 
   describe "slack" do
     setup do
-      account = account_fixture()
-      customer = customer_fixture(account)
-      conversation = conversation_fixture(account, customer)
-      thread = slack_conversation_thread_fixture(conversation)
+      account = insert(:account)
+      customer = insert(:customer, account: account)
+      conversation = insert(:conversation, account: account, customer: customer)
+      thread = insert(:slack_conversation_thread, account: account, conversation: conversation)
 
       {:ok, conversation: conversation, account: account, customer: customer, thread: thread}
     end
 
-    test "get_conversation_account_id/1 returns a valid account_id", %{conversation: conversation} do
+    test "get_conversation_account_id/1 returns a valid account_id",
+         %{conversation: conversation} do
       account_id = Slack.get_conversation_account_id(conversation.id)
 
       assert account_id
@@ -31,10 +33,8 @@ defmodule ChatApi.SlackTest do
       assert Slack.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
     end
 
-    test "get_message_text/1 returns subject for initial slack thread", %{
-      conversation: conversation,
-      customer: customer
-    } do
+    test "get_message_text/1 returns subject for initial slack thread",
+         %{conversation: conversation, customer: customer} do
       text =
         Slack.get_message_text(%{
           customer: customer,
@@ -49,11 +49,8 @@ defmodule ChatApi.SlackTest do
       assert String.contains?(text, "Reply to this thread to start chatting")
     end
 
-    test "get_message_text/1 returns subject for slack reply", %{
-      conversation: conversation,
-      customer: customer,
-      thread: thread
-    } do
+    test "get_message_text/1 returns subject for slack reply",
+         %{conversation: conversation, customer: customer, thread: thread} do
       assert Slack.get_message_text(%{
                text: "Test message",
                conversation_id: conversation.id,
@@ -83,10 +80,8 @@ defmodule ChatApi.SlackTest do
       end
     end
 
-    test "get_message_payload/2 returns payload for initial slack thread", %{
-      customer: customer,
-      thread: thread
-    } do
+    test "get_message_payload/2 returns payload for initial slack thread",
+         %{customer: customer, thread: thread} do
       text = "Hello world"
       customer_email = "*Email:*\n#{customer.email}"
       channel = thread.slack_channel
@@ -130,9 +125,8 @@ defmodule ChatApi.SlackTest do
                })
     end
 
-    test "get_message_payload/2 returns payload for slack reply", %{
-      thread: thread
-    } do
+    test "get_message_payload/2 returns payload for slack reply",
+         %{thread: thread} do
       text = "Hello world"
       ts = thread.slack_thread_ts
       channel = thread.slack_channel
@@ -171,7 +165,7 @@ defmodule ChatApi.SlackTest do
     test "create_new_slack_conversation_thread/2 creates a new thread and assigns the primary user",
          %{conversation: conversation, account: account} do
       %{account_id: account_id, id: id} = conversation
-      primary_user = user_fixture(account)
+      primary_user = insert(:user, account: account)
       channel = "bots"
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
@@ -193,23 +187,21 @@ defmodule ChatApi.SlackTest do
     test "fetch_valid_user/1 reject disabled users and fetch the oldest user.",
          %{account: account} do
       {:ok, disabled_user} =
-        account
-        |> user_fixture()
+        insert(:user, account: account)
         |> Users.disable_user()
 
-      primary_user = user_fixture(account)
+      primary_user = insert(:user, account: account)
 
       # Make sure that secondary_user is inserted later.
-      :timer.sleep(500)
-      secondary_user = user_fixture(account)
+      :timer.sleep(1000)
+      secondary_user = insert(:user, account: account)
 
       users = [disabled_user, secondary_user, primary_user]
       assert primary_user.id === Slack.fetch_valid_user(users)
     end
 
-    test "create_new_slack_conversation_thread/2 raises if no primary user exists", %{
-      conversation: conversation
-    } do
+    test "create_new_slack_conversation_thread/2 raises if no primary user exists",
+         %{conversation: conversation} do
       channel = "bots"
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}

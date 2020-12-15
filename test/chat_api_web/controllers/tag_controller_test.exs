@@ -1,19 +1,18 @@
 defmodule ChatApiWeb.TagControllerTest do
   use ChatApiWeb.ConnCase
 
+  import ChatApi.Factory
   alias ChatApi.Tags.Tag
 
-  @create_attrs %{
-    name: "some name"
-  }
+  @create_attrs params_for(:tag, name: "some name")
   @update_attrs %{
     name: "some updated name"
   }
   @invalid_attrs %{name: nil}
 
   setup %{conn: conn} do
-    account = account_fixture()
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
+    account = insert(:account)
+    user = insert(:user, account: account)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
@@ -37,6 +36,7 @@ defmodule ChatApiWeb.TagControllerTest do
 
       assert %{
                "id" => _id,
+               "object" => "tag",
                "name" => "some name"
              } = json_response(resp, 200)["data"]
     end
@@ -82,7 +82,7 @@ defmodule ChatApiWeb.TagControllerTest do
   end
 
   defp create_tag(%{account: account}) do
-    tag = tag_fixture(account)
+    tag = insert(:tag, account: account)
 
     %{tag: tag}
   end

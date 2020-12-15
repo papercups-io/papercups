@@ -20,6 +20,12 @@ defmodule ChatApiWeb.Router do
     plug(ChatApiWeb.EnsureUserEnabledPlug)
   end
 
+  pipeline :public_api do
+    plug(ChatApiWeb.IPAddressPlug)
+    plug(:accepts, ["json"])
+    plug(ChatApiWeb.PublicAPIAuthPlug, otp_app: :chat_api)
+  end
+
   # Swagger
   scope "/api/swagger" do
     forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :chat_api, swagger_file: "swagger.json"
@@ -54,8 +60,11 @@ defmodule ChatApiWeb.Router do
 
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)
+    get("/conversations/shared", ConversationController, :shared)
 
     post("/slack/webhook", SlackController, :webhook)
+    # TODO: move to protected route after testing?
+    get("/hubspot/oauth", HubspotController, :oauth)
   end
 
   # Protected routes
@@ -92,15 +101,28 @@ defmodule ChatApiWeb.Router do
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
     resources("/customers", CustomerController, except: [:new, :edit, :create])
+    resources("/notes", NoteController, except: [:new, :edit])
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
+    resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
 
+    post("/conversations/:conversation_id/share", ConversationController, :share)
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
     post("/customers/:customer_id/tags", CustomerController, :add_tag)
     delete("/customers/:customer_id/tags/:tag_id", CustomerController, :remove_tag)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
+  end
+
+  scope "/api/v1", ChatApiWeb do
+    pipe_through([:public_api, :api_protected])
+
+    get("/me", SessionController, :me)
+
+    resources("/messages", MessageController, except: [:new, :edit])
+    resources("/conversations", ConversationController, except: [:new, :edit])
+    resources("/customers", CustomerController, except: [:new, :edit])
   end
 
   # Enables LiveDashboard only for development

@@ -24,7 +24,9 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL, isDev} from '../config';
+import {BASE_URL, isDev, isHostedProd} from '../config';
+import analytics from '../analytics';
+import {hasValidStripeKey} from '../utils';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -46,38 +48,21 @@ import LiveSessionViewer from './sessions/LiveSessionViewer';
 import ReportingDashboard from './reporting/ReportingDashboard';
 
 const {
-  REACT_APP_STRIPE_PUBLIC_KEY,
   REACT_APP_STORYTIME_ENABLED,
   REACT_APP_ADMIN_ACCOUNT_ID = '1474cfc8-0891-4d0d-bab6-4699ab0411a2',
 } = process.env;
 
 const TITLE_FLASH_INTERVAL = 2000;
 
-const hasValidStripeKey = () => {
-  const key = REACT_APP_STRIPE_PUBLIC_KEY;
-
-  return key && key.startsWith('pk_');
-};
-
 const shouldDisplayChat = (pathname: string) => {
-  if (pathname === '/account/getting-started') {
-    return false;
-  }
-
-  return true;
+  return isHostedProd && pathname !== '/account/getting-started';
 };
 
-const Dashboard = (props: RouteComponentProps) => {
-  const auth = useAuth();
-  const {pathname} = useLocation();
-  const {currentUser, unreadByCategory: unread} = useConversations();
+// TODO: not sure if this is the best way to handle this, but the goal
+// of this component is to flash the number of unread messages in the
+// tab (i.e. HTML title) so users can see when new messages arrive
+const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
   const [htmlTitle, setHtmlTitle] = useState('Papercups');
-
-  const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
-  const totalNumUnread = (unread && unread.all) || 0;
-  const shouldDisplayBilling = hasValidStripeKey();
-
-  const logout = () => auth.logout().then(() => props.history.push('/login'));
 
   const toggleNotificationMessage = () => {
     if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups')) {
@@ -90,6 +75,40 @@ const Dashboard = (props: RouteComponentProps) => {
   };
 
   useEffect(() => {
+    let timeout;
+
+    if (totalNumUnread > 0) {
+      timeout = setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
+    } else {
+      clearTimeout(timeout);
+    }
+  });
+
+  return (
+    <Helmet defer={false}>
+      <title>{totalNumUnread ? htmlTitle : 'Papercups'}</title>
+    </Helmet>
+  );
+};
+
+const Dashboard = (props: RouteComponentProps) => {
+  const auth = useAuth();
+  const {pathname} = useLocation();
+  const {currentUser, unreadByCategory: unread} = useConversations();
+
+  const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
+  const totalNumUnread = (unread && unread.all) || 0;
+  const shouldDisplayBilling = hasValidStripeKey();
+
+  const logout = () => auth.logout().then(() => props.history.push('/login'));
+
+  useEffect(() => {
+    if (currentUser && currentUser.id) {
+      const {id, email} = currentUser;
+
+      analytics.identify(id, email);
+    }
+
     if (REACT_APP_STORYTIME_ENABLED && currentUser) {
       const {id, email} = currentUser;
       // TODO: figure out a better way to initialize this?
@@ -107,23 +126,9 @@ const Dashboard = (props: RouteComponentProps) => {
     }
   }, [currentUser]);
 
-  // TODO: isolate this so it doesn't trigger a rerender of the entire dashboard
-  // every 2 seconds (i.e. the TITLE_FLASH_INTERVAL)
-  useEffect(() => {
-    let timeout;
-
-    if (totalNumUnread > 0) {
-      timeout = setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
-    } else {
-      clearTimeout(timeout);
-    }
-  });
-
   return (
     <Layout>
-      <Helmet defer={false}>
-        <title>{totalNumUnread ? htmlTitle : 'Papercups'}</title>
-      </Helmet>
+      <DashboardHtmlHead totalNumUnread={totalNumUnread} />
 
       <Sider
         width={220}
@@ -297,6 +302,16 @@ const Dashboard = (props: RouteComponentProps) => {
             component={PriorityConversations}
           />
           <Route path="/conversations/closed" component={ClosedConversations} />
+          <Route
+            path="/conversations/:id"
+            render={(props: RouteComponentProps<{id: string}>) => {
+              const {id: conversationId} = props.match.params;
+
+              return (
+                <Redirect to={`/conversations/all?cid=${conversationId}`} />
+              );
+            }}
+          />
           {shouldDisplayBilling && (
             <Route path="/billing" component={BillingOverview} />
           )}
@@ -308,6 +323,24 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
+<<<<<<< HEAD
+=======
+
+      {isHostedProd && currentUser && (
+        <ChatWidget
+          title="Need help with anything?"
+          subtitle="Ask us in the chat window below 😊"
+          greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
+          primaryColor="#1890ff"
+          accountId={REACT_APP_ADMIN_ACCOUNT_ID}
+          hideToggleButton
+          customer={{
+            external_id: [currentUser.id, currentUser.email].join('|'),
+            email: currentUser.email,
+          }}
+        />
+      )}
+>>>>>>> a243a2a2728ecfb0cd8eb3a7245eb6f949a9dff2
     </Layout>
   );
 };

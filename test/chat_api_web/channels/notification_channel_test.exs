@@ -1,10 +1,11 @@
 defmodule ChatApiWeb.NotificationChannelTest do
   use ChatApiWeb.ChannelCase
+  import ChatApi.Factory
 
   setup do
-    account = account_fixture()
-    user = user_fixture(account)
-    conversation = conversation_fixture(account, customer_fixture(account))
+    account = insert(:account)
+    user = insert(:user, account: account)
+    conversation = insert(:conversation, account: account)
 
     {:ok, _, socket} =
       ChatApiWeb.UserSocket

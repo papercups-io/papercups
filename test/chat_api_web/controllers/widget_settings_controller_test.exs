@@ -1,29 +1,12 @@
 defmodule ChatApiWeb.WidgetSettingsControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.WidgetSettings
 
-  def create_attr(account_id) do
-    %{
-      color: "some color",
-      subtitle: "some subtitle",
-      title: "some title",
-      account_id: account_id
-    }
-  end
-
-  def update_attrs(account_id) do
-    %{
-      color: "some updated color",
-      subtitle: "some updated subtitle",
-      title: "some updated title",
-      account_id: account_id
-    }
-  end
-
   setup %{conn: conn} do
-    account = account_fixture()
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
+    account = insert(:account)
+    user = insert(:user, account: account)
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
@@ -31,7 +14,8 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
   end
 
   describe "update" do
-    test "returns existing widget_settings", %{authed_conn: authed_conn, account: account} do
+    test "returns existing widget_settings",
+         %{authed_conn: authed_conn, account: account} do
       assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account(account.id)
 
       settings = %{
@@ -46,6 +30,7 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
         })
 
       assert %{
+               "object" => "widget_settings",
                "title" => "Test title",
                "subtitle" => "Test subtitle",
                "color" => "Test color"
@@ -57,6 +42,7 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
         })
 
       assert %{
+               "object" => "widget_settings",
                "title" => "Test title",
                "subtitle" => "Test subtitle",
                "color" => "Updated color"

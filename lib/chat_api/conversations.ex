@@ -21,13 +21,21 @@ defmodule ChatApi.Conversations do
     []
   end
 
-  def list_conversations_by_account(account_id, params) do
+  def list_conversations_by_account(account_id, attrs) do
     Conversation
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
+        c.id
+      )
+    )
     |> where(account_id: ^account_id)
-    |> where(^filter_where(params))
+    |> where(^filter_where(attrs))
     |> where([c], is_nil(c.archived_at))
-    |> order_by(desc: :inserted_at)
-    |> preload([:customer, [messages: [user: :profile]]])
+    |> order_by([c, f], desc: f)
+    |> preload([:customer, messages: [user: :profile]])
     |> Repo.all()
   end
 
@@ -36,27 +44,9 @@ defmodule ChatApi.Conversations do
     list_conversations_by_account(account_id, %{})
   end
 
-  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
-  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
-  def filter_where(params) do
-    Enum.reduce(params, dynamic(true), fn
-      {"status", value}, dynamic ->
-        dynamic([p], ^dynamic and p.status == ^value)
-
-      {"priority", value}, dynamic ->
-        dynamic([p], ^dynamic and p.priority == ^value)
-
-      {"assignee_id", value}, dynamic ->
-        dynamic([p], ^dynamic and p.assignee_id == ^value)
-
-      {_, _}, dynamic ->
-        # Not a where parameter
-        dynamic
-    end)
-  end
-
   @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
   def find_by_customer(customer_id, account_id) do
+    # TODO: make sure messages are sorted properly?
     Conversation
     |> where(customer_id: ^customer_id)
     |> where(account_id: ^account_id)
@@ -74,6 +64,7 @@ defmodule ChatApi.Conversations do
   """
   @spec get_conversation!(binary()) :: Conversation.t()
   def get_conversation!(id) do
+    # TODO: make sure messages are sorted properly?
     Conversation
     |> Repo.get!(id)
     |> Repo.preload([:customer, :tags, messages: [user: :profile]])
@@ -94,17 +85,22 @@ defmodule ChatApi.Conversations do
     conversation_id |> get_conversation_with!(:customer) |> Map.get(:customer)
   end
 
+  @spec get_shared_conversation!(binary(), binary(), binary()) :: Conversation.t()
+  def get_shared_conversation!(conversation_id, account_id, customer_id) do
+    # TODO: make sure messages are sorted properly?
+    Conversation
+    |> where(id: ^conversation_id)
+    |> where(customer_id: ^customer_id)
+    |> where(account_id: ^account_id)
+    |> where([c], is_nil(c.archived_at))
+    |> Repo.one!()
+    |> Repo.preload([:customer, :tags, messages: [user: :profile]])
+  end
+
   @spec create_conversation(map()) :: {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
   def create_conversation(attrs \\ %{}) do
     %Conversation{}
     |> Conversation.changeset(attrs)
-    |> Repo.insert()
-  end
-
-  @spec create_test_conversation(map()) :: {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
-  def create_test_conversation(attrs \\ %{}) do
-    %Conversation{}
-    |> Conversation.test_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -262,5 +258,28 @@ defmodule ChatApi.Conversations do
     conversation
     |> get_tag(tag_id)
     |> Repo.delete()
+  end
+
+  #####################
+  # Private methods
+  #####################
+
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
+  defp filter_where(attrs) do
+    Enum.reduce(attrs, dynamic(true), fn
+      {"status", value}, dynamic ->
+        dynamic([p], ^dynamic and p.status == ^value)
+
+      {"priority", value}, dynamic ->
+        dynamic([p], ^dynamic and p.priority == ^value)
+
+      {"assignee_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.assignee_id == ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end

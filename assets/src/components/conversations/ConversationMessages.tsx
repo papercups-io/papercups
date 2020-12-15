@@ -46,16 +46,29 @@ const ConversationMessages = ({
   showGetStarted,
   sx = {},
   setScrollRef,
+  isAgentMessage,
 }: {
   messages: Array<Message>;
-  currentUser: User;
+  currentUser?: User;
   customer: Customer | null;
   loading?: boolean;
   isClosing?: boolean;
   showGetStarted?: boolean;
   sx?: any;
   setScrollRef: (el: any) => void;
+  isAgentMessage?: (message: Message) => boolean;
 }) => {
+  // Sets old behavior as default, but eventually we may just want to show
+  // any message with a `user_id` (as opposed to `customer_id`) as an agent
+  // (Note that this will require an update to the <ChatMessage /> UI component
+  // in order to distinguish between different agents by e.g. profile photo)
+  const isAgentMessageDefaultFn = (msg: Message) =>
+    !!msg.user_id && !!currentUser && msg.user_id === currentUser.id;
+  const isAgentMsg =
+    typeof isAgentMessage === 'function'
+      ? isAgentMessage
+      : isAgentMessageDefaultFn;
+
   return (
     <Box
       sx={{
@@ -84,7 +97,7 @@ const ConversationMessages = ({
             messages.map((msg: Message, key: number) => {
               // Slight hack
               const next = messages[key + 1];
-              const isMe = !!msg.user_id && msg.user_id === currentUser.id;
+              const isMe = isAgentMsg(msg);
               const isLastInGroup = next
                 ? msg.customer_id !== next.customer_id
                 : true;

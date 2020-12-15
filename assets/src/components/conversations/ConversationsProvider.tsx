@@ -4,7 +4,7 @@ import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Conversation, Message} from '../../types';
-import {sleep} from '../../utils';
+import {sleep, isWindowHidden, updateQueryParams} from '../../utils';
 import {SOCKET_URL} from '../../socket';
 import logger from '../../logger';
 
@@ -307,6 +307,24 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.setState({presence: latest});
   };
 
+  playNotificationSound = async (volume: number) => {
+    try {
+      const file = '/alert-v2.mp3';
+      const audio = new Audio(file);
+      audio.volume = volume;
+
+      await audio?.play();
+    } catch (err) {
+      logger.error('Failed to play notification sound:', err);
+    }
+  };
+
+  throttledNotificationSound = throttle(
+    (volume = 0.2) => this.playNotificationSound(volume),
+    10 * 1000, // throttle every 10 secs so we don't get spammed with sounds
+    {trailing: false}
+  );
+
   handleNewMessage = async (message: Message) => {
     logger.debug('New message!', message);
 
@@ -315,7 +333,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
       selectedConversationId,
       conversationsById,
     } = this.state;
-    const {conversation_id: conversationId} = message;
+    const {conversation_id: conversationId, customer_id: customerId} = message;
     const existingMessages = messagesByConversation[conversationId] || [];
     const updatedMessagesByConversation = {
       ...messagesByConversation,
@@ -327,6 +345,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
         messagesByConversation: updatedMessagesByConversation,
       },
       () => {
+        if (isWindowHidden(document || window.document)) {
+          // Play a slightly louder sound if this is the first message
+          const volume = existingMessages.length === 0 ? 0.2 : 0.1;
+
+          this.throttledNotificationSound(volume);
+        }
         // TODO: this is a bit hacky... there's probably a better way to
         // handle listening for changes on conversation records...
         if (selectedConversationId === conversationId) {
@@ -337,7 +361,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
           // Otherwise, find the updated conversation and mark it as unread
           const conversation = conversationsById[conversationId];
           const shouldDisplayAlert =
-            conversation && conversation.status === 'open';
+            !!customerId && conversation && conversation.status === 'open';
 
           this.setState({
             conversationsById: {
@@ -394,6 +418,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     // FIXME: this is a hack to fix the race condition with the `shout` event
     await sleep(1000);
     await this.fetchAllConversations();
+    await this.throttledNotificationSound();
   };
 
   handleJoinMultipleConversations = (conversationIds: Array<string>) => {
@@ -431,6 +456,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
       if (conversation && !conversation.read) {
         this.handleConversationRead(id);
       }
+
+      updateQueryParams({cid: id});
     });
   };
 

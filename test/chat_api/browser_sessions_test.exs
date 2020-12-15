@@ -1,6 +1,7 @@
 defmodule ChatApi.BrowserSessionsTest do
   use ChatApi.DataCase
 
+  import ChatApi.Factory
   alias ChatApi.BrowserSessions
 
   describe "browser_sessions" do
@@ -25,27 +26,35 @@ defmodule ChatApi.BrowserSessionsTest do
     }
 
     setup do
-      account = account_fixture()
+      account = insert(:account)
+      browser_session = insert(:browser_session, account: account)
 
-      {:ok, account: account}
+      {:ok, account: account, browser_session: browser_session}
     end
 
-    test "list_browser_sessions/0 returns all browser_sessions", %{account: account} do
-      browser_session = browser_session_fixture(account)
-      sessions = BrowserSessions.list_browser_sessions(account.id)
-      assert Enum.map(sessions, & &1.id) == [browser_session.id]
+    test "list_browser_sessions/0 returns all browser_sessions",
+         %{account: account, browser_session: browser_session} do
+      session_ids =
+        BrowserSessions.list_browser_sessions(account.id)
+        |> Enum.map(& &1.id)
+
+      assert session_ids == [browser_session.id]
     end
 
-    test "get_browser_session!/1 returns the browser_session with given id", %{account: account} do
-      browser_session = browser_session_fixture(account)
-      assert BrowserSessions.get_browser_session!(browser_session.id) == browser_session
+    test "get_browser_session!/1 returns the browser_session with given id",
+         %{browser_session: browser_session} do
+      found_session = BrowserSessions.get_browser_session!(browser_session.id)
+
+      assert is_struct(found_session)
+      assert found_session.id == browser_session.id
     end
 
     test "create_browser_session/1 with valid data creates a browser_session", %{account: account} do
       attrs = Map.merge(@valid_attrs, %{account_id: account.id})
 
       assert {:ok, %BrowserSession{} = browser_session} =
-               BrowserSessions.create_browser_session(attrs)
+               params_for(:browser_session, attrs)
+               |> BrowserSessions.create_browser_session()
 
       assert browser_session.finished_at ==
                DateTime.from_naive!(~N[2010-04-17T14:00:00Z], "Etc/UTC")
@@ -60,10 +69,10 @@ defmodule ChatApi.BrowserSessionsTest do
       assert {:error, %Ecto.Changeset{}} = BrowserSessions.create_browser_session(@invalid_attrs)
     end
 
-    test "update_browser_session/2 with valid data updates the browser_session", %{
-      account: account
-    } do
-      browser_session = browser_session_fixture(account)
+    test "update_browser_session/2 with valid data updates the browser_session",
+         %{browser_session: browser_session} do
+      {:ok, %BrowserSession{} = browser_session} =
+        BrowserSessions.update_browser_session(browser_session, @update_attrs)
 
       assert {:ok, %BrowserSession{} = browser_session} =
                BrowserSessions.update_browser_session(browser_session, @update_attrs)
@@ -77,17 +86,14 @@ defmodule ChatApi.BrowserSessionsTest do
                DateTime.from_naive!(~N[2011-05-18T15:01:01Z], "Etc/UTC")
     end
 
-    test "update_browser_session/2 with invalid data returns error changeset", %{account: account} do
-      browser_session = browser_session_fixture(account)
-
+    test "update_browser_session/2 with invalid data returns error changeset",
+         %{browser_session: browser_session} do
       assert {:error, %Ecto.Changeset{}} =
                BrowserSessions.update_browser_session(browser_session, @invalid_attrs)
-
-      assert browser_session == BrowserSessions.get_browser_session!(browser_session.id)
     end
 
-    test "delete_browser_session/1 deletes the browser_session", %{account: account} do
-      browser_session = browser_session_fixture(account)
+    test "delete_browser_session/1 deletes the browser_session",
+         %{browser_session: browser_session} do
       assert {:ok, %BrowserSession{}} = BrowserSessions.delete_browser_session(browser_session)
 
       assert_raise Ecto.NoResultsError, fn ->
@@ -95,8 +101,8 @@ defmodule ChatApi.BrowserSessionsTest do
       end
     end
 
-    test "change_browser_session/1 returns a browser_session changeset", %{account: account} do
-      browser_session = browser_session_fixture(account)
+    test "change_browser_session/1 returns a browser_session changeset",
+         %{browser_session: browser_session} do
       assert %Ecto.Changeset{} = BrowserSessions.change_browser_session(browser_session)
     end
   end

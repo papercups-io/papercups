@@ -2,18 +2,45 @@ name: Papercups
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
 
 jobs:
-
-  build:
+  mix-format:
+    name: Mix Format
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Build the Docker image
-      run: docker build . --file production.Dockerfile --tag papercups/papercups:$(date +%s)
+      - name: Initial setup
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run format check
+        run: mix format --check-formatted
+
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Initial setup
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
+
+      - name: Install dependencies
+        run: npm install --prefix assets
+
+      - name: Run format check
+        run: npm run prettier:check --prefix assets
 
   mix-test:
     name: Mix Test
@@ -43,8 +70,8 @@ jobs:
       - name: Initial setup
         uses: actions/setup-elixir@v1
         with:
-          elixir-version: '1.10.4'
-          otp-version: '22.2.6'
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
 
       - name: Install dependencies
         run: mix deps.get
@@ -52,21 +79,9 @@ jobs:
       - name: Run tests
         run: mix test
 
-  mix-format:
-    name: Mix Format
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Initial setup
-      uses: actions/setup-elixir@v1
-      with:
-        elixir-version: '1.10.4'
-        otp-version: '22.2.6'
-
-    - name: Install dependencies
-      run: mix deps.get
-
-    - name: Run format check
-      run: mix format --check-formatted
-
+  # build:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Build the Docker image
+  #       run: docker build . --file production.Dockerfile --tag papercups/papercups:$(date +%s)

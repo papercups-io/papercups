@@ -16,6 +16,9 @@ export const BASE_URL = isDev
   ? 'http://localhost:4000'
   : `https://${REACT_URL}`;
 
+// In the dev environment, we use port 3000 and proxy API requests to 4000
+export const FRONTEND_BASE_URL = isDev ? 'http://localhost:3000' : BASE_URL;
+
 // Defaults to Papercups client ID (it's ok for this value to be public)
 export const SLACK_CLIENT_ID =
   process.env.REACT_APP_SLACK_CLIENT_ID || '1192316529232.1250363411891';

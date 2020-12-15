@@ -1,6 +1,7 @@
 defmodule ChatApiWeb.AccountControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.Accounts.Account
 
   @create_attrs %{
@@ -20,7 +21,7 @@ defmodule ChatApiWeb.AccountControllerTest do
   end
 
   setup %{conn: conn} do
-    account = account_fixture()
+    account = insert(:account)
     conn = put_req_header(conn, "accept", "application/json")
 
     {:ok, conn: conn, account: account}
@@ -36,6 +37,7 @@ defmodule ChatApiWeb.AccountControllerTest do
 
       assert %{
                "id" => _id,
+               "object" => "account",
                "company_name" => "some company_name"
              } = json_response(resp, 200)["data"]
     end

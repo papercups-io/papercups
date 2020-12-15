@@ -1,6 +1,7 @@
 defmodule ChatApiWeb.BrowserSessionControllerTest do
   use ChatApiWeb.ConnCase
 
+  import ChatApi.Factory
   alias ChatApi.BrowserSessions.BrowserSession
 
   @create_attrs %{
@@ -22,8 +23,8 @@ defmodule ChatApiWeb.BrowserSessionControllerTest do
   }
 
   setup %{conn: conn} do
-    account = account_fixture()
-    user = %ChatApi.Users.User{email: "test@example.com", account_id: account.id}
+    account = insert(:account)
+    user = insert(:user, account: account, email: "test@example.com")
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
@@ -52,6 +53,7 @@ defmodule ChatApiWeb.BrowserSessionControllerTest do
 
       assert %{
                "id" => ^id,
+               "object" => "browser_session",
                "finished_at" => "2010-04-17T14:00:00Z",
                "metadata" => %{},
                "started_at" => "2010-04-17T14:00:00Z"
@@ -84,6 +86,7 @@ defmodule ChatApiWeb.BrowserSessionControllerTest do
 
       assert %{
                "id" => ^id,
+               "object" => "browser_session",
                "finished_at" => "2011-05-18T15:01:01Z",
                "metadata" => %{},
                "started_at" => "2011-05-18T15:01:01Z"
@@ -122,7 +125,7 @@ defmodule ChatApiWeb.BrowserSessionControllerTest do
   end
 
   defp create_browser_session(%{account: account}) do
-    browser_session = browser_session_fixture(account)
+    browser_session = insert(:browser_session, account: account)
 
     %{browser_session: browser_session}
   end

@@ -13,6 +13,7 @@ defmodule ChatApiWeb.UserView do
       %{profile: %UserProfile{} = profile} ->
         %{
           id: user.id,
+          object: "user",
           email: user.email,
           created_at: user.inserted_at,
           disabled_at: user.disabled_at,
@@ -25,6 +26,7 @@ defmodule ChatApiWeb.UserView do
       _ ->
         %{
           id: user.id,
+          object: "user",
           email: user.email,
           created_at: user.inserted_at,
           disabled_at: user.disabled_at,

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
+  "repository": "https://github.com/papercups-io/papercups",
   "dependencies": {
     "@papercups-io/chat-widget": "^1.1.3",
     "@papercups-io/storytime": "^1.0.6",
@@ -16,17 +17,22 @@
     "@types/lodash": "^4.14.159",
     "@types/node": "^12.0.0",
     "@types/phoenix": "^1.4.4",
+    "@types/query-string": "^6.3.0",
     "@types/react": "^16.9.41",
+    "@types/react-color": "^3.0.4",
     "@types/react-dom": "^16.9.8",
+    "@types/react-helmet": "^6.1.0",
     "@types/react-router-dom": "^5.1.5",
     "@types/react-syntax-highlighter": "^11.0.4",
     "@types/recharts": "^1.8.15",
     "@types/superagent": "^4.1.8",
     "@types/theme-ui": "^0.3.4",
     "antd": "^4.3.5",
+    "cpx": "^1.5.0",
     "dayjs": "^1.9.1",
     "lodash": "^4.17.20",
     "logrocket": "^1.0.10",
+    "mkdirp": "^1.0.4",
     "phoenix": "^1.5.3",
     "posthog-js": "^1.4.4",
     "query-string": "^6.13.1",
@@ -53,7 +59,9 @@
     "postbuild": "mkdirp ../priv/static && cpx \"./build/**\" \"../priv/static\" --clean",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "deploy": "npm run build"
+    "deploy": "npm run build",
+    "prettier": "prettier --write 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
+    "prettier:check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -82,13 +90,8 @@
   },
   "proxy": "http://localhost:4000",
   "devDependencies": {
-    "@types/query-string": "^6.3.0",
-    "@types/react-color": "^3.0.4",
-    "@types/react-helmet": "^6.1.0",
-    "cpx": "^1.5.0",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
-    "mkdirp": "^1.0.4",
     "prettier": "^2.0.5"
   }
 }

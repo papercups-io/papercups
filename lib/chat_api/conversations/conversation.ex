@@ -43,6 +43,8 @@ defmodule ChatApi.Conversations.Conversation do
       :archived_at
     ])
     |> validate_required([:status, :account_id, :customer_id])
+    |> foreign_key_constraint(:account_id)
+    |> foreign_key_constraint(:customer_id)
   end
 
   def test_changeset(conversation, attrs) do

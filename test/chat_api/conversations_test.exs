@@ -1,94 +1,94 @@
 defmodule ChatApi.ConversationsTest do
   use ChatApi.DataCase, async: true
 
+  import ChatApi.Factory
   alias ChatApi.{Conversations, SlackConversationThreads}
 
   describe "conversations" do
     alias ChatApi.Conversations.Conversation
     alias ChatApi.SlackConversationThreads.SlackConversationThread
 
-    @valid_attrs %{status: "open"}
     @update_attrs %{status: "closed"}
     @invalid_attrs %{status: nil}
 
-    def valid_create_attrs do
-      account = account_fixture()
-      customer = customer_fixture(account)
-
-      Enum.into(@valid_attrs, %{account_id: account.id, customer_id: customer.id})
-    end
-
     setup do
-      account = account_fixture()
-      customer = customer_fixture(account)
-      conversation = conversation_fixture(account, customer)
+      account = insert(:account)
+      customer = insert(:customer, account: account)
+      conversation = insert(:conversation, account: account, customer: customer)
 
       {:ok, account: account, conversation: conversation, customer: customer}
     end
 
-    test "list_conversations/0 returns all conversations", %{
-      conversation: conversation
-    } do
-      result_ids = Enum.map(Conversations.list_conversations(), fn r -> r.id end)
+    test "list_conversations/0 returns all conversations",
+         %{conversation: conversation} do
+      result_ids = Conversations.list_conversations() |> Enum.map(& &1.id)
 
       assert result_ids == [conversation.id]
     end
 
-    test "list_conversations_by_account/1 returns all conversations for an account", %{
-      account: account,
-      conversation: conversation
-    } do
-      different_account = account_fixture()
-      different_customer = customer_fixture(different_account)
-      _conversation = conversation_fixture(different_account, different_customer)
-
+    test "list_conversations_by_account/1 returns all conversations for an account",
+         %{account: account, conversation: conversation} do
       result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
 
       assert result_ids == [conversation.id]
+    end
+
+    test "list_conversations_by_account/1 sorts the conversations by most recent message",
+         %{account: account, customer: customer, conversation: conversation_1} do
+      [conversation_2, conversation_3] =
+        insert_pair(:conversation, account: account, customer: customer)
+
+      insert(:message,
+        account: account,
+        conversation: conversation_2,
+        inserted_at: ~N[2020-11-02 20:00:00]
+      )
+
+      insert(:message,
+        account: account,
+        conversation: conversation_3,
+        inserted_at: ~N[2020-11-03 20:00:00]
+      )
+
+      results = Conversations.list_conversations_by_account(account.id)
+      result_ids = Enum.map(results, & &1.id)
+
+      # Sorted by conversation with most recent message to least recent
+      assert result_ids == [conversation_1.id, conversation_3.id, conversation_2.id]
     end
 
     test "list_conversations_by_account/1 returns all not archived conversations for an account",
-         %{
-           account: account,
-           conversation: conversation,
-           customer: customer
-         } do
-      _archived_conversation =
-        conversation_fixture(account, customer) |> Conversations.archive_conversation()
+         %{account: account, conversation: conversation} do
+      not_archived_conversation = insert(:conversation, account: account)
+      _archived_conversation = Conversations.archive_conversation(conversation)
 
       result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
 
-      assert result_ids == [conversation.id]
+      assert result_ids == [not_archived_conversation.id]
     end
 
-    test "find_by_customer/2 returns all conversations for a customer", %{
-      account: account,
-      conversation: conversation,
-      customer: customer
-    } do
+    test "find_by_customer/2 returns all conversations for a customer",
+         %{account: account, conversation: conversation, customer: customer} do
       result_ids = Enum.map(Conversations.find_by_customer(customer.id, account.id), & &1.id)
 
       assert result_ids == [conversation.id]
     end
 
-    test "find_by_customer/2 does not include archived conversations for a customer", %{
-      account: account,
-      conversation: conversation,
-      customer: customer
-    } do
+    test "find_by_customer/2 does not include archived conversations for a customer",
+         %{account: account, conversation: conversation, customer: customer} do
       _archived_conversation =
-        conversation_fixture(account, customer) |> Conversations.archive_conversation()
+        insert(:conversation, account: account, customer: customer)
+        |> Conversations.archive_conversation()
 
       result_ids = Enum.map(Conversations.find_by_customer(customer.id, account.id), & &1.id)
 
       assert result_ids == [conversation.id]
     end
 
-    test "find_by_customer/2 does not include closed conversations for a customer", %{
-      account: account,
-      customer: customer
-    } do
-      closed = conversation_fixture(account, customer, %{status: "closed"})
+    test "find_by_customer/2 does not include closed conversations for a customer",
+         %{account: account, customer: customer} do
+      closed = insert(:conversation, account: account, customer: customer, status: "closed")
+
       results = Conversations.find_by_customer(customer.id, account.id)
       ids = Enum.map(results, & &1.id)
 
@@ -96,15 +96,16 @@ defmodule ChatApi.ConversationsTest do
       assert Enum.all?(results, fn conv -> conv.status == "open" end)
     end
 
-    test "get_conversation!/1 returns the conversation with given id", %{
-      conversation: conversation
-    } do
-      assert Conversations.get_conversation!(conversation.id) == conversation
+    test "get_conversation!/1 returns the conversation with given id",
+         %{conversation: conversation} do
+      found_conversation = Conversations.get_conversation!(conversation.id)
+
+      assert found_conversation.id == conversation.id
     end
 
     test "create_conversation/1 with valid data creates a conversation" do
       assert {:ok, %Conversation{} = conversation} =
-               Conversations.create_conversation(valid_create_attrs())
+               Conversations.create_conversation(params_with_assocs(:conversation))
 
       assert conversation.status == "open"
     end
@@ -113,39 +114,37 @@ defmodule ChatApi.ConversationsTest do
       assert {:error, %Ecto.Changeset{}} = Conversations.create_conversation(@invalid_attrs)
     end
 
-    test "update_conversation/2 with valid data updates the conversation", %{
-      conversation: conversation
-    } do
+    test "update_conversation/2 with valid data updates the conversation",
+         %{conversation: conversation} do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.update_conversation(conversation, @update_attrs)
 
       assert conversation.status == "closed"
     end
 
-    test "update_conversation/2 with invalid data returns error changeset", %{
-      conversation: conversation
-    } do
+    test "update_conversation/2 with invalid data returns error changeset",
+         %{conversation: conversation} do
       assert {:error, %Ecto.Changeset{}} =
                Conversations.update_conversation(conversation, @invalid_attrs)
 
       assert _conversation = Conversations.get_conversation!(conversation.id)
     end
 
-    test "delete_conversation/1 deletes the conversation", %{conversation: conversation} do
+    test "delete_conversation/1 deletes the conversation",
+         %{conversation: conversation} do
       assert {:ok, %Conversation{}} = Conversations.delete_conversation(conversation)
       assert_raise Ecto.NoResultsError, fn -> Conversations.get_conversation!(conversation.id) end
     end
 
-    test "delete_conversation/1 deletes the conversation if associated slack_conversation_threads exist",
-         %{conversation: _conversation} do
+    test "delete_conversation/1 deletes the conversation if associated slack_conversation_threads exist" do
       assert {:ok, %Conversation{} = conversation} =
-               Conversations.create_conversation(valid_create_attrs())
+               Conversations.create_conversation(params_with_assocs(:conversation))
 
       slack_conversation_thread_attrs = %{
         slack_channel: "some slack_channel",
         slack_thread_ts: "some slack_thread_ts",
         conversation_id: conversation.id,
-        account_id: valid_create_attrs().account_id
+        account_id: conversation.account_id
       }
 
       assert {:ok, %SlackConversationThread{} = slack_conversation_thread} =
@@ -168,46 +167,39 @@ defmodule ChatApi.ConversationsTest do
       assert %Ecto.Changeset{} = Conversations.change_conversation(conversation)
     end
 
-    test "has_agent_replied?/1 checks if an agent has replied to the conversation", %{
-      account: account,
-      customer: customer,
-      conversation: conversation
-    } do
+    test "has_agent_replied?/1 checks if an agent has replied to the conversation",
+         %{account: account, customer: customer, conversation: conversation} do
       refute Conversations.has_agent_replied?(conversation.id)
 
       # Create a message from a customer (i.e. not an agent)
-      message_fixture(account, conversation, %{customer_id: customer.id})
-
+      insert(:message, account: account, customer: customer)
       refute Conversations.has_agent_replied?(conversation.id)
 
       # Create a message from an agent
-      user = user_fixture(account)
-      message_fixture(account, conversation, %{user_id: user.id})
+      user = insert(:user, account: account)
+      insert(:message, account: account, conversation: conversation, user: user)
 
       assert Conversations.has_agent_replied?(conversation.id)
     end
 
-    test "archive_conversation/1 sets the archive_at field of a conversation", %{
-      conversation: conversation
-    } do
+    test "archive_conversation/1 sets the archive_at field of a conversation",
+         %{conversation: conversation} do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.archive_conversation(conversation)
 
       assert %DateTime{} = conversation.archived_at
     end
 
-    test "query_conversations_closed_for/1 returns an Ecto.Query for conversations which have been closed for more than 14 days",
-         %{conversation: _conversation, account: account, customer: customer} do
-      past = DateTime.add(DateTime.utc_now(), -(14 * 24 * 60 * 60))
+    test "query_conversations_closed_for/1 returns an Ecto.Query for conversations which have been closed for more than 14 days" do
+      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336))
 
-      _closed_conversation =
-        conversation_fixture(account, customer, %{
-          updated_at: DateTime.utc_now(),
-          status: "closed"
-        })
+      _closed_conversation = insert(:conversation, status: "closed")
 
       ready_to_archive_conversation =
-        conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
+        insert(:conversation,
+          status: "closed",
+          updated_at: past
+        )
 
       assert %Ecto.Query{} = query = Conversations.query_conversations_closed_for(days: 14)
 
@@ -216,18 +208,12 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [ready_to_archive_conversation.id]
     end
 
-    test "archive_conversations/1 archives conversations which have been closed for more than 14 days",
-         %{conversation: _conversation, account: account, customer: customer} do
-      past = DateTime.add(DateTime.utc_now(), -(14 * 24 * 60 * 60))
+    test "archive_conversations/1 archives conversations which have been closed for more than 14 days" do
+      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336))
 
-      closed_conversation =
-        conversation_fixture(account, customer, %{
-          updated_at: DateTime.utc_now(),
-          status: "closed"
-        })
+      closed_conversation = insert(:conversation, status: "closed")
 
-      ready_to_archive_conversation =
-        conversation_fixture(account, customer, %{updated_at: past, status: "closed"})
+      ready_to_archive_conversation = insert(:conversation, status: "closed", updated_at: past)
 
       assert {1, nil} =
                Conversations.query_conversations_closed_for(days: 14)

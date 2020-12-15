@@ -13,6 +13,7 @@ defmodule ChatApiWeb.MessageView do
   def render("message.json", %{message: message}) do
     %{
       id: message.id,
+      object: "message",
       body: message.body,
       created_at: message.inserted_at,
       sent_at: message.sent_at,
@@ -27,6 +28,7 @@ defmodule ChatApiWeb.MessageView do
   def render("expanded.json", %{message: %{customer: %ChatApi.Customers.Customer{}} = message}) do
     %{
       id: message.id,
+      object: "message",
       body: message.body,
       created_at: message.inserted_at,
       sent_at: message.sent_at,
@@ -43,6 +45,7 @@ defmodule ChatApiWeb.MessageView do
   def render("expanded.json", %{message: message}) do
     %{
       id: message.id,
+      object: "message",
       body: message.body,
       created_at: message.inserted_at,
       sent_at: message.sent_at,
