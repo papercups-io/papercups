@@ -135,6 +135,7 @@ defmodule ChatApiWeb.MessageController do
     message
     |> Messages.broadcast_to_conversation!()
     |> Messages.notify(:slack)
+    |> Messages.notify(:other_slack_threads)
     |> Messages.notify(:webhooks)
   end
 end

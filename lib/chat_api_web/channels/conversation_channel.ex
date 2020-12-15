@@ -129,6 +129,7 @@ defmodule ChatApiWeb.ConversationChannel do
 
     message
     |> Messages.notify(:slack)
+    |> Messages.notify(:other_slack_threads)
     |> Messages.notify(:new_message_email)
     |> Messages.notify(:webhooks)
   end

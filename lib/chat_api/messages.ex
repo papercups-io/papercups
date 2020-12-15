@@ -104,19 +104,21 @@ defmodule ChatApi.Messages do
   end
 
   # Notifications
+  # TODO: move these into a different module???
   # TODO: move more of these to be queued up in Oban?
 
   @spec notify(Message.t(), atom()) :: Message.t()
   def notify(
-        %Message{body: body, conversation_id: conversation_id} = message,
+        %Message{body: _body, conversation_id: _conversation_id} = message,
         :slack
       ) do
     Logger.info("Sending notification: :slack")
     # TODO: should we just pass in the message struct here?
     Task.start(fn ->
-      ChatApi.Slack.send_conversation_message_alert(conversation_id, body,
-        type: get_message_type(message)
-      )
+      # ChatApi.Slack.send_conversation_message_alert(conversation_id, body,
+      #   type: get_message_type(message)
+      # )
+      ChatApi.Slack.send_conversation_message_alert_v2(message)
     end)
 
     message
@@ -157,6 +159,20 @@ defmodule ChatApi.Messages do
     %{message: formatted}
     |> ChatApi.Workers.SendConversationReplyEmail.new(schedule_in: schedule_in)
     |> Oban.insert()
+
+    message
+  end
+
+  def notify(%Message{} = message, :other_slack_threads) do
+    Logger.info("Sending notification: :other_slack_threads")
+    # TODO: should we just pass in the message struct here?
+    Task.start(fn ->
+      # ChatApi.Slack.send_conversation_message_alert(conversation_id, body,
+      #   type: get_message_type(message)
+      # )
+      # ChatApi.Slack.send_conversation_message_alert_v2(message)
+      ChatApi.Slack.notify_auxiliary_threads(message)
+    end)
 
     message
   end

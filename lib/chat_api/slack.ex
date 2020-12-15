@@ -7,8 +7,14 @@ defmodule ChatApi.Slack do
 
   use Tesla
 
-  alias ChatApi.{Conversations, SlackAuthorizations, SlackConversationThreads, Users}
-  alias ChatApi.Customers.Customer
+  alias ChatApi.{
+    Conversations,
+    SlackAuthorizations,
+    SlackConversationThreads,
+    Users.User,
+    Customers.Customer,
+    Messages.Message
+  }
 
   plug Tesla.Middleware.BaseUrl, "https://slack.com/api"
 
@@ -122,8 +128,8 @@ defmodule ChatApi.Slack do
   end
 
   @spec get_user_email(binary(), binary()) :: nil | binary()
-  def get_user_email(user_id, access_token) do
-    with {:ok, response} <- retrieve_user_info(user_id, access_token) do
+  def get_user_email(slack_user_id, access_token) do
+    with {:ok, response} <- retrieve_user_info(slack_user_id, access_token) do
       try do
         extract_slack_user_email(response)
       rescue
@@ -135,19 +141,53 @@ defmodule ChatApi.Slack do
     end
   end
 
-  # Look for a match between the Slack sender and internal Papercups users
-  # to try to identify the sender; falls back to the default assignee id.
-  @spec get_sender_id(Conversations.Conversation.t(), binary()) :: binary()
-  def get_sender_id(conversation, user_id) do
-    %{account_id: account_id, assignee_id: assignee_id} = conversation
+  @spec find_matching_customer(binary(), binary()) :: Customer.t() | nil
+  def find_matching_customer(account_id, slack_user_id) do
     %{access_token: access_token} = get_slack_authorization(account_id)
 
-    user_id
+    slack_user_id
     |> get_user_email(access_token)
-    |> Users.find_user_by_email(account_id)
-    |> case do
+    |> ChatApi.Customers.find_by_email(account_id)
+  end
+
+  @spec find_matching_user(binary(), binary()) :: User.t() | nil
+  def find_matching_user(account_id, slack_user_id) do
+    %{access_token: access_token} = get_slack_authorization(account_id)
+
+    slack_user_id
+    |> get_user_email(access_token)
+    |> ChatApi.Users.find_user_by_email(account_id)
+  end
+
+  # Look for a match between the Slack sender and internal Papercups users
+  # to try to identify the sender; falls back to the default assignee id.
+  @spec get_admin_sender_id(Conversations.Conversation.t(), binary()) :: binary()
+  def get_admin_sender_id(
+        %Conversations.Conversation{account_id: account_id, assignee_id: assignee_id},
+        slack_user_id
+      ) do
+    case find_matching_user(account_id, slack_user_id) do
       %{id: id} -> id
       _ -> assignee_id
+    end
+  end
+
+  # TODO: this could probably be named better?
+  def format_sender_id!(account_id, slack_user_id) do
+    case find_matching_user(account_id, slack_user_id) do
+      %{id: user_id} ->
+        %{"user_id" => user_id}
+
+      _ ->
+        case find_matching_customer(account_id, slack_user_id) do
+          %{id: customer_id} ->
+            %{"customer_id" => customer_id}
+
+          _ ->
+            raise "Unable to find matching user or customer ID for Slack user #{
+                    inspect(slack_user_id)
+                  } on account #{inspect(account_id)}"
+        end
     end
   end
 
@@ -164,11 +204,12 @@ defmodule ChatApi.Slack do
   @spec send_conversation_message_alert(binary(), binary(), keyword()) ::
           Tesla.Env.result() | nil | :ok
   def send_conversation_message_alert(conversation_id, text, type: type) do
+    # TODO: handle getting all these fields in a separate function?
     %{account_id: account_id, customer: customer} =
       Conversations.get_conversation_with!(conversation_id, :customer)
 
-    %{access_token: access_token, channel: channel, channel_id: channel_id} =
-      get_slack_authorization(account_id)
+    auth = get_slack_authorization(account_id)
+    %{access_token: access_token, channel: channel, channel_id: channel_id} = auth
 
     # Check if a Slack thread already exists for this conversation.
     # If one exists, send followup messages as replies; otherwise, start a new thread
@@ -217,6 +258,106 @@ defmodule ChatApi.Slack do
 
       error ->
         Logger.error("Unable to send Slack message: #{inspect(error)}")
+    end
+  end
+
+  @spec send_conversation_message_alert_v2(Message.t()) :: Tesla.Env.result() | nil | :ok
+  def send_conversation_message_alert_v2(
+        %Message{conversation_id: conversation_id, body: text} = message
+      ) do
+    type = get_message_type(message)
+    # TODO: handle getting all these fields in a separate function?
+    %{account_id: account_id, customer: customer} =
+      Conversations.get_conversation_with!(conversation_id, :customer)
+
+    auth = get_slack_authorization(account_id)
+    %{access_token: access_token, channel: channel, channel_id: channel_id} = auth
+
+    # Check if a Slack thread already exists for this conversation.
+    # If one exists, send followup messages as replies; otherwise, start a new thread
+    # TODO: get ALL relevant threads, and send messages to all of them? ¯\_(ツ)_/¯
+    # TODO: make it possible to override the channel_id or thread in a argument above???
+    # ...we need more granular control over where thesee messages are sent!
+    # TODO: actually, this method is currently only really relevant for the "main"
+    # Slack channel that's authorized... we'll probably need a separate method that just:
+    # forwards a message to any existing Slack thread?
+    thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id)
+
+    # TODO: use a struct here?
+    %{
+      customer: customer,
+      text: text,
+      conversation_id: conversation_id,
+      type: type,
+      thread: thread
+    }
+    |> get_message_text()
+    |> get_message_payload(%{
+      channel: channel,
+      customer: customer,
+      thread: thread
+    })
+    |> send_message(access_token)
+    |> case do
+      # Just pass through in test/dev mode (not sure if there's a more idiomatic way to do this)
+      {:ok, nil} ->
+        nil
+
+      {:ok, response} ->
+        # If no thread exists yet, start a new thread and kick off the first reply
+        if is_nil(thread) do
+          {:ok, thread} = create_new_slack_conversation_thread(conversation_id, response)
+
+          send_message(
+            %{
+              "channel" => channel,
+              "text" => "(Send a message here to get started!)",
+              "thread_ts" => thread.slack_thread_ts
+            },
+            access_token
+          )
+        end
+
+      error ->
+        Logger.error("Unable to send Slack message: #{inspect(error)}")
+    end
+  end
+
+  @spec notify_auxiliary_threads(ChatApi.Messages.Message.t()) :: :ok
+  def notify_auxiliary_threads(
+        %Message{conversation_id: conversation_id, account_id: account_id, body: text} = _message
+      ) do
+    auth = get_slack_authorization(account_id)
+
+    conversation_id
+    |> SlackConversationThreads.get_threads_by_conversation_id()
+    |> Stream.reject(fn thread -> thread.slack_channel == auth.channel_id end)
+    |> Enum.each(fn thread ->
+      # TODO: should we use Task.async/await here?
+      IO.inspect("!!! SENDING MESSAGE FOR THREAD !!!")
+      IO.inspect(thread)
+
+      message = %{
+        "text" => text,
+        "channel" => thread.slack_channel,
+        "thread_ts" => thread.slack_thread_ts
+      }
+
+      IO.inspect(message)
+      result = send_message(message, auth.access_token)
+
+      IO.inspect(result)
+    end)
+  end
+
+  @spec is_primary_channel?(binary(), binary()) :: boolean()
+  def is_primary_channel?(account_id, slack_channel_id) do
+    case get_slack_authorization(account_id) do
+      %{channel: channel, channel_id: channel_id} ->
+        channel == slack_channel_id || channel_id == slack_channel_id
+
+      _ ->
+        false
     end
   end
 
@@ -276,6 +417,7 @@ defmodule ChatApi.Slack do
         thread: _thread
       }) do
     case type do
+      # TODO: get agent name, rather than just showing "Agent"
       :agent -> "*:female-technologist: Agent*: #{text}"
       :customer -> "*:wave: #{identify_customer(customer)}*: #{text}"
       :conversation_update -> "_#{text}_"
@@ -443,6 +585,11 @@ defmodule ChatApi.Slack do
       raise "users.info returned ok=false"
     end
   end
+
+  @spec get_message_type(Message.t()) :: atom()
+  def get_message_type(%Message{customer_id: nil}), do: :agent
+  def get_message_type(%Message{user_id: nil}), do: :customer
+  def get_message_type(_message), do: :unknown
 
   @spec get_default_access_token() :: binary() | nil
   defp get_default_access_token() do

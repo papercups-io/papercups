@@ -31,7 +31,7 @@ defmodule ChatApi.SlackConversationThreads do
     |> where(conversation_id: ^conversation_id)
     |> where(^filter_where(filters))
     |> preload(:conversation)
-    |> Repo.one()
+    |> Repo.all()
   end
 
   @spec get_by_slack_thread_ts(binary(), binary()) :: SlackConversationThread.t() | nil

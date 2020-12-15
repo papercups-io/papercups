@@ -3,6 +3,7 @@ defmodule ChatApi.Conversations.Helpers do
   Helper methods for Conversations context.
   """
 
+  require Logger
   alias ChatApi.Slack
 
   @spec send_conversation_state_update(Conversation.t(), map()) ::
@@ -15,11 +16,13 @@ defmodule ChatApi.Conversations.Helpers do
         {:error, "state_invalid"}
 
       conversation_state_message ->
-        Slack.send_conversation_message_alert(
-          conversation.id,
-          conversation_state_message,
-          type: :conversation_update
-        )
+        Logger.info("Would have sent conversation update: #{inspect(conversation_state_message)}")
+        # # TODO: disabling this for now
+        # Slack.send_conversation_message_alert(
+        #   conversation.id,
+        #   conversation_state_message,
+        #   type: :conversation_update
+        # )
 
         {:ok, conversation_state_message}
     end

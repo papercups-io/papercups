@@ -133,23 +133,35 @@ defmodule ChatApiWeb.SlackController do
          } = event
        ) do
     Logger.debug("Handling Slack event: #{inspect(event)}")
+    IO.inspect(event)
     # TODO: check if message is coming from support channel thread?
     # If yes, will need to notify other "main" Slack channel...
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
-      %{id: conversation_id, account_id: account_id} = conversation
-      sender_id = Slack.get_sender_id(conversation, user_id)
-
-      params = %{
-        "body" => text,
-        "conversation_id" => conversation_id,
-        "account_id" => account_id,
-        "user_id" => sender_id
-      }
-
-      params
-      |> Messages.create_and_fetch!()
-      |> Messages.broadcast_to_conversation!()
-      |> Messages.notify(:webhooks)
+      # TODO: holy hell clean this up!
+      if Slack.is_primary_channel?(conversation.account_id, channel) do
+        %{
+          "body" => text,
+          "conversation_id" => conversation.id,
+          "account_id" => conversation.account_id,
+          "user_id" => Slack.get_admin_sender_id(conversation, user_id)
+        }
+        |> Messages.create_and_fetch!()
+        |> Messages.broadcast_to_conversation!()
+        |> Messages.notify(:webhooks)
+        |> Messages.notify(:other_slack_threads)
+      else
+        # Some duplication here, but probably more readable then if we tried to be clever
+        Slack.format_sender_id!(conversation.account_id, user_id)
+        |> Map.merge(%{
+          "body" => text,
+          "conversation_id" => conversation.id,
+          "account_id" => conversation.account_id
+        })
+        |> Messages.create_and_fetch!()
+        |> Messages.broadcast_to_conversation!()
+        |> Messages.notify(:webhooks)
+        |> Messages.notify(:slack)
+      end
     end
   end
 
@@ -246,6 +258,7 @@ defmodule ChatApiWeb.SlackController do
 
         ChatApi.Messages.get_message!(message.id)
         |> ChatApi.Messages.broadcast_to_conversation!()
+        # notify primary channel only
         |> ChatApi.Messages.notify(:slack)
         |> ChatApi.Messages.notify(:webhooks)
       end
