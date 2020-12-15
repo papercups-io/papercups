@@ -62,15 +62,15 @@ const shouldDisplayChat = (pathname: string) => {
 // of this component is to flash the number of unread messages in the
 // tab (i.e. HTML title) so users can see when new messages arrive
 const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
-  const [htmlTitle, setHtmlTitle] = useState('Papercups');
+  const [htmlTitle, setHtmlTitle] = useState('Botcart');
 
   const toggleNotificationMessage = () => {
-    if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups')) {
+    if (totalNumUnread > 0 && htmlTitle.startsWith('Botcart')) {
       setHtmlTitle(
         `(${totalNumUnread}) New message${totalNumUnread === 1 ? '' : 's'}!`
       );
     } else {
-      setHtmlTitle('Papercups');
+      setHtmlTitle('Botcart');
     }
   };
 
