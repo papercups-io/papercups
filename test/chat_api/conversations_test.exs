@@ -245,9 +245,18 @@ defmodule ChatApi.ConversationsTest do
       # from Ecto.Changeset, edit conv1 to have its last message, 30 days ago
       change(msg, %{inserted_at: one_month_ago}) |> Repo.update!()
 
+      conv1 = Conversations.get_conversation!(conv1.id)
+      refute conv1.archived_at
+
       assert {1, _} =
                Conversations.find_freetier_conversations_old_by(days: 30)
                |> Conversations.archive_conversations()
+
+      conv1 = Conversations.get_conversation!(conv1.id)
+      assert conv1.archived_at
+
+      conv2 = Conversations.get_conversation!(conv2.id)
+      refute conv2.archived_at
     end
   end
 end
