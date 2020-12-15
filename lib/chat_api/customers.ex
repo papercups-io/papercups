@@ -56,19 +56,16 @@ defmodule ChatApi.Customers do
     external_id |> to_string() |> find_by_external_id(account_id)
   end
 
+  @spec find_by_email(binary(), binary()) :: Customer.t() | nil
+  def find_by_email(email, account_id) do
+    Customer
+    |> where(account_id: ^account_id, email: ^email)
+    |> order_by(desc: :updated_at)
+    |> first()
+    |> Repo.one()
+  end
+
   @spec create_customer(map()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Creates a customer.
-
-  ## Examples
-
-      iex> create_customer(%{field: value})
-      {:ok, %Customer{}}
-
-      iex> create_customer(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
   def create_customer(attrs \\ %{}) do
     %Customer{}
     |> Customer.changeset(attrs)
@@ -76,18 +73,6 @@ defmodule ChatApi.Customers do
   end
 
   @spec update_customer(Customer.t(), map) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Updates a customer.
-
-  ## Examples
-
-      iex> update_customer(customer, %{field: new_value})
-      {:ok, %Customer{}}
-
-      iex> update_customer(customer, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
   def update_customer(%Customer{} = customer, attrs) do
     customer
     |> Customer.changeset(attrs)

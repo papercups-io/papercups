@@ -172,6 +172,12 @@ defmodule ChatApi.Slack do
 
     # Check if a Slack thread already exists for this conversation.
     # If one exists, send followup messages as replies; otherwise, start a new thread
+    # TODO: get ALL relevant threads, and send messages to all of them? ¯\_(ツ)_/¯
+    # TODO: make it possible to override the channel_id or thread in a argument above???
+    # ...we need more granular control over where thesee messages are sent!
+    # TODO: actually, this method is currently only really relevant for the "main"
+    # Slack channel that's authorized... we'll probably need a separate method that just:
+    # forwards a message to any existing Slack thread?
     thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id)
 
     # TODO: use a struct here?
@@ -211,16 +217,6 @@ defmodule ChatApi.Slack do
 
       error ->
         Logger.error("Unable to send Slack message: #{inspect(error)}")
-    end
-  end
-
-  @spec get_conversation_account_id(binary()) :: binary() | nil
-  def get_conversation_account_id(conversation_id) do
-    with %{account_id: account_id} <- Conversations.get_conversation!(conversation_id) do
-      account_id
-    else
-      # TODO: better error handling
-      _error -> nil
     end
   end
 

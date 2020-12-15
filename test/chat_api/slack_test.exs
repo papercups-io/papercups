@@ -21,13 +21,6 @@ defmodule ChatApi.SlackTest do
       {:ok, conversation: conversation, account: account, customer: customer, thread: thread}
     end
 
-    test "get_conversation_account_id/1 returns a valid account_id",
-         %{conversation: conversation} do
-      account_id = Slack.get_conversation_account_id(conversation.id)
-
-      assert account_id
-    end
-
     test "is_valid_access_token?/1 checks the validity of an access token" do
       assert Slack.is_valid_access_token?("invalid") == false
       assert Slack.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true

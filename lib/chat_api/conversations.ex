@@ -260,6 +260,34 @@ defmodule ChatApi.Conversations do
     |> Repo.delete()
   end
 
+  # Notifications
+
+  def broadcast_conversation_to_admin!(
+        %Conversation{id: conversation_id, account_id: account_id} = conversation
+      ) do
+    # TODO: should this be handled async in a Task?
+    ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:created", %{
+      "id" => conversation_id
+    })
+
+    conversation
+  end
+
+  def broadcast_conversation_to_customer!(
+        %Conversation{id: conversation_id, customer_id: customer_id} = conversation
+      ) do
+    # TODO: should this be handled async in a Task?
+    ChatApiWeb.Endpoint.broadcast!(
+      "conversation:lobby:" <> customer_id,
+      "conversation:created",
+      %{
+        "id" => conversation_id
+      }
+    )
+
+    conversation
+  end
+
   #####################
   # Private methods
   #####################

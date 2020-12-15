@@ -117,6 +117,12 @@ defmodule ChatApiWeb.SlackController do
     nil
   end
 
+  defp handle_event(%{"type" => "message", "text" => ""} = _event) do
+    # Don't do anything for blank messages (e.g. when only an attachment is sent)
+    # TODO: add better support for image/file attachments
+    nil
+  end
+
   defp handle_event(
          %{
            "type" => "message",
@@ -127,7 +133,8 @@ defmodule ChatApiWeb.SlackController do
          } = event
        ) do
     Logger.debug("Handling Slack event: #{inspect(event)}")
-
+    # TODO: check if message is coming from support channel thread?
+    # If yes, will need to notify other "main" Slack channel...
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
       %{id: conversation_id, account_id: account_id} = conversation
       sender_id = Slack.get_sender_id(conversation, user_id)
@@ -143,6 +150,112 @@ defmodule ChatApiWeb.SlackController do
       |> Messages.create_and_fetch!()
       |> Messages.broadcast_to_conversation!()
       |> Messages.notify(:webhooks)
+    end
+  end
+
+  defp handle_event(
+         %{
+           "type" => "message",
+           "text" => text,
+           "channel" => channel,
+           "user" => user_id,
+           "ts" => ts
+         } = event
+       ) do
+    # Just some test IDs from my local env
+    support_channel_id = "C01HKUP8RPA"
+    account_id = "2ebbad4c-b162-4ed2-aff5-eaf9ebf469a5"
+
+    if channel == support_channel_id do
+      IO.inspect("!!! Handling NEW Slack event !!!")
+      IO.inspect(event)
+
+      with %{access_token: token} <- Slack.get_slack_authorization(account_id),
+           {:ok, %{body: %{"ok" => true, "user" => user}}} <-
+             Slack.retrieve_user_info(user_id, token),
+           %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user do
+        IO.inspect(email)
+        IO.inspect(user)
+
+        customer =
+          case ChatApi.Customers.find_by_email(email, account_id) do
+            nil ->
+              {:ok, created} =
+                ChatApi.Customers.create_customer(%{
+                  account_id: account_id,
+                  email: email,
+                  name: name,
+                  time_zone: time_zone,
+                  first_seen: DateTime.utc_now(),
+                  last_seen: DateTime.utc_now(),
+                  # TODO: last_seen is stored as a date, while last_seen_at is stored as
+                  # a datetime -- we should opt for datetime values whenever possible
+                  last_seen_at: DateTime.utc_now()
+                })
+
+              IO.inspect("CREATED NEW CUSTOMER!")
+              IO.inspect(created)
+
+              created
+
+            found ->
+              IO.inspect(found)
+
+              found
+          end
+
+        # TODO: check for existing conversation thread!
+        # OR: check for existing conversation in channel with different thread ID???
+        # TODO: maybe this logic here only worries about CREATING new conversations?
+
+        {:ok, conversation} =
+          ChatApi.Conversations.create_conversation(%{
+            account_id: account_id,
+            customer_id: customer.id
+          })
+
+        IO.inspect("CONVERSATION!")
+        IO.inspect(conversation)
+
+        # TODO: create new slack_conversation_thread? (use `ts` field from message for `slack_thread_ts`)
+        {:ok, slack_conversation_thread} =
+          ChatApi.SlackConversationThreads.create_slack_conversation_thread(%{
+            slack_channel: channel,
+            slack_thread_ts: ts,
+            account_id: account_id,
+            conversation_id: conversation.id
+          })
+
+        IO.inspect("SLACK CONVERSATION THREAD!")
+        IO.inspect(slack_conversation_thread)
+
+        {:ok, message} =
+          ChatApi.Messages.create_message(%{
+            account_id: account_id,
+            conversation_id: conversation.id,
+            customer_id: customer.id,
+            body: text
+          })
+
+        IO.inspect("MESSAGE!")
+        IO.inspect(message)
+
+        conversation
+        |> ChatApi.Conversations.broadcast_conversation_to_admin!()
+        |> ChatApi.Conversations.broadcast_conversation_to_customer!()
+
+        ChatApi.Messages.get_message!(message.id)
+        |> ChatApi.Messages.broadcast_to_conversation!()
+        |> ChatApi.Messages.notify(:slack)
+        |> ChatApi.Messages.notify(:webhooks)
+      end
+
+      # TODO: what happens here?
+      # check if an account has a support_channel_id that matches
+      # if channel matches a "support" channel:
+      # get the "customer" info based on the user_id, and find or create a customer
+      # spawn a new conversation with the provided message, linking to customer_id
+      # handle default assignment?
     end
   end
 
