@@ -101,6 +101,16 @@ defmodule ChatApi.Slack do
     end
   end
 
+  @spec get_access_token(binary()) :: Tesla.Env.result()
+  def get_access_token(code) do
+    client_id = System.get_env("PAPERCUPS_SLACK_CLIENT_ID")
+    client_secret = System.get_env("PAPERCUPS_SLACK_CLIENT_SECRET")
+
+    get("/oauth.v2.access",
+      query: [code: code, client_id: client_id, client_secret: client_secret]
+    )
+  end
+
   @spec log(binary()) :: :ok | Tesla.Env.result()
   def log(message) do
     case System.get_env("PAPERCUPS_SLACK_WEBHOOK_URL") do
@@ -189,16 +199,6 @@ defmodule ChatApi.Slack do
                   } on account #{inspect(account_id)}"
         end
     end
-  end
-
-  @spec get_access_token(binary()) :: Tesla.Env.result()
-  def get_access_token(code) do
-    client_id = System.get_env("PAPERCUPS_SLACK_CLIENT_ID")
-    client_secret = System.get_env("PAPERCUPS_SLACK_CLIENT_SECRET")
-
-    get("/oauth.v2.access",
-      query: [code: code, client_id: client_id, client_secret: client_secret]
-    )
   end
 
   @spec send_conversation_message_alert(binary(), binary(), keyword()) ::
