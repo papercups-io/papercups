@@ -189,6 +189,7 @@ defmodule ChatApiWeb.SlackController do
         IO.inspect(email)
         IO.inspect(user)
 
+        # TODO: move into a `find_or_create_by_email` method
         customer =
           case ChatApi.Customers.find_by_email(email, account_id) do
             nil ->
@@ -219,6 +220,9 @@ defmodule ChatApiWeb.SlackController do
         # TODO: check for existing conversation thread!
         # OR: check for existing conversation in channel with different thread ID???
         # TODO: maybe this logic here only worries about CREATING new conversations?
+
+        # TODO: should the conversation + thread + message all be handled in a transaction???
+        # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
 
         {:ok, conversation} =
           ChatApi.Conversations.create_conversation(%{

@@ -56,7 +56,9 @@ defmodule ChatApi.Customers do
     external_id |> to_string() |> find_by_external_id(account_id)
   end
 
-  @spec find_by_email(binary(), binary()) :: Customer.t() | nil
+  @spec find_by_email(binary() | nil, binary()) :: Customer.t() | nil
+  def find_by_email(nil, _account_id), do: nil
+
   def find_by_email(email, account_id) do
     Customer
     |> where(account_id: ^account_id, email: ^email)
