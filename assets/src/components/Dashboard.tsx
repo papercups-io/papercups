@@ -323,8 +323,6 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
-<<<<<<< HEAD
-=======
 
       {isHostedProd && currentUser && (
         <ChatWidget
@@ -340,7 +338,6 @@ const Dashboard = (props: RouteComponentProps) => {
           }}
         />
       )}
->>>>>>> a243a2a2728ecfb0cd8eb3a7245eb6f949a9dff2
     </Layout>
   );
 };
