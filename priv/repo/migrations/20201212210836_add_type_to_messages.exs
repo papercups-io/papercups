@@ -3,8 +3,8 @@ defmodule ChatApi.Repo.Migrations.AddTypeToMessages do
 
   def change do
     alter table(:messages) do
-      add(:type, :string)
-      add(:private, :boolean)
+      add(:message_type, :string)
+      add(:priv, :boolean)
     end
   end
 end
