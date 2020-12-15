@@ -17,7 +17,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
 
     # TODO: improve error handling!
-    {:ok, response} = Slack.get_access_token(code)
+    {:ok, response} = Slack.Client.get_access_token(code)
 
     Logger.info("Slack OAuth response: #{inspect(response)}")
 
@@ -138,20 +138,20 @@ defmodule ChatApiWeb.SlackController do
     # If yes, will need to notify other "main" Slack channel...
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
       # TODO: holy hell clean this up!
-      if Slack.is_primary_channel?(conversation.account_id, channel) do
+      if Slack.Helpers.is_primary_channel?(conversation.account_id, channel) do
         %{
           "body" => text,
           "conversation_id" => conversation.id,
           "account_id" => conversation.account_id,
-          "user_id" => Slack.get_admin_sender_id(conversation, user_id)
+          "user_id" => Slack.Helpers.get_admin_sender_id(conversation, user_id)
         }
         |> Messages.create_and_fetch!()
         |> Messages.broadcast_to_conversation!()
         |> Messages.notify(:webhooks)
-        |> Messages.notify(:other_slack_threads)
+        |> Messages.notify(:slack_support_threads)
       else
         # Some duplication here, but probably more readable then if we tried to be clever
-        Slack.format_sender_id!(conversation.account_id, user_id)
+        Slack.Helpers.format_sender_id!(conversation.account_id, user_id)
         |> Map.merge(%{
           "body" => text,
           "conversation_id" => conversation.id,
@@ -182,9 +182,9 @@ defmodule ChatApiWeb.SlackController do
       IO.inspect("!!! Handling NEW Slack event !!!")
       IO.inspect(event)
 
-      with %{access_token: token} <- Slack.get_slack_authorization(account_id),
+      with %{access_token: token} <- Slack.Helpers.get_slack_authorization(account_id),
            {:ok, %{body: %{"ok" => true, "user" => user}}} <-
-             Slack.retrieve_user_info(user_id, token),
+             Slack.Client.retrieve_user_info(user_id, token),
            %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user do
         IO.inspect(email)
         IO.inspect(user)
@@ -291,7 +291,7 @@ defmodule ChatApiWeb.SlackController do
       # Putting in an async Task for now, since we don't care if this succeeds
       # or fails (and we also don't want it to block anything)
       Task.start(fn ->
-        ChatApi.Slack.log("#{email} successfully linked Slack!")
+        ChatApi.Slack.Notifications.log("#{email} successfully linked Slack!")
       end)
     end
 

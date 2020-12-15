@@ -115,7 +115,7 @@ defmodule ChatApi.Messages do
     Logger.info("Sending notification: :slack")
     # TODO: should we just pass in the message struct here?
     Task.start(fn ->
-      ChatApi.Slack.send_conversation_message_alert_v2(message)
+      ChatApi.Slack.Notifications.notify_primary_channel(message)
     end)
 
     message
@@ -160,12 +160,12 @@ defmodule ChatApi.Messages do
     message
   end
 
-  # TODO: come up with a better name... it's not super clear what `other_slack_threads` means!
-  def notify(%Message{} = message, :other_slack_threads) do
-    Logger.info("Sending notification: :other_slack_threads")
+  # TODO: come up with a better name... it's not super clear what `slack_support_threads` means!
+  def notify(%Message{} = message, :slack_support_threads) do
+    Logger.info("Sending notification: :slack_support_threads")
     # TODO: should we just pass in the message struct here?
     Task.start(fn ->
-      ChatApi.Slack.notify_auxiliary_threads(message)
+      ChatApi.Slack.Notifications.notify_auxiliary_threads(message)
     end)
 
     message
