@@ -1,14 +1,1 @@
-<svg id="emoji" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
-  <g id="color">
-    <polygon fill="#1890ff" stroke="none" stroke-miterlimit="10" stroke-width="2" points="49.9235,50.25 51.9,35.85 20.4,35.85 22.6588,50.25"/>
-  </g>
-  <g id="hair"/>
-  <g id="skin"/>
-  <g id="skin-shadow"/>
-  <g id="line">
-    <polygon fill="none" stroke="#000000" stroke-miterlimit="10" stroke-width="2" points="49.9235,50.25 51.9,35.85 20.4,35.85 22.6588,50.25"/>
-    <polyline fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" points="54,20.55 47.7,66.45 25.2,66.45 18,20.55"/>
-    <line x1="18" x2="54" y1="20.55" y2="20.55" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
-    <line x1="36" x2="36" y1="5" y2="17" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
-  </g>
-</svg>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700"><defs><style>.cls-1{fill:#231f20;}.cls-2{fill:#fff;}</style></defs><rect class="cls-1" width="700" height="700" rx="350"/><path class="cls-2" d="M496.77,346.53A108.42,108.42,0,0,1,388.35,455H251.05l12.38-54.21H380.32a54.21,54.21,0,0,0,0-108.42H279.93l16.5-87.54h-69.3a23.89,23.89,0,1,1,0-47.78H357.87l-16.5,81.11h47A108.42,108.42,0,0,1,496.77,346.53Z"/><path class="cls-2" d="M399.19,348.14a24.09,24.09,0,0,1-24.09,24.09H267.55L275.8,324h99.3A24.1,24.1,0,0,1,399.19,348.14Z"/><circle class="cls-2" cx="295.28" cy="515.9" r="27.1"/><circle class="cls-2" cx="411.33" cy="515.9" r="27.1"/></svg>
