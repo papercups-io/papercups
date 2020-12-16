@@ -170,114 +170,79 @@ defmodule ChatApiWeb.SlackController do
          %{
            "type" => "message",
            "text" => text,
+           "team" => team,
            "channel" => channel,
            "user" => user_id,
            "ts" => ts
          } = event
        ) do
-    # Just some test IDs from my local env
-    support_channel_id = "C01HKUP8RPA"
-    account_id = "2ebbad4c-b162-4ed2-aff5-eaf9ebf469a5"
-
     # TODO: have different "types" of slack_authorizations: "reply" and "support"?
     # here we check if this event matches the "support" auth/workspace + channel
     # (I'm assuming the event has a field for this!)
 
-    if channel == support_channel_id do
+    with %{account_id: account_id, access_token: token} <-
+           Slack.Helpers.get_fake_slack_authorization(%{
+             channel_id: channel,
+             team_id: team,
+             type: "support"
+           }),
+         {:ok, %{body: %{"ok" => true, "user" => user}}} <-
+           Slack.Client.retrieve_user_info(user_id, token),
+         %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user,
+         {:ok, customer} <-
+           ChatApi.Customers.find_or_create_by_email(email, account_id, %{
+             name: name,
+             time_zone: time_zone
+           }),
+         # TODO: should the conversation + thread + message all be handled in a transaction?
+         # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
+         # TODO: should we handle default assignment here as well?
+         {:ok, conversation} <-
+           Conversations.create_conversation(%{
+             account_id: account_id,
+             customer_id: customer.id
+           }),
+         {:ok, slack_conversation_thread} <-
+           ChatApi.SlackConversationThreads.create_slack_conversation_thread(%{
+             slack_channel: channel,
+             slack_thread_ts: ts,
+             account_id: account_id,
+             conversation_id: conversation.id
+           }),
+         {:ok, message} <-
+           Messages.create_message(%{
+             account_id: account_id,
+             conversation_id: conversation.id,
+             customer_id: customer.id,
+             body: text
+           }) do
       IO.inspect("!!! Handling NEW Slack event !!!")
       IO.inspect(event)
+      IO.inspect(email)
+      IO.inspect(user)
 
-      with %{access_token: token} <- Slack.Helpers.get_slack_authorization(account_id),
-           {:ok, %{body: %{"ok" => true, "user" => user}}} <-
-             Slack.Client.retrieve_user_info(user_id, token),
-           %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user do
-        IO.inspect(email)
-        IO.inspect(user)
+      # TODO: check for existing conversation thread!
+      # OR: check for existing conversation in channel with different thread ID???
+      # TODO: maybe this logic here only worries about CREATING new conversations?
 
-        # TODO: move into a `find_or_create_by_email` method
-        customer =
-          case ChatApi.Customers.find_by_email(email, account_id) do
-            nil ->
-              {:ok, created} =
-                ChatApi.Customers.create_customer(%{
-                  account_id: account_id,
-                  email: email,
-                  name: name,
-                  time_zone: time_zone,
-                  first_seen: DateTime.utc_now(),
-                  last_seen: DateTime.utc_now(),
-                  # TODO: last_seen is stored as a date, while last_seen_at is stored as
-                  # a datetime -- we should opt for datetime values whenever possible
-                  last_seen_at: DateTime.utc_now()
-                })
+      IO.inspect("CONVERSATION!")
+      IO.inspect(conversation)
 
-              IO.inspect("CREATED NEW CUSTOMER!")
-              IO.inspect(created)
+      IO.inspect("SLACK CONVERSATION THREAD!")
+      IO.inspect(slack_conversation_thread)
 
-              created
+      IO.inspect("MESSAGE!")
+      IO.inspect(message)
 
-            found ->
-              IO.inspect(found)
+      conversation
+      |> Conversations.Notification.broadcast_conversation_to_admin!()
+      |> Conversations.Notification.broadcast_conversation_to_customer!()
 
-              found
-          end
-
-        # TODO: check for existing conversation thread!
-        # OR: check for existing conversation in channel with different thread ID???
-        # TODO: maybe this logic here only worries about CREATING new conversations?
-
-        # TODO: should the conversation + thread + message all be handled in a transaction???
-        # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
-
-        {:ok, conversation} =
-          Conversations.create_conversation(%{
-            account_id: account_id,
-            customer_id: customer.id
-          })
-
-        IO.inspect("CONVERSATION!")
-        IO.inspect(conversation)
-
-        # TODO: create new slack_conversation_thread? (use `ts` field from message for `slack_thread_ts`)
-        {:ok, slack_conversation_thread} =
-          ChatApi.SlackConversationThreads.create_slack_conversation_thread(%{
-            slack_channel: channel,
-            slack_thread_ts: ts,
-            account_id: account_id,
-            conversation_id: conversation.id
-          })
-
-        IO.inspect("SLACK CONVERSATION THREAD!")
-        IO.inspect(slack_conversation_thread)
-
-        {:ok, message} =
-          Messages.create_message(%{
-            account_id: account_id,
-            conversation_id: conversation.id,
-            customer_id: customer.id,
-            body: text
-          })
-
-        IO.inspect("MESSAGE!")
-        IO.inspect(message)
-
-        conversation
-        |> Conversations.Notification.broadcast_conversation_to_admin!()
-        |> Conversations.Notification.broadcast_conversation_to_customer!()
-
-        Messages.get_message!(message.id)
-        |> Messages.Notification.broadcast_to_conversation!()
-        # notify primary channel only
-        |> Messages.Notification.notify(:slack)
-        |> Messages.Notification.notify(:webhooks)
-      end
-
-      # TODO: what happens here?
-      # check if an account has a support_channel_id that matches
-      # if channel matches a "support" channel:
-      # get the "customer" info based on the user_id, and find or create a customer
-      # spawn a new conversation with the provided message, linking to customer_id
-      # handle default assignment?
+      Messages.get_message!(message.id)
+      |> Messages.Notification.broadcast_to_conversation!()
+      # notify primary channel only
+      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.notify(:webhooks)
     end
   end
 

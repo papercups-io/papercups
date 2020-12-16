@@ -110,6 +110,17 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  def get_fake_slack_authorization(%{channel_id: channel_id}) do
+    support_channel_id = "C01HKUP8RPA"
+    account_id = "2ebbad4c-b162-4ed2-aff5-eaf9ebf469a5"
+
+    if channel_id == support_channel_id do
+      SlackAuthorizations.get_authorization_by_account(account_id)
+    else
+      nil
+    end
+  end
+
   # TODO: not sure the most idiomatic way to handle this, but basically this
   # just formats how we show the name/email of the customer if they exist
   @spec identify_customer(Customer.t()) :: binary()

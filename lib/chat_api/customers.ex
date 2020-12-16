@@ -10,34 +10,11 @@ defmodule ChatApi.Customers do
   alias ChatApi.Tags.CustomerTag
 
   @spec list_customers(binary()) :: [Customer.t()]
-  @doc """
-  Returns the list of customers.
-
-  ## Examples
-
-      iex> list_customers(account_id)
-      [%Customer{}, ...]
-
-  """
   def list_customers(account_id) do
     Customer |> where(account_id: ^account_id) |> Repo.all()
   end
 
   @spec get_customer!(binary()) :: Customer.t() | nil
-  @doc """
-  Gets a single customer.
-
-  Raises `Ecto.NoResultsError` if the Customer does not exist.
-
-  ## Examples
-
-      iex> get_customer!(123)
-      %Customer{}
-
-      iex> get_customer!(456)
-      ** (Ecto.NoResultsError)
-
-  """
   def get_customer!(id) do
     Customer |> Repo.get!(id) |> Repo.preload(:tags)
   end
@@ -65,6 +42,28 @@ defmodule ChatApi.Customers do
     |> order_by(desc: :updated_at)
     |> first()
     |> Repo.one()
+  end
+
+  @spec find_or_create_by_email(binary() | nil, binary(), map()) ::
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
+  def find_or_create_by_email(email, account_id, attrs \\ %{}) do
+    case ChatApi.Customers.find_by_email(email, account_id) do
+      nil ->
+        %{
+          # Defaults
+          first_seen: DateTime.utc_now(),
+          last_seen: DateTime.utc_now(),
+          # TODO: last_seen is stored as a date, while last_seen_at is stored as
+          # a datetime -- we should opt for datetime values whenever possible
+          last_seen_at: DateTime.utc_now()
+        }
+        |> Map.merge(attrs)
+        |> Map.merge(%{email: email, account_id: account_id})
+        |> ChatApi.Customers.create_customer()
+
+      customer ->
+        {:ok, customer}
+    end
   end
 
   @spec create_customer(map()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
@@ -129,32 +128,11 @@ defmodule ChatApi.Customers do
   def sanitize_ad_hoc_metadata(metadata), do: metadata
 
   @spec delete_customer(Customer.t()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Deletes a customer.
-
-  ## Examples
-
-      iex> delete_customer(customer)
-      {:ok, %Customer{}}
-
-      iex> delete_customer(customer)
-      {:error, %Ecto.Changeset{}}
-
-  """
   def delete_customer(%Customer{} = customer) do
     Repo.delete(customer)
   end
 
   @spec change_customer(Customer.t(), map()) :: Ecto.Changeset.t()
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking customer changes.
-
-  ## Examples
-
-      iex> change_customer(customer)
-      %Ecto.Changeset{data: %Customer{}}
-
-  """
   def change_customer(%Customer{} = customer, attrs \\ %{}) do
     Customer.changeset(customer, attrs)
   end
