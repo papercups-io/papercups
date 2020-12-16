@@ -105,6 +105,7 @@ defmodule ChatApi.Factory do
       team_name: sequence(:team_name, &"some team_name #{&1}"),
       token_type: "some token_type",
       webhook_url: "some webhook_url",
+      type: "reply",
       account: build(:account)
     }
   end
