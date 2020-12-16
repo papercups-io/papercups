@@ -29,23 +29,6 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec find_matching_customer(binary(), binary()) :: Customer.t() | nil
-  def find_matching_customer(account_id, slack_user_id) do
-    # TODO: maybe we should just have a method that returns the account's access token
-    # TODO: do we need to specify which authorization "type" we're using here? yes, I think so...
-    # %{access_token: access_token} = get_slack_authorization(account_id)
-
-    case SlackAuthorizations.get_authorization_by_account(account_id) do
-      %{access_token: access_token} ->
-        slack_user_id
-        |> get_user_email(access_token)
-        |> ChatApi.Customers.find_by_email(account_id)
-
-      _ ->
-        nil
-    end
-  end
-
   @spec find_matching_customer_v2(any(), binary()) :: Customer.t() | nil
   def find_matching_customer_v2(authorization, slack_user_id) do
     case authorization do
@@ -53,23 +36,6 @@ defmodule ChatApi.Slack.Helpers do
         slack_user_id
         |> get_user_email(access_token)
         |> ChatApi.Customers.find_by_email(account_id)
-
-      _ ->
-        nil
-    end
-  end
-
-  @spec find_matching_user(binary(), binary()) :: User.t() | nil
-  def find_matching_user(account_id, slack_user_id) do
-    # TODO: maybe we should just have a method that returns the account's access token
-    # TODO: do we need to specify which authorization "type" we're using here? yes, I think so...
-    # %{access_token: access_token} = get_slack_authorization(account_id)
-
-    case SlackAuthorizations.get_authorization_by_account(account_id) do
-      %{access_token: access_token} ->
-        slack_user_id
-        |> get_user_email(access_token)
-        |> ChatApi.Users.find_user_by_email(account_id)
 
       _ ->
         nil
@@ -89,45 +55,11 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  # Look for a match between the Slack sender and internal Papercups users
-  # to try to identify the sender; falls back to the default assignee id.
-  @spec get_admin_sender_id(Conversations.Conversation.t(), binary()) :: binary()
-  def get_admin_sender_id(
-        %Conversations.Conversation{account_id: account_id, assignee_id: assignee_id},
-        slack_user_id
-      ) do
-    case find_matching_user(account_id, slack_user_id) do
-      %{id: id} -> id
-      _ -> assignee_id
-    end
-  end
-
   @spec get_admin_sender_id_v2(any(), binary(), binary()) :: binary()
   def get_admin_sender_id_v2(authorization, slack_user_id, fallback) do
     case find_matching_user_v2(authorization, slack_user_id) do
       %{id: id} -> id
       _ -> fallback
-    end
-  end
-
-  # TODO: this could probably be named better?
-  # TODO: nested case statements are a little icky
-  @spec format_sender_id!(binary(), binary()) :: map()
-  def format_sender_id!(account_id, slack_user_id) do
-    case find_matching_user(account_id, slack_user_id) do
-      %{id: user_id} ->
-        %{"user_id" => user_id}
-
-      _ ->
-        case find_matching_customer(account_id, slack_user_id) do
-          %{id: customer_id} ->
-            %{"customer_id" => customer_id}
-
-          _ ->
-            raise "Unable to find matching user or customer ID for Slack user #{
-                    inspect(slack_user_id)
-                  } on account #{inspect(account_id)}"
-        end
     end
   end
 
@@ -147,28 +79,6 @@ defmodule ChatApi.Slack.Helpers do
                     inspect(slack_user_id)
                   } on account authorization #{inspect(authorization)}"
         end
-    end
-  end
-
-  @spec is_primary_channel?(binary(), binary()) :: boolean()
-  def is_primary_channel?(account_id, slack_channel_id) do
-    case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
-      %{channel: channel, channel_id: channel_id} ->
-        channel == slack_channel_id || channel_id == slack_channel_id
-
-      _ ->
-        false
-    end
-  end
-
-  @spec is_primary_reply_channel?(binary(), binary()) :: boolean()
-  def is_primary_reply_channel?(account_id, slack_channel_id) do
-    case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
-      %{channel: channel, channel_id: channel_id} ->
-        channel == slack_channel_id || channel_id == slack_channel_id
-
-      _ ->
-        false
     end
   end
 
