@@ -97,7 +97,7 @@ defmodule ChatApi.Factory do
       app_id: sequence(:app_id, &"some app_id #{&1}"),
       authed_user_id: sequence(:authed_user_id, &"some authed_user_id #{&1}"),
       bot_user_id: sequence(:bot_user_id, &"some bot_user_id #{&1}"),
-      channel: "some channel",
+      channel: "#test",
       channel_id: sequence(:channel_id, &"some channel_id #{&1}"),
       configuration_url: "some configuration_url",
       scope: "some scope",
@@ -114,7 +114,7 @@ defmodule ChatApi.Factory do
       account: build(:account),
       conversation: build(:conversation),
       slack_thread_ts: sequence("1234.56789"),
-      slack_channel: "bots"
+      slack_channel: "#test"
     }
   end
 

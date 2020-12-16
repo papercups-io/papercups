@@ -138,7 +138,6 @@ defmodule ChatApiWeb.SlackController do
     # TODO: check if message is coming from support channel thread?
     # If yes, will need to notify other "main" Slack channel...
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
-      # TODO: holy hell clean this up!
       if Slack.Helpers.is_primary_channel?(conversation.account_id, channel) do
         %{
           "body" => text,
