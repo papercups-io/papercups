@@ -133,9 +133,9 @@ defmodule ChatApiWeb.MessageController do
 
   defp broadcast_new_message(message) do
     message
-    |> Messages.broadcast_to_conversation!()
-    |> Messages.notify(:slack)
-    |> Messages.notify(:slack_support_threads)
-    |> Messages.notify(:webhooks)
+    |> Messages.Notification.broadcast_to_conversation!()
+    |> Messages.Notification.notify(:slack)
+    |> Messages.Notification.notify(:slack_support_threads)
+    |> Messages.Notification.notify(:webhooks)
   end
 end

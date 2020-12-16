@@ -4,6 +4,7 @@ defmodule ChatApiWeb.SlackController do
   require Logger
 
   alias ChatApi.{
+    Conversations,
     Messages,
     Slack,
     SlackAuthorizations,
@@ -146,9 +147,9 @@ defmodule ChatApiWeb.SlackController do
           "user_id" => Slack.Helpers.get_admin_sender_id(conversation, user_id)
         }
         |> Messages.create_and_fetch!()
-        |> Messages.broadcast_to_conversation!()
-        |> Messages.notify(:webhooks)
-        |> Messages.notify(:slack_support_threads)
+        |> Messages.Notification.broadcast_to_conversation!()
+        |> Messages.Notification.notify(:webhooks)
+        |> Messages.Notification.notify(:slack_support_threads)
       else
         # Some duplication here, but probably more readable then if we tried to be clever
         conversation.account_id
@@ -159,9 +160,9 @@ defmodule ChatApiWeb.SlackController do
           "account_id" => conversation.account_id
         })
         |> Messages.create_and_fetch!()
-        |> Messages.broadcast_to_conversation!()
-        |> Messages.notify(:webhooks)
-        |> Messages.notify(:slack)
+        |> Messages.Notification.broadcast_to_conversation!()
+        |> Messages.Notification.notify(:webhooks)
+        |> Messages.Notification.notify(:slack)
       end
     end
   end
@@ -230,7 +231,7 @@ defmodule ChatApiWeb.SlackController do
         # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
 
         {:ok, conversation} =
-          ChatApi.Conversations.create_conversation(%{
+          Conversations.create_conversation(%{
             account_id: account_id,
             customer_id: customer.id
           })
@@ -251,7 +252,7 @@ defmodule ChatApiWeb.SlackController do
         IO.inspect(slack_conversation_thread)
 
         {:ok, message} =
-          ChatApi.Messages.create_message(%{
+          Messages.create_message(%{
             account_id: account_id,
             conversation_id: conversation.id,
             customer_id: customer.id,
@@ -262,14 +263,14 @@ defmodule ChatApiWeb.SlackController do
         IO.inspect(message)
 
         conversation
-        |> ChatApi.Conversations.broadcast_conversation_to_admin!()
-        |> ChatApi.Conversations.broadcast_conversation_to_customer!()
+        |> Conversations.Notification.broadcast_conversation_to_admin!()
+        |> Conversations.Notification.broadcast_conversation_to_customer!()
 
-        ChatApi.Messages.get_message!(message.id)
-        |> ChatApi.Messages.broadcast_to_conversation!()
+        Messages.get_message!(message.id)
+        |> Messages.Notification.broadcast_to_conversation!()
         # notify primary channel only
-        |> ChatApi.Messages.notify(:slack)
-        |> ChatApi.Messages.notify(:webhooks)
+        |> Messages.Notification.notify(:slack)
+        |> Messages.Notification.notify(:webhooks)
       end
 
       # TODO: what happens here?

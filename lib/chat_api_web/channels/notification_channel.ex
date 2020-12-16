@@ -107,11 +107,11 @@ defmodule ChatApiWeb.NotificationChannel do
 
   defp broadcast_new_message(message) do
     message
-    |> Messages.broadcast_to_conversation!()
-    |> Messages.notify(:slack)
-    |> Messages.notify(:slack_support_threads)
-    |> Messages.notify(:webhooks)
-    |> Messages.notify(:conversation_reply_email)
+    |> Messages.Notification.broadcast_to_conversation!()
+    |> Messages.Notification.notify(:slack)
+    |> Messages.Notification.notify(:slack_support_threads)
+    |> Messages.Notification.notify(:webhooks)
+    |> Messages.Notification.notify(:conversation_reply_email)
   end
 
   defp maybe_update_conversation_assignee(

@@ -4,11 +4,11 @@ defmodule ChatApi.Conversations.Helpers do
   """
 
   require Logger
-  alias ChatApi.Slack
+  # alias ChatApi.Slack
 
   @spec send_conversation_state_update(Conversation.t(), map()) ::
           {:ok, String.t()} | {:error, String.t()}
-  def send_conversation_state_update(conversation, state) do
+  def send_conversation_state_update(_conversation, state) do
     case get_conversation_state_message(state) do
       nil ->
         # TODO: should we use an atom here (e.g. :invalid_state),
