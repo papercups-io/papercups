@@ -130,6 +130,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
     const q = qs.parse(query);
     const code = q.code ? String(q.code) : null;
     const state = q.state ? String(q.state) : null;
+    console.log('Handling integration:', {type, q, code, state});
 
     if (!code) {
       return null;
