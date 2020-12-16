@@ -151,7 +151,8 @@ defmodule ChatApiWeb.SlackController do
         |> Messages.notify(:slack_support_threads)
       else
         # Some duplication here, but probably more readable then if we tried to be clever
-        Slack.Helpers.format_sender_id!(conversation.account_id, user_id)
+        conversation.account_id
+        |> Slack.Helpers.format_sender_id!(user_id)
         |> Map.merge(%{
           "body" => text,
           "conversation_id" => conversation.id,
@@ -177,6 +178,10 @@ defmodule ChatApiWeb.SlackController do
     # Just some test IDs from my local env
     support_channel_id = "C01HKUP8RPA"
     account_id = "2ebbad4c-b162-4ed2-aff5-eaf9ebf469a5"
+
+    # TODO: have different "types" of slack_authorizations: "reply" and "support"?
+    # here we check if this event matches the "support" auth/workspace + channel
+    # (I'm assuming the event has a field for this!)
 
     if channel == support_channel_id do
       IO.inspect("!!! Handling NEW Slack event !!!")
