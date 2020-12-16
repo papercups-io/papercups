@@ -8,6 +8,7 @@ defmodule ChatApi.Slack.Notifications do
   alias ChatApi.{
     Conversations,
     Slack,
+    SlackAuthorizations,
     SlackConversationThreads,
     Messages.Message
   }
@@ -40,7 +41,7 @@ defmodule ChatApi.Slack.Notifications do
     %{account_id: account_id, customer: customer} =
       Conversations.get_conversation_with!(conversation_id, :customer)
 
-    auth = Slack.Helpers.get_slack_authorization(account_id)
+    auth = SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"})
     %{access_token: access_token, channel: channel, channel_id: channel_id} = auth
 
     # Check if a Slack thread already exists for this conversation.
@@ -100,13 +101,13 @@ defmodule ChatApi.Slack.Notifications do
         account_id: account_id,
         body: text
       }) do
-    auth = Slack.Helpers.get_slack_authorization(account_id)
+    auth = SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"})
 
     conversation_id
     |> SlackConversationThreads.get_threads_by_conversation_id()
-    |> Stream.reject(fn thread -> thread.slack_channel == auth.channel_id end)
+    |> Stream.filter(fn thread -> thread.slack_channel == auth.channel_id end)
     |> Enum.each(fn thread ->
-      # TODO: should we use Task.async/await here?
+      # TODO: should we use Task.async/await/yield here?
       IO.inspect("!!! SENDING MESSAGE FOR THREAD !!!")
       IO.inspect(thread)
 

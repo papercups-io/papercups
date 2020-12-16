@@ -16,6 +16,7 @@ defmodule ChatApi.Slack.Helpers do
 
   @spec get_user_email(binary(), binary()) :: nil | binary()
   def get_user_email(slack_user_id, access_token) do
+    # TODO: make this more idiomatic, this looks a little weird...
     with {:ok, response} <- ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token) do
       try do
         extract_slack_user_email(response)
@@ -31,20 +32,61 @@ defmodule ChatApi.Slack.Helpers do
   @spec find_matching_customer(binary(), binary()) :: Customer.t() | nil
   def find_matching_customer(account_id, slack_user_id) do
     # TODO: maybe we should just have a method that returns the account's access token
-    %{access_token: access_token} = get_slack_authorization(account_id)
+    # TODO: do we need to specify which authorization "type" we're using here? yes, I think so...
+    # %{access_token: access_token} = get_slack_authorization(account_id)
 
-    slack_user_id
-    |> get_user_email(access_token)
-    |> ChatApi.Customers.find_by_email(account_id)
+    case SlackAuthorizations.get_authorization_by_account(account_id) do
+      %{access_token: access_token} ->
+        slack_user_id
+        |> get_user_email(access_token)
+        |> ChatApi.Customers.find_by_email(account_id)
+
+      _ ->
+        nil
+    end
+  end
+
+  @spec find_matching_customer_v2(any(), binary()) :: Customer.t() | nil
+  def find_matching_customer_v2(authorization, slack_user_id) do
+    case authorization do
+      %{access_token: access_token, account_id: account_id} ->
+        slack_user_id
+        |> get_user_email(access_token)
+        |> ChatApi.Customers.find_by_email(account_id)
+
+      _ ->
+        nil
+    end
   end
 
   @spec find_matching_user(binary(), binary()) :: User.t() | nil
   def find_matching_user(account_id, slack_user_id) do
-    %{access_token: access_token} = get_slack_authorization(account_id)
+    # TODO: maybe we should just have a method that returns the account's access token
+    # TODO: do we need to specify which authorization "type" we're using here? yes, I think so...
+    # %{access_token: access_token} = get_slack_authorization(account_id)
 
-    slack_user_id
-    |> get_user_email(access_token)
-    |> ChatApi.Users.find_user_by_email(account_id)
+    case SlackAuthorizations.get_authorization_by_account(account_id) do
+      %{access_token: access_token} ->
+        slack_user_id
+        |> get_user_email(access_token)
+        |> ChatApi.Users.find_user_by_email(account_id)
+
+      _ ->
+        nil
+    end
+  end
+
+  @spec find_matching_user_v2(any(), binary()) :: User.t() | nil
+  def find_matching_user_v2(authorization, slack_user_id) do
+    case authorization do
+      %{access_token: access_token, account_id: account_id} ->
+        slack_user_id
+        |> get_user_email(access_token)
+        |> ChatApi.Users.find_user_by_email(account_id)
+
+      _ ->
+        nil
+    end
   end
 
   # Look for a match between the Slack sender and internal Papercups users
@@ -60,8 +102,17 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @spec get_admin_sender_id_v2(any(), binary(), binary()) :: binary()
+  def get_admin_sender_id_v2(authorization, slack_user_id, fallback) do
+    case find_matching_user_v2(authorization, slack_user_id) do
+      %{id: id} -> id
+      _ -> fallback
+    end
+  end
+
   # TODO: this could probably be named better?
   # TODO: nested case statements are a little icky
+  @spec format_sender_id!(binary(), binary()) :: map()
   def format_sender_id!(account_id, slack_user_id) do
     case find_matching_user(account_id, slack_user_id) do
       %{id: user_id} ->
@@ -80,9 +131,50 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @spec format_sender_id_v2!(any(), binary()) :: map()
+  def format_sender_id_v2!(authorization, slack_user_id) do
+    case find_matching_user_v2(authorization, slack_user_id) do
+      %{id: user_id} ->
+        %{"user_id" => user_id}
+
+      _ ->
+        case find_matching_customer_v2(authorization, slack_user_id) do
+          %{id: customer_id} ->
+            %{"customer_id" => customer_id}
+
+          _ ->
+            raise "Unable to find matching user or customer ID for Slack user #{
+                    inspect(slack_user_id)
+                  } on account authorization #{inspect(authorization)}"
+        end
+    end
+  end
+
   @spec is_primary_channel?(binary(), binary()) :: boolean()
   def is_primary_channel?(account_id, slack_channel_id) do
-    case get_slack_authorization(account_id) do
+    case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
+      %{channel: channel, channel_id: channel_id} ->
+        channel == slack_channel_id || channel_id == slack_channel_id
+
+      _ ->
+        false
+    end
+  end
+
+  @spec is_primary_reply_channel?(binary(), binary()) :: boolean()
+  def is_primary_reply_channel?(account_id, slack_channel_id) do
+    case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
+      %{channel: channel, channel_id: channel_id} ->
+        channel == slack_channel_id || channel_id == slack_channel_id
+
+      _ ->
+        false
+    end
+  end
+
+  @spec is_primary_channel_v2?(any(), binary()) :: boolean()
+  def is_primary_channel_v2?(authorization, slack_channel_id) do
+    case authorization do
       %{channel: channel, channel_id: channel_id} ->
         channel == slack_channel_id || channel_id == slack_channel_id
 
@@ -98,6 +190,7 @@ defmodule ChatApi.Slack.Helpers do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
       # Supports a fallback access token as an env variable to make it easier to
       # test locally (assumes the existence of a "bots" channel in your workspace)
+      # TODO: deprecate me!
       nil ->
         %{
           access_token: ChatApi.Slack.Token.get_default_access_token(),
@@ -107,17 +200,6 @@ defmodule ChatApi.Slack.Helpers do
 
       auth ->
         auth
-    end
-  end
-
-  def get_fake_slack_authorization(%{channel_id: channel_id}) do
-    support_channel_id = "C01HKUP8RPA"
-    account_id = "2ebbad4c-b162-4ed2-aff5-eaf9ebf469a5"
-
-    if channel_id == support_channel_id do
-      SlackAuthorizations.get_authorization_by_account(account_id)
-    else
-      nil
     end
   end
 
@@ -154,18 +236,6 @@ defmodule ChatApi.Slack.Helpers do
 
   @spec assign_and_broadcast_conversation_updated(map(), binary()) :: :ok | {:error, term()}
   def assign_and_broadcast_conversation_updated(conversation, primary_user_id) do
-    # %{id: conversation_id, account_id: account_id} = conversation
-
-    # {:ok, update} =
-    #   Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
-
-    # result = ChatApiWeb.ConversationView.render("basic.json", conversation: update)
-
-    # ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
-    #   "id" => conversation_id,
-    #   "updates" => result
-    # })
-
     case Conversations.update_conversation(conversation, %{assignee_id: primary_user_id}) do
       {:ok, update} ->
         ChatApiWeb.Endpoint.broadcast!(

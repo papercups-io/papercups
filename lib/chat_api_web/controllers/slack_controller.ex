@@ -11,12 +11,13 @@ defmodule ChatApiWeb.SlackController do
     SlackConversationThreads
   }
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
 
   @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def oauth(conn, %{"code" => code}) do
+  def oauth(conn, %{"code" => code} = params) do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
-
+    IO.inspect("!!! MADE IT !!!")
+    IO.inspect(params)
     # TODO: improve error handling!
     {:ok, response} = Slack.Client.get_access_token(code)
 
@@ -57,7 +58,8 @@ defmodule ChatApiWeb.SlackController do
           configuration_url: configuration_url,
           team_id: team_id,
           team_name: team_name,
-          webhook_url: webhook_url
+          webhook_url: webhook_url,
+          type: Map.get(params, "type", "reply")
         }
 
         SlackAuthorizations.create_or_update(account_id, params)
@@ -75,24 +77,26 @@ defmodule ChatApiWeb.SlackController do
   end
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def authorization(conn, _payload) do
-    with %{account_id: account_id} <- conn.assigns.current_user do
-      auth = SlackAuthorizations.get_authorization_by_account(account_id)
+  def authorization(conn, payload) do
+    filters = %{type: Map.get(payload, "type", "reply")}
 
-      case auth do
-        nil ->
-          json(conn, %{data: nil})
+    conn
+    |> Pow.Plug.current_user()
+    |> Map.get(:account_id)
+    |> SlackAuthorizations.get_authorization_by_account(filters)
+    |> case do
+      nil ->
+        json(conn, %{data: nil})
 
-        _ ->
-          json(conn, %{
-            data: %{
-              created_at: auth.inserted_at,
-              channel: auth.channel,
-              configuration_url: auth.configuration_url,
-              team_name: auth.team_name
-            }
-          })
-      end
+      auth ->
+        json(conn, %{
+          data: %{
+            created_at: auth.inserted_at,
+            channel: auth.channel,
+            configuration_url: auth.configuration_url,
+            team_name: auth.team_name
+          }
+        })
     end
   end
 
@@ -130,33 +134,45 @@ defmodule ChatApiWeb.SlackController do
            "text" => text,
            "thread_ts" => thread_ts,
            "channel" => channel,
-           "user" => user_id
+           "user" => slack_user_id
          } = event
        ) do
     Logger.debug("Handling Slack event: #{inspect(event)}")
     IO.inspect(event)
     # TODO: check if message is coming from support channel thread?
     # If yes, will need to notify other "main" Slack channel...
-    with {:ok, conversation} <- get_thread_conversation(thread_ts, channel) do
-      if Slack.Helpers.is_primary_channel?(conversation.account_id, channel) do
+    with {:ok, conversation} <- get_thread_conversation(thread_ts, channel),
+         %{account_id: account_id, id: conversation_id} <- conversation,
+         primary_reply_authorization <-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
+      if Slack.Helpers.is_primary_channel_v2?(primary_reply_authorization, channel) do
+        IO.inspect("!!! PRIMARY CHANNEL DETECTED !!!")
+
         %{
           "body" => text,
-          "conversation_id" => conversation.id,
-          "account_id" => conversation.account_id,
-          "user_id" => Slack.Helpers.get_admin_sender_id(conversation, user_id)
+          "conversation_id" => conversation_id,
+          "account_id" => account_id,
+          "user_id" =>
+            Slack.Helpers.get_admin_sender_id_v2(
+              primary_reply_authorization,
+              slack_user_id,
+              conversation.assignee_id
+            )
         }
         |> Messages.create_and_fetch!()
         |> Messages.Notification.broadcast_to_conversation!()
         |> Messages.Notification.notify(:webhooks)
         |> Messages.Notification.notify(:slack_support_threads)
       else
-        # Some duplication here, but probably more readable then if we tried to be clever
-        conversation.account_id
-        |> Slack.Helpers.format_sender_id!(user_id)
+        IO.inspect("!!! SUPPORT CHANNEL DETECTED !!!")
+
+        account_id
+        |> SlackAuthorizations.get_authorization_by_account(%{type: "support"})
+        |> Slack.Helpers.format_sender_id_v2!(slack_user_id)
         |> Map.merge(%{
           "body" => text,
-          "conversation_id" => conversation.id,
-          "account_id" => conversation.account_id
+          "conversation_id" => conversation_id,
+          "account_id" => account_id
         })
         |> Messages.create_and_fetch!()
         |> Messages.Notification.broadcast_to_conversation!()
@@ -172,7 +188,7 @@ defmodule ChatApiWeb.SlackController do
            "text" => text,
            "team" => team,
            "channel" => channel,
-           "user" => user_id,
+           "user" => slack_user_id,
            "ts" => ts
          } = event
        ) do
@@ -181,13 +197,13 @@ defmodule ChatApiWeb.SlackController do
     # (I'm assuming the event has a field for this!)
 
     with %{account_id: account_id, access_token: token} <-
-           Slack.Helpers.get_fake_slack_authorization(%{
+           ChatApi.SlackAuthorizations.find_slack_authorization(%{
              channel_id: channel,
              team_id: team,
              type: "support"
            }),
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
-           Slack.Client.retrieve_user_info(user_id, token),
+           Slack.Client.retrieve_user_info(slack_user_id, token),
          %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user,
          {:ok, customer} <-
            ChatApi.Customers.find_or_create_by_email(email, account_id, %{

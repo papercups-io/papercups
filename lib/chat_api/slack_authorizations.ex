@@ -24,10 +24,14 @@ defmodule ChatApi.SlackAuthorizations do
     |> Repo.one()
   end
 
-  @spec get_authorization_by_account(binary()) :: SlackAuthorization.t() | nil
-  def get_authorization_by_account(account_id) do
+  @spec get_authorization_by_account(binary(), map()) :: SlackAuthorization.t() | nil
+  def get_authorization_by_account(account_id, filters \\ %{}) do
+    IO.inspect("FILTERS!!!")
+    IO.inspect(filters)
+
     SlackAuthorization
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
     |> Repo.one()
   end
@@ -35,7 +39,12 @@ defmodule ChatApi.SlackAuthorizations do
   @spec create_or_update(binary(), map()) ::
           {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
   def create_or_update(account_id, params) do
-    existing = get_authorization_by_account(account_id)
+    filters = Map.take(params, [:type])
+    existing = get_authorization_by_account(account_id, filters)
+
+    IO.inspect("!!! WTF !!!")
+    IO.inspect(existing)
+    IO.inspect(params)
 
     if existing do
       update_slack_authorization(existing, params)
