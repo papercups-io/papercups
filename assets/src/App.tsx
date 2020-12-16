@@ -20,6 +20,8 @@ import Pricing from './components/billing/PricingOverview';
 import Sandbox from './components/Sandbox';
 import SharedConversation from './components/conversations/SharedConversation';
 import './App.css';
+import TeamsLand from './components/TeamsLand';
+import TeamsRegister from './components/TeamsRegister';
 
 const App = () => {
   const auth = useAuth();
@@ -36,6 +38,8 @@ const App = () => {
           <Route path="/demo" component={Demo} />
           <Route path="/bot/demo" component={BotDemo} />
           <Route path="/login" component={Login} />
+          <Route path="/teams/register" component={TeamsRegister} />
+          <Route path="/teams" component={TeamsLand} />
           <Route path="/register/:invite" component={Register} />
           <Route path="/register" component={Register} />
           <Route path="/verify" component={EmailVerification} />
@@ -63,6 +67,8 @@ const App = () => {
   return (
     <Router>
       <Switch>
+        <Route path="/teams/register" component={TeamsRegister} />
+        <Route path="/teams" component={TeamsLand} />
         <Route path="/login" component={Login} />
         <Route path="/register/:invite" component={Register} />
         <Route path="/register" component={Register} />

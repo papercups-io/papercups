@@ -5,6 +5,7 @@
   "license": "MIT",
   "repository": "https://github.com/papercups-io/papercups",
   "dependencies": {
+    "@azure/msal-browser": "^2.8.0",
     "@papercups-io/chat-widget": "^1.1.3",
     "@papercups-io/storytime": "^1.0.6",
     "@sentry/react": "^5.20.1",
