@@ -130,19 +130,23 @@ class IntegrationsOverview extends React.Component<Props, State> {
     const q = qs.parse(query);
     const code = q.code ? String(q.code) : null;
     const state = q.state ? String(q.state) : null;
-    console.log('Handling integration:', {type, q, code, state});
 
     if (!code) {
       return null;
     }
 
+    console.log('Handling integration:', {type, q, code, state});
+
     switch (type) {
       case 'slack':
         const type = state || 'reply';
+        console.log('Authorizing Slack:', {type, q, code, state});
 
-        return API.authorizeSlackIntegration(code, type).catch((err) =>
-          logger.error('Failed to authorize Slack:', err)
-        );
+        return API.authorizeSlackIntegration(code, type)
+          .then((result) =>
+            console.log('Successfully authorized Slack:', result)
+          )
+          .catch((err) => logger.error('Failed to authorize Slack:', err));
       case 'gmail':
         return API.authorizeGmailIntegration(code).catch((err) =>
           logger.error('Failed to authorize Gmail:', err)
