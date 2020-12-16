@@ -135,14 +135,14 @@ class IntegrationsOverview extends React.Component<Props, State> {
       return null;
     }
 
-    console.log('Handling integration:', {type, q, code, state});
+    console.log('Handling integration type:', {type, q, code, state});
 
     switch (type) {
       case 'slack':
-        const type = state || 'reply';
-        console.log('Authorizing Slack:', {type, q, code, state});
+        const authorizationType = state || 'reply';
+        console.log('Authorizing Slack:', {authorizationType});
 
-        return API.authorizeSlackIntegration(code, type)
+        return API.authorizeSlackIntegration(code, authorizationType)
           .then((result) =>
             console.log('Successfully authorized Slack:', result)
           )
@@ -152,6 +152,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
           logger.error('Failed to authorize Gmail:', err)
         );
       default:
+        console.log('No type match found for:', type, type === 'slack');
+
         return null;
     }
   };
