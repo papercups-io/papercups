@@ -133,5 +133,18 @@ defmodule ChatApi.SlackConversationThreadsTest do
       assert result.id == slack_conversation_thread.id
       refute SlackConversationThreads.get_thread_by_conversation_id(conversation.id, "ch2")
     end
+
+    test "get_threads_by_conversation_id/2 finds slack_conversation_threads by conversation",
+         %{conversation: conversation} do
+      insert(:slack_conversation_thread, conversation: conversation, slack_channel: "ch1")
+      insert(:slack_conversation_thread, conversation: conversation, slack_channel: "ch2")
+
+      slack_channels =
+        SlackConversationThreads.get_threads_by_conversation_id(conversation.id)
+        |> Enum.map(& &1.slack_channel)
+
+      assert Enum.member?(slack_channels, "ch1")
+      assert Enum.member?(slack_channels, "ch2")
+    end
   end
 end
