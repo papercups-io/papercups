@@ -45,8 +45,11 @@ defmodule ChatApi.Customers do
   end
 
   @spec find_or_create_by_email(binary() | nil, binary(), map()) ::
-          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
-  def find_or_create_by_email(email, account_id, attrs \\ %{}) do
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()} | {:error, atom()}
+  def find_or_create_by_email(email, account_id, attrs \\ %{})
+  def find_or_create_by_email(nil, _account_id, _attrs), do: {:error, :email_required}
+
+  def find_or_create_by_email(email, account_id, attrs) do
     case ChatApi.Customers.find_by_email(email, account_id) do
       nil ->
         %{
