@@ -184,8 +184,9 @@ defmodule ChatApi.Conversations do
     Repo.update_all(query, set: [archived_at: DateTime.utc_now()])
   end
 
-  @spec find_freetier_conversations_old_by([{:days, number | Decimal.t()}, ...]) :: Ecto.Query.t()
-  def find_freetier_conversations_old_by(days: days) do
+  @spec query_free_tier_conversations_inactive_for([{:days, number | Decimal.t()}, ...]) ::
+          Ecto.Query.t()
+  def query_free_tier_conversations_inactive_for(days: days) do
     from c in Conversation,
       join: a in Account,
       on: a.id == c.account_id,

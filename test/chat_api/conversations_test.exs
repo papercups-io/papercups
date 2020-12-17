@@ -249,7 +249,7 @@ defmodule ChatApi.ConversationsTest do
       refute conv1.archived_at
 
       assert {1, _} =
-               Conversations.find_freetier_conversations_old_by(days: 30)
+               Conversations.query_free_tier_conversations_inactive_for(days: 30)
                |> Conversations.archive_conversations()
 
       conv1 = Conversations.get_conversation!(conv1.id)
