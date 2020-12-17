@@ -44,6 +44,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
       const integrations = await Promise.all([
         this.fetchSlackIntegration(),
+        this.fetchSlackSupportIntegration(),
         this.fetchGmailIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
@@ -60,11 +61,23 @@ class IntegrationsOverview extends React.Component<Props, State> {
   }
 
   fetchSlackIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchSlackAuthorization();
+    const auth = await API.fetchSlackAuthorization('reply');
 
     return {
       key: 'slack',
       integration: 'Slack',
+      status: auth ? 'connected' : 'not_connected',
+      created_at: auth ? auth.created_at : null,
+      icon: '/slack.svg',
+    };
+  };
+
+  fetchSlackSupportIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchSlackAuthorization('support');
+
+    return {
+      key: 'slack:sync',
+      integration: 'Sync with Slack (beta)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
       icon: '/slack.svg',
@@ -116,6 +129,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
   handleIntegrationType = async (type: string, query: string = '') => {
     const q = qs.parse(query);
     const code = q.code ? String(q.code) : null;
+    const state = q.state ? String(q.state) : null;
 
     if (!code) {
       return null;
@@ -123,13 +137,19 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
     switch (type) {
       case 'slack':
-        return API.authorizeSlackIntegration(code).catch((err) =>
-          logger.error('Failed to authorize Slack:', err)
-        );
+        const authorizationType = state || 'reply';
+
+        return API.authorizeSlackIntegration(code, authorizationType)
+          .then((result) =>
+            logger.debug('Successfully authorized Slack:', result)
+          )
+          .catch((err) => logger.error('Failed to authorize Slack:', err));
       case 'gmail':
-        return API.authorizeGmailIntegration(code).catch((err) =>
-          logger.error('Failed to authorize Gmail:', err)
-        );
+        return API.authorizeGmailIntegration(code)
+          .then((result) =>
+            logger.debug('Successfully authorized Gmail:', result)
+          )
+          .catch((err) => logger.error('Failed to authorize Gmail:', err));
       default:
         return null;
     }

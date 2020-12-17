@@ -8,6 +8,7 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
   @foreign_key_type :binary_id
   schema "slack_authorizations" do
     field :access_token, :string
+    field :type, :string, default: "reply"
     field :app_id, :string
     field :authed_user_id, :string
     field :bot_user_id, :string
@@ -30,6 +31,7 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
     slack_authorization
     |> cast(attrs, [
       :account_id,
+      :type,
       :access_token,
       :app_id,
       :authed_user_id,
@@ -44,5 +46,6 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
       :token_type
     ])
     |> validate_required([:account_id, :access_token])
+    |> validate_inclusion(:type, ["reply", "support"])
   end
 end

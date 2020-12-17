@@ -106,8 +106,7 @@ defmodule ChatApi.CustomersTest do
       assert String.length(truncated) <= 255
     end
 
-    test "update_customer/2 with invalid data returns error changeset",
-         %{customer: customer} do
+    test "update_customer/2 with invalid data returns error changeset", %{customer: customer} do
       assert {:error, %Ecto.Changeset{}} = Customers.update_customer(customer, @invalid_attrs)
 
       assert customer ==
@@ -120,25 +119,62 @@ defmodule ChatApi.CustomersTest do
       assert_raise Ecto.NoResultsError, fn -> Customers.get_customer!(customer.id) end
     end
 
-    test "change_customer/1 returns a customer changeset",
-         %{customer: customer} do
+    test "change_customer/1 returns a customer changeset", %{customer: customer} do
       assert %Ecto.Changeset{} = Customers.change_customer(customer)
     end
 
-    test "find_by_external_id/2 returns a customer by external_id",
-         %{account: account} do
+    test "find_by_external_id/2 returns a customer by external_id", %{account: account} do
       external_id = "cus_123"
-      _customer = insert(:customer, %{external_id: external_id, account: account})
+      %{id: customer_id} = insert(:customer, %{external_id: external_id, account: account})
 
-      assert _customer = Customers.find_by_external_id(external_id, account.id)
+      assert %Customer{id: ^customer_id} = Customers.find_by_external_id(external_id, account.id)
     end
 
-    test "find_by_external_id/2 works with integer external_ids",
-         %{account: account} do
+    test "find_by_external_id/2 works with integer external_ids", %{account: account} do
       external_id = "123"
-      _customer = insert(:customer, %{external_id: external_id, account: account})
+      %{id: customer_id} = insert(:customer, %{external_id: external_id, account: account})
 
-      assert _customer = Customers.find_by_external_id(123, account.id)
+      assert %Customer{id: ^customer_id} = Customers.find_by_external_id(123, account.id)
+    end
+
+    test "find_or_create_by_email/3 finds the matching customer", %{account: account} do
+      email = "test@test.com"
+      %{id: customer_id} = insert(:customer, %{email: email, account: account})
+
+      assert {:ok, %Customer{id: ^customer_id}} =
+               Customers.find_or_create_by_email(email, account.id)
+    end
+
+    test "find_or_create_by_email/3 creates a new customer if necessary", %{account: account} do
+      email = "test@test.com"
+      %{id: customer_id} = insert(:customer, %{email: "other@test.com", account: account})
+
+      assert {:ok, %Customer{} = customer} = Customers.find_or_create_by_email(email, account.id)
+      assert customer.id != customer_id
+      assert customer.email == email
+    end
+
+    test "find_or_create_by_email/3 creates a new customer with additional params", %{
+      account: account
+    } do
+      email = "test@test.com"
+      %{id: customer_id} = insert(:customer, %{email: "other@test.com", account: account})
+
+      assert {:ok, %Customer{} = customer} =
+               Customers.find_or_create_by_email(email, account.id, %{name: "New Customer"})
+
+      assert customer.id != customer_id
+      assert customer.email == email
+      assert customer.name == "New Customer"
+    end
+
+    test "find_or_create_by_email/3 returns an :error tuple if email is nil", %{
+      account: account
+    } do
+      assert {:error, _error} = Customers.find_or_create_by_email(nil, account.id)
+
+      assert {:error, _error} =
+               Customers.find_or_create_by_email(nil, account.id, %{name: "New Customer"})
     end
   end
 end

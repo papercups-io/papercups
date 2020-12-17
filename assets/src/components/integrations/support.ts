@@ -1,5 +1,11 @@
 export type IntegrationType = {
-  key: 'slack' | 'gmail' | 'microsoft-teams' | 'whatsapp' | 'twilio';
+  key:
+    | 'slack'
+    | 'slack:sync'
+    | 'gmail'
+    | 'microsoft-teams'
+    | 'whatsapp'
+    | 'twilio';
   integration: string;
   status: 'connected' | 'not_connected';
   created_at?: string | null;

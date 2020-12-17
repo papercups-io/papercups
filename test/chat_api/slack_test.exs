@@ -3,6 +3,7 @@ defmodule ChatApi.SlackTest do
 
   import ExUnit.CaptureLog
   import ChatApi.Factory
+  import Mock
 
   alias ChatApi.{
     Conversations,
@@ -11,7 +12,14 @@ defmodule ChatApi.SlackTest do
     Users
   }
 
-  describe "slack" do
+  describe "Slack.Token" do
+    test "Token.is_valid_access_token?/1 checks the validity of an access token" do
+      assert Slack.Token.is_valid_access_token?("invalid") == false
+      assert Slack.Token.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
+    end
+  end
+
+  describe "Slack.Helpers" do
     setup do
       account = insert(:account)
       customer = insert(:customer, account: account)
@@ -21,22 +29,10 @@ defmodule ChatApi.SlackTest do
       {:ok, conversation: conversation, account: account, customer: customer, thread: thread}
     end
 
-    test "get_conversation_account_id/1 returns a valid account_id",
-         %{conversation: conversation} do
-      account_id = Slack.get_conversation_account_id(conversation.id)
-
-      assert account_id
-    end
-
-    test "is_valid_access_token?/1 checks the validity of an access token" do
-      assert Slack.is_valid_access_token?("invalid") == false
-      assert Slack.is_valid_access_token?("xoxb-xxx-xxxxx-xxx") == true
-    end
-
-    test "get_message_text/1 returns subject for initial slack thread",
+    test "Helpers.get_message_text/1 returns subject for initial slack thread",
          %{conversation: conversation, customer: customer} do
       text =
-        Slack.get_message_text(%{
+        Slack.Helpers.get_message_text(%{
           customer: customer,
           text: "Test message",
           conversation_id: conversation.id,
@@ -49,9 +45,9 @@ defmodule ChatApi.SlackTest do
       assert String.contains?(text, "Reply to this thread to start chatting")
     end
 
-    test "get_message_text/1 returns subject for slack reply",
+    test "Helpers.get_message_text/1 returns subject for slack reply",
          %{conversation: conversation, customer: customer, thread: thread} do
-      assert Slack.get_message_text(%{
+      assert Slack.Helpers.get_message_text(%{
                text: "Test message",
                conversation_id: conversation.id,
                customer: customer,
@@ -60,7 +56,7 @@ defmodule ChatApi.SlackTest do
              }) ==
                "*:female-technologist: Agent*: Test message"
 
-      assert Slack.get_message_text(%{
+      assert Slack.Helpers.get_message_text(%{
                text: "Test message",
                conversation_id: conversation.id,
                customer: customer,
@@ -70,7 +66,7 @@ defmodule ChatApi.SlackTest do
                "*:wave: #{customer.email}*: Test message"
 
       assert_raise ArgumentError, fn ->
-        Slack.get_message_text(%{
+        Slack.Helpers.get_message_text(%{
           text: "Test message",
           conversation_id: conversation.id,
           customer: customer,
@@ -80,7 +76,7 @@ defmodule ChatApi.SlackTest do
       end
     end
 
-    test "get_message_payload/2 returns payload for initial slack thread",
+    test "Helpers.get_message_payload/2 returns payload for initial slack thread",
          %{customer: customer, thread: thread} do
       text = "Hello world"
       customer_email = "*Email:*\n#{customer.email}"
@@ -118,14 +114,14 @@ defmodule ChatApi.SlackTest do
                ],
                "channel" => ^channel
              } =
-               Slack.get_message_payload(text, %{
+               Slack.Helpers.get_message_payload(text, %{
                  channel: channel,
                  customer: customer,
                  thread: nil
                })
     end
 
-    test "get_message_payload/2 returns payload for slack reply",
+    test "Helpers.get_message_payload/2 returns payload for slack reply",
          %{thread: thread} do
       text = "Hello world"
       ts = thread.slack_thread_ts
@@ -136,33 +132,50 @@ defmodule ChatApi.SlackTest do
                "text" => ^text,
                "thread_ts" => ^ts
              } =
-               Slack.get_message_payload(text, %{
+               Slack.Helpers.get_message_payload(text, %{
                  channel: channel,
                  thread: thread,
                  customer: nil
                })
     end
 
-    test "extract_slack_conversation_thread_info/1 extracts thread info from slack response" do
+    test "Helpers.extract_slack_conversation_thread_info/1 extracts thread info from slack response" do
       channel = "bots"
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
 
       assert %{slack_channel: ^channel, slack_thread_ts: ^ts} =
-               Slack.extract_slack_conversation_thread_info(response)
+               Slack.Helpers.extract_slack_conversation_thread_info(response)
     end
 
-    test "extract_slack_conversation_thread_info/1 raises if the slack response has ok=false" do
+    test "Helpers.extract_slack_conversation_thread_info/1 raises if the slack response has ok=false" do
       response = %{body: %{"ok" => false}}
 
       assert capture_log(fn ->
                assert_raise RuntimeError, fn ->
-                 Slack.extract_slack_conversation_thread_info(response)
+                 Slack.Helpers.extract_slack_conversation_thread_info(response)
                end
              end) =~ "Error sending Slack message"
     end
 
-    test "create_new_slack_conversation_thread/2 creates a new thread and assigns the primary user",
+    test "Helpers.extract_slack_user_email/1 extracts user's email from slack response" do
+      email = "test@test.com"
+      response = %{body: %{"ok" => true, "user" => %{"profile" => %{"email" => email}}}}
+
+      assert email = Slack.Helpers.extract_slack_user_email(response)
+    end
+
+    test "Helpers.extract_slack_user_email/1 raises if the slack response has ok=false" do
+      response = %{body: %{"ok" => false, "user" => nil}}
+
+      assert capture_log(fn ->
+               assert_raise RuntimeError, fn ->
+                 Slack.Helpers.extract_slack_user_email(response)
+               end
+             end) =~ "Error retrieving user info"
+    end
+
+    test "Helpers.create_new_slack_conversation_thread/2 creates a new thread and assigns the primary user",
          %{conversation: conversation, account: account} do
       %{account_id: account_id, id: id} = conversation
       primary_user = insert(:user, account: account)
@@ -170,7 +183,7 @@ defmodule ChatApi.SlackTest do
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
 
-      {:ok, thread} = Slack.create_new_slack_conversation_thread(id, response)
+      {:ok, thread} = Slack.Helpers.create_new_slack_conversation_thread(id, response)
 
       assert %SlackConversationThreads.SlackConversationThread{
                slack_channel: ^channel,
@@ -184,7 +197,28 @@ defmodule ChatApi.SlackTest do
       assert conversation.assignee_id == primary_user.id
     end
 
-    test "fetch_valid_user/1 reject disabled users and fetch the oldest user.",
+    test "Helpers.create_new_slack_conversation_thread/2 raises if no primary user exists",
+         %{conversation: conversation} do
+      channel = "bots"
+      ts = "1234.56789"
+      response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
+
+      assert_raise RuntimeError, fn ->
+        Slack.Helpers.create_new_slack_conversation_thread(conversation.id, response)
+      end
+    end
+
+    test "Helpers.get_conversation_primary_user_id/2 gets the primary user of the associated account" do
+      account = insert(:account)
+      user = insert(:user, account: account)
+      customer = insert(:customer, account: account)
+      conversation = insert(:conversation, account: account, customer: customer)
+      conversation = Conversations.get_conversation_with!(conversation.id, account: :users)
+
+      assert Slack.Helpers.get_conversation_primary_user_id(conversation) == user.id
+    end
+
+    test "Helpers.fetch_valid_user/1 reject disabled users and fetch the oldest user.",
          %{account: account} do
       {:ok, disabled_user} =
         insert(:user, account: account)
@@ -197,17 +231,108 @@ defmodule ChatApi.SlackTest do
       secondary_user = insert(:user, account: account)
 
       users = [disabled_user, secondary_user, primary_user]
-      assert primary_user.id === Slack.fetch_valid_user(users)
+      assert primary_user.id === Slack.Helpers.fetch_valid_user(users)
     end
 
-    test "create_new_slack_conversation_thread/2 raises if no primary user exists",
-         %{conversation: conversation} do
-      channel = "bots"
-      ts = "1234.56789"
-      response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
+    test "Helpers.identify_customer/1 returns the message sender type", %{account: account} do
+      jane = insert(:customer, account: account, name: "Jane", email: "jane@jane.com")
+      bob = insert(:customer, account: account, email: "bob@bob.com", name: nil)
+      test = insert(:customer, account: account, name: "Test User", email: nil)
+      anon = insert(:customer, account: account, name: nil, email: nil)
 
-      assert_raise RuntimeError, fn ->
-        Slack.create_new_slack_conversation_thread(conversation.id, response)
+      assert Slack.Helpers.identify_customer(jane) == "Jane (jane@jane.com)"
+      assert Slack.Helpers.identify_customer(bob) == "bob@bob.com"
+      assert Slack.Helpers.identify_customer(test) == "Test User"
+      assert Slack.Helpers.identify_customer(anon) == "Anonymous User"
+    end
+
+    test "Helpers.get_message_type/1 returns the message sender type" do
+      customer_message = insert(:message, user: nil)
+      user_message = insert(:message, customer: nil)
+
+      assert :customer = Slack.Helpers.get_message_type(customer_message)
+      assert :agent = Slack.Helpers.get_message_type(user_message)
+    end
+
+    test "Helpers.format_sender_id!/2 gets an existing user_id", %{account: account} do
+      authorization = insert(:slack_authorization, account: account)
+      _customer = insert(:customer, account: account, email: "customer@customer.com")
+      user = insert(:user, account: account, email: "user@user.com")
+      slack_user_id = "U123TEST"
+
+      slack_user = %{
+        "real_name" => "Test User",
+        "tz" => "America/New_York",
+        "profile" => %{"email" => "user@user.com"}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end do
+        refute Slack.Helpers.find_matching_customer(authorization, slack_user_id)
+        assert %{id: user_id} = Slack.Helpers.find_matching_user(authorization, slack_user_id)
+        assert user_id == user.id
+
+        assert %{"user_id" => ^user_id} =
+                 Slack.Helpers.format_sender_id!(authorization, slack_user_id)
+      end
+    end
+
+    test "Helpers.format_sender_id!/2 gets an existing customer_id", %{account: account} do
+      authorization = insert(:slack_authorization, account: account)
+      customer = insert(:customer, account: account, email: "customer@customer.com")
+      _user = insert(:user, account: account, email: "user@user.com")
+      slack_user_id = "U123TEST"
+
+      slack_user = %{
+        "real_name" => "Test Customer",
+        "tz" => "America/New_York",
+        "profile" => %{"email" => "customer@customer.com"}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end do
+        assert %{id: customer_id} =
+                 Slack.Helpers.find_matching_customer(authorization, slack_user_id)
+
+        refute Slack.Helpers.find_matching_user(authorization, slack_user_id)
+        assert customer_id == customer.id
+
+        assert %{"customer_id" => ^customer_id} =
+                 Slack.Helpers.format_sender_id!(authorization, slack_user_id)
+      end
+    end
+
+    test "Helpers.format_sender_id!/2 creates a new customer_id if necessary", %{account: account} do
+      authorization = insert(:slack_authorization, account: account)
+      _customer = insert(:customer, account: account, email: "customer@customer.com")
+      _user = insert(:user, account: account, email: "user@user.com")
+      slack_user_id = "U123TEST"
+
+      slack_user = %{
+        "real_name" => "Test Customer",
+        "tz" => "America/New_York",
+        # New customer email
+        "profile" => %{"email" => "new@customer.com"}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end do
+        refute Slack.Helpers.find_matching_customer(authorization, slack_user_id)
+        refute Slack.Helpers.find_matching_user(authorization, slack_user_id)
+
+        assert %{"customer_id" => customer_id} =
+                 Slack.Helpers.format_sender_id!(authorization, slack_user_id)
+
+        customer = ChatApi.Customers.get_customer!(customer_id)
+
+        assert customer.email == "new@customer.com"
+        assert customer.name == "Test Customer"
       end
     end
   end
