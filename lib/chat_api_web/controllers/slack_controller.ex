@@ -184,20 +184,14 @@ defmodule ChatApiWeb.SlackController do
            "ts" => ts
          } = _event
        ) do
-    with %{account_id: account_id, access_token: token} <-
+    with %{account_id: account_id} = authorization <-
            ChatApi.SlackAuthorizations.find_slack_authorization(%{
              channel_id: channel,
              team_id: team,
              type: "support"
            }),
-         {:ok, %{body: %{"ok" => true, "user" => user}}} <-
-           Slack.Client.retrieve_user_info(slack_user_id, token),
-         %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user,
          {:ok, customer} <-
-           ChatApi.Customers.find_or_create_by_email(email, account_id, %{
-             name: name,
-             time_zone: time_zone
-           }),
+           Slack.Helpers.find_or_create_customer_from_slack_user_id(authorization, slack_user_id),
          # TODO: should the conversation + thread + message all be handled in a transaction?
          # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
          # TODO: should we handle default assignment here as well?
