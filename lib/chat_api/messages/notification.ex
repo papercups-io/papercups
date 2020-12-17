@@ -81,7 +81,7 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending notification: :slack_support_threads")
 
     Task.start(fn ->
-      ChatApi.Slack.Notifications.notify_auxiliary_threads(message)
+      ChatApi.Slack.Notifications.notify_support_threads(message)
     end)
 
     message

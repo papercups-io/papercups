@@ -91,8 +91,8 @@ defmodule ChatApi.Slack.Notifications do
     end
   end
 
-  @spec notify_auxiliary_threads(ChatApi.Messages.Message.t()) :: :ok
-  def notify_auxiliary_threads(%Message{
+  @spec notify_support_threads(ChatApi.Messages.Message.t()) :: :ok
+  def notify_support_threads(%Message{
         conversation_id: conversation_id,
         account_id: account_id,
         body: text
@@ -103,7 +103,6 @@ defmodule ChatApi.Slack.Notifications do
         |> SlackConversationThreads.get_threads_by_conversation_id()
         |> Stream.filter(fn thread -> thread.slack_channel == channel_id end)
         |> Enum.each(fn thread ->
-          # TODO: should we use Task.async/await/yield here?
           message = %{
             "text" => text,
             "channel" => thread.slack_channel,
