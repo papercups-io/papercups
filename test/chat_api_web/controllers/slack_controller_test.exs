@@ -3,13 +3,16 @@ defmodule ChatApiWeb.SlackControllerTest do
 
   import ChatApi.Factory
   import ExUnit.CaptureLog
+  import Mock
 
   alias ChatApi.Messages
+
+  @email "customer@test.com"
 
   setup %{conn: conn} do
     account = insert(:account)
     user = insert(:user, account: account)
-    customer = insert(:customer, account: account)
+    customer = insert(:customer, account: account, email: @email)
     conversation = insert(:conversation, account: account, customer: customer)
     auth = insert(:slack_authorization, account: account)
     thread = insert(:slack_conversation_thread, conversation: conversation, account: account)
@@ -17,7 +20,7 @@ defmodule ChatApiWeb.SlackControllerTest do
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
-    {:ok, conn: conn, authed_conn: authed_conn, thread: thread, auth: auth}
+    {:ok, conn: conn, authed_conn: authed_conn, thread: thread, auth: auth, account: account}
   end
 
   describe "authorization" do
@@ -45,8 +48,11 @@ defmodule ChatApiWeb.SlackControllerTest do
   end
 
   describe "webhook" do
-    test "sends an event to the webhook",
-         %{conn: conn, thread: thread, auth: auth} do
+    test "sends a new thread message event to the webhook", %{
+      conn: conn,
+      thread: thread,
+      auth: auth
+    } do
       account_id = thread.account_id
 
       event_params = %{
@@ -66,6 +72,41 @@ defmodule ChatApiWeb.SlackControllerTest do
 
       assert [%{body: body}] = Messages.list_messages(account_id)
       assert body == event_params["text"]
+    end
+
+    test "sends a new message event to the webhook", %{conn: conn, account: account} do
+      authorization = insert(:slack_authorization, account: account, type: "support")
+
+      event_params = %{
+        "type" => "message",
+        "text" => "hello world #{System.unique_integer([:positive])}",
+        "channel" => authorization.channel_id,
+        "team" => authorization.team_id,
+        "user" => authorization.authed_user_id,
+        "ts" => "1234.56789"
+      }
+
+      slack_user = %{
+        "real_name" => "Test User",
+        "tz" => "America/New_York",
+        "profile" => %{"email" => @email}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end,
+        send_message: fn _, _ -> {:ok, nil} end do
+        # TODO: figure out a better way to handle Slack warnings in test mode
+        assert capture_log(fn ->
+                 post(conn, Routes.slack_path(conn, :webhook), %{
+                   "event" => event_params
+                 })
+               end)
+
+        assert [%{body: body}] = Messages.list_messages(account.id)
+        assert body == event_params["text"]
+      end
     end
   end
 end

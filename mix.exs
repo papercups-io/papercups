@@ -42,7 +42,7 @@ defmodule ChatApi.MixProject do
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_machina, "~> 2.4", only: [:test]},
-      {:mox, "~> 1.0", only: :test},
+      {:mock, "~> 0.3.0", only: :test},
       {:customerio, "~> 0.2"},
       {:swoosh, "~> 1.0"},
       {:gen_smtp, "~> 0.13"},
