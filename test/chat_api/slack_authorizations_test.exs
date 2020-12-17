@@ -19,7 +19,8 @@ defmodule ChatApi.SlackAuthorizationsTest do
       team_id: "some updated team_id",
       team_name: "some updated team_name",
       token_type: "some updated token_type",
-      webhook_url: "some updated webhook_url"
+      webhook_url: "some updated webhook_url",
+      type: "reply"
     }
     @invalid_attrs %{
       access_token: nil,
@@ -96,6 +97,14 @@ defmodule ChatApi.SlackAuthorizationsTest do
                |> Repo.preload([:account])
     end
 
+    test "update_slack_authorization/2 with an invalid type returns error changeset",
+         %{slack_authorization: slack_authorization} do
+      assert {:error, %Ecto.Changeset{}} =
+               SlackAuthorizations.update_slack_authorization(slack_authorization, %{
+                 type: "unknown"
+               })
+    end
+
     test "delete_slack_authorization/1 deletes the slack_authorization",
          %{slack_authorization: slack_authorization} do
       assert {:ok, %SlackAuthorization{}} =
@@ -110,6 +119,77 @@ defmodule ChatApi.SlackAuthorizationsTest do
          %{slack_authorization: slack_authorization} do
       assert %Ecto.Changeset{} =
                SlackAuthorizations.change_slack_authorization(slack_authorization)
+    end
+
+    test "find_slack_authorization/1 finds a slack_authorization matching the provided filters" do
+      %{id: slack_authorization_id} =
+        insert(:slack_authorization, team_id: "T123", channel_id: "C123", type: "reply")
+
+      assert %{id: ^slack_authorization_id} =
+               SlackAuthorizations.find_slack_authorization(%{team_id: "T123"})
+
+      assert %{id: ^slack_authorization_id} =
+               SlackAuthorizations.find_slack_authorization(%{team_id: "T123", channel_id: "C123"})
+
+      assert %{id: ^slack_authorization_id} =
+               SlackAuthorizations.find_slack_authorization(%{
+                 team_id: "T123",
+                 channel_id: "C123",
+                 type: "reply"
+               })
+
+      # With different :type
+      refute SlackAuthorizations.find_slack_authorization(%{
+               team_id: "T123",
+               channel_id: "C123",
+               type: "support"
+             })
+
+      # With different :team_id
+      refute SlackAuthorizations.find_slack_authorization(%{
+               team_id: "T321",
+               channel_id: "C123",
+               type: "reply"
+             })
+
+      # With different :channel_id
+      refute SlackAuthorizations.find_slack_authorization(%{
+               team_id: "T123",
+               channel_id: "C321",
+               type: "support"
+             })
+    end
+
+    test "create_or_update/2 creates a new authorization if none is found for the account",
+         %{slack_authorization: slack_authorization} do
+      new_account = insert(:account)
+      params = Map.merge(@update_attrs, %{account_id: new_account.id})
+
+      {:ok, created} = SlackAuthorizations.create_or_update(new_account.id, params)
+
+      assert created.id != slack_authorization.id
+      assert created.access_token == "some updated access_token"
+    end
+
+    test "create_or_update/2 creates a new authorization if none is found matching the authorization type",
+         %{slack_authorization: slack_authorization} do
+      params =
+        Map.merge(@update_attrs, %{type: "support", account_id: slack_authorization.account_id})
+
+      {:ok, created} =
+        SlackAuthorizations.create_or_update(slack_authorization.account_id, params)
+
+      assert created.id != slack_authorization.id
+      assert created.access_token == "some updated access_token"
+    end
+
+    test "create_or_update/2 updates the existing authorization if one is found for the account",
+         %{slack_authorization: slack_authorization} do
+      {:ok, updated} =
+        SlackAuthorizations.create_or_update(slack_authorization.account_id, @update_attrs)
+
+      assert updated.id == slack_authorization.id
+      assert updated.access_token == "some updated access_token"
     end
   end
 end
