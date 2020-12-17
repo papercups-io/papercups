@@ -14,8 +14,8 @@ const getSlackAuthUrl = (type = 'reply') => {
   const q = {
     state: type,
     scope:
-      'incoming-webhook chat:write channels:history channels:manage chat:write.public users:read users:read.email',
-    user_scope: 'channels:history',
+      'incoming-webhook chat:write channels:history channels:manage chat:write.public users:read users:read.email groups:history',
+    user_scope: 'channels:history groups:history',
     client_id: SLACK_CLIENT_ID,
     redirect_uri: redirect,
   };
