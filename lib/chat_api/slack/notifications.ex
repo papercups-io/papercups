@@ -112,20 +112,13 @@ defmodule ChatApi.Slack.Notifications do
         |> Stream.filter(fn thread -> thread.slack_channel == channel_id end)
         |> Enum.each(fn thread ->
           # TODO: should we use Task.async/await/yield here?
-          IO.inspect("!!! SENDING MESSAGE FOR THREAD !!!")
-          IO.inspect(thread)
-
           message = %{
             "text" => text,
             "channel" => thread.slack_channel,
             "thread_ts" => thread.slack_thread_ts
           }
 
-          IO.inspect(message)
-
-          result = Slack.Client.send_message(message, access_token)
-
-          IO.inspect(result)
+          Slack.Client.send_message(message, access_token)
         end)
 
       _ ->

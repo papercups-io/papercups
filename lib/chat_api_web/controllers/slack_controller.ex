@@ -16,8 +16,6 @@ defmodule ChatApiWeb.SlackController do
   @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def oauth(conn, %{"code" => code} = params) do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
-    IO.inspect("!!! MADE IT !!!")
-    IO.inspect(params)
     # TODO: improve error handling!
     {:ok, response} = Slack.Client.get_access_token(code)
 
@@ -138,7 +136,6 @@ defmodule ChatApiWeb.SlackController do
          } = event
        ) do
     Logger.debug("Handling Slack event: #{inspect(event)}")
-    IO.inspect(event)
     # TODO: check if message is coming from support channel thread?
     # If yes, will need to notify other "main" Slack channel...
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel),
@@ -146,8 +143,6 @@ defmodule ChatApiWeb.SlackController do
          primary_reply_authorization <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
       if Slack.Helpers.is_primary_channel_v2?(primary_reply_authorization, channel) do
-        IO.inspect("!!! PRIMARY CHANNEL DETECTED !!!")
-
         %{
           "body" => text,
           "conversation_id" => conversation_id,
@@ -164,8 +159,6 @@ defmodule ChatApiWeb.SlackController do
         |> Messages.Notification.notify(:webhooks)
         |> Messages.Notification.notify(:slack_support_threads)
       else
-        IO.inspect("!!! SUPPORT CHANNEL DETECTED !!!")
-
         account_id
         |> SlackAuthorizations.get_authorization_by_account(%{type: "support"})
         |> Slack.Helpers.format_sender_id_v2!(slack_user_id)
@@ -190,12 +183,8 @@ defmodule ChatApiWeb.SlackController do
            "channel" => channel,
            "user" => slack_user_id,
            "ts" => ts
-         } = event
+         } = _event
        ) do
-    # TODO: have different "types" of slack_authorizations: "reply" and "support"?
-    # here we check if this event matches the "support" auth/workspace + channel
-    # (I'm assuming the event has a field for this!)
-
     with %{account_id: account_id, access_token: token} <-
            ChatApi.SlackAuthorizations.find_slack_authorization(%{
              channel_id: channel,
@@ -218,38 +207,20 @@ defmodule ChatApiWeb.SlackController do
              account_id: account_id,
              customer_id: customer.id
            }),
-         {:ok, slack_conversation_thread} <-
-           ChatApi.SlackConversationThreads.create_slack_conversation_thread(%{
-             slack_channel: channel,
-             slack_thread_ts: ts,
-             account_id: account_id,
-             conversation_id: conversation.id
-           }),
          {:ok, message} <-
            Messages.create_message(%{
              account_id: account_id,
              conversation_id: conversation.id,
              customer_id: customer.id,
              body: text
+           }),
+         {:ok, _slack_conversation_thread} <-
+           ChatApi.SlackConversationThreads.create_slack_conversation_thread(%{
+             slack_channel: channel,
+             slack_thread_ts: ts,
+             account_id: account_id,
+             conversation_id: conversation.id
            }) do
-      IO.inspect("!!! Handling NEW Slack event !!!")
-      IO.inspect(event)
-      IO.inspect(email)
-      IO.inspect(user)
-
-      # TODO: check for existing conversation thread!
-      # OR: check for existing conversation in channel with different thread ID???
-      # TODO: maybe this logic here only worries about CREATING new conversations?
-
-      IO.inspect("CONVERSATION!")
-      IO.inspect(conversation)
-
-      IO.inspect("SLACK CONVERSATION THREAD!")
-      IO.inspect(slack_conversation_thread)
-
-      IO.inspect("MESSAGE!")
-      IO.inspect(message)
-
       conversation
       |> Conversations.Notification.broadcast_conversation_to_admin!()
       |> Conversations.Notification.broadcast_conversation_to_customer!()

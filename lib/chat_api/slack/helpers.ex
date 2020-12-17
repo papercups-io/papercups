@@ -16,16 +16,26 @@ defmodule ChatApi.Slack.Helpers do
 
   @spec get_user_email(binary(), binary()) :: nil | binary()
   def get_user_email(slack_user_id, access_token) do
-    # TODO: make this more idiomatic, this looks a little weird...
-    with {:ok, response} <- ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token) do
-      try do
-        extract_slack_user_email(response)
-      rescue
-        error ->
-          Logger.error("Unable to retrieve Slack user email: #{inspect(error)}")
+    case ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token) do
+      {:ok, nil} ->
+        Logger.debug("Invalid Slack token - returning nil for user email")
 
-          nil
-      end
+        nil
+
+      {:ok, response} ->
+        try do
+          extract_slack_user_email(response)
+        rescue
+          error ->
+            Logger.error("Unable to retrieve Slack user email: #{inspect(error)}")
+
+            nil
+        end
+
+      error ->
+        Logger.error("Unable to retrieve Slack user info: #{inspect(error)}")
+
+        nil
     end
   end
 
@@ -100,7 +110,7 @@ defmodule ChatApi.Slack.Helpers do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
       # Supports a fallback access token as an env variable to make it easier to
       # test locally (assumes the existence of a "bots" channel in your workspace)
-      # TODO: deprecate me!
+      # TODO: deprecate
       nil ->
         %{
           access_token: ChatApi.Slack.Token.get_default_access_token(),

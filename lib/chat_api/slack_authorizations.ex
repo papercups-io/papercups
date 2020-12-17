@@ -26,9 +26,6 @@ defmodule ChatApi.SlackAuthorizations do
 
   @spec get_authorization_by_account(binary(), map()) :: SlackAuthorization.t() | nil
   def get_authorization_by_account(account_id, filters \\ %{}) do
-    IO.inspect("FILTERS!!!")
-    IO.inspect(filters)
-
     SlackAuthorization
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
@@ -41,10 +38,6 @@ defmodule ChatApi.SlackAuthorizations do
   def create_or_update(account_id, params) do
     filters = Map.take(params, [:type])
     existing = get_authorization_by_account(account_id, filters)
-
-    IO.inspect("!!! WTF !!!")
-    IO.inspect(existing)
-    IO.inspect(params)
 
     if existing do
       update_slack_authorization(existing, params)
