@@ -41,7 +41,7 @@ defmodule ChatApi.Messages.Notification do
 
   def notify(%Message{account_id: account_id} = message, :webhooks) do
     Logger.info("Sending notification: :webhooks")
-    # TODO: use Oban instead?
+    # TODO: how should we handle errors/retry logic?
     Task.start(fn ->
       send_webhook_notifications(account_id, Helpers.format(message))
     end)
@@ -51,10 +51,8 @@ defmodule ChatApi.Messages.Notification do
 
   def notify(%Message{} = message, :new_message_email) do
     Logger.info("Sending notification: :new_message_email")
-    # TODO: use Oban instead?
+    # TODO: how should we handle errors/retry logic?
     Task.start(fn ->
-      # TODO: update params to just accept a full `message` object/struct,
-      # so that we can include some info about the customer in the email as well
       ChatApi.Emails.send_new_message_alerts(message)
     end)
 
@@ -81,7 +79,7 @@ defmodule ChatApi.Messages.Notification do
   # TODO: come up with a better name... it's not super clear what `slack_support_threads` means!
   def notify(%Message{} = message, :slack_support_threads) do
     Logger.info("Sending notification: :slack_support_threads")
-    # TODO: should we just pass in the message struct here?
+
     Task.start(fn ->
       ChatApi.Slack.Notifications.notify_auxiliary_threads(message)
     end)
