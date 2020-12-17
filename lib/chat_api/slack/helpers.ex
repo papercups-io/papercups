@@ -39,8 +39,8 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec find_matching_customer_v2(any(), binary()) :: Customer.t() | nil
-  def find_matching_customer_v2(authorization, slack_user_id) do
+  @spec find_matching_customer(any(), binary()) :: Customer.t() | nil
+  def find_matching_customer(authorization, slack_user_id) do
     case authorization do
       %{access_token: access_token, account_id: account_id} ->
         slack_user_id
@@ -52,8 +52,8 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec find_matching_user_v2(any(), binary()) :: User.t() | nil
-  def find_matching_user_v2(authorization, slack_user_id) do
+  @spec find_matching_user(any(), binary()) :: User.t() | nil
+  def find_matching_user(authorization, slack_user_id) do
     case authorization do
       %{access_token: access_token, account_id: account_id} ->
         slack_user_id
@@ -65,22 +65,22 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec get_admin_sender_id_v2(any(), binary(), binary()) :: binary()
-  def get_admin_sender_id_v2(authorization, slack_user_id, fallback) do
-    case find_matching_user_v2(authorization, slack_user_id) do
+  @spec get_admin_sender_id(any(), binary(), binary()) :: binary()
+  def get_admin_sender_id(authorization, slack_user_id, fallback) do
+    case find_matching_user(authorization, slack_user_id) do
       %{id: id} -> id
       _ -> fallback
     end
   end
 
-  @spec format_sender_id_v2!(any(), binary()) :: map()
-  def format_sender_id_v2!(authorization, slack_user_id) do
-    case find_matching_user_v2(authorization, slack_user_id) do
+  @spec format_sender_id!(any(), binary()) :: map()
+  def format_sender_id!(authorization, slack_user_id) do
+    case find_matching_user(authorization, slack_user_id) do
       %{id: user_id} ->
         %{"user_id" => user_id}
 
       _ ->
-        case find_matching_customer_v2(authorization, slack_user_id) do
+        case find_matching_customer(authorization, slack_user_id) do
           %{id: customer_id} ->
             %{"customer_id" => customer_id}
 
@@ -92,8 +92,8 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec is_primary_channel_v2?(any(), binary()) :: boolean()
-  def is_primary_channel_v2?(authorization, slack_channel_id) do
+  @spec is_primary_channel?(any(), binary()) :: boolean()
+  def is_primary_channel?(authorization, slack_channel_id) do
     case authorization do
       %{channel: channel, channel_id: channel_id} ->
         channel == slack_channel_id || channel_id == slack_channel_id

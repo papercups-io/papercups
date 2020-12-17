@@ -47,14 +47,6 @@ defmodule ChatApi.Slack.Notifications do
            Conversations.get_conversation_with!(conversation_id, :customer),
          %{access_token: access_token, channel: channel, channel_id: channel_id} <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
-      # Check if a Slack thread already exists for this conversation.
-      # If one exists, send followup messages as replies; otherwise, start a new thread
-      # TODO: get ALL relevant threads, and send messages to all of them? ¯\_(ツ)_/¯
-      # TODO: make it possible to override the channel_id or thread in a argument above???
-      # ...we need more granular control over where thesee messages are sent!
-      # TODO: actually, this method is currently only really relevant for the "main"
-      # Slack channel that's authorized... we'll probably need a separate method that just:
-      # forwards a message to any existing Slack thread?
       thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id)
 
       # TODO: use a struct here?

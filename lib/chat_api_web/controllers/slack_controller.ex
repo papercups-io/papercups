@@ -136,19 +136,18 @@ defmodule ChatApiWeb.SlackController do
          } = event
        ) do
     Logger.debug("Handling Slack event: #{inspect(event)}")
-    # TODO: check if message is coming from support channel thread?
-    # If yes, will need to notify other "main" Slack channel...
+
     with {:ok, conversation} <- get_thread_conversation(thread_ts, channel),
          %{account_id: account_id, id: conversation_id} <- conversation,
          primary_reply_authorization <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
-      if Slack.Helpers.is_primary_channel_v2?(primary_reply_authorization, channel) do
+      if Slack.Helpers.is_primary_channel?(primary_reply_authorization, channel) do
         %{
           "body" => text,
           "conversation_id" => conversation_id,
           "account_id" => account_id,
           "user_id" =>
-            Slack.Helpers.get_admin_sender_id_v2(
+            Slack.Helpers.get_admin_sender_id(
               primary_reply_authorization,
               slack_user_id,
               conversation.assignee_id
@@ -161,7 +160,7 @@ defmodule ChatApiWeb.SlackController do
       else
         account_id
         |> SlackAuthorizations.get_authorization_by_account(%{type: "support"})
-        |> Slack.Helpers.format_sender_id_v2!(slack_user_id)
+        |> Slack.Helpers.format_sender_id!(slack_user_id)
         |> Map.merge(%{
           "body" => text,
           "conversation_id" => conversation_id,
