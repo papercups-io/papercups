@@ -135,25 +135,22 @@ class IntegrationsOverview extends React.Component<Props, State> {
       return null;
     }
 
-    console.log('Handling integration type:', {type, q, code, state});
-
     switch (type) {
       case 'slack':
         const authorizationType = state || 'reply';
-        console.log('Authorizing Slack:', {authorizationType});
 
         return API.authorizeSlackIntegration(code, authorizationType)
           .then((result) =>
-            console.log('Successfully authorized Slack:', result)
+            logger.debug('Successfully authorized Slack:', result)
           )
           .catch((err) => logger.error('Failed to authorize Slack:', err));
       case 'gmail':
-        return API.authorizeGmailIntegration(code).catch((err) =>
-          logger.error('Failed to authorize Gmail:', err)
-        );
+        return API.authorizeGmailIntegration(code)
+          .then((result) =>
+            logger.debug('Successfully authorized Gmail:', result)
+          )
+          .catch((err) => logger.error('Failed to authorize Gmail:', err));
       default:
-        console.log('No type match found for:', type, type === 'slack');
-
         return null;
     }
   };
