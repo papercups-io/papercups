@@ -184,7 +184,8 @@ defmodule ChatApi.Conversations do
     Repo.update_all(query, set: [archived_at: DateTime.utc_now()])
   end
 
-  @spec query_free_tier_conversations_inactive_for([{:days, number | Decimal.t()}, ...]) ::
+  # TODO: I wonder if this should live somewhere else...
+  @spec query_free_tier_conversations_inactive_for([{:days, number}]) ::
           Ecto.Query.t()
   def query_free_tier_conversations_inactive_for(days: days) do
     from c in Conversation,
@@ -196,17 +197,18 @@ defmodule ChatApi.Conversations do
             group_by: m.conversation_id,
             select: %{
               conversation_id: m.conversation_id,
-              insert_date: max(m.inserted_at)
+              most_recently_inserted_at: max(m.inserted_at)
             }
         ),
       on: last_message.conversation_id == c.id,
       where:
         is_nil(c.archived_at) and
           a.subscription_plan == "starter" and c.priority == "not_priority" and
-          last_message.insert_date < ago(^days, "day")
+          c.inserted_at < ago(^days, "day") and
+          last_message.most_recently_inserted_at < ago(^days, "day")
   end
 
-  @spec query_conversations_closed_for([{:days, number | Decimal.t()}, ...]) :: Ecto.Query.t()
+  @spec query_conversations_closed_for([{:days, number}]) :: Ecto.Query.t()
   def query_conversations_closed_for(days: days) do
     Conversation
     |> where([c], is_nil(c.archived_at))
