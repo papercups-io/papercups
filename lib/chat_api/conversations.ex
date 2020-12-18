@@ -185,8 +185,7 @@ defmodule ChatApi.Conversations do
   end
 
   # TODO: I wonder if this should live somewhere else...
-  @spec query_free_tier_conversations_inactive_for([{:days, number}]) ::
-          Ecto.Query.t()
+  @spec query_free_tier_conversations_inactive_for([{:days, number}]) :: Ecto.Query.t()
   def query_free_tier_conversations_inactive_for(days: days) do
     from c in Conversation,
       join: a in Account,

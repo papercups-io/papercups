@@ -1,4 +1,4 @@
-defmodule ChatApi.Workers.ArchiveFreeTierConversations do
+defmodule ChatApi.Workers.ArchiveStaleFreeTierConversations do
   use Oban.Worker, queue: :default
 
   require Logger
@@ -10,7 +10,7 @@ defmodule ChatApi.Workers.ArchiveFreeTierConversations do
     conversations_query = Conversations.query_free_tier_conversations_inactive_for(days: 30)
     {n, _} = Conversations.archive_conversations(conversations_query)
 
-    Logger.info("Archived #{n} old freetier conversations")
+    Logger.info("Archived #{n} stale conversations from free tier accounts")
 
     :ok
   end
