@@ -1,12 +1,40 @@
+### Friday, 18 December
+
+- [[#478](https://github.com/papercups-io/papercups/pull/478)] Added a **new Slack integration** which allows you to sync Slack channel conversations with Papercups [0]
+  - This is primarily for our new B2B customers 🚀 
+- Added **new configuration options** to our chat widget
+  - You can now customize virtually all the of the text in the widget ✏️ 
+  - _See https://github.com/papercups-io/chat-widget#options for all the latest configuration options_
+- [[#466](https://github.com/papercups-io/papercups/pull/466)] Made it clearer **when the user is inactive/disconnected** in the Storytime live session viewer [1]
+- [[#445](https://github.com/papercups-io/papercups/pull/445)] Added a **notification sound** when new messages arrive in the dashboard 🔔 
+- [[#440](https://github.com/papercups-io/papercups/pull/440)] Fixed the issue where auth sessions get reset after new deployments 🐞 
+- [[#406](https://github.com/papercups-io/papercups/pull/406)] Added support for **API keys**, for easier API access 🧑‍💻 
+- [[#404](https://github.com/papercups-io/papercups/pull/404)] Added support for **proactively messaging customers** from the Storytime live session viewer [2]
+- [[#396](https://github.com/papercups-io/papercups/pull/396)] Huge improvements to our **test suite** 🎉 [3]
+  - Added factories to DRY things up, sped test runner up 3x, and removed all background warning/error messages
+  - Big thanks to **[@flmel](https://github.com/flmel)** for helping out with this! 🙏 
+
+_[0] New integration: Sync with Slack_
+> <img width="800" alt="Sync with Slack" src="https://user-images.githubusercontent.com/5264279/102438782-fa598500-3fea-11eb-9525-7e570900f9fe.png">
+
+_[1] Indicate user status in live session viewer:_
+> <img width="800" alt="Indicate user status in live session viewer" src="https://user-images.githubusercontent.com/5264279/101836012-a5110580-3b0a-11eb-8eaf-5e95d0a4387a.gif">
+
+_[2] Proactively message customers:_
+> <img width="800" alt="Proactively message customers" src="https://user-images.githubusercontent.com/5264279/99601162-df382d00-29cc-11eb-8d2a-4d48bc3dac51.gif">
+
+_[3] Test suite improvements:_
+> <img width="400" alt="Test suite improvements" src="https://user-images.githubusercontent.com/5264279/102661847-a1553280-414b-11eb-8625-41193c1608ca.png">
+
 ### Monday, 9 November
 
 - Added **conversation state updates** to our **Slack integration** [0]
-  - Huge thanks to **@jalford14** for helping out with this! 🎉 
+  - Huge thanks to **[@jalford14](https://github.com/jalford14)** for helping out with this! 🎉 
 - Added a **status indicator to Storytime** so you can distinguish between active and inactive users on your website [1]
 - We now start a new conversation with customers if the last conversation was closed
 - Fixed Slack message threads when you change your Slack integration to a new channel 🐞 
 - [Beta] We have a **[Wordpress plugin](https://github.com/papercups-io/wordpress-plugin)** in the works, let us know if you're interested in using it!
-  - Huge thanks to **@ZmagoD** for setting this up! 🔥
+  - Huge thanks to **[@ZmagoD](https://github.com/ZmagoD)** for setting this up! 🔥
 
 _[0] Slack conversation state updates:_
 > <img width="400" alt="Slack conversation state updates" src="https://user-images.githubusercontent.com/5264279/98575832-af2fb200-2287-11eb-9d7a-a0743dbaacf0.png">
