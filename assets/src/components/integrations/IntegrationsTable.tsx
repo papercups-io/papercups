@@ -6,15 +6,16 @@ import {colors, Button, Table, Tag, Text, Tooltip} from '../common';
 import {SLACK_CLIENT_ID, isDev} from '../../config';
 import {IntegrationType} from './support';
 
-const getSlackAuthUrl = () => {
+const getSlackAuthUrl = (type = 'reply') => {
   // NB: when testing locally, update `origin` to an ngrok url
   // pointing at localhost:4000 (or wherever your server is running)
   const origin = window.location.origin;
   const redirect = `${origin}/integrations/slack`;
   const q = {
+    state: type,
     scope:
-      'incoming-webhook chat:write channels:history channels:manage chat:write.public users:read users:read.email',
-    user_scope: 'channels:history',
+      'incoming-webhook chat:write channels:history channels:manage chat:write.public users:read users:read.email groups:history',
+    user_scope: 'channels:history groups:history',
     client_id: SLACK_CLIENT_ID,
     redirect_uri: redirect,
   };
@@ -87,7 +88,13 @@ const IntegrationsTable = ({
         switch (key) {
           case 'slack':
             return (
-              <a href={getSlackAuthUrl()}>
+              <a href={getSlackAuthUrl('reply')}>
+                <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
+              </a>
+            );
+          case 'slack:sync':
+            return (
+              <a href={getSlackAuthUrl('support')}>
                 <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
               </a>
             );

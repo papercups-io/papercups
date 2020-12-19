@@ -1,4 +1,4 @@
-defmodule ChatApi.Workers.ArchiveConversations do
+defmodule ChatApi.Workers.ArchiveStaleClosedConversations do
   @moduledoc """
   A worker that archives stale conversations (e.g. closed for more than 14 days)
   """
@@ -20,7 +20,7 @@ defmodule ChatApi.Workers.ArchiveConversations do
     # |> Repo.all()
     # |> Conversations.Helpers.send_multiple_archived_updates()
 
-    Logger.info("Archived #{n} conversations")
+    Logger.info("Archived #{n} stale closed conversations")
 
     :ok
   end

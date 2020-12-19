@@ -64,14 +64,14 @@ defmodule ChatApi.MessagesTest do
       customer_message = insert(:message, user: nil)
       user_message = insert(:message, customer: nil)
 
-      assert :customer = Messages.get_message_type(customer_message)
-      assert :agent = Messages.get_message_type(user_message)
+      assert :customer = Messages.Helpers.get_message_type(customer_message)
+      assert :agent = Messages.Helpers.get_message_type(user_message)
     end
 
     test "get_conversation_topic/1 returns the conversation event topic",
          %{message: message} do
       %{conversation_id: conversation_id} = message
-      topic = Messages.get_conversation_topic(message)
+      topic = Messages.Helpers.get_conversation_topic(message)
 
       assert "conversation:" <> ^conversation_id = topic
     end
@@ -80,7 +80,7 @@ defmodule ChatApi.MessagesTest do
       customer = insert(:customer)
       message = insert(:message, customer: customer)
 
-      assert %{body: body, customer: c} = Messages.format(message)
+      assert %{body: body, customer: c} = Messages.Helpers.format(message)
       assert body == message.body
       assert customer.email == c.email
     end

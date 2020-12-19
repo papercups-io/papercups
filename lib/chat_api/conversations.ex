@@ -6,6 +6,7 @@ defmodule ChatApi.Conversations do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
+  alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
@@ -183,7 +184,30 @@ defmodule ChatApi.Conversations do
     Repo.update_all(query, set: [archived_at: DateTime.utc_now()])
   end
 
-  @spec query_conversations_closed_for([{:days, number | Decimal.t()}, ...]) :: Ecto.Query.t()
+  # TODO: I wonder if this should live somewhere else...
+  @spec query_free_tier_conversations_inactive_for([{:days, number}]) :: Ecto.Query.t()
+  def query_free_tier_conversations_inactive_for(days: days) do
+    from c in Conversation,
+      join: a in Account,
+      on: a.id == c.account_id,
+      join:
+        last_message in subquery(
+          from m in Message,
+            group_by: m.conversation_id,
+            select: %{
+              conversation_id: m.conversation_id,
+              most_recently_inserted_at: max(m.inserted_at)
+            }
+        ),
+      on: last_message.conversation_id == c.id,
+      where:
+        is_nil(c.archived_at) and
+          a.subscription_plan == "starter" and c.priority == "not_priority" and
+          c.inserted_at < ago(^days, "day") and
+          last_message.most_recently_inserted_at < ago(^days, "day")
+  end
+
+  @spec query_conversations_closed_for([{:days, number}]) :: Ecto.Query.t()
   def query_conversations_closed_for(days: days) do
     Conversation
     |> where([c], is_nil(c.archived_at))

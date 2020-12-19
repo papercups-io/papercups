@@ -9,40 +9,26 @@ defmodule ChatApi.SlackAuthorizations do
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   @spec list_slack_authorizations() :: [SlackAuthorization.t()]
-  @doc """
-  Returns the list of slack_authorizations.
-
-  ## Examples
-
-      iex> list_slack_authorizations()
-      [%SlackAuthorization{}, ...]
-
-  """
   def list_slack_authorizations do
     Repo.all(SlackAuthorization)
   end
 
   @spec get_slack_authorization!(binary()) :: SlackAuthorization.t()
-  @doc """
-  Gets a single slack_authorization.
-
-  Raises `Ecto.NoResultsError` if the Slack authorization does not exist.
-
-  ## Examples
-
-      iex> get_slack_authorization!(123)
-      %SlackAuthorization{}
-
-      iex> get_slack_authorization!(456)
-      ** (Ecto.NoResultsError)
-
-  """
   def get_slack_authorization!(id), do: Repo.get!(SlackAuthorization, id)
 
-  @spec get_authorization_by_account(binary()) :: SlackAuthorization.t() | nil
-  def get_authorization_by_account(account_id) do
+  @spec find_slack_authorization(map()) :: SlackAuthorization.t() | nil
+  def find_slack_authorization(filters \\ %{}) do
+    SlackAuthorization
+    |> where(^filter_where(filters))
+    |> order_by(desc: :inserted_at)
+    |> Repo.one()
+  end
+
+  @spec get_authorization_by_account(binary(), map()) :: SlackAuthorization.t() | nil
+  def get_authorization_by_account(account_id, filters \\ %{}) do
     SlackAuthorization
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
     |> Repo.one()
   end
@@ -50,7 +36,8 @@ defmodule ChatApi.SlackAuthorizations do
   @spec create_or_update(binary(), map()) ::
           {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
   def create_or_update(account_id, params) do
-    existing = get_authorization_by_account(account_id)
+    filters = Map.take(params, [:type])
+    existing = get_authorization_by_account(account_id, filters)
 
     if existing do
       update_slack_authorization(existing, params)
@@ -61,18 +48,6 @@ defmodule ChatApi.SlackAuthorizations do
 
   @spec create_slack_authorization(map()) ::
           {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Creates a slack_authorization.
-
-  ## Examples
-
-      iex> create_slack_authorization(%{field: value})
-      {:ok, %SlackAuthorization{}}
-
-      iex> create_slack_authorization(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
   def create_slack_authorization(attrs \\ %{}) do
     %SlackAuthorization{}
     |> SlackAuthorization.changeset(attrs)
@@ -81,18 +56,6 @@ defmodule ChatApi.SlackAuthorizations do
 
   @spec update_slack_authorization(SlackAuthorization.t(), map()) ::
           {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Updates a slack_authorization.
-
-  ## Examples
-
-      iex> update_slack_authorization(slack_authorization, %{field: new_value})
-      {:ok, %SlackAuthorization{}}
-
-      iex> update_slack_authorization(slack_authorization, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
   def update_slack_authorization(%SlackAuthorization{} = slack_authorization, attrs) do
     slack_authorization
     |> SlackAuthorization.changeset(attrs)
@@ -101,33 +64,33 @@ defmodule ChatApi.SlackAuthorizations do
 
   @spec delete_slack_authorization(SlackAuthorization.t()) ::
           {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Deletes a slack_authorization.
-
-  ## Examples
-
-      iex> delete_slack_authorization(slack_authorization)
-      {:ok, %SlackAuthorization{}}
-
-      iex> delete_slack_authorization(slack_authorization)
-      {:error, %Ecto.Changeset{}}
-
-  """
   def delete_slack_authorization(%SlackAuthorization{} = slack_authorization) do
     Repo.delete(slack_authorization)
   end
 
   @spec change_slack_authorization(SlackAuthorization.t(), map()) :: Ecto.Changeset.t()
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking slack_authorization changes.
-
-  ## Examples
-
-      iex> change_slack_authorization(slack_authorization)
-      %Ecto.Changeset{data: %SlackAuthorization{}}
-
-  """
   def change_slack_authorization(%SlackAuthorization{} = slack_authorization, attrs \\ %{}) do
     SlackAuthorization.changeset(slack_authorization, attrs)
+  end
+
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  defp filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {:account_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.account_id == ^value)
+
+      {:channel_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.channel_id == ^value)
+
+      {:team_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.team_id == ^value)
+
+      {:type, value}, dynamic ->
+        dynamic([r], ^dynamic and r.type == ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end

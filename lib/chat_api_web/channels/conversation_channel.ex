@@ -125,12 +125,13 @@ defmodule ChatApiWeb.ConversationChannel do
 
   defp broadcast_new_message(socket, message) do
     broadcast_conversation_update(message)
-    broadcast(socket, "shout", Messages.format(message))
+    broadcast(socket, "shout", Messages.Helpers.format(message))
 
     message
-    |> Messages.notify(:slack)
-    |> Messages.notify(:new_message_email)
-    |> Messages.notify(:webhooks)
+    |> Messages.Notification.notify(:slack)
+    |> Messages.Notification.notify(:slack_support_threads)
+    |> Messages.Notification.notify(:new_message_email)
+    |> Messages.Notification.notify(:webhooks)
   end
 
   # Add authorization logic here as required.

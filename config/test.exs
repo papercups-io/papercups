@@ -24,5 +24,12 @@ config :chat_api, ChatApiWeb.Endpoint,
 
 config :chat_api, Oban, crontab: false, queues: false, plugins: false
 
+config :sentry,
+  dsn: System.get_env("SENTRY_DSN"),
+  environment_name: Mix.env(),
+  included_environments: [:prod],
+  enable_source_code_context: true,
+  root_source_code_path: File.cwd!()
+
 # Print only warnings and errors during test
 config :logger, level: :warn

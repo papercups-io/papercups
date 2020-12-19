@@ -2,6 +2,8 @@ defmodule ChatApi.ConversationsTest do
   use ChatApi.DataCase, async: true
 
   import ChatApi.Factory
+
+  alias ChatApi.Repo
   alias ChatApi.{Conversations, SlackConversationThreads}
 
   describe "conversations" do
@@ -191,21 +193,35 @@ defmodule ChatApi.ConversationsTest do
     end
 
     test "query_conversations_closed_for/1 returns an Ecto.Query for conversations which have been closed for more than 14 days" do
-      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336))
-
       _closed_conversation = insert(:conversation, status: "closed")
 
       ready_to_archive_conversation =
-        insert(:conversation,
-          status: "closed",
-          updated_at: past
-        )
+        insert(:conversation, status: "closed", updated_at: days_ago(15))
 
       assert %Ecto.Query{} = query = Conversations.query_conversations_closed_for(days: 14)
 
-      result_ids = Enum.map(Repo.all(query), & &1.id)
+      result_ids = query |> Repo.all() |> Enum.map(& &1.id)
 
       assert result_ids == [ready_to_archive_conversation.id]
+    end
+
+    test "query_free_tier_conversations_inactive_for/1 returns an Ecto.Query for free tier conversations that have been inactive for X days" do
+      active_conversation = insert(:conversation, inserted_at: days_ago(31))
+      insert(:message, conversation: active_conversation, inserted_at: days_ago(30))
+      insert(:message, conversation: active_conversation, inserted_at: days_ago(20))
+      insert(:message, conversation: active_conversation, inserted_at: days_ago(10))
+
+      inactive_conversation = insert(:conversation, inserted_at: days_ago(35))
+      insert(:message, conversation: inactive_conversation, inserted_at: days_ago(32))
+      insert(:message, conversation: inactive_conversation, inserted_at: days_ago(31))
+      insert(:message, conversation: inactive_conversation, inserted_at: days_ago(30))
+
+      assert %Ecto.Query{} =
+               query = Conversations.query_free_tier_conversations_inactive_for(days: 30)
+
+      result_ids = query |> Repo.all() |> Enum.map(& &1.id)
+
+      assert result_ids == [inactive_conversation.id]
     end
 
     test "archive_conversations/1 archives conversations which have been closed for more than 14 days" do
@@ -224,6 +240,57 @@ defmodule ChatApi.ConversationsTest do
 
       closed_conversation = Conversations.get_conversation!(closed_conversation.id)
       refute closed_conversation.archived_at
+    end
+
+    test "archive_conversations/1 archives inactive free tier conversations" do
+      conv1 = insert(:conversation, inserted_at: days_ago(31))
+      insert(:message, conversation: conv1, inserted_at: days_ago(31))
+
+      # just another conversation
+      conv2 = insert(:conversation)
+      insert(:message, conversation: conv2)
+
+      conv1 = Conversations.get_conversation!(conv1.id)
+      refute conv1.archived_at
+
+      assert {1, _} =
+               Conversations.query_free_tier_conversations_inactive_for(days: 30)
+               |> Conversations.archive_conversations()
+
+      conv1 = Conversations.get_conversation!(conv1.id)
+      assert conv1.archived_at
+
+      conv2 = Conversations.get_conversation!(conv2.id)
+      refute conv2.archived_at
+    end
+
+    test "archive_conversations/1 does not archive free tier conversations with recently active message" do
+      conv1 = insert(:conversation, inserted_at: days_ago(31))
+      insert(:message, conversation: conv1, inserted_at: days_ago(3))
+
+      # just another conversation
+      conv2 = insert(:conversation)
+      insert(:message, conversation: conv2)
+
+      conv1 = Conversations.get_conversation!(conv1.id)
+      refute conv1.archived_at
+
+      assert {0, _} =
+               Conversations.query_free_tier_conversations_inactive_for(days: 30)
+               |> Conversations.archive_conversations()
+
+      conv1 = Conversations.get_conversation!(conv1.id)
+      refute conv1.archived_at
+
+      conv2 = Conversations.get_conversation!(conv2.id)
+      refute conv2.archived_at
+    end
+
+    defp days_ago(days) do
+      DateTime.utc_now()
+      |> DateTime.add(days * 60 * 60 * 24 * -1)
+      |> DateTime.truncate(:second)
+      |> DateTime.to_naive()
     end
   end
 end
