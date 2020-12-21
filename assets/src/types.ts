@@ -60,6 +60,15 @@ export type Conversation = {
   tags?: Array<Tag>;
 };
 
+export type CustomerNote = {
+  id: string;
+  body: string;
+  customer_id: string;
+  author_id: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Tag = {
   id: string;
   name: string;

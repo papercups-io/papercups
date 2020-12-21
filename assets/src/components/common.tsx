@@ -53,6 +53,7 @@ export const colors = {
   blue: blue, // expose all blues
   gray: grey, // expose all grays
   text: 'rgba(0, 0, 0, 0.65)',
+  note: '#feedaf',
 };
 
 export const TextArea = Input.TextArea;

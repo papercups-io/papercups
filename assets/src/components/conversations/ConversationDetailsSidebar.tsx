@@ -10,6 +10,7 @@ import {
   Badge,
   Button,
   Input,
+  Paragraph,
   Tag,
   Text,
   Tooltip,
@@ -26,10 +27,10 @@ import {
   SidebarCustomerTags,
   SidebarConversationTags,
 } from './SidebarTagSection';
+import SidebarCustomerNotes from './SidebarCustomerNotes';
 import * as API from '../../api';
 import {Conversation, Customer} from '../../types';
 import logger from '../../logger';
-import Paragraph from 'antd/lib/typography/Paragraph';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -222,6 +223,14 @@ const CustomerDetails = ({
         <Box mb={1}>
           <Text type="secondary">IP:</Text> {lastIpAddress || 'Unknown'}
         </Box>
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Customer Notes</Text>
+        </Box>
+
+        <SidebarCustomerNotes customerId={customerId} />
       </DetailsSectionCard>
 
       <DetailsSectionCard>
