@@ -740,7 +740,54 @@ export const enableAccountUser = async (
     .then((res) => res.body.data);
 };
 
-export const fetchAllTags = (token = getAccessToken()) => {
+export const fetchCustomerNotes = async (
+  customerId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/notes`)
+    .query({customer_id: customerId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createCustomerNote = async (
+  customerId: string,
+  body: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/notes`)
+    .set('Authorization', token)
+    .send({
+      note: {
+        body,
+        customer_id: customerId,
+      },
+    })
+    .then((res) => res.body.data);
+};
+
+export const deleteCustomerNote = async (
+  noteId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request.delete(`/api/notes/${noteId}`).set('Authorization', token);
+};
+
+export const fetchAllTags = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -751,7 +798,7 @@ export const fetchAllTags = (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const createTag = (name: string, token = getAccessToken()) => {
+export const createTag = async (name: string, token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -763,7 +810,7 @@ export const createTag = (name: string, token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const addConversationTag = (
+export const addConversationTag = async (
   conversationId: string,
   tagId: string,
   token = getAccessToken()
@@ -779,7 +826,7 @@ export const addConversationTag = (
     .then((res) => res.body.data);
 };
 
-export const removeConversationTag = (
+export const removeConversationTag = async (
   conversationId: string,
   tagId: string,
   token = getAccessToken()
@@ -794,7 +841,7 @@ export const removeConversationTag = (
     .then((res) => res.body.data);
 };
 
-export const addCustomerTag = (
+export const addCustomerTag = async (
   customerId: string,
   tagId: string,
   token = getAccessToken()
@@ -810,7 +857,7 @@ export const addCustomerTag = (
     .then((res) => res.body.data);
 };
 
-export const removeCustomerTag = (
+export const removeCustomerTag = async (
   customerId: string,
   tagId: string,
   token = getAccessToken()
