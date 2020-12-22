@@ -29,16 +29,14 @@ defmodule ChatApiWeb.CustomerControllerTest do
   end
 
   describe "index" do
-    test "lists all customers",
-         %{authed_conn: authed_conn, customer: customer} do
+    test "lists all customers", %{authed_conn: authed_conn, customer: customer} do
       resp = get(authed_conn, Routes.customer_path(authed_conn, :index))
       ids = json_response(resp, 200)["data"] |> Enum.map(& &1["id"])
 
       assert ids == [customer.id]
     end
 
-    test "lists all customers in csv format",
-         %{authed_conn: authed_conn, customer: customer} do
+    test "lists all customers in csv format", %{authed_conn: authed_conn, customer: customer} do
       resp = get(authed_conn, Routes.customer_path(authed_conn, :index) <> "?format=csv")
       csv = response(resp, 200)
 
@@ -62,8 +60,11 @@ defmodule ChatApiWeb.CustomerControllerTest do
   end
 
   describe "create customer" do
-    test "renders customer when data is valid",
-         %{conn: conn, authed_conn: authed_conn, account: account} do
+    test "renders customer when data is valid", %{
+      conn: conn,
+      authed_conn: authed_conn,
+      account: account
+    } do
       resp =
         post(conn, Routes.customer_path(conn, :create),
           customer: params_for(:customer, account: account)
@@ -79,16 +80,14 @@ defmodule ChatApiWeb.CustomerControllerTest do
              } = json_response(resp, 200)["data"]
     end
 
-    test "ensures external_id is a string",
-         %{conn: conn, account: account} do
+    test "ensures external_id is a string", %{conn: conn, account: account} do
       customer = params_for(:customer, account: account, external_id: 123)
       resp = post(conn, Routes.customer_path(conn, :create), customer: customer)
 
       assert %{"external_id" => "123"} = json_response(resp, 201)["data"]
     end
 
-    test "truncates current_url if it is too long",
-         %{conn: conn, account: account} do
+    test "truncates current_url if it is too long", %{conn: conn, account: account} do
       current_url =
         "http://example.com/login?next=/insights%3Finsight%3DTRENDS%26interval%3Dday%26events%3D%255B%257B%2522id%2522%253A%2522%2524pageview%2522%252C%2522name%2522%253A%2522%2524pageview%2522%252C%2522type%2522%253A%2522events%2522%252C%2522order%2522%253A0%252C%2522math%2522%253A%2522total%2522%257D%255D%26display%3DActionsTable%26actions%3D%255B%255D%26new_entity%3D%255B%255D%26breakdown%3D%2524browser%26breakdown_type%3Devent%26properties%3D%255B%255D"
 
@@ -133,8 +132,7 @@ defmodule ChatApiWeb.CustomerControllerTest do
   end
 
   describe "delete customer" do
-    test "deletes chosen customer",
-         %{authed_conn: authed_conn, customer: customer} do
+    test "deletes chosen customer", %{authed_conn: authed_conn, customer: customer} do
       resp =
         delete(
           authed_conn,
@@ -229,8 +227,7 @@ defmodule ChatApiWeb.CustomerControllerTest do
   end
 
   describe "identifies a customer by external_id" do
-    test "finds the correct customer",
-         %{conn: conn, account: account} do
+    test "finds the correct customer", %{conn: conn, account: account} do
       external_id = "cus_123"
       customer = insert(:customer, account: account, external_id: external_id)
       %{id: customer_id, account_id: account_id} = customer
@@ -246,8 +243,7 @@ defmodule ChatApiWeb.CustomerControllerTest do
              } = json_response(resp, 200)["data"]
     end
 
-    test "returns nil if no match is found",
-         %{conn: conn, account: account} do
+    test "returns nil if no match is found", %{conn: conn, account: account} do
       customer = insert(:customer, account: account, external_id: "cus_123")
       %{id: _customer_id, account_id: account_id} = customer
 
@@ -262,8 +258,7 @@ defmodule ChatApiWeb.CustomerControllerTest do
              } = json_response(resp, 200)["data"]
     end
 
-    test "returns the most recent match if multiple exist",
-         %{conn: conn} do
+    test "returns the most recent match if multiple exist", %{conn: conn} do
       external_id = "cus_123"
       acc_1 = insert(:account)
       insert(:customer, account: acc_1, external_id: external_id)

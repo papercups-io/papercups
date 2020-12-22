@@ -33,6 +33,13 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def company_factory do
+    %ChatApi.Companies.Company{
+      account: build(:account),
+      name: "Test Inc"
+    }
+  end
+
   def conversation_factory do
     %ChatApi.Conversations.Conversation{
       account: build(:account),
