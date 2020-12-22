@@ -23,6 +23,24 @@ defmodule ChatApi.Customers do
     Customer |> where(account_id: ^account_id) |> Repo.all()
   end
 
+  @spec list_customers(binary(), map()) :: Scrivener.Page.t()
+  @doc """
+  Returns an`%Scrivener.Page{}` with paginatinated customers.
+
+  ## Examples
+      iex> list_customers(account_id, %{})
+      %Scrivener.Page{entries: [%Customer{},...], page_size: 50}
+
+      iex> list_customers(account_id, %{page_size: 10, page: 2})
+      %Scrivener.Page{entries: [%Customer{},...], page_size: 10, page: 2}
+
+  """
+  def list_customers(account_id, pagination_params) do
+    Customer
+    |> where(account_id: ^account_id)
+    |> Repo.paginate(pagination_params)
+  end
+
   @spec get_customer!(binary()) :: Customer.t() | nil
   @doc """
   Gets a single customer.
