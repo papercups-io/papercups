@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   useLocation,
   Switch,
@@ -57,6 +57,30 @@ const TITLE_FLASH_INTERVAL = 2000;
 const shouldDisplayChat = (pathname: string) => {
   return isHostedProd && pathname !== '/account/getting-started';
 };
+
+const ShortcutIcon = ({totalNumUnread}: {totalNumUnread: number}) => {
+  
+  const iconLink = '/logo.svg'
+  const iconUnreadLink = '/logo-unread.svg'
+  const [data, setData] = useState(iconLink);
+
+  useEffect(() => {
+    if(totalNumUnread){
+      setData(iconUnreadLink)
+    } else{
+      setData(iconLink)
+    }
+  })
+  
+  return (
+    <div className="" style={{position:'absolute', zIndex: 1, display: 'none'}}>
+      <Helmet defer={false}>
+        <link rel="icon" href={data}></link>
+      </Helmet>
+    </div>
+    )
+
+}
 
 // TODO: not sure if this is the best way to handle this, but the goal
 // of this component is to flash the number of unread messages in the
@@ -128,7 +152,9 @@ const Dashboard = (props: RouteComponentProps) => {
 
   return (
     <Layout>
-      <DashboardHtmlHead totalNumUnread={totalNumUnread} />
+      <ShortcutIcon totalNumUnread={totalNumUnread} />
+
+
 
       <Sider
         width={220}
