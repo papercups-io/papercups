@@ -17,6 +17,7 @@ defmodule ChatApiWeb.CompanyView do
       name: company.name,
       created_at: company.inserted_at,
       updated_at: company.updated_at,
+      account_id: company.account_id,
       external_id: company.external_id,
       website_url: company.website_url,
       description: company.description,
