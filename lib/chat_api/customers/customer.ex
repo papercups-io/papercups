@@ -4,6 +4,7 @@ defmodule ChatApi.Customers.Customer do
 
   alias ChatApi.{
     Accounts.Account,
+    Companies.Company,
     Conversations.Conversation,
     Messages.Message,
     Notes.Note,
@@ -42,6 +43,7 @@ defmodule ChatApi.Customers.Customer do
     has_many(:conversations, Conversation)
     has_many(:notes, Note)
     belongs_to(:account, Account)
+    belongs_to(:company, Company)
 
     has_many(:customer_tags, CustomerTag)
     has_many(:tags, through: [:customer_tags, :tag])
