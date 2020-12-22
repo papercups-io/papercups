@@ -16,11 +16,11 @@ defmodule ChatApi.Messages.Notification do
     })
   end
 
-  @spec broadcast_to_conversation!(Message.t()) :: Message.t()
-  def broadcast_to_conversation!(%Message{} = message) do
+  @spec broadcast_to_conversation!(Message.t(), String.t()) :: Message.t()
+  def broadcast_to_conversation!(%Message{} = message, event_name \\ "shout") do
     message
     |> Helpers.get_conversation_topic()
-    |> ChatApiWeb.Endpoint.broadcast!("shout", Helpers.format(message))
+    |> ChatApiWeb.Endpoint.broadcast!(event_name, Helpers.format(message))
 
     message
   end

@@ -25,6 +25,12 @@ defmodule ChatApiWeb.ConversationChannelTest do
     assert_broadcast "shout", _msg
   end
 
+  test "message:created broadcasts to conversation:lobby", %{socket: socket, account: account} do
+    msg = %{body: "Hello world!", account_id: account.id}
+    push(socket, "message:created", msg)
+    assert_broadcast "message:created", _msg
+  end
+
   test "broadcasts are pushed to the client", %{socket: socket} do
     broadcast_from!(socket, "broadcast", %{"some" => "data"})
     assert_push "broadcast", %{"some" => "data"}

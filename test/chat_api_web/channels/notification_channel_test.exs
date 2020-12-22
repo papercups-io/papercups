@@ -40,6 +40,22 @@ defmodule ChatApiWeb.NotificationChannelTest do
     assert_push("shout", _msg)
   end
 
+  test "message:created broadcasts to notification:lobby", %{
+    socket: socket,
+    account: account,
+    conversation: conversation
+  } do
+    msg = %{
+      body: "Message created!",
+      account_id: account.id,
+      conversation_id: conversation.id
+    }
+
+    push(socket, "message:created", msg)
+
+    assert_push("message:created", _msg)
+  end
+
   test "broadcasts are pushed to the client", %{socket: socket} do
     broadcast_from!(socket, "broadcast", %{"some" => "data"})
     assert_push "broadcast", %{"some" => "data"}
