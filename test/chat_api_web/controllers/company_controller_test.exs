@@ -86,17 +86,19 @@ defmodule ChatApiWeb.CompanyControllerTest do
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
 
       conn = get(authed_conn, Routes.company_path(authed_conn, :show, id))
+      account_id = company.account_id
 
       assert %{
-               "id" => id,
+               "id" => ^id,
+               "account_id" => ^account_id,
+               "name" => "some updated name",
                "description" => "some updated description",
                "external_id" => "some updated external_id",
                "industry" => "some updated industry",
                "logo_image_url" => "some updated logo_image_url",
-               "metadata" => %{},
-               "name" => "some updated name",
+               "website_url" => "some updated website_url",
                "slack_channel_id" => "some updated slack_channel_id",
-               "website_url" => "some updated website_url"
+               "metadata" => %{}
              } = json_response(conn, 200)["data"]
     end
 

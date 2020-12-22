@@ -7,14 +7,14 @@ defmodule ChatApi.Companies.Company do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "companies" do
+    field(:name, :string)
     field(:description, :string)
     field(:external_id, :string)
+    field(:website_url, :string)
     field(:industry, :string)
     field(:logo_image_url, :string)
-    field(:metadata, :map)
-    field(:name, :string)
     field(:slack_channel_id, :string)
-    field(:website_url, :string)
+    field(:metadata, :map)
 
     belongs_to(:account, Account)
     has_many(:customers, Customer)
@@ -27,10 +27,10 @@ defmodule ChatApi.Companies.Company do
     company
     |> cast(attrs, [
       :name,
+      :description,
       :account_id,
       :external_id,
       :website_url,
-      :description,
       :logo_image_url,
       :industry,
       :slack_channel_id,
