@@ -1,15 +1,20 @@
 import React from 'react';
-import {RouteComponentProps, Link} from 'react-router-dom';
-import {Box, Flex} from 'theme-ui';
-import qs from 'query-string';
-import {Button, Input, Text, Title} from './common';
-import logger from '../logger';
+import {RouteComponentProps} from 'react-router-dom';
+import {Flex} from 'theme-ui';
+//import qs from 'query-string';
+//import logger from '../logger';
 import * as msal from '@azure/msal-browser';
 
 type Props = RouteComponentProps<{invite?: string}> & {
 };
 type State = {
 };
+
+const TEAM_ID_PAPERCUPS_TEST = "8ae730af-1c24-4005-bd83-6326f9a38c62"
+const DESIRED_SCOPES = [
+  "User.Read",
+  "Team.ReadBasic.All",  // list joined Teams
+]
 
 class Register extends React.Component<Props, State> {
   state: State = {
@@ -32,15 +37,11 @@ class Register extends React.Component<Props, State> {
       }
     }
 
-    const loginRequest = {
-      scopes: ["User.ReadWrite"]
-    }
-
     async function acquireTokenOrRedirect(userAgent: any, signedInUser: any) {
       try {
         const accessTokenResponse = await userAgent.acquireTokenSilent({
           account: signedInUser,
-          scopes: ["user.read"]
+          scopes: DESIRED_SCOPES,
         })
         return accessTokenResponse
       }
@@ -48,13 +49,14 @@ class Register extends React.Component<Props, State> {
         if (error.errorMessage.indexOf("interaction_required") !== -1) {
           console.log("redirecting to acquire token")
           await userAgent.acquireTokenRedirect({
-            scopes: ["user.read"]
+            scopes: DESIRED_SCOPES,
           });
         }
       }
     }
 
     function allowUserAccountSelection() {
+      // on Oauth, if a user has multiple Microsoft accounts, allow the user to select an account
       /*
       const currentAccounts = await userAgent.getAllAccounts();
       console.log("CURRENT ACCOUNTS")
@@ -107,7 +109,7 @@ class Register extends React.Component<Props, State> {
       } else {
         console.log("no sign-in, or tokenResponse - redirecting to SSO")
         await userAgent.loginRedirect({
-          scopes: ["user.read"]
+          scopes: DESIRED_SCOPES,
         });
       }
     }
@@ -116,40 +118,76 @@ class Register extends React.Component<Props, State> {
     }
 
     // attempt to use accessToken
-    async function requestUserProfile(accessToken: any) {
-      const headers = new Headers();
+    function graphHeaders(accessToken: any) {
+      const headers: Headers = new Headers();
       const bearer = "Bearer " + accessToken;
       headers.append("Authorization", bearer);
+      headers.append("Content-Type", "application/json")
+      return headers
+    }
+    async function getUserProfile(accessToken: any) {
+      const url = "https://graph.microsoft.com/v1.0/me";
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: graphHeaders(accessToken),
+      })
+      console.log("fetched profile!")
+      console.log(await res.json())
+    }
+    async function getUserGroups(accessToken: any) {
+      // docs: https://docs.microsoft.com/en-us/graph/api/user-list-joinedteams?view=graph-rest-beta&tabs=http
       const url = "https://graph.microsoft.com/v1.0/me/joinedTeams";
 
       const res = await fetch(url, {
         method: "GET",
-        headers: headers,
+        headers: graphHeaders(accessToken),
       })
-      console.log("fetched profile!")
-      console.log(res)
+      console.log("fetched joined teams?")
+      console.log(await res.json())
+    }
+    async function listGroups(accessToken: any) {
+      const url = `https://graph.microsoft.com/beta/groups`;
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: graphHeaders(accessToken),
+      })
+      console.log("list groups?")
+      console.log(await res.json())
+    }
+    async function listChannels(accessToken: any) {
+      const url = `https://graph.microsoft.com/beta/teams/${TEAM_ID_PAPERCUPS_TEST}/channels`;
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: graphHeaders(accessToken),
+      })
+      console.log("list channels?")
+      console.log(await res.json())
     }
     async function postChatMessage(accessToken: any) {
-      const headers = new Headers();
-      const bearer = "Bearer " + accessToken;
-      headers.append("Authorization", bearer);
       const teamId = "8ae730af-1c24-4005-bd83-6326f9a38c62"
       const channelId = "19%3a4ffe109ef79944828b94064aa3069a64%40thread.tacv2"
-      const url = `https://graph.microsoft.com/v1.0/teams/${teamId}/channels/${channelId}/messages`;
+      const url = `https://graph.microsoft.com/beta/teams/${teamId}/channels/${channelId}/messages`;
 
       const res = await fetch(url, {
         method: "POST",
-        headers: headers,
+        headers: graphHeaders(accessToken),
         body: JSON.stringify({
           contentType: "html",
           content: "Posted via the Graph API!",
         })
       })
-      console.log("fetched profile!")
-      console.log(res)
+      console.log("posted message?")
+      console.log(await res.json())
     }
-    //requestUserProfile(accessToken)
-    postChatMessage(accessToken)
+    getUserProfile(accessToken)
+    getUserGroups(accessToken)
+    //listGroups(accessToken)
+    //listChannels(accessToken)
+    // fetch teamId, channelId
+    //postChatMessage(accessToken)
   }
 
   render() {
