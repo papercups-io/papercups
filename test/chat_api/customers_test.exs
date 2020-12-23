@@ -46,6 +46,8 @@ defmodule ChatApi.CustomersTest do
       page = Customers.list_customers(account.id, %{})
       page_with_params = Customers.list_customers(account.id, %{page: 2, page_size: 5})
 
+      assert Enum.all?(page.entries, &(&1.account_id == account.id))
+
       assert page.total_entries == 10
       assert page.total_pages == 1
 
