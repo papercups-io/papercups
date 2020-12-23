@@ -25,7 +25,7 @@ defmodule ChatApi.Customers do
 
   @spec list_customers(binary(), map()) :: Scrivener.Page.t()
   @doc """
-  Returns an`%Scrivener.Page{}` with paginatinated customers.
+  Returns a `%Scrivener.Page{}` with paginated customers.
 
   ## Examples
       iex> list_customers(account_id, %{})
