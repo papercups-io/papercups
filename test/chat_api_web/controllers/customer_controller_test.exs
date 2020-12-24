@@ -36,6 +36,15 @@ defmodule ChatApiWeb.CustomerControllerTest do
       assert ids == [customer.id]
     end
 
+    test "lists all customers by company", %{authed_conn: authed_conn, account: account} do
+      company = insert(:company, account: account)
+      new_customer = insert(:customer, account: account, company: company)
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :index, %{"company_id" => company.id}))
+      ids = json_response(resp, 200)["data"] |> Enum.map(& &1["id"])
+
+      assert ids == [new_customer.id]
+    end
+
     test "lists all customers in csv format", %{authed_conn: authed_conn, customer: customer} do
       resp = get(authed_conn, Routes.customer_path(authed_conn, :index) <> "?format=csv")
       csv = response(resp, 200)

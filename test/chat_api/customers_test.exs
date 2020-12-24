@@ -30,8 +30,7 @@ defmodule ChatApi.CustomersTest do
       {:ok, account: account, customer: customer}
     end
 
-    test "list_customers/1 returns all customers",
-         %{account: account, customer: customer} do
+    test "list_customers/2 returns all customers", %{account: account, customer: customer} do
       customer_ids =
         Customers.list_customers(account.id)
         |> Enum.map(& &1.id)
@@ -39,12 +38,41 @@ defmodule ChatApi.CustomersTest do
       assert customer_ids == [customer.id]
     end
 
-    test "list_customers/2 returns paginated customers" do
+    test "list_customers/2 can filter by company_id", %{account: account} do
+      company = insert(:company, account: account)
+      new_customer = insert(:customer, account: account, company: company)
+
+      customer_ids =
+        Customers.list_customers(account.id, %{"company_id" => company.id})
+        |> Enum.map(& &1.id)
+
+      assert customer_ids == [new_customer.id]
+    end
+
+    test "list_customers/2 can search by name/email", %{account: account} do
+      alex = insert(:customer, account: account, name: "Alex Reichert")
+      kam = insert(:customer, account: account, email: "kam@kam.com")
+
+      alex_ids =
+        account.id
+        |> Customers.list_customers(%{"name" => "%alex%"})
+        |> Enum.map(& &1.id)
+
+      kam_ids =
+        account.id
+        |> Customers.list_customers(%{"email" => "%kam%"})
+        |> Enum.map(& &1.id)
+
+      assert alex_ids == [alex.id]
+      assert kam_ids == [kam.id]
+    end
+
+    test "list_customers/3 returns paginated customers" do
       account = insert(:account)
       insert_list(10, :customer, account: account)
 
-      page = Customers.list_customers(account.id, %{})
-      page_with_params = Customers.list_customers(account.id, %{page: 2, page_size: 5})
+      page = Customers.list_customers(account.id, %{}, %{})
+      page_with_params = Customers.list_customers(account.id, %{}, %{page: 2, page_size: 5})
 
       assert Enum.all?(page.entries, &(&1.account_id == account.id))
 

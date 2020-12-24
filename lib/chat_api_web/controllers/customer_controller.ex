@@ -9,7 +9,7 @@ defmodule ChatApiWeb.CustomerController do
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
   def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      customers = Customers.list_customers(account_id)
+      customers = Customers.list_customers(account_id, params)
       render(conn, "index.#{resp_format(params)}", customers: customers)
     end
   end

@@ -9,26 +9,30 @@ defmodule ChatApi.Customers do
   alias ChatApi.Customers.Customer
   alias ChatApi.Tags.CustomerTag
 
-  @spec list_customers(binary()) :: [Customer.t()]
-  def list_customers(account_id) do
-    Customer |> where(account_id: ^account_id) |> Repo.all()
+  @spec list_customers(binary(), map()) :: [Customer.t()]
+  def list_customers(account_id, filters \\ %{}) do
+    Customer
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> Repo.all()
   end
 
-  @spec list_customers(binary(), map()) :: Scrivener.Page.t()
+  @spec list_customers(binary(), map(), map()) :: Scrivener.Page.t()
   @doc """
   Returns a `%Scrivener.Page{}` with paginated customers.
 
   ## Examples
-      iex> list_customers(account_id, %{})
+      iex> list_customers(account_id, %{}, %{})
       %Scrivener.Page{entries: [%Customer{},...], page_size: 50}
 
-      iex> list_customers(account_id, %{page_size: 10, page: 2})
+      iex> list_customers(account_id, %{"company_id" => "xxxxx"}, %{page_size: 10, page: 2})
       %Scrivener.Page{entries: [%Customer{},...], page_size: 10, page: 2}
 
   """
-  def list_customers(account_id, pagination_params) do
+  def list_customers(account_id, filters, pagination_params) do
     Customer
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> Repo.paginate(pagination_params)
   end
 
@@ -216,5 +220,24 @@ defmodule ChatApi.Customers do
     customer
     |> get_tag(tag_id)
     |> Repo.delete()
+  end
+
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
+  def filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"company_id", value}, dynamic ->
+        dynamic([r], ^dynamic and r.company_id == ^value)
+
+      {"name", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.name, ^value))
+
+      {"email", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.email, ^value))
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end
