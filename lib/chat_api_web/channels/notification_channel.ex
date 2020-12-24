@@ -63,9 +63,10 @@ defmodule ChatApiWeb.NotificationChannel do
       |> Messages.get_message!()
       |> broadcast_new_message()
       |> maybe_update_conversation_assignee()
+      |> maybe_update_first_replied_at()
     end
 
-    {:noreply, socket}
+    {:reply, :ok, socket}
   end
 
   @impl true
@@ -127,6 +128,21 @@ defmodule ChatApiWeb.NotificationChannel do
     message
   end
 
+
+  #TODO: totally refactor this see function below and above
+  defp maybe_update_first_replied_at(
+         %Messages.Message{conversation_id: conversation_id} = message
+       ) do
+
+    # Check if this is the first agent reply, in which case
+    # we set reply to conversation to the time the message was sent
+    if Conversations.count_agent_replies(conversation_id) == 1 do
+      update_first_replied_at(message)
+    end
+
+    message
+  end
+
   defp update_conversation_assignee(
          %Messages.Message{
            account_id: account_id,
@@ -144,6 +160,16 @@ defmodule ChatApiWeb.NotificationChannel do
       "id" => conversation_id,
       "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
     })
+  end
+
+  defp update_first_replied_at(
+         %Messages.Message{
+           conversation_id: conversation_id,
+         } = message
+  ) do
+    {:ok, convo} = conversation_id
+    |> Conversations.get_conversation!()
+    |> Conversations.update_conversation(%{first_replied_at: message.inserted_at})
   end
 
   defp put_new_topics(socket, topics) do

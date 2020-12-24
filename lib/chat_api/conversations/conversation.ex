@@ -42,6 +42,7 @@ defmodule ChatApi.Conversations.Conversation do
     field(:source, :string, default: "chat")
     field(:read, :boolean, default: false)
     field(:archived_at, :utc_datetime)
+    field(:first_replied_at, :utc_datetime)
     field(:closed_at, :utc_datetime)
     field(:metadata, :map)
 
@@ -66,6 +67,8 @@ defmodule ChatApi.Conversations.Conversation do
       :assignee_id,
       :account_id,
       :customer_id,
+      :archived_at,
+      :first_replied_at
       :archived_at,
       :closed_at,
       :source,

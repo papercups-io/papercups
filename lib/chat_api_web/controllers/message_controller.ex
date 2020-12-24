@@ -4,6 +4,7 @@ defmodule ChatApiWeb.MessageController do
 
   alias ChatApi.Messages
   alias ChatApi.Messages.Message
+  alias ChatApi.Conversations
 
   action_fallback(ChatApiWeb.FallbackController)
 
