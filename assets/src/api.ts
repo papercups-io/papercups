@@ -153,13 +153,17 @@ export const createNewCustomer = async (accountId: string) => {
     .then((res) => res.body.data);
 };
 
-export const fetchCustomers = async (token = getAccessToken()) => {
+export const fetchCustomers = async (
+  filters = {},
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/customers`)
+    .query(filters)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

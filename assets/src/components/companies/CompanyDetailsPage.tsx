@@ -5,26 +5,30 @@ import {Result, Title} from '../common';
 import * as API from '../../api';
 import Spinner from '../Spinner';
 import logger from '../../logger';
+import CustomersTable from '../customers/CustomersTable';
 
 type Props = RouteComponentProps<{id: string}>;
 type State = {
   loading: boolean;
   company: any;
+  customers: Array<any>;
 };
 
 class CompanyDetailsPage extends React.Component<Props, State> {
   state: State = {
     loading: true,
     company: null,
+    customers: [],
   };
 
   async componentDidMount() {
     try {
       const {id: companyId} = this.props.match.params;
       const company = await API.fetchCompany(companyId);
-      logger.info('Company:', company); // TODO
+      const customers = await API.fetchCustomers({company_id: companyId});
+      logger.info({company, customers}); // TODO
 
-      this.setState({company, loading: false});
+      this.setState({company, customers, loading: false});
     } catch (err) {
       logger.error('Error loading company!', err);
 
@@ -33,7 +37,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
   }
 
   render() {
-    const {loading, company} = this.state;
+    const {loading, company, customers = []} = this.state;
 
     if (loading) {
       return (
@@ -57,6 +61,15 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     return (
       <Box p={4}>
         <Title level={3}>{name}</Title>
+
+        <Box my={4}>
+          <CustomersTable
+            loading={loading}
+            customers={customers}
+            currentlyOnline={{}}
+            onUpdate={() => Promise.resolve()}
+          />
+        </Box>
       </Box>
     );
   }
