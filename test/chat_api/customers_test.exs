@@ -39,6 +39,23 @@ defmodule ChatApi.CustomersTest do
       assert customer_ids == [customer.id]
     end
 
+    test "list_customers/2 returns paginated customers" do
+      account = insert(:account)
+      insert_list(10, :customer, account: account)
+
+      page = Customers.list_customers(account.id, %{})
+      page_with_params = Customers.list_customers(account.id, %{page: 2, page_size: 5})
+
+      assert Enum.all?(page.entries, &(&1.account_id == account.id))
+
+      assert page.total_entries == 10
+      assert page.total_pages == 1
+
+      assert page_with_params.page_number == 2
+      assert page_with_params.page_size == 5
+      assert page_with_params.total_pages == 2
+    end
+
     test "get_customer!/1 returns the customer with given id",
          %{customer: customer} do
       found_customer =
