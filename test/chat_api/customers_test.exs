@@ -51,6 +51,7 @@ defmodule ChatApi.CustomersTest do
 
     test "list_customers/2 can search by name/email", %{account: account} do
       alex = insert(:customer, account: account, name: "Alex Reichert")
+      alexis = insert(:customer, account: account, name: "Alexis O'Hare")
       kam = insert(:customer, account: account, email: "kam@kam.com")
 
       alex_ids =
@@ -63,7 +64,7 @@ defmodule ChatApi.CustomersTest do
         |> Customers.list_customers(%{"email" => "%kam%"})
         |> Enum.map(& &1.id)
 
-      assert alex_ids == [alex.id]
+      assert Enum.sort(alex_ids) == Enum.sort([alex.id, alexis.id])
       assert kam_ids == [kam.id]
     end
 
