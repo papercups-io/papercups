@@ -29,10 +29,6 @@ const ClosedConversations = () => {
     return results;
   };
 
-  if (loading) {
-    return null;
-  }
-
   return (
     <ConversationsContainer
       loading={loading}

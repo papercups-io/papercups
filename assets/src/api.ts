@@ -193,6 +193,59 @@ export const updateCustomer = async (
     .then((res) => res.body.data);
 };
 
+export const createNewCompany = async (
+  params: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/companies`)
+    .send({company: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchCompanies = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/companies`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchCompany = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/companies/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateCompany = async (
+  id: string,
+  updates: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/companies/${id}`)
+    .set('Authorization', token)
+    .send({company: updates})
+    .then((res) => res.body.data);
+};
+
 export const createNewConversation = async (
   customerId: string,
   params?: object,
