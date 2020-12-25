@@ -62,8 +62,7 @@ defmodule ChatApiWeb.NotificationChannel do
       |> Map.get(:id)
       |> Messages.get_message!()
       |> broadcast_new_message()
-      |> maybe_update_conversation_assignee()
-      |> maybe_update_first_replied_at()
+      |> update_conversation_on_first_agent_message()
     end
 
     {:reply, :ok, socket}
@@ -116,60 +115,33 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:conversation_reply_email)
   end
 
-  defp maybe_update_conversation_assignee(
-         %Messages.Message{conversation_id: conversation_id} = message
-       ) do
-    # Check if this is the first agent reply, in which case
-    # we auto assign the conversation to that user.
-    if Conversations.count_agent_replies(conversation_id) == 1 do
-      update_conversation_assignee(message)
-    end
-
-    message
-  end
-
-
-  #TODO: totally refactor this see function below and above
-  defp maybe_update_first_replied_at(
-         %Messages.Message{conversation_id: conversation_id} = message
-       ) do
-
-    # Check if this is the first agent reply, in which case
-    # we set reply to conversation to the time the message was sent
-    if Conversations.count_agent_replies(conversation_id) == 1 do
-      update_first_replied_at(message)
-    end
-
-    message
-  end
-
-  defp update_conversation_assignee(
+  defp update_conversation_on_first_agent_message(
          %Messages.Message{
-           account_id: account_id,
            conversation_id: conversation_id,
-           user_id: assignee_id
-         } = _message
+           account_id: account_id
+         } = message
        ) do
+    # Check if this is the first agent reply, in which case
+    # we auto assign the conversation to that user and set first replied at time
+    if Conversations.count_agent_replies(conversation_id) == 1 do
+      update_conversation(account_id, conversation_id, %{
+        assignee_id: message.user_id,
+        first_replied_at: message.inserted_at
+      })
+    end
+  end
+
+  defp update_conversation(account_id, conversation_id, attrs) do
     # TODO: DRY up this logic with other places we do conversation updates w/ broadcasting
     {:ok, conversation} =
       conversation_id
       |> Conversations.get_conversation!()
-      |> Conversations.update_conversation(%{assignee_id: assignee_id})
+      |> Conversations.update_conversation(attrs)
 
     ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
       "id" => conversation_id,
       "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
     })
-  end
-
-  defp update_first_replied_at(
-         %Messages.Message{
-           conversation_id: conversation_id,
-         } = message
-  ) do
-    {:ok, convo} = conversation_id
-    |> Conversations.get_conversation!()
-    |> Conversations.update_conversation(%{first_replied_at: message.inserted_at})
   end
 
   defp put_new_topics(socket, topics) do

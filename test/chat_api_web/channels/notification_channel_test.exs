@@ -16,7 +16,7 @@ defmodule ChatApiWeb.NotificationChannelTest do
         "ids" => [conversation.id]
       })
 
-    %{socket: socket, account: account, conversation: conversation}
+    %{socket: socket, account: account, conversation: conversation, user: user}
   end
 
   test "ping replies with status ok", %{socket: socket} do
@@ -62,8 +62,26 @@ defmodule ChatApiWeb.NotificationChannelTest do
     ref = push(socket, "shout", msg)
     assert_reply(ref, :ok)
     conv = Conversations.get_conversation(conversation.id)
-    IO.inspect(conv.first_replied_at)
 
     assert conv.first_replied_at == DateTime.truncate(inserted_at, :second)
+  end
+
+  test "conversation assignee is updated when first agent first replies", %{
+    socket: socket,
+    account: account,
+    user: user,
+    conversation: conversation
+  } do
+    msg = %{
+      body: "Hello world!",
+      account_id: account.id,
+      conversation_id: conversation.id
+    }
+
+    ref = push(socket, "shout", msg)
+    assert_reply(ref, :ok)
+    conv = Conversations.get_conversation(conversation.id)
+
+    assert conv.assignee_id == user.id
   end
 end
