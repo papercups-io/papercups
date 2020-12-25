@@ -1,56 +1,93 @@
 import React from 'react';
-import {Box, Flex} from 'theme-ui';
-import {Title} from '../common';
+import {RouteComponentProps} from 'react-router-dom';
+import {Box} from 'theme-ui';
+import {Button, Input, Title} from '../common';
 import * as API from '../../api';
-import Spinner from '../Spinner';
 import logger from '../../logger';
 
-type Props = {};
+type Props = RouteComponentProps<{}>;
 type State = {
-  loading: boolean;
-  companies: Array<any>;
+  submitting: boolean;
+  name: string;
+  description: string;
+  websiteUrl: string;
 };
 
 class CreateCompanyPage extends React.Component<Props, State> {
   state: State = {
-    loading: true,
-    companies: [],
+    submitting: false,
+    name: '',
+    description: '',
+    websiteUrl: '',
   };
 
-  async componentDidMount() {
+  handleCreateCompany = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     try {
-      const companies = await API.fetchCompanies();
-      logger.info('Companies:', companies); // TODO
+      const {name, description, websiteUrl} = this.state;
+      const {id: companyId} = await API.createNewCompany({
+        name,
+        description,
+        website_url: websiteUrl,
+      });
 
-      this.setState({companies, loading: false});
+      return this.props.history.push(`/companies/${companyId}`);
     } catch (err) {
-      logger.error('Error loading companies!', err);
-
-      this.setState({loading: false});
+      logger.error('Error creating new company:', err);
     }
-  }
+  };
 
   render() {
-    const {loading} = this.state;
-
-    if (loading) {
-      return (
-        <Flex
-          sx={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-          }}
-        >
-          <Spinner size={40} />
-        </Flex>
-      );
-    }
+    const {name, description, websiteUrl, submitting} = this.state;
 
     return (
-      <Box p={4}>
+      <Box p={4} sx={{maxWidth: 720}}>
         <Title level={3}>New company (beta)</Title>
+
+        <Box my={4} sx={{maxWidth: 400}}>
+          <form onSubmit={this.handleCreateCompany}>
+            <Box mb={3}>
+              <label htmlFor="name">Company name</label>
+              <Input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  this.setState({name: e.target.value})
+                }
+              />
+            </Box>
+            <Box mb={3}>
+              <label htmlFor="description">Company description</label>
+              <Input
+                id="description"
+                type="text"
+                value={description}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  this.setState({description: e.target.value})
+                }
+              />
+            </Box>
+            <Box mb={3}>
+              <label htmlFor="website_url">Company website</label>
+              <Input
+                id="website_url"
+                type="text"
+                value={websiteUrl}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  this.setState({websiteUrl: e.target.value})
+                }
+              />
+            </Box>
+
+            <Box my={4}>
+              <Button type="primary" htmlType="submit" loading={submitting}>
+                Create
+              </Button>
+            </Box>
+          </form>
+        </Box>
       </Box>
     );
   }

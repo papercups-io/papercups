@@ -1,6 +1,6 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
-import {Box} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 import {Button, Table, Title} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
@@ -38,7 +38,16 @@ const CompaniesTable = ({
       dataIndex: 'website_url',
       key: 'website_url',
       render: (value: string) => {
-        return value || '--';
+        // TODO: check if valid url!
+        if (value && value.length) {
+          return (
+            <a href={value} target="_blank" rel="noopener noreferrer">
+              {value}
+            </a>
+          );
+        } else {
+          return '--';
+        }
       },
     },
     {
@@ -90,7 +99,12 @@ class CompaniesPage extends React.Component<Props, State> {
 
     return (
       <Box p={4}>
-        <Title level={3}>Companies (beta)</Title>
+        <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
+          <Title level={3}>Companies (beta)</Title>
+          <Link to="/companies/new">
+            <Button type="primary">New company</Button>
+          </Link>
+        </Flex>
 
         <Box my={4}>
           <CompaniesTable loading={loading} companies={companies} />

@@ -1,7 +1,8 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router-dom';
+import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Result, Title} from '../common';
+import {Button, Result, Title} from '../common';
+import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import Spinner from '../Spinner';
 import logger from '../../logger';
@@ -60,6 +61,12 @@ class CompanyDetailsPage extends React.Component<Props, State> {
 
     return (
       <Box p={4}>
+        <Box mb={4}>
+          <Link to="/companies">
+            <Button icon={<ArrowLeftOutlined />}>Back to companies</Button>
+          </Link>
+        </Box>
+
         <Title level={3}>{name}</Title>
 
         <Box my={4}>
