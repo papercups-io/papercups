@@ -73,7 +73,7 @@ defmodule ChatApi.Slack.Client do
     # TODO: we need channels:read scope to access this
     if should_execute?(access_token) do
       get("/conversations.list",
-        query: [types: "public_channel"],
+        query: [types: "public_channel,private_channel"],
         headers: [
           {"Authorization", "Bearer " <> access_token}
         ]
