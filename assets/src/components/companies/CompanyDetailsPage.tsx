@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Result, Title} from '../common';
+import {Button, Divider, Paragraph, Result, Text, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import Spinner from '../Spinner';
@@ -57,7 +57,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
       return <Result status="error" title="Error retrieving company" />;
     }
 
-    const {name} = company;
+    const {name, description, website_url: websiteUrl} = company;
 
     return (
       <Box p={4}>
@@ -69,7 +69,29 @@ class CompanyDetailsPage extends React.Component<Props, State> {
 
         <Title level={3}>{name}</Title>
 
-        <Box my={4}>
+        {description && <Paragraph>{description}</Paragraph>}
+
+        <Box mb={2}>
+          <Box>
+            <Text strong>Website</Text>
+          </Box>
+
+          <Paragraph>
+            {websiteUrl ? (
+              <a href={websiteUrl} target="_blank" rel="noopener noreferrer">
+                {websiteUrl}
+              </a>
+            ) : (
+              'N/A'
+            )}
+          </Paragraph>
+        </Box>
+
+        <Divider />
+
+        <Title level={4}>Customers</Title>
+
+        <Box my={3}>
           <CustomersTable
             loading={loading}
             customers={customers}

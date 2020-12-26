@@ -12,9 +12,13 @@ const CompaniesTable = ({
   loading?: boolean;
   companies: Array<any>;
 }) => {
-  const data = companies.map((company) => {
-    return {key: company.id, ...company};
-  });
+  const data = companies
+    .map((company) => {
+      return {key: company.id, ...company};
+    })
+    .sort((a, b) => {
+      return +new Date(b.updated_at) - +new Date(a.updated_at);
+    });
 
   const columns = [
     {
