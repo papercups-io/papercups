@@ -27,7 +27,6 @@ class CompanyDetailsPage extends React.Component<Props, State> {
       const {id: companyId} = this.props.match.params;
       const company = await API.fetchCompany(companyId);
       const customers = await API.fetchCustomers({company_id: companyId});
-      logger.info({company, customers}); // TODO
 
       this.setState({company, customers, loading: false});
     } catch (err) {

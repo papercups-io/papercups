@@ -88,7 +88,6 @@ class CompaniesPage extends React.Component<Props, State> {
   async componentDidMount() {
     try {
       const companies = await API.fetchCompanies();
-      logger.info('Companies:', companies); // TODO
 
       this.setState({companies, loading: false});
     } catch (err) {
