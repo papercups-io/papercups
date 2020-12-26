@@ -40,6 +40,26 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  def average_first_replied_time(account_id, filters \\ %{}) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where([conv], not is_nil(conv.first_replied_at))
+    |> select([:first_replied_at, :inserted_at])
+    |> Repo.all()
+    |> compute_average_replied_time()
+  end
+
+  def compute_average_replied_time(conversations) do
+    conversations
+    |> Enum.map(fn conv -> Time.diff(conv.first_replied_at, conv.inserted_at) end)
+    |> average()
+  end
+
+  def average(list) do
+    total = Enum.reduce(list, 0, fn x, acc -> x + acc end)
+    total / max(length(list), 1)
+  end
+
   @spec count_conversations_by_date(binary(), binary(), binary()) :: [aggregate_by_date()]
   def count_conversations_by_date(account_id, from_date, to_date),
     do: count_conversations_by_date(account_id, %{from_date: from_date, to_date: to_date})
