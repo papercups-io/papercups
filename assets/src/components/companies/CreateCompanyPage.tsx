@@ -1,7 +1,8 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router-dom';
+import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box} from 'theme-ui';
-import {Button, Input, Title} from '../common';
+import {Button, Input, Select, Title} from '../common';
+import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';
 
@@ -11,6 +12,9 @@ type State = {
   name: string;
   description: string;
   websiteUrl: string;
+  slackChannelId: string;
+  slackChannelName: string;
+  channels: Array<any>;
 };
 
 class CreateCompanyPage extends React.Component<Props, State> {
@@ -19,17 +23,50 @@ class CreateCompanyPage extends React.Component<Props, State> {
     name: '',
     description: '',
     websiteUrl: '',
+    slackChannelId: '',
+    slackChannelName: '',
+    channels: [],
+  };
+
+  async componentDidMount() {
+    const shouldFetchSlackChannels = await this.hasSlackAuthorization();
+
+    if (shouldFetchSlackChannels) {
+      const channels = await API.fetchSlackChannels();
+
+      this.setState({channels});
+    }
+  }
+
+  hasSlackAuthorization = async () => {
+    try {
+      const auth = await API.fetchSlackAuthorization('support');
+
+      return !!auth;
+    } catch (err) {
+      logger.error('Error fetching Slack authorization:', err);
+
+      return false;
+    }
   };
 
   handleCreateCompany = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
-      const {name, description, websiteUrl} = this.state;
+      const {
+        name,
+        description,
+        websiteUrl,
+        slackChannelId,
+        slackChannelName,
+      } = this.state;
       const {id: companyId} = await API.createNewCompany({
         name,
         description,
         website_url: websiteUrl,
+        slack_channel_id: slackChannelId,
+        slack_channel_name: slackChannelName,
       });
 
       return this.props.history.push(`/companies/${companyId}`);
@@ -39,10 +76,23 @@ class CreateCompanyPage extends React.Component<Props, State> {
   };
 
   render() {
-    const {name, description, websiteUrl, submitting} = this.state;
+    const {
+      name,
+      description,
+      websiteUrl,
+      slackChannelId,
+      channels = [],
+      submitting,
+    } = this.state;
 
     return (
       <Box p={4} sx={{maxWidth: 720}}>
+        <Box mb={4}>
+          <Link to="/companies">
+            <Button icon={<ArrowLeftOutlined />}>Back to companies</Button>
+          </Link>
+        </Box>
+
         <Title level={3}>New company (beta)</Title>
 
         <Box my={4} sx={{maxWidth: 400}}>
@@ -78,6 +128,28 @@ class CreateCompanyPage extends React.Component<Props, State> {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   this.setState({websiteUrl: e.target.value})
                 }
+              />
+            </Box>
+
+            <Box mb={3}>
+              <label htmlFor="slack_channel_id">Company Slack channel</label>
+
+              <Select
+                style={{width: '100%'}}
+                placeholder="Select Slack channel"
+                showSearch
+                value={slackChannelId || undefined}
+                onChange={(value: string, record: any) => {
+                  this.setState({
+                    slackChannelId: value,
+                    slackChannelName: record.label,
+                  });
+                }}
+                options={channels.map((channel: any) => {
+                  const {id, name} = channel;
+
+                  return {id, key: id, label: `#${name}`, value: id};
+                })}
               />
             </Box>
 

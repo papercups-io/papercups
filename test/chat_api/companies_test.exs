@@ -15,6 +15,7 @@ defmodule ChatApi.CompaniesTest do
       metadata: %{},
       name: "some updated name",
       slack_channel_id: "some updated slack_channel_id",
+      slack_channel_name: "some updated slack_channel_name",
       website_url: "some updated website_url"
     }
     @invalid_attrs %{
@@ -25,6 +26,7 @@ defmodule ChatApi.CompaniesTest do
       metadata: nil,
       name: nil,
       slack_channel_id: nil,
+      slack_channel_name: nil,
       website_url: nil
     }
 
@@ -70,6 +72,7 @@ defmodule ChatApi.CompaniesTest do
       assert company.logo_image_url == "some updated logo_image_url"
       assert company.name == "some updated name"
       assert company.slack_channel_id == "some updated slack_channel_id"
+      assert company.slack_channel_name == "some updated slack_channel_name"
       assert company.website_url == "some updated website_url"
       assert company.metadata == %{}
     end

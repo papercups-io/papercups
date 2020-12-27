@@ -11,6 +11,7 @@ defmodule ChatApiWeb.CompanyControllerTest do
     metadata: %{},
     name: "some updated name",
     slack_channel_id: "some updated slack_channel_id",
+    slack_channel_name: "some updated slack_channel_name",
     website_url: "some updated website_url"
   }
   @invalid_attrs %{
@@ -21,6 +22,7 @@ defmodule ChatApiWeb.CompanyControllerTest do
     metadata: nil,
     name: nil,
     slack_channel_id: nil,
+    slack_channel_name: nil,
     website_url: nil
   }
 
@@ -98,6 +100,7 @@ defmodule ChatApiWeb.CompanyControllerTest do
                "logo_image_url" => "some updated logo_image_url",
                "website_url" => "some updated website_url",
                "slack_channel_id" => "some updated slack_channel_id",
+               "slack_channel_name" => "some updated slack_channel_name",
                "metadata" => %{}
              } = json_response(conn, 200)["data"]
     end

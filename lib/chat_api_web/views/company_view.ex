@@ -24,6 +24,7 @@ defmodule ChatApiWeb.CompanyView do
       logo_image_url: company.logo_image_url,
       industry: company.industry,
       slack_channel_id: company.slack_channel_id,
+      slack_channel_name: company.slack_channel_name,
       metadata: company.metadata
     }
   end

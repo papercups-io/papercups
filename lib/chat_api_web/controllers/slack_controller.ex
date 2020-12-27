@@ -115,6 +115,20 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec channels(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def channels(conn, payload) do
+    # TODO: figure out the best way to handle errors here... should we just return
+    # an empty list of channels if the call fails, or indicate that an error occurred?
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         filters <- %{type: Map.get(payload, "type", "support")},
+         %{access_token: access_token} <-
+           SlackAuthorizations.get_authorization_by_account(account_id, filters),
+         {:ok, result} <- Slack.Client.list_channels(access_token),
+         %{body: %{"ok" => true, "channels" => channels}} <- result do
+      json(conn, %{data: channels})
+    end
+  end
+
   defp handle_event(%{"bot_id" => _bot_id} = _event) do
     # Don't do anything on bot events for now
     nil

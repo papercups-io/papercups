@@ -250,6 +250,14 @@ export const updateCompany = async (
     .then((res) => res.body.data);
 };
 
+export const deleteCompany = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request.delete(`/api/companies/${id}`).set('Authorization', token);
+};
+
 export const createNewConversation = async (
   customerId: string,
   params?: object,
@@ -546,6 +554,21 @@ export const fetchSlackAuthorization = async (
   return request
     .get(`/api/slack/authorization`)
     .query({type})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchSlackChannels = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/slack/channels`)
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
