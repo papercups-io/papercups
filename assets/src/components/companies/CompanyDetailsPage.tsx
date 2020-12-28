@@ -145,7 +145,16 @@ class CompanyDetailsPage extends React.Component<Props, State> {
               <Text strong>Connected Slack Channel</Text>
             </Box>
 
-            <Paragraph>{formatSlackChannel(slackChannelName)}</Paragraph>
+            <Paragraph>
+              {/* TODO: include Slack team ID if necessary */}
+              <a
+                href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {formatSlackChannel(slackChannelName)}
+              </a>
+            </Paragraph>
           </Box>
         )}
 
