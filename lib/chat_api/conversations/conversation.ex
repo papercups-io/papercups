@@ -18,6 +18,7 @@ defmodule ChatApi.Conversations.Conversation do
     field(:priority, :string, default: "not_priority")
     field(:read, :boolean, default: false)
     field(:archived_at, :utc_datetime)
+    field(:closed_at, :utc_datetime)
 
     has_many(:messages, Message)
     belongs_to(:assignee, User, foreign_key: :assignee_id, references: :id, type: :integer)
@@ -32,6 +33,7 @@ defmodule ChatApi.Conversations.Conversation do
 
   @doc false
   def changeset(conversation, attrs) do
+
     conversation
     |> cast(attrs, [
       :status,
@@ -40,9 +42,11 @@ defmodule ChatApi.Conversations.Conversation do
       :assignee_id,
       :account_id,
       :customer_id,
-      :archived_at
+      :archived_at,
+      :closed_at
     ])
     |> validate_required([:status, :account_id, :customer_id])
+    |> put_closed_at()
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:customer_id)
   end
@@ -52,4 +56,14 @@ defmodule ChatApi.Conversations.Conversation do
     |> cast(attrs, [:inserted_at, :updated_at, :status])
     |> changeset(attrs)
   end
+
+  defp put_closed_at(%Ecto.Changeset{valid?: true, changes: %{status: status}} = changeset) do
+    case status do
+      "closed" -> put_change(changeset, :closed_at, DateTime.utc_now() |> DateTime.truncate(:second))
+      "open" -> put_change(changeset, :closed_at, nil)
+    end
+  end
+
+  defp put_closed_at(changeset), do: changeset
+
 end
