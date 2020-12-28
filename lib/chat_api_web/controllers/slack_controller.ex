@@ -172,6 +172,7 @@ defmodule ChatApiWeb.SlackController do
         |> Messages.Notification.notify(:webhooks)
         |> Messages.Notification.notify(:slack_support_threads)
       else
+        # FIXME: this breaks if a "support" integration doesn't exist
         account_id
         |> SlackAuthorizations.get_authorization_by_account(%{type: "support"})
         |> Slack.Helpers.format_sender_id!(slack_user_id)
@@ -238,6 +239,22 @@ defmodule ChatApiWeb.SlackController do
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:webhooks)
     end
+  end
+
+  defp handle_event(
+         %{
+           "type" => "reaction_added",
+           "reaction" => _reaction,
+           "user" => _user,
+           "item" => %{
+             "channel" => _channel,
+             "ts" => _ts,
+             "type" => "message"
+           }
+         } = event
+       ) do
+    Logger.info("Slack emoji reaction detected:")
+    Logger.info(inspect(event))
   end
 
   defp handle_event(_), do: nil

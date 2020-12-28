@@ -22,6 +22,7 @@ const getSlackAuthUrl = (type = 'reply') => {
     'users:read.email',
     'groups:history',
     'groups:read',
+    'reactions:read',
   ];
   const userScopes = ['channels:history', 'groups:history'];
   const q = {
