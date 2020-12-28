@@ -47,6 +47,7 @@ type State = {
   customerBreakdownByBrowser: Array<CustomerBreakdownCount>;
   customerBreakdownByOs: Array<CustomerBreakdownCount>;
   customerBreakdownByTimezone: Array<CustomerBreakdownCount>;
+  averageTimeToFirstRespond: number;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
@@ -62,6 +63,7 @@ class ReportingDashboard extends React.Component<Props, State> {
     customerBreakdownByBrowser: [],
     customerBreakdownByOs: [],
     customerBreakdownByTimezone: [],
+    averageTimeToFirstRespond: 0,
   };
 
   componentDidMount() {
@@ -89,6 +91,7 @@ class ReportingDashboard extends React.Component<Props, State> {
       customerBreakdownByBrowser: data?.customer_breakdown_by_browser || [],
       customerBreakdownByOs: data?.customer_breakdown_by_os || [],
       customerBreakdownByTimezone: data?.customer_breakdown_by_time_zone || [],
+      averageTimeToFirstRespond: data?.average_time_to_first_respond || 0,
     });
   };
 
@@ -183,6 +186,14 @@ class ReportingDashboard extends React.Component<Props, State> {
     );
   };
 
+  formatResponseTimeStats = (responseTime: number) => {
+    const seconds = Math.round(responseTime);
+    //time would look like 00:01:20 if on average it takes 80 seconds to respond
+    const time = new Date(seconds * 1000).toISOString().substr(11, 8);
+    const [hour, minute, second] = time.split(':');
+    return `${hour} hr ${minute} min ${second} sec`;
+  };
+
   render() {
     const {
       fromDate,
@@ -190,6 +201,7 @@ class ReportingDashboard extends React.Component<Props, State> {
       customerBreakdownByBrowser = [],
       customerBreakdownByOs = [],
       customerBreakdownByTimezone = [],
+      averageTimeToFirstRespond = 0,
     } = this.state;
     const dailyStats = this.formatDailyStats();
     const userStats = this.formatUserStats();
@@ -205,6 +217,10 @@ class ReportingDashboard extends React.Component<Props, State> {
     const timezoneStats = this.formatCustomerBreakdownStats(
       customerBreakdownByTimezone,
       'time_zone'
+    );
+
+    const responsTimeStats = this.formatResponseTimeStats(
+      averageTimeToFirstRespond
     );
 
     return (
@@ -231,6 +247,18 @@ class ReportingDashboard extends React.Component<Props, State> {
 
         <Box>
           <Flex mx={-3} mb={4}>
+            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+              <Box mb={2}>
+                <Text strong>Response Metrics</Text>
+              </Box>
+              <Box>
+                <Box mb={2}>
+                  <Text>Average 1st Response </Text>
+                </Box>
+                <Text>{responsTimeStats}</Text>
+              </Box>
+            </Box>
+
             <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
               <Box mb={2}>
                 <Text strong>New messages per day</Text>
