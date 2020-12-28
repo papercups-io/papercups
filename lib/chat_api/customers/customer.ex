@@ -59,6 +59,7 @@ defmodule ChatApi.Customers.Customer do
       :first_seen,
       :last_seen,
       :account_id,
+      :company_id,
       :email,
       :name,
       :phone,
@@ -79,6 +80,7 @@ defmodule ChatApi.Customers.Customer do
     ])
     |> validate_required([:first_seen, :last_seen, :account_id])
     |> foreign_key_constraint(:account_id)
+    |> foreign_key_constraint(:company_id)
   end
 
   def metadata_changeset(customer, attrs) do

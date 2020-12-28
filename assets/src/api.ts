@@ -153,13 +153,17 @@ export const createNewCustomer = async (accountId: string) => {
     .then((res) => res.body.data);
 };
 
-export const fetchCustomers = async (token = getAccessToken()) => {
+export const fetchCustomers = async (
+  filters = {},
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/customers`)
+    .query(filters)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -191,6 +195,67 @@ export const updateCustomer = async (
       customer: updates,
     })
     .then((res) => res.body.data);
+};
+
+export const createNewCompany = async (
+  params: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/companies`)
+    .send({company: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchCompanies = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/companies`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchCompany = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/companies/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateCompany = async (
+  id: string,
+  updates: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/companies/${id}`)
+    .set('Authorization', token)
+    .send({company: updates})
+    .then((res) => res.body.data);
+};
+
+export const deleteCompany = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request.delete(`/api/companies/${id}`).set('Authorization', token);
 };
 
 export const createNewConversation = async (
@@ -489,6 +554,21 @@ export const fetchSlackAuthorization = async (
   return request
     .get(`/api/slack/authorization`)
     .query({type})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchSlackChannels = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/slack/channels`)
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

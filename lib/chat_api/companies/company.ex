@@ -14,6 +14,7 @@ defmodule ChatApi.Companies.Company do
     field(:industry, :string)
     field(:logo_image_url, :string)
     field(:slack_channel_id, :string)
+    field(:slack_channel_name, :string)
     field(:metadata, :map)
 
     belongs_to(:account, Account)
@@ -34,6 +35,7 @@ defmodule ChatApi.Companies.Company do
       :logo_image_url,
       :industry,
       :slack_channel_id,
+      :slack_channel_name,
       :metadata
     ])
     |> validate_required([

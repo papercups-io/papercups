@@ -11,11 +11,23 @@ const getSlackAuthUrl = (type = 'reply') => {
   // pointing at localhost:4000 (or wherever your server is running)
   const origin = window.location.origin;
   const redirect = `${origin}/integrations/slack`;
+  const scopes = [
+    'incoming-webhook',
+    'chat:write',
+    'channels:history',
+    'channels:manage',
+    'channels:read',
+    'chat:write.public',
+    'users:read',
+    'users:read.email',
+    'groups:history',
+    'groups:read',
+  ];
+  const userScopes = ['channels:history', 'groups:history'];
   const q = {
     state: type,
-    scope:
-      'incoming-webhook chat:write channels:history channels:manage chat:write.public users:read users:read.email groups:history',
-    user_scope: 'channels:history groups:history',
+    scope: scopes.join(' '),
+    user_scope: userScopes.join(' '),
     client_id: SLACK_CLIENT_ID,
     redirect_uri: redirect,
   };
