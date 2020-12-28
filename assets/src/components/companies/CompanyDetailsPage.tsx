@@ -25,6 +25,7 @@ type Props = RouteComponentProps<{id: string}>;
 type State = {
   loading: boolean;
   deleting: boolean;
+  refreshing: boolean;
   company: any;
   customers: Array<any>;
 };
@@ -33,6 +34,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
   state: State = {
     loading: true,
     deleting: false,
+    refreshing: false,
     company: null,
     customers: [],
   };
@@ -51,6 +53,21 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     }
   }
 
+  handleRefreshCustomers = async () => {
+    this.setState({refreshing: true});
+
+    try {
+      const {id: companyId} = this.props.match.params;
+      const customers = await API.fetchCustomers({company_id: companyId});
+
+      this.setState({customers, refreshing: false});
+    } catch (err) {
+      logger.error('Error refreshing customers!', err);
+
+      this.setState({refreshing: false});
+    }
+  };
+
   handleDeleteCompany = async () => {
     try {
       this.setState({deleting: true});
@@ -67,7 +84,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, deleting, company, customers = []} = this.state;
+    const {loading, deleting, refreshing, company, customers = []} = this.state;
 
     if (loading) {
       return (
@@ -164,10 +181,10 @@ class CompanyDetailsPage extends React.Component<Props, State> {
 
         <Box my={3}>
           <CustomersTable
-            loading={loading}
+            loading={loading || refreshing}
             customers={customers}
             currentlyOnline={{}}
-            onUpdate={() => Promise.resolve()}
+            onUpdate={this.handleRefreshCustomers}
           />
         </Box>
       </Box>
