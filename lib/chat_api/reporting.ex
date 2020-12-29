@@ -121,10 +121,34 @@ defmodule ChatApi.Reporting do
     |> compute_weekday_aggregates()
   end
 
+  def first_response_time_by_weekday(account_id) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where([conv], not is_nil(conv.first_replied_at))
+    |> average_grouped_by_date()
+    |> select_merge([m], %{day: fragment("to_char(date(?), 'Day')", m.inserted_at)})
+    |> Repo.all()
+    |> Enum.group_by(&String.trim(&1.day))
+    |> compute_average_weekday_aggregates()
+  end
+
   defp count_grouped_by_date(query, field \\ :inserted_at) do
     query
     |> group_by([r], fragment("date(?)", field(r, ^field)))
     |> select([r], %{date: fragment("date(?)", field(r, ^field)), count: count(r.id)})
+    |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
+  end
+
+  # TODO some duplication here with group by date might be good to refactor
+  defp average_grouped_by_date(query, field \\ :inserted_at) do
+    query
+    |> group_by([r], fragment("date(?)", field(r, ^field)))
+    |> select([r], %{
+      date: fragment("date(?)", field(r, ^field)),
+      count: count(r.id),
+      # avg doesn't do anything but raises a grouping_error when I remove it...
+      response_time: fragment("extract(epoch FROM ?)", avg(r.first_replied_at - r.inserted_at))
+    })
     |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
   end
 
@@ -137,6 +161,18 @@ defmodule ChatApi.Reporting do
         day: weekday,
         average: total / max(length(records), 1),
         total: total
+      }
+    end)
+  end
+
+  defp compute_average_weekday_aggregates(grouped) do
+    Enum.map(weekdays(), fn weekday ->
+      records = Map.get(grouped, weekday, [])
+      total = Enum.reduce(records, 0, fn x, acc -> x.response_time + acc end)
+
+      %{
+        day: weekday,
+        average: total / max(length(records), 1)
       }
     end)
   end

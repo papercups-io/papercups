@@ -21,6 +21,7 @@ defmodule ChatApiWeb.ReportingController do
         conversations_by_date: Reporting.count_conversations_by_date(account_id, filters),
         messages_per_user: Reporting.count_messages_per_user(account_id, filters),
         messages_by_weekday: Reporting.count_messages_by_weekday(account_id, filters),
+        first_response_time_by_weekday: Reporting.first_response_time_by_weekday(account_id),
         sent_messages_by_date: Reporting.count_sent_messages_by_date(account_id, filters),
         received_messages_by_date: Reporting.count_received_messages_by_date(account_id, filters),
         customer_breakdown_by_browser:

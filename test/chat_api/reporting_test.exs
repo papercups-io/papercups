@@ -335,6 +335,83 @@ defmodule ChatApi.ReportingTest do
     end
   end
 
+  describe "first_response_time_by_weekday" do
+    setup do
+      account = insert(:account)
+
+      {:ok, account: account}
+    end
+
+    test "correctly calculates total and avg of customer messages per day", %{account: account} do
+      # 01:02:03 - 3723
+      # Monday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-28 10:00:00],
+        first_replied_at: ~N[2020-09-28 11:02:03]
+      )
+
+      # Monday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-05 10:00:00],
+        first_replied_at: ~N[2020-10-05 11:00:03]
+      )
+
+      # Tuesday
+      insert_pair(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-29 10:00:00],
+        first_replied_at: ~N[2020-09-29 11:02:03]
+      )
+
+      # Wednesday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-30 12:00:00],
+        first_replied_at: ~N[2020-09-30 12:02:03]
+      )
+
+      # Thursday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-01 12:00:00],
+        first_replied_at: ~N[2020-10-01 12:02:03]
+      )
+
+      # Friday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 12:00:00],
+        first_replied_at: ~N[2020-10-02 12:00:03]
+      )
+
+      # Saturday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 12:00:00],
+        first_replied_at: ~N[2020-10-03 12:00:03]
+      )
+
+      # Sunday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-04 10:00:00],
+        first_replied_at: ~N[2020-10-04 11:00:03]
+      )
+
+      assert [
+               %{day: "Monday", average: 3663.0},
+               %{day: "Tuesday", average: 3723.0},
+               %{day: "Wednesday", average: 123.0},
+               %{day: "Thursday", average: 123.0},
+               %{day: "Friday", average: 3.0},
+               %{day: "Saturday", average: 3.0},
+               %{day: "Sunday", average: 3603.0}
+             ] = Reporting.first_response_time_by_weekday(account.id)
+    end
+  end
+
   describe "count_messages_by_weekday/1" do
     setup do
       account = insert(:account)
