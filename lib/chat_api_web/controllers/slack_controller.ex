@@ -147,17 +147,17 @@ defmodule ChatApiWeb.SlackController do
            "type" => "message",
            "text" => text,
            "thread_ts" => thread_ts,
-           "channel" => channel,
+           "channel" => slack_channel_id,
            "user" => slack_user_id
          } = event
        ) do
     Logger.debug("Handling Slack event: #{inspect(event)}")
 
-    with {:ok, conversation} <- get_thread_conversation(thread_ts, channel),
+    with {:ok, conversation} <- get_thread_conversation(thread_ts, slack_channel_id),
          %{account_id: account_id, id: conversation_id} <- conversation,
          primary_reply_authorization <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
-      if Slack.Helpers.is_primary_channel?(primary_reply_authorization, channel) do
+      if Slack.Helpers.is_primary_channel?(primary_reply_authorization, slack_channel_id) do
         %{
           "body" => text,
           "conversation_id" => conversation_id,
@@ -178,7 +178,7 @@ defmodule ChatApiWeb.SlackController do
         # FIXME: this breaks if a "support" integration doesn't exist
         account_id
         |> SlackAuthorizations.get_authorization_by_account(%{type: "support"})
-        |> Slack.Helpers.format_sender_id!(slack_user_id, channel)
+        |> Slack.Helpers.format_sender_id!(slack_user_id, slack_channel_id)
         |> Map.merge(%{
           "body" => text,
           "conversation_id" => conversation_id,

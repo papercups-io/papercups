@@ -19,6 +19,79 @@ defmodule ChatApi.SlackTest do
     end
   end
 
+  @slack_channel_id "C123TEST"
+
+  describe "Slack.Notifications" do
+    setup do
+      account = insert(:account)
+      auth = insert(:slack_authorization, account: account, type: "support")
+      customer = insert(:customer, account: account)
+      conversation = insert(:conversation, account: account, customer: customer)
+
+      thread =
+        insert(:slack_conversation_thread,
+          account: account,
+          conversation: conversation,
+          slack_channel: @slack_channel_id
+        )
+
+      {:ok,
+       conversation: conversation,
+       auth: auth,
+       account: account,
+       customer: customer,
+       thread: thread}
+    end
+
+    test "Notifications.notify_slack_channel/2 sends a thread reply notification", %{
+      account: account,
+      auth: auth,
+      customer: customer,
+      conversation: conversation,
+      thread: thread
+    } do
+      message = insert(:message, account: account, conversation: conversation, customer: customer)
+
+      with_mock ChatApi.Slack.Client,
+        send_message: fn msg, _ ->
+          {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
+        end do
+        assert :ok = Slack.Notifications.notify_slack_channel(@slack_channel_id, message)
+
+        assert_called(Slack.Client.send_message(:_, :_))
+
+        assert_called(
+          Slack.Client.send_message(
+            %{
+              "text" => message.body,
+              "channel" => thread.slack_channel,
+              "thread_ts" => thread.slack_thread_ts
+            },
+            auth.access_token
+          )
+        )
+      end
+    end
+
+    test "Notifications.notify_slack_channel/2 does not send a thread reply if channel is not found",
+         %{
+           account: account,
+           customer: customer,
+           conversation: conversation
+         } do
+      message = insert(:message, account: account, conversation: conversation, customer: customer)
+
+      with_mock ChatApi.Slack.Client,
+        send_message: fn msg, _ ->
+          {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
+        end do
+        assert :ok = Slack.Notifications.notify_slack_channel("C123UNKNOWN", message)
+
+        assert_not_called(Slack.Client.send_message(:_, :_))
+      end
+    end
+  end
+
   describe "Slack.Helpers" do
     setup do
       account = insert(:account)
