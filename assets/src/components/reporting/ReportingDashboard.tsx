@@ -7,6 +7,7 @@ import MessagesPerDayChart from './MessagesPerDayChart';
 import MessagesPerUserChart from './MessagesPerUserChart';
 import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
 import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
+import FirstResponseTimeByWeekChart from './FirstResponseTimeByWeekChart';
 import CustomerBreakdownChart from './CustomerBreakdownChart';
 import {ReportingDatum} from './support';
 import logger from '../../logger';
@@ -34,6 +35,11 @@ interface CustomerBreakdownCount {
   count: number;
 }
 
+type ResponseTimeByWeekDay = {
+  day: string;
+  average: number;
+};
+
 type Props = {};
 type State = {
   fromDate: dayjs.Dayjs;
@@ -48,6 +54,7 @@ type State = {
   customerBreakdownByOs: Array<CustomerBreakdownCount>;
   customerBreakdownByTimezone: Array<CustomerBreakdownCount>;
   averageTimeToFirstRespond: number;
+  firstResponseTimeByWeekday: Array<ResponseTimeByWeekDay>;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
@@ -64,6 +71,7 @@ class ReportingDashboard extends React.Component<Props, State> {
     customerBreakdownByOs: [],
     customerBreakdownByTimezone: [],
     averageTimeToFirstRespond: 0,
+    firstResponseTimeByWeekday: [],
   };
 
   componentDidMount() {
@@ -92,6 +100,7 @@ class ReportingDashboard extends React.Component<Props, State> {
       customerBreakdownByOs: data?.customer_breakdown_by_os || [],
       customerBreakdownByTimezone: data?.customer_breakdown_by_time_zone || [],
       averageTimeToFirstRespond: data?.average_time_to_first_respond || 0,
+      firstResponseTimeByWeekday: data?.first_response_time_by_weekday || [],
     });
   };
 
@@ -174,6 +183,16 @@ class ReportingDashboard extends React.Component<Props, State> {
     });
   };
 
+  formatResponseTimeByWeekDay = (stats: Array<ResponseTimeByWeekDay>) => {
+    return stats.map((ele) => {
+      // use minutes instead of seconds when rendering the chart
+      return {
+        average: Math.round((ele.average / 60) * 100) / 100,
+        day: ele.day.slice(0, 3),
+      };
+    });
+  };
+
   handleDateRangeUpdated = (range: any) => {
     const [fromDate, toDate] = range;
 
@@ -191,7 +210,7 @@ class ReportingDashboard extends React.Component<Props, State> {
     //time would look like 00:01:20 if on average it takes 80 seconds to respond
     const time = new Date(seconds * 1000).toISOString().substr(11, 8);
     const [hour, minute, second] = time.split(':');
-    return `${hour} hr ${minute} min ${second} sec`;
+    return `${hour} h ${minute} m ${second} s`;
   };
 
   render() {
@@ -202,6 +221,7 @@ class ReportingDashboard extends React.Component<Props, State> {
       customerBreakdownByOs = [],
       customerBreakdownByTimezone = [],
       averageTimeToFirstRespond = 0,
+      firstResponseTimeByWeekday = [],
     } = this.state;
     const dailyStats = this.formatDailyStats();
     const userStats = this.formatUserStats();
@@ -221,6 +241,10 @@ class ReportingDashboard extends React.Component<Props, State> {
 
     const responsTimeStats = this.formatResponseTimeStats(
       averageTimeToFirstRespond
+    );
+
+    const responseTimeByWeekDay = this.formatResponseTimeByWeekDay(
+      firstResponseTimeByWeekday
     );
 
     return (
@@ -253,12 +277,15 @@ class ReportingDashboard extends React.Component<Props, State> {
               </Box>
               <Box>
                 <Box mb={2}>
-                  <Text>Average 1st Response </Text>
+                  <Text>average first response time: </Text>
+                  <Text style={{fontWeight: 'bold'}}>{responsTimeStats}</Text>
                 </Box>
-                <Text>{responsTimeStats}</Text>
               </Box>
+              <FirstResponseTimeByWeekChart data={responseTimeByWeekDay} />
             </Box>
-
+          </Flex>
+          <Divider />
+          <Flex mx={-3} mb={4}>
             <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
               <Box mb={2}>
                 <Text strong>New messages per day</Text>
