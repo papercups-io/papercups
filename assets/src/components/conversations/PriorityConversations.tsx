@@ -11,12 +11,14 @@ const PriorityConversations = () => {
     priority = [],
     conversationsById = {},
     messagesByConversation = {},
+    othersTypingByConversation = {},
     currentlyOnline = {},
     fetchPriorityConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
     onSendMessage,
+    handleTyping,
   } = useConversations();
 
   if (loading) {
@@ -34,11 +36,13 @@ const PriorityConversations = () => {
       conversationIds={priority}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
+      othersTypingByConversation={othersTypingByConversation}
       fetch={fetchPriorityConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}
       onSendMessage={onSendMessage}
+      handleTyping={handleTyping}
     />
   );
 };

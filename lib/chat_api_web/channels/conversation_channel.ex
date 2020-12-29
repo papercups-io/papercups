@@ -108,6 +108,29 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
+  @impl true
+  def handle_in("message:typing", payload, socket) do
+    with %{conversation: conversation, customer_id: customer_id} <- socket.assigns do
+      customer = ChatApi.Customers.get_customer!(customer_id)
+
+      broadcast_from(
+        socket,
+        "message:other_typing",
+        %{
+          customer: %{
+            id: customer_id,
+            name: customer.name,
+            email: customer.email,
+            kind: "customer"
+          },
+          conversation_id: conversation.id
+        }
+      )
+    end
+
+    {:noreply, socket}
+  end
+
   defp broadcast_conversation_update(message) do
     %{conversation_id: conversation_id, account_id: account_id} = message
     # Mark as unread and ensure the conversation is open, since we want to

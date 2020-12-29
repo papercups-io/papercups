@@ -69,6 +69,29 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   @impl true
+  def handle_in("message:typing", %{"conversation_id" => conversation_id}, socket) do
+    with %{current_user: current_user} <- socket.assigns do
+      profile = ChatApi.Users.get_user_profile(current_user.id)
+
+      ChatApiWeb.Endpoint.broadcast(
+        "conversation:#{conversation_id}",
+        "message:other_typing",
+        %{
+          user: %{
+            name: profile.display_name,
+            email: current_user.email,
+            id: current_user.id,
+            kind: "user"
+          },
+          conversation_id: conversation_id
+        }
+      )
+    end
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info(%Broadcast{topic: topic, event: event, payload: payload}, socket) do
     case topic do
       "conversation:" <> conversation_id ->

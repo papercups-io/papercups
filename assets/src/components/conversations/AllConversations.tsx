@@ -11,12 +11,14 @@ const AllConversations = () => {
     all = [],
     conversationsById = {},
     messagesByConversation = {},
+    othersTypingByConversation = {},
     currentlyOnline = {},
     fetchAllConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
     onSendMessage,
+    handleTyping,
   } = useConversations();
 
   if (loading) {
@@ -34,11 +36,13 @@ const AllConversations = () => {
       conversationIds={all}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
+      othersTypingByConversation={othersTypingByConversation}
       fetch={fetchAllConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}
       onSendMessage={onSendMessage}
+      handleTyping={handleTyping}
     />
   );
 };
