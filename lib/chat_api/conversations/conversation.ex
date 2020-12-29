@@ -33,7 +33,6 @@ defmodule ChatApi.Conversations.Conversation do
 
   @doc false
   def changeset(conversation, attrs) do
-
     conversation
     |> cast(attrs, [
       :status,
@@ -59,11 +58,13 @@ defmodule ChatApi.Conversations.Conversation do
 
   defp put_closed_at(%Ecto.Changeset{valid?: true, changes: %{status: status}} = changeset) do
     case status do
-      "closed" -> put_change(changeset, :closed_at, DateTime.utc_now() |> DateTime.truncate(:second))
-      "open" -> put_change(changeset, :closed_at, nil)
+      "closed" ->
+        put_change(changeset, :closed_at, DateTime.utc_now() |> DateTime.truncate(:second))
+
+      "open" ->
+        put_change(changeset, :closed_at, nil)
     end
   end
 
   defp put_closed_at(changeset), do: changeset
-
 end

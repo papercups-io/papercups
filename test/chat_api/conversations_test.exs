@@ -286,11 +286,17 @@ defmodule ChatApi.ConversationsTest do
       refute conv2.archived_at
     end
 
-    test "update_conversation/2 sets the closed_at field based on updated status", %{conversation: conversation} do
-      assert {:ok, %Conversation{} = closed_conversation} = Conversations.update_conversation(conversation, @update_attrs)
+    test "update_conversation/2 sets the closed_at field based on updated status", %{
+      conversation: conversation
+    } do
+      assert {:ok, %Conversation{} = closed_conversation} =
+               Conversations.update_conversation(conversation, @update_attrs)
+
       assert %DateTime{} = closed_conversation.closed_at
 
-      assert {:ok, %Conversation{} = open_conversation} = Conversations.update_conversation(conversation, %{status: "open"})
+      assert {:ok, %Conversation{} = open_conversation} =
+               Conversations.update_conversation(conversation, %{status: "open"})
+
       assert open_conversation.closed_at == nil
     end
 
