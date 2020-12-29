@@ -90,5 +90,18 @@ defmodule ChatApi.CompaniesTest do
     test "change_company/1 returns a company changeset", %{company: company} do
       assert %Ecto.Changeset{} = Companies.change_company(company)
     end
+
+    test "find_by_slack_channel/2 finds an account's company by slack_channel_id", %{
+      account: account
+    } do
+      company = insert(:company, account: account, slack_channel_id: "C1")
+      _company_2 = insert(:company, account: account, slack_channel_id: "C2")
+      _company_3 = insert(:company, account: account, slack_channel_id: "C3")
+
+      assert %Company{id: company_id, slack_channel_id: "C1"} =
+               Companies.find_by_slack_channel(account.id, "C1")
+
+      assert company.id == company_id
+    end
   end
 end

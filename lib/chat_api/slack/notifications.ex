@@ -91,29 +91,56 @@ defmodule ChatApi.Slack.Notifications do
     end
   end
 
-  @spec notify_support_threads(ChatApi.Messages.Message.t()) :: :ok
-  def notify_support_threads(%Message{
-        conversation_id: conversation_id,
-        account_id: account_id,
-        body: text
-      }) do
+  @spec notify_support_channel(ChatApi.Messages.Message.t()) :: :ok
+  def notify_support_channel(%Message{account_id: account_id} = message) do
     case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
       %{access_token: access_token, channel_id: channel_id} ->
-        conversation_id
-        |> SlackConversationThreads.get_threads_by_conversation_id()
-        |> Stream.filter(fn thread -> thread.slack_channel == channel_id end)
-        |> Enum.each(fn thread ->
-          message = %{
-            "text" => text,
-            "channel" => thread.slack_channel,
-            "thread_ts" => thread.slack_thread_ts
-          }
-
-          Slack.Client.send_message(message, access_token)
-        end)
+        notify_slack_channel(access_token, channel_id, message)
 
       _ ->
         nil
     end
+  end
+
+  @spec notify_company_channel(ChatApi.Messages.Message.t()) :: :ok
+  def notify_company_channel(
+        %Message{account_id: account_id, conversation_id: conversation_id} = message
+      ) do
+    with %{access_token: access_token} <-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
+         %{customer: %{company: %{slack_channel_id: channel_id}}} <-
+           Conversations.get_conversation_with(conversation_id, customer: :company) do
+      notify_slack_channel(access_token, channel_id, message)
+    end
+  end
+
+  @spec notify_slack_channel(binary(), ChatApi.Messages.Message.t()) :: :ok
+  def notify_slack_channel(channel_id, %Message{account_id: account_id} = message) do
+    case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
+      %{access_token: access_token} ->
+        notify_slack_channel(access_token, channel_id, message)
+
+      _ ->
+        nil
+    end
+  end
+
+  @spec notify_slack_channel(binary(), binary(), ChatApi.Messages.Message.t()) :: :ok
+  def notify_slack_channel(access_token, channel_id, %Message{
+        conversation_id: conversation_id,
+        body: text
+      }) do
+    conversation_id
+    |> SlackConversationThreads.get_threads_by_conversation_id()
+    |> Stream.filter(fn thread -> thread.slack_channel == channel_id end)
+    |> Enum.each(fn thread ->
+      message = %{
+        "text" => text,
+        "channel" => thread.slack_channel,
+        "thread_ts" => thread.slack_thread_ts
+      }
+
+      Slack.Client.send_message(message, access_token)
+    end)
   end
 end

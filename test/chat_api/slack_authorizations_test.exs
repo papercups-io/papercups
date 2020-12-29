@@ -50,6 +50,29 @@ defmodule ChatApi.SlackAuthorizationsTest do
       assert slack_authorization_ids == [slack_authorization.id]
     end
 
+    test "list_slack_authorizations/1 returns all slack_authorizations that match the filters" do
+      auth_1 = insert(:slack_authorization, type: "support")
+      _auth_2 = insert(:slack_authorization, type: "reply")
+      auth_3 = insert(:slack_authorization, type: "support")
+
+      slack_authorization_ids =
+        SlackAuthorizations.list_slack_authorizations(%{type: "support"})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(slack_authorization_ids) == Enum.sort([auth_1.id, auth_3.id])
+    end
+
+    test "list_slack_authorizations_by_account/1 returns all slack_authorizations for the account",
+         %{slack_authorization: slack_authorization} do
+      account_id = slack_authorization.account_id
+
+      slack_authorization_ids =
+        SlackAuthorizations.list_slack_authorizations_by_account(account_id)
+        |> Enum.map(& &1.id)
+
+      assert slack_authorization_ids == [slack_authorization.id]
+    end
+
     test "get_slack_authorization!/1 returns the slack_authorization with given id",
          %{slack_authorization: slack_authorization} do
       assert slack_authorization ==

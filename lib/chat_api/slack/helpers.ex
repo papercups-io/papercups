@@ -39,17 +39,22 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec find_or_create_customer_from_slack_user_id(any(), binary()) ::
+  @spec find_or_create_customer_from_slack_user_id(any(), binary(), binary()) ::
           {:ok, Customer.t()} | {:error, any()}
-  def find_or_create_customer_from_slack_user_id(authorization, slack_user_id) do
+  def find_or_create_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id) do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
            ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token),
          %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user do
-      ChatApi.Customers.find_or_create_by_email(email, account_id, %{
-        name: name,
-        time_zone: time_zone
-      })
+      default_attrs = %{name: name, time_zone: time_zone}
+
+      attrs =
+        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+          nil -> default_attrs
+          company -> Map.merge(default_attrs, %{company_id: company.id})
+        end
+
+      ChatApi.Customers.find_or_create_by_email(email, account_id, attrs)
     else
       error ->
         Logger.error("Error creating customer from Slack user: #{inspect(error)}")
@@ -92,8 +97,8 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec format_sender_id!(any(), binary()) :: map()
-  def format_sender_id!(authorization, slack_user_id) do
+  @spec format_sender_id!(any(), binary(), binary()) :: map()
+  def format_sender_id!(authorization, slack_user_id, slack_channel_id) do
     # TODO: what's the best way to handle these nested `case` statements?
     case find_matching_user(authorization, slack_user_id) do
       %{id: user_id} ->
@@ -105,7 +110,11 @@ defmodule ChatApi.Slack.Helpers do
             %{"customer_id" => customer_id}
 
           _ ->
-            case find_or_create_customer_from_slack_user_id(authorization, slack_user_id) do
+            case find_or_create_customer_from_slack_user_id(
+                   authorization,
+                   slack_user_id,
+                   slack_channel_id
+                 ) do
               {:ok, customer} ->
                 %{"customer_id" => customer.id}
 

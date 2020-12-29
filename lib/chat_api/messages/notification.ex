@@ -76,12 +76,22 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  # TODO: come up with a better name... it's not super clear what `slack_support_threads` means!
-  def notify(%Message{} = message, :slack_support_threads) do
-    Logger.info("Sending notification: :slack_support_threads")
+  def notify(%Message{} = message, :slack_company_channel) do
+    Logger.info("Sending notification: :slack_company_channel")
 
     Task.start(fn ->
-      ChatApi.Slack.Notifications.notify_support_threads(message)
+      ChatApi.Slack.Notifications.notify_company_channel(message)
+    end)
+
+    message
+  end
+
+  # TODO: come up with a better name... it's not super clear what `slack_support_channel` means!
+  def notify(%Message{} = message, :slack_support_channel) do
+    Logger.info("Sending notification: :slack_support_channel")
+
+    Task.start(fn ->
+      ChatApi.Slack.Notifications.notify_support_channel(message)
     end)
 
     message

@@ -109,7 +109,8 @@ defmodule ChatApiWeb.NotificationChannel do
     message
     |> Messages.Notification.broadcast_to_conversation!()
     |> Messages.Notification.notify(:slack)
-    |> Messages.Notification.notify(:slack_support_threads)
+    |> Messages.Notification.notify(:slack_support_channel)
+    |> Messages.Notification.notify(:slack_company_channel)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:conversation_reply_email)
   end
