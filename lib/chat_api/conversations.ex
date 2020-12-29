@@ -76,6 +76,11 @@ defmodule ChatApi.Conversations do
     Conversation |> Repo.get(id)
   end
 
+  @spec get_conversation_with(binary(), atom() | list()) :: Conversation.t()
+  def get_conversation_with(id, preloaded) do
+    Conversation |> Repo.get(id) |> Repo.preload(preloaded)
+  end
+
   @spec get_conversation_with!(binary(), atom() | list()) :: Conversation.t()
   def get_conversation_with!(id, preloaded) do
     Conversation |> Repo.get!(id) |> Repo.preload(preloaded)

@@ -39,4 +39,13 @@ defmodule ChatApi.Companies do
   def change_company(%Company{} = company, attrs \\ %{}) do
     Company.changeset(company, attrs)
   end
+
+  @spec find_by_slack_channel(binary(), binary()) :: Company.t() | nil
+  def find_by_slack_channel(account_id, slack_channel_id) do
+    Company
+    |> where(account_id: ^account_id)
+    |> where(slack_channel_id: ^slack_channel_id)
+    |> order_by(desc: :inserted_at)
+    |> Repo.one()
+  end
 end

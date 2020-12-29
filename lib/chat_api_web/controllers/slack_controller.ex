@@ -11,6 +11,8 @@ defmodule ChatApiWeb.SlackController do
     SlackConversationThreads
   }
 
+  alias ChatApi.SlackAuthorizations.SlackAuthorization
+
   action_fallback(ChatApiWeb.FallbackController)
 
   @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
@@ -145,17 +147,17 @@ defmodule ChatApiWeb.SlackController do
            "type" => "message",
            "text" => text,
            "thread_ts" => thread_ts,
-           "channel" => channel,
+           "channel" => slack_channel_id,
            "user" => slack_user_id
          } = event
        ) do
     Logger.debug("Handling Slack event: #{inspect(event)}")
 
-    with {:ok, conversation} <- get_thread_conversation(thread_ts, channel),
+    with {:ok, conversation} <- get_thread_conversation(thread_ts, slack_channel_id),
          %{account_id: account_id, id: conversation_id} <- conversation,
          primary_reply_authorization <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
-      if Slack.Helpers.is_primary_channel?(primary_reply_authorization, channel) do
+      if Slack.Helpers.is_primary_channel?(primary_reply_authorization, slack_channel_id) do
         %{
           "body" => text,
           "conversation_id" => conversation_id,
@@ -170,20 +172,26 @@ defmodule ChatApiWeb.SlackController do
         |> Messages.create_and_fetch!()
         |> Messages.Notification.broadcast_to_conversation!()
         |> Messages.Notification.notify(:webhooks)
-        |> Messages.Notification.notify(:slack_support_threads)
+        |> Messages.Notification.notify(:slack_support_channel)
+        |> Messages.Notification.notify(:slack_company_channel)
       else
-        account_id
-        |> SlackAuthorizations.get_authorization_by_account(%{type: "support"})
-        |> Slack.Helpers.format_sender_id!(slack_user_id)
-        |> Map.merge(%{
-          "body" => text,
-          "conversation_id" => conversation_id,
-          "account_id" => account_id
-        })
-        |> Messages.create_and_fetch!()
-        |> Messages.Notification.broadcast_to_conversation!()
-        |> Messages.Notification.notify(:webhooks)
-        |> Messages.Notification.notify(:slack)
+        case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
+          nil ->
+            nil
+
+          authorization ->
+            authorization
+            |> Slack.Helpers.format_sender_id!(slack_user_id, slack_channel_id)
+            |> Map.merge(%{
+              "body" => text,
+              "conversation_id" => conversation_id,
+              "account_id" => account_id
+            })
+            |> Messages.create_and_fetch!()
+            |> Messages.Notification.broadcast_to_conversation!()
+            |> Messages.Notification.notify(:webhooks)
+            |> Messages.Notification.notify(:slack)
+        end
       end
     end
   end
@@ -193,19 +201,23 @@ defmodule ChatApiWeb.SlackController do
            "type" => "message",
            "text" => text,
            "team" => team,
-           "channel" => channel,
+           "channel" => slack_channel_id,
            "user" => slack_user_id,
            "ts" => ts
          } = _event
        ) do
     with %{account_id: account_id} = authorization <-
-           ChatApi.SlackAuthorizations.find_slack_authorization(%{
-             channel_id: channel,
+           SlackAuthorizations.find_slack_authorization(%{
              team_id: team,
              type: "support"
            }),
+         :ok <- validate_channel_supported(authorization, slack_channel_id),
          {:ok, customer} <-
-           Slack.Helpers.find_or_create_customer_from_slack_user_id(authorization, slack_user_id),
+           Slack.Helpers.find_or_create_customer_from_slack_user_id(
+             authorization,
+             slack_user_id,
+             slack_channel_id
+           ),
          # TODO: should the conversation + thread + message all be handled in a transaction?
          # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
          # TODO: should we handle default assignment here as well?
@@ -222,8 +234,8 @@ defmodule ChatApiWeb.SlackController do
              body: text
            }),
          {:ok, _slack_conversation_thread} <-
-           ChatApi.SlackConversationThreads.create_slack_conversation_thread(%{
-             slack_channel: channel,
+           SlackConversationThreads.create_slack_conversation_thread(%{
+             slack_channel: slack_channel_id,
              slack_thread_ts: ts,
              account_id: account_id,
              conversation_id: conversation.id
@@ -240,6 +252,22 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  defp handle_event(
+         %{
+           "type" => "reaction_added",
+           "reaction" => _reaction,
+           "user" => _user,
+           "item" => %{
+             "channel" => _channel,
+             "ts" => _ts,
+             "type" => "message"
+           }
+         } = event
+       ) do
+    Logger.info("Slack emoji reaction detected:")
+    Logger.info(inspect(event))
+  end
+
   defp handle_event(_), do: nil
 
   defp get_thread_conversation(thread_ts, channel) do
@@ -249,13 +277,30 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec validate_channel_supported(any(), binary()) :: :ok | :error
+  defp validate_channel_supported(
+         %SlackAuthorization{channel_id: slack_channel_id},
+         slack_channel_id
+       ),
+       do: :ok
+
+  defp validate_channel_supported(
+         %SlackAuthorization{account_id: account_id},
+         slack_channel_id
+       ) do
+    case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+      nil -> :error
+      _company -> :ok
+    end
+  end
+
   @spec notify_slack(Conn.t()) :: Conn.t()
   defp notify_slack(conn) do
     with %{email: email} <- conn.assigns.current_user do
       # Putting in an async Task for now, since we don't care if this succeeds
       # or fails (and we also don't want it to block anything)
       Task.start(fn ->
-        ChatApi.Slack.Notifications.log("#{email} successfully linked Slack!")
+        Slack.Notifications.log("#{email} successfully linked Slack!")
       end)
     end
 
