@@ -72,7 +72,7 @@ defmodule ChatApi.Customers do
   def find_or_create_by_email(nil, _account_id, _attrs), do: {:error, :email_required}
 
   def find_or_create_by_email(email, account_id, attrs) do
-    case ChatApi.Customers.find_by_email(email, account_id) do
+    case find_by_email(email, account_id) do
       nil ->
         %{
           # Defaults
@@ -84,10 +84,35 @@ defmodule ChatApi.Customers do
         }
         |> Map.merge(attrs)
         |> Map.merge(%{email: email, account_id: account_id})
-        |> ChatApi.Customers.create_customer()
+        |> create_customer()
 
       customer ->
         {:ok, customer}
+    end
+  end
+
+  @spec create_or_update_by_email(binary() | nil, binary(), map()) ::
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()} | {:error, atom()}
+  def create_or_update_by_email(email, account_id, attrs \\ %{})
+  def create_or_update_by_email(nil, _account_id, _attrs), do: {:error, :email_required}
+
+  def create_or_update_by_email(email, account_id, attrs) do
+    case find_by_email(email, account_id) do
+      nil ->
+        %{
+          # Defaults
+          first_seen: DateTime.utc_now(),
+          last_seen: DateTime.utc_now(),
+          # TODO: last_seen is stored as a date, while last_seen_at is stored as
+          # a datetime -- we should opt for datetime values whenever possible
+          last_seen_at: DateTime.utc_now()
+        }
+        |> Map.merge(attrs)
+        |> Map.merge(%{email: email, account_id: account_id})
+        |> create_customer()
+
+      customer ->
+        update_customer(customer, attrs)
     end
   end
 
