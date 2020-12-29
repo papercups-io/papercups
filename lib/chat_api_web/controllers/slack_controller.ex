@@ -175,19 +175,23 @@ defmodule ChatApiWeb.SlackController do
         |> Messages.Notification.notify(:slack_support_channel)
         |> Messages.Notification.notify(:slack_company_channel)
       else
-        # FIXME: this breaks if a "support" integration doesn't exist
-        account_id
-        |> SlackAuthorizations.get_authorization_by_account(%{type: "support"})
-        |> Slack.Helpers.format_sender_id!(slack_user_id, slack_channel_id)
-        |> Map.merge(%{
-          "body" => text,
-          "conversation_id" => conversation_id,
-          "account_id" => account_id
-        })
-        |> Messages.create_and_fetch!()
-        |> Messages.Notification.broadcast_to_conversation!()
-        |> Messages.Notification.notify(:webhooks)
-        |> Messages.Notification.notify(:slack)
+        case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
+          nil ->
+            nil
+
+          authorization ->
+            authorization
+            |> Slack.Helpers.format_sender_id!(slack_user_id, slack_channel_id)
+            |> Map.merge(%{
+              "body" => text,
+              "conversation_id" => conversation_id,
+              "account_id" => account_id
+            })
+            |> Messages.create_and_fetch!()
+            |> Messages.Notification.broadcast_to_conversation!()
+            |> Messages.Notification.notify(:webhooks)
+            |> Messages.Notification.notify(:slack)
+        end
       end
     end
   end

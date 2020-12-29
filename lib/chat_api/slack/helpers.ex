@@ -56,6 +56,12 @@ defmodule ChatApi.Slack.Helpers do
 
       ChatApi.Customers.find_or_create_by_email(email, account_id, attrs)
     else
+      # NB: This may occur in test mode, or when the Slack.Client is disabled
+      {:ok, error} ->
+        Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+
       error ->
         Logger.error("Error creating customer from Slack user: #{inspect(error)}")
 
