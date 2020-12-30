@@ -68,8 +68,7 @@ defmodule ChatApi.Conversations.Conversation do
       :account_id,
       :customer_id,
       :archived_at,
-      :first_replied_at
-      :archived_at,
+      :first_replied_at,
       :closed_at,
       :source,
       :metadata
