@@ -212,6 +212,7 @@ defmodule ChatApiWeb.SlackController do
              type: "support"
            }),
          :ok <- validate_channel_supported(authorization, slack_channel_id),
+         # TODO: handle updating the customer's company_id if it's not set yet
          {:ok, customer} <-
            Slack.Helpers.find_or_create_customer_from_slack_user_id(
              authorization,
