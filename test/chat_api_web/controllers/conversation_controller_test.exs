@@ -98,6 +98,50 @@ defmodule ChatApiWeb.ConversationControllerTest do
 
       assert json_response(conn, 422)["errors"] != %{}
     end
+
+    test "renders conversation when updated status is closed", %{
+      authed_conn: authed_conn,
+      conversation: %Conversation{id: id} = conversation
+    } do
+      conn =
+        put(authed_conn, Routes.conversation_path(authed_conn, :update, conversation),
+          conversation: @update_attrs
+        )
+
+      assert %{"id" => ^id} = json_response(conn, 200)["data"]
+
+      conn = get(authed_conn, Routes.conversation_path(authed_conn, :show, id))
+
+      assert %{
+               "id" => _id,
+               "closed_at" => closed_at,
+               "status" => "closed"
+             } = json_response(conn, 200)["data"]
+
+      assert closed_at != nil
+    end
+
+    test "renders conversation when updated status is open", %{
+      authed_conn: authed_conn,
+      conversation: %Conversation{id: id} = conversation
+    } do
+      conn =
+        put(authed_conn, Routes.conversation_path(authed_conn, :update, conversation),
+          conversation: %{status: "open"}
+        )
+
+      assert %{"id" => ^id} = json_response(conn, 200)["data"]
+
+      conn = get(authed_conn, Routes.conversation_path(authed_conn, :show, id))
+
+      assert %{
+               "id" => _id,
+               "closed_at" => closed_at,
+               "status" => "open"
+             } = json_response(conn, 200)["data"]
+
+      assert closed_at == nil
+    end
   end
 
   describe "delete conversation" do
