@@ -43,6 +43,7 @@ defmodule ChatApi.Reporting do
   def average_first_replied_time(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> where([conv], not is_nil(conv.first_replied_at))
     |> select([:first_replied_at, :inserted_at])
     |> Repo.all()
@@ -56,8 +57,7 @@ defmodule ChatApi.Reporting do
   end
 
   def average(list) do
-    total = Enum.reduce(list, 0, fn x, acc -> x + acc end)
-    total / max(length(list), 1)
+    Enum.sum(list) / max(length(list), 1)
   end
 
   @spec count_conversations_by_date(binary(), binary(), binary()) :: [aggregate_by_date()]
@@ -121,9 +121,10 @@ defmodule ChatApi.Reporting do
     |> compute_weekday_aggregates()
   end
 
-  def first_response_time_by_weekday(account_id) do
+  def first_response_time_by_weekday(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> where([conv], not is_nil(conv.first_replied_at))
     |> average_grouped_by_date()
     |> select_merge([m], %{day: fragment("to_char(date(?), 'Day')", m.inserted_at)})

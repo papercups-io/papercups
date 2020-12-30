@@ -359,7 +359,7 @@ defmodule ChatApi.ReportingTest do
       )
 
       # Tuesday
-      insert_pair(:conversation,
+      insert(:conversation,
         account: account,
         inserted_at: ~N[2020-09-29 10:00:00],
         first_replied_at: ~N[2020-09-29 11:02:03]
