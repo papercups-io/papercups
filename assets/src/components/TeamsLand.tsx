@@ -107,8 +107,7 @@ async function handleOauth(msClient: any) {
  */
 function graphHeaders(accessToken: any) {
   const headers: Headers = new Headers();
-  const bearer = "Bearer " + accessToken;
-  headers.append("Authorization", bearer);
+  headers.append("Authorization", accessToken);
   headers.append("Content-Type", "application/json")
   return headers
 }
@@ -197,14 +196,14 @@ class Register extends React.Component<Props, State> {
     const msClient = new msal.PublicClientApplication(oauthConfig);
 
     // attempt to get access code via redirect
-    let signedInUser, accessToken = await handleOauth(msClient)
+    let [signedInUser, accessToken] = await handleOauth(msClient)
 
     // attempt to use accessToken
     getUserProfile(accessToken)
     getUserGroups(accessToken)
-    //listGroups(accessToken)
-    //listChannels(accessToken)
-    //postChatMessage(accessToken)  // requires TeamId, ChannelId
+    listGroups(accessToken)
+    listChannels(accessToken)
+    postChatMessage(accessToken)  // requires TeamId, ChannelId
   }
 
   render() {
