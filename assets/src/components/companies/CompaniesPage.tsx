@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Table, Title} from '../common';
+import {Alert, Button, Paragraph, Table, Text, Title} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
 
@@ -108,6 +108,23 @@ class CompaniesPage extends React.Component<Props, State> {
             <Button type="primary">New company</Button>
           </Link>
         </Flex>
+
+        <Box mb={4}>
+          <Paragraph>
+            View or create companies to group and manage your customers.
+          </Paragraph>
+
+          <Alert
+            message={
+              <Text>
+                This page is still a work in progress &mdash; more features
+                coming soon!
+              </Text>
+            }
+            type="info"
+            showIcon
+          />
+        </Box>
 
         <Box my={4}>
           <CompaniesTable loading={loading} companies={companies} />
