@@ -1,15 +1,7 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {
-  Button,
-  Divider,
-  Paragraph,
-  Popconfirm,
-  Result,
-  Text,
-  Title,
-} from '../common';
+import {colors, Button, Popconfirm, Result, Text, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import {sleep} from '../../utils';
@@ -19,6 +11,22 @@ import CustomersTable from '../customers/CustomersTable';
 
 const formatSlackChannel = (name: string) => {
   return name.startsWith('#') ? name : `#${name}`;
+};
+
+const DetailsSectionCard = ({children}: {children: any}) => {
+  return (
+    <Box
+      p={3}
+      mb={3}
+      sx={{
+        bg: colors.white,
+        border: '1px solid rgba(0,0,0,.06)',
+        borderRadius: 4,
+      }}
+    >
+      {children}
+    </Box>
+  );
 };
 
 type Props = RouteComponentProps<{id: string}>;
@@ -107,12 +115,16 @@ class CompanyDetailsPage extends React.Component<Props, State> {
       name,
       description,
       website_url: websiteUrl,
+      external_id: externalId,
       slack_channel_id: slackChannelId,
       slack_channel_name: slackChannelName,
     } = company;
 
     return (
-      <Box p={4}>
+      <Flex
+        p={4}
+        sx={{flexDirection: 'column', flex: 1, bg: 'rgb(245, 245, 245)'}}
+      >
         <Flex
           mb={4}
           sx={{justifyContent: 'space-between', alignItems: 'center'}}
@@ -136,58 +148,92 @@ class CompanyDetailsPage extends React.Component<Props, State> {
           )}
         </Flex>
 
-        <Title level={3}>{name}</Title>
+        <Title level={2}>{name}</Title>
 
-        {description && <Paragraph>{description}</Paragraph>}
+        <Flex>
+          <Box sx={{flex: 1, pr: 4}}>
+            <DetailsSectionCard>
+              <Box mb={3}>
+                <Box>
+                  <Text strong>Description</Text>
+                </Box>
 
-        <Box mb={2}>
-          <Box>
-            <Text strong>Website</Text>
-          </Box>
+                <Text>{description || 'N/A'}</Text>
+              </Box>
 
-          <Paragraph>
-            {websiteUrl ? (
-              <a href={websiteUrl} target="_blank" rel="noopener noreferrer">
-                {websiteUrl}
-              </a>
-            ) : (
-              'N/A'
+              <Box mb={3}>
+                <Box>
+                  <Text strong>Website</Text>
+                </Box>
+
+                <Text>
+                  {websiteUrl ? (
+                    <a
+                      href={websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {websiteUrl}
+                    </a>
+                  ) : (
+                    'N/A'
+                  )}
+                </Text>
+              </Box>
+
+              <Box>
+                <Box>
+                  <Text strong>ID</Text>
+                </Box>
+
+                <Text>{externalId || 'N/A'}</Text>
+              </Box>
+            </DetailsSectionCard>
+
+            {slackChannelId && slackChannelName && (
+              <DetailsSectionCard>
+                <Box>
+                  <Text strong>Connected Slack Channel</Text>
+                </Box>
+
+                <Text>
+                  {/* TODO: include Slack team ID if necessary */}
+                  <a
+                    href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {formatSlackChannel(slackChannelName)}
+                  </a>
+                </Text>
+              </DetailsSectionCard>
             )}
-          </Paragraph>
-        </Box>
 
-        {slackChannelId && slackChannelName && (
-          <Box mb={2}>
-            <Box>
-              <Text strong>Connected Slack Channel</Text>
-            </Box>
+            <DetailsSectionCard>
+              <Box>
+                <Text strong>Metadata</Text>
+              </Box>
 
-            <Paragraph>
-              {/* TODO: include Slack team ID if necessary */}
-              <a
-                href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {formatSlackChannel(slackChannelName)}
-              </a>
-            </Paragraph>
+              <Text>{'N/A'}</Text>
+            </DetailsSectionCard>
           </Box>
-        )}
 
-        <Divider />
+          <Box sx={{flex: 3}}>
+            <DetailsSectionCard>
+              <Box pb={2} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
+                <Title level={4}>People</Title>
+              </Box>
 
-        <Title level={4}>People</Title>
-
-        <Box my={3}>
-          <CustomersTable
-            loading={loading || refreshing}
-            customers={customers}
-            currentlyOnline={{}}
-            onUpdate={this.handleRefreshCustomers}
-          />
-        </Box>
-      </Box>
+              <CustomersTable
+                loading={loading || refreshing}
+                customers={customers}
+                currentlyOnline={{}}
+                onUpdate={this.handleRefreshCustomers}
+              />
+            </DetailsSectionCard>
+          </Box>
+        </Flex>
+      </Flex>
     );
   }
 }

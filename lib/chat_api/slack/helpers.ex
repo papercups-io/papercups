@@ -106,6 +106,7 @@ defmodule ChatApi.Slack.Helpers do
   @spec format_sender_id!(any(), binary(), binary()) :: map()
   def format_sender_id!(authorization, slack_user_id, slack_channel_id) do
     # TODO: what's the best way to handle these nested `case` statements?
+    # TODO: handle updating the customer's company_id if it's not set yet?
     case find_matching_user(authorization, slack_user_id) do
       %{id: user_id} ->
         %{"user_id" => user_id}
