@@ -45,25 +45,59 @@ defmodule ChatApiWeb.NotificationChannelTest do
     assert_push "broadcast", %{"some" => "data"}
   end
 
-  test "conversation first replied at is updated", %{
-    socket: socket,
-    account: account,
-    conversation: conversation
-  } do
-    inserted_at = DateTime.utc_now()
+  describe "Updating first replied at" do
+    test "conversation first replied at is updated", %{
+      socket: socket,
+      account: account,
+      conversation: conversation
+    } do
+      inserted_at = DateTime.utc_now()
 
-    msg = %{
-      body: "Hello world!",
-      account_id: account.id,
-      conversation_id: conversation.id,
-      inserted_at: inserted_at
-    }
+      msg = %{
+        body: "Hello world!",
+        account_id: account.id,
+        conversation_id: conversation.id,
+        inserted_at: inserted_at
+      }
 
-    ref = push(socket, "shout", msg)
-    assert_reply(ref, :ok)
-    conv = Conversations.get_conversation(conversation.id)
+      ref = push(socket, "shout", msg)
+      assert_reply(ref, :ok)
+      conv = Conversations.get_conversation(conversation.id)
 
-    assert conv.first_replied_at == DateTime.truncate(inserted_at, :second)
+      assert conv.first_replied_at == DateTime.truncate(inserted_at, :second)
+    end
+
+    test "it only happens on first reply", %{
+      socket: socket,
+      account: account,
+      conversation: conversation
+    } do
+      inserted_at = DateTime.utc_now()
+
+      msg = %{
+        body: "Hello world!",
+        account_id: account.id,
+        conversation_id: conversation.id
+      }
+
+      response = %{
+        body: "goodbye world",
+        account_id: account.id,
+        conversation_id: conversation.id
+      }
+
+      ref = push(socket, "shout", msg)
+      assert_reply(ref, :ok)
+
+      Process.sleep(1000)
+
+      ref1 = push(socket, "shout", response)
+      assert_reply(ref1, :ok)
+
+      conv = Conversations.get_conversation(conversation.id)
+
+      assert conv.first_replied_at == DateTime.truncate(inserted_at, :second)
+    end
   end
 
   test "conversation assignee is updated when first agent first replies", %{

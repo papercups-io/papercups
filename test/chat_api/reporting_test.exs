@@ -91,24 +91,6 @@ defmodule ChatApi.ReportingTest do
                Reporting.count_conversations_by_date(account.id)
     end
 
-    test "average_first_replied_time gets the average seconds it takes to respond", %{
-      account: account
-    } do
-      inserted_at = ~N[2020-09-01 12:00:00]
-      first_replied_at = ~N[2020-09-01 12:30:00]
-
-      insert_list(
-        3,
-        :conversation,
-        account: account,
-        inserted_at: inserted_at,
-        first_replied_at: first_replied_at
-      )
-
-      average_replied_time = Reporting.average_first_replied_time(account.id)
-      assert average_replied_time == Time.diff(first_replied_at, inserted_at)
-    end
-
     test "count_conversations_by_date/1 groups by date correctly",
          %{account: account} do
       insert_pair(
@@ -254,6 +236,48 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-02], count: 2},
                %{date: ~D[2020-09-03], count: 1}
              ] = Reporting.count_received_messages_by_date(account.id)
+    end
+  end
+
+  describe "average_first_replied_time" do
+    setup do
+      {:ok, account: insert(:account)}
+    end
+
+    test "gets the average seconds it takes to respond", %{
+      account: account
+    } do
+      inserted_at = ~N[2020-09-01 12:00:00]
+      first_replied_at = ~N[2020-09-01 12:30:00]
+
+      insert_list(
+        3,
+        :conversation,
+        account: account,
+        inserted_at: inserted_at,
+        first_replied_at: first_replied_at
+      )
+
+      average_replied_time = Reporting.average_first_replied_time(account.id)
+      assert average_replied_time == Time.diff(first_replied_at, inserted_at)
+    end
+
+    test "when first_replied_at is nil", %{
+      account: account
+    } do
+      inserted_at = ~N[2020-09-01 12:00:00]
+      first_replied_at = nil
+
+      insert_list(
+        3,
+        :conversation,
+        account: account,
+        inserted_at: inserted_at,
+        first_replied_at: first_replied_at
+      )
+
+      average_replied_time = Reporting.average_first_replied_time(account.id)
+      assert average_replied_time == 0.0
     end
   end
 
