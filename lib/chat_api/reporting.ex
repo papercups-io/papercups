@@ -173,7 +173,8 @@ defmodule ChatApi.Reporting do
 
       %{
         day: weekday,
-        average: total / max(length(records), 1)
+        average: total / max(length(records), 1),
+        unit: :seconds
       }
     end)
   end

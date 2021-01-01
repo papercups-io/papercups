@@ -401,13 +401,13 @@ defmodule ChatApi.ReportingTest do
       )
 
       assert [
-               %{day: "Monday", average: 3663.0},
-               %{day: "Tuesday", average: 3723.0},
-               %{day: "Wednesday", average: 123.0},
-               %{day: "Thursday", average: 123.0},
-               %{day: "Friday", average: 3.0},
-               %{day: "Saturday", average: 3.0},
-               %{day: "Sunday", average: 3603.0}
+               %{day: "Monday", average: 3663.0, unit: :seconds},
+               %{day: "Tuesday", average: 3723.0, unit: :seconds},
+               %{day: "Wednesday", average: 123.0, unit: :seconds},
+               %{day: "Thursday", average: 123.0, unit: :seconds},
+               %{day: "Friday", average: 3.0, unit: :seconds},
+               %{day: "Saturday", average: 3.0, unit: :seconds},
+               %{day: "Sunday", average: 3603.0, unit: :seconds}
              ] = Reporting.first_response_time_by_weekday(account.id)
     end
   end
