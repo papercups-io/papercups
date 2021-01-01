@@ -42,6 +42,24 @@ jobs:
       - name: Run format check
         run: npm run prettier:check --prefix assets
 
+  npm-test:
+    name: NPM Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Initial setup
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
+
+      - name: Install dependencies
+        run: npm install --prefix assets
+
+      - name: Run format check
+        run: npm test --prefix assets
+
   mix-test:
     name: Mix Test
     runs-on: ubuntu-latest

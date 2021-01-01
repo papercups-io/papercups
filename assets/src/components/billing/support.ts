@@ -198,7 +198,7 @@ export const calculateSubscriptionDiscount = (
   }
 
   if (amountOff) {
-    return total - amountOff;
+    return amountOff;
   } else if (percentOff) {
     return total * (percentOff / 100);
   } else {
