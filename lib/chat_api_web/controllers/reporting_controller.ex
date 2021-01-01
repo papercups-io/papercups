@@ -28,7 +28,8 @@ defmodule ChatApiWeb.ReportingController do
         customer_breakdown_by_browser:
           Reporting.get_customer_breakdown(account_id, :browser, filters),
         customer_breakdown_by_os: Reporting.get_customer_breakdown(account_id, :os, filters),
-        average_time_to_first_respond: Reporting.average_first_replied_time(account_id, filters),
+        average_time_to_first_respond:
+          Reporting.average_seconds_to_first_reply(account_id, filters),
         customer_breakdown_by_time_zone:
           Reporting.get_customer_breakdown(account_id, :time_zone, filters)
       }

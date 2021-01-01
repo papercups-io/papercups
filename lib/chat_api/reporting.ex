@@ -40,7 +40,8 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  def average_first_replied_time(account_id, filters \\ %{}) do
+  @spec average_seconds_to_first_reply(binary(), map()) :: [aggregate_by_date()]
+  def average_seconds_to_first_reply(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))

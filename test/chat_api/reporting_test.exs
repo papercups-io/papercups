@@ -239,7 +239,7 @@ defmodule ChatApi.ReportingTest do
     end
   end
 
-  describe "average_first_replied_time" do
+  describe "average_seconds_to_first_reply" do
     setup do
       {:ok, account: insert(:account)}
     end
@@ -258,7 +258,7 @@ defmodule ChatApi.ReportingTest do
         first_replied_at: first_replied_at
       )
 
-      average_replied_time = Reporting.average_first_replied_time(account.id)
+      average_replied_time = Reporting.average_seconds_to_first_reply(account.id)
       assert average_replied_time == Time.diff(first_replied_at, inserted_at)
     end
 
@@ -276,7 +276,7 @@ defmodule ChatApi.ReportingTest do
         first_replied_at: first_replied_at
       )
 
-      average_replied_time = Reporting.average_first_replied_time(account.id)
+      average_replied_time = Reporting.average_seconds_to_first_reply(account.id)
       assert average_replied_time == 0.0
     end
   end
