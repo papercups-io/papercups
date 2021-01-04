@@ -35,15 +35,14 @@ defmodule ChatApi.Messages.Helpers do
     |> build_message_type_updates(message)
   end
 
+  @spec is_first_agent_reply?(Message.t()) :: boolean()
+  def is_first_agent_reply?(%Message{conversation_id: conversation_id, user_id: assignee_id}) do
+    !is_nil(assignee_id) && Conversations.count_agent_replies(conversation_id) == 1
+  end
+
   @spec build_first_reply_updates(map(), Message.t()) :: map()
-  defp build_first_reply_updates(
-         updates,
-         %Message{
-           conversation_id: conversation_id,
-           user_id: assignee_id
-         }
-       ) do
-    if !is_nil(assignee_id) && Conversations.count_agent_replies(conversation_id) == 1 do
+  defp build_first_reply_updates(updates, %Message{user_id: assignee_id} = message) do
+    if is_first_agent_reply?(message) do
       Map.merge(updates, %{assignee_id: assignee_id})
     else
       updates
