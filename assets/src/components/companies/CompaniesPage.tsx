@@ -2,6 +2,7 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {Alert, Button, Paragraph, Table, Text, Title} from '../common';
+import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';
 
@@ -105,7 +106,9 @@ class CompaniesPage extends React.Component<Props, State> {
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Companies (beta)</Title>
           <Link to="/companies/new">
-            <Button type="primary">New company</Button>
+            <Button type="primary" icon={<PlusOutlined />}>
+              New company
+            </Button>
           </Link>
         </Flex>
 

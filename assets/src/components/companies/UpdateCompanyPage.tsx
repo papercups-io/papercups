@@ -1,14 +1,16 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
-import {Box} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 import {Button, Input, Select, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';
 
-type Props = RouteComponentProps<{}>;
+type Props = RouteComponentProps<{id: string}>;
 type State = {
-  submitting: boolean;
+  loading: boolean;
+  saving: boolean;
+  company: any;
   name: string;
   description: string;
   websiteUrl: string;
@@ -17,9 +19,11 @@ type State = {
   channels: Array<any>;
 };
 
-class CreateCompanyPage extends React.Component<Props, State> {
+class UpdateCompanyPage extends React.Component<Props, State> {
   state: State = {
-    submitting: false,
+    loading: true,
+    saving: false,
+    company: null,
     name: '',
     description: '',
     websiteUrl: '',
@@ -29,14 +33,64 @@ class CreateCompanyPage extends React.Component<Props, State> {
   };
 
   async componentDidMount() {
-    const shouldFetchSlackChannels = await this.hasSlackAuthorization();
+    try {
+      const shouldFetchSlackChannels = await this.hasSlackAuthorization();
+      const {id: companyId} = this.props.match.params;
+      const company = await API.fetchCompany(companyId);
+      const {
+        name,
+        description,
+        website_url: websiteUrl,
+        slack_channel_id: slackChannelId,
+        slack_channel_name: slackChannelName,
+      } = company;
 
-    if (shouldFetchSlackChannels) {
-      const channels = await API.fetchSlackChannels();
+      if (shouldFetchSlackChannels) {
+        const channels = await API.fetchSlackChannels();
 
-      this.setState({channels});
+        this.setState({channels});
+      }
+
+      this.setState({
+        company,
+        name,
+        description,
+        websiteUrl,
+        slackChannelId,
+        slackChannelName,
+        loading: false,
+      });
+    } catch (err) {
+      logger.error('Error loading company for editing:', err);
+
+      this.setState({loading: false});
     }
   }
+
+  handleResetCompanyFields = async () => {
+    try {
+      const {id: companyId} = this.props.match.params;
+      const company = await API.fetchCompany(companyId);
+      const {
+        name,
+        description,
+        website_url: websiteUrl,
+        slack_channel_id: slackChannelId,
+        slack_channel_name: slackChannelName,
+      } = company;
+
+      this.setState({
+        company,
+        name,
+        description,
+        websiteUrl,
+        slackChannelId,
+        slackChannelName,
+      });
+    } catch (err) {
+      logger.error('Error resetting company fields:', err);
+    }
+  };
 
   hasSlackAuthorization = async () => {
     try {
@@ -50,10 +104,11 @@ class CreateCompanyPage extends React.Component<Props, State> {
     }
   };
 
-  handleCreateCompany = async (e: React.FormEvent<HTMLFormElement>) => {
+  handleUpdateCompany = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
+      const {id: companyId} = this.props.match.params;
       const {
         name,
         description,
@@ -61,7 +116,7 @@ class CreateCompanyPage extends React.Component<Props, State> {
         slackChannelId,
         slackChannelName,
       } = this.state;
-      const {id: companyId} = await API.createNewCompany({
+      const company = await API.updateCompany(companyId, {
         name,
         description,
         website_url: websiteUrl,
@@ -69,20 +124,23 @@ class CreateCompanyPage extends React.Component<Props, State> {
         slack_channel_name: slackChannelName,
       });
 
+      this.setState({company});
+
       return this.props.history.push(`/companies/${companyId}`);
     } catch (err) {
-      logger.error('Error creating new company:', err);
+      logger.error('Error updating company:', err);
     }
   };
 
   render() {
     const {
+      loading,
       name,
       description,
       websiteUrl,
       slackChannelId,
       channels = [],
-      submitting,
+      saving,
     } = this.state;
 
     return (
@@ -93,15 +151,16 @@ class CreateCompanyPage extends React.Component<Props, State> {
           </Link>
         </Box>
 
-        <Title level={3}>New company information</Title>
+        <Title level={3}>Edit company</Title>
 
         <Box my={4} sx={{maxWidth: 400}}>
-          <form onSubmit={this.handleCreateCompany}>
+          <form onSubmit={this.handleUpdateCompany}>
             <Box mb={3}>
               <label htmlFor="name">Company name</label>
               <Input
                 id="name"
                 type="text"
+                disabled={loading}
                 value={name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   this.setState({name: e.target.value})
@@ -113,6 +172,7 @@ class CreateCompanyPage extends React.Component<Props, State> {
               <Input
                 id="description"
                 type="text"
+                disabled={loading}
                 value={description}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   this.setState({description: e.target.value})
@@ -124,6 +184,7 @@ class CreateCompanyPage extends React.Component<Props, State> {
               <Input
                 id="website_url"
                 type="text"
+                disabled={loading}
                 value={websiteUrl}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   this.setState({websiteUrl: e.target.value})
@@ -138,6 +199,7 @@ class CreateCompanyPage extends React.Component<Props, State> {
                 style={{width: '100%'}}
                 placeholder="Select Slack channel"
                 showSearch
+                disabled={loading}
                 value={slackChannelId || undefined}
                 onChange={(value: string, record: any) => {
                   this.setState({
@@ -153,11 +215,20 @@ class CreateCompanyPage extends React.Component<Props, State> {
               />
             </Box>
 
-            <Box my={4}>
-              <Button type="primary" htmlType="submit" loading={submitting}>
-                Create
+            <Flex my={4}>
+              <Box mr={2}>
+                <Button
+                  disabled={loading}
+                  onClick={this.handleResetCompanyFields}
+                >
+                  Reset
+                </Button>
+              </Box>
+
+              <Button type="primary" htmlType="submit" loading={saving}>
+                Update
               </Button>
-            </Box>
+            </Flex>
           </form>
         </Box>
       </Box>
@@ -165,4 +236,4 @@ class CreateCompanyPage extends React.Component<Props, State> {
   }
 }
 
-export default CreateCompanyPage;
+export default UpdateCompanyPage;
