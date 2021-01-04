@@ -374,7 +374,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
             notification.open({
               message: 'New message',
               description: (
-                <a href={'/conversations/all?cid=' + message.conversation_id}>
+                <a href={`/conversations/all?cid=${conversationId}`}>
                   {message.body}
                 </a>
               ),

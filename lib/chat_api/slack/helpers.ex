@@ -179,7 +179,8 @@ defmodule ChatApi.Slack.Helpers do
   end
 
   @spec create_new_slack_conversation_thread(binary(), map()) ::
-          {:ok, SlackConversationThreads.t()} | {:error, Ecto.Changeset.t()}
+          {:ok, SlackConversationThreads.SlackConversationThread.t()}
+          | {:error, Ecto.Changeset.t()}
   def create_new_slack_conversation_thread(conversation_id, response) do
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
          primary_user_id <- get_conversation_primary_user_id(conversation) do

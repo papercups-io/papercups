@@ -68,7 +68,7 @@ defmodule ChatApi.SlackConversationThreads do
     Repo.delete(slack_conversation_thread)
   end
 
-  @spec change_slack_conversation_thread(SlackConverationThread.t(), map()) :: Ecto.Changeset.t()
+  @spec change_slack_conversation_thread(SlackConversationThread.t(), map()) :: Ecto.Changeset.t()
   def change_slack_conversation_thread(
         %SlackConversationThread{} = slack_conversation_thread,
         attrs \\ %{}

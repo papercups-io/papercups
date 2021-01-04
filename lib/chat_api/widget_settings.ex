@@ -69,7 +69,7 @@ defmodule ChatApi.WidgetSettings do
     end
   end
 
-  @spec update_widget_setting(WidgetSettings.t(), map()) ::
+  @spec update_widget_setting(WidgetSetting.t(), map()) ::
           {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a widget_setting.
@@ -98,7 +98,7 @@ defmodule ChatApi.WidgetSettings do
     |> update_widget_setting(attrs)
   end
 
-  @spec delete_widget_setting(WidgetSettings.t()) ::
+  @spec delete_widget_setting(WidgetSetting.t()) ::
           {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a widget_setting.
@@ -116,7 +116,7 @@ defmodule ChatApi.WidgetSettings do
     Repo.delete(widget_setting)
   end
 
-  @spec change_widget_setting(WidgetSettings.t(), map()) :: Ecto.Changeset.t()
+  @spec change_widget_setting(WidgetSetting.t(), map()) :: Ecto.Changeset.t()
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking widget_setting changes.
 

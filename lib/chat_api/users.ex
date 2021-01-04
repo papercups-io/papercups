@@ -294,7 +294,7 @@ defmodule ChatApi.Users do
   end
 
   @spec update_user_settings(integer(), map()) ::
-          {:ok, UserSettings.t()} | {:error, Ecto.Changet.t()}
+          {:ok, UserSettings.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Updates a user_settings.
 
@@ -314,7 +314,7 @@ defmodule ChatApi.Users do
   end
 
   @spec delete_user_settings(UserSettings.t()) ::
-          {:ok, UserSettings.t()} | {:error, Ecto.Changet.t()}
+          {:ok, UserSettings.t()} | {:error, Ecto.Changeset.t()}
   @doc """
   Deletes a user_settings.
 
