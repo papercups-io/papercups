@@ -151,7 +151,9 @@ defmodule ChatApiWeb.SlackControllerTest do
           {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
         end,
         send_message: fn _, _ ->
-          {:ok, %{body: %{"ok" => true}}}
+          # TODO: this prevents a new thread from being created, but we should include an
+          # actual response payload so that we can test that a thread is successfully created
+          {:ok, nil}
         end do
         post(conn, Routes.slack_path(conn, :webhook), %{
           "event" => event_params

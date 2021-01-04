@@ -23,7 +23,7 @@ defmodule ChatApi.Messages.Helpers do
   def handle_post_creation_conversation_updates(%Message{} = message) do
     message
     |> build_conversation_updates()
-    |> update_and_broadcast_to_admin(message)
+    |> update_conversation_and_broadcast_to_admin(message)
 
     message
   end
@@ -59,8 +59,8 @@ defmodule ChatApi.Messages.Helpers do
     end
   end
 
-  @spec update_and_broadcast_to_admin(map(), Message.t()) :: any()
-  defp update_and_broadcast_to_admin(
+  @spec update_conversation_and_broadcast_to_admin(map(), Message.t()) :: any()
+  defp update_conversation_and_broadcast_to_admin(
          updates,
          %Message{
            account_id: account_id,
