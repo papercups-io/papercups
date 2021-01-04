@@ -93,7 +93,7 @@ class CreateCompanyPage extends React.Component<Props, State> {
           </Link>
         </Box>
 
-        <Title level={3}>New company information</Title>
+        <Title level={3}>New company</Title>
 
         <Box my={4} sx={{maxWidth: 400}}>
           <form onSubmit={this.handleCreateCompany}>

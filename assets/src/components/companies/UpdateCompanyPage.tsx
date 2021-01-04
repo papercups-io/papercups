@@ -151,7 +151,7 @@ class UpdateCompanyPage extends React.Component<Props, State> {
           </Link>
         </Box>
 
-        <Title level={3}>Edit company</Title>
+        <Title level={3}>Edit company information</Title>
 
         <Box my={4} sx={{maxWidth: 400}}>
           <form onSubmit={this.handleUpdateCompany}>
