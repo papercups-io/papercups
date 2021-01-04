@@ -1,7 +1,15 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Popconfirm, Result, Text, Title} from '../common';
+import {
+  colors,
+  shadows,
+  Button,
+  Popconfirm,
+  Result,
+  Text,
+  Title,
+} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import {sleep} from '../../utils';
@@ -22,6 +30,7 @@ const DetailsSectionCard = ({children}: {children: any}) => {
         bg: colors.white,
         border: '1px solid rgba(0,0,0,.06)',
         borderRadius: 4,
+        boxShadow: shadows.medium,
       }}
     >
       {children}
@@ -123,7 +132,11 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     return (
       <Flex
         p={4}
-        sx={{flexDirection: 'column', flex: 1, bg: 'rgb(245, 245, 245)'}}
+        sx={{
+          flexDirection: 'column',
+          flex: 1,
+          bg: 'rgb(245, 245, 245)',
+        }}
       >
         <Flex
           mb={4}

@@ -33,7 +33,8 @@ defmodule ChatApiWeb.SlackControllerTest do
      auth: auth,
      account: account,
      conversation: conversation,
-     customer: customer}
+     customer: customer,
+     user: user}
   end
 
   describe "authorization" do
@@ -63,8 +64,8 @@ defmodule ChatApiWeb.SlackControllerTest do
   describe "webhook" do
     test "sends a new thread message event to the webhook from the primary channel", %{
       conn: conn,
-      thread: thread,
-      auth: auth
+      auth: auth,
+      thread: thread
     } do
       account_id = thread.account_id
 
@@ -82,6 +83,40 @@ defmodule ChatApiWeb.SlackControllerTest do
 
       assert [%{body: body}] = Messages.list_messages(account_id)
       assert body == event_params["text"]
+    end
+
+    test "updates the conversation with the assignee after the first agent reply", %{
+      conn: conn,
+      auth: auth,
+      thread: thread,
+      user: user
+    } do
+      account_id = thread.account_id
+
+      event_params = %{
+        "type" => "message",
+        "text" => "hello world #{System.unique_integer([:positive])}",
+        "thread_ts" => thread.slack_thread_ts,
+        "channel" => @slack_channel,
+        "user" => auth.authed_user_id
+      }
+
+      slack_user = %{
+        "profile" => %{"email" => user.email}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end do
+        post(conn, Routes.slack_path(conn, :webhook), %{
+          "event" => event_params
+        })
+
+        assert [%{conversation: conversation}] = Messages.list_messages(account_id)
+        assert conversation.assignee_id == user.id
+        assert conversation.read
+      end
     end
 
     test "sends a new thread message event to the webhook from a support channel without authorization",
@@ -151,7 +186,9 @@ defmodule ChatApiWeb.SlackControllerTest do
           {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
         end,
         send_message: fn _, _ ->
-          {:ok, %{body: %{"ok" => true}}}
+          # TODO: this prevents a new thread from being created, but we should include an
+          # actual response payload so that we can test that a thread is successfully created
+          {:ok, nil}
         end do
         post(conn, Routes.slack_path(conn, :webhook), %{
           "event" => event_params
