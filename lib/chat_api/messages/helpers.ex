@@ -43,7 +43,7 @@ defmodule ChatApi.Messages.Helpers do
            user_id: assignee_id
          }
        ) do
-    if Conversations.count_agent_replies(conversation_id) == 1 do
+    if !is_nil(assignee_id) && Conversations.count_agent_replies(conversation_id) == 1 do
       Map.merge(updates, %{assignee_id: assignee_id})
     else
       updates
@@ -59,7 +59,7 @@ defmodule ChatApi.Messages.Helpers do
     end
   end
 
-  @spec update_conversation_and_broadcast_to_admin(map(), Message.t()) :: any()
+  @spec update_conversation_and_broadcast_to_admin(map(), Message.t()) :: :ok | no_return()
   defp update_conversation_and_broadcast_to_admin(
          updates,
          %Message{

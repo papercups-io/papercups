@@ -3,10 +3,9 @@ defmodule ChatApi.MessagesTest do
 
   import ChatApi.Factory
   alias ChatApi.Messages
+  alias ChatApi.Messages.Message
 
   describe "messages" do
-    alias ChatApi.Messages.Message
-
     @update_attrs %{body: "some updated body"}
     @invalid_attrs %{body: nil}
 
@@ -59,6 +58,12 @@ defmodule ChatApi.MessagesTest do
          %{message: message} do
       assert %Ecto.Changeset{} = Messages.change_message(message)
     end
+  end
+
+  describe "helpers" do
+    setup do
+      {:ok, message: insert(:message)}
+    end
 
     test "get_message_type/1 returns the message sender type" do
       customer_message = insert(:message, user: nil)
@@ -83,6 +88,42 @@ defmodule ChatApi.MessagesTest do
       assert %{body: body, customer: c} = Messages.Helpers.format(message)
       assert body == message.body
       assert customer.email == c.email
+    end
+
+    test "build_conversation_updates/1 builds the conversation updates for a created message" do
+      account = insert(:account)
+      agent = insert(:user, account: account)
+      customer = insert(:customer, account: account)
+      conversation = insert(:conversation, account: account, customer: customer)
+
+      initial_customer_message =
+        insert(:message, conversation: conversation, customer: customer, user: nil)
+
+      # No conversation updates are necessary on the first customer message
+      assert %{} = Messages.Helpers.build_conversation_updates(initial_customer_message)
+
+      first_agent_reply = insert(:message, conversation: conversation, user: agent, customer: nil)
+      agent_id = agent.id
+
+      # After the first reply, auto-assign the responder and mark the conversation as "read"
+      assert %{assignee_id: ^agent_id, read: true} =
+               Messages.Helpers.build_conversation_updates(first_agent_reply)
+
+      first_customer_reply =
+        insert(:message, conversation: conversation, customer: customer, user: nil)
+
+      assert %{} = Messages.Helpers.build_conversation_updates(first_customer_reply)
+
+      second_agent_reply =
+        insert(:message, conversation: conversation, user: agent, customer: nil)
+
+      # On subsequent replies, just mark the conversation as "read"
+      assert %{read: true} = Messages.Helpers.build_conversation_updates(second_agent_reply)
+
+      second_customer_reply =
+        insert(:message, conversation: conversation, customer: customer, user: nil)
+
+      assert %{} = Messages.Helpers.build_conversation_updates(second_customer_reply)
     end
   end
 end
