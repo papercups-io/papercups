@@ -10,7 +10,7 @@ import {
   Text,
   Title,
 } from '../common';
-import {ArrowLeftOutlined} from '../icons';
+import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
 import {sleep} from '../../utils';
 import Spinner from '../Spinner';
@@ -127,6 +127,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
       external_id: externalId,
       slack_channel_id: slackChannelId,
       slack_channel_name: slackChannelName,
+      id: companyId,
     } = company;
 
     return (
@@ -154,14 +155,20 @@ class CompanyDetailsPage extends React.Component<Props, State> {
               placement="bottomLeft"
               onConfirm={this.handleDeleteCompany}
             >
-              <Button danger loading={deleting}>
+              <Button danger loading={deleting} icon={<DeleteOutlined />}>
                 Delete company
               </Button>
             </Popconfirm>
           )}
         </Flex>
 
-        <Title level={2}>{name}</Title>
+        <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
+          <Title level={2}>{name}</Title>
+
+          <Link to={`/companies/${companyId}/edit`}>
+            <Button>Edit company information</Button>
+          </Link>
+        </Flex>
 
         <Flex>
           <Box sx={{flex: 1, pr: 4}}>

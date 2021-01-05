@@ -48,6 +48,7 @@ import LiveSessionViewer from './sessions/LiveSessionViewer';
 import ReportingDashboard from './reporting/ReportingDashboard';
 import CompaniesPage from './companies/CompaniesPage';
 import CreateCompanyPage from './companies/CreateCompanyPage';
+import UpdateCompanyPage from './companies/UpdateCompanyPage';
 import CompanyDetailsPage from './companies/CompanyDetailsPage';
 
 const {
@@ -305,6 +306,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/account*" component={AccountOverview} />
           <Route path="/customers" component={CustomersPage} />
           <Route path="/companies/new" component={CreateCompanyPage} />
+          <Route path="/companies/:id/edit" component={UpdateCompanyPage} />
           <Route path="/companies/:id" component={CompanyDetailsPage} />
           <Route path="/companies" component={CompaniesPage} />
           <Route path="/integrations/:type" component={IntegrationsOverview} />
