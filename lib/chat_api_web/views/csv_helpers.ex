@@ -10,9 +10,10 @@ defmodule ChatApiWeb.CSVHelpers do
   using the given fields with respective order.
 
   ## Examples
-      
+
       iex> CSVHelpers.dump_csv_rfc4180([%{name: "Papercups", awesome: true}], [:name, :awesome])
       "name,awesome\\r\\n\\"Papercups\\",\\"true\\""
+
   """
   @spec dump_csv_rfc4180([map() | struct()], list()) :: String.t()
   def dump_csv_rfc4180(rows, fields) when is_list(rows) and is_list(fields) do

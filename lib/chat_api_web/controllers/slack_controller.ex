@@ -214,9 +214,9 @@ defmodule ChatApiWeb.SlackController do
              type: "support"
            }),
          :ok <- validate_channel_supported(authorization, slack_channel_id),
-         # TODO: handle updating the customer's company_id if it's not set yet
+         :ok <- validate_non_admin_user(authorization, slack_user_id),
          {:ok, customer} <-
-           Slack.Helpers.find_or_create_customer_from_slack_user_id(
+           Slack.Helpers.create_or_update_customer_from_slack_user_id(
              authorization,
              slack_user_id,
              slack_channel_id
@@ -277,6 +277,14 @@ defmodule ChatApiWeb.SlackController do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
       %{conversation: conversation} -> {:ok, conversation}
       _ -> {:error, "Not found"}
+    end
+  end
+
+  @spec validate_non_admin_user(any(), binary()) :: :ok | :error
+  defp validate_non_admin_user(authorization, slack_user_id) do
+    case Slack.Helpers.find_matching_user(authorization, slack_user_id) do
+      nil -> :ok
+      _match -> :error
     end
   end
 

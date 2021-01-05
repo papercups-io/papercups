@@ -5,6 +5,20 @@ defmodule ChatApi.ApiKeys.PersonalApiKey do
   alias ChatApi.Accounts.Account
   alias ChatApi.Users.User
 
+  @type t :: %__MODULE__{
+          label: String.t(),
+          value: String.t(),
+          last_used_at: any(),
+          # Foreign keys
+          account_id: any(),
+          account: any(),
+          user_id: any(),
+          user: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "personal_api_keys" do
