@@ -7,6 +7,24 @@ defmodule ChatApi.Messages.Message do
   alias ChatApi.Customers.Customer
   alias ChatApi.Users.User
 
+  @type t :: %__MODULE__{
+          body: String.t(),
+          sent_at: any(),
+          seen_at: any(),
+          # Foreign keys
+          conversation_id: any(),
+          conversation: any(),
+          account_id: any(),
+          account: any(),
+          customer_id: any(),
+          customer: any(),
+          user_id: any(),
+          user: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "messages" do

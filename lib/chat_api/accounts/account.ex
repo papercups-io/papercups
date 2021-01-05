@@ -9,6 +9,27 @@ defmodule ChatApi.Accounts.Account do
   alias ChatApi.Users.User
   alias ChatApi.WidgetSettings.WidgetSetting
 
+  @type t :: %__MODULE__{
+          company_name: String.t(),
+          time_zone: String.t() | nil,
+          subscription_plan: String.t() | nil,
+          # Stripe fields
+          stripe_customer_id: String.t() | nil,
+          stripe_subscription_id: String.t() | nil,
+          stripe_product_id: String.t() | nil,
+          stripe_default_payment_method_id: String.t() | nil,
+          # Relations
+          customers: any(),
+          conversations: any(),
+          messages: any(),
+          users: any(),
+          widget_settings: any(),
+          working_hours: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "accounts" do
