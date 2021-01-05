@@ -69,6 +69,38 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  # NB: this is basically the same as `find_or_create_customer_from_slack_user_id` above,
+  # but keeping both with duplicate code for now since we may get rid of one in the near future
+  @spec create_or_update_customer_from_slack_user_id(any(), binary(), binary()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def create_or_update_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id) do
+    with %{access_token: access_token, account_id: account_id} <- authorization,
+         {:ok, %{body: %{"ok" => true, "user" => user}}} <-
+           ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token),
+         %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user do
+      default_attrs = %{name: name, time_zone: time_zone}
+
+      attrs =
+        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+          nil -> default_attrs
+          company -> Map.merge(default_attrs, %{company_id: company.id})
+        end
+
+      ChatApi.Customers.create_or_update_by_email(email, account_id, attrs)
+    else
+      # NB: This may occur in test mode, or when the Slack.Client is disabled
+      {:ok, error} ->
+        Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+
+      error ->
+        Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+    end
+  end
+
   @spec find_matching_customer(any(), binary()) :: Customer.t() | nil
   def find_matching_customer(authorization, slack_user_id) do
     case authorization do
