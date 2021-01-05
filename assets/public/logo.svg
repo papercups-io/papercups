@@ -1,14 +1,6 @@
-<svg id="emoji" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
-  <g id="color">
-    <polygon fill="#1890ff" stroke="none" stroke-miterlimit="10" stroke-width="2" points="49.9235,50.25 51.9,35.85 20.4,35.85 22.6588,50.25"/>
-  </g>
-  <g id="hair"/>
-  <g id="skin"/>
-  <g id="skin-shadow"/>
-  <g id="line">
-    <polygon fill="none" stroke="#000000" stroke-miterlimit="10" stroke-width="2" points="49.9235,50.25 51.9,35.85 20.4,35.85 22.6588,50.25"/>
-    <polyline fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" points="54,20.55 47.7,66.45 25.2,66.45 18,20.55"/>
-    <line x1="18" x2="54" y1="20.55" y2="20.55" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
-    <line x1="36" x2="36" y1="5" y2="17" fill="none" stroke="#000000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2"/>
-  </g>
+<svg width="151" height="208" viewBox="0 0 151 208" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M150.129 80.4667C150.129 165.787 44.3575 163.16 44.3575 163.16L0.00146484 207.52C0.00146484 207.52 0.00146484 128.56 0.00146484 59.4L51.3348 0.120026H51.4388C84.1081 1.14669 150.129 1.37337 150.129 80.4667Z" fill="#1890FF"/>
+<path d="M51.4388 -9.53674e-05V59.3999H0.00146484L51.3348 0.119892L51.4388 -9.53674e-05Z" fill="#005FB8"/>
+<path d="M0 70.2402V59.4136C0.00133333 63.0003 0.00136719 66.6136 0.00136719 70.2402H0Z" fill="#C0DFE6"/>
+<path d="M0.00136719 70.2402C0.00136719 66.6136 0.00136719 63.0003 0.00136719 59.4003L51.4374 59.4136L0 70.2402" fill="#0074E0"/>
 </svg>
