@@ -221,7 +221,10 @@ defmodule ChatApiWeb.SlackControllerTest do
       assert [] = Messages.list_messages(account_id)
     end
 
-    test "sending a new message event to the webhook from the default support channel", %{conn: conn, account: account} do
+    test "sending a new message event to the webhook from the default support channel", %{
+      conn: conn,
+      account: account
+    } do
       authorization = insert(:slack_authorization, account: account, type: "support")
 
       event_params = %{
@@ -253,8 +256,12 @@ defmodule ChatApiWeb.SlackControllerTest do
       end
     end
 
-    test "sending a new message event to the webhook from a private company channel", %{conn: conn, account: account} do
+    test "sending a new message event to the webhook from a private company channel", %{
+      conn: conn,
+      account: account
+    } do
       authorization = insert(:slack_authorization, account: account, type: "support")
+
       company =
         insert(:company,
           account: account,
