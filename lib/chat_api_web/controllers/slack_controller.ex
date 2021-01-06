@@ -307,6 +307,8 @@ defmodule ChatApiWeb.SlackController do
              type: "support"
            }),
          :ok <- validate_channel_supported(authorization, slack_channel_id),
+         # NB: not ideal, but this may treat an internal/admin user as a "customer",
+         # because at the moment all conversations must have a customer associated with them
          {:ok, customer} <-
            Slack.Helpers.create_or_update_customer_from_slack_user_id(
              authorization,
