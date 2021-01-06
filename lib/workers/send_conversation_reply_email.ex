@@ -10,6 +10,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   alias ChatApi.{Accounts, Conversations, Messages, Repo, Users}
 
   @impl Oban.Worker
+  @spec perform(Oban.Job.t()) :: :ok
   def perform(%Oban.Job{args: %{"message" => message}}) do
     if has_valid_email_domain?() && reply_emails_enabled?() do
       Logger.info("Checking if we need to send reply email: #{inspect(message)}")
@@ -22,7 +23,8 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
     :ok
   end
 
-  def send_email(%{"user_id" => nil, "user" => nil}), do: nil
+  @spec send_email(map()) :: :ok | :skipped | :error
+  def send_email(%{"user_id" => nil, "user" => nil}), do: :skipped
 
   def send_email(
         %{
@@ -33,7 +35,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
           "conversation_id" => conversation_id
         } = _message
       ) do
-    if Conversations.has_unseen_messages?(conversation_id) do
+    if should_send_email?(conversation_id) do
       Logger.info("Sending reply email!")
 
       email =
@@ -62,11 +64,14 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
       end
     else
       Logger.info("Skipping reply email: no unseen messages")
+
+      :skipped
     end
   end
 
-  def send_email(_params), do: nil
+  def send_email(_params), do: :error
 
+  @spec get_pending_job_ids(binary()) :: [integer()]
   def get_pending_job_ids(conversation_id) do
     # TODO: double check this logic
     Oban.Job
@@ -83,10 +88,20 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
     |> Enum.map(fn id -> Oban.cancel_job(id) end)
   end
 
+  @spec should_send_email?(binary()) :: boolean()
+  def should_send_email?(conversation_id) do
+    case Conversations.get_conversation!(conversation_id) do
+      %{source: "chat"} -> Conversations.has_unseen_messages?(conversation_id)
+      _ -> false
+    end
+  end
+
+  @spec has_valid_email_domain? :: boolean()
   def has_valid_email_domain?() do
     System.get_env("DOMAIN") == "mail.heypapercups.io"
   end
 
+  @spec reply_emails_enabled? :: boolean()
   def reply_emails_enabled?() do
     case System.get_env("CONVERSATION_REPLY_EMAILS_ENABLED") do
       x when x == "1" or x == "true" -> true

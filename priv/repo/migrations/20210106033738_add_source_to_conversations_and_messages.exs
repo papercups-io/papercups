@@ -3,12 +3,12 @@ defmodule ChatApi.Repo.Migrations.AddSourceToConversationsAndMessages do
 
   def change do
     alter table(:conversations) do
-      add(:source, :string)
+      add(:source, :string, default: "chat")
       add(:metadata, :map)
     end
 
     alter table(:messages) do
-      add(:source, :string)
+      add(:source, :string, default: "chat")
       add(:metadata, :map)
     end
   end

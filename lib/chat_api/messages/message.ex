@@ -33,7 +33,7 @@ defmodule ChatApi.Messages.Message do
     field(:body, :string)
     field(:sent_at, :utc_datetime)
     field(:seen_at, :utc_datetime)
-    field(:source, :string)
+    field(:source, :string, default: "chat")
     field(:metadata, :map)
 
     belongs_to(:conversation, Conversation)

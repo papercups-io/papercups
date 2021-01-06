@@ -39,7 +39,7 @@ defmodule ChatApi.Conversations.Conversation do
   schema "conversations" do
     field(:status, :string, default: "open")
     field(:priority, :string, default: "not_priority")
-    field(:source, :string)
+    field(:source, :string, default: "chat")
     field(:read, :boolean, default: false)
     field(:archived_at, :utc_datetime)
     field(:closed_at, :utc_datetime)

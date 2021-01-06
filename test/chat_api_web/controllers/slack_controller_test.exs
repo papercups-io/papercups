@@ -81,7 +81,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "event" => event_params
       })
 
-      assert [%{body: body}] = Messages.list_messages(account_id)
+      assert [%{body: body, source: "slack"}] = Messages.list_messages(account_id)
       assert body == event_params["text"]
     end
 
@@ -194,7 +194,7 @@ defmodule ChatApiWeb.SlackControllerTest do
           "event" => event_params
         })
 
-        assert [%{body: body}] = Messages.list_messages(account.id)
+        assert [%{body: body, source: "slack"}] = Messages.list_messages(account.id)
         assert body == event_params["text"]
       end
     end
@@ -251,7 +251,10 @@ defmodule ChatApiWeb.SlackControllerTest do
           "event" => event_params
         })
 
-        assert [%{body: body}] = Messages.list_messages(account.id)
+        assert [%{body: body, conversation: conversation, source: "slack"}] =
+                 Messages.list_messages(account.id)
+
+        assert %{source: "slack"} = conversation
         assert body == event_params["text"]
       end
     end
@@ -293,8 +296,17 @@ defmodule ChatApiWeb.SlackControllerTest do
           "event" => event_params
         })
 
-        assert [%{body: body, customer_id: customer_id}] = Messages.list_messages(account.id)
+        assert [
+                 %{
+                   body: body,
+                   customer_id: customer_id,
+                   conversation: conversation,
+                   source: "slack"
+                 }
+               ] = Messages.list_messages(account.id)
+
         assert %{company_id: company_id} = Customers.get_customer!(customer_id)
+        assert %{source: "slack"} = conversation
         assert body == event_params["text"]
         assert company_id == company.id
       end
