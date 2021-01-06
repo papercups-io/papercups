@@ -32,6 +32,7 @@ defmodule ChatApi.MessagesTest do
 
       assert {:ok, %Message{} = message} = Messages.create_message(attrs)
       assert message.body == "valid message body"
+      assert message.source == "chat"
     end
 
     test "create_message/1 with invalid data returns error changeset" do

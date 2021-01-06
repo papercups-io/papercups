@@ -110,6 +110,7 @@ defmodule ChatApi.ConversationsTest do
                Conversations.create_conversation(params_with_assocs(:conversation))
 
       assert conversation.status == "open"
+      assert conversation.source == "chat"
     end
 
     test "create_conversation/1 with invalid data returns error changeset" do
