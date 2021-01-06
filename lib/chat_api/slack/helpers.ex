@@ -292,6 +292,21 @@ defmodule ChatApi.Slack.Helpers do
   # Extractors
   #####################
 
+  @spec extract_slack_message(map()) :: {:ok, map()} | {:error, String.t()}
+  def extract_slack_message(%{body: %{"ok" => true, "messages" => [message | _]}}),
+    do: {:ok, message}
+
+  def extract_slack_message(%{body: %{"ok" => true, "messages" => []}}),
+    do: {:error, "No messages were found"}
+
+  def extract_slack_message(%{body: %{"ok" => false} = body}),
+    do: {:error, "conversations.history returned ok=false: #{inspect(body)}"}
+
+  def extract_slack_message(response),
+    do: {:error, "Invalid response: #{inspect(response)}"}
+
+  # TODO: refactor extractors below to return :ok/:error tuples rather than raising?
+
   @spec extract_slack_conversation_thread_info(map()) :: map()
   def extract_slack_conversation_thread_info(%{body: body}) do
     if Map.get(body, "ok") do
