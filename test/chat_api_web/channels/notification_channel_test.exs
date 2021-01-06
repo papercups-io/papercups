@@ -42,4 +42,19 @@ defmodule ChatApiWeb.NotificationChannelTest do
     broadcast_from!(socket, "broadcast", %{"some" => "data"})
     assert_push "broadcast", %{"some" => "data"}
   end
+
+  test "should handle typing event", %{socket: socket, conversation: conversation} do
+    profile = socket.assigns.current_user.id |> ChatApi.Users.get_user_profile()
+    name = profile.display_name
+    email = socket.assigns.current_user.email
+    id = socket.assigns.current_user.id
+    conversation_id = conversation.id
+
+    push(socket, "message:typing", %{"conversation_id" => conversation.id})
+
+    assert_push "message:other_typing", %{
+      user: %{id: ^id, name: ^name, email: ^email, kind: "user"},
+      conversation_id: ^conversation_id
+    }
+  end
 end

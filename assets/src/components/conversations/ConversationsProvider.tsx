@@ -22,6 +22,7 @@ export const ConversationsContext = React.createContext<{
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
   currentlyOnline: {[key: string]: any};
+  othersTypingByConversation: {[key: string]: any};
 
   onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
@@ -38,6 +39,7 @@ export const ConversationsContext = React.createContext<{
   fetchClosedConversations: () => Promise<Array<string>>;
   // TODO: should this be different?
   fetchConversationById: (conversationId: string) => Promise<Array<string>>;
+  handleTyping: (conversationId: string) => () => void;
 }>({
   loading: true,
   account: null,
@@ -52,6 +54,7 @@ export const ConversationsContext = React.createContext<{
   conversationsById: {},
   messagesByConversation: {},
   currentlyOnline: {},
+  othersTypingByConversation: {},
 
   onSelectConversation: () => {},
   onSendMessage: () => {},
@@ -62,6 +65,7 @@ export const ConversationsContext = React.createContext<{
   fetchPriorityConversations: () => Promise.resolve([]),
   fetchClosedConversations: () => Promise.resolve([]),
   fetchConversationById: () => Promise.resolve([]),
+  handleTyping: () => () => {},
 });
 
 export const useConversations = () => useContext(ConversationsContext);
@@ -155,6 +159,7 @@ type State = {
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
   presence: PhoenixPresence;
+  othersTypingByConversation: {[key: string]: any};
 
   all: Array<string>;
   mine: Array<string>;
@@ -173,6 +178,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     conversationsById: {},
     messagesByConversation: {},
     presence: {},
+    othersTypingByConversation: {},
 
     all: [],
     mine: [],
@@ -248,6 +254,37 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.channel.on('shout', (message) => {
       // Handle new message
       this.handleNewMessage(message);
+    });
+
+    this.channel.on('message:other_typing', (payload) => {
+      const conversationId = payload.conversation_id;
+
+      const oldState =
+        this.state.othersTypingByConversation[conversationId] || [];
+      const typer = payload.user || payload.customer;
+
+      const alreadyTyping = oldState.find(
+        (item: any) => item.id === typer.id && item.kind === typer.kind
+      );
+
+      const newState =
+        typer && !alreadyTyping ? [...oldState, typer] : oldState;
+
+      const updateTypingState = (
+        conversationId: string,
+        newState: Array<object>
+      ) =>
+        this.setState({
+          othersTypingByConversation: {
+            ...this.state.othersTypingByConversation,
+            [conversationId]: newState,
+          },
+        });
+
+      if (typer.kind === 'customer' || typer.id !== this.state.currentUser.id) {
+        updateTypingState(payload.conversation_id, newState);
+        setTimeout(() => updateTypingState(payload.conversation_id, []), 1000);
+      }
     });
 
     // TODO: fix race condition between this event and `shout` above
@@ -485,6 +522,16 @@ export class ConversationsProvider extends React.Component<Props, State> {
     }
   };
 
+  handleTyping = (conversationId: string) => () => {
+    if (!this.channel || !this.state.currentUser) {
+      return;
+    }
+    this.channel.push('message:typing', {
+      user_id: this.state.currentUser,
+      conversation_id: conversationId,
+    });
+  };
+
   handleUpdateConversation = async (conversationId: string, params: any) => {
     const {conversationsById} = this.state;
     const existing = conversationsById[conversationId];
@@ -711,6 +758,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
       conversationsById,
       messagesByConversation,
       presence,
+      othersTypingByConversation,
     } = this.state;
     const unreadByCategory = this.getUnreadByCategory();
 
@@ -721,6 +769,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
           account,
           currentUser,
           isNewUser,
+          othersTypingByConversation,
           all,
           mine,
           priority,
@@ -740,6 +789,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
           fetchMyConversations: this.fetchMyConversations,
           fetchPriorityConversations: this.fetchPriorityConversations,
           fetchClosedConversations: this.fetchClosedConversations,
+          handleTyping: this.handleTyping,
         }}
       >
         {this.props.children}

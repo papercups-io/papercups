@@ -5,15 +5,21 @@ import {colors, Button, TextArea} from '../common';
 const ConversationFooter = ({
   sx = {},
   onSendMessage,
+  onInputChanged,
+  othersTyping,
 }: {
   sx?: any;
   onSendMessage: (message: string) => void;
+  onInputChanged: () => void;
+  othersTyping: Array<object>;
 }) => {
   const [message, setMessage] = React.useState('');
 
   const handleMessageChange = (e: any) => setMessage(e.target.value);
 
   const handleKeyDown = (e: any) => {
+    onInputChanged();
+
     const {key, metaKey} = e;
     // Not sure what the best UX is here, but we currently allow
     // sending the message by pressing "cmd/metaKey + Enter"
@@ -26,6 +32,22 @@ const ConversationFooter = ({
     e && e.preventDefault();
     onSendMessage(message);
     setMessage('');
+  };
+
+  const othersTypingMessage = (others: Array<any>) => {
+    const toStr = (name?: string, email?: string) =>
+      `${name || email || 'Anonymous User'} `;
+
+    const titles = others.map((item: any) => toStr(item.name, item.email));
+
+    switch (titles.length) {
+      case 0:
+        return '\xa0';
+      case 1:
+        return [...titles, 'is typing...'].join(' ');
+      default:
+        return `${titles.join(', ')} are typing...`;
+    }
   };
 
   return (
@@ -57,6 +79,9 @@ const ConversationFooter = ({
               </Button>
             </Flex>
           </form>
+        </Box>
+        <Box sx={{position: 'absolute'}}>
+          {othersTypingMessage(othersTyping)}
         </Box>
       </Box>
     </Box>

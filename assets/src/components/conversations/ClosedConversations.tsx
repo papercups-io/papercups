@@ -11,6 +11,7 @@ const ClosedConversations = () => {
     closed = [],
     conversationsById = {},
     messagesByConversation = {},
+    othersTypingByConversation = {},
     currentlyOnline = {},
     fetchAllConversations,
     fetchClosedConversations,
@@ -18,6 +19,7 @@ const ClosedConversations = () => {
     onUpdateConversation,
     onDeleteConversation,
     onSendMessage,
+    handleTyping,
   } = useConversations();
 
   const fetch = async () => {
@@ -40,11 +42,13 @@ const ClosedConversations = () => {
       conversationIds={closed}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
+      othersTypingByConversation={othersTypingByConversation}
       fetch={fetch}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}
       onSendMessage={onSendMessage}
+      handleTyping={handleTyping}
     />
   );
 };

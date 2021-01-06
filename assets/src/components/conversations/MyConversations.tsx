@@ -11,12 +11,14 @@ const MyConversations = () => {
     mine = [],
     conversationsById = {},
     messagesByConversation = {},
+    othersTypingByConversation = {},
     currentlyOnline = {},
     fetchMyConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
     onSendMessage,
+    handleTyping,
   } = useConversations();
 
   return (
@@ -30,11 +32,13 @@ const MyConversations = () => {
       conversationIds={mine}
       conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
+      othersTypingByConversation={othersTypingByConversation}
       fetch={fetchMyConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}
       onSendMessage={onSendMessage}
+      handleTyping={handleTyping}
     />
   );
 };

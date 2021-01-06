@@ -22,6 +22,7 @@ type Props = {
   conversationIds: Array<string>;
   conversationsById: {[key: string]: Conversation};
   messagesByConversation: {[key: string]: Array<Message>};
+  othersTypingByConversation: {[key: string]: Array<object>};
   fetch: () => Promise<Array<string>>;
   onSelectConversation: (id: string | null, fn?: () => void) => void;
   onUpdateConversation: (id: string, params: any) => Promise<void>;
@@ -31,6 +32,7 @@ type Props = {
     conversationId: string,
     fn: () => void
   ) => void;
+  handleTyping: (conversationId: string) => () => void;
 };
 
 type State = {
@@ -298,6 +300,11 @@ class ConversationsContainer extends React.Component<Props, State> {
     });
   };
 
+  othersTyping = (
+    othersTypingByConversation: {[key: string]: Array<object>},
+    conversationId: string
+  ) => othersTypingByConversation[conversationId] || [];
+
   render() {
     const {selected: selectedConversationId, closing = []} = this.state;
     const {
@@ -426,6 +433,13 @@ class ConversationsContainer extends React.Component<Props, State> {
               <ConversationFooter
                 key={selectedConversation.id}
                 onSendMessage={this.handleSendMessage}
+                onInputChanged={this.props.handleTyping(
+                  selectedConversation.id
+                )}
+                othersTyping={this.othersTyping(
+                  this.props.othersTypingByConversation,
+                  selectedConversation.id
+                )}
               />
             )}
 

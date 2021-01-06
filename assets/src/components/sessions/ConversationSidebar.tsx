@@ -10,11 +10,13 @@ type Props = {
   conversation: Conversation;
   currentUser: User;
   messages: Array<Message>;
+  othersTyping: Array<any>;
   onSendMessage: (
     message: string,
     conversationId: string,
     cb: () => void
   ) => void;
+  handleTyping: (conversationId: string) => () => void;
 };
 
 class ConversationSidebar extends React.Component<Props, any> {
@@ -77,6 +79,8 @@ class ConversationSidebar extends React.Component<Props, any> {
         <ConversationFooter
           sx={{px: 3, pb: 3}}
           onSendMessage={this.handleSendMessage}
+          onInputChanged={this.props.handleTyping(conversation.id)}
+          othersTyping={this.props.othersTyping}
         />
       </Flex>
     );
@@ -93,9 +97,11 @@ const ConversationsSidebarWrapper = ({
     currentUser,
     conversationsById = {},
     messagesByConversation = {},
+    othersTypingByConversation = {},
     fetchConversationById,
     onSendMessage,
     onSelectConversation,
+    handleTyping,
   } = useConversations();
 
   React.useEffect(() => {
@@ -108,6 +114,8 @@ const ConversationsSidebarWrapper = ({
   if (loading) {
     return null;
   }
+
+  const othersTyping = othersTypingByConversation[conversationId] || [];
 
   // TODO: fix case where conversation is closed!
   const conversation = conversationsById[conversationId] || null;
@@ -123,6 +131,8 @@ const ConversationsSidebarWrapper = ({
       messages={messages}
       currentUser={currentUser}
       onSendMessage={onSendMessage}
+      handleTyping={handleTyping}
+      othersTyping={othersTyping}
     />
   );
 };
