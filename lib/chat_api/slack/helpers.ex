@@ -45,14 +45,21 @@ defmodule ChatApi.Slack.Helpers do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
            ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token),
-         %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user do
-      default_attrs = %{name: name, time_zone: time_zone}
+         %{"profile" => %{"email" => email} = profile} <- user do
+      company_attrs =
+        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+          %{id: company_id} -> %{company_id: company_id}
+          _ -> %{}
+        end
 
       attrs =
-        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
-          nil -> default_attrs
-          company -> Map.merge(default_attrs, %{company_id: company.id})
-        end
+        %{
+          name: Map.get(profile, "real_name"),
+          time_zone: Map.get(user, "tz")
+        }
+        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+        |> Map.new()
+        |> Map.merge(company_attrs)
 
       ChatApi.Customers.find_or_create_by_email(email, account_id, attrs)
     else
@@ -77,14 +84,21 @@ defmodule ChatApi.Slack.Helpers do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
            ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token),
-         %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user do
-      default_attrs = %{name: name, time_zone: time_zone}
+         %{"profile" => %{"email" => email} = profile} <- user do
+      company_attrs =
+        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+          %{id: company_id} -> %{company_id: company_id}
+          _ -> %{}
+        end
 
       attrs =
-        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
-          nil -> default_attrs
-          company -> Map.merge(default_attrs, %{company_id: company.id})
-        end
+        %{
+          name: Map.get(profile, "real_name"),
+          time_zone: Map.get(user, "tz")
+        }
+        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+        |> Map.new()
+        |> Map.merge(company_attrs)
 
       ChatApi.Customers.create_or_update_by_email(email, account_id, attrs)
     else
