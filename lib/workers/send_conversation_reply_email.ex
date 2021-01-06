@@ -88,6 +88,10 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
     |> Enum.map(fn id -> Oban.cancel_job(id) end)
   end
 
+  @doc """
+  Check if we should send a notification email. Note that we only want to send
+  these if the source is "chat" (we don't want to send when source is "slack")
+  """
   @spec should_send_email?(binary()) :: boolean()
   def should_send_email?(conversation_id) do
     case Conversations.get_conversation!(conversation_id) do
