@@ -336,7 +336,7 @@ defmodule ChatApi.SlackTest do
       slack_user = %{
         "real_name" => "Test User",
         "tz" => "America/New_York",
-        "profile" => %{"email" => "user@user.com"}
+        "profile" => %{"email" => "user@user.com", "real_name" => "Test User"}
       }
 
       with_mock ChatApi.Slack.Client,
@@ -360,7 +360,7 @@ defmodule ChatApi.SlackTest do
       slack_user = %{
         "real_name" => "Test Customer",
         "tz" => "America/New_York",
-        "profile" => %{"email" => "customer@customer.com"}
+        "profile" => %{"email" => "customer@customer.com", "real_name" => "Test Customer"}
       }
 
       with_mock ChatApi.Slack.Client,
@@ -394,7 +394,7 @@ defmodule ChatApi.SlackTest do
         "real_name" => "Test Customer",
         "tz" => "America/New_York",
         # New customer email
-        "profile" => %{"email" => "new@customer.com"}
+        "profile" => %{"email" => "new@customer.com", "real_name" => "Test Customer"}
       }
 
       with_mock ChatApi.Slack.Client,
@@ -423,7 +423,7 @@ defmodule ChatApi.SlackTest do
         "real_name" => "Test Customer",
         "tz" => "America/New_York",
         # New customer email
-        "profile" => %{"email" => "new@customer.com"}
+        "profile" => %{"email" => "new@customer.com", "real_name" => "Test Customer"}
       }
 
       with_mock ChatApi.Slack.Client,
