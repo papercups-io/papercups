@@ -4,7 +4,7 @@ defmodule ChatApi.Conversations.Helpers do
   """
 
   require Logger
-  # alias ChatApi.Slack
+  alias ChatApi.Conversations.Conversation
 
   @spec send_conversation_state_update(Conversation.t(), map()) ::
           {:ok, String.t()} | {:error, String.t()}

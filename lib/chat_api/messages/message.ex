@@ -11,6 +11,8 @@ defmodule ChatApi.Messages.Message do
           body: String.t(),
           sent_at: any(),
           seen_at: any(),
+          source: String.t() | nil,
+          metadata: any(),
           # Foreign keys
           conversation_id: any(),
           conversation: any(),
@@ -31,6 +33,8 @@ defmodule ChatApi.Messages.Message do
     field(:body, :string)
     field(:sent_at, :utc_datetime)
     field(:seen_at, :utc_datetime)
+    field(:source, :string)
+    field(:metadata, :map)
 
     belongs_to(:conversation, Conversation)
     belongs_to(:account, Account)
@@ -50,8 +54,11 @@ defmodule ChatApi.Messages.Message do
       :customer_id,
       :user_id,
       :sent_at,
-      :seen_at
+      :seen_at,
+      :source,
+      :metadata
     ])
     |> validate_required([:body, :account_id, :conversation_id])
+    |> validate_inclusion(:source, ["chat", "slack", "email"])
   end
 end

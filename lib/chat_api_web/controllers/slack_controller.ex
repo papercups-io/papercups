@@ -227,7 +227,8 @@ defmodule ChatApiWeb.SlackController do
          {:ok, conversation} <-
            Conversations.create_conversation(%{
              account_id: account_id,
-             customer_id: customer.id
+             customer_id: customer.id,
+             source: "slack"
            }),
          {:ok, message} <-
            Messages.create_message(%{
