@@ -162,6 +162,7 @@ defmodule ChatApiWeb.SlackController do
           "body" => text,
           "conversation_id" => conversation_id,
           "account_id" => account_id,
+          "source" => "slack",
           "user_id" =>
             Slack.Helpers.get_admin_sender_id(
               primary_reply_authorization,
@@ -186,7 +187,8 @@ defmodule ChatApiWeb.SlackController do
             |> Map.merge(%{
               "body" => text,
               "conversation_id" => conversation_id,
-              "account_id" => account_id
+              "account_id" => account_id,
+              "source" => "slack"
             })
             |> Messages.create_and_fetch!()
             |> Messages.Notification.broadcast_to_conversation!()
@@ -227,14 +229,16 @@ defmodule ChatApiWeb.SlackController do
          {:ok, conversation} <-
            Conversations.create_conversation(%{
              account_id: account_id,
-             customer_id: customer.id
+             customer_id: customer.id,
+             source: "slack"
            }),
          {:ok, message} <-
            Messages.create_message(%{
              account_id: account_id,
              conversation_id: conversation.id,
              customer_id: customer.id,
-             body: text
+             body: text,
+             source: "slack"
            }),
          {:ok, _slack_conversation_thread} <-
            SlackConversationThreads.create_slack_conversation_thread(%{

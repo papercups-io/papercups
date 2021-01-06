@@ -44,7 +44,8 @@ defmodule ChatApi.Factory do
     %ChatApi.Conversations.Conversation{
       account: build(:account),
       customer: build(:customer),
-      status: "open"
+      status: "open",
+      source: "chat"
     }
   end
 
@@ -83,7 +84,8 @@ defmodule ChatApi.Factory do
       conversation: build(:conversation),
       customer: build(:customer),
       user: build(:user),
-      body: "some message body"
+      body: "some message body",
+      source: "chat"
     }
   end
 

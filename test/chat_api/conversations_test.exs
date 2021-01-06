@@ -110,10 +110,18 @@ defmodule ChatApi.ConversationsTest do
                Conversations.create_conversation(params_with_assocs(:conversation))
 
       assert conversation.status == "open"
+      assert conversation.source == "chat"
     end
 
     test "create_conversation/1 with invalid data returns error changeset" do
       assert {:error, %Ecto.Changeset{}} = Conversations.create_conversation(@invalid_attrs)
+    end
+
+    test "create_conversation/1 with invalid source returns error changeset" do
+      assert {:error, %Ecto.Changeset{errors: errors}} =
+               Conversations.create_conversation(%{status: "closed", source: "unknown"})
+
+      assert {"is invalid", _} = errors[:source]
     end
 
     test "update_conversation/2 with valid data updates the conversation",
