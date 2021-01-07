@@ -50,7 +50,7 @@ export const isValidUuid = (id: any) => {
   return regex.test(id);
 };
 
-export const updateQueryParams = (query: object) => {
+export const updateQueryParams = (query: Record<string, any>) => {
   if (window.history.pushState) {
     window.history.pushState(
       null,

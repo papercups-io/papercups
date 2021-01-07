@@ -672,11 +672,8 @@ export const timezones: Array<Timezone> = [
   },
 ];
 
-/**
- *
- * @type {Array.<{ offset: string, label: string, tzCode: string }>}
- */
-export var minimalTimezoneSet = [
+// NB: currently unused
+export const minimalTimezoneSet: Array<Timezone> = [
   {
     offset: '-11:00',
     label: '(GMT-11:00) Pago Pago',

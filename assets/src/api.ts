@@ -260,7 +260,7 @@ export const deleteCompany = async (id: string, token = getAccessToken()) => {
 
 export const createNewConversation = async (
   customerId: string,
-  params?: object,
+  params?: any,
   token = getAccessToken()
 ) => {
   if (!token) {
