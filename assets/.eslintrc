@@ -12,6 +12,7 @@
     "prettier"
   ],
   "rules": {
-    "prettier/prettier": 2
+    "prettier/prettier": 2,
+    "@typescript-eslint/no-use-before-define": "warn"
   }
 }
