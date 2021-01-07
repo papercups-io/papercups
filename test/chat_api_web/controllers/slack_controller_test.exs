@@ -194,8 +194,11 @@ defmodule ChatApiWeb.SlackControllerTest do
           "event" => event_params
         })
 
-        assert [%{body: body, source: "slack"}] = Messages.list_messages(account.id)
+        assert [%{body: body, conversation: conversation, source: "slack"}] =
+                 Messages.list_messages(account.id)
+
         assert body == event_params["text"]
+        refute conversation.read
       end
     end
 
@@ -294,6 +297,64 @@ defmodule ChatApiWeb.SlackControllerTest do
         send_message: fn _, _ -> {:ok, nil} end do
         post(conn, Routes.slack_path(conn, :webhook), %{
           "event" => event_params
+        })
+
+        assert [
+                 %{
+                   body: body,
+                   customer_id: customer_id,
+                   conversation: conversation,
+                   source: "slack"
+                 }
+               ] = Messages.list_messages(account.id)
+
+        assert %{company_id: company_id} = Customers.get_customer!(customer_id)
+        assert %{source: "slack"} = conversation
+        assert body == event_params["text"]
+        assert company_id == company.id
+      end
+    end
+
+    test "uses the correct Slack team_id from a shared external private company channel", %{
+      conn: conn,
+      account: account
+    } do
+      team_id = "T123TEST"
+
+      authorization =
+        insert(:slack_authorization, account: account, type: "support", team_id: team_id)
+
+      company =
+        insert(:company,
+          account: account,
+          name: "Slack Test Co",
+          slack_channel_id: @slack_channel
+        )
+
+      event_params = %{
+        "type" => "message",
+        "text" => "hello world #{System.unique_integer([:positive])}",
+        "channel" => @slack_channel,
+        "team" => "T123EXTERNAL",
+        "user" => authorization.authed_user_id,
+        "ts" => "1234.56789"
+      }
+
+      slack_user = %{
+        "real_name" => "Test User",
+        "tz" => "America/New_York",
+        "profile" => %{"email" => @email}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end,
+        send_message: fn _, _ -> {:ok, nil} end do
+        post(conn, Routes.slack_path(conn, :webhook), %{
+          "event" => event_params,
+          "is_ext_shared_channel" => true,
+          "team_id" => team_id
         })
 
         assert [

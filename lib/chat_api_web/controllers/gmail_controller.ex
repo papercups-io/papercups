@@ -105,7 +105,7 @@ defmodule ChatApiWeb.GmailController do
     json(conn, %{data: %{url: url}})
   end
 
-  @spec notify_slack(Conn.t()) :: Conn.t()
+  @spec notify_slack(Plug.Conn.t()) :: Plug.Conn.t()
   defp notify_slack(conn) do
     with %{email: email} <- conn.assigns.current_user do
       # Putting in an async Task for now, since we don't care if this succeeds

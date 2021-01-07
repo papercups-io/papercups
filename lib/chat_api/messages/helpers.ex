@@ -54,6 +54,7 @@ defmodule ChatApi.Messages.Helpers do
     case get_message_type(message) do
       # If agent responded, conversation should be marked as "read"
       :agent -> Map.merge(updates, %{read: true})
+      :customer -> Map.merge(updates, %{read: false})
       _ -> updates
     end
   end
