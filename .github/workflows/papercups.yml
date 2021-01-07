@@ -6,24 +6,6 @@ on:
   pull_request:
 
 jobs:
-  mix-format:
-    name: Mix Format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Initial setup
-        uses: actions/setup-elixir@v1
-        with:
-          elixir-version: "1.10.4"
-          otp-version: "22.2.6"
-
-      - name: Install dependencies
-        run: mix deps.get
-
-      - name: Run format check
-        run: mix format --check-formatted
-
   prettier:
     name: Prettier
     runs-on: ubuntu-latest
@@ -77,6 +59,24 @@ jobs:
 
       - name: Run build
         run: npm run build --prefix assets
+
+  mix-format:
+    name: Mix Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Initial setup
+        uses: actions/setup-elixir@v1
+        with:
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Run format check
+        run: mix format --check-formatted
 
   mix-test:
     name: Mix Test
