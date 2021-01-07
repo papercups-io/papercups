@@ -93,6 +93,9 @@ defmodule ChatApi.SlackAuthorizations do
       {:team_id, value}, dynamic ->
         dynamic([r], ^dynamic and r.team_id == ^value)
 
+      {:bot_user_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.bot_user_id == ^value)
+
       {:type, value}, dynamic ->
         dynamic([r], ^dynamic and r.type == ^value)
 

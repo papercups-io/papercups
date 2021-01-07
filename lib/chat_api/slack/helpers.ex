@@ -305,6 +305,16 @@ defmodule ChatApi.Slack.Helpers do
   def extract_slack_message(response),
     do: {:error, "Invalid response: #{inspect(response)}"}
 
+  @spec extract_slack_channel(map()) :: {:ok, map()} | {:error, String.t()}
+  def extract_slack_channel(%{body: %{"ok" => true, "channel" => channel}}) when is_map(channel),
+    do: {:ok, channel}
+
+  def extract_slack_channel(%{body: %{"ok" => false} = body}),
+    do: {:error, "conversations.info returned ok=false: #{inspect(body)}"}
+
+  def extract_slack_channel(response),
+    do: {:error, "Invalid response: #{inspect(response)}"}
+
   # TODO: refactor extractors below to return :ok/:error tuples rather than raising?
 
   @spec extract_slack_conversation_thread_info(map()) :: map()
