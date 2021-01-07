@@ -262,6 +262,44 @@ defmodule ChatApi.ReportingTest do
       assert average_replied_time == Time.diff(first_replied_at, inserted_at)
     end
 
+    test "gets average response time of multiple times", %{account: account} do
+      # 31 seconds
+      inserted_at_1 = ~N[2020-09-01 12:00:00]
+      first_replied_at_1 = ~N[2020-09-01 12:00:31]
+
+      # 671 seconds
+      inserted_at_2 = ~N[2020-09-02 12:00:00]
+      first_replied_at_2 = ~N[2020-09-02 12:11:11]
+
+      # 3665 seconds
+      inserted_at_3 = ~N[2020-09-01 10:00:00]
+      first_replied_at_3 = ~N[2020-09-01 11:01:05]
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_1,
+        first_replied_at: first_replied_at_1
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_2,
+        first_replied_at: first_replied_at_2
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_3,
+        first_replied_at: first_replied_at_3
+      )
+
+      average_replied_time = Reporting.average_seconds_to_first_reply(account.id)
+      assert average_replied_time == (31 + 671 + 3665) / 3
+    end
+
     test "when first_replied_at is nil", %{
       account: account
     } do

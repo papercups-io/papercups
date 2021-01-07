@@ -9,7 +9,7 @@ import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
 import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
 import FirstResponseTimeByWeekChart from './FirstResponseTimeByWeekChart';
 import CustomerBreakdownChart from './CustomerBreakdownChart';
-import {ReportingDatum} from './support';
+import {ReportingDatum, secondsToHoursAndMinutes} from './support';
 import logger from '../../logger';
 
 type DateCount = {
@@ -184,11 +184,11 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatResponseTimeByWeekDay = (stats: Array<ResponseTimeByWeekDay>) => {
-    return stats.map((ele) => {
+    return stats.map((average: string, day) => {
       // use minutes instead of seconds when rendering the chart
       return {
-        average: Math.round((ele.average / 60) * 100) / 100,
-        day: ele.day.slice(0, 3),
+        average: Math.round((average / 60) * 100) / 100,
+        day: day.slice(0, 3),
       };
     });
   };
@@ -206,9 +206,7 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatResponseTimeStats = (responseTime: number) => {
-    const seconds = Math.round(responseTime);
-    //time would look like 00:01:20 if on average it takes 80 seconds to respond
-    const time = new Date(seconds * 1000).toISOString().substr(11, 8);
+    const time = secondsToHoursAndMinutes(responseTime);
     const [hour, minute, second] = time.split(':');
     return `${hour} h ${minute} m ${second} s`;
   };
@@ -239,7 +237,7 @@ class ReportingDashboard extends React.Component<Props, State> {
       'time_zone'
     );
 
-    const responsTimeStats = this.formatResponseTimeStats(
+    const responseTimeStats = this.formatResponseTimeStats(
       averageTimeToFirstRespond
     );
 
@@ -278,7 +276,7 @@ class ReportingDashboard extends React.Component<Props, State> {
               <Box>
                 <Box mb={2}>
                   <Text>average first response time: </Text>
-                  <Text style={{fontWeight: 'bold'}}>{responsTimeStats}</Text>
+                  <Text style={{fontWeight: 'bold'}}>{responseTimeStats}</Text>
                 </Box>
               </Box>
               <FirstResponseTimeByWeekChart data={responseTimeByWeekDay} />

@@ -17,6 +17,7 @@ defmodule ChatApi.Reporting do
   @type aggregate_by_user() :: %{user: %{id: integer(), email: binary()}, count: integer()}
   @type aggregate_by_weekday() :: %{weekday: binary(), average: float(), total: integer()}
   @type aggregate_by_field() :: %{field: binary(), count: integer()}
+  @type aggregate_average_by_weekday() :: %{day: binary(), average: float(), unit: float()}
 
   @spec count_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_messages_by_date(account_id, filters \\ %{}) do
@@ -40,7 +41,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec average_seconds_to_first_reply(binary(), map()) :: [aggregate_by_date()]
+  @spec average_seconds_to_first_reply(binary(), map()) :: float()
   def average_seconds_to_first_reply(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
@@ -109,7 +110,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec count_messages_by_weekday(binary(), map()) :: [aggregate_by_weekday()]
+  @spec count_messages_by_weekday(binary(), map()) :: [aggregate_average_by_weekday()]
   def count_messages_by_weekday(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -122,6 +123,7 @@ defmodule ChatApi.Reporting do
     |> compute_weekday_aggregates()
   end
 
+  @spec first_response_time_by_weekday(binary(), map()) :: []
   def first_response_time_by_weekday(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
@@ -167,6 +169,7 @@ defmodule ChatApi.Reporting do
     end)
   end
 
+  @spec compute_weekday_aggregates(any) :: [aggregate_average_by_weekday()]
   defp compute_average_weekday_aggregates(grouped) do
     Enum.map(weekdays(), fn weekday ->
       records = Map.get(grouped, weekday, [])
