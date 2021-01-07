@@ -105,6 +105,10 @@ defmodule ChatApiWeb.SlackController do
     Logger.debug("Payload from Slack webhook: #{inspect(payload)}")
 
     case payload do
+      %{"event" => _event, "is_ext_shared_channel" => true} ->
+        handle_payload(payload)
+        send_resp(conn, 200, "")
+
       %{"event" => event} ->
         handle_event(event)
         send_resp(conn, 200, "")
@@ -131,6 +135,22 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  defp handle_payload(
+         %{
+           "event" => event,
+           "team_id" => team,
+           "is_ext_shared_channel" => true
+         } = _payload
+       ) do
+    # NB: this is a bit of a hack -- we override the "team" id in the "event" payload
+    # to match the "team" where the Papercups app is installed
+    event
+    |> Map.merge(%{"team" => team})
+    |> handle_event()
+  end
+
+  defp handle_payload(_), do: nil
+
   defp handle_event(%{"bot_id" => _bot_id} = _event) do
     # Don't do anything on bot events for now
     nil
@@ -151,7 +171,7 @@ defmodule ChatApiWeb.SlackController do
            "user" => slack_user_id
          } = event
        ) do
-    Logger.debug("Handling Slack event: #{inspect(event)}")
+    Logger.debug("Handling Slack message reply event: #{inspect(event)}")
 
     with {:ok, conversation} <- get_thread_conversation(thread_ts, slack_channel_id),
          %{account_id: account_id, id: conversation_id} <- conversation,
@@ -208,8 +228,10 @@ defmodule ChatApiWeb.SlackController do
            "channel" => slack_channel_id,
            "user" => slack_user_id,
            "ts" => ts
-         } = _event
+         } = event
        ) do
+    Logger.debug("Handling Slack new message event: #{inspect(event)}")
+
     with %{account_id: account_id} = authorization <-
            SlackAuthorizations.find_slack_authorization(%{
              team_id: team,
@@ -271,6 +293,8 @@ defmodule ChatApiWeb.SlackController do
            }
          } = event
        ) do
+    Logger.debug("Handling Slack reaction event: #{inspect(event)}")
+
     with :ok <- validate_no_existing_thread(channel, ts),
          # TODO: allow in support channel as well?
          %{account_id: account_id} <- ChatApi.Companies.find_by_slack_channel(channel),
@@ -441,7 +465,7 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
-  @spec notify_slack(Conn.t()) :: Conn.t()
+  @spec notify_slack(Plug.Conn.t()) :: Plug.Conn.t()
   defp notify_slack(conn) do
     with %{email: email} <- conn.assigns.current_user do
       # Putting in an async Task for now, since we don't care if this succeeds

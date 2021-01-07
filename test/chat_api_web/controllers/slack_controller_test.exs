@@ -194,8 +194,11 @@ defmodule ChatApiWeb.SlackControllerTest do
           "event" => event_params
         })
 
-        assert [%{body: body, source: "slack"}] = Messages.list_messages(account.id)
+        assert [%{body: body, conversation: conversation, source: "slack"}] =
+                 Messages.list_messages(account.id)
+
         assert body == event_params["text"]
+        refute conversation.read
       end
     end
 

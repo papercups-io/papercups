@@ -74,7 +74,7 @@ defmodule ChatApiWeb.RegistrationController do
     end
   end
 
-  @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  @spec create(Conn.t(), map()) :: Conn.t()
   def create(conn, %{"user" => user_params}) do
     if registration_disabled?() do
       send_server_error(conn, 403, "An invitation token is required to register")
