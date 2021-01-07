@@ -296,8 +296,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.debug("Handling Slack reaction event: #{inspect(event)}")
 
     with :ok <- validate_no_existing_thread(channel, ts),
-         # TODO: allow in support channel as well?
-         %{account_id: account_id} <- ChatApi.Companies.find_by_slack_channel(channel),
+         {:ok, account_id} <- find_account_id_by_support_channel(channel),
          %{access_token: access_token} <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
          {:ok, response} <- Slack.Client.retrieve_message(channel, ts, access_token),
@@ -421,6 +420,23 @@ defmodule ChatApiWeb.SlackController do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
       %{conversation: conversation} -> {:ok, conversation}
       _ -> {:error, "Not found"}
+    end
+  end
+
+  @spec find_account_id_by_support_channel(binary()) :: {:ok, binary()} | {:error, :not_found}
+  defp find_account_id_by_support_channel(slack_channel_id) do
+    case ChatApi.Companies.find_by_slack_channel(slack_channel_id) do
+      %{account_id: account_id} ->
+        {:ok, account_id}
+
+      _ ->
+        case SlackAuthorizations.find_slack_authorization(%{
+               channel_id: slack_channel_id,
+               type: "support"
+             }) do
+          %{account_id: account_id} -> {:ok, account_id}
+          _ -> {:error, :not_found}
+        end
     end
   end
 
