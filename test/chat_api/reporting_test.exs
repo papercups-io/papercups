@@ -239,6 +239,86 @@ defmodule ChatApi.ReportingTest do
     end
   end
 
+  describe "average_seconds_to_first_reply" do
+    setup do
+      {:ok, account: insert(:account)}
+    end
+
+    test "gets the average seconds it takes to respond", %{
+      account: account
+    } do
+      inserted_at = ~N[2020-09-01 12:00:00]
+      first_replied_at = ~N[2020-09-01 12:30:00]
+
+      insert_list(
+        3,
+        :conversation,
+        account: account,
+        inserted_at: inserted_at,
+        first_replied_at: first_replied_at
+      )
+
+      average_replied_time = Reporting.average_seconds_to_first_reply(account.id)
+      assert average_replied_time == Time.diff(first_replied_at, inserted_at)
+    end
+
+    test "gets average response time of multiple times", %{account: account} do
+      # 31 seconds
+      inserted_at_1 = ~N[2020-09-01 12:00:00]
+      first_replied_at_1 = ~N[2020-09-01 12:00:31]
+
+      # 671 seconds
+      inserted_at_2 = ~N[2020-09-02 12:00:00]
+      first_replied_at_2 = ~N[2020-09-02 12:11:11]
+
+      # 3665 seconds
+      inserted_at_3 = ~N[2020-09-01 10:00:00]
+      first_replied_at_3 = ~N[2020-09-01 11:01:05]
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_1,
+        first_replied_at: first_replied_at_1
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_2,
+        first_replied_at: first_replied_at_2
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_3,
+        first_replied_at: first_replied_at_3
+      )
+
+      average_replied_time = Reporting.average_seconds_to_first_reply(account.id)
+      assert average_replied_time == (31 + 671 + 3665) / 3
+    end
+
+    test "when first_replied_at is nil", %{
+      account: account
+    } do
+      inserted_at = ~N[2020-09-01 12:00:00]
+      first_replied_at = nil
+
+      insert_list(
+        3,
+        :conversation,
+        account: account,
+        inserted_at: inserted_at,
+        first_replied_at: first_replied_at
+      )
+
+      average_replied_time = Reporting.average_seconds_to_first_reply(account.id)
+      assert average_replied_time == 0.0
+    end
+  end
+
   describe "get_customer_breakdown/1" do
     setup do
       account = insert(:account)
@@ -314,6 +394,83 @@ defmodule ChatApi.ReportingTest do
                  from_date: ~N[2020-10-10 12:00:00],
                  to_date: ~N[2020-10-12 13:00:00]
                })
+    end
+  end
+
+  describe "first_response_time_by_weekday" do
+    setup do
+      account = insert(:account)
+
+      {:ok, account: account}
+    end
+
+    test "correctly calculates total and avg of customer messages per day", %{account: account} do
+      # 01:02:03 - 3723
+      # Monday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-28 10:00:00],
+        first_replied_at: ~N[2020-09-28 11:02:03]
+      )
+
+      # Monday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-05 10:00:00],
+        first_replied_at: ~N[2020-10-05 11:00:03]
+      )
+
+      # Tuesday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-29 10:00:00],
+        first_replied_at: ~N[2020-09-29 11:02:03]
+      )
+
+      # Wednesday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-30 12:00:00],
+        first_replied_at: ~N[2020-09-30 12:02:03]
+      )
+
+      # Thursday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-01 12:00:00],
+        first_replied_at: ~N[2020-10-01 12:02:03]
+      )
+
+      # Friday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 12:00:00],
+        first_replied_at: ~N[2020-10-02 12:00:03]
+      )
+
+      # Saturday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 12:00:00],
+        first_replied_at: ~N[2020-10-03 12:00:03]
+      )
+
+      # Sunday
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-04 10:00:00],
+        first_replied_at: ~N[2020-10-04 11:00:03]
+      )
+
+      assert [
+               %{day: "Monday", average: 3663.0, unit: :seconds},
+               %{day: "Tuesday", average: 3723.0, unit: :seconds},
+               %{day: "Wednesday", average: 123.0, unit: :seconds},
+               %{day: "Thursday", average: 123.0, unit: :seconds},
+               %{day: "Friday", average: 3.0, unit: :seconds},
+               %{day: "Saturday", average: 3.0, unit: :seconds},
+               %{day: "Sunday", average: 3603.0, unit: :seconds}
+             ] = Reporting.first_response_time_by_weekday(account.id)
     end
   end
 
