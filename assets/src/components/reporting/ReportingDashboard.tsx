@@ -184,7 +184,7 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatResponseTimeByWeekDay = (stats: Array<ResponseTimeByWeekDay>) => {
-    return stats.map((average: string, day) => {
+    return stats.map(({average, day}) => {
       // use minutes instead of seconds when rendering the chart
       return {
         average: Math.round((average / 60) * 100) / 100,
