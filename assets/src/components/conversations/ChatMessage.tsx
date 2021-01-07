@@ -25,6 +25,29 @@ const getSenderIdentifier = (customer?: Customer | null, user?: User) => {
   }
 };
 
+
+const EmptyAvatar = ({
+
+}) =>{
+  return(
+    <Box
+    ml={2}
+    style={{
+      height: 32,
+      width: 32,
+      borderRadius: '50%',
+      justifyContent: 'center',
+      alignItems: 'center',
+
+      backgroundPosition: 'center',
+      backgroundSize: 'cover',
+
+    }}
+  />
+  )
+}
+
+
 const SenderAvatar = ({
   isAgent,
   name,
@@ -42,7 +65,7 @@ const SenderAvatar = ({
     return (
       <Tooltip title={name}>
         <Box
-          mr={2}
+          ml={2}
           style={{
             height: 32,
             width: 32,
@@ -87,16 +110,20 @@ type Props = {
   message: Message;
   customer?: Customer | null;
   isMe?: boolean;
+  isFirstInGroup?: boolean;
   isLastInGroup?: boolean;
   shouldDisplayTimestamp?: boolean;
+  shouldDisplatAvatar?: boolean;
 };
 
 const ChatMessage = ({
   message,
   customer,
   isMe,
+  isFirstInGroup,
   isLastInGroup,
   shouldDisplayTimestamp,
+  shouldDisplatAvatar,
 }: Props) => {
   const {body, sent_at, created_at, user, seen_at} = message;
   const isAgent = !!user;
@@ -121,9 +148,16 @@ const ChatMessage = ({
               background: colors.primary,
             }}
           />
+          {shouldDisplatAvatar ? (
+            <SenderAvatar name={tooltip} user={user} isAgent={isAgent} />
+          ) : 
+          (
+            <EmptyAvatar></EmptyAvatar>
+          )}
+
         </Flex>
         {shouldDisplayTimestamp && (
-          <Flex m={1} sx={{justifyContent: 'flex-end'}}>
+          <Flex m={1} mx={2} pr={4} sx={{justifyContent: 'flex-end'}}>
             {formattedSeenAt ? (
               <Text type="secondary">Seen {formattedSeenAt}</Text>
             ) : (
@@ -138,6 +172,7 @@ const ChatMessage = ({
   return (
     <Box pr={4} pl={0} pb={isLastInGroup ? 3 : 2}>
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
+
         <SenderAvatar
           name={tooltip}
           user={user}

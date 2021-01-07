@@ -1,6 +1,7 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+import dayjs from 'dayjs';
 import {Button, colors, Result} from '../common';
 import {SmileOutlined} from '../icons';
 import Spinner from '../Spinner';
@@ -73,7 +74,7 @@ const ConversationMessages = ({
     <Box
       sx={{
         flex: 1,
-        overflowY: 'scroll',
+        overflowY: 'auto',
         opacity: isClosing ? 0.6 : 1,
       }}
     >
@@ -96,12 +97,36 @@ const ConversationMessages = ({
           {messages.length ? (
             messages.map((msg: Message, key: number) => {
               // Slight hack
+              const prev = key > 0 ? messages[key - 1] : null;
               const next = messages[key + 1];
               const isMe = isAgentMsg(msg);
               const isLastInGroup = next
                 ? msg.customer_id !== next.customer_id
                 : true;
+              const isFirstInGroup = prev
+                ? msg.customer_id !== prev.customer_id
+                : true;
+              var shouldDisplayTimestamp = false
+              var shouldDisplatAvatar = false
+              if(!next){
+                shouldDisplayTimestamp = true;
+              } else if(msg.customer_id == next.customer_id){
+                const msgSentAt = dayjs.utc(msg.sent_at || msg.created_at);
+                const nextSentAt = dayjs.utc(next.sent_at || next.created_at);
+                const diff = nextSentAt.diff(msgSentAt, 's');
+                if(diff > 60 * 60 ){
+                   shouldDisplayTimestamp = true;
+                }
+              }
+              else{
+                shouldDisplayTimestamp = true;
+              }
 
+              if(!next || (next && msg.customer_id !== next.customer_id)){
+                shouldDisplatAvatar = true
+              }
+
+              
               // TODO: fix `isMe` logic for multiple agents
               return (
                 <ChatMessage
@@ -109,8 +134,10 @@ const ConversationMessages = ({
                   message={msg}
                   customer={customer}
                   isMe={isMe}
+                  isFirstInGroup={isFirstInGroup}
                   isLastInGroup={isLastInGroup}
-                  shouldDisplayTimestamp={isLastInGroup}
+                  shouldDisplayTimestamp={shouldDisplayTimestamp}
+                  shouldDisplatAvatar={shouldDisplatAvatar}
                 />
               );
             })
