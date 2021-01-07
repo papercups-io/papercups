@@ -4,7 +4,7 @@ import {Box, Flex} from 'theme-ui';
 import {Button, colors, Result} from '../common';
 import {SmileOutlined} from '../icons';
 import Spinner from '../Spinner';
-import ChatMessage from './ChatMessage';
+import {ChatMessage} from './ChatMessage';
 import {Customer, Message, User} from '../../types';
 
 const EmptyMessagesPlaceholder = () => {

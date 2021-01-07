@@ -4,8 +4,13 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {colors, Badge, Text} from '../common';
 import {SmileTwoTone, StarFilled} from '../icons';
+import {UserOutlined} from '../icons';
+
 import {formatRelativeTime} from '../../utils';
+import {formatRelativeTimeShort} from '../../utils';
 import {Conversation, Message} from '../../types';
+import {SenderAvatar} from './ChatMessage';
+import {getSenderIdentifier} from './ChatMessage';
 
 dayjs.extend(utc);
 
@@ -14,12 +19,14 @@ const formatConversation = (
   messages: Array<Message> = []
 ) => {
   const recent = messages[messages.length - 1];
+  console.log(recent);
   const ts = recent ? recent.created_at : conversation.created_at;
   const created = dayjs.utc(ts);
-  const date = formatRelativeTime(created);
+  const date = formatRelativeTimeShort(created);
 
   return {
     ...conversation,
+    user: recent && recent.user ? recent.user: null,
     date: date || '1d', // TODO
     preview: recent && recent.body ? recent.body : '...',
     messages: messages,
@@ -42,15 +49,17 @@ const ConversationItem = ({
   onSelectConversation: (id: string) => void;
 }) => {
   const formatted = formatConversation(conversation, messages);
-  const {id, priority, status, customer, date, preview, read} = formatted;
+  const {id, priority, status, customer, user, date, preview, read} = formatted;
+  const isAgent = !!user;
   const {name, email} = customer;
   const isPriority = priority === 'priority';
   const isClosed = status === 'closed';
+  const tooltip = getSenderIdentifier(customer, user);
 
   return (
     <Box
-      p={3}
       sx={{
+        padding: isHighlighted ? '16px 16px 16px 14px' : `${3}`,
         opacity: isClosed ? 0.8 : 1,
         borderBottom: '1px solid #f0f0f0',
         borderLeft: isHighlighted ? `2px solid ${colors.primary}` : null,
@@ -59,15 +68,50 @@ const ConversationItem = ({
       }}
       onClick={() => onSelectConversation(id)}
     >
-      <Flex mb={2} sx={{justifyContent: 'space-between'}}>
+      <Flex mb={3} sx={{justifyContent: 'space-between'}}>
         <Flex sx={{alignItems: 'center'}}>
-          <Box mr={2}>
-            {isPriority ? (
-              <StarFilled style={{fontSize: 16, color: colors.gold}} />
-            ) : (
-              <SmileTwoTone style={{fontSize: 16}} twoToneColor={color} />
-            )}
-          </Box>
+            {
+              isCustomerOnline ? (
+                <Badge
+                  status="success"
+                  title="Online now"
+                  dot={true}
+                >
+                  <Flex
+                    mr={2}
+                    sx={{
+                      bg:  color,
+                      height: 32,
+                      width: 32,
+                      borderRadius: '50%',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      color: '#fff',
+                    }}
+                  >
+                  <UserOutlined style={{color: colors.white}} />
+                  </Flex>
+                </Badge>
+              ) : (
+                <Flex
+                  mr={2}
+                  sx={{
+                    bg:  color,
+                    height: 32,
+                    width: 32,
+                    borderRadius: '50%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    color: '#fff',
+                  }}
+                >
+                <UserOutlined style={{color: colors.white}} />
+                </Flex>
+
+              )
+             
+            }
+
           <Text
             strong
             style={{
@@ -82,28 +126,35 @@ const ConversationItem = ({
         </Flex>
 
         {read ? (
-          isCustomerOnline ? (
-            <Badge status="success" text="Online" />
-          ) : (
-            <Text type="secondary">{date}</Text>
-          )
+          <Text type="secondary">{date}</Text>
         ) : (
-          <Badge status="processing" />
+          <Badge status="processing" offset={[6, 0]} />
         )}
       </Flex>
-      <Box
-        style={{
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {read ? (
-          <Text type="secondary">{preview}</Text>
-        ) : (
-          <Text strong>{preview}</Text>
+      <Flex sx={{justifyContent: 'space-between'}}>
+        <Flex sx={{alignItems: 'center'}}>
+          {isAgent && (
+            <SenderAvatar name={tooltip} user={user} isAgent={isAgent} color={color} size={16} />
+          )}
+          <Box
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {read ? (
+              <Text>{preview}</Text>
+            ) : (
+              <Text strong>{preview}</Text>
+            )}
+          </Box>
+
+        </Flex>
+        {isPriority && (
+          <StarFilled style={{fontSize: 16, color: colors.gold}} title="Prioritized" />
         )}
-      </Box>
+      </Flex>
     </Box>
   );
 };
