@@ -298,8 +298,11 @@ defmodule ChatApiWeb.SlackController do
            "user" => slack_user_id,
            "channel" => slack_channel_id
            #  "inviter" => slack_inviter_id
-         } = _event
+         } = event
        ) do
+    Logger.info("Slack group_join event detected:")
+    Logger.info(inspect(event))
+
     with %{account_id: account_id, access_token: access_token} <-
            SlackAuthorizations.find_slack_authorization(%{
              bot_user_id: slack_user_id,
