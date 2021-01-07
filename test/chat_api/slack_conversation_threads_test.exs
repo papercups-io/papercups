@@ -146,5 +146,27 @@ defmodule ChatApi.SlackConversationThreadsTest do
       assert Enum.member?(slack_channels, "ch1")
       assert Enum.member?(slack_channels, "ch2")
     end
+
+    test "exists?/1 checks if a thread exists",
+         %{conversation: conversation} do
+      channel = "ch1"
+      ts = "ts123"
+
+      refute SlackConversationThreads.exists?(%{
+               "slack_channel" => channel,
+               "slack_thread_ts" => ts
+             })
+
+      insert(:slack_conversation_thread,
+        conversation: conversation,
+        slack_channel: channel,
+        slack_thread_ts: ts
+      )
+
+      assert SlackConversationThreads.exists?(%{
+               "slack_channel" => channel,
+               "slack_thread_ts" => ts
+             })
+    end
   end
 end

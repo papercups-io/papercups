@@ -262,20 +262,136 @@ defmodule ChatApiWeb.SlackController do
   defp handle_event(
          %{
            "type" => "reaction_added",
-           "reaction" => _reaction,
+           "reaction" => "eyes",
            "user" => _user,
            "item" => %{
-             "channel" => _channel,
-             "ts" => _ts,
+             "channel" => channel,
+             "ts" => ts,
              "type" => "message"
            }
          } = event
        ) do
-    Logger.info("Slack emoji reaction detected:")
+    with :ok <- validate_no_existing_thread(channel, ts),
+         # TODO: allow in support channel as well?
+         %{account_id: account_id} <- ChatApi.Companies.find_by_slack_channel(channel),
+         %{access_token: access_token} <-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
+         {:ok, response} <- Slack.Client.retrieve_message(channel, ts, access_token),
+         {:ok, message} <- Slack.Helpers.extract_slack_message(response) do
+      Logger.info("Slack emoji reaction detected:")
+      Logger.info(inspect(event))
+
+      # The message from the conversations.history API doesn't include the channel, so we add it manually
+      message
+      |> Map.merge(%{"channel" => channel})
+      |> handle_emoji_reaction_event()
+    end
+  end
+
+  # NB: this currently listens for the Papercups app being added to a Slack channel.
+  # At the moment, it doesn't do anything. But in the future, we may auto-create a
+  # `company` record based on the Slack channel info (if this use case is common enough)
+  defp handle_event(
+         %{
+           "type" => "message",
+           "subtype" => "group_join",
+           "user" => slack_user_id,
+           "channel" => slack_channel_id
+           #  "inviter" => slack_inviter_id
+         } = event
+       ) do
+    Logger.info("Slack group_join event detected:")
     Logger.info(inspect(event))
+
+    with %{account_id: account_id, access_token: access_token} <-
+           SlackAuthorizations.find_slack_authorization(%{
+             bot_user_id: slack_user_id,
+             type: "support"
+           }),
+         :ok <- validate_no_existing_company(account_id, slack_channel_id),
+         {:ok, response} <- Slack.Client.retrieve_channel_info(slack_channel_id, access_token),
+         {:ok, channel} <- Slack.Helpers.extract_slack_channel(response),
+         %{"name" => name, "purpose" => purpose, "topic" => topic} <- channel do
+      company = %{
+        # Set default company name to Slack channel name
+        name: name,
+        description: purpose["value"] || topic["value"],
+        account_id: account_id,
+        slack_channel_name: "##{name}",
+        slack_channel_id: slack_channel_id
+      }
+
+      Logger.info("Papercups app added to Slack channel: ##{name}")
+      # TODO: should we do this? might make onboarding a bit easier, but would also set up
+      # companies with "weird" names (i.e. in the format of a Slack channel name)
+      Logger.info("Would have created company with fields:")
+      Logger.info(inspect(company))
+    end
   end
 
   defp handle_event(_), do: nil
+
+  # TODO: DRY this up with the message event handler above, for now the only difference between this one
+  # and that one is: this handler allows admin users to create threads via Slack support channels
+  defp handle_emoji_reaction_event(
+         %{
+           "type" => "message",
+           "text" => text,
+           "team" => team,
+           "channel" => slack_channel_id,
+           "user" => slack_user_id,
+           "ts" => ts
+         } = _event
+       ) do
+    with %{account_id: account_id} = authorization <-
+           SlackAuthorizations.find_slack_authorization(%{
+             team_id: team,
+             type: "support"
+           }),
+         :ok <- validate_channel_supported(authorization, slack_channel_id),
+         # NB: not ideal, but this may treat an internal/admin user as a "customer",
+         # because at the moment all conversations must have a customer associated with them
+         {:ok, customer} <-
+           Slack.Helpers.create_or_update_customer_from_slack_user_id(
+             authorization,
+             slack_user_id,
+             slack_channel_id
+           ),
+         # TODO: should the conversation + thread + message all be handled in a transaction?
+         # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
+         # TODO: should we handle default assignment here as well?
+         {:ok, conversation} <-
+           Conversations.create_conversation(%{
+             account_id: account_id,
+             customer_id: customer.id,
+             source: "slack"
+           }),
+         {:ok, message} <-
+           Messages.create_message(%{
+             account_id: account_id,
+             conversation_id: conversation.id,
+             customer_id: customer.id,
+             body: text,
+             source: "slack"
+           }),
+         {:ok, _slack_conversation_thread} <-
+           SlackConversationThreads.create_slack_conversation_thread(%{
+             slack_channel: slack_channel_id,
+             slack_thread_ts: ts,
+             account_id: account_id,
+             conversation_id: conversation.id
+           }) do
+      conversation
+      |> Conversations.Notification.broadcast_conversation_to_admin!()
+      |> Conversations.Notification.broadcast_conversation_to_customer!()
+
+      Messages.get_message!(message.id)
+      |> Messages.Notification.broadcast_to_conversation!()
+      # notify primary channel only
+      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.notify(:webhooks)
+    end
+  end
 
   defp get_thread_conversation(thread_ts, channel) do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
@@ -306,6 +422,22 @@ defmodule ChatApiWeb.SlackController do
     case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
       nil -> :error
       _company -> :ok
+    end
+  end
+
+  @spec validate_no_existing_company(binary(), binary()) :: :ok | :error
+  def validate_no_existing_company(account_id, slack_channel_id) do
+    case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+      nil -> :ok
+      _company -> :error
+    end
+  end
+
+  @spec validate_no_existing_thread(binary(), binary()) :: :ok | :error
+  def validate_no_existing_thread(channel, ts) do
+    case SlackConversationThreads.exists?(%{"slack_thread_ts" => ts, "slack_channel" => channel}) do
+      false -> :ok
+      true -> :error
     end
   end
 
