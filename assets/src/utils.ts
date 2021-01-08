@@ -34,10 +34,37 @@ export const formatDiffDuration = (start: dayjs.Dayjs, finish: dayjs.Dayjs) => {
   const diff = finish.diff(start, 's');
   const seconds = diff % 60;
   const mins = Math.floor(diff / 60) % 60;
-  const hrs = Math.floor(mins / 60);
+  const hrs = Math.floor(diff / 60 / 60);
   const format = (n: number) => String(n).padStart(2, '0');
 
   return `${format(hrs)}:${format(mins)}:${format(seconds)}`;
+};
+
+export const formatSecondsToHoursAndMinutes = (secs: number) => {
+  // time would look like 00:01:20 if on average it takes 80.3 seconds to respond
+  const time = new Date(Math.round(secs) * 1000)
+    .toISOString()
+    .substring(11, 19);
+  const [hours, minutes, seconds] = time.split(':');
+
+  return {hours, minutes, seconds};
+};
+
+const defaultFormatterFn = (n: number) => String(n).padStart(2, '0');
+
+export const formatSecondsToHoursAndMinutesV2 = (
+  secs: number,
+  formatter = defaultFormatterFn
+) => {
+  const seconds = secs % 60;
+  const minutes = Math.floor(secs / 60) % 60;
+  const hours = Math.floor(secs / 60 / 60);
+
+  return {
+    hours: formatter(hours),
+    minutes: formatter(minutes),
+    seconds: formatter(seconds),
+  };
 };
 
 export const isValidUuid = (id: any) => {
@@ -50,7 +77,7 @@ export const isValidUuid = (id: any) => {
   return regex.test(id);
 };
 
-export const updateQueryParams = (query: object) => {
+export const updateQueryParams = (query: Record<any, any>) => {
   if (window.history.pushState) {
     window.history.pushState(
       null,

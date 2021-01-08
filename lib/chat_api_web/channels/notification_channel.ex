@@ -115,6 +115,7 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:conversation_reply_email)
   end
 
+  # TODO: replace with Messages.Helpers.handle_post_creation_conversation_updates
   defp update_conversation_on_first_agent_message(
          %Messages.Message{
            conversation_id: conversation_id,

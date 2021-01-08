@@ -14,7 +14,7 @@ const renderers = {
 type ChatMessageBoxProps = {
   className?: string;
   content: string;
-  sx?: object;
+  sx?: Record<any, any>;
 };
 
 const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {

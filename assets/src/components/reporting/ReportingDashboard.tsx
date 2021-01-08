@@ -9,7 +9,8 @@ import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
 import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
 import FirstResponseTimeByWeekChart from './FirstResponseTimeByWeekChart';
 import CustomerBreakdownChart from './CustomerBreakdownChart';
-import {ReportingDatum, secondsToHoursAndMinutes} from './support';
+import {ReportingDatum} from './support';
+import {formatSecondsToHoursAndMinutes} from '../../utils';
 import logger from '../../logger';
 
 type DateCount = {
@@ -206,9 +207,11 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatResponseTimeStats = (responseTime: number) => {
-    const time = secondsToHoursAndMinutes(responseTime);
-    const [hour, minute, second] = time.split(':');
-    return `${hour} h ${minute} m ${second} s`;
+    const {hours, minutes, seconds} = formatSecondsToHoursAndMinutes(
+      responseTime
+    );
+
+    return `${hours} h ${minutes} m ${seconds} s`;
   };
 
   render() {
@@ -273,10 +276,11 @@ class ReportingDashboard extends React.Component<Props, State> {
               <Box mb={2}>
                 <Text strong>Response Metrics</Text>
               </Box>
+              {/* TODO: use antd <Statistic> instead? */}
               <Box>
                 <Box mb={2}>
-                  <Text>average first response time: </Text>
-                  <Text style={{fontWeight: 'bold'}}>{responseTimeStats}</Text>
+                  <Text>Average first response time: </Text>
+                  <Text strong>{responseTimeStats}</Text>
                 </Box>
               </Box>
               <FirstResponseTimeByWeekChart data={responseTimeByWeekDay} />

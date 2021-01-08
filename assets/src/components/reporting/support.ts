@@ -81,8 +81,3 @@ export const FAKE_DATA: Array<ReportingDatum> = [
     conversations: 12,
   },
 ];
-
-export const secondsToHoursAndMinutes = (seconds: number) => {
-  //time would look like 00:01:20 if on average it takes 80.3 seconds to respond
-  return new Date(Math.round(seconds) * 1000).toISOString().substring(11, 19);
-};

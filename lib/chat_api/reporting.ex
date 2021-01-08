@@ -15,9 +15,8 @@ defmodule ChatApi.Reporting do
 
   @type aggregate_by_date() :: %{date: binary(), count: integer()}
   @type aggregate_by_user() :: %{user: %{id: integer(), email: binary()}, count: integer()}
-  @type aggregate_by_weekday() :: %{weekday: binary(), average: float(), total: integer()}
   @type aggregate_by_field() :: %{field: binary(), count: integer()}
-  @type aggregate_average_by_weekday() :: %{day: binary(), average: float(), unit: float()}
+  @type aggregate_average_by_weekday() :: %{day: binary(), average: float(), unit: atom()}
 
   @spec count_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_messages_by_date(account_id, filters \\ %{}) do
@@ -52,12 +51,14 @@ defmodule ChatApi.Reporting do
     |> compute_average_replied_time()
   end
 
+  @spec compute_average_replied_time([Conversation.t()]) :: float()
   def compute_average_replied_time(conversations) do
     conversations
     |> Enum.map(fn conv -> Time.diff(conv.first_replied_at, conv.inserted_at) end)
     |> average()
   end
 
+  @spec average([integer()]) :: float()
   def average(list) do
     Enum.sum(list) / max(length(list), 1)
   end
@@ -123,7 +124,7 @@ defmodule ChatApi.Reporting do
     |> compute_weekday_aggregates()
   end
 
-  @spec first_response_time_by_weekday(binary(), map()) :: []
+  @spec first_response_time_by_weekday(binary(), map()) :: [aggregate_average_by_weekday()]
   def first_response_time_by_weekday(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
@@ -136,6 +137,7 @@ defmodule ChatApi.Reporting do
     |> compute_average_weekday_aggregates()
   end
 
+  @spec count_grouped_by_date(Ecto.Query.t(), atom()) :: Ecto.Query.t()
   defp count_grouped_by_date(query, field \\ :inserted_at) do
     query
     |> group_by([r], fragment("date(?)", field(r, ^field)))
@@ -143,7 +145,9 @@ defmodule ChatApi.Reporting do
     |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
   end
 
-  # TODO some duplication here with group by date might be good to refactor
+  # TODO: some duplication here with group by date might be good to refactor
+  # TODO: clean this up (see comment about `avg` not doing anything below)
+  @spec average_grouped_by_date(Ecto.Query.t(), atom()) :: Ecto.Query.t()
   defp average_grouped_by_date(query, field \\ :inserted_at) do
     query
     |> group_by([r], fragment("date(?)", field(r, ^field)))
@@ -156,6 +160,7 @@ defmodule ChatApi.Reporting do
     |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
   end
 
+  @spec compute_weekday_aggregates(map()) :: [map()]
   defp compute_weekday_aggregates(grouped) do
     Enum.map(weekdays(), fn weekday ->
       records = Map.get(grouped, weekday, [])
@@ -169,7 +174,7 @@ defmodule ChatApi.Reporting do
     end)
   end
 
-  @spec compute_weekday_aggregates(any) :: [aggregate_average_by_weekday()]
+  @spec compute_average_weekday_aggregates(map()) :: [aggregate_average_by_weekday()]
   defp compute_average_weekday_aggregates(grouped) do
     Enum.map(weekdays(), fn weekday ->
       records = Map.get(grouped, weekday, [])
