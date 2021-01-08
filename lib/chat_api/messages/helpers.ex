@@ -41,9 +41,12 @@ defmodule ChatApi.Messages.Helpers do
   end
 
   @spec build_first_reply_updates(map(), Message.t()) :: map()
-  defp build_first_reply_updates(updates, %Message{user_id: assignee_id} = message) do
+  defp build_first_reply_updates(
+         updates,
+         %Message{user_id: assignee_id, inserted_at: first_replied_at} = message
+       ) do
     if is_first_agent_reply?(message) do
-      Map.merge(updates, %{assignee_id: assignee_id})
+      Map.merge(updates, %{assignee_id: assignee_id, first_replied_at: first_replied_at})
     else
       updates
     end
