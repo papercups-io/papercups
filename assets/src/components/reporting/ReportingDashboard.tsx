@@ -115,6 +115,7 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatCustomerBreakdownStats = (stats: Array<any>, field: string) => {
+    const MAX_NUM_SHOWN = 10;
     const formatted = stats
       .map((data) => ({
         name: data[field] || 'Unknown',
@@ -122,12 +123,12 @@ class ReportingDashboard extends React.Component<Props, State> {
       }))
       .sort((a, b) => b.value - a.value);
 
-    if (formatted.length <= 10) {
+    if (formatted.length <= MAX_NUM_SHOWN) {
       return formatted;
     }
 
-    const top = formatted.slice(0, 9);
-    const other = formatted.slice(9).reduce(
+    const top = formatted.slice(0, MAX_NUM_SHOWN - 1);
+    const other = formatted.slice(MAX_NUM_SHOWN - 1).reduce(
       (acc, data) => {
         return {...acc, value: acc.value + (data.value || 0)};
       },
