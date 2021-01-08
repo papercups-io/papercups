@@ -9,7 +9,8 @@ import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
 import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
 import FirstResponseTimeByWeekChart from './FirstResponseTimeByWeekChart';
 import CustomerBreakdownChart from './CustomerBreakdownChart';
-import {ReportingDatum, secondsToHoursAndMinutes} from './support';
+import {ReportingDatum} from './support';
+import {formatSecondsToHoursAndMinutes} from '../../utils';
 import logger from '../../logger';
 
 type DateCount = {
@@ -114,6 +115,7 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatCustomerBreakdownStats = (stats: Array<any>, field: string) => {
+    const MAX_NUM_SHOWN = 10;
     const formatted = stats
       .map((data) => ({
         name: data[field] || 'Unknown',
@@ -121,12 +123,12 @@ class ReportingDashboard extends React.Component<Props, State> {
       }))
       .sort((a, b) => b.value - a.value);
 
-    if (formatted.length <= 10) {
+    if (formatted.length <= MAX_NUM_SHOWN) {
       return formatted;
     }
 
-    const top = formatted.slice(0, 9);
-    const other = formatted.slice(9).reduce(
+    const top = formatted.slice(0, MAX_NUM_SHOWN - 1);
+    const other = formatted.slice(MAX_NUM_SHOWN - 1).reduce(
       (acc, data) => {
         return {...acc, value: acc.value + (data.value || 0)};
       },
@@ -206,9 +208,11 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatResponseTimeStats = (responseTime: number) => {
-    const time = secondsToHoursAndMinutes(responseTime);
-    const [hour, minute, second] = time.split(':');
-    return `${hour} h ${minute} m ${second} s`;
+    const {hours, minutes, seconds} = formatSecondsToHoursAndMinutes(
+      responseTime
+    );
+
+    return `${hours} h ${minutes} m ${seconds} s`;
   };
 
   render() {
@@ -273,10 +277,11 @@ class ReportingDashboard extends React.Component<Props, State> {
               <Box mb={2}>
                 <Text strong>Response Metrics</Text>
               </Box>
+              {/* TODO: use antd <Statistic> instead? */}
               <Box>
                 <Box mb={2}>
-                  <Text>average first response time: </Text>
-                  <Text style={{fontWeight: 'bold'}}>{responseTimeStats}</Text>
+                  <Text>Average first response time: </Text>
+                  <Text strong>{responseTimeStats}</Text>
                 </Box>
               </Box>
               <FirstResponseTimeByWeekChart data={responseTimeByWeekDay} />
