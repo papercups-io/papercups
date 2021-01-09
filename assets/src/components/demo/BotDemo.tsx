@@ -9,7 +9,6 @@ import {
   Button,
   Divider,
   Input,
-  Paragraph,
   Text,
   TextArea,
   Title,
