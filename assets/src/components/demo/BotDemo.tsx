@@ -114,11 +114,11 @@ class Demo extends React.Component<Props, State> {
     };
   };
 
-  handleChangeQuestion = (e: any) => {
+  handleChangeQuestion = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({newQuestion: e.target.value});
   };
 
-  handleChangeAnswer = (e: any) => {
+  handleChangeAnswer = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({newAnswer: e.target.value});
   };
 

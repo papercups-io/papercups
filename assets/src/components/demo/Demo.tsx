@@ -80,11 +80,11 @@ class Demo extends React.Component<Props, State> {
     this.storytime && this.storytime.finish();
   }
 
-  handleChangeTitle = (e: any) => {
+  handleChangeTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({title: e.target.value});
   };
 
-  handleChangeSubtitle = (e: any) => {
+  handleChangeSubtitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({subtitle: e.target.value});
   };
 

@@ -4,13 +4,14 @@ import {Box, Flex} from 'theme-ui';
 import {Button, Input, Select, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
+import {Company} from '../../types';
 import logger from '../../logger';
 
 type Props = RouteComponentProps<{id: string}>;
 type State = {
   loading: boolean;
   saving: boolean;
-  company: any;
+  company: Company | null;
   name: string;
   description: string;
   websiteUrl: string;
