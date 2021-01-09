@@ -8,6 +8,25 @@ defmodule ChatApi.Users.User do
   alias ChatApi.Accounts.Account
   alias ChatApi.Users.{UserProfile, UserSettings}
 
+  @type t :: %__MODULE__{
+          email_confirmation_token: String.t() | nil,
+          password_reset_token: String.t() | nil,
+          email_confirmed_at: any(),
+          disabled_at: any(),
+          archived_at: any(),
+          role: String.t() | nil,
+          has_valid_email: boolean() | nil,
+          # Pow fields
+          email: String.t(),
+          password_hash: String.t(),
+          # Relations
+          account_id: any(),
+          account: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   schema "users" do
     field(:email_confirmation_token, :string)
     field(:password_reset_token, :string)

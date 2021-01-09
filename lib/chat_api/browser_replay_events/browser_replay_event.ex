@@ -5,6 +5,19 @@ defmodule ChatApi.BrowserReplayEvents.BrowserReplayEvent do
   alias ChatApi.Accounts.Account
   alias ChatApi.BrowserSessions.BrowserSession
 
+  @type t :: %__MODULE__{
+          event: any(),
+          timestamp: any(),
+          # Relations
+          account_id: any(),
+          account: any(),
+          browser_session_id: any(),
+          browser_session: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "browser_replay_events" do

@@ -4,6 +4,24 @@ defmodule ChatApi.Companies.Company do
 
   alias ChatApi.{Accounts.Account, Customers.Customer}
 
+  @type t :: %__MODULE__{
+          name: String.t(),
+          description: String.t() | nil,
+          external_id: String.t() | nil,
+          website_url: String.t() | nil,
+          industry: String.t() | nil,
+          logo_image_url: String.t() | nil,
+          slack_channel_id: String.t() | nil,
+          slack_channel_name: String.t() | nil,
+          metadata: any(),
+          # Relations
+          account_id: any(),
+          account: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "companies" do
