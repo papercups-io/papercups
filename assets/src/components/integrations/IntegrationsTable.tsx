@@ -44,9 +44,11 @@ const getGmailAuthUrl = () => {
 };
 
 const IntegrationsTable = ({
+  loading,
   integrations,
   onDisconnectSlack,
 }: {
+  loading?: boolean;
   integrations: Array<IntegrationType>;
   onDisconnectSlack: (id: string) => void;
 }) => {
@@ -181,7 +183,9 @@ const IntegrationsTable = ({
     },
   ];
 
-  return <Table dataSource={integrations} columns={columns} />;
+  return (
+    <Table loading={loading} dataSource={integrations} columns={columns} />
+  );
 };
 
 export default IntegrationsTable;

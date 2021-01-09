@@ -15,6 +15,7 @@ import NewWebhookModal from './NewWebhookModal';
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
   loading: boolean;
+  refreshing: boolean;
   isWebhookModalOpen: boolean;
   selectedWebhook: WebhookEventSubscription | null;
   integrations: Array<IntegrationType>;
@@ -24,6 +25,7 @@ type State = {
 class IntegrationsOverview extends React.Component<Props, State> {
   state: State = {
     loading: true,
+    refreshing: false,
     isWebhookModalOpen: false,
     selectedWebhook: null,
     integrations: [],
@@ -62,6 +64,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
   refreshAllIntegrations = async () => {
     try {
+      this.setState({refreshing: true});
+
       const integrations = await Promise.all([
         this.fetchSlackIntegration(),
         this.fetchSlackSupportIntegration(),
@@ -71,9 +75,11 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchWhatsAppIntegration(),
       ]);
 
-      this.setState({integrations});
+      this.setState({integrations, refreshing: false});
     } catch (err) {
       logger.error('Error refreshing integrations:', err);
+
+      this.setState({refreshing: false});
     }
   };
 
@@ -229,6 +235,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
   render() {
     const {
       loading,
+      refreshing,
       isWebhookModalOpen,
       selectedWebhook,
       webhooks = [],
@@ -277,6 +284,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
           <Box mt={3} mb={4}>
             <IntegrationsTable
+              loading={refreshing}
               integrations={integrations}
               onDisconnectSlack={this.handleDisconnectSlack}
             />
