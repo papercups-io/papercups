@@ -18,7 +18,8 @@ defmodule ChatApiWeb.SlackController do
   @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def oauth(conn, %{"code" => code} = params) do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
-    # TODO: improve error handling!
+    # TODO: improve error handling, incorporate these lines into the
+    # `with` statement rather than doing `if Map.get(body, "ok") do...`
     {:ok, response} = Slack.Client.get_access_token(code)
 
     Logger.info("Slack OAuth response: #{inspect(response)}")
@@ -98,12 +99,23 @@ defmodule ChatApiWeb.SlackController do
       auth ->
         json(conn, %{
           data: %{
+            id: auth.id,
             created_at: auth.inserted_at,
             channel: auth.channel,
             configuration_url: auth.configuration_url,
             team_name: auth.team_name
           }
         })
+    end
+  end
+
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def delete(conn, %{"id" => id}) do
+    with %{account_id: _account_id} <- conn.assigns.current_user,
+         %SlackAuthorization{} = auth <-
+           SlackAuthorizations.get_slack_authorization!(id),
+         {:ok, %SlackAuthorization{}} <- SlackAuthorizations.delete_slack_authorization(auth) do
+      send_resp(conn, :no_content, "")
     end
   end
 

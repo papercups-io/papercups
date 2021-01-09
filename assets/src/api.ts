@@ -558,6 +558,19 @@ export const fetchSlackAuthorization = async (
     .then((res) => res.body.data);
 };
 
+export const deleteSlackAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/slack/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
 export const fetchSlackChannels = async (
   query = {},
   token = getAccessToken()

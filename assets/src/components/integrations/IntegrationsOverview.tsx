@@ -60,6 +60,23 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
   }
 
+  refreshAllIntegrations = async () => {
+    try {
+      const integrations = await Promise.all([
+        this.fetchSlackIntegration(),
+        this.fetchSlackSupportIntegration(),
+        this.fetchGmailIntegration(),
+        this.fetchTwilioIntegration(),
+        this.fetchMicrosoftTeamsIntegration(),
+        this.fetchWhatsAppIntegration(),
+      ]);
+
+      this.setState({integrations});
+    } catch (err) {
+      logger.error('Error refreshing integrations:', err);
+    }
+  };
+
   fetchSlackIntegration = async (): Promise<IntegrationType> => {
     const auth = await API.fetchSlackAuthorization('reply');
 
@@ -68,6 +85,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Slack',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
     };
   };
@@ -80,6 +98,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Sync with Slack (beta)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
     };
   };
@@ -92,6 +111,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Gmail (beta)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
       icon: '/gmail.svg',
     };
   };
@@ -102,6 +122,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Microsoft Teams',
       status: 'not_connected',
       created_at: null,
+      authorization_id: null,
       icon: '/microsoft-teams.svg',
     };
   };
@@ -112,6 +133,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Twilio',
       status: 'not_connected',
       created_at: null,
+      authorization_id: null,
       icon: '/twilio.svg',
     };
   };
@@ -122,6 +144,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'WhatsApp',
       status: 'not_connected',
       created_at: null,
+      authorization_id: null,
       icon: '/whatsapp.svg',
     };
   };
@@ -153,6 +176,12 @@ class IntegrationsOverview extends React.Component<Props, State> {
       default:
         return null;
     }
+  };
+
+  handleDisconnectSlack = async (authorizationId: string) => {
+    return API.deleteSlackAuthorization(authorizationId)
+      .then(() => this.refreshAllIntegrations())
+      .catch((err) => logger.error('Failed to authorize Gmail:', err));
   };
 
   handleAddWebhook = () => {
@@ -247,7 +276,10 @@ class IntegrationsOverview extends React.Component<Props, State> {
           />
 
           <Box mt={3} mb={4}>
-            <IntegrationsTable integrations={integrations} />
+            <IntegrationsTable
+              integrations={integrations}
+              onDisconnectSlack={this.handleDisconnectSlack}
+            />
           </Box>
         </Box>
 

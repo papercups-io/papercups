@@ -9,6 +9,7 @@ export type IntegrationType = {
   integration: string;
   status: 'connected' | 'not_connected';
   created_at?: string | null;
+  authorization_id: string | null;
   icon: string;
 };
 
