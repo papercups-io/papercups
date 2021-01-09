@@ -299,8 +299,11 @@ defmodule ChatApi.Slack.Helpers do
   def extract_slack_message(%{body: %{"ok" => true, "messages" => []}}),
     do: {:error, "No messages were found"}
 
-  def extract_slack_message(%{body: %{"ok" => false} = body}),
-    do: {:error, "conversations.history returned ok=false: #{inspect(body)}"}
+  def extract_slack_message(%{body: %{"ok" => false} = body}) do
+    Logger.error("conversations.history returned ok=false: #{inspect(body)}")
+
+    {:error, "conversations.history returned ok=false: #{inspect(body)}"}
+  end
 
   def extract_slack_message(response),
     do: {:error, "Invalid response: #{inspect(response)}"}
@@ -309,8 +312,11 @@ defmodule ChatApi.Slack.Helpers do
   def extract_slack_channel(%{body: %{"ok" => true, "channel" => channel}}) when is_map(channel),
     do: {:ok, channel}
 
-  def extract_slack_channel(%{body: %{"ok" => false} = body}),
-    do: {:error, "conversations.info returned ok=false: #{inspect(body)}"}
+  def extract_slack_channel(%{body: %{"ok" => false} = body}) do
+    Logger.error("conversations.info returned ok=false: #{inspect(body)}")
+
+    {:error, "conversations.info returned ok=false: #{inspect(body)}"}
+  end
 
   def extract_slack_channel(response),
     do: {:error, "Invalid response: #{inspect(response)}"}

@@ -69,9 +69,9 @@ defmodule ChatApiWeb.SlackController do
         SlackAuthorizations.create_or_update(account_id, params)
 
         send_internal_notification(
-          "User #{inspect(email)} successfully linked Slack '#{inspect(params.type)}' integration to channel #{
-            inspect(channel)
-          }"
+          "#{email} successfully linked Slack `#{inspect(params.type)}` integration to channel `#{
+            channel
+          }`"
         )
 
         json(conn, %{data: %{ok: true}})
@@ -367,7 +367,7 @@ defmodule ChatApiWeb.SlackController do
       }
 
       send_internal_notification(
-        "Papercups app added to Slack channel ##{inspect(name)} for account #{inspect(account_id)}"
+        "Papercups app was added to Slack channel `##{name}` for account `#{account_id}`"
       )
 
       # TODO: should we do this? might make onboarding a bit easier, but would also set up
