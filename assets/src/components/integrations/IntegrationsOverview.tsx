@@ -187,7 +187,9 @@ class IntegrationsOverview extends React.Component<Props, State> {
   handleDisconnectSlack = async (authorizationId: string) => {
     return API.deleteSlackAuthorization(authorizationId)
       .then(() => this.refreshAllIntegrations())
-      .catch((err) => logger.error('Failed to authorize Gmail:', err));
+      .catch((err) =>
+        logger.error('Failed to remove Slack authorization:', err)
+      );
   };
 
   handleAddWebhook = () => {
