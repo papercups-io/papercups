@@ -181,7 +181,7 @@ export const fetchCustomer = async (id: string, token = getAccessToken()) => {
 
 export const updateCustomer = async (
   id: string,
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -198,7 +198,7 @@ export const updateCustomer = async (
 };
 
 export const createNewCompany = async (
-  params: any,
+  params: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -236,7 +236,7 @@ export const fetchCompany = async (id: string, token = getAccessToken()) => {
 
 export const updateCompany = async (
   id: string,
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -291,7 +291,7 @@ export const fetchAccountInfo = async (token = getAccessToken()) => {
 };
 
 export const updateAccountInfo = async (
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -319,7 +319,7 @@ export const fetchUserProfile = async (token = getAccessToken()) => {
 };
 
 export const updateUserProfile = async (
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -347,7 +347,7 @@ export const fetchUserSettings = async (token = getAccessToken()) => {
 };
 
 export const updateUserSettings = async (
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -460,7 +460,7 @@ export const fetchSharedConversation = async (
 
 export const updateConversation = async (
   conversationId: string,
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -556,6 +556,19 @@ export const fetchSlackAuthorization = async (
     .query({type})
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export const deleteSlackAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/slack/authorizations/${authorizationId}`)
+    .set('Authorization', token);
 };
 
 export const fetchSlackChannels = async (

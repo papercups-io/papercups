@@ -3,15 +3,15 @@ import {Channel, Socket} from 'phoenix';
 import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
-import {Conversation, Message} from '../../types';
+import {Account, Conversation, Message, User} from '../../types';
 import {sleep, isWindowHidden, updateQueryParams} from '../../utils';
 import {SOCKET_URL} from '../../socket';
 import logger from '../../logger';
 
 export const ConversationsContext = React.createContext<{
   loading: boolean;
-  account: any;
-  currentUser: any;
+  account: Account | null;
+  currentUser: User | null;
   isNewUser: boolean;
 
   all: Array<string>;
@@ -147,8 +147,8 @@ export const updatePresenceWithExiters = (
 type Props = React.PropsWithChildren<{}>;
 type State = {
   loading: boolean;
-  account: any | null;
-  currentUser: any | null;
+  account: Account | null;
+  currentUser: User | null;
   isNewUser: boolean;
 
   selectedConversationId: string | null;

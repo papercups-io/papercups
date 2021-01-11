@@ -6,6 +6,20 @@ defmodule ChatApi.Notes.Note do
   alias ChatApi.Customers.Customer
   alias ChatApi.Users.User
 
+  @type t :: %__MODULE__{
+          body: String.t(),
+          # Relations
+          account_id: any(),
+          account: any(),
+          customer_id: any(),
+          customer: any(),
+          author_id: any(),
+          author: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "notes" do

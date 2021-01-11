@@ -51,8 +51,6 @@ defmodule ChatApi.Emails.Helpers do
     |> normalize_mx_records_to_string()
   end
 
-  defp normalize_mx_records_to_string(nil), do: []
-
   defp normalize_mx_records_to_string(domains) do
     normalize_mx_records_to_string(domains, [])
   end
@@ -64,8 +62,6 @@ defmodule ChatApi.Emails.Helpers do
   defp normalize_mx_records_to_string([{priority, domain} | domains], normalized_domains) do
     normalize_mx_records_to_string(domains, [{priority, to_string(domain)} | normalized_domains])
   end
-
-  defp sort_mx_records_by_priority(nil), do: []
 
   defp sort_mx_records_by_priority(domains) do
     Enum.sort(domains, fn {priority, _domain}, {other_priority, _other_domain} ->

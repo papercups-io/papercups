@@ -49,7 +49,7 @@ const ConversationMessages = ({
   isAgentMessage,
 }: {
   messages: Array<Message>;
-  currentUser?: User;
+  currentUser?: User | null;
   customer: Customer | null;
   loading?: boolean;
   isClosing?: boolean;

@@ -20,12 +20,12 @@ defmodule ChatApi.Users do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
-  @spec find_by_id!(integer()) :: User.t()
+  @spec find_by_id!(integer() | binary()) :: User.t()
   def find_by_id!(user_id) do
     Repo.get!(User, user_id)
   end
 
-  @spec find_by_id(integer(), binary()) :: User.t() | nil
+  @spec find_by_id(integer() | binary(), binary()) :: User.t() | nil
   def find_by_id(user_id, account_id) do
     User |> where(account_id: ^account_id, id: ^user_id) |> Repo.one()
   end

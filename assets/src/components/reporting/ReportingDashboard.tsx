@@ -115,7 +115,7 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatCustomerBreakdownStats = (stats: Array<any>, field: string) => {
-    const MAX_NUM_SHOWN = 10;
+    const MAX_NUM_SHOWN = 5;
     const formatted = stats
       .map((data) => ({
         name: data[field] || 'Unknown',

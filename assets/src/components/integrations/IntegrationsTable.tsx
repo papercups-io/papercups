@@ -2,7 +2,7 @@ import React from 'react';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
-import {colors, Button, Table, Tag, Text, Tooltip} from '../common';
+import {colors, Button, Popconfirm, Table, Tag, Text, Tooltip} from '../common';
 import {SLACK_CLIENT_ID, isDev} from '../../config';
 import {IntegrationType} from './support';
 
@@ -44,16 +44,20 @@ const getGmailAuthUrl = () => {
 };
 
 const IntegrationsTable = ({
+  loading,
   integrations,
+  onDisconnectSlack,
 }: {
+  loading?: boolean;
   integrations: Array<IntegrationType>;
+  onDisconnectSlack: (id: string) => void;
 }) => {
   const columns = [
     {
       title: 'Integration',
       dataIndex: 'integration',
       key: 'integration',
-      render: (value: string, record: any) => {
+      render: (value: string, record: IntegrationType) => {
         const {icon} = record;
 
         return (
@@ -94,18 +98,64 @@ const IntegrationsTable = ({
       title: '',
       dataIndex: 'action',
       key: 'action',
-      render: (action: any, record: any) => {
-        const {key, status} = record;
+      render: (action: any, record: IntegrationType) => {
+        const {key, status, authorization_id: authorizationId} = record;
         const isConnected = status === 'connected';
 
         switch (key) {
           case 'slack':
+            if (isConnected && authorizationId) {
+              return (
+                <Flex mx={-1}>
+                  <Box mx={1}>
+                    <a href={getSlackAuthUrl('reply')}>
+                      <Button>Reconnect</Button>
+                    </a>
+                  </Box>
+                  <Box mx={1}>
+                    <Popconfirm
+                      title="Are you sure you want to disconnect from Slack?"
+                      okText="Yes"
+                      cancelText="No"
+                      placement="topLeft"
+                      onConfirm={() => onDisconnectSlack(authorizationId)}
+                    >
+                      <Button danger>Disconnect</Button>
+                    </Popconfirm>
+                  </Box>
+                </Flex>
+              );
+            }
+
             return (
               <a href={getSlackAuthUrl('reply')}>
                 <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
               </a>
             );
           case 'slack:sync':
+            if (isConnected && authorizationId) {
+              return (
+                <Flex mx={-1}>
+                  <Box mx={1}>
+                    <a href={getSlackAuthUrl('support')}>
+                      <Button>Reconnect</Button>
+                    </a>
+                  </Box>
+                  <Box mx={1}>
+                    <Popconfirm
+                      title="Are you sure you want to disconnect from Slack?"
+                      okText="Yes"
+                      cancelText="No"
+                      placement="topLeft"
+                      onConfirm={() => onDisconnectSlack(authorizationId)}
+                    >
+                      <Button danger>Disconnect</Button>
+                    </Popconfirm>
+                  </Box>
+                </Flex>
+              );
+            }
+
             return (
               <a href={getSlackAuthUrl('support')}>
                 <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
@@ -133,7 +183,9 @@ const IntegrationsTable = ({
     },
   ];
 
-  return <Table dataSource={integrations} columns={columns} />;
+  return (
+    <Table loading={loading} dataSource={integrations} columns={columns} />
+  );
 };
 
 export default IntegrationsTable;

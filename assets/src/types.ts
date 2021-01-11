@@ -1,3 +1,13 @@
+export type Account = {
+  id: string;
+  company_name: string;
+  time_zone?: string;
+  subscription_plan?: string;
+  users?: Array<User>;
+  widget_settings: any;
+  working_hours: Array<any>;
+};
+
 export type User = {
   id: number;
   email: string;
@@ -31,7 +41,16 @@ export type Customer = {
   updated_at?: string;
 };
 
-// NB: actual message records will look slightly different
+export type Company = {
+  id: string;
+  name: string;
+  description?: string;
+  website_url?: string;
+  external_id?: string;
+  slack_channel_id?: string;
+  slack_channel_name?: string;
+};
+
 export type Message = {
   body: string;
   created_at: string;
@@ -43,7 +62,6 @@ export type Message = {
   user?: User;
 };
 
-// NB: actual conversation records will look different
 export type Conversation = {
   id: string;
   account_id: string;

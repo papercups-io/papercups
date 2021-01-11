@@ -18,7 +18,8 @@ defmodule ChatApiWeb.SlackController do
   @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def oauth(conn, %{"code" => code} = params) do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
-    # TODO: improve error handling!
+    # TODO: improve error handling, incorporate these lines into the
+    # `with` statement rather than doing `if Map.get(body, "ok") do...`
     {:ok, response} = Slack.Client.get_access_token(code)
 
     Logger.info("Slack OAuth response: #{inspect(response)}")
@@ -26,7 +27,7 @@ defmodule ChatApiWeb.SlackController do
     %{body: body} = response
 
     if Map.get(body, "ok") do
-      with %{account_id: account_id} <- conn.assigns.current_user,
+      with %{account_id: account_id, email: email} <- conn.assigns.current_user,
            %{
              "access_token" => access_token,
              "app_id" => app_id,
@@ -62,11 +63,18 @@ defmodule ChatApiWeb.SlackController do
           type: Map.get(params, "type", "reply")
         }
 
+        # TODO: after creating, check if connected channel is private;
+        # If yes, use webhook_url to send notification that Papercups app needs
+        # to be added manually, along with instructions for how to do so
         SlackAuthorizations.create_or_update(account_id, params)
 
-        conn
-        |> notify_slack()
-        |> json(%{data: %{ok: true}})
+        send_internal_notification(
+          "#{email} successfully linked Slack `#{inspect(params.type)}` integration to channel `#{
+            channel
+          }`"
+        )
+
+        json(conn, %{data: %{ok: true}})
       else
         _ ->
           raise "Unrecognized OAuth response"
@@ -91,12 +99,23 @@ defmodule ChatApiWeb.SlackController do
       auth ->
         json(conn, %{
           data: %{
+            id: auth.id,
             created_at: auth.inserted_at,
             channel: auth.channel,
             configuration_url: auth.configuration_url,
             team_name: auth.team_name
           }
         })
+    end
+  end
+
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def delete(conn, %{"id" => id}) do
+    with %{account_id: _account_id} <- conn.assigns.current_user,
+         %SlackAuthorization{} = auth <-
+           SlackAuthorizations.get_slack_authorization!(id),
+         {:ok, %SlackAuthorization{}} <- SlackAuthorizations.delete_slack_authorization(auth) do
+      send_resp(conn, :no_content, "")
     end
   end
 
@@ -220,6 +239,7 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  # TODO: ignore message if it's from a bot?
   defp handle_event(
          %{
            "type" => "message",
@@ -237,6 +257,8 @@ defmodule ChatApiWeb.SlackController do
              team_id: team,
              type: "support"
            }),
+         # TODO: remove after debugging!
+         :ok <- Logger.info("Handling Slack new message event: #{inspect(event)}"),
          :ok <- validate_channel_supported(authorization, slack_channel_id),
          :ok <- validate_non_admin_user(authorization, slack_user_id),
          {:ok, customer} <-
@@ -293,7 +315,7 @@ defmodule ChatApiWeb.SlackController do
            }
          } = event
        ) do
-    Logger.debug("Handling Slack reaction event: #{inspect(event)}")
+    Logger.info("Handling Slack reaction event: #{inspect(event)}")
 
     with :ok <- validate_no_existing_thread(channel, ts),
          {:ok, account_id} <- find_account_id_by_support_channel(channel),
@@ -344,7 +366,10 @@ defmodule ChatApiWeb.SlackController do
         slack_channel_id: slack_channel_id
       }
 
-      Logger.info("Papercups app added to Slack channel: ##{name}")
+      send_internal_notification(
+        "Papercups app was added to Slack channel `##{name}` for account `#{account_id}`"
+      )
+
       # TODO: should we do this? might make onboarding a bit easier, but would also set up
       # companies with "weird" names (i.e. in the format of a Slack channel name)
       Logger.info("Would have created company with fields:")
@@ -481,16 +506,11 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
-  @spec notify_slack(Plug.Conn.t()) :: Plug.Conn.t()
-  defp notify_slack(conn) do
-    with %{email: email} <- conn.assigns.current_user do
-      # Putting in an async Task for now, since we don't care if this succeeds
-      # or fails (and we also don't want it to block anything)
-      Task.start(fn ->
-        Slack.Notifications.log("#{email} successfully linked Slack!")
-      end)
-    end
-
-    conn
+  @spec send_internal_notification(binary()) :: any()
+  defp send_internal_notification(message) do
+    Logger.info(message)
+    # Putting in an async Task for now, since we don't care if this succeeds
+    # or fails (and we also don't want it to block anything)
+    Task.start(fn -> Slack.Notifications.log(message) end)
   end
 end

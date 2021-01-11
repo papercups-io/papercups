@@ -94,15 +94,15 @@ class CustomerDetailsModal extends React.Component<Props, State> {
     this.setState({updates: {...this.state.updates, ...updates}});
   };
 
-  handleChangeName = (e: any) => {
+  handleChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.handleEditCustomer({name: e.target.value});
   };
 
-  handleChangeEmail = (e: any) => {
+  handleChangeEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.handleEditCustomer({email: e.target.value});
   };
 
-  handleChangePhone = (e: any) => {
+  handleChangePhone = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.handleEditCustomer({phone: e.target.value});
   };
 

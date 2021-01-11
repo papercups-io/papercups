@@ -32,15 +32,15 @@ class Login extends React.Component<Props, State> {
     this.setState({redirect: String(redirect)});
   }
 
-  handleChangeEmail = (e: any) => {
+  handleChangeEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({email: e.target.value});
   };
 
-  handleChangePassword = (e: any) => {
+  handleChangePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({password: e.target.value});
   };
 
-  handleSubmit = (e: any) => {
+  handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     this.setState({loading: true, error: null});

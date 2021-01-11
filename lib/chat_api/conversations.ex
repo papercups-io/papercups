@@ -8,6 +8,7 @@ defmodule ChatApi.Conversations do
 
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
 

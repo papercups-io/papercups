@@ -15,14 +15,14 @@ import DisabledUsersTable from './DisabledUsersTable';
 import WorkingHoursSelector from './WorkingHoursSelector';
 import {WorkingHours} from './support';
 import * as API from '../../api';
-import {User} from '../../types';
+import {Account, User} from '../../types';
 import {FRONTEND_BASE_URL} from '../../config';
 import {sleep, hasValidStripeKey} from '../../utils';
 import logger from '../../logger';
 
 type Props = {};
 type State = {
-  account: any;
+  account: Account | null;
   companyName: string;
   currentUser: User | null;
   inviteUrl: string;
@@ -125,7 +125,7 @@ class AccountOverview extends React.Component<Props, State> {
     }
   };
 
-  handleChangeCompanyName = (e: any) => {
+  handleChangeCompanyName = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({companyName: e.target.value});
   };
 

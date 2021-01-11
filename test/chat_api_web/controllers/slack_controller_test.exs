@@ -59,6 +59,25 @@ defmodule ChatApiWeb.SlackControllerTest do
 
       assert %{"data" => nil} = json_response(resp, 200)
     end
+
+    test "deletes the authorization if it exists", %{authed_conn: authed_conn, auth: auth} do
+      resp = get(authed_conn, Routes.slack_path(authed_conn, :authorization), %{})
+
+      # First verify that it exists
+      assert %{
+               "channel" => channel,
+               "team_name" => team_name
+             } = json_response(resp, 200)["data"]
+
+      # Then, delete and verify it no longer exists
+      resp = delete(authed_conn, Routes.slack_path(authed_conn, :delete, auth))
+
+      assert response(resp, 204)
+
+      resp = get(authed_conn, Routes.slack_path(authed_conn, :authorization), %{})
+
+      assert %{"data" => nil} = json_response(resp, 200)
+    end
   end
 
   describe "webhook" do

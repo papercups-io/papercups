@@ -12,6 +12,7 @@ import {
 } from '../common';
 import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
+import {Company} from '../../types';
 import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
@@ -43,7 +44,7 @@ type State = {
   loading: boolean;
   deleting: boolean;
   refreshing: boolean;
-  company: any;
+  company: Company | null;
   customers: Array<any>;
 };
 

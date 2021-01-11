@@ -43,19 +43,21 @@ class Register extends React.Component<Props, State> {
     this.setState({inviteToken, redirect: String(redirect)});
   }
 
-  handleChangeCompanyName = (e: any) => {
+  handleChangeCompanyName = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({companyName: e.target.value});
   };
 
-  handleChangeEmail = (e: any) => {
+  handleChangeEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({email: e.target.value});
   };
 
-  handleChangePassword = (e: any) => {
+  handleChangePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({password: e.target.value});
   };
 
-  handleChangePasswordConfirmation = (e: any) => {
+  handleChangePasswordConfirmation = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     this.setState({passwordConfirmation: e.target.value});
   };
 
@@ -91,7 +93,7 @@ class Register extends React.Component<Props, State> {
     this.setState({error: this.getValidationError()});
   };
 
-  handleSubmit = (e: any) => {
+  handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const error = this.getValidationError();

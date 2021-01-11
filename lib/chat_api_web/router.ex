@@ -81,6 +81,7 @@ defmodule ChatApiWeb.Router do
 
     get("/slack/oauth", SlackController, :oauth)
     get("/slack/authorization", SlackController, :authorization)
+    delete("/slack/authorizations/:id", SlackController, :delete)
     get("/slack/channels", SlackController, :channels)
     get("/gmail/auth", GmailController, :auth)
     get("/gmail/oauth", GmailController, :callback)
