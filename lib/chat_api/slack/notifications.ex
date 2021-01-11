@@ -53,6 +53,7 @@ defmodule ChatApi.Slack.Notifications do
       thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id)
 
       # TODO: use a struct here?
+      # TODO: pass through `message` instead of text/conversation_id/type individually?
       %{
         customer: customer,
         text: text,
