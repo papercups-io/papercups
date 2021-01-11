@@ -68,6 +68,7 @@ defmodule ChatApiWeb.ConversationController do
     end
   end
 
+  # TODO: figure out a better way to handle this
   @spec find_by_customer(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def find_by_customer(conn, %{"customer_id" => customer_id, "account_id" => account_id}) do
     conversations = Conversations.find_by_customer(customer_id, account_id)

@@ -41,14 +41,24 @@ defmodule ChatApiWeb.CustomerController do
   end
 
   @spec identify(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def identify(conn, %{
-        "external_id" => external_id,
-        "account_id" => account_id
-      }) do
-    Logger.info("Connection host for /api/customers/identify: #{inspect(conn.host)}")
-
+  def identify(
+        conn,
+        %{
+          "external_id" => external_id,
+          "account_id" => account_id
+        } = params
+      ) do
+    # TODO: support whitelisting urls for an account so we only enable this and
+    # other chat widget-related APIs for incoming requests from supported urls?
     if Accounts.exists?(account_id) do
-      case Customers.find_by_external_id(external_id, account_id) do
+      # TODO: make "host" a required param? (but would have to ignore on mobile...)
+      filters =
+        params
+        |> Map.take(["email", "host"])
+        |> Enum.reject(fn {_k, v} -> blank?(v) end)
+        |> Map.new()
+
+      case Customers.find_by_external_id(external_id, account_id, filters) do
         %{id: customer_id} ->
           json(conn, %{
             data: %{
@@ -139,6 +149,11 @@ defmodule ChatApiWeb.CustomerController do
   ###
   # Helpers
   ###
+
+  @spec blank?(binary() | nil) :: boolean()
+  defp blank?(nil), do: true
+  defp blank?(""), do: true
+  defp blank?(_), do: false
 
   @spec resp_format(map()) :: String.t()
   defp resp_format(%{"format" => "csv"}), do: "csv"

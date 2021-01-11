@@ -41,18 +41,21 @@ defmodule ChatApi.Customers do
     Customer |> Repo.get!(id) |> Repo.preload(:tags)
   end
 
-  @spec find_by_external_id(binary(), binary()) :: Customer.t() | nil
-  def find_by_external_id(external_id, account_id) when is_binary(external_id) do
+  @spec find_by_external_id(binary(), binary(), map()) :: Customer.t() | nil
+  def find_by_external_id(external_id, account_id, filters \\ %{})
+
+  def find_by_external_id(external_id, account_id, filters) when is_binary(external_id) do
     Customer
     |> where(account_id: ^account_id, external_id: ^external_id)
+    |> where(^filter_where(filters))
     |> order_by(desc: :updated_at)
     |> first()
     |> Repo.one()
   end
 
-  @spec find_by_external_id(integer(), binary()) :: Customer.t() | nil
-  def find_by_external_id(external_id, account_id) when is_integer(external_id) do
-    external_id |> to_string() |> find_by_external_id(account_id)
+  @spec find_by_external_id(integer(), binary(), map()) :: Customer.t() | nil
+  def find_by_external_id(external_id, account_id, filters) when is_integer(external_id) do
+    external_id |> to_string() |> find_by_external_id(account_id, filters)
   end
 
   @spec find_by_email(binary() | nil, binary()) :: Customer.t() | nil
@@ -259,6 +262,9 @@ defmodule ChatApi.Customers do
 
       {"email", value}, dynamic ->
         dynamic([r], ^dynamic and ilike(r.email, ^value))
+
+      {"host", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.host, ^value))
 
       {_, _}, dynamic ->
         # Not a where parameter

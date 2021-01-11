@@ -241,13 +241,43 @@ defmodule ChatApiWeb.CustomerControllerTest do
   describe "identifies a customer by external_id" do
     test "finds the correct customer", %{conn: conn, account: account} do
       external_id = "cus_123"
-      customer = insert(:customer, account: account, external_id: external_id)
-      %{id: customer_id, account_id: account_id} = customer
+      email = "customer@test.com"
+      host = "app.test.com"
+
+      customer =
+        insert(:customer, account: account, external_id: external_id, email: email, host: host)
+
+      customer_id = customer.id
 
       resp =
         get(conn, Routes.customer_path(conn, :identify),
-          account_id: account_id,
-          external_id: external_id
+          account_id: account.id,
+          external_id: external_id,
+          email: email,
+          host: host
+        )
+
+      assert %{
+               "customer_id" => ^customer_id
+             } = json_response(resp, 200)["data"]
+    end
+
+    test "ignoring nil/null filters", %{conn: conn, account: account} do
+      external_id = "cus_123"
+      email = "customer@test.com"
+      host = "app.test.com"
+
+      customer =
+        insert(:customer, account: account, external_id: external_id, email: email, host: host)
+
+      customer_id = customer.id
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account.id,
+          external_id: external_id,
+          email: email,
+          host: nil
         )
 
       assert %{
@@ -256,13 +286,25 @@ defmodule ChatApiWeb.CustomerControllerTest do
     end
 
     test "returns nil if no match is found", %{conn: conn, account: account} do
-      customer = insert(:customer, account: account, external_id: "cus_123")
-      %{id: _customer_id, account_id: account_id} = customer
+      external_id = "cus_123"
+      email = "test@test.com"
+      _customer = insert(:customer, account: account, external_id: external_id, email: email)
 
       resp =
         get(conn, Routes.customer_path(conn, :identify),
-          account_id: account_id,
+          account_id: account.id,
           external_id: "invalid"
+        )
+
+      assert %{
+               "customer_id" => nil
+             } = json_response(resp, 200)["data"]
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account.id,
+          external_id: external_id,
+          email: "unknown@test.com"
         )
 
       assert %{
