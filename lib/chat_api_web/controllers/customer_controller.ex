@@ -150,6 +150,7 @@ defmodule ChatApiWeb.CustomerController do
   # Helpers
   ###
 
+  @spec blank?(binary() | nil) :: boolean()
   defp blank?(nil), do: true
   defp blank?(""), do: true
   defp blank?(_), do: false
