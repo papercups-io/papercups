@@ -47,6 +47,8 @@ defmodule ChatApiWeb.SlackController do
              "configuration_url" => configuration_url,
              "url" => webhook_url
            } <- incoming_webhook do
+        integration_type = Map.get(params, "type", "reply")
+
         params = %{
           account_id: account_id,
           access_token: access_token,
@@ -61,7 +63,7 @@ defmodule ChatApiWeb.SlackController do
           team_id: team_id,
           team_name: team_name,
           webhook_url: webhook_url,
-          type: Map.get(params, "type", "reply")
+          type: integration_type
         }
 
         # TODO: after creating, check if connected channel is private;
@@ -69,8 +71,22 @@ defmodule ChatApiWeb.SlackController do
         # to be added manually, along with instructions for how to do so
         SlackAuthorizations.create_or_update(account_id, params)
 
+        cond do
+          integration_type == "reply" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
+            send_private_channel_instructions(:reply, webhook_url)
+
+          integration_type == "support" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
+            send_private_channel_instructions(:support, webhook_url)
+
+          integration_type == "support" ->
+            send_support_channel_instructions(webhook_url)
+
+          true ->
+            nil
+        end
+
         send_internal_notification(
-          "#{email} successfully linked Slack `#{inspect(params.type)}` integration to channel `#{
+          "#{email} successfully linked Slack `#{inspect(integration_type)}` integration to channel `#{
             channel
           }`"
         )
@@ -514,5 +530,64 @@ defmodule ChatApiWeb.SlackController do
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
     Task.start(fn -> Slack.Notifications.log(message) end)
+  end
+
+  @spec send_private_channel_instructions(:reply | :support, binary()) :: any()
+  defp send_private_channel_instructions(:reply, webhook_url) do
+    message = """
+    Hi there! :wave: looks like you've connected Papercups to a private channel.
+
+    In order to complete your setup, you'll need to manually add the *Papercups* app this channel.
+
+    You can do this by typing `/app` in the message box below, clicking on "*Add apps to this channel*", and selecting the *Papercups* app.
+
+    (If that doesn't work, try following these instructions: https://slack.com/help/articles/202035138-Add-apps-to-your-Slack-workspace)
+
+    Thanks for trying us out! :rocket:
+    """
+
+    Logger.info(message)
+    # Putting in an async Task for now, since we don't care if this succeeds
+    # or fails (and we also don't want it to block anything)
+    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
+  end
+
+  defp send_private_channel_instructions(:support, webhook_url) do
+    message = """
+    Hi there! :wave: looks like you've connected Papercups to a private channel.
+
+    In order to complete your setup, you'll need to manually add the *Papercups* app to this channel, as well as any other channels in which you'd like it to be active.
+
+    You can do this by typing `/app` in the message box below, click on "*Add apps to this channel*", and selecting the *Papercups* app.
+
+    (If that doesn't work, try following these instructions: https://slack.com/help/articles/202035138-Add-apps-to-your-Slack-workspace)
+
+    Thanks for trying us out! :rocket:
+    """
+
+    Logger.info(message)
+    # Putting in an async Task for now, since we don't care if this succeeds
+    # or fails (and we also don't want it to block anything)
+    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
+  end
+
+  @spec send_support_channel_instructions(binary()) :: any()
+  defp send_support_channel_instructions(webhook_url) do
+    message = """
+    Hi there! :wave:
+
+    If you'd like to sync messages with Papercups in other channels, you'll need to manually add the *Papercups* app to them.
+
+    You can do this by going to the channels you want to sync, typing `/app` in the message box, clicking on "*Add apps to this channel*", and selecting the *Papercups* app.
+
+    (If that doesn't work, try following these instructions: https://slack.com/help/articles/202035138-Add-apps-to-your-Slack-workspace)
+
+    Thanks for trying us out! :rocket:
+    """
+
+    Logger.info(message)
+    # Putting in an async Task for now, since we don't care if this succeeds
+    # or fails (and we also don't want it to block anything)
+    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
   end
 end
