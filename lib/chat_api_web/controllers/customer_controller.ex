@@ -46,15 +46,15 @@ defmodule ChatApiWeb.CustomerController do
         %{
           "external_id" => external_id,
           "account_id" => account_id
-        } = _params
+        } = params
       ) do
-    Logger.info("Connection host for /api/customers/identify: #{inspect(conn.host)}")
-
     # TODO: support whitelisting urls for an account so we only enable this and
     # other chat widget-related APIs for incoming requests from supported urls?
     if Accounts.exists?(account_id) do
       # TODO: use `conn.host` to filter by customers with matching host
-      case Customers.find_by_external_id(external_id, account_id) do
+      filters = Map.take(params, ["email", "host"])
+
+      case Customers.find_by_external_id(external_id, account_id, filters) do
         %{id: customer_id} ->
           json(conn, %{
             data: %{

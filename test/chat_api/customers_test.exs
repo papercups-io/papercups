@@ -169,18 +169,49 @@ defmodule ChatApi.CustomersTest do
       assert %Ecto.Changeset{} = Customers.change_customer(customer)
     end
 
-    test "find_by_external_id/2 returns a customer by external_id", %{account: account} do
+    test "find_by_external_id/3 returns a customer by external_id", %{account: account} do
       external_id = "cus_123"
       %{id: customer_id} = insert(:customer, %{external_id: external_id, account: account})
 
       assert %Customer{id: ^customer_id} = Customers.find_by_external_id(external_id, account.id)
     end
 
-    test "find_by_external_id/2 works with integer external_ids", %{account: account} do
+    test "find_by_external_id/3 works with integer external_ids", %{account: account} do
       external_id = "123"
       %{id: customer_id} = insert(:customer, %{external_id: external_id, account: account})
 
       assert %Customer{id: ^customer_id} = Customers.find_by_external_id(123, account.id)
+    end
+
+    test "find_by_external_id/3 can filter by email and host", %{account: account} do
+      external_id = "123"
+      email = "test@test.com"
+      host = "app.chat.com"
+
+      %{id: customer_id} =
+        insert(:customer, %{
+          external_id: external_id,
+          account: account,
+          email: email,
+          host: host
+        })
+
+      # These all work
+      assert %Customer{id: ^customer_id} = Customers.find_by_external_id(123, account.id)
+
+      assert %Customer{id: ^customer_id} =
+               Customers.find_by_external_id(123, account.id, %{"email" => email})
+
+      assert %Customer{id: ^customer_id} =
+               Customers.find_by_external_id(123, account.id, %{"email" => email, "host" => host})
+
+      # These all should not work
+      refute Customers.find_by_external_id(123, account.id, %{"email" => "other@test.com"})
+
+      refute Customers.find_by_external_id(123, account.id, %{
+               "email" => email,
+               "host" => "other.host.com"
+             })
     end
 
     test "find_or_create_by_email/3 finds the matching customer", %{account: account} do
