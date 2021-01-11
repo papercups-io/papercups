@@ -51,7 +51,6 @@ defmodule ChatApiWeb.CustomerController do
     # TODO: support whitelisting urls for an account so we only enable this and
     # other chat widget-related APIs for incoming requests from supported urls?
     if Accounts.exists?(account_id) do
-      # TODO: use `conn.host` to filter by customers with matching host
       filters = Map.take(params, ["email", "host"])
 
       case Customers.find_by_external_id(external_id, account_id, filters) do
