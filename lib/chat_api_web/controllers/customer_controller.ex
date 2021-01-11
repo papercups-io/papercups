@@ -1,6 +1,8 @@
 defmodule ChatApiWeb.CustomerController do
   use ChatApiWeb, :controller
 
+  require Logger
+
   alias ChatApi.{Accounts, Customers}
   alias ChatApi.Customers.Customer
 
@@ -43,6 +45,8 @@ defmodule ChatApiWeb.CustomerController do
         "external_id" => external_id,
         "account_id" => account_id
       }) do
+    Logger.info("Connection host for /api/customers/identify: #{inspect(conn.host)}")
+
     if Accounts.exists?(account_id) do
       case Customers.find_by_external_id(external_id, account_id) do
         %{id: customer_id} ->
