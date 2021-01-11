@@ -51,8 +51,12 @@ defmodule ChatApiWeb.CustomerController do
     # TODO: support whitelisting urls for an account so we only enable this and
     # other chat widget-related APIs for incoming requests from supported urls?
     if Accounts.exists?(account_id) do
-      # TODO: make these required params?
-      filters = Map.take(params, ["email", "host"])
+      # TODO: make "host" a required param? (but would have to ignore on mobile...)
+      filters =
+        params
+        |> Map.take(["email", "host"])
+        |> Enum.reject(fn {_k, v} -> blank?(v) end)
+        |> Map.new()
 
       case Customers.find_by_external_id(external_id, account_id, filters) do
         %{id: customer_id} ->
@@ -145,6 +149,10 @@ defmodule ChatApiWeb.CustomerController do
   ###
   # Helpers
   ###
+
+  defp blank?(nil), do: true
+  defp blank?(""), do: true
+  defp blank?(_), do: false
 
   @spec resp_format(map()) :: String.t()
   defp resp_format(%{"format" => "csv"}), do: "csv"

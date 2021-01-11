@@ -262,6 +262,29 @@ defmodule ChatApiWeb.CustomerControllerTest do
              } = json_response(resp, 200)["data"]
     end
 
+    test "ignoring nil/null filters", %{conn: conn, account: account} do
+      external_id = "cus_123"
+      email = "customer@test.com"
+      host = "app.test.com"
+
+      customer =
+        insert(:customer, account: account, external_id: external_id, email: email, host: host)
+
+      customer_id = customer.id
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account.id,
+          external_id: external_id,
+          email: email,
+          host: nil
+        )
+
+      assert %{
+               "customer_id" => ^customer_id
+             } = json_response(resp, 200)["data"]
+    end
+
     test "returns nil if no match is found", %{conn: conn, account: account} do
       external_id = "cus_123"
       email = "test@test.com"
