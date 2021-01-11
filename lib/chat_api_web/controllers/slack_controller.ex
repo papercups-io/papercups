@@ -4,6 +4,7 @@ defmodule ChatApiWeb.SlackController do
   require Logger
 
   alias ChatApi.{
+    Companies,
     Conversations,
     Messages,
     Slack,
@@ -372,8 +373,9 @@ defmodule ChatApiWeb.SlackController do
 
       # TODO: should we do this? might make onboarding a bit easier, but would also set up
       # companies with "weird" names (i.e. in the format of a Slack channel name)
-      Logger.info("Would have created company with fields:")
-      Logger.info(inspect(company))
+      {:ok, result} = Companies.create_company(company)
+      Logger.info("Successfully auto-created company:")
+      Logger.info(inspect(result))
     end
   end
 
