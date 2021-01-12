@@ -5,12 +5,8 @@ defmodule ChatApiWeb.ConversationChannel do
   alias ChatApi.{Messages, Conversations}
 
   @impl true
-  def join("conversation:lobby", payload, socket) do
-    if authorized?(payload) do
-      {:ok, socket}
-    else
-      {:error, %{reason: "unauthorized"}}
-    end
+  def join("conversation:lobby", _payload, socket) do
+    {:ok, socket}
   end
 
   def join("conversation:lobby:" <> customer_id, _params, socket) do
@@ -133,10 +129,6 @@ defmodule ChatApiWeb.ConversationChannel do
   end
 
   # Add authorization logic here as required.
-  defp authorized?(_payload) do
-    true
-  end
-
   defp authorized?(_payload, conversation_id) do
     case Conversations.get_conversation(conversation_id) do
       %Conversations.Conversation{} -> true
