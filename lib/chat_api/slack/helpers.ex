@@ -192,6 +192,11 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @spec is_private_slack_channel?(binary()) :: boolean()
+  def is_private_slack_channel?("G" <> _rest), do: true
+  def is_private_slack_channel?("C" <> _rest), do: false
+  def is_private_slack_channel?(_), do: false
+
   @spec get_slack_authorization(binary()) ::
           %{access_token: binary(), channel: binary(), channel_id: binary()}
           | SlackAuthorizations.SlackAuthorization.t()

@@ -47,11 +47,18 @@ defmodule ChatApi.SlackTest do
     test "Notifications.notify_slack_channel/2 sends a thread reply notification", %{
       account: account,
       auth: auth,
-      customer: customer,
       conversation: conversation,
       thread: thread
     } do
-      message = insert(:message, account: account, conversation: conversation, customer: customer)
+      user = insert(:user, account: account, email: "user@user.com")
+
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          user: user,
+          customer: nil
+        )
 
       with_mock ChatApi.Slack.Client,
         send_message: fn msg, _ ->
@@ -61,10 +68,12 @@ defmodule ChatApi.SlackTest do
 
         assert_called(Slack.Client.send_message(:_, :_))
 
+        expected_text = "*#{user.email}*: #{message.body}"
+
         assert_called(
           Slack.Client.send_message(
             %{
-              "text" => message.body,
+              "text" => expected_text,
               "channel" => thread.slack_channel,
               "thread_ts" => thread.slack_thread_ts
             },
