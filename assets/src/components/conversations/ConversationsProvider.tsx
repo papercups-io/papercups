@@ -4,7 +4,7 @@ import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Account, Conversation, Message, User} from '../../types';
-import {sleep, isWindowHidden, updateQueryParams} from '../../utils';
+import {isWindowHidden, updateQueryParams} from '../../utils';
 import {SOCKET_URL} from '../../socket';
 import logger from '../../logger';
 
