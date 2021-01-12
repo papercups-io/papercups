@@ -214,7 +214,8 @@ defmodule ChatApi.SlackTest do
       assert %{
                "channel" => ^channel,
                "text" => ^text,
-               "thread_ts" => ^ts
+               "thread_ts" => ^ts,
+               "reply_broadcast" => false
              } =
                Slack.Helpers.get_message_payload(text, %{
                  channel: channel,
@@ -226,7 +227,8 @@ defmodule ChatApi.SlackTest do
       assert %{
                "channel" => ^channel,
                "text" => ^text,
-               "thread_ts" => ^ts
+               "thread_ts" => ^ts,
+               "reply_broadcast" => false
              } =
                Slack.Helpers.get_message_payload(text, %{
                  channel: channel,
