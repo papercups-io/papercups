@@ -204,22 +204,37 @@ defmodule ChatApi.SlackTest do
                })
     end
 
-    test "Helpers.get_message_payload/2 returns payload for slack reply",
-         %{account: account, thread: thread} do
+    test "Helpers.get_message_payload/2 returns payload for slack reply", %{thread: thread} do
       text = "Hello world"
       ts = thread.slack_thread_ts
       channel = thread.slack_channel
+      customer_message = insert(:message, user: nil)
+      user_message = insert(:message, customer: nil)
 
       assert %{
                "channel" => ^channel,
                "text" => ^text,
-               "thread_ts" => ^ts
+               "thread_ts" => ^ts,
+               "reply_broadcast" => false
              } =
                Slack.Helpers.get_message_payload(text, %{
                  channel: channel,
                  thread: thread,
                  customer: nil,
-                 account_id: account.id
+                 message: customer_message
+               })
+
+      assert %{
+               "channel" => ^channel,
+               "text" => ^text,
+               "thread_ts" => ^ts,
+               "reply_broadcast" => false
+             } =
+               Slack.Helpers.get_message_payload(text, %{
+                 channel: channel,
+                 thread: thread,
+                 customer: nil,
+                 message: user_message
                })
     end
 
