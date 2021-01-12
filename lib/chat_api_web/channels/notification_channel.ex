@@ -4,6 +4,7 @@ defmodule ChatApiWeb.NotificationChannel do
   alias ChatApiWeb.Presence
   alias Phoenix.Socket.Broadcast
   alias ChatApi.{Messages, Conversations}
+  alias ChatApi.Messages.Message
 
   require Logger
 
@@ -87,6 +88,7 @@ defmodule ChatApiWeb.NotificationChannel do
     {:noreply, socket}
   end
 
+  @spec broadcast_new_message(Message.t(), any()) :: Message.t()
   defp broadcast_new_message(message, socket) do
     broadcast(socket, "shout", Messages.Helpers.format(message))
 
@@ -99,6 +101,7 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:conversation_reply_email)
   end
 
+  @spec authorized?(any(), binary()) :: boolean()
   defp authorized?(socket, account_id) do
     with %{current_user: current_user} <- socket.assigns,
          %{account_id: acct} <- current_user do
