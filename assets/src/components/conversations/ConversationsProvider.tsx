@@ -4,7 +4,7 @@ import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Account, Conversation, Message, User} from '../../types';
-import {sleep, isWindowHidden, updateQueryParams} from '../../utils';
+import {isWindowHidden, updateQueryParams} from '../../utils';
 import {SOCKET_URL} from '../../socket';
 import logger from '../../logger';
 
@@ -411,28 +411,15 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   handleNewConversation = async (conversationId?: string) => {
-    if (!this.channel || !conversationId) {
-      return;
-    }
+    logger.debug('Listening to new conversation:', conversationId);
 
-    this.channel.push('watch:one', {
-      conversation_id: conversationId,
-    });
-
-    // FIXME: this is a hack to fix the race condition with the `shout` event
-    await sleep(1000);
     await this.fetchAllConversations();
     await this.throttledNotificationSound();
   };
 
+  // TODO: double check that there's no logic we need to add here
   handleJoinMultipleConversations = (conversationIds: Array<string>) => {
-    if (!this.channel) {
-      return;
-    }
-
-    this.channel.push('watch:many', {
-      conversation_ids: conversationIds,
-    });
+    logger.debug('Listening to multiple new conversations:', conversationIds);
   };
 
   handleConversationUpdated = (id: string, updates: any) => {
