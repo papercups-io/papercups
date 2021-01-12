@@ -65,7 +65,8 @@ defmodule ChatApi.Slack.Notifications do
       |> Slack.Helpers.get_message_payload(%{
         channel: channel,
         customer: customer,
-        thread: thread
+        thread: thread,
+        account_id: account_id
       })
       |> Slack.Client.send_message(access_token)
       |> case do

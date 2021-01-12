@@ -205,7 +205,7 @@ defmodule ChatApi.SlackTest do
     end
 
     test "Helpers.get_message_payload/2 returns payload for slack reply",
-         %{thread: thread} do
+         %{account: account, thread: thread} do
       text = "Hello world"
       ts = thread.slack_thread_ts
       channel = thread.slack_channel
@@ -218,7 +218,8 @@ defmodule ChatApi.SlackTest do
                Slack.Helpers.get_message_payload(text, %{
                  channel: channel,
                  thread: thread,
-                 customer: nil
+                 customer: nil,
+                 account_id: account.id
                })
     end
 

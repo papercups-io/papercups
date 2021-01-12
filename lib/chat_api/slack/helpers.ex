@@ -456,16 +456,28 @@ defmodule ChatApi.Slack.Helpers do
   def get_message_payload(text, %{
         channel: channel,
         customer: _customer,
+        account_id: account_id,
         thread: %{slack_thread_ts: slack_thread_ts}
       }) do
     %{
       "channel" => channel,
       "text" => text,
-      "thread_ts" => slack_thread_ts
+      "thread_ts" => slack_thread_ts,
+      "reply_broadcast" => reply_broadcast_enabled?(account_id)
     }
   end
 
   def get_message_payload(text, params) do
     raise "Unrecognized params for Slack payload: #{text} #{inspect(params)}"
+  end
+
+  @spec reply_broadcast_enabled?(binary()) :: boolean()
+  defp reply_broadcast_enabled?(account_id) do
+    # TODO: figure out a better way to enable feature flags for certain accounts,
+    # or just make this configurable in account settings (or something like that)
+    case System.get_env("PAPERCUPS_FEATURE_FLAGGED_ACCOUNTS") do
+      ids when is_binary(ids) -> ids |> String.split(" ") |> Enum.member?(account_id)
+      _ -> false
+    end
   end
 end
