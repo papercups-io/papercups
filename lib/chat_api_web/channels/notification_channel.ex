@@ -8,16 +8,11 @@ defmodule ChatApiWeb.NotificationChannel do
   require Logger
 
   @impl true
-  def join("notification:" <> account_id, %{"ids" => ids}, socket) do
+  def join("notification:" <> account_id, _payload, socket) do
     if authorized?(socket, account_id) do
-      topics = for conversation_id <- ids, do: "conversation:#{conversation_id}"
-
       send(self(), :after_join)
 
-      {:ok,
-       socket
-       |> assign(:topics, [])
-       |> put_new_topics(topics)}
+      {:ok, socket}
     else
       {:error, %{reason: "Unauthorized"}}
     end
@@ -30,22 +25,8 @@ defmodule ChatApiWeb.NotificationChannel do
     {:reply, {:ok, payload}, socket}
   end
 
-  def handle_in("watch:one", %{"conversation_id" => id}, socket) do
-    {:reply, :ok, put_new_topics(socket, ["conversation:#{id}"])}
-  end
-
-  def handle_in("watch:many", %{"conversation_ids" => ids}, socket) do
-    topics = Enum.map(ids, fn id -> "conversation:#{id}" end)
-
-    {:reply, :ok, put_new_topics(socket, topics)}
-  end
-
-  def handle_in("unwatch", %{"conversation_id" => id}, _socket) do
-    {:reply, :ok, ChatApiWeb.Endpoint.unsubscribe("conversation:#{id}")}
-  end
-
   def handle_in("read", %{"conversation_id" => id}, socket) do
-    _conversation = Conversations.mark_conversation_read(id)
+    {:ok, _conversation} = Conversations.mark_conversation_read(id)
 
     {:reply, :ok, socket}
   end
@@ -61,7 +42,7 @@ defmodule ChatApiWeb.NotificationChannel do
       message
       |> Map.get(:id)
       |> Messages.get_message!()
-      |> broadcast_new_message()
+      |> broadcast_new_message(socket)
       |> Messages.Helpers.handle_post_creation_conversation_updates()
     end
 
@@ -70,6 +51,7 @@ defmodule ChatApiWeb.NotificationChannel do
 
   @impl true
   def handle_info(%Broadcast{topic: topic, event: event, payload: payload}, socket) do
+    # TODO: can we get rid of this now?
     case topic do
       "conversation:" <> conversation_id ->
         push(socket, event, Map.merge(payload, %{conversation_id: conversation_id}))
@@ -105,7 +87,9 @@ defmodule ChatApiWeb.NotificationChannel do
     {:noreply, socket}
   end
 
-  defp broadcast_new_message(message) do
+  defp broadcast_new_message(message, socket) do
+    broadcast(socket, "shout", Messages.Helpers.format(message))
+
     message
     |> Messages.Notification.broadcast_to_conversation!()
     |> Messages.Notification.notify(:slack)
@@ -113,20 +97,6 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:slack_company_channel)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:conversation_reply_email)
-  end
-
-  defp put_new_topics(socket, topics) do
-    Enum.reduce(topics, socket, fn topic, acc ->
-      topics = acc.assigns.topics
-
-      if topic in topics do
-        acc
-      else
-        :ok = ChatApiWeb.Endpoint.subscribe(topic)
-
-        assign(acc, :topics, [topic | topics])
-      end
-    end)
   end
 
   defp authorized?(socket, account_id) do
