@@ -51,21 +51,16 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   def handle_in("shout", payload, socket) do
-    with %{current_user: current_user} <- socket.assigns,
-         %{id: user_id, account_id: account_id} <- current_user do
-      {:ok, message} =
-        payload
-        |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
-        |> Messages.create_message()
+    Logger.warn(
+      "'shout' is deprecated as event name on a new message and will be removed in a future version. Please migrate to a newer version of a client."
+    )
 
-      message
-      |> Map.get(:id)
-      |> Messages.get_message!()
-      |> broadcast_new_message()
-      |> Messages.Helpers.handle_post_creation_conversation_updates()
-    end
+    handle_incoming_message("shout", payload, socket)
+  end
 
-    {:reply, :ok, socket}
+  @impl true
+  def handle_in("message:created", payload, socket) do
+    handle_incoming_message("message:created", payload, socket)
   end
 
   @impl true
@@ -105,9 +100,9 @@ defmodule ChatApiWeb.NotificationChannel do
     {:noreply, socket}
   end
 
-  defp broadcast_new_message(message) do
+  defp broadcast_new_message(message, event_name) do
     message
-    |> Messages.Notification.broadcast_to_conversation!()
+    |> Messages.Notification.broadcast_to_conversation!(event_name)
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:slack_support_channel)
     |> Messages.Notification.notify(:slack_company_channel)
@@ -136,5 +131,23 @@ defmodule ChatApiWeb.NotificationChannel do
     else
       _ -> false
     end
+  end
+
+  defp handle_incoming_message(event_name, payload, socket) do
+    with %{current_user: current_user} <- socket.assigns,
+         %{id: user_id, account_id: account_id} <- current_user do
+      {:ok, message} =
+        payload
+        |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
+        |> Messages.create_message()
+
+      message
+      |> Map.get(:id)
+      |> Messages.get_message!()
+      |> broadcast_new_message(event_name)
+      |> Messages.Helpers.handle_post_creation_conversation_updates()
+    end
+
+    {:reply, :ok, socket}
   end
 end
