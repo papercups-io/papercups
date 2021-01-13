@@ -94,7 +94,9 @@ const ConversationFooter = ({
             </Box>
 
             <Box mb={2}>
+              {/* NB: we use the `key` prop to auto-focus the textarea when toggling `messageType` */}
               <TextArea
+                key={messageType}
                 className="TextArea--transparent"
                 placeholder="Type your message here"
                 autoSize={{minRows: 2, maxRows: 4}}
