@@ -19,10 +19,6 @@ const AllConversations = () => {
     onSendMessage,
   } = useConversations();
 
-  if (loading) {
-    return null;
-  }
-
   return (
     <ConversationsContainer
       loading={loading}

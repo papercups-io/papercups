@@ -15,6 +15,7 @@ import NewWebhookModal from './NewWebhookModal';
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
   loading: boolean;
+  refreshing: boolean;
   isWebhookModalOpen: boolean;
   selectedWebhook: WebhookEventSubscription | null;
   integrations: Array<IntegrationType>;
@@ -24,6 +25,7 @@ type State = {
 class IntegrationsOverview extends React.Component<Props, State> {
   state: State = {
     loading: true,
+    refreshing: false,
     isWebhookModalOpen: false,
     selectedWebhook: null,
     integrations: [],
@@ -60,6 +62,27 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
   }
 
+  refreshAllIntegrations = async () => {
+    try {
+      this.setState({refreshing: true});
+
+      const integrations = await Promise.all([
+        this.fetchSlackIntegration(),
+        this.fetchSlackSupportIntegration(),
+        this.fetchGmailIntegration(),
+        this.fetchTwilioIntegration(),
+        this.fetchMicrosoftTeamsIntegration(),
+        this.fetchWhatsAppIntegration(),
+      ]);
+
+      this.setState({integrations, refreshing: false});
+    } catch (err) {
+      logger.error('Error refreshing integrations:', err);
+
+      this.setState({refreshing: false});
+    }
+  };
+
   fetchSlackIntegration = async (): Promise<IntegrationType> => {
     const auth = await API.fetchSlackAuthorization('reply');
 
@@ -68,6 +91,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Slack',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
     };
   };
@@ -80,6 +104,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Sync with Slack (beta)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
     };
   };
@@ -92,6 +117,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Gmail (beta)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
       icon: '/gmail.svg',
     };
   };
@@ -102,6 +128,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Microsoft Teams',
       status: 'not_connected',
       created_at: null,
+      authorization_id: null,
       icon: '/microsoft-teams.svg',
     };
   };
@@ -112,6 +139,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'Twilio',
       status: 'not_connected',
       created_at: null,
+      authorization_id: null,
       icon: '/twilio.svg',
     };
   };
@@ -122,6 +150,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       integration: 'WhatsApp',
       status: 'not_connected',
       created_at: null,
+      authorization_id: null,
       icon: '/whatsapp.svg',
     };
   };
@@ -153,6 +182,14 @@ class IntegrationsOverview extends React.Component<Props, State> {
       default:
         return null;
     }
+  };
+
+  handleDisconnectSlack = async (authorizationId: string) => {
+    return API.deleteSlackAuthorization(authorizationId)
+      .then(() => this.refreshAllIntegrations())
+      .catch((err) =>
+        logger.error('Failed to remove Slack authorization:', err)
+      );
   };
 
   handleAddWebhook = () => {
@@ -200,6 +237,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
   render() {
     const {
       loading,
+      refreshing,
       isWebhookModalOpen,
       selectedWebhook,
       webhooks = [],
@@ -247,7 +285,11 @@ class IntegrationsOverview extends React.Component<Props, State> {
           />
 
           <Box mt={3} mb={4}>
-            <IntegrationsTable integrations={integrations} />
+            <IntegrationsTable
+              loading={refreshing}
+              integrations={integrations}
+              onDisconnectSlack={this.handleDisconnectSlack}
+            />
           </Box>
         </Box>
 

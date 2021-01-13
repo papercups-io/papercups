@@ -10,6 +10,7 @@ import {
   Badge,
   Button,
   Input,
+  Paragraph,
   Tag,
   Text,
   Tooltip,
@@ -26,10 +27,10 @@ import {
   SidebarCustomerTags,
   SidebarConversationTags,
 } from './SidebarTagSection';
+import SidebarCustomerNotes from './SidebarCustomerNotes';
 import * as API from '../../api';
 import {Conversation, Customer} from '../../types';
 import logger from '../../logger';
-import Paragraph from 'antd/lib/typography/Paragraph';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -151,8 +152,20 @@ const CustomerDetails = ({
             <Text strong>Last seen</Text>
             <Badge status="processing" text="Online now" />
           </Flex>
-          <Box mb={1}>
+          <Box mb={2}>
             <CustomerActiveSessions customerId={customerId} />
+          </Box>
+          <Text type="secondary">Session started at</Text>
+          <Box mb={1}>
+            {lastSeenUrl ? (
+              <Tooltip title={lastSeenUrl}>
+                <a href={lastSeenUrl} target="_blank" rel="noopener noreferrer">
+                  {pathname && pathname.length > 1 ? pathname : lastSeenUrl}
+                </a>
+              </Tooltip>
+            ) : (
+              <Text>Unknown URL</Text>
+            )}
           </Box>
         </DetailsSectionCard>
       ) : (
@@ -222,6 +235,14 @@ const CustomerDetails = ({
         <Box mb={1}>
           <Text type="secondary">IP:</Text> {lastIpAddress || 'Unknown'}
         </Box>
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Customer Notes</Text>
+        </Box>
+
+        <SidebarCustomerNotes customerId={customerId} />
       </DetailsSectionCard>
 
       <DetailsSectionCard>

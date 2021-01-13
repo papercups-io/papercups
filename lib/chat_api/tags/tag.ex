@@ -6,6 +6,20 @@ defmodule ChatApi.Tags.Tag do
   alias ChatApi.Tags.{ConversationTag, CustomerTag}
   alias ChatApi.Users.User
 
+  @type t :: %__MODULE__{
+          name: String.t(),
+          description: String.t() | nil,
+          color: String.t() | nil,
+          # Relations
+          account_id: any(),
+          account: any(),
+          creator_id: any(),
+          creator: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "tags" do

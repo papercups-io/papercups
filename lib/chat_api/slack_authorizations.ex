@@ -8,9 +8,17 @@ defmodule ChatApi.SlackAuthorizations do
 
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
-  @spec list_slack_authorizations() :: [SlackAuthorization.t()]
-  def list_slack_authorizations do
-    Repo.all(SlackAuthorization)
+  @spec list_slack_authorizations(map()) :: [SlackAuthorization.t()]
+  def list_slack_authorizations(filters \\ %{}) do
+    SlackAuthorization
+    |> where(^filter_where(filters))
+    |> order_by(desc: :inserted_at)
+    |> Repo.all()
+  end
+
+  @spec list_slack_authorizations_by_account(binary(), map()) :: [SlackAuthorization.t()]
+  def list_slack_authorizations_by_account(account_id, filters \\ %{}) do
+    filters |> Map.merge(%{account_id: account_id}) |> list_slack_authorizations()
   end
 
   @spec get_slack_authorization!(binary()) :: SlackAuthorization.t()
@@ -84,6 +92,9 @@ defmodule ChatApi.SlackAuthorizations do
 
       {:team_id, value}, dynamic ->
         dynamic([r], ^dynamic and r.team_id == ^value)
+
+      {:bot_user_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.bot_user_id == ^value)
 
       {:type, value}, dynamic ->
         dynamic([r], ^dynamic and r.type == ^value)

@@ -41,14 +41,20 @@ If you plan on self-hosting Papercups, you'll need to set up your own Slack app 
 - Add the bot scopes we’ll be using
   - `channels:history`
   - `channels:manage`
+  - `channels:read`
   - `chat:write`
   - `chat:write.public`
+  - `users:read`
+  - `users:read.email`
+  - `groups:history`
+  - `groups:read`
   - `incoming-webhook`
 
 ![](https://paper-attachments.dropbox.com/s_63895AAB3973EA701984146FF05B40938812C8B7E2ACDD7574570851E5FDF9D0_1596321782791_Screen+Shot+2020-08-01+at+6.42.16+PM.png)
 
 - Add the user scopes we’ll be using
   - `channels:history`
+  - `groups:history`
 
 ![](https://paper-attachments.dropbox.com/s_63895AAB3973EA701984146FF05B40938812C8B7E2ACDD7574570851E5FDF9D0_1596321782746_Screen+Shot+2020-08-01+at+6.42.23+PM.png)
 

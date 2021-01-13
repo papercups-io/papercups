@@ -8,9 +8,11 @@ defmodule ChatApi.SlackConversationThreads do
 
   alias ChatApi.SlackConversationThreads.SlackConversationThread
 
-  @spec list_slack_conversation_threads() :: [SlackConversationThread.t()]
-  def list_slack_conversation_threads do
-    Repo.all(SlackConversationThread)
+  @spec list_slack_conversation_threads(map()) :: [SlackConversationThread.t()]
+  def list_slack_conversation_threads(filters \\ %{}) do
+    SlackConversationThread
+    |> where(^filter_where(filters))
+    |> Repo.all()
   end
 
   @spec get_slack_conversation_thread!(binary()) :: SlackConversationThread.t()
@@ -68,12 +70,23 @@ defmodule ChatApi.SlackConversationThreads do
     Repo.delete(slack_conversation_thread)
   end
 
-  @spec change_slack_conversation_thread(SlackConverationThread.t(), map()) :: Ecto.Changeset.t()
+  @spec change_slack_conversation_thread(SlackConversationThread.t(), map()) :: Ecto.Changeset.t()
   def change_slack_conversation_thread(
         %SlackConversationThread{} = slack_conversation_thread,
         attrs \\ %{}
       ) do
     SlackConversationThread.changeset(slack_conversation_thread, attrs)
+  end
+
+  @spec exists?(map()) :: boolean()
+  def exists?(filters) do
+    count =
+      SlackConversationThread
+      |> where(^filter_where(filters))
+      |> select([t], count(t.id))
+      |> Repo.one()
+
+    count > 0
   end
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries

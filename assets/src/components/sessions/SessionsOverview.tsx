@@ -121,7 +121,7 @@ class SessionsOverview extends React.Component<Props, State> {
     }
   };
 
-  getSessionActiveMetadata = (sessionId: string): object => {
+  getSessionActiveMetadata = (sessionId: string): Record<string, any> => {
     const {sessionStatusMetadataById = {}} = this.state;
 
     return sessionStatusMetadataById[sessionId] || {};

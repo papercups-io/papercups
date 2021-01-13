@@ -153,13 +153,17 @@ export const createNewCustomer = async (accountId: string) => {
     .then((res) => res.body.data);
 };
 
-export const fetchCustomers = async (token = getAccessToken()) => {
+export const fetchCustomers = async (
+  filters = {},
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/customers`)
+    .query(filters)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -177,7 +181,7 @@ export const fetchCustomer = async (id: string, token = getAccessToken()) => {
 
 export const updateCustomer = async (
   id: string,
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -193,9 +197,70 @@ export const updateCustomer = async (
     .then((res) => res.body.data);
 };
 
+export const createNewCompany = async (
+  params: Record<string, any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/companies`)
+    .send({company: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchCompanies = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/companies`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchCompany = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/companies/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateCompany = async (
+  id: string,
+  updates: Record<string, any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/companies/${id}`)
+    .set('Authorization', token)
+    .send({company: updates})
+    .then((res) => res.body.data);
+};
+
+export const deleteCompany = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request.delete(`/api/companies/${id}`).set('Authorization', token);
+};
+
 export const createNewConversation = async (
   customerId: string,
-  params?: object,
+  params?: Record<any, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -226,7 +291,7 @@ export const fetchAccountInfo = async (token = getAccessToken()) => {
 };
 
 export const updateAccountInfo = async (
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -254,7 +319,7 @@ export const fetchUserProfile = async (token = getAccessToken()) => {
 };
 
 export const updateUserProfile = async (
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -282,7 +347,7 @@ export const fetchUserSettings = async (token = getAccessToken()) => {
 };
 
 export const updateUserSettings = async (
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -395,7 +460,7 @@ export const fetchSharedConversation = async (
 
 export const updateConversation = async (
   conversationId: string,
-  updates: any,
+  updates: Record<string, any>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -489,6 +554,34 @@ export const fetchSlackAuthorization = async (
   return request
     .get(`/api/slack/authorization`)
     .query({type})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteSlackAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/slack/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
+export const fetchSlackChannels = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/slack/channels`)
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -740,7 +833,54 @@ export const enableAccountUser = async (
     .then((res) => res.body.data);
 };
 
-export const fetchAllTags = (token = getAccessToken()) => {
+export const fetchCustomerNotes = async (
+  customerId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/notes`)
+    .query({customer_id: customerId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createCustomerNote = async (
+  customerId: string,
+  body: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/notes`)
+    .set('Authorization', token)
+    .send({
+      note: {
+        body,
+        customer_id: customerId,
+      },
+    })
+    .then((res) => res.body.data);
+};
+
+export const deleteCustomerNote = async (
+  noteId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request.delete(`/api/notes/${noteId}`).set('Authorization', token);
+};
+
+export const fetchAllTags = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -751,7 +891,7 @@ export const fetchAllTags = (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const createTag = (name: string, token = getAccessToken()) => {
+export const createTag = async (name: string, token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -763,7 +903,7 @@ export const createTag = (name: string, token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const addConversationTag = (
+export const addConversationTag = async (
   conversationId: string,
   tagId: string,
   token = getAccessToken()
@@ -779,7 +919,7 @@ export const addConversationTag = (
     .then((res) => res.body.data);
 };
 
-export const removeConversationTag = (
+export const removeConversationTag = async (
   conversationId: string,
   tagId: string,
   token = getAccessToken()
@@ -794,7 +934,7 @@ export const removeConversationTag = (
     .then((res) => res.body.data);
 };
 
-export const addCustomerTag = (
+export const addCustomerTag = async (
   customerId: string,
   tagId: string,
   token = getAccessToken()
@@ -810,7 +950,7 @@ export const addCustomerTag = (
     .then((res) => res.body.data);
 };
 
-export const removeCustomerTag = (
+export const removeCustomerTag = async (
   customerId: string,
   tagId: string,
   token = getAccessToken()

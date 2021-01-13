@@ -202,12 +202,12 @@ describe('calculateSubscriptionDiscount', () => {
       discount: {
         duration: 'forever',
         name: 'Early Adopter',
-        percent_off: 50,
+        percent_off: 40,
         valid: true,
       },
     });
 
-    expect(calculateSubscriptionDiscount(subscription)).toEqual(2000);
+    expect(calculateSubscriptionDiscount(subscription)).toEqual(1600);
   });
 
   test('handles amount_off discounts', () => {
@@ -230,6 +230,6 @@ describe('calculateSubscriptionDiscount', () => {
       },
     });
 
-    expect(calculateSubscriptionDiscount(subscription)).toEqual(3000);
+    expect(calculateSubscriptionDiscount(subscription)).toEqual(1000);
   });
 });

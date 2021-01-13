@@ -25,7 +25,7 @@ const PaymentForm = ({onSuccess, onCancel}: Props) => {
     }
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!stripe || !elements) {

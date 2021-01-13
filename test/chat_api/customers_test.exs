@@ -30,13 +30,59 @@ defmodule ChatApi.CustomersTest do
       {:ok, account: account, customer: customer}
     end
 
-    test "list_customers/1 returns all customers",
-         %{account: account, customer: customer} do
+    test "list_customers/2 returns all customers", %{account: account, customer: customer} do
       customer_ids =
         Customers.list_customers(account.id)
         |> Enum.map(& &1.id)
 
       assert customer_ids == [customer.id]
+    end
+
+    test "list_customers/2 can filter by company_id", %{account: account} do
+      company = insert(:company, account: account)
+      new_customer = insert(:customer, account: account, company: company)
+
+      customer_ids =
+        Customers.list_customers(account.id, %{"company_id" => company.id})
+        |> Enum.map(& &1.id)
+
+      assert customer_ids == [new_customer.id]
+    end
+
+    test "list_customers/2 can search by name/email", %{account: account} do
+      alex = insert(:customer, account: account, name: "Alex Reichert")
+      alexis = insert(:customer, account: account, name: "Alexis O'Hare")
+      kam = insert(:customer, account: account, email: "kam@kam.com")
+
+      alex_ids =
+        account.id
+        |> Customers.list_customers(%{"name" => "%alex%"})
+        |> Enum.map(& &1.id)
+
+      kam_ids =
+        account.id
+        |> Customers.list_customers(%{"email" => "%kam%"})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(alex_ids) == Enum.sort([alex.id, alexis.id])
+      assert kam_ids == [kam.id]
+    end
+
+    test "list_customers/3 returns paginated customers" do
+      account = insert(:account)
+      insert_list(10, :customer, account: account)
+
+      page = Customers.list_customers(account.id, %{}, %{})
+      page_with_params = Customers.list_customers(account.id, %{}, %{page: 2, page_size: 5})
+
+      assert Enum.all?(page.entries, &(&1.account_id == account.id))
+
+      assert page.total_entries == 10
+      assert page.total_pages == 1
+
+      assert page_with_params.page_number == 2
+      assert page_with_params.page_size == 5
+      assert page_with_params.total_pages == 2
     end
 
     test "get_customer!/1 returns the customer with given id",
@@ -123,18 +169,49 @@ defmodule ChatApi.CustomersTest do
       assert %Ecto.Changeset{} = Customers.change_customer(customer)
     end
 
-    test "find_by_external_id/2 returns a customer by external_id", %{account: account} do
+    test "find_by_external_id/3 returns a customer by external_id", %{account: account} do
       external_id = "cus_123"
       %{id: customer_id} = insert(:customer, %{external_id: external_id, account: account})
 
       assert %Customer{id: ^customer_id} = Customers.find_by_external_id(external_id, account.id)
     end
 
-    test "find_by_external_id/2 works with integer external_ids", %{account: account} do
+    test "find_by_external_id/3 works with integer external_ids", %{account: account} do
       external_id = "123"
       %{id: customer_id} = insert(:customer, %{external_id: external_id, account: account})
 
       assert %Customer{id: ^customer_id} = Customers.find_by_external_id(123, account.id)
+    end
+
+    test "find_by_external_id/3 can filter by email and host", %{account: account} do
+      external_id = "123"
+      email = "test@test.com"
+      host = "app.chat.com"
+
+      %{id: customer_id} =
+        insert(:customer, %{
+          external_id: external_id,
+          account: account,
+          email: email,
+          host: host
+        })
+
+      # These all work
+      assert %Customer{id: ^customer_id} = Customers.find_by_external_id(123, account.id)
+
+      assert %Customer{id: ^customer_id} =
+               Customers.find_by_external_id(123, account.id, %{"email" => email})
+
+      assert %Customer{id: ^customer_id} =
+               Customers.find_by_external_id(123, account.id, %{"email" => email, "host" => host})
+
+      # These all should not work
+      refute Customers.find_by_external_id(123, account.id, %{"email" => "other@test.com"})
+
+      refute Customers.find_by_external_id(123, account.id, %{
+               "email" => email,
+               "host" => "other.host.com"
+             })
     end
 
     test "find_or_create_by_email/3 finds the matching customer", %{account: account} do
@@ -175,6 +252,57 @@ defmodule ChatApi.CustomersTest do
 
       assert {:error, _error} =
                Customers.find_or_create_by_email(nil, account.id, %{name: "New Customer"})
+    end
+
+    test "create_or_update_by_email/3 finds the matching customer", %{account: account} do
+      email = "test@test.com"
+      %{id: customer_id} = insert(:customer, %{email: email, account: account})
+
+      assert {:ok, %Customer{id: ^customer_id}} =
+               Customers.create_or_update_by_email(email, account.id)
+    end
+
+    test "create_or_update_by_email/3 updates the matching customer", %{account: account} do
+      email = "test@test.com"
+      name = "Test User"
+      %{id: customer_id} = insert(:customer, %{email: email, account: account})
+
+      assert {:ok, %Customer{id: ^customer_id, name: ^name}} =
+               Customers.create_or_update_by_email(email, account.id, %{name: name})
+    end
+
+    test "create_or_update_by_email/3 creates a new customer if necessary", %{account: account} do
+      email = "test@test.com"
+      %{id: customer_id} = insert(:customer, %{email: "other@test.com", account: account})
+
+      assert {:ok, %Customer{} = customer} =
+               Customers.create_or_update_by_email(email, account.id)
+
+      assert customer.id != customer_id
+      assert customer.email == email
+    end
+
+    test "create_or_update_by_email/3 creates a new customer with additional params", %{
+      account: account
+    } do
+      email = "test@test.com"
+      %{id: customer_id} = insert(:customer, %{email: "other@test.com", account: account})
+
+      assert {:ok, %Customer{} = customer} =
+               Customers.create_or_update_by_email(email, account.id, %{name: "New Customer"})
+
+      assert customer.id != customer_id
+      assert customer.email == email
+      assert customer.name == "New Customer"
+    end
+
+    test "create_or_update_by_email/3 returns an :error tuple if email is nil", %{
+      account: account
+    } do
+      assert {:error, _error} = Customers.create_or_update_by_email(nil, account.id)
+
+      assert {:error, _error} =
+               Customers.create_or_update_by_email(nil, account.id, %{name: "New Customer"})
     end
   end
 end

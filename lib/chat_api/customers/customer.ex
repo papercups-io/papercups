@@ -4,11 +4,44 @@ defmodule ChatApi.Customers.Customer do
 
   alias ChatApi.{
     Accounts.Account,
+    Companies.Company,
     Conversations.Conversation,
     Messages.Message,
     Notes.Note,
     Tags.CustomerTag
   }
+
+  @type t :: %__MODULE__{
+          first_seen: any(),
+          last_seen: any(),
+          email: String.t() | nil,
+          name: String.t() | nil,
+          phone: String.t() | nil,
+          external_id: String.t() | nil,
+          # Browser metadata
+          browser: String.t() | nil,
+          browser_version: String.t() | nil,
+          browser_language: String.t() | nil,
+          os: String.t() | nil,
+          ip: String.t() | nil,
+          last_seen_at: any(),
+          current_url: String.t() | nil,
+          host: String.t() | nil,
+          pathname: String.t() | nil,
+          screen_height: integer() | nil,
+          screen_width: integer() | nil,
+          lib: String.t() | nil,
+          time_zone: String.t() | nil,
+          metadata: any(),
+          # Relations
+          account_id: any(),
+          account: any(),
+          company_id: any(),
+          company: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -42,6 +75,7 @@ defmodule ChatApi.Customers.Customer do
     has_many(:conversations, Conversation)
     has_many(:notes, Note)
     belongs_to(:account, Account)
+    belongs_to(:company, Company)
 
     has_many(:customer_tags, CustomerTag)
     has_many(:tags, through: [:customer_tags, :tag])
@@ -57,6 +91,7 @@ defmodule ChatApi.Customers.Customer do
       :first_seen,
       :last_seen,
       :account_id,
+      :company_id,
       :email,
       :name,
       :phone,
@@ -77,6 +112,7 @@ defmodule ChatApi.Customers.Customer do
     ])
     |> validate_required([:first_seen, :last_seen, :account_id])
     |> foreign_key_constraint(:account_id)
+    |> foreign_key_constraint(:company_id)
   end
 
   def metadata_changeset(customer, attrs) do

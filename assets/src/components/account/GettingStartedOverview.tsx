@@ -70,25 +70,27 @@ class GettingStartedOverview extends React.Component<Props, State> {
     400
   );
 
-  handleChangeTitle = (e: any) => {
+  handleChangeTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({title: e.target.value}, this.debouncedUpdateWidgetSettings);
   };
 
-  handleChangeSubtitle = (e: any) => {
+  handleChangeSubtitle = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState(
       {subtitle: e.target.value},
       this.debouncedUpdateWidgetSettings
     );
   };
 
-  handleChangeGreeting = (e: any) => {
+  handleChangeGreeting = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState(
       {greeting: e.target.value},
       this.debouncedUpdateWidgetSettings
     );
   };
 
-  handleChangeNewMessagePlaceholder = (e: any) => {
+  handleChangeNewMessagePlaceholder = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     this.setState(
       {newMessagePlaceholder: e.target.value},
       this.debouncedUpdateWidgetSettings

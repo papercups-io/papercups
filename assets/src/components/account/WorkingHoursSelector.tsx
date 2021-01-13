@@ -67,7 +67,7 @@ const filterSelectOption = (input: string, option: any) => {
 };
 
 type Props = {
-  timezone: string | null;
+  timezone?: string | null;
   workingHours: Array<WorkingHours>;
   onCancel?: () => void;
   onSave: (data: {

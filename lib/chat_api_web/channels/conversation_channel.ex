@@ -5,12 +5,8 @@ defmodule ChatApiWeb.ConversationChannel do
   alias ChatApi.{Messages, Conversations}
 
   @impl true
-  def join("conversation:lobby", payload, socket) do
-    if authorized?(payload) do
-      {:ok, socket}
-    else
-      {:error, %{reason: "unauthorized"}}
-    end
+  def join("conversation:lobby", _payload, socket) do
+    {:ok, socket}
   end
 
   def join("conversation:lobby:" <> customer_id, _params, socket) do
@@ -73,15 +69,11 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
-  # Channels can be used in a request/response fashion
-  # by sending replies to requests from the client
   @impl true
   def handle_in("ping", payload, socket) do
     {:reply, {:ok, payload}, socket}
   end
 
-  # It is also common to receive messages from the client and
-  # broadcast to everyone in the current topic (conversation:lobby).
   def handle_in("shout", payload, socket) do
     with %{conversation: conversation} <- socket.assigns,
          %{id: conversation_id, account_id: account_id} <- conversation,
@@ -129,16 +121,14 @@ defmodule ChatApiWeb.ConversationChannel do
 
     message
     |> Messages.Notification.notify(:slack)
-    |> Messages.Notification.notify(:slack_support_threads)
+    # TODO: check if :slack_support_channel and :slack_company_channel are relevant
+    |> Messages.Notification.notify(:slack_support_channel)
+    |> Messages.Notification.notify(:slack_company_channel)
     |> Messages.Notification.notify(:new_message_email)
     |> Messages.Notification.notify(:webhooks)
   end
 
   # Add authorization logic here as required.
-  defp authorized?(_payload) do
-    true
-  end
-
   defp authorized?(_payload, conversation_id) do
     case Conversations.get_conversation(conversation_id) do
       %Conversations.Conversation{} -> true

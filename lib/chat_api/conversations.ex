@@ -8,6 +8,7 @@ defmodule ChatApi.Conversations do
 
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
 
@@ -74,6 +75,11 @@ defmodule ChatApi.Conversations do
   @spec get_conversation(binary()) :: Conversation.t() | nil
   def get_conversation(id) do
     Conversation |> Repo.get(id)
+  end
+
+  @spec get_conversation_with(binary(), atom() | list()) :: Conversation.t()
+  def get_conversation_with(id, preloaded) do
+    Conversation |> Repo.get(id) |> Repo.preload(preloaded)
   end
 
   @spec get_conversation_with!(binary(), atom() | list()) :: Conversation.t()

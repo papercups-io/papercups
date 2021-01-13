@@ -87,25 +87,25 @@ class UserProfile extends React.Component<Props, State> {
     }
   };
 
-  handleChangeFullName = (e: any) => {
+  handleChangeFullName = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({fullName: e.target.value});
   };
 
-  handleChangeDisplayName = (e: any) => {
+  handleChangeDisplayName = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({displayName: e.target.value});
   };
 
-  handleChangeProfilePhotoUrl = (e: any) => {
+  handleChangeProfilePhotoUrl = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({profilePhotoUrl: e.target.value});
   };
 
-  handleCancel = () => {
+  handleCancel = async () => {
     return this.fetchLatestProfile().then(() =>
       this.setState({isEditing: false})
     );
   };
 
-  handleUpdate = () => {
+  handleUpdate = async () => {
     const {displayName, fullName, profilePhotoUrl} = this.state;
 
     return API.updateUserProfile({

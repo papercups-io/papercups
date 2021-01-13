@@ -15,8 +15,8 @@ defmodule ChatApi.Reporting do
 
   @type aggregate_by_date() :: %{date: binary(), count: integer()}
   @type aggregate_by_user() :: %{user: %{id: integer(), email: binary()}, count: integer()}
-  @type aggregate_by_weekday() :: %{weekday: binary(), average: float(), total: integer()}
   @type aggregate_by_field() :: %{field: binary(), count: integer()}
+  @type aggregate_average_by_weekday() :: %{day: binary(), average: float(), unit: atom()}
 
   @spec count_messages_by_date(binary(), map()) :: [aggregate_by_date()]
   def count_messages_by_date(account_id, filters \\ %{}) do
@@ -38,6 +38,29 @@ defmodule ChatApi.Reporting do
     |> where(^filter_where(filters))
     |> count_grouped_by_date()
     |> Repo.all()
+  end
+
+  @spec average_seconds_to_first_reply(binary(), map()) :: float()
+  def average_seconds_to_first_reply(account_id, filters \\ %{}) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where([conv], not is_nil(conv.first_replied_at))
+    |> select([:first_replied_at, :inserted_at])
+    |> Repo.all()
+    |> compute_average_replied_time()
+  end
+
+  @spec compute_average_replied_time([Conversation.t()]) :: float()
+  def compute_average_replied_time(conversations) do
+    conversations
+    |> Enum.map(fn conv -> Time.diff(conv.first_replied_at, conv.inserted_at) end)
+    |> average()
+  end
+
+  @spec average([integer()]) :: float()
+  def average(list) do
+    Enum.sum(list) / max(length(list), 1)
   end
 
   @spec count_conversations_by_date(binary(), binary(), binary()) :: [aggregate_by_date()]
@@ -88,7 +111,7 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec count_messages_by_weekday(binary(), map()) :: [aggregate_by_weekday()]
+  @spec count_messages_by_weekday(binary(), map()) :: [aggregate_average_by_weekday()]
   def count_messages_by_weekday(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
@@ -101,6 +124,20 @@ defmodule ChatApi.Reporting do
     |> compute_weekday_aggregates()
   end
 
+  @spec first_response_time_by_weekday(binary(), map()) :: [aggregate_average_by_weekday()]
+  def first_response_time_by_weekday(account_id, filters \\ %{}) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where([conv], not is_nil(conv.first_replied_at))
+    |> average_grouped_by_date()
+    |> select_merge([m], %{day: fragment("to_char(date(?), 'Day')", m.inserted_at)})
+    |> Repo.all()
+    |> Enum.group_by(&String.trim(&1.day))
+    |> compute_average_weekday_aggregates()
+  end
+
+  @spec count_grouped_by_date(Ecto.Query.t(), atom()) :: Ecto.Query.t()
   defp count_grouped_by_date(query, field \\ :inserted_at) do
     query
     |> group_by([r], fragment("date(?)", field(r, ^field)))
@@ -108,6 +145,22 @@ defmodule ChatApi.Reporting do
     |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
   end
 
+  # TODO: some duplication here with group by date might be good to refactor
+  # TODO: clean this up (see comment about `avg` not doing anything below)
+  @spec average_grouped_by_date(Ecto.Query.t(), atom()) :: Ecto.Query.t()
+  defp average_grouped_by_date(query, field \\ :inserted_at) do
+    query
+    |> group_by([r], fragment("date(?)", field(r, ^field)))
+    |> select([r], %{
+      date: fragment("date(?)", field(r, ^field)),
+      count: count(r.id),
+      # avg doesn't do anything but raises a grouping_error when I remove it...
+      response_time: fragment("extract(epoch FROM ?)", avg(r.first_replied_at - r.inserted_at))
+    })
+    |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
+  end
+
+  @spec compute_weekday_aggregates(map()) :: [map()]
   defp compute_weekday_aggregates(grouped) do
     Enum.map(weekdays(), fn weekday ->
       records = Map.get(grouped, weekday, [])
@@ -117,6 +170,20 @@ defmodule ChatApi.Reporting do
         day: weekday,
         average: total / max(length(records), 1),
         total: total
+      }
+    end)
+  end
+
+  @spec compute_average_weekday_aggregates(map()) :: [aggregate_average_by_weekday()]
+  defp compute_average_weekday_aggregates(grouped) do
+    Enum.map(weekdays(), fn weekday ->
+      records = Map.get(grouped, weekday, [])
+      total = Enum.reduce(records, 0, fn x, acc -> x.response_time + acc end)
+
+      %{
+        day: weekday,
+        average: total / max(length(records), 1),
+        unit: :seconds
       }
     end)
   end

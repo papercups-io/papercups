@@ -1,6 +1,8 @@
 defmodule ChatApiWeb.CustomerController do
   use ChatApiWeb, :controller
 
+  require Logger
+
   alias ChatApi.{Accounts, Customers}
   alias ChatApi.Customers.Customer
 
@@ -9,7 +11,7 @@ defmodule ChatApiWeb.CustomerController do
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
   def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      customers = Customers.list_customers(account_id)
+      customers = Customers.list_customers(account_id, params)
       render(conn, "index.#{resp_format(params)}", customers: customers)
     end
   end
@@ -39,12 +41,24 @@ defmodule ChatApiWeb.CustomerController do
   end
 
   @spec identify(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def identify(conn, %{
-        "external_id" => external_id,
-        "account_id" => account_id
-      }) do
+  def identify(
+        conn,
+        %{
+          "external_id" => external_id,
+          "account_id" => account_id
+        } = params
+      ) do
+    # TODO: support whitelisting urls for an account so we only enable this and
+    # other chat widget-related APIs for incoming requests from supported urls?
     if Accounts.exists?(account_id) do
-      case Customers.find_by_external_id(external_id, account_id) do
+      # TODO: make "host" a required param? (but would have to ignore on mobile...)
+      filters =
+        params
+        |> Map.take(["email", "host"])
+        |> Enum.reject(fn {_k, v} -> blank?(v) end)
+        |> Map.new()
+
+      case Customers.find_by_external_id(external_id, account_id, filters) do
         %{id: customer_id} ->
           json(conn, %{
             data: %{
@@ -135,6 +149,11 @@ defmodule ChatApiWeb.CustomerController do
   ###
   # Helpers
   ###
+
+  @spec blank?(binary() | nil) :: boolean()
+  defp blank?(nil), do: true
+  defp blank?(""), do: true
+  defp blank?(_), do: false
 
   @spec resp_format(map()) :: String.t()
   defp resp_format(%{"format" => "csv"}), do: "csv"

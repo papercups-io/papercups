@@ -11,7 +11,8 @@ const ConversationFooter = ({
 }) => {
   const [message, setMessage] = React.useState('');
 
-  const handleMessageChange = (e: any) => setMessage(e.target.value);
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
+    setMessage(e.target.value);
 
   const handleKeyDown = (e: any) => {
     const {key, metaKey} = e;

@@ -6,6 +6,20 @@ defmodule ChatApi.BrowserSessions.BrowserSession do
   alias ChatApi.BrowserReplayEvents.BrowserReplayEvent
   alias ChatApi.Customers.Customer
 
+  @type t :: %__MODULE__{
+          started_at: any(),
+          finished_at: any(),
+          metadata: any(),
+          # Relations
+          account_id: any(),
+          account: any(),
+          customer_id: any(),
+          customer: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "browser_sessions" do

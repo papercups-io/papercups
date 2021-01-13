@@ -3,7 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 import {colors, Layout, notification, Sider, Text, Title} from '../common';
 import {sleep} from '../../utils';
-import {Conversation, Message, User} from '../../types';
+import {Account, Conversation, Message, User} from '../../types';
 import ConversationHeader from './ConversationHeader';
 import ConversationItem from './ConversationItem';
 import ConversationClosing from './ConversationClosing';
@@ -14,8 +14,8 @@ import {getColorByUuid} from './support';
 
 type Props = {
   title?: string;
-  account: any;
-  currentUser: User;
+  account: Account | null;
+  currentUser: User | null;
   currentlyOnline?: any;
   loading: boolean;
   showGetStarted: boolean;

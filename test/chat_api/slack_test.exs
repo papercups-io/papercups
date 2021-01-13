@@ -19,6 +19,89 @@ defmodule ChatApi.SlackTest do
     end
   end
 
+  @slack_user_id "U123TEST"
+  @slack_channel_id "C123TEST"
+
+  describe "Slack.Notifications" do
+    setup do
+      account = insert(:account)
+      auth = insert(:slack_authorization, account: account, type: "support")
+      customer = insert(:customer, account: account)
+      conversation = insert(:conversation, account: account, customer: customer)
+
+      thread =
+        insert(:slack_conversation_thread,
+          account: account,
+          conversation: conversation,
+          slack_channel: @slack_channel_id
+        )
+
+      {:ok,
+       conversation: conversation,
+       auth: auth,
+       account: account,
+       customer: customer,
+       thread: thread}
+    end
+
+    test "Notifications.notify_slack_channel/2 sends a thread reply notification", %{
+      account: account,
+      auth: auth,
+      conversation: conversation,
+      thread: thread
+    } do
+      user = insert(:user, account: account, email: "user@user.com")
+
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          user: user,
+          customer: nil
+        )
+
+      with_mock ChatApi.Slack.Client,
+        send_message: fn msg, _ ->
+          {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
+        end do
+        assert :ok = Slack.Notifications.notify_slack_channel(@slack_channel_id, message)
+
+        assert_called(Slack.Client.send_message(:_, :_))
+
+        expected_text = "*#{user.email}*: #{message.body}"
+
+        assert_called(
+          Slack.Client.send_message(
+            %{
+              "text" => expected_text,
+              "channel" => thread.slack_channel,
+              "thread_ts" => thread.slack_thread_ts
+            },
+            auth.access_token
+          )
+        )
+      end
+    end
+
+    test "Notifications.notify_slack_channel/2 does not send a thread reply if channel is not found",
+         %{
+           account: account,
+           customer: customer,
+           conversation: conversation
+         } do
+      message = insert(:message, account: account, conversation: conversation, customer: customer)
+
+      with_mock ChatApi.Slack.Client,
+        send_message: fn msg, _ ->
+          {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
+        end do
+        assert :ok = Slack.Notifications.notify_slack_channel("C123UNKNOWN", message)
+
+        assert_not_called(Slack.Client.send_message(:_, :_))
+      end
+    end
+  end
+
   describe "Slack.Helpers" do
     setup do
       account = insert(:account)
@@ -121,21 +204,37 @@ defmodule ChatApi.SlackTest do
                })
     end
 
-    test "Helpers.get_message_payload/2 returns payload for slack reply",
-         %{thread: thread} do
+    test "Helpers.get_message_payload/2 returns payload for slack reply", %{thread: thread} do
       text = "Hello world"
       ts = thread.slack_thread_ts
       channel = thread.slack_channel
+      customer_message = insert(:message, user: nil)
+      user_message = insert(:message, customer: nil)
 
       assert %{
                "channel" => ^channel,
                "text" => ^text,
-               "thread_ts" => ^ts
+               "thread_ts" => ^ts,
+               "reply_broadcast" => false
              } =
                Slack.Helpers.get_message_payload(text, %{
                  channel: channel,
                  thread: thread,
-                 customer: nil
+                 customer: nil,
+                 message: customer_message
+               })
+
+      assert %{
+               "channel" => ^channel,
+               "text" => ^text,
+               "thread_ts" => ^ts,
+               "reply_broadcast" => false
+             } =
+               Slack.Helpers.get_message_payload(text, %{
+                 channel: channel,
+                 thread: thread,
+                 customer: nil,
+                 message: user_message
                })
     end
 
@@ -254,41 +353,39 @@ defmodule ChatApi.SlackTest do
       assert :agent = Slack.Helpers.get_message_type(user_message)
     end
 
-    test "Helpers.format_sender_id!/2 gets an existing user_id", %{account: account} do
+    test "Helpers.format_sender_id!/3 gets an existing user_id", %{account: account} do
       authorization = insert(:slack_authorization, account: account)
       _customer = insert(:customer, account: account, email: "customer@customer.com")
       user = insert(:user, account: account, email: "user@user.com")
-      slack_user_id = "U123TEST"
 
       slack_user = %{
         "real_name" => "Test User",
         "tz" => "America/New_York",
-        "profile" => %{"email" => "user@user.com"}
+        "profile" => %{"email" => "user@user.com", "real_name" => "Test User"}
       }
 
       with_mock ChatApi.Slack.Client,
         retrieve_user_info: fn _, _ ->
           {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
         end do
-        refute Slack.Helpers.find_matching_customer(authorization, slack_user_id)
-        assert %{id: user_id} = Slack.Helpers.find_matching_user(authorization, slack_user_id)
+        refute Slack.Helpers.find_matching_customer(authorization, @slack_user_id)
+        assert %{id: user_id} = Slack.Helpers.find_matching_user(authorization, @slack_user_id)
         assert user_id == user.id
 
         assert %{"user_id" => ^user_id} =
-                 Slack.Helpers.format_sender_id!(authorization, slack_user_id)
+                 Slack.Helpers.format_sender_id!(authorization, @slack_user_id, @slack_channel_id)
       end
     end
 
-    test "Helpers.format_sender_id!/2 gets an existing customer_id", %{account: account} do
+    test "Helpers.format_sender_id!/3 gets an existing customer_id", %{account: account} do
       authorization = insert(:slack_authorization, account: account)
       customer = insert(:customer, account: account, email: "customer@customer.com")
       _user = insert(:user, account: account, email: "user@user.com")
-      slack_user_id = "U123TEST"
 
       slack_user = %{
         "real_name" => "Test Customer",
         "tz" => "America/New_York",
-        "profile" => %{"email" => "customer@customer.com"}
+        "profile" => %{"email" => "customer@customer.com", "real_name" => "Test Customer"}
       }
 
       with_mock ChatApi.Slack.Client,
@@ -296,43 +393,96 @@ defmodule ChatApi.SlackTest do
           {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
         end do
         assert %{id: customer_id} =
-                 Slack.Helpers.find_matching_customer(authorization, slack_user_id)
+                 Slack.Helpers.find_matching_customer(authorization, @slack_user_id)
 
-        refute Slack.Helpers.find_matching_user(authorization, slack_user_id)
+        refute Slack.Helpers.find_matching_user(authorization, @slack_user_id)
         assert customer_id == customer.id
 
         assert %{"customer_id" => ^customer_id} =
-                 Slack.Helpers.format_sender_id!(authorization, slack_user_id)
+                 Slack.Helpers.format_sender_id!(authorization, @slack_user_id, @slack_channel_id)
       end
     end
 
-    test "Helpers.format_sender_id!/2 creates a new customer_id if necessary", %{account: account} do
+    test "Helpers.format_sender_id!/3 creates a new customer_id if necessary", %{account: account} do
       authorization = insert(:slack_authorization, account: account)
       _customer = insert(:customer, account: account, email: "customer@customer.com")
       _user = insert(:user, account: account, email: "user@user.com")
-      slack_user_id = "U123TEST"
+
+      company =
+        insert(:company,
+          account: account,
+          name: "Slack Test Co",
+          slack_channel_id: @slack_channel_id
+        )
 
       slack_user = %{
         "real_name" => "Test Customer",
         "tz" => "America/New_York",
         # New customer email
-        "profile" => %{"email" => "new@customer.com"}
+        "profile" => %{"email" => "new@customer.com", "real_name" => "Test Customer"}
       }
 
       with_mock ChatApi.Slack.Client,
         retrieve_user_info: fn _, _ ->
           {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
         end do
-        refute Slack.Helpers.find_matching_customer(authorization, slack_user_id)
-        refute Slack.Helpers.find_matching_user(authorization, slack_user_id)
+        refute Slack.Helpers.find_matching_customer(authorization, @slack_user_id)
+        refute Slack.Helpers.find_matching_user(authorization, @slack_user_id)
 
         assert %{"customer_id" => customer_id} =
-                 Slack.Helpers.format_sender_id!(authorization, slack_user_id)
+                 Slack.Helpers.format_sender_id!(authorization, @slack_user_id, @slack_channel_id)
 
         customer = ChatApi.Customers.get_customer!(customer_id)
 
         assert customer.email == "new@customer.com"
         assert customer.name == "Test Customer"
+        assert customer.company_id == company.id
+      end
+    end
+
+    test "Helpers.create_or_update_customer_from_slack_user_id/3 creates or updates the customer",
+         %{account: account} do
+      authorization = insert(:slack_authorization, account: account)
+
+      slack_user = %{
+        "real_name" => "Test Customer",
+        "tz" => "America/New_York",
+        # New customer email
+        "profile" => %{"email" => "new@customer.com", "real_name" => "Test Customer"}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end do
+        {:ok, new_customer} =
+          Slack.Helpers.create_or_update_customer_from_slack_user_id(
+            authorization,
+            @slack_user_id,
+            @slack_channel_id
+          )
+
+        assert new_customer.email == "new@customer.com"
+        assert new_customer.name == "Test Customer"
+
+        company =
+          insert(:company,
+            account: account,
+            name: "Slack Test Co",
+            slack_channel_id: @slack_channel_id
+          )
+
+        {:ok, updated_customer} =
+          Slack.Helpers.create_or_update_customer_from_slack_user_id(
+            authorization,
+            @slack_user_id,
+            @slack_channel_id
+          )
+
+        assert updated_customer.id == new_customer.id
+        assert updated_customer.company_id == company.id
+        assert updated_customer.email == "new@customer.com"
+        assert updated_customer.name == "Test Customer"
       end
     end
   end

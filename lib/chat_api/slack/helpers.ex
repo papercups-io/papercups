@@ -39,18 +39,75 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec find_or_create_customer_from_slack_user_id(any(), binary()) ::
+  @spec find_or_create_customer_from_slack_user_id(any(), binary(), binary()) ::
           {:ok, Customer.t()} | {:error, any()}
-  def find_or_create_customer_from_slack_user_id(authorization, slack_user_id) do
+  def find_or_create_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id) do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
            ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token),
-         %{"real_name" => name, "tz" => time_zone, "profile" => %{"email" => email}} <- user do
-      ChatApi.Customers.find_or_create_by_email(email, account_id, %{
-        name: name,
-        time_zone: time_zone
-      })
+         %{"profile" => %{"email" => email} = profile} <- user do
+      company_attrs =
+        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+          %{id: company_id} -> %{company_id: company_id}
+          _ -> %{}
+        end
+
+      attrs =
+        %{
+          name: Map.get(profile, "real_name"),
+          time_zone: Map.get(user, "tz")
+        }
+        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+        |> Map.new()
+        |> Map.merge(company_attrs)
+
+      ChatApi.Customers.find_or_create_by_email(email, account_id, attrs)
     else
+      # NB: This may occur in test mode, or when the Slack.Client is disabled
+      {:ok, error} ->
+        Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+
+      error ->
+        Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+    end
+  end
+
+  # NB: this is basically the same as `find_or_create_customer_from_slack_user_id` above,
+  # but keeping both with duplicate code for now since we may get rid of one in the near future
+  @spec create_or_update_customer_from_slack_user_id(any(), binary(), binary()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def create_or_update_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id) do
+    with %{access_token: access_token, account_id: account_id} <- authorization,
+         {:ok, %{body: %{"ok" => true, "user" => user}}} <-
+           ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token),
+         %{"profile" => %{"email" => email} = profile} <- user do
+      company_attrs =
+        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+          %{id: company_id} -> %{company_id: company_id}
+          _ -> %{}
+        end
+
+      attrs =
+        %{
+          name: Map.get(profile, "real_name"),
+          time_zone: Map.get(user, "tz")
+        }
+        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+        |> Map.new()
+        |> Map.merge(company_attrs)
+
+      ChatApi.Customers.create_or_update_by_email(email, account_id, attrs)
+    else
+      # NB: This may occur in test mode, or when the Slack.Client is disabled
+      {:ok, error} ->
+        Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+
       error ->
         Logger.error("Error creating customer from Slack user: #{inspect(error)}")
 
@@ -92,9 +149,11 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec format_sender_id!(any(), binary()) :: map()
-  def format_sender_id!(authorization, slack_user_id) do
+  @spec format_sender_id!(any(), binary(), binary()) :: map()
+  def format_sender_id!(authorization, slack_user_id, slack_channel_id) do
     # TODO: what's the best way to handle these nested `case` statements?
+    # TODO: handle updating the customer's company_id if it's not set yet?
+    # TODO: should we check if the slack_user_id is a workspace admin, or something like that?
     case find_matching_user(authorization, slack_user_id) do
       %{id: user_id} ->
         %{"user_id" => user_id}
@@ -105,7 +164,11 @@ defmodule ChatApi.Slack.Helpers do
             %{"customer_id" => customer_id}
 
           _ ->
-            case find_or_create_customer_from_slack_user_id(authorization, slack_user_id) do
+            case find_or_create_customer_from_slack_user_id(
+                   authorization,
+                   slack_user_id,
+                   slack_channel_id
+                 ) do
               {:ok, customer} ->
                 %{"customer_id" => customer.id}
 
@@ -128,6 +191,11 @@ defmodule ChatApi.Slack.Helpers do
         false
     end
   end
+
+  @spec is_private_slack_channel?(binary()) :: boolean()
+  def is_private_slack_channel?("G" <> _rest), do: true
+  def is_private_slack_channel?("C" <> _rest), do: false
+  def is_private_slack_channel?(_), do: false
 
   @spec get_slack_authorization(binary()) ::
           %{access_token: binary(), channel: binary(), channel_id: binary()}
@@ -162,7 +230,8 @@ defmodule ChatApi.Slack.Helpers do
   end
 
   @spec create_new_slack_conversation_thread(binary(), map()) ::
-          {:ok, SlackConversationThreads.t()} | {:error, Ecto.Changeset.t()}
+          {:ok, SlackConversationThreads.SlackConversationThread.t()}
+          | {:error, Ecto.Changeset.t()}
   def create_new_slack_conversation_thread(conversation_id, response) do
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
          primary_user_id <- get_conversation_primary_user_id(conversation) do
@@ -227,6 +296,37 @@ defmodule ChatApi.Slack.Helpers do
   #####################
   # Extractors
   #####################
+
+  @spec extract_slack_message(map()) :: {:ok, map()} | {:error, String.t()}
+  def extract_slack_message(%{body: %{"ok" => true, "messages" => [message | _]}}),
+    do: {:ok, message}
+
+  def extract_slack_message(%{body: %{"ok" => true, "messages" => []}}),
+    do: {:error, "No messages were found"}
+
+  def extract_slack_message(%{body: %{"ok" => false} = body}) do
+    Logger.error("conversations.history returned ok=false: #{inspect(body)}")
+
+    {:error, "conversations.history returned ok=false: #{inspect(body)}"}
+  end
+
+  def extract_slack_message(response),
+    do: {:error, "Invalid response: #{inspect(response)}"}
+
+  @spec extract_slack_channel(map()) :: {:ok, map()} | {:error, String.t()}
+  def extract_slack_channel(%{body: %{"ok" => true, "channel" => channel}}) when is_map(channel),
+    do: {:ok, channel}
+
+  def extract_slack_channel(%{body: %{"ok" => false} = body}) do
+    Logger.error("conversations.info returned ok=false: #{inspect(body)}")
+
+    {:error, "conversations.info returned ok=false: #{inspect(body)}"}
+  end
+
+  def extract_slack_channel(response),
+    do: {:error, "Invalid response: #{inspect(response)}"}
+
+  # TODO: refactor extractors below to return :ok/:error tuples rather than raising?
 
   @spec extract_slack_conversation_thread_info(map()) :: map()
   def extract_slack_conversation_thread_info(%{body: body}) do
@@ -356,16 +456,34 @@ defmodule ChatApi.Slack.Helpers do
   def get_message_payload(text, %{
         channel: channel,
         customer: _customer,
+        message: message,
         thread: %{slack_thread_ts: slack_thread_ts}
       }) do
     %{
       "channel" => channel,
       "text" => text,
-      "thread_ts" => slack_thread_ts
+      "thread_ts" => slack_thread_ts,
+      "reply_broadcast" => reply_broadcast_enabled?(message)
     }
   end
 
   def get_message_payload(text, params) do
     raise "Unrecognized params for Slack payload: #{text} #{inspect(params)}"
   end
+
+  @spec reply_broadcast_enabled?(Message.t()) :: boolean()
+  # We only want to enable this for messages from customers
+  defp reply_broadcast_enabled?(%Message{
+         account_id: account_id,
+         customer: %Customer{} = _customer
+       }) do
+    # TODO: figure out a better way to enable feature flags for certain accounts,
+    # or just make this configurable in account settings (or something like that)
+    case System.get_env("PAPERCUPS_FEATURE_FLAGGED_ACCOUNTS") do
+      ids when is_binary(ids) -> ids |> String.split(" ") |> Enum.member?(account_id)
+      _ -> false
+    end
+  end
+
+  defp reply_broadcast_enabled?(_message), do: false
 end

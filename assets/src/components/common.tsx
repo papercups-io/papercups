@@ -16,6 +16,7 @@ import Radio from 'antd/lib/radio';
 import Result from 'antd/lib/result';
 import Select from 'antd/lib/select';
 import Spin from 'antd/lib/spin';
+import Statistic from 'antd/lib/statistic';
 import Table from 'antd/lib/table';
 import Tag from 'antd/lib/tag';
 import Tooltip from 'antd/lib/tooltip';
@@ -53,6 +54,17 @@ export const colors = {
   blue: blue, // expose all blues
   gray: grey, // expose all grays
   text: 'rgba(0, 0, 0, 0.65)',
+  note: '#feedaf',
+};
+
+export const shadows = {
+  primary:
+    '0 0 #0000, 0 0 #0000, 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+  small: '0 0 #0000, 0 0 #0000, 0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+  medium:
+    '0 0 #0000, 0 0 #0000, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+  large:
+    '0 0 #0000, 0 0 #0000, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
 };
 
 export const TextArea = Input.TextArea;
@@ -60,7 +72,7 @@ export const TextArea = Input.TextArea;
 /* Whitelist node types that we allow when we render markdown.
  * Reference https://github.com/rexxars/react-markdown#node-types
  */
-export const allowedNodeTypes: any[] = [
+export const allowedNodeTypes: Array<any> = [
   'root',
   'text',
   'break',
@@ -109,6 +121,7 @@ export {
   Result,
   Select,
   Spin,
+  Statistic,
   Table,
   Tag,
   Tooltip,

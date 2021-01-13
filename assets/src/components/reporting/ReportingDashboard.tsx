@@ -7,8 +7,10 @@ import MessagesPerDayChart from './MessagesPerDayChart';
 import MessagesPerUserChart from './MessagesPerUserChart';
 import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
 import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
+import FirstResponseTimeByWeekChart from './FirstResponseTimeByWeekChart';
 import CustomerBreakdownChart from './CustomerBreakdownChart';
 import {ReportingDatum} from './support';
+import {formatSecondsToHoursAndMinutes} from '../../utils';
 import logger from '../../logger';
 
 type DateCount = {
@@ -34,6 +36,11 @@ interface CustomerBreakdownCount {
   count: number;
 }
 
+type ResponseTimeByWeekDay = {
+  day: string;
+  average: number;
+};
+
 type Props = {};
 type State = {
   fromDate: dayjs.Dayjs;
@@ -47,6 +54,8 @@ type State = {
   customerBreakdownByBrowser: Array<CustomerBreakdownCount>;
   customerBreakdownByOs: Array<CustomerBreakdownCount>;
   customerBreakdownByTimezone: Array<CustomerBreakdownCount>;
+  averageTimeToFirstRespond: number;
+  firstResponseTimeByWeekday: Array<ResponseTimeByWeekDay>;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
@@ -62,6 +71,8 @@ class ReportingDashboard extends React.Component<Props, State> {
     customerBreakdownByBrowser: [],
     customerBreakdownByOs: [],
     customerBreakdownByTimezone: [],
+    averageTimeToFirstRespond: 0,
+    firstResponseTimeByWeekday: [],
   };
 
   componentDidMount() {
@@ -89,6 +100,8 @@ class ReportingDashboard extends React.Component<Props, State> {
       customerBreakdownByBrowser: data?.customer_breakdown_by_browser || [],
       customerBreakdownByOs: data?.customer_breakdown_by_os || [],
       customerBreakdownByTimezone: data?.customer_breakdown_by_time_zone || [],
+      averageTimeToFirstRespond: data?.average_time_to_first_respond || 0,
+      firstResponseTimeByWeekday: data?.first_response_time_by_weekday || [],
     });
   };
 
@@ -102,6 +115,7 @@ class ReportingDashboard extends React.Component<Props, State> {
   };
 
   formatCustomerBreakdownStats = (stats: Array<any>, field: string) => {
+    const MAX_NUM_SHOWN = 5;
     const formatted = stats
       .map((data) => ({
         name: data[field] || 'Unknown',
@@ -109,12 +123,12 @@ class ReportingDashboard extends React.Component<Props, State> {
       }))
       .sort((a, b) => b.value - a.value);
 
-    if (formatted.length <= 10) {
+    if (formatted.length <= MAX_NUM_SHOWN) {
       return formatted;
     }
 
-    const top = formatted.slice(0, 9);
-    const other = formatted.slice(9).reduce(
+    const top = formatted.slice(0, MAX_NUM_SHOWN - 1);
+    const other = formatted.slice(MAX_NUM_SHOWN - 1).reduce(
       (acc, data) => {
         return {...acc, value: acc.value + (data.value || 0)};
       },
@@ -171,6 +185,16 @@ class ReportingDashboard extends React.Component<Props, State> {
     });
   };
 
+  formatResponseTimeByWeekDay = (stats: Array<ResponseTimeByWeekDay>) => {
+    return stats.map(({average, day}) => {
+      // use minutes instead of seconds when rendering the chart
+      return {
+        average: Math.round((average / 60) * 100) / 100,
+        day: day.slice(0, 3),
+      };
+    });
+  };
+
   handleDateRangeUpdated = (range: any) => {
     const [fromDate, toDate] = range;
 
@@ -183,6 +207,14 @@ class ReportingDashboard extends React.Component<Props, State> {
     );
   };
 
+  formatResponseTimeStats = (responseTime: number) => {
+    const {hours, minutes, seconds} = formatSecondsToHoursAndMinutes(
+      responseTime
+    );
+
+    return `${hours} h ${minutes} m ${seconds} s`;
+  };
+
   render() {
     const {
       fromDate,
@@ -190,6 +222,8 @@ class ReportingDashboard extends React.Component<Props, State> {
       customerBreakdownByBrowser = [],
       customerBreakdownByOs = [],
       customerBreakdownByTimezone = [],
+      averageTimeToFirstRespond = 0,
+      firstResponseTimeByWeekday = [],
     } = this.state;
     const dailyStats = this.formatDailyStats();
     const userStats = this.formatUserStats();
@@ -205,6 +239,14 @@ class ReportingDashboard extends React.Component<Props, State> {
     const timezoneStats = this.formatCustomerBreakdownStats(
       customerBreakdownByTimezone,
       'time_zone'
+    );
+
+    const responseTimeStats = this.formatResponseTimeStats(
+      averageTimeToFirstRespond
+    );
+
+    const responseTimeByWeekDay = this.formatResponseTimeByWeekDay(
+      firstResponseTimeByWeekday
     );
 
     return (
@@ -230,6 +272,22 @@ class ReportingDashboard extends React.Component<Props, State> {
         </Flex>
 
         <Box>
+          <Flex mx={-3} mb={4}>
+            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+              <Box mb={2}>
+                <Text strong>Response Metrics</Text>
+              </Box>
+              {/* TODO: use antd <Statistic> instead? */}
+              <Box>
+                <Box mb={2}>
+                  <Text>Average first response time: </Text>
+                  <Text strong>{responseTimeStats}</Text>
+                </Box>
+              </Box>
+              <FirstResponseTimeByWeekChart data={responseTimeByWeekDay} />
+            </Box>
+          </Flex>
+          <Divider />
           <Flex mx={-3} mb={4}>
             <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
               <Box mb={2}>

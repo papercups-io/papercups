@@ -8,7 +8,7 @@ import {Conversation, Message, User} from '../../types';
 
 type Props = {
   conversation: Conversation;
-  currentUser: User;
+  currentUser: User | null;
   messages: Array<Message>;
   onSendMessage: (
     message: string,

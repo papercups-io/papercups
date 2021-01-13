@@ -5,10 +5,10 @@ import request from 'superagent';
 import {
   colors,
   notification,
+  Alert,
   Button,
   Divider,
   Input,
-  Paragraph,
   Text,
   TextArea,
   Title,
@@ -114,11 +114,11 @@ class Demo extends React.Component<Props, State> {
     };
   };
 
-  handleChangeQuestion = (e: any) => {
+  handleChangeQuestion = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({newQuestion: e.target.value});
   };
 
-  handleChangeAnswer = (e: any) => {
+  handleChangeAnswer = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({newAnswer: e.target.value});
   };
 
@@ -185,17 +185,16 @@ class Demo extends React.Component<Props, State> {
       >
         <Box mb={4}>
           <Title>Papercups Bot Demo</Title>
-          <Paragraph>
-            Hello! Try asking a question in the chat window.{' '}
-            <span role="img" aria-label=":)">
-              🤖
-            </span>
-          </Paragraph>
-          <Paragraph>
-            The bot will try to respond to your questions in the chat based on
-            the training data below. You can add new questions/answers as well
-            if you'd like to try it out!
-          </Paragraph>
+          <Alert
+            message={
+              <Text>
+                This bot is temporarily disabled, click{' '}
+                <Link to="/demo">here</Link> to view our standard demo.
+              </Text>
+            }
+            type="error"
+            showIcon
+          />
         </Box>
 
         <Divider />

@@ -110,10 +110,18 @@ defmodule ChatApi.ConversationsTest do
                Conversations.create_conversation(params_with_assocs(:conversation))
 
       assert conversation.status == "open"
+      assert conversation.source == "chat"
     end
 
     test "create_conversation/1 with invalid data returns error changeset" do
       assert {:error, %Ecto.Changeset{}} = Conversations.create_conversation(@invalid_attrs)
+    end
+
+    test "create_conversation/1 with invalid source returns error changeset" do
+      assert {:error, %Ecto.Changeset{errors: errors}} =
+               Conversations.create_conversation(%{status: "closed", source: "unknown"})
+
+      assert {"is invalid", _} = errors[:source]
     end
 
     test "update_conversation/2 with valid data updates the conversation",
@@ -284,6 +292,20 @@ defmodule ChatApi.ConversationsTest do
 
       conv2 = Conversations.get_conversation!(conv2.id)
       refute conv2.archived_at
+    end
+
+    test "update_conversation/2 sets the closed_at field based on updated status", %{
+      conversation: conversation
+    } do
+      assert {:ok, %Conversation{} = closed_conversation} =
+               Conversations.update_conversation(conversation, @update_attrs)
+
+      assert %DateTime{} = closed_conversation.closed_at
+
+      assert {:ok, %Conversation{} = open_conversation} =
+               Conversations.update_conversation(conversation, %{status: "open"})
+
+      assert open_conversation.closed_at == nil
     end
 
     defp days_ago(days) do

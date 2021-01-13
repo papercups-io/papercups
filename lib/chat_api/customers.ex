@@ -9,9 +9,31 @@ defmodule ChatApi.Customers do
   alias ChatApi.Customers.Customer
   alias ChatApi.Tags.CustomerTag
 
-  @spec list_customers(binary()) :: [Customer.t()]
-  def list_customers(account_id) do
-    Customer |> where(account_id: ^account_id) |> Repo.all()
+  @spec list_customers(binary(), map()) :: [Customer.t()]
+  def list_customers(account_id, filters \\ %{}) do
+    Customer
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> Repo.all()
+  end
+
+  @spec list_customers(binary(), map(), map()) :: Scrivener.Page.t()
+  @doc """
+  Returns a `%Scrivener.Page{}` with paginated customers.
+
+  ## Examples
+      iex> list_customers(account_id, %{}, %{})
+      %Scrivener.Page{entries: [%Customer{},...], page_size: 50}
+
+      iex> list_customers(account_id, %{"company_id" => "xxxxx"}, %{page_size: 10, page: 2})
+      %Scrivener.Page{entries: [%Customer{},...], page_size: 10, page: 2}
+
+  """
+  def list_customers(account_id, filters, pagination_params) do
+    Customer
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> Repo.paginate(pagination_params)
   end
 
   @spec get_customer!(binary()) :: Customer.t() | nil
@@ -19,18 +41,21 @@ defmodule ChatApi.Customers do
     Customer |> Repo.get!(id) |> Repo.preload(:tags)
   end
 
-  @spec find_by_external_id(binary(), binary()) :: Customer.t() | nil
-  def find_by_external_id(external_id, account_id) when is_binary(external_id) do
+  @spec find_by_external_id(binary(), binary(), map()) :: Customer.t() | nil
+  def find_by_external_id(external_id, account_id, filters \\ %{})
+
+  def find_by_external_id(external_id, account_id, filters) when is_binary(external_id) do
     Customer
     |> where(account_id: ^account_id, external_id: ^external_id)
+    |> where(^filter_where(filters))
     |> order_by(desc: :updated_at)
     |> first()
     |> Repo.one()
   end
 
-  @spec find_by_external_id(integer(), binary()) :: Customer.t() | nil
-  def find_by_external_id(external_id, account_id) when is_integer(external_id) do
-    external_id |> to_string() |> find_by_external_id(account_id)
+  @spec find_by_external_id(integer(), binary(), map()) :: Customer.t() | nil
+  def find_by_external_id(external_id, account_id, filters) when is_integer(external_id) do
+    external_id |> to_string() |> find_by_external_id(account_id, filters)
   end
 
   @spec find_by_email(binary() | nil, binary()) :: Customer.t() | nil
@@ -50,7 +75,7 @@ defmodule ChatApi.Customers do
   def find_or_create_by_email(nil, _account_id, _attrs), do: {:error, :email_required}
 
   def find_or_create_by_email(email, account_id, attrs) do
-    case ChatApi.Customers.find_by_email(email, account_id) do
+    case find_by_email(email, account_id) do
       nil ->
         %{
           # Defaults
@@ -62,10 +87,35 @@ defmodule ChatApi.Customers do
         }
         |> Map.merge(attrs)
         |> Map.merge(%{email: email, account_id: account_id})
-        |> ChatApi.Customers.create_customer()
+        |> create_customer()
 
       customer ->
         {:ok, customer}
+    end
+  end
+
+  @spec create_or_update_by_email(binary() | nil, binary(), map()) ::
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()} | {:error, atom()}
+  def create_or_update_by_email(email, account_id, attrs \\ %{})
+  def create_or_update_by_email(nil, _account_id, _attrs), do: {:error, :email_required}
+
+  def create_or_update_by_email(email, account_id, attrs) do
+    case find_by_email(email, account_id) do
+      nil ->
+        %{
+          # Defaults
+          first_seen: DateTime.utc_now(),
+          last_seen: DateTime.utc_now(),
+          # TODO: last_seen is stored as a date, while last_seen_at is stored as
+          # a datetime -- we should opt for datetime values whenever possible
+          last_seen_at: DateTime.utc_now()
+        }
+        |> Map.merge(attrs)
+        |> Map.merge(%{email: email, account_id: account_id})
+        |> create_customer()
+
+      customer ->
+        update_customer(customer, attrs)
     end
   end
 
@@ -198,5 +248,27 @@ defmodule ChatApi.Customers do
     customer
     |> get_tag(tag_id)
     |> Repo.delete()
+  end
+
+  # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
+  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
+  def filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"company_id", value}, dynamic ->
+        dynamic([r], ^dynamic and r.company_id == ^value)
+
+      {"name", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.name, ^value))
+
+      {"email", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.email, ^value))
+
+      {"host", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.host, ^value))
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end
