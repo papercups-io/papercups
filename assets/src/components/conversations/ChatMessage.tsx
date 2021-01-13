@@ -98,7 +98,14 @@ const ChatMessage = ({
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
-  const {body, sent_at, created_at, user, seen_at} = message;
+  const {
+    body,
+    sent_at,
+    created_at,
+    user,
+    seen_at,
+    private: isPrivate,
+  } = message;
   const isAgent = !!user;
   const tooltip = getSenderIdentifier(customer, user);
   const sentAt = dayjs.utc(sent_at || created_at);
@@ -113,12 +120,12 @@ const ChatMessage = ({
       <Box pr={0} pl={4} pb={isLastInGroup ? 3 : 2}>
         <Flex sx={{justifyContent: 'flex-end'}}>
           <ChatMessageBox
-            className="Text--white"
+            className={isPrivate ? '' : 'Text--white'}
             content={body}
             sx={{
               px: 3,
               py: 2,
-              background: colors.primary,
+              background: isPrivate ? colors.note : colors.primary,
             }}
           />
         </Flex>
@@ -149,7 +156,7 @@ const ChatMessage = ({
           sx={{
             px: 3,
             py: 2,
-            background: 'rgb(245, 245, 245)',
+            background: isPrivate ? colors.note : 'rgb(245, 245, 245)',
             maxWidth: '80%',
           }}
         />

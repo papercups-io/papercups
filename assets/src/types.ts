@@ -53,6 +53,8 @@ export type Company = {
 
 export type Message = {
   body: string;
+  type?: 'reply' | 'note';
+  private?: boolean;
   created_at: string;
   sent_at?: string;
   seen_at?: string;
