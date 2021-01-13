@@ -54,6 +54,7 @@ export const colors = {
   blue: blue, // expose all blues
   gray: grey, // expose all grays
   text: 'rgba(0, 0, 0, 0.65)',
+  secondary: 'rgba(0, 0, 0, 0.45)',
   note: '#feedaf',
 };
 

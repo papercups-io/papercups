@@ -98,6 +98,27 @@ defmodule ChatApi.ConversationsTest do
       assert Enum.all?(results, fn conv -> conv.status == "open" end)
     end
 
+    test "find_by_customer/2 does not include private messages in the conversation results",
+         %{account: account, customer: customer, conversation: conversation} do
+      user = insert(:user, account: account)
+      reply = insert(:message, account: account, conversation: conversation, user: user, body: "This should be visible!")
+
+      _private =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          user: user,
+          private: true,
+          type: "note",
+          body: "This should be hidden!"
+        )
+
+      assert [conversation] = Conversations.find_by_customer(customer.id, account.id)
+      assert [message] = conversation.messages
+      assert message.body == reply.body
+      refute message.private
+    end
+
     test "get_conversation!/1 returns the conversation with given id",
          %{conversation: conversation} do
       found_conversation = Conversations.get_conversation!(conversation.id)

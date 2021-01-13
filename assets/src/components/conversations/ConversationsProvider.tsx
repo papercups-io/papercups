@@ -26,11 +26,7 @@ export const ConversationsContext = React.createContext<{
   onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
   onDeleteConversation: (id: string) => Promise<any>;
-  onSendMessage: (
-    message: string,
-    conversationId: string,
-    cb?: () => void
-  ) => any;
+  onSendMessage: (message: Partial<Message>, cb?: () => void) => any;
 
   fetchAllConversations: () => Promise<Array<string>>;
   fetchMyConversations: () => Promise<Array<string>>;
@@ -452,18 +448,21 @@ export class ConversationsProvider extends React.Component<Props, State> {
     });
   };
 
-  handleSendMessage = (
-    message: string,
-    conversationId: string,
-    cb?: () => void
-  ) => {
-    if (!this.channel || !message || message.trim().length === 0) {
+  handleSendMessage = (message: Partial<Message>, cb?: () => void) => {
+    if (!message || !message.conversation_id) {
+      throw new Error(
+        `Invalid message ${message} - a \`conversation_id\` is required.`
+      );
+    }
+
+    const {body} = message;
+
+    if (!this.channel || !body || body.trim().length === 0) {
       return;
     }
 
     this.channel.push('shout', {
-      body: message,
-      conversation_id: conversationId,
+      ...message,
       sent_at: new Date().toISOString(),
     });
 

@@ -51,6 +51,8 @@ export type Company = {
   slack_channel_name?: string;
 };
 
+export type MessageType = 'reply' | 'note';
+
 export type Message = {
   body: string;
   type?: 'reply' | 'note';

@@ -89,6 +89,14 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   @spec broadcast_new_message(Message.t(), any()) :: Message.t()
+  defp broadcast_new_message(%Message{private: true} = message, socket) do
+    # For private messages, we only need to broadcast back to the admin channel
+    # (We avoid broadcasting to the customer channel or Slack or email)
+    broadcast(socket, "shout", Messages.Helpers.format(message))
+
+    message
+  end
+
   defp broadcast_new_message(message, socket) do
     broadcast(socket, "shout", Messages.Helpers.format(message))
 
