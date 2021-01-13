@@ -1,6 +1,6 @@
 import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
-import {Box, Flex} from 'theme-ui';
+import {Box, Flex, Image} from 'theme-ui';
 import qs from 'query-string';
 import {Button, Input, Text, Title} from '../common';
 import {useAuth} from './AuthProvider';
