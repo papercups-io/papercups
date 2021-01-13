@@ -92,6 +92,46 @@ defmodule ChatApi.SlackTest do
       end
     end
 
+    test "Notifications.notify_slack_channel/2 sends a thread reply notification for users without profile info",
+         %{
+           account: account,
+           auth: auth,
+           conversation: conversation,
+           thread: thread
+         } do
+      user = insert(:user, account: account, email: "user@user.com")
+
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          user: user,
+          customer: nil
+        )
+
+      with_mock ChatApi.Slack.Client,
+        send_message: fn msg, _ ->
+          {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
+        end do
+        message = Messages.get_message!(message.id)
+        assert :ok = Slack.Notifications.notify_slack_channel(@slack_channel_id, message)
+
+        assert_called(Slack.Client.send_message(:_, :_))
+
+        assert_called(
+          Slack.Client.send_message(
+            %{
+              "text" => message.body,
+              "channel" => thread.slack_channel,
+              "thread_ts" => thread.slack_thread_ts,
+              "username" => user.email
+            },
+            auth.access_token
+          )
+        )
+      end
+    end
+
     test "Notifications.notify_slack_channel/2 does not send a thread reply if channel is not found",
          %{
            account: account,
