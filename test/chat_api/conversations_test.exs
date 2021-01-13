@@ -101,7 +101,14 @@ defmodule ChatApi.ConversationsTest do
     test "find_by_customer/2 does not include private messages in the conversation results",
          %{account: account, customer: customer, conversation: conversation} do
       user = insert(:user, account: account)
-      reply = insert(:message, account: account, conversation: conversation, user: user, body: "This should be visible!")
+
+      reply =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          user: user,
+          body: "This should be visible!"
+        )
 
       _private =
         insert(:message,
