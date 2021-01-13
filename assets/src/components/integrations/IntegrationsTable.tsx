@@ -7,8 +7,6 @@ import {SLACK_CLIENT_ID, isDev} from '../../config';
 import {IntegrationType} from './support';
 
 const getSlackAuthUrl = (type = 'reply') => {
-  // NB: when testing locally, update `origin` to an ngrok url
-  // pointing at localhost:4000 (or wherever your server is running)
   const origin = window.location.origin;
   const redirect = `${origin}/integrations/slack`;
   const scopes = [
@@ -18,13 +16,14 @@ const getSlackAuthUrl = (type = 'reply') => {
     'channels:manage',
     'channels:read',
     'chat:write.public',
+    'chat:write.customize',
     'users:read',
     'users:read.email',
     'groups:history',
     'groups:read',
     'reactions:read',
   ];
-  const userScopes = ['channels:history', 'groups:history'];
+  const userScopes = ['channels:history', 'groups:history', 'chat:write'];
   const q = {
     state: type,
     scope: scopes.join(' '),

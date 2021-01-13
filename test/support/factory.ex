@@ -142,12 +142,20 @@ defmodule ChatApi.Factory do
     }
   end
 
-  @spec user_factory :: ChatApi.Users.User.t()
   def user_factory do
     %ChatApi.Users.User{
       email: sequence(:email, &"company_name-#{&1}@example.com"),
       account: build(:account),
       password: "supersecret123"
+    }
+  end
+
+  def user_profile_factory do
+    %ChatApi.Users.UserProfile{
+      user: build(:user),
+      display_name: "Test User",
+      full_name: "Testy McTesterson",
+      profile_photo_url: "https://via.placeholder.com/100x100"
     }
   end
 
