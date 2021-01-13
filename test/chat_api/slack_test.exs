@@ -7,6 +7,7 @@ defmodule ChatApi.SlackTest do
 
   alias ChatApi.{
     Conversations,
+    Messages,
     Slack,
     SlackConversationThreads,
     Users
@@ -52,6 +53,13 @@ defmodule ChatApi.SlackTest do
     } do
       user = insert(:user, account: account, email: "user@user.com")
 
+      profile =
+        insert(:user_profile,
+          user: user,
+          display_name: "Test User",
+          profile_photo_url: "https://image.com"
+        )
+
       message =
         insert(:message,
           account: account,
@@ -64,18 +72,19 @@ defmodule ChatApi.SlackTest do
         send_message: fn msg, _ ->
           {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
         end do
+        message = Messages.get_message!(message.id)
         assert :ok = Slack.Notifications.notify_slack_channel(@slack_channel_id, message)
 
         assert_called(Slack.Client.send_message(:_, :_))
 
-        expected_text = "*#{user.email}*: #{message.body}"
-
         assert_called(
           Slack.Client.send_message(
             %{
-              "text" => expected_text,
+              "text" => message.body,
               "channel" => thread.slack_channel,
-              "thread_ts" => thread.slack_thread_ts
+              "thread_ts" => thread.slack_thread_ts,
+              "username" => profile.display_name,
+              "icon_url" => profile.profile_photo_url
             },
             auth.access_token
           )
