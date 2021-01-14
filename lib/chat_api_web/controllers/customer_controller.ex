@@ -58,6 +58,7 @@ defmodule ChatApiWeb.CustomerController do
         |> Enum.reject(fn {_k, v} -> blank?(v) end)
         |> Map.new()
 
+      # TODO: require `external_id` to be a minimum length/randomness?
       case Customers.find_by_external_id(external_id, account_id, filters) do
         %{id: customer_id} ->
           json(conn, %{

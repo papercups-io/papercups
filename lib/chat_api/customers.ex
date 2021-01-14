@@ -44,6 +44,8 @@ defmodule ChatApi.Customers do
   @spec find_by_external_id(binary(), binary(), map()) :: Customer.t() | nil
   def find_by_external_id(external_id, account_id, filters \\ %{})
 
+  # TODO: return list rather than just one, and then ignore situations where there are multiple with the same ID
+  # TODO: factor in IP address as well? eh, maybe not... but it might be better to just make this super restrictive?
   def find_by_external_id(external_id, account_id, filters) when is_binary(external_id) do
     Customer
     |> where(account_id: ^account_id, external_id: ^external_id)
