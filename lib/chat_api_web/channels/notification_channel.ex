@@ -92,6 +92,7 @@ defmodule ChatApiWeb.NotificationChannel do
   defp broadcast_new_message(%Message{private: true} = message, socket) do
     # For private messages, we only need to broadcast back to the admin channel
     # (We avoid broadcasting to the customer channel or Slack or email)
+    # TODO: broadcast to webhooks and internal Slack channel?
     broadcast(socket, "shout", Messages.Helpers.format(message))
 
     message
