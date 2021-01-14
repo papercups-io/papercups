@@ -718,6 +718,16 @@ defmodule ChatApi.ReportingTest do
         first_replied_at: ~N[2020-10-03 11:10:15]
       )
 
+      sorted =
+        account.id
+        |> Reporting.conversation_seconds_to_first_reply_by_date()
+        |> Enum.map(fn record ->
+          %{
+            record
+            | seconds_to_first_reply_list: Enum.sort(record.seconds_to_first_reply_list)
+          }
+        end)
+
       assert [
                %{
                  average: 3723.0,
@@ -729,7 +739,7 @@ defmodule ChatApi.ReportingTest do
                  average: 163.33333333333334,
                  date: ~D[2020-10-02],
                  median: 140,
-                 seconds_to_first_reply_list: [20, 330, 140]
+                 seconds_to_first_reply_list: [20, 140, 330]
                },
                %{
                  average: 310.0,
@@ -737,10 +747,7 @@ defmodule ChatApi.ReportingTest do
                  median: 310.0,
                  seconds_to_first_reply_list: [5, 615]
                }
-             ] =
-               account.id
-               |> Reporting.conversation_seconds_to_first_reply_by_date()
-               |> Enum.sort_by(& &1.date, Date)
+             ] = sorted
     end
 
     test "correctly calculates reply time metrics by date with filters", %{account: account} do
@@ -783,12 +790,25 @@ defmodule ChatApi.ReportingTest do
         first_replied_at: ~N[2020-10-03 11:10:15]
       )
 
+      sorted =
+        account.id
+        |> Reporting.conversation_seconds_to_first_reply_by_date(%{
+          from_date: ~N[2020-10-01 12:00:00],
+          to_date: ~N[2020-10-04 13:00:00]
+        })
+        |> Enum.map(fn record ->
+          %{
+            record
+            | seconds_to_first_reply_list: Enum.sort(record.seconds_to_first_reply_list)
+          }
+        end)
+
       assert [
                %{
                  average: 163.33333333333334,
                  date: ~D[2020-10-02],
                  median: 140,
-                 seconds_to_first_reply_list: [20, 330, 140]
+                 seconds_to_first_reply_list: [20, 140, 330]
                },
                %{
                  average: 310.0,
@@ -796,13 +816,7 @@ defmodule ChatApi.ReportingTest do
                  median: 310.0,
                  seconds_to_first_reply_list: [5, 615]
                }
-             ] =
-               account.id
-               |> Reporting.conversation_seconds_to_first_reply_by_date(%{
-                 from_date: ~N[2020-10-01 12:00:00],
-                 to_date: ~N[2020-10-04 13:00:00]
-               })
-               |> Enum.sort_by(& &1.date, Date)
+             ] = sorted
     end
 
     test "correctly handles empty data", %{account: account} do

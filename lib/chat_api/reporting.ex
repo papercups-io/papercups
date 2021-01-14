@@ -55,14 +55,14 @@ defmodule ChatApi.Reporting do
   def conversation_seconds_to_first_reply_by_date(account_id, filters \\ %{}) do
     account_id
     |> list_conversations_with_agent_reply(filters)
-    |> Enum.map(fn conv ->
+    |> Stream.map(fn conv ->
       %{
         date: NaiveDateTime.to_date(conv.inserted_at),
         seconds_to_first_reply: calculate_seconds_to_first_reply(conv)
       }
     end)
     |> Enum.group_by(& &1.date, & &1.seconds_to_first_reply)
-    |> Enum.map(fn {date, seconds_to_first_reply_list} ->
+    |> Stream.map(fn {date, seconds_to_first_reply_list} ->
       %{
         date: date,
         seconds_to_first_reply_list: seconds_to_first_reply_list,
@@ -70,6 +70,7 @@ defmodule ChatApi.Reporting do
         median: median(seconds_to_first_reply_list)
       }
     end)
+    |> Enum.sort_by(& &1.date, Date)
   end
 
   # TODO: move to Conversations context?
