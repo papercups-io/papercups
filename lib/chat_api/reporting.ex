@@ -54,7 +54,13 @@ defmodule ChatApi.Reporting do
   @spec compute_average_replied_time([Conversation.t()]) :: float()
   def compute_average_replied_time(conversations) do
     conversations
-    |> Enum.map(fn conv -> Time.diff(conv.first_replied_at, conv.inserted_at) end)
+    |> Enum.map(fn conv ->
+      # The `inserted_at` field is a NaiveDateTime, so we need to convert
+      # the `first_replied_at` field to make this diff work
+      conv.first_replied_at
+      |> DateTime.to_naive()
+      |> NaiveDateTime.diff(conv.inserted_at)
+    end)
     |> average()
   end
 

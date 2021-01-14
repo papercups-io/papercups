@@ -4,11 +4,11 @@ defmodule ChatApi.ReportingTest do
   import ChatApi.Factory
   alias ChatApi.Reporting
 
-  describe "reporting" do
-    setup do
-      {:ok, account: insert(:account)}
-    end
+  setup do
+    {:ok, account: insert(:account)}
+  end
 
+  describe "count_messages_by_date" do
     test "count_messages_by_date/1 retrieves the number of messages created per day",
          %{account: account} do
       insert_list(
@@ -30,20 +30,6 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-01], count: 2},
                %{date: ~D[2020-09-02], count: 1}
              ] = Reporting.count_messages_by_date(account.id)
-    end
-
-    test "count_messages_per_user/1 should return correct number of messages sent per user on team",
-         %{account: account} do
-      user_2 = insert(:user, account: account)
-      user_3 = insert(:user, account: account)
-
-      insert_pair(:message, account: account, user: user_2)
-      insert(:message, account: account, user: user_3)
-
-      assert [
-               %{count: 2},
-               %{count: 1}
-             ] = Reporting.count_messages_per_user(account.id)
     end
 
     test "count_messages_by_date/1 only fetches messages by the given account id",
@@ -77,7 +63,25 @@ defmodule ChatApi.ReportingTest do
                  ~N[2020-09-03 13:00:00]
                )
     end
+  end
 
+  describe "count_messages_per_user" do
+    test "count_messages_per_user/1 should return correct number of messages sent per user on team",
+         %{account: account} do
+      user_2 = insert(:user, account: account)
+      user_3 = insert(:user, account: account)
+
+      insert_pair(:message, account: account, user: user_2)
+      insert(:message, account: account, user: user_3)
+
+      assert [
+               %{count: 2},
+               %{count: 1}
+             ] = Reporting.count_messages_per_user(account.id)
+    end
+  end
+
+  describe "count_conversations_by_date" do
     test "count_conversations_by_date/1 retrieves the number of conversations created per day",
          %{account: account} do
       insert_list(
@@ -153,7 +157,9 @@ defmodule ChatApi.ReportingTest do
                  ~N[2020-09-03 13:00:00]
                )
     end
+  end
 
+  describe "count_sent_messages_by_date" do
     test "count_sent_messages_by_date/1 groups by date correctly",
          %{account: account} do
       user_2 = insert(:user, account: account)
@@ -202,7 +208,9 @@ defmodule ChatApi.ReportingTest do
                %{date: ~D[2020-09-03], count: 2}
              ] = Reporting.count_sent_messages_by_date(account.id)
     end
+  end
 
+  describe "count_received_messages_by_date" do
     test "count_received_messages_by_date/1 groups by date correctly",
          %{account: account} do
       # Messages from Customer (not user)
@@ -240,10 +248,6 @@ defmodule ChatApi.ReportingTest do
   end
 
   describe "average_seconds_to_first_reply" do
-    setup do
-      {:ok, account: insert(:account)}
-    end
-
     test "gets the average seconds it takes to respond", %{
       account: account
     } do
@@ -275,6 +279,10 @@ defmodule ChatApi.ReportingTest do
       inserted_at_3 = ~N[2020-09-01 10:00:00]
       first_replied_at_3 = ~N[2020-09-01 11:01:05]
 
+      # 90000 seconds
+      inserted_at_4 = ~N[2020-09-02 10:00:00]
+      first_replied_at_4 = ~N[2020-09-03 11:00:00]
+
       insert(
         :conversation,
         account: account,
@@ -296,8 +304,58 @@ defmodule ChatApi.ReportingTest do
         first_replied_at: first_replied_at_3
       )
 
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_4,
+        first_replied_at: first_replied_at_4
+      )
+
       average_replied_time = Reporting.average_seconds_to_first_reply(account.id)
-      assert average_replied_time == (31 + 671 + 3665) / 3
+      assert average_replied_time == (31 + 671 + 3665 + 90000) / 4
+    end
+
+    test "gets average response time of multiple times with filters", %{account: account} do
+      # 31 seconds
+      inserted_at_1 = ~N[2020-10-01 12:00:00]
+      first_replied_at_1 = ~N[2020-10-01 12:00:31]
+
+      # 671 seconds
+      inserted_at_2 = ~N[2020-10-02 12:00:00]
+      first_replied_at_2 = ~N[2020-10-02 12:11:11]
+
+      # 3665 seconds
+      inserted_at_3 = ~N[2020-10-03 10:00:00]
+      first_replied_at_3 = ~N[2020-10-03 11:01:05]
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_1,
+        first_replied_at: first_replied_at_1
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_2,
+        first_replied_at: first_replied_at_2
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_3,
+        first_replied_at: first_replied_at_3
+      )
+
+      average_replied_time =
+        Reporting.average_seconds_to_first_reply(account.id, %{
+          from_date: ~N[2020-10-01 11:00:00],
+          to_date: ~N[2020-10-02 13:00:00]
+        })
+
+      assert average_replied_time == (31 + 671) / 2
     end
 
     test "when first_replied_at is nil", %{
@@ -397,15 +455,8 @@ defmodule ChatApi.ReportingTest do
     end
   end
 
-  describe "first_response_time_by_weekday" do
-    setup do
-      account = insert(:account)
-
-      {:ok, account: account}
-    end
-
+  describe "first_response_time_by_weekday/2" do
     test "correctly calculates total and avg of customer messages per day", %{account: account} do
-      # 01:02:03 - 3723
       # Monday
       insert(:conversation,
         account: account,
@@ -413,7 +464,6 @@ defmodule ChatApi.ReportingTest do
         first_replied_at: ~N[2020-09-28 11:02:03]
       )
 
-      # Monday
       insert(:conversation,
         account: account,
         inserted_at: ~N[2020-10-05 10:00:00],
@@ -448,11 +498,23 @@ defmodule ChatApi.ReportingTest do
         first_replied_at: ~N[2020-10-02 12:00:03]
       )
 
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 12:00:00],
+        first_replied_at: ~N[2020-10-03 12:00:00]
+      )
+
       # Saturday
       insert(:conversation,
         account: account,
         inserted_at: ~N[2020-10-03 12:00:00],
         first_replied_at: ~N[2020-10-03 12:00:03]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 10:00:00],
+        first_replied_at: ~N[2020-10-03 11:10:00]
       )
 
       # Sunday
@@ -467,20 +529,14 @@ defmodule ChatApi.ReportingTest do
                %{day: "Tuesday", average: 3723.0, unit: :seconds},
                %{day: "Wednesday", average: 123.0, unit: :seconds},
                %{day: "Thursday", average: 123.0, unit: :seconds},
-               %{day: "Friday", average: 3.0, unit: :seconds},
-               %{day: "Saturday", average: 3.0, unit: :seconds},
+               %{day: "Friday", average: 43201.5, unit: :seconds},
+               %{day: "Saturday", average: 2101.5, unit: :seconds},
                %{day: "Sunday", average: 3603.0, unit: :seconds}
              ] = Reporting.first_response_time_by_weekday(account.id)
     end
   end
 
   describe "count_messages_by_weekday/1" do
-    setup do
-      account = insert(:account)
-
-      {:ok, account: account}
-    end
-
     test "correctly calculates total and avg of customer messages per day",
          %{account: account} do
       insert(:message,
@@ -588,12 +644,6 @@ defmodule ChatApi.ReportingTest do
   end
 
   describe "count_customers_by_date/1" do
-    setup do
-      account = insert(:account)
-
-      {:ok, account: account}
-    end
-
     test "it groups by date correctly", %{account: account} do
       insert(:customer, account: account, inserted_at: ~N[2020-10-10 12:00:00])
       insert(:customer, account: account, inserted_at: ~N[2020-10-11 12:00:00])
@@ -608,12 +658,6 @@ defmodule ChatApi.ReportingTest do
   end
 
   describe "count_customers_by_date/3" do
-    setup do
-      account = insert(:account)
-
-      {:ok, account: account}
-    end
-
     test "Fetches customers between two dates", %{account: account} do
       insert(:customer, account: account, inserted_at: ~N[2020-10-12 12:00:00])
       insert(:customer, account: account, inserted_at: ~N[2020-10-11 12:00:00])
