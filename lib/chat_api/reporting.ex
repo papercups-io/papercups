@@ -41,14 +41,20 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
-  @spec conversation_seconds_to_first_reply_by_date(binary(), map()) :: [map()]
-  def conversation_seconds_to_first_reply_by_date(account_id, filters \\ %{}) do
+  @spec list_conversations_with_agent_reply(binary(), map()) :: [Conversation.t()]
+  def list_conversations_with_agent_reply(account_id, filters \\ %{}) do
     Conversation
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> where([conv], not is_nil(conv.first_replied_at))
     |> select([:first_replied_at, :inserted_at])
     |> Repo.all()
+  end
+
+  @spec conversation_seconds_to_first_reply_by_date(binary(), map()) :: [map()]
+  def conversation_seconds_to_first_reply_by_date(account_id, filters \\ %{}) do
+    account_id
+    |> list_conversations_with_agent_reply(filters)
     |> Enum.map(fn conv ->
       %{
         date: NaiveDateTime.to_date(conv.inserted_at),
@@ -78,28 +84,28 @@ defmodule ChatApi.Reporting do
 
   @spec average_seconds_to_first_reply(binary(), map()) :: float()
   def average_seconds_to_first_reply(account_id, filters \\ %{}) do
-    Conversation
-    |> where(account_id: ^account_id)
-    |> where(^filter_where(filters))
-    |> where([conv], not is_nil(conv.first_replied_at))
-    |> select([:first_replied_at, :inserted_at])
-    |> Repo.all()
-    |> compute_average_replied_time()
+    account_id
+    |> list_conversations_with_agent_reply(filters)
+    |> compute_average_seconds_to_first_reply()
   end
 
-  @spec compute_average_replied_time([Conversation.t()]) :: float()
-  def compute_average_replied_time(conversations) do
+  @spec compute_average_seconds_to_first_reply([Conversation.t()]) :: float()
+  def compute_average_seconds_to_first_reply(conversations) do
     conversations
     |> Enum.map(&calculate_seconds_to_first_reply/1)
     |> average()
   end
 
   @spec average([integer()]) :: float()
+  def average([]), do: 0.0
+
   def average(list) do
-    Enum.sum(list) / max(length(list), 1)
+    Enum.sum(list) / length(list)
   end
 
-  @spec median([integer()]) :: integer()
+  @spec median([integer()]) :: number()
+  def median([]), do: 0
+
   def median(list) do
     case length(list) do
       n when Integer.is_even(n) ->
