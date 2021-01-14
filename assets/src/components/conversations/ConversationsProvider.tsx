@@ -4,7 +4,7 @@ import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Account, Conversation, Message, User} from '../../types';
-import {sleep, isWindowHidden, updateQueryParams} from '../../utils';
+import {isWindowHidden, updateQueryParams} from '../../utils';
 import {SOCKET_URL} from '../../socket';
 import logger from '../../logger';
 
@@ -26,11 +26,7 @@ export const ConversationsContext = React.createContext<{
   onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
   onDeleteConversation: (id: string) => Promise<any>;
-  onSendMessage: (
-    message: string,
-    conversationId: string,
-    cb?: () => void
-  ) => any;
+  onSendMessage: (message: Partial<Message>, cb?: () => void) => any;
 
   fetchAllConversations: () => Promise<Array<string>>;
   fetchMyConversations: () => Promise<Array<string>>;
@@ -411,28 +407,15 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   handleNewConversation = async (conversationId?: string) => {
-    if (!this.channel || !conversationId) {
-      return;
-    }
+    logger.debug('Listening to new conversation:', conversationId);
 
-    this.channel.push('watch:one', {
-      conversation_id: conversationId,
-    });
-
-    // FIXME: this is a hack to fix the race condition with the `shout` event
-    await sleep(1000);
     await this.fetchAllConversations();
     await this.throttledNotificationSound();
   };
 
+  // TODO: double check that there's no logic we need to add here
   handleJoinMultipleConversations = (conversationIds: Array<string>) => {
-    if (!this.channel) {
-      return;
-    }
-
-    this.channel.push('watch:many', {
-      conversation_ids: conversationIds,
-    });
+    logger.debug('Listening to multiple new conversations:', conversationIds);
   };
 
   handleConversationUpdated = (id: string, updates: any) => {
@@ -465,18 +448,21 @@ export class ConversationsProvider extends React.Component<Props, State> {
     });
   };
 
-  handleSendMessage = (
-    message: string,
-    conversationId: string,
-    cb?: () => void
-  ) => {
-    if (!this.channel || !message || message.trim().length === 0) {
+  handleSendMessage = (message: Partial<Message>, cb?: () => void) => {
+    if (!message || !message.conversation_id) {
+      throw new Error(
+        `Invalid message ${message} - a \`conversation_id\` is required.`
+      );
+    }
+
+    const {body} = message;
+
+    if (!this.channel || !body || body.trim().length === 0) {
       return;
     }
 
     this.channel.push('shout', {
-      body: message,
-      conversation_id: conversationId,
+      ...message,
       sent_at: new Date().toISOString(),
     });
 
