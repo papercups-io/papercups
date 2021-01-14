@@ -4,6 +4,7 @@ defmodule ChatApi.Reporting do
   """
 
   import Ecto.Query, warn: false
+  require Integer
 
   alias ChatApi.{
     Repo,
@@ -40,6 +41,41 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  @spec conversation_seconds_to_first_reply_by_date(binary(), map()) :: [map()]
+  def conversation_seconds_to_first_reply_by_date(account_id, filters \\ %{}) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where([conv], not is_nil(conv.first_replied_at))
+    |> select([:first_replied_at, :inserted_at])
+    |> Repo.all()
+    |> Enum.map(fn conv ->
+      %{
+        date: NaiveDateTime.to_date(conv.inserted_at),
+        seconds_to_first_reply: calculate_seconds_to_first_reply(conv)
+      }
+    end)
+    |> Enum.group_by(& &1.date, & &1.seconds_to_first_reply)
+    |> Enum.map(fn {date, seconds_to_first_reply_list} ->
+      %{
+        date: date,
+        seconds_to_first_reply_list: seconds_to_first_reply_list,
+        average: average(seconds_to_first_reply_list),
+        median: median(seconds_to_first_reply_list)
+      }
+    end)
+  end
+
+  # TODO: move to Conversations context?
+  @spec calculate_seconds_to_first_reply(Conversation.t()) :: integer()
+  def calculate_seconds_to_first_reply(conversation) do
+    # The `inserted_at` field is a NaiveDateTime, so we need to convert
+    # the `first_replied_at` field to make this diff work
+    conversation.first_replied_at
+    |> DateTime.to_naive()
+    |> NaiveDateTime.diff(conversation.inserted_at)
+  end
+
   @spec average_seconds_to_first_reply(binary(), map()) :: float()
   def average_seconds_to_first_reply(account_id, filters \\ %{}) do
     Conversation
@@ -54,19 +90,32 @@ defmodule ChatApi.Reporting do
   @spec compute_average_replied_time([Conversation.t()]) :: float()
   def compute_average_replied_time(conversations) do
     conversations
-    |> Enum.map(fn conv ->
-      # The `inserted_at` field is a NaiveDateTime, so we need to convert
-      # the `first_replied_at` field to make this diff work
-      conv.first_replied_at
-      |> DateTime.to_naive()
-      |> NaiveDateTime.diff(conv.inserted_at)
-    end)
+    |> Enum.map(&calculate_seconds_to_first_reply/1)
     |> average()
   end
 
   @spec average([integer()]) :: float()
   def average(list) do
     Enum.sum(list) / max(length(list), 1)
+  end
+
+  @spec median([integer()]) :: integer()
+  def median(list) do
+    case length(list) do
+      n when Integer.is_even(n) ->
+        finish = list |> length() |> div(2)
+        start = finish - 1
+
+        list |> Enum.sort() |> Enum.slice(start..finish) |> average()
+
+      n when Integer.is_odd(n) ->
+        midpoint = list |> length() |> div(2)
+
+        list |> Enum.sort() |> Enum.at(midpoint)
+
+      _ ->
+        0
+    end
   end
 
   @spec count_conversations_by_date(binary(), binary(), binary()) :: [aggregate_by_date()]
