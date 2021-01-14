@@ -676,4 +676,182 @@ defmodule ChatApi.ReportingTest do
                )
     end
   end
+
+  describe "conversation_seconds_to_first_reply_by_date/2" do
+    test "correctly calculates reply time metrics by date", %{account: account} do
+      # 2020-09-28
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-28 10:00:00],
+        first_replied_at: ~N[2020-09-28 11:02:03]
+      )
+
+      # 2020-10-02
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 12:00:00],
+        first_replied_at: ~N[2020-10-02 12:00:20]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 11:00:00],
+        first_replied_at: ~N[2020-10-02 11:05:30]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 10:00:00],
+        first_replied_at: ~N[2020-10-02 10:02:20]
+      )
+
+      # 2020-10-03
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 12:00:00],
+        first_replied_at: ~N[2020-10-03 12:00:05]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 11:00:00],
+        first_replied_at: ~N[2020-10-03 11:10:15]
+      )
+
+      sorted =
+        account.id
+        |> Reporting.conversation_seconds_to_first_reply_by_date()
+        |> Enum.map(fn record ->
+          %{
+            record
+            | seconds_to_first_reply_list: Enum.sort(record.seconds_to_first_reply_list)
+          }
+        end)
+
+      assert [
+               %{
+                 average: 3723.0,
+                 date: ~D[2020-09-28],
+                 median: 3723,
+                 seconds_to_first_reply_list: [3723]
+               },
+               %{
+                 average: 163.33333333333334,
+                 date: ~D[2020-10-02],
+                 median: 140,
+                 seconds_to_first_reply_list: [20, 140, 330]
+               },
+               %{
+                 average: 310.0,
+                 date: ~D[2020-10-03],
+                 median: 310.0,
+                 seconds_to_first_reply_list: [5, 615]
+               }
+             ] = sorted
+    end
+
+    test "correctly calculates reply time metrics by date with filters", %{account: account} do
+      # 2020-09-28
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-28 10:00:00],
+        first_replied_at: ~N[2020-09-28 11:02:03]
+      )
+
+      # 2020-10-02
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 12:00:00],
+        first_replied_at: ~N[2020-10-02 12:00:20]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 11:00:00],
+        first_replied_at: ~N[2020-10-02 11:05:30]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 10:00:00],
+        first_replied_at: ~N[2020-10-02 10:02:20]
+      )
+
+      # 2020-10-03
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 12:00:00],
+        first_replied_at: ~N[2020-10-03 12:00:05]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 11:00:00],
+        first_replied_at: ~N[2020-10-03 11:10:15]
+      )
+
+      sorted =
+        account.id
+        |> Reporting.conversation_seconds_to_first_reply_by_date(%{
+          from_date: ~N[2020-10-01 12:00:00],
+          to_date: ~N[2020-10-04 13:00:00]
+        })
+        |> Enum.map(fn record ->
+          %{
+            record
+            | seconds_to_first_reply_list: Enum.sort(record.seconds_to_first_reply_list)
+          }
+        end)
+
+      assert [
+               %{
+                 average: 163.33333333333334,
+                 date: ~D[2020-10-02],
+                 median: 140,
+                 seconds_to_first_reply_list: [20, 140, 330]
+               },
+               %{
+                 average: 310.0,
+                 date: ~D[2020-10-03],
+                 median: 310.0,
+                 seconds_to_first_reply_list: [5, 615]
+               }
+             ] = sorted
+    end
+
+    test "correctly handles empty data", %{account: account} do
+      assert [] =
+               Reporting.conversation_seconds_to_first_reply_by_date(account.id, %{
+                 from_date: ~N[2020-10-01 12:00:00],
+                 to_date: ~N[2020-10-04 13:00:00]
+               })
+    end
+  end
+
+  describe "average" do
+    test "returns zero for an empty list" do
+      assert 0.0 = Reporting.average([])
+    end
+
+    test "correctly calculates the average" do
+      assert 2.5 = Reporting.average([1, 2, 3, 4])
+      assert 2.5 = Reporting.average([4, 3, 2, 1])
+      assert 5.0 = Reporting.average([5, 5, 5])
+      assert 0.5 = Reporting.average([-1, 2, -3, 4])
+    end
+  end
+
+  describe "median" do
+    test "returns zero for an empty list" do
+      assert 0 = Reporting.median([])
+    end
+
+    test "correctly calculates the median" do
+      assert 2.5 = Reporting.median([1, 2, 3, 4])
+      assert 3 = Reporting.median([1, 2, 3, 4, 5])
+      assert 3 = Reporting.median([3, 1, 2, 5, 4])
+      assert 5 = Reporting.median([5, 5, 5])
+      assert 0.5 = Reporting.median([-1, 2, -3, 4])
+    end
+  end
 end
