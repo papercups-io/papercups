@@ -55,7 +55,7 @@ export const colors = {
   gray: grey, // expose all grays
   text: 'rgba(0, 0, 0, 0.65)',
   secondary: 'rgba(0, 0, 0, 0.45)',
-  note: '#feedaf',
+  note: '#fff1b8',
 };
 
 export const shadows = {

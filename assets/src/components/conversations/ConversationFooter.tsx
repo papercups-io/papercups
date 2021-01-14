@@ -57,7 +57,7 @@ const ConversationFooter = ({
           pb={2}
           pt={1}
           sx={{
-            background: isPrivateNote ? 'rgba(254,237,175,.5)' : colors.white,
+            background: isPrivateNote ? 'rgba(254,237,175,.4)' : colors.white,
             border: '1px solid #f5f5f5',
             borderRadius: 4,
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
@@ -98,7 +98,11 @@ const ConversationFooter = ({
               <TextArea
                 key={messageType}
                 className="TextArea--transparent"
-                placeholder="Type your message here"
+                placeholder={
+                  isPrivateNote
+                    ? 'Type a private note here'
+                    : 'Type your reply here'
+                }
                 autoSize={{minRows: 2, maxRows: 4}}
                 autoFocus
                 value={message}
