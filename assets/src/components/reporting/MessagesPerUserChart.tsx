@@ -10,12 +10,12 @@ import {
 import {colors} from '../common';
 import {FAKE_DATA_USERS} from './support';
 
+const {blues, purples, magentas} = colors;
+
 const COLORS = [
-  colors.primary,
-  colors.green,
-  colors.gold,
-  colors.red,
-  colors.volcano,
+  ...blues.slice(3).filter((c, i) => i % 2 === 1),
+  ...purples.slice(3).filter((c, i) => i % 2 === 1),
+  ...magentas.slice(3).filter((c, i) => i % 2 === 1),
 ];
 
 const MessagesPerUserChart = ({data = FAKE_DATA_USERS}: {data?: any}) => {

@@ -9,12 +9,12 @@ import {
 } from 'recharts';
 import {colors} from '../common';
 
+const {blues, purples, magentas} = colors;
+
 const COLORS = [
-  colors.primary,
-  colors.green,
-  colors.gold,
-  colors.red,
-  colors.volcano,
+  ...blues.slice(3).filter((c, i) => i % 2 === 1),
+  ...purples.slice(3).filter((c, i) => i % 2 === 1),
+  ...magentas.slice(3).filter((c, i) => i % 2 === 1),
 ];
 
 const CustomerBreakdownChart = ({data}: {data: any}) => {

@@ -26,7 +26,7 @@ const MessagesByDayOfWeekChart = ({data}: {data: any}) => {
         <YAxis width={40} />
         <Tooltip />
         <Legend />
-        <Bar dataKey="average" stackId="messages" fill={colors.magenta} />
+        <Bar dataKey="average" stackId="messages" fill={colors.blues[7]} />
         <Bar dataKey="total" stackId="messages" fill={colors.primary} />
       </BarChart>
     </ResponsiveContainer>

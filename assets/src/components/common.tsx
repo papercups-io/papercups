@@ -52,7 +52,11 @@ export const colors = {
   purple: purple[5],
   magenta: magenta[5],
   blue: blue, // expose all blues
-  gray: grey, // expose all grays
+  blues: blue, // alias
+  gray: grey, // expose all grays,
+  grays: grey, // alias
+  purples: purple,
+  magentas: magenta,
   text: 'rgba(0, 0, 0, 0.65)',
   secondary: 'rgba(0, 0, 0, 0.45)',
   note: '#fff1b8',
