@@ -233,7 +233,8 @@ class ReportingDashboard extends React.Component<Props, State> {
     }
 
     const {average: averageLastWeek} = next;
-    const percentage = (averageThisWeek - averageLastWeek) / averageLastWeek;
+    const percentage =
+      (averageThisWeek - averageLastWeek) / (averageLastWeek || 1);
     const sign = percentage < 0 ? '-' : '+';
 
     return {
@@ -249,6 +250,7 @@ class ReportingDashboard extends React.Component<Props, State> {
     };
   };
 
+  // TODO: DRY this up with function above
   formatMedianResponseTimeThisWeek = () => {
     const {firstReplyMetricsByWeek = []} = this.state;
     const [current, next] = firstReplyMetricsByWeek;
@@ -267,7 +269,8 @@ class ReportingDashboard extends React.Component<Props, State> {
     }
 
     const {median: medianLastWeek} = next;
-    const percentage = (medianThisWeek - medianLastWeek) / medianLastWeek;
+    const percentage =
+      (medianThisWeek - medianLastWeek) / (medianLastWeek || 1);
     const sign = percentage < 0 ? '-' : '+';
 
     return {
