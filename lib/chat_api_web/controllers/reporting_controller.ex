@@ -31,7 +31,9 @@ defmodule ChatApiWeb.ReportingController do
         average_time_to_first_respond:
           Reporting.average_seconds_to_first_reply(account_id, filters),
         customer_breakdown_by_time_zone:
-          Reporting.get_customer_breakdown(account_id, :time_zone, filters)
+          Reporting.get_customer_breakdown(account_id, :time_zone, filters),
+        first_reply_metrics_by_week:
+          Reporting.seconds_to_first_reply_metrics_by_week(account_id, filters)
       }
     })
   end

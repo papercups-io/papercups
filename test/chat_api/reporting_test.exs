@@ -854,4 +854,30 @@ defmodule ChatApi.ReportingTest do
       assert 0.5 = Reporting.median([-1, 2, -3, 4])
     end
   end
+
+  describe "get_weekly_chunks/2" do
+    test "gets the week tuples for the given date range" do
+      from_date = ~N[2020-10-01 12:00:00]
+      to_date = ~N[2020-10-04 13:00:00]
+
+      assert [{~D[2020-09-27] = start, ~D[2020-10-03] = finish}] =
+               Reporting.get_weekly_chunks(from_date, to_date)
+
+      from_date = ~N[2020-10-01 12:00:00]
+      to_date = ~N[2020-11-01 12:00:00]
+      chunks = Reporting.get_weekly_chunks(from_date, to_date)
+
+      assert [
+               {~D[2020-10-25], ~D[2020-10-31]},
+               {~D[2020-10-18], ~D[2020-10-24]},
+               {~D[2020-10-11], ~D[2020-10-17]},
+               {~D[2020-10-04], ~D[2020-10-10]},
+               {~D[2020-09-27], ~D[2020-10-03]}
+             ] = chunks
+
+      # Verify that the start is on a Sunday (7) and the end is on a Saturday (6)
+      assert Enum.all?(chunks, fn {start, _} -> Date.day_of_week(start) == 7 end)
+      assert Enum.all?(chunks, fn {_, finish} -> Date.day_of_week(finish) == 6 end)
+    end
+  end
 end
