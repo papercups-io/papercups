@@ -536,7 +536,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.info(message)
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
-    Task.start(fn -> Slack.Notifications.log(message) end)
+    Task.start(fn -> Slack.Notification.log(message) end)
   end
 
   @spec send_private_channel_instructions(:reply | :support, binary()) :: any()
@@ -556,7 +556,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.info(message)
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
-    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
+    Task.start(fn -> Slack.Notification.log(message, webhook_url) end)
   end
 
   defp send_private_channel_instructions(:support, webhook_url) do
@@ -575,7 +575,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.info(message)
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
-    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
+    Task.start(fn -> Slack.Notification.log(message, webhook_url) end)
   end
 
   @spec send_support_channel_instructions(binary()) :: any()
@@ -595,6 +595,6 @@ defmodule ChatApiWeb.SlackController do
     Logger.info(message)
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
-    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
+    Task.start(fn -> Slack.Notification.log(message, webhook_url) end)
   end
 end

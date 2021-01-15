@@ -23,7 +23,7 @@ defmodule ChatApi.SlackTest do
   @slack_user_id "U123TEST"
   @slack_channel_id "C123TEST"
 
-  describe "Slack.Notifications" do
+  describe "Slack.Notification" do
     setup do
       account = insert(:account)
       auth = insert(:slack_authorization, account: account, type: "support")
@@ -73,7 +73,7 @@ defmodule ChatApi.SlackTest do
           {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
         end do
         message = Messages.get_message!(message.id)
-        assert :ok = Slack.Notifications.notify_slack_channel(@slack_channel_id, message)
+        assert :ok = Slack.Notification.notify_slack_channel(@slack_channel_id, message)
 
         assert_called(Slack.Client.send_message(:_, :_))
 
@@ -114,7 +114,7 @@ defmodule ChatApi.SlackTest do
           {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
         end do
         message = Messages.get_message!(message.id)
-        assert :ok = Slack.Notifications.notify_slack_channel(@slack_channel_id, message)
+        assert :ok = Slack.Notification.notify_slack_channel(@slack_channel_id, message)
 
         assert_called(Slack.Client.send_message(:_, :_))
 
@@ -144,7 +144,7 @@ defmodule ChatApi.SlackTest do
         send_message: fn msg, _ ->
           {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
         end do
-        assert :ok = Slack.Notifications.notify_slack_channel("C123UNKNOWN", message)
+        assert :ok = Slack.Notification.notify_slack_channel("C123UNKNOWN", message)
 
         assert_not_called(Slack.Client.send_message(:_, :_))
       end

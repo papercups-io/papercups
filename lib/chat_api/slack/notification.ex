@@ -1,4 +1,4 @@
-defmodule ChatApi.Slack.Notifications do
+defmodule ChatApi.Slack.Notification do
   @moduledoc """
   A module to handle sending Slack notifications.
   """

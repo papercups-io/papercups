@@ -43,7 +43,7 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending notification: :slack")
 
     Task.start(fn ->
-      ChatApi.Slack.Notifications.notify_primary_channel(message)
+      ChatApi.Slack.Notification.notify_primary_channel(message)
     end)
 
     message
@@ -90,7 +90,7 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending notification: :slack_company_channel")
 
     Task.start(fn ->
-      ChatApi.Slack.Notifications.notify_company_channel(message)
+      ChatApi.Slack.Notification.notify_company_channel(message)
     end)
 
     message
@@ -101,7 +101,7 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending notification: :slack_support_channel")
 
     Task.start(fn ->
-      ChatApi.Slack.Notifications.notify_support_channel(message)
+      ChatApi.Slack.Notification.notify_support_channel(message)
     end)
 
     message
