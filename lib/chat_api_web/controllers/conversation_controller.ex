@@ -244,7 +244,7 @@ defmodule ChatApiWeb.ConversationController do
            })
            |> Messages.create_message() do
       Messages.get_message!(msg.id)
-      |> Messages.Notification.broadcast_to_conversation!()
+      |> Messages.Notification.broadcast_to_customer!()
       |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:webhooks)

@@ -16,9 +16,8 @@ defmodule ChatApi.Messages.Notification do
     })
   end
 
-  # TODO: rename to `broadcast_to_customer` or something more explicit?
-  @spec broadcast_to_conversation!(Message.t()) :: Message.t()
-  def broadcast_to_conversation!(%Message{} = message) do
+  @spec broadcast_to_customer!(Message.t()) :: Message.t()
+  def broadcast_to_customer!(%Message{} = message) do
     message
     |> Helpers.get_conversation_topic()
     |> ChatApiWeb.Endpoint.broadcast!("shout", Helpers.format(message))

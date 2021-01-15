@@ -227,7 +227,7 @@ defmodule ChatApiWeb.SlackController do
             )
         }
         |> Messages.create_and_fetch!()
-        |> Messages.Notification.broadcast_to_conversation!()
+        |> Messages.Notification.broadcast_to_customer!()
         |> Messages.Notification.broadcast_to_admin!()
         |> Messages.Notification.notify(:webhooks)
         |> Messages.Notification.notify(:slack_support_channel)
@@ -248,7 +248,7 @@ defmodule ChatApiWeb.SlackController do
               "source" => "slack"
             })
             |> Messages.create_and_fetch!()
-            |> Messages.Notification.broadcast_to_conversation!()
+            |> Messages.Notification.broadcast_to_customer!()
             |> Messages.Notification.broadcast_to_admin!()
             |> Messages.Notification.notify(:webhooks)
             |> Messages.Notification.notify(:slack)
@@ -315,12 +315,13 @@ defmodule ChatApiWeb.SlackController do
       |> Conversations.Notification.broadcast_conversation_to_customer!()
 
       Messages.get_message!(message.id)
-      |> Messages.Notification.broadcast_to_conversation!()
+      |> Messages.Notification.broadcast_to_customer!()
       |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:webhooks)
+
       # TODO: should we make this configurable? Or only do it from private channels?
       # (Considering temporarily disabling this until we figure out what most users want)
-      |> Messages.Notification.notify(:slack)
+      # |> Messages.Notification.notify(:slack)
     end
   end
 
@@ -456,7 +457,7 @@ defmodule ChatApiWeb.SlackController do
       |> Conversations.Notification.broadcast_conversation_to_customer!()
 
       Messages.get_message!(message.id)
-      |> Messages.Notification.broadcast_to_conversation!()
+      |> Messages.Notification.broadcast_to_customer!()
       |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:webhooks)
       # TODO: should we make this configurable? Or only do it from private channels?

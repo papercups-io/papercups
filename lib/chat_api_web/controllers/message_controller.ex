@@ -133,7 +133,7 @@ defmodule ChatApiWeb.MessageController do
 
   defp broadcast_new_message(message) do
     message
-    |> Messages.Notification.broadcast_to_conversation!()
+    |> Messages.Notification.broadcast_to_customer!()
     |> Messages.Notification.broadcast_to_admin!()
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:slack_support_channel)
