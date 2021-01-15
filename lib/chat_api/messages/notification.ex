@@ -26,6 +26,15 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  @spec broadcast_to_admin!(Message.t()) :: Message.t()
+  def broadcast_to_admin!(%Message{} = message) do
+    message
+    |> Helpers.get_admin_topic()
+    |> ChatApiWeb.Endpoint.broadcast!("shout", Helpers.format(message))
+
+    message
+  end
+
   @spec notify(Message.t(), atom()) :: Message.t()
   def notify(
         %Message{body: _body, conversation_id: _conversation_id} = message,

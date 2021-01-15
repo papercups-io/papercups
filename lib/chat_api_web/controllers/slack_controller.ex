@@ -228,6 +228,7 @@ defmodule ChatApiWeb.SlackController do
         }
         |> Messages.create_and_fetch!()
         |> Messages.Notification.broadcast_to_conversation!()
+        |> Messages.Notification.broadcast_to_admin!()
         |> Messages.Notification.notify(:webhooks)
         |> Messages.Notification.notify(:slack_support_channel)
         |> Messages.Notification.notify(:slack_company_channel)
@@ -248,6 +249,7 @@ defmodule ChatApiWeb.SlackController do
             })
             |> Messages.create_and_fetch!()
             |> Messages.Notification.broadcast_to_conversation!()
+            |> Messages.Notification.broadcast_to_admin!()
             |> Messages.Notification.notify(:webhooks)
             |> Messages.Notification.notify(:slack)
             |> Messages.Helpers.handle_post_creation_conversation_updates()
@@ -314,9 +316,11 @@ defmodule ChatApiWeb.SlackController do
 
       Messages.get_message!(message.id)
       |> Messages.Notification.broadcast_to_conversation!()
-      # notify primary channel only
-      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:webhooks)
+      # TODO: should we make this configurable? Or only do it from private channels?
+      # (Considering temporarily disabling this until we figure out what most users want)
+      |> Messages.Notification.notify(:slack)
     end
   end
 
@@ -453,9 +457,12 @@ defmodule ChatApiWeb.SlackController do
 
       Messages.get_message!(message.id)
       |> Messages.Notification.broadcast_to_conversation!()
-      # notify primary channel only
-      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:webhooks)
+      # TODO: should we make this configurable? Or only do it from private channels?
+      # (Leaving this enabled for the emoji reaction use case, since it's an explicit action
+      # as opposed to the auto-syncing that occurs above for all new messages)
+      |> Messages.Notification.notify(:slack)
     end
   end
 
