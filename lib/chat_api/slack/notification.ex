@@ -15,6 +15,7 @@ defmodule ChatApi.Slack.Notification do
   }
 
   alias ChatApi.Users.{User, UserProfile}
+  alias ChatApi.SlackConversationThreads.SlackConversationThread
 
   @spec log(binary()) :: :ok | Tesla.Env.result()
   def log(message) do
@@ -40,6 +41,7 @@ defmodule ChatApi.Slack.Notification do
   @spec notify_primary_channel(Message.t()) :: Tesla.Env.result() | nil | :ok
   def notify_primary_channel(
         %Message{
+          id: message_id,
           conversation_id: conversation_id,
           body: text,
           account_id: account_id
@@ -49,9 +51,12 @@ defmodule ChatApi.Slack.Notification do
     with %{customer: customer} <-
            Conversations.get_conversation_with!(conversation_id, :customer),
          %{access_token: access_token, channel: channel, channel_id: channel_id} <-
-           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
-      thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id)
-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}),
+         is_first_message <-
+           Conversations.is_first_message?(conversation_id, message_id),
+         thread <-
+           SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id),
+         :ok <- validate_send_to_primary_channel(thread, is_first_message: is_first_message) do
       # TODO: use a struct here?
       # TODO: pass through `message` instead of text/conversation_id/type individually?
       %{
@@ -151,6 +156,15 @@ defmodule ChatApi.Slack.Notification do
       Slack.Client.send_message(message, access_token)
     end)
   end
+
+  # If `is_first_message: true` or a valid Slack thread exists already, return :ok.
+  # Otherwise, return :error (i.e. we don't want to start a new thread with a non-initial message)
+  @spec validate_send_to_primary_channel(SlackConversationThread.t() | nil, [
+          {:is_first_message, boolean}
+        ]) :: :error | :ok
+  def validate_send_to_primary_channel(_thread, is_first_message: true), do: :ok
+  def validate_send_to_primary_channel(%SlackConversationThread{}, _opts), do: :ok
+  def validate_send_to_primary_channel(_thread, _opts), do: :error
 
   @spec format_slack_message_text(Message.t()) :: String.t()
   defp format_slack_message_text(%Message{} = message) do

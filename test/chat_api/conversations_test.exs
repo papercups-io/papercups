@@ -9,6 +9,7 @@ defmodule ChatApi.ConversationsTest do
   describe "conversations" do
     alias ChatApi.Conversations.Conversation
     alias ChatApi.SlackConversationThreads.SlackConversationThread
+    alias ChatApi.Messages.Message
 
     @update_attrs %{status: "closed"}
     @invalid_attrs %{status: nil}
@@ -334,6 +335,42 @@ defmodule ChatApi.ConversationsTest do
                Conversations.update_conversation(conversation, %{status: "open"})
 
       assert open_conversation.closed_at == nil
+    end
+
+    test "get_first_message/1 returns the first message of the conversation",
+         %{account: account, conversation: conversation} do
+      refute Conversations.get_first_message(conversation.id)
+
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          inserted_at: ~N[2020-11-02 20:00:00]
+        )
+
+      message_id = message.id
+
+      assert %Message{id: ^message_id} = Conversations.get_first_message(conversation.id)
+    end
+
+    test "is_first_message?/2 checks if the message is the first message of the conversation",
+         %{account: account, conversation: conversation} do
+      first_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          inserted_at: ~N[2020-11-02 20:00:00]
+        )
+
+      second_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          inserted_at: ~N[2020-11-02 20:00:00]
+        )
+
+      assert Conversations.is_first_message?(conversation.id, first_message.id)
+      refute Conversations.is_first_message?(conversation.id, second_message.id)
     end
 
     defp days_ago(days) do
