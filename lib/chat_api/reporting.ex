@@ -86,18 +86,8 @@ defmodule ChatApi.Reporting do
       |> Enum.map(fn {k, v} -> {k, List.flatten(v)} end)
       |> Map.new()
 
-    # Default to one week ago if none is provided
-    from_date =
-      Map.get(
-        filters,
-        :from_date,
-        NaiveDateTime.utc_now() |> NaiveDateTime.add(-1 * @seconds_per_week)
-      )
-
-    to_date = Map.get(filters, :to_date, NaiveDateTime.utc_now())
-
-    from_date
-    |> get_weekly_chunks(to_date)
+    filters
+    |> get_weekly_chunks()
     |> Enum.map(fn {start_date, end_date} ->
       seconds_to_first_reply_list =
         start_date
@@ -117,7 +107,7 @@ defmodule ChatApi.Reporting do
   end
 
   @spec get_weekly_chunks(NaiveDateTime.t(), NaiveDateTime.t()) :: [{Date.t(), Date.t()}]
-  def get_weekly_chunks(from_date, to_date \\ NaiveDateTime.utc_now()) do
+  def get_weekly_chunks(from_date, to_date) do
     start = from_date |> NaiveDateTime.to_date() |> start_of_week()
     finish = to_date |> NaiveDateTime.to_date() |> end_of_week()
 
@@ -129,6 +119,24 @@ defmodule ChatApi.Reporting do
         _ -> {:halt, acc}
       end
     end)
+  end
+
+  @spec get_weekly_chunks(map()) :: [{Date.t(), Date.t()}]
+  def get_weekly_chunks(filters \\ %{}) do
+    from_date =
+      case Map.fetch(filters, :from_date) do
+        {:ok, date} -> NaiveDateTime.from_iso8601!(date)
+        # Default to one week ago
+        :error -> NaiveDateTime.utc_now() |> NaiveDateTime.add(-1 * @seconds_per_week)
+      end
+
+    to_date =
+      case Map.fetch(filters, :to_date) do
+        {:ok, date} -> NaiveDateTime.from_iso8601!(date)
+        :error -> NaiveDateTime.utc_now()
+      end
+
+    get_weekly_chunks(from_date, to_date)
   end
 
   def start_of_week(date) do
