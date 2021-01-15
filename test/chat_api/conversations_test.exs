@@ -366,7 +366,7 @@ defmodule ChatApi.ConversationsTest do
         insert(:message,
           account: account,
           conversation: conversation,
-          inserted_at: ~N[2020-11-02 20:00:00]
+          inserted_at: ~N[2020-11-02 20:15:00]
         )
 
       assert Conversations.is_first_message?(conversation.id, first_message.id)
