@@ -2,13 +2,19 @@ import React from 'react';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import * as API from '../../api';
-import {Divider, Paragraph, RangePicker, Text, Title} from '../common';
+import {
+  colors,
+  Divider,
+  Paragraph,
+  RangePicker,
+  Statistic,
+  Text,
+  Title,
+} from '../common';
 import MessagesPerDayChart from './MessagesPerDayChart';
 import MessagesPerUserChart from './MessagesPerUserChart';
 import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
 import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
-import FirstResponseTimeByWeekChart from './FirstResponseTimeByWeekChart';
-import CustomerBreakdownChart from './CustomerBreakdownChart';
 import {ReportingDatum} from './support';
 import {formatSecondsToHoursAndMinutes} from '../../utils';
 import logger from '../../logger';
@@ -36,9 +42,12 @@ interface CustomerBreakdownCount {
   count: number;
 }
 
-type ResponseTimeByWeekDay = {
-  day: string;
+type ReplyTimeMetricsByWeek = {
+  start_date: string;
+  end_date: string;
   average: number;
+  median: number;
+  seconds_to_first_reply_list: Array<number>;
 };
 
 type Props = {};
@@ -54,8 +63,9 @@ type State = {
   customerBreakdownByBrowser: Array<CustomerBreakdownCount>;
   customerBreakdownByOs: Array<CustomerBreakdownCount>;
   customerBreakdownByTimezone: Array<CustomerBreakdownCount>;
-  averageTimeToFirstRespond: number;
-  firstResponseTimeByWeekday: Array<ResponseTimeByWeekDay>;
+  averageTimeToFirstReply: number;
+  medianTimeToFirstReply: number;
+  firstReplyMetricsByWeek: Array<ReplyTimeMetricsByWeek>;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
@@ -71,8 +81,9 @@ class ReportingDashboard extends React.Component<Props, State> {
     customerBreakdownByBrowser: [],
     customerBreakdownByOs: [],
     customerBreakdownByTimezone: [],
-    averageTimeToFirstRespond: 0,
-    firstResponseTimeByWeekday: [],
+    averageTimeToFirstReply: 0,
+    medianTimeToFirstReply: 0,
+    firstReplyMetricsByWeek: [],
   };
 
   componentDidMount() {
@@ -100,8 +111,9 @@ class ReportingDashboard extends React.Component<Props, State> {
       customerBreakdownByBrowser: data?.customer_breakdown_by_browser || [],
       customerBreakdownByOs: data?.customer_breakdown_by_os || [],
       customerBreakdownByTimezone: data?.customer_breakdown_by_time_zone || [],
-      averageTimeToFirstRespond: data?.average_time_to_first_respond || 0,
-      firstResponseTimeByWeekday: data?.first_response_time_by_weekday || [],
+      averageTimeToFirstReply: data?.average_time_to_first_reply || 0,
+      medianTimeToFirstReply: data?.median_time_to_first_reply || 0,
+      firstReplyMetricsByWeek: data?.first_reply_metrics_by_week || [],
     });
   };
 
@@ -185,16 +197,6 @@ class ReportingDashboard extends React.Component<Props, State> {
     });
   };
 
-  formatResponseTimeByWeekDay = (stats: Array<ResponseTimeByWeekDay>) => {
-    return stats.map(({average, day}) => {
-      // use minutes instead of seconds when rendering the chart
-      return {
-        average: Math.round((average / 60) * 100) / 100,
-        day: day.slice(0, 3),
-      };
-    });
-  };
-
   handleDateRangeUpdated = (range: any) => {
     const [fromDate, toDate] = range;
 
@@ -207,47 +209,98 @@ class ReportingDashboard extends React.Component<Props, State> {
     );
   };
 
-  formatResponseTimeStats = (responseTime: number) => {
-    const {hours, minutes, seconds} = formatSecondsToHoursAndMinutes(
-      responseTime
-    );
+  formatDurationInSeconds = (secs: number) => {
+    const {hours, minutes, seconds} = formatSecondsToHoursAndMinutes(secs);
 
-    return `${hours} h ${minutes} m ${seconds} s`;
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  formatAverageResponseTimeThisWeek = () => {
+    const {firstReplyMetricsByWeek = []} = this.state;
+    const [current, next] = firstReplyMetricsByWeek;
+
+    if (!current) {
+      return {};
+    }
+
+    const {average: averageThisWeek} = current;
+
+    if (!next) {
+      return {
+        title: this.formatDurationInSeconds(averageThisWeek),
+        description: null,
+      };
+    }
+
+    const {average: averageLastWeek} = next;
+    const percentage = (averageThisWeek - averageLastWeek) / averageLastWeek;
+    const sign = percentage < 0 ? '-' : '+';
+
+    return {
+      title: this.formatDurationInSeconds(averageThisWeek),
+      description: (
+        <Paragraph>
+          <Text
+            style={{color: percentage < 0 ? colors.red : colors.green}}
+          >{`${sign}${Math.abs(percentage).toFixed(2)}%`}</Text>{' '}
+          <Text type="secondary">from previous week</Text>
+        </Paragraph>
+      ),
+    };
+  };
+
+  formatMedianResponseTimeThisWeek = () => {
+    const {firstReplyMetricsByWeek = []} = this.state;
+    const [current, next] = firstReplyMetricsByWeek;
+
+    if (!current) {
+      return {};
+    }
+
+    const {median: medianThisWeek} = current;
+
+    if (!next) {
+      return {
+        title: this.formatDurationInSeconds(medianThisWeek),
+        description: null,
+      };
+    }
+
+    const {median: medianLastWeek} = next;
+    const percentage = (medianThisWeek - medianLastWeek) / medianLastWeek;
+    const sign = percentage < 0 ? '-' : '+';
+
+    return {
+      title: this.formatDurationInSeconds(medianThisWeek),
+      description: (
+        <Paragraph>
+          <Text
+            style={{color: percentage < 0 ? colors.red : colors.green}}
+          >{`${sign}${Math.abs(percentage).toFixed(2)}%`}</Text>{' '}
+          <Text type="secondary">from previous week</Text>
+        </Paragraph>
+      ),
+    };
   };
 
   render() {
     const {
       fromDate,
       toDate,
-      customerBreakdownByBrowser = [],
-      customerBreakdownByOs = [],
-      customerBreakdownByTimezone = [],
-      averageTimeToFirstRespond = 0,
-      firstResponseTimeByWeekday = [],
+      averageTimeToFirstReply = 0,
+      medianTimeToFirstReply = 0,
     } = this.state;
     const dailyStats = this.formatDailyStats();
     const userStats = this.formatUserStats();
     const dayOfWeekStats = this.formatDayOfWeekStats();
-    const browserStats = this.formatCustomerBreakdownStats(
-      customerBreakdownByBrowser,
-      'browser'
-    );
-    const osStats = this.formatCustomerBreakdownStats(
-      customerBreakdownByOs,
-      'os'
-    );
-    const timezoneStats = this.formatCustomerBreakdownStats(
-      customerBreakdownByTimezone,
-      'time_zone'
-    );
-
-    const responseTimeStats = this.formatResponseTimeStats(
-      averageTimeToFirstRespond
-    );
-
-    const responseTimeByWeekDay = this.formatResponseTimeByWeekDay(
-      firstResponseTimeByWeekday
-    );
+    const {
+      title: thisWeekAverageTitle,
+      description: thisWeekAverageSubtext,
+    } = this.formatAverageResponseTimeThisWeek();
+    const {
+      title: thisWeekMedianTitle,
+      description: thisWeekMedianSubtext,
+    } = this.formatMedianResponseTimeThisWeek();
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
@@ -272,21 +325,42 @@ class ReportingDashboard extends React.Component<Props, State> {
         </Flex>
 
         <Box>
-          <Flex mx={-3} mb={4}>
-            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
-              <Box mb={2}>
-                <Text strong>Response Metrics</Text>
+          <Box mb={2}>
+            <Text strong>Response Metrics</Text>
+          </Box>
+          <Box>
+            <Flex mx={-3}>
+              <Box mx={3} sx={{flex: 1}}>
+                <Statistic
+                  title="Average response time this week"
+                  value={thisWeekAverageTitle}
+                />
+                <Text>{thisWeekAverageSubtext}</Text>
               </Box>
-              {/* TODO: use antd <Statistic> instead? */}
-              <Box>
-                <Box mb={2}>
-                  <Text>Average first response time: </Text>
-                  <Text strong>{responseTimeStats}</Text>
-                </Box>
+
+              <Box mx={3} sx={{flex: 1}}>
+                <Statistic
+                  title="Median response time this week"
+                  value={thisWeekMedianTitle}
+                />
+                <Text>{thisWeekMedianSubtext}</Text>
               </Box>
-              <FirstResponseTimeByWeekChart data={responseTimeByWeekDay} />
-            </Box>
-          </Flex>
+
+              <Box mx={3} sx={{flex: 1}}>
+                <Statistic
+                  title="Average response time overall"
+                  value={this.formatDurationInSeconds(averageTimeToFirstReply)}
+                />
+              </Box>
+
+              <Box mx={3} sx={{flex: 1}}>
+                <Statistic
+                  title="Median response time overall"
+                  value={this.formatDurationInSeconds(medianTimeToFirstReply)}
+                />
+              </Box>
+            </Flex>
+          </Box>
           <Divider />
           <Flex mx={-3} mb={4}>
             <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
@@ -320,6 +394,8 @@ class ReportingDashboard extends React.Component<Props, State> {
             </Box>
           </Flex>
 
+          {/* Hiding customer breakdown charts for now since they aren't particularly useful ¯\_(ツ)_/¯ */}
+          {/*
           <Divider />
 
           <Box my={4}>
@@ -348,6 +424,7 @@ class ReportingDashboard extends React.Component<Props, State> {
               <CustomerBreakdownChart data={timezoneStats} />
             </Box>
           </Flex>
+          */}
         </Box>
       </Box>
     );

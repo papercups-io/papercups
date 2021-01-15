@@ -171,6 +171,20 @@ defmodule ChatApi.Reporting do
     |> average()
   end
 
+  @spec median_seconds_to_first_reply(binary(), map()) :: float()
+  def median_seconds_to_first_reply(account_id, filters \\ %{}) do
+    account_id
+    |> list_conversations_with_agent_reply(filters)
+    |> compute_median_seconds_to_first_reply()
+  end
+
+  @spec compute_median_seconds_to_first_reply([Conversation.t()]) :: float()
+  def compute_median_seconds_to_first_reply(conversations) do
+    conversations
+    |> Enum.map(&calculate_seconds_to_first_reply/1)
+    |> median()
+  end
+
   @spec average([integer()]) :: float()
   def average([]), do: 0.0
 

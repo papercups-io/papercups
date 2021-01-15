@@ -25,15 +25,17 @@ defmodule ChatApiWeb.ReportingController do
           Reporting.first_response_time_by_weekday(account_id, filters),
         sent_messages_by_date: Reporting.count_sent_messages_by_date(account_id, filters),
         received_messages_by_date: Reporting.count_received_messages_by_date(account_id, filters),
-        customer_breakdown_by_browser:
-          Reporting.get_customer_breakdown(account_id, :browser, filters),
-        customer_breakdown_by_os: Reporting.get_customer_breakdown(account_id, :os, filters),
-        average_time_to_first_respond:
+        average_time_to_first_reply:
           Reporting.average_seconds_to_first_reply(account_id, filters),
-        customer_breakdown_by_time_zone:
-          Reporting.get_customer_breakdown(account_id, :time_zone, filters),
+        median_time_to_first_reply: Reporting.median_seconds_to_first_reply(account_id, filters),
         first_reply_metrics_by_week:
           Reporting.seconds_to_first_reply_metrics_by_week(account_id, filters)
+        # NB: this are currently unused
+        # customer_breakdown_by_browser:
+        #   Reporting.get_customer_breakdown(account_id, :browser, filters),
+        # customer_breakdown_by_os: Reporting.get_customer_breakdown(account_id, :os, filters),
+        # customer_breakdown_by_time_zone:
+        #   Reporting.get_customer_breakdown(account_id, :time_zone, filters),
       }
     })
   end
