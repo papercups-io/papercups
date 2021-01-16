@@ -125,6 +125,7 @@ defmodule ChatApi.Reporting do
   def get_weekly_chunks(filters \\ %{}) do
     from_date =
       case Map.fetch(filters, :from_date) do
+        {:ok, %NaiveDateTime{} = date} -> date
         {:ok, date} -> NaiveDateTime.from_iso8601!(date)
         # Default to one week ago
         :error -> NaiveDateTime.utc_now() |> NaiveDateTime.add(-1 * @seconds_per_week)
@@ -132,6 +133,7 @@ defmodule ChatApi.Reporting do
 
     to_date =
       case Map.fetch(filters, :to_date) do
+        {:ok, %NaiveDateTime{} = date} -> date
         {:ok, date} -> NaiveDateTime.from_iso8601!(date)
         :error -> NaiveDateTime.utc_now()
       end
@@ -139,10 +141,12 @@ defmodule ChatApi.Reporting do
     get_weekly_chunks(from_date, to_date)
   end
 
+  @spec start_of_week(Date.t()) :: Date.t()
   def start_of_week(date) do
     Date.add(date, -1 * Date.day_of_week(date))
   end
 
+  @spec end_of_week(Date.t()) :: Date.t()
   def end_of_week(date) do
     Date.add(date, 7 - Date.day_of_week(date))
   end
