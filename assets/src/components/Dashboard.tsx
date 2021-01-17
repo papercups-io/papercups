@@ -8,7 +8,7 @@ import {
   RouteComponentProps,
 } from 'react-router-dom';
 import {Helmet} from 'react-helmet';
-import {Box, Flex} from 'theme-ui';
+import {Box, Flex, Image} from 'theme-ui';
 import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
 // import {Storytime} from '../lib/storytime'; // For testing
 import {Storytime} from '@papercups-io/storytime';
@@ -50,6 +50,8 @@ import CompaniesPage from './companies/CompaniesPage';
 import CreateCompanyPage from './companies/CreateCompanyPage';
 import UpdateCompanyPage from './companies/UpdateCompanyPage';
 import CompanyDetailsPage from './companies/CompanyDetailsPage';
+import Logo from '../botcart-white.svg'
+
 
 const {
   REACT_APP_STORYTIME_ENABLED,
@@ -90,7 +92,7 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
 
   return (
     <Helmet defer={false}>
-      <title>{totalNumUnread ? htmlTitle : 'Papercups'}</title>
+      <title>{totalNumUnread ? htmlTitle : 'Botcart'}</title>
     </Helmet>
   );
 };
@@ -270,9 +272,28 @@ const Dashboard = (props: RouteComponentProps) => {
             </Menu>
           </Box>
 
+          <Box py={3} style={{textAlign: 'center'}}>
+            <Menu mode="inline" theme="dark" selectable={false}>
+              <Menu.Item
+                
+                key="logo"
+                
+              >
+                <Image width={'100px'} src={Logo} />
+
+                <a
+                href="https://botcart.co/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                www.botcart.co
+              </a>
+              </Menu.Item>
+            </Menu>
+          </Box>
+
           <Box py={3}>
             <Menu mode="inline" theme="dark" selectable={false}>
-          
               <Menu.Item
                 title="Log out"
                 icon={<LogoutOutlined />}
