@@ -242,7 +242,7 @@ class ReportingDashboard extends React.Component<Props, State> {
       description: (
         <Paragraph>
           <Text
-            style={{color: percentage < 0 ? colors.red : colors.green}}
+            style={{color: percentage < 0 ? colors.green : colors.red}}
           >{`${sign}${Math.abs(percentage).toFixed(2)}%`}</Text>{' '}
           <Text type="secondary">from previous week</Text>
         </Paragraph>
@@ -278,7 +278,7 @@ class ReportingDashboard extends React.Component<Props, State> {
       description: (
         <Paragraph>
           <Text
-            style={{color: percentage < 0 ? colors.red : colors.green}}
+            style={{color: percentage < 0 ? colors.green : colors.red}}
           >{`${sign}${Math.abs(percentage).toFixed(2)}%`}</Text>{' '}
           <Text type="secondary">from previous week</Text>
         </Paragraph>
