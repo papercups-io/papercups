@@ -8,7 +8,7 @@ import {
   RouteComponentProps,
 } from 'react-router-dom';
 import {Helmet} from 'react-helmet';
-import {Box, Flex} from 'theme-ui';
+import {Box, Flex, Image} from 'theme-ui';
 import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
 // import {Storytime} from '../lib/storytime'; // For testing
 import {Storytime} from '@papercups-io/storytime';
@@ -267,6 +267,26 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/billing">Billing</Link>
                 </Menu.Item>
               )}
+            </Menu>
+          </Box>
+
+          <Box py={3} style={{textAlign: 'center'}}>
+            <Menu mode="inline" theme="dark" selectable={false}>
+              <Menu.Item
+                
+                key="logo"
+                
+              >
+                <Image width={'100px'} src="../../botcart-white.svg" />
+
+                <a
+                href="https://botcart.co/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                www.botcart.co
+              </a>
+              </Menu.Item>
             </Menu>
           </Box>
 
