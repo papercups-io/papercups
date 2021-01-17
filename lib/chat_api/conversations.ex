@@ -46,16 +46,26 @@ defmodule ChatApi.Conversations do
     list_conversations_by_account(account_id, %{})
   end
 
+  @customer_conversations_limit 3
+
   @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
   def find_by_customer(customer_id, account_id) do
-    # TODO: make sure messages are sorted properly?
+    # NB: this is the method used to fetch conversations for a customer in the widget,
+    # so we need to make sure that private messages are excluded from the query.
+    messages =
+      from m in Message,
+        where: m.private == false,
+        order_by: m.inserted_at,
+        preload: [user: :profile]
+
     Conversation
     |> where(customer_id: ^customer_id)
     |> where(account_id: ^account_id)
     |> where(status: "open")
     |> where([c], is_nil(c.archived_at))
     |> order_by(desc: :inserted_at)
-    |> preload([:customer, messages: [user: :profile]])
+    |> limit(@customer_conversations_limit)
+    |> preload([:customer, messages: ^messages])
     |> Repo.all()
   end
 

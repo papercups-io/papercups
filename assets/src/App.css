@@ -22,6 +22,7 @@ body {
 .TextArea--transparent:hover,
 .TextArea--transparent:focus,
 .TextArea--transparent:active {
+  background: transparent;
   border: none;
   box-shadow: none;
   resize: none;

@@ -134,7 +134,7 @@ defmodule ChatApi.Slack.Notifications do
   def notify_slack_channel(
         access_token,
         channel_id,
-        %Message{conversation_id: conversation_id} = message
+        %Message{conversation_id: conversation_id, user: user} = message
       ) do
     conversation_id
     |> SlackConversationThreads.get_threads_by_conversation_id()
@@ -143,7 +143,9 @@ defmodule ChatApi.Slack.Notifications do
       message = %{
         "text" => format_slack_message_text(message),
         "channel" => thread.slack_channel,
-        "thread_ts" => thread.slack_thread_ts
+        "thread_ts" => thread.slack_thread_ts,
+        "username" => format_user_name(user),
+        "icon_url" => slack_icon_url(user)
       }
 
       Slack.Client.send_message(message, access_token)
@@ -154,7 +156,7 @@ defmodule ChatApi.Slack.Notifications do
   defp format_slack_message_text(%Message{} = message) do
     case message do
       %{body: body, user: %User{} = user} when not is_nil(user) ->
-        "*#{format_user_name(user)}*: #{body}"
+        body
 
       %{body: body, customer: %Customer{} = customer} when not is_nil(customer) ->
         "*:wave: #{Slack.Helpers.identify_customer(customer)}*: #{body}"
@@ -164,8 +166,8 @@ defmodule ChatApi.Slack.Notifications do
     end
   end
 
-  @spec format_user_name(User.t()) :: String.t()
-  defp format_user_name(%User{} = user) do
+  @spec format_user_name(User.t() | nil) :: String.t()
+  defp format_user_name(user) do
     case user do
       %{profile: %UserProfile{display_name: display_name}}
       when not is_nil(display_name) ->
@@ -175,8 +177,36 @@ defmodule ChatApi.Slack.Notifications do
       when not is_nil(full_name) ->
         full_name
 
-      user ->
-        user.email
+      %{email: email} ->
+        email
+
+      _ ->
+        default_app_name()
     end
+  end
+
+  @spec slack_icon_url(User.t() | nil) :: String.t()
+  defp slack_icon_url(user) do
+    case user do
+      %{profile: %UserProfile{profile_photo_url: profile_photo_url}}
+      when not is_nil(profile_photo_url) ->
+        profile_photo_url
+
+      _ ->
+        default_app_icon_url()
+    end
+  end
+
+  @papercups_app_name "Papercups"
+  @papercups_icon_url "https://s3-us-west-2.amazonaws.com/slack-files2/avatars/2021-01-05/1626939067681_3e27968eb3657d7167e5_132.png"
+
+  @spec default_app_name() :: String.t()
+  defp default_app_name() do
+    System.get_env("PAPERCUPS_APP_NAME", @papercups_app_name)
+  end
+
+  @spec default_app_icon_url() :: String.t()
+  defp default_app_icon_url() do
+    System.get_env("PAPERCUPS_APP_ICON_URL", @papercups_icon_url)
   end
 end

@@ -16,6 +16,7 @@ defmodule ChatApi.Messages.Notification do
     })
   end
 
+  # TODO: rename to `broadcast_to_customer` or something more explicit?
   @spec broadcast_to_conversation!(Message.t()) :: Message.t()
   def broadcast_to_conversation!(%Message{} = message) do
     message
@@ -31,7 +32,7 @@ defmodule ChatApi.Messages.Notification do
         :slack
       ) do
     Logger.info("Sending notification: :slack")
-    # TODO: should we just pass in the message struct here?
+
     Task.start(fn ->
       ChatApi.Slack.Notifications.notify_primary_channel(message)
     end)
