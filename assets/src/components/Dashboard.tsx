@@ -280,7 +280,7 @@ const Dashboard = (props: RouteComponentProps) => {
                 
               >
                   <a href="https://botcart.co/"  target="_blank"  rel="noopener noreferrer">
-                    <Image width={'100px'} src={Logo} />
+                    <Image width={'80px'} src={Logo} />
                   </a>
 
               
