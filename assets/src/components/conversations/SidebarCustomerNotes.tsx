@@ -67,7 +67,7 @@ const SidebarCustomerNotes = ({customerId}: {customerId: string}) => {
 
   return (
     <Box>
-      <Box mb={2} sx={{bg: 'rgba(254,237,175,.5)'}}>
+      <Box mb={2} sx={{bg: 'rgba(254,237,175,.4)'}}>
         <TextArea
           style={{background: 'transparent'}}
           placeholder="Add a note"

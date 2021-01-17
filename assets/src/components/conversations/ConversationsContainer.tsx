@@ -26,11 +26,7 @@ type Props = {
   onSelectConversation: (id: string | null, fn?: () => void) => void;
   onUpdateConversation: (id: string, params: any) => Promise<void>;
   onDeleteConversation: (id: string) => Promise<void>;
-  onSendMessage: (
-    message: string,
-    conversationId: string,
-    fn: () => void
-  ) => void;
+  onSendMessage: (message: Partial<Message>, fn: () => void) => void;
 };
 
 type State = {
@@ -286,16 +282,19 @@ class ConversationsContainer extends React.Component<Props, State> {
     this.props.onUpdateConversation(conversationId, {assignee_id: userId});
   };
 
-  handleSendMessage = (message: string) => {
+  handleSendMessage = (message: Partial<Message>) => {
     const {selected: conversationId} = this.state;
 
     if (!conversationId) {
       return null;
     }
 
-    this.props.onSendMessage(message, conversationId, () => {
-      this.scrollIntoView();
-    });
+    this.props.onSendMessage(
+      {...message, conversation_id: conversationId},
+      () => {
+        this.scrollIntoView();
+      }
+    );
   };
 
   render() {

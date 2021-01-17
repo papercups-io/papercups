@@ -10,11 +10,7 @@ type Props = {
   conversation: Conversation;
   currentUser: User | null;
   messages: Array<Message>;
-  onSendMessage: (
-    message: string,
-    conversationId: string,
-    cb: () => void
-  ) => void;
+  onSendMessage: (message: Partial<Message>, cb: () => void) => void;
 };
 
 class ConversationSidebar extends React.Component<Props, any> {
@@ -37,16 +33,19 @@ class ConversationSidebar extends React.Component<Props, any> {
     this.scrollToEl && this.scrollToEl.scrollIntoView();
   };
 
-  handleSendMessage = (message: string) => {
+  handleSendMessage = (message: Partial<Message>) => {
     const {id: conversationId} = this.props.conversation;
 
     if (!conversationId) {
       return null;
     }
 
-    this.props.onSendMessage(message, conversationId, () => {
-      this.scrollIntoView();
-    });
+    this.props.onSendMessage(
+      {...message, conversation_id: conversationId},
+      () => {
+        this.scrollIntoView();
+      }
+    );
   };
 
   render() {

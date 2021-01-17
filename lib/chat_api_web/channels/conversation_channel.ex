@@ -3,6 +3,7 @@ defmodule ChatApiWeb.ConversationChannel do
 
   alias ChatApiWeb.Presence
   alias ChatApi.{Messages, Conversations}
+  alias ChatApi.Messages.Message
 
   @impl true
   def join("conversation:lobby", _payload, socket) do
@@ -100,7 +101,8 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
-  defp broadcast_conversation_update(message) do
+  @spec broadcast_conversation_update!(Message.t()) :: Message.t()
+  defp broadcast_conversation_update!(message) do
     %{conversation_id: conversation_id, account_id: account_id} = message
     # Mark as unread and ensure the conversation is open, since we want to
     # reopen a conversation if it received a new message after being closed.
@@ -113,11 +115,26 @@ defmodule ChatApiWeb.ConversationChannel do
       "id" => conversation_id,
       "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
     })
+
+    message
   end
 
+  @spec broadcast_to_admin_channel!(Message.t()) :: Message.t()
+  defp broadcast_to_admin_channel!(%Message{account_id: account_id} = message) do
+    ChatApiWeb.Endpoint.broadcast!(
+      "notification:" <> account_id,
+      "shout",
+      Messages.Helpers.format(message)
+    )
+
+    message
+  end
+
+  @spec broadcast_new_message(any(), Message.t()) :: Message.t()
   defp broadcast_new_message(socket, message) do
-    broadcast_conversation_update(message)
+    broadcast_conversation_update!(message)
     broadcast(socket, "shout", Messages.Helpers.format(message))
+    broadcast_to_admin_channel!(message)
 
     message
     |> Messages.Notification.notify(:slack)
@@ -129,6 +146,7 @@ defmodule ChatApiWeb.ConversationChannel do
   end
 
   # Add authorization logic here as required.
+  @spec authorized?(any(), binary()) :: boolean()
   defp authorized?(_payload, conversation_id) do
     case Conversations.get_conversation(conversation_id) do
       %Conversations.Conversation{} -> true

@@ -34,6 +34,8 @@ defmodule ChatApi.Messages.Message do
     field(:sent_at, :utc_datetime)
     field(:seen_at, :utc_datetime)
     field(:source, :string, default: "chat")
+    field(:type, :string, default: "reply")
+    field(:private, :boolean, default: false)
     field(:metadata, :map)
 
     belongs_to(:conversation, Conversation)
@@ -49,6 +51,8 @@ defmodule ChatApi.Messages.Message do
     message
     |> cast(attrs, [
       :body,
+      :type,
+      :private,
       :conversation_id,
       :account_id,
       :customer_id,
@@ -59,6 +63,7 @@ defmodule ChatApi.Messages.Message do
       :metadata
     ])
     |> validate_required([:body, :account_id, :conversation_id])
+    |> validate_inclusion(:type, ["reply", "note"])
     |> validate_inclusion(:source, ["chat", "slack", "email"])
   end
 end
