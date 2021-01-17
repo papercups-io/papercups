@@ -50,6 +50,8 @@ import CompaniesPage from './companies/CompaniesPage';
 import CreateCompanyPage from './companies/CreateCompanyPage';
 import UpdateCompanyPage from './companies/UpdateCompanyPage';
 import CompanyDetailsPage from './companies/CompanyDetailsPage';
+import Logo from '../botcart-white.svg'
+
 
 const {
   REACT_APP_STORYTIME_ENABLED,
@@ -277,7 +279,7 @@ const Dashboard = (props: RouteComponentProps) => {
                 key="logo"
                 
               >
-                <Image width={'100px'} src="../../botcart-white.svg" />
+                <Image width={'100px'} src={Logo} />
 
                 <a
                 href="https://botcart.co/"
