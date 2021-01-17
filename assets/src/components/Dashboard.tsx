@@ -279,15 +279,9 @@ const Dashboard = (props: RouteComponentProps) => {
                 key="logo"
                 
               >
-                <Image width={'100px'} src={Logo} />
+                <Image width={'80px'} src={Logo} href="https://botcart.co/" />
 
-                <a
-                href="https://botcart.co/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                www.botcart.co
-              </a>
+              
               </Menu.Item>
             </Menu>
           </Box>

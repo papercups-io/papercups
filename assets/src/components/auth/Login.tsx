@@ -125,8 +125,8 @@ class Login extends React.Component<Props, State> {
               <Link to={`/register${location.search}`}>Sign up!</Link>
             </Box> */}
             <Box my={3}>
-              <Text>
-                If you have forgotten your password, Contact:
+              <Text style={{textAlign: 'center'}}>
+                If you have forgotten your password, kindly contact:
                 <a href="mailto:akhil.varyani@botcart.co">
                   akhil.varyani@botcart.co
                 </a>
