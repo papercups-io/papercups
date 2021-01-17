@@ -74,10 +74,9 @@ class Login extends React.Component<Props, State> {
         }}
       >
         <Box sx={{width: '100%', maxWidth: 320}}>
-          <Box>
-            <Image src="assets/public/logo.svg" />
-          </Box>
-          <Title level={1}>Welcome to BotCart</Title>
+          <Title style={{textAlign: 'center'}} level={1}>
+            Welcome to BotCart
+          </Title>
           <form onSubmit={this.handleSubmit}>
             <Box mb={2}>
               <label htmlFor="email">Email</label>
@@ -124,9 +123,26 @@ class Login extends React.Component<Props, State> {
             {/* <Box mt={error ? 3 : 4}>
               Don't have an account?{' '}
               <Link to={`/register${location.search}`}>Sign up!</Link>
-            </Box> */}  
+            </Box> */}
             <Box my={3}>
-              <Text>If you have forgotten your password, contact <Link to="mailto:akhil.varyani@botcart.co">akhil.varyani@botcart.co</Link></Text>
+              <Text>
+                If you have forgotten your password, Contact:
+                <a href="mailto:akhil.varyani@botcart.co">
+                  akhil.varyani@botcart.co
+                </a>
+              </Text>
+            </Box>
+            <Box style={{textAlign: 'center'}}>
+              <Image width={'130px'} src="../../logo.svg" />
+            </Box>
+            <Box m={2} style={{textAlign: 'center'}}>
+              <a
+                href="https://botcart.co/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                www.botcart.co
+              </a>
             </Box>
           </form>
         </Box>

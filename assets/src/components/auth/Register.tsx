@@ -1,6 +1,6 @@
 import React from 'react';
 import {RouteComponentProps, Link} from 'react-router-dom';
-import {Box, Flex} from 'theme-ui';
+import {Box, Flex, Image} from 'theme-ui';
 import qs from 'query-string';
 import {Button, Input, Text, Title} from '../common';
 import {useAuth} from './AuthProvider';
@@ -156,7 +156,9 @@ class Register extends React.Component<Props, State> {
         }}
       >
         <Box sx={{width: '100%', maxWidth: 320}}>
-          <Title level={1}>Get started</Title>
+          <Title style={{textAlign: 'center'}} level={1}>
+            Get started
+          </Title>
           <form onSubmit={this.handleSubmit}>
             {!inviteToken && (
               <Box mb={2}>
@@ -230,9 +232,21 @@ class Register extends React.Component<Props, State> {
               </Box>
             )}
 
-            <Box mt={error ? 3 : 4}>
+            <Box mt={error ? 3 : 4} mb={4}>
               Already have an account?{' '}
               <Link to={`/login${location.search}`}>Log in!</Link>
+            </Box>
+            <Box style={{textAlign: 'center'}}>
+              <Image width={'130px'} src="../../logo.svg" />
+            </Box>
+            <Box m={2} style={{textAlign: 'center'}}>
+              <a
+                href="https://botcart.co/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                www.botcart.co
+              </a>
             </Box>
           </form>
         </Box>

@@ -90,7 +90,7 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
 
   return (
     <Helmet defer={false}>
-      <title>{totalNumUnread ? htmlTitle : 'Papercups'}</title>
+      <title>{totalNumUnread ? htmlTitle : 'Botcart'}</title>
     </Helmet>
   );
 };
@@ -272,7 +272,6 @@ const Dashboard = (props: RouteComponentProps) => {
 
           <Box py={3}>
             <Menu mode="inline" theme="dark" selectable={false}>
-          
               <Menu.Item
                 title="Log out"
                 icon={<LogoutOutlined />}
