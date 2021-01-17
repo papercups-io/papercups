@@ -73,6 +73,84 @@ defmodule ChatApi.Reporting do
     |> Enum.sort_by(& &1.date, Date)
   end
 
+  @days_per_week 7
+  @seconds_per_day 60 * 60 * 24
+  @seconds_per_week @seconds_per_day * @days_per_week
+
+  @spec seconds_to_first_reply_metrics_by_week(binary(), map()) :: [map()]
+  def seconds_to_first_reply_metrics_by_week(account_id, filters \\ %{}) do
+    seconds_to_first_reply_list_by_date =
+      account_id
+      |> conversation_seconds_to_first_reply_by_date(filters)
+      |> Enum.group_by(& &1.date, & &1.seconds_to_first_reply_list)
+      |> Enum.map(fn {k, v} -> {k, List.flatten(v)} end)
+      |> Map.new()
+
+    filters
+    |> get_weekly_chunks()
+    |> Enum.map(fn {start_date, end_date} ->
+      seconds_to_first_reply_list =
+        start_date
+        |> Date.range(end_date)
+        |> Enum.reduce([], fn date, acc ->
+          acc ++ Map.get(seconds_to_first_reply_list_by_date, date, [])
+        end)
+
+      %{
+        start_date: start_date,
+        end_date: end_date,
+        seconds_to_first_reply_list: seconds_to_first_reply_list,
+        average: average(seconds_to_first_reply_list),
+        median: median(seconds_to_first_reply_list)
+      }
+    end)
+  end
+
+  @spec get_weekly_chunks(NaiveDateTime.t(), NaiveDateTime.t()) :: [{Date.t(), Date.t()}]
+  def get_weekly_chunks(from_date, to_date) do
+    start = from_date |> NaiveDateTime.to_date() |> start_of_week()
+    finish = to_date |> NaiveDateTime.to_date() |> end_of_week()
+
+    start
+    |> Stream.iterate(fn date -> Date.add(date, @days_per_week) end)
+    |> Enum.reduce_while([], fn date, acc ->
+      case Date.compare(date, finish) do
+        :lt -> {:cont, [{date, Date.add(date, @days_per_week - 1)} | acc]}
+        _ -> {:halt, acc}
+      end
+    end)
+  end
+
+  @spec get_weekly_chunks(map()) :: [{Date.t(), Date.t()}]
+  def get_weekly_chunks(filters \\ %{}) do
+    from_date =
+      case Map.fetch(filters, :from_date) do
+        {:ok, %NaiveDateTime{} = date} -> date
+        {:ok, date} -> NaiveDateTime.from_iso8601!(date)
+        # Default to one week ago
+        :error -> NaiveDateTime.utc_now() |> NaiveDateTime.add(-1 * @seconds_per_week)
+      end
+
+    to_date =
+      case Map.fetch(filters, :to_date) do
+        {:ok, %NaiveDateTime{} = date} -> date
+        {:ok, date} -> NaiveDateTime.from_iso8601!(date)
+        :error -> NaiveDateTime.utc_now()
+      end
+
+    get_weekly_chunks(from_date, to_date)
+  end
+
+  @spec start_of_week(Date.t()) :: Date.t()
+  def start_of_week(date) do
+    Date.add(date, -1 * Date.day_of_week(date))
+  end
+
+  @spec end_of_week(Date.t()) :: Date.t()
+  def end_of_week(date) do
+    Date.add(date, 7 - Date.day_of_week(date))
+  end
+
   # TODO: move to Conversations context?
   @spec calculate_seconds_to_first_reply(Conversation.t()) :: integer()
   def calculate_seconds_to_first_reply(conversation) do
@@ -95,6 +173,20 @@ defmodule ChatApi.Reporting do
     conversations
     |> Enum.map(&calculate_seconds_to_first_reply/1)
     |> average()
+  end
+
+  @spec median_seconds_to_first_reply(binary(), map()) :: float()
+  def median_seconds_to_first_reply(account_id, filters \\ %{}) do
+    account_id
+    |> list_conversations_with_agent_reply(filters)
+    |> compute_median_seconds_to_first_reply()
+  end
+
+  @spec compute_median_seconds_to_first_reply([Conversation.t()]) :: float()
+  def compute_median_seconds_to_first_reply(conversations) do
+    conversations
+    |> Enum.map(&calculate_seconds_to_first_reply/1)
+    |> median()
   end
 
   @spec average([integer()]) :: float()

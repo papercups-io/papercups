@@ -377,6 +377,135 @@ defmodule ChatApi.ReportingTest do
     end
   end
 
+  describe "median_seconds_to_first_reply" do
+    test "gets the median seconds it takes to respond", %{
+      account: account
+    } do
+      inserted_at = ~N[2020-09-01 12:00:00]
+      first_replied_at = ~N[2020-09-01 12:30:00]
+
+      insert_list(
+        3,
+        :conversation,
+        account: account,
+        inserted_at: inserted_at,
+        first_replied_at: first_replied_at
+      )
+
+      median_replied_time = Reporting.median_seconds_to_first_reply(account.id)
+      assert median_replied_time == Time.diff(first_replied_at, inserted_at)
+    end
+
+    test "gets median response time of multiple times", %{account: account} do
+      # 31 seconds
+      inserted_at_1 = ~N[2020-09-01 12:00:00]
+      first_replied_at_1 = ~N[2020-09-01 12:00:31]
+
+      # 671 seconds
+      inserted_at_2 = ~N[2020-09-02 12:00:00]
+      first_replied_at_2 = ~N[2020-09-02 12:11:11]
+
+      # 3665 seconds
+      inserted_at_3 = ~N[2020-09-01 10:00:00]
+      first_replied_at_3 = ~N[2020-09-01 11:01:05]
+
+      # 90000 seconds
+      inserted_at_4 = ~N[2020-09-02 10:00:00]
+      first_replied_at_4 = ~N[2020-09-03 11:00:00]
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_1,
+        first_replied_at: first_replied_at_1
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_2,
+        first_replied_at: first_replied_at_2
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_3,
+        first_replied_at: first_replied_at_3
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_4,
+        first_replied_at: first_replied_at_4
+      )
+
+      median_replied_time = Reporting.median_seconds_to_first_reply(account.id)
+      assert median_replied_time == (671 + 3665) / 2
+    end
+
+    test "gets median response time of multiple times with filters", %{account: account} do
+      # 31 seconds
+      inserted_at_1 = ~N[2020-10-01 12:00:00]
+      first_replied_at_1 = ~N[2020-10-01 12:00:31]
+
+      # 671 seconds
+      inserted_at_2 = ~N[2020-10-02 12:00:00]
+      first_replied_at_2 = ~N[2020-10-02 12:11:11]
+
+      # 3665 seconds
+      inserted_at_3 = ~N[2020-10-03 10:00:00]
+      first_replied_at_3 = ~N[2020-10-03 11:01:05]
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_1,
+        first_replied_at: first_replied_at_1
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_2,
+        first_replied_at: first_replied_at_2
+      )
+
+      insert(
+        :conversation,
+        account: account,
+        inserted_at: inserted_at_3,
+        first_replied_at: first_replied_at_3
+      )
+
+      median_replied_time =
+        Reporting.median_seconds_to_first_reply(account.id, %{
+          from_date: ~N[2020-10-01 11:00:00],
+          to_date: ~N[2020-10-02 13:00:00]
+        })
+
+      assert median_replied_time == (31 + 671) / 2
+    end
+
+    test "when first_replied_at is nil", %{
+      account: account
+    } do
+      inserted_at = ~N[2020-09-01 12:00:00]
+      first_replied_at = nil
+
+      insert_list(
+        3,
+        :conversation,
+        account: account,
+        inserted_at: inserted_at,
+        first_replied_at: first_replied_at
+      )
+
+      assert 0 = Reporting.median_seconds_to_first_reply(account.id)
+    end
+  end
+
   describe "get_customer_breakdown/1" do
     setup do
       account = insert(:account)
@@ -828,6 +957,88 @@ defmodule ChatApi.ReportingTest do
     end
   end
 
+  describe "seconds_to_first_reply_metrics_by_week/2" do
+    test "correctly calculates reply time metrics by date", %{account: account} do
+      # 2020-09-28
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-09-28 10:00:00],
+        first_replied_at: ~N[2020-09-28 11:02:03]
+      )
+
+      # 2020-10-02
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 12:00:00],
+        first_replied_at: ~N[2020-10-02 12:00:20]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 11:00:00],
+        first_replied_at: ~N[2020-10-02 11:05:30]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-02 10:00:00],
+        first_replied_at: ~N[2020-10-02 10:02:20]
+      )
+
+      # 2020-10-03
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 12:00:00],
+        first_replied_at: ~N[2020-10-03 12:00:05]
+      )
+
+      insert(:conversation,
+        account: account,
+        inserted_at: ~N[2020-10-03 11:00:00],
+        first_replied_at: ~N[2020-10-03 11:10:15]
+      )
+
+      sorted =
+        account.id
+        |> Reporting.seconds_to_first_reply_metrics_by_week(%{
+          from_date: ~N[2020-09-28 10:00:00],
+          to_date: ~N[2020-10-04 13:00:00]
+        })
+        |> Enum.map(fn record ->
+          %{
+            record
+            | seconds_to_first_reply_list: Enum.sort(record.seconds_to_first_reply_list)
+          }
+        end)
+
+      assert [
+               %{
+                 average: 222.0,
+                 end_date: ~D[2020-10-03],
+                 median: 140,
+                 seconds_to_first_reply_list: [5, 20, 140, 330, 615],
+                 start_date: ~D[2020-09-27]
+               }
+             ] = sorted
+    end
+
+    test "correctly handles empty data", %{account: account} do
+      assert [
+               %{
+                 average: 0.0,
+                 end_date: ~D[2020-10-03],
+                 median: 0,
+                 seconds_to_first_reply_list: [],
+                 start_date: ~D[2020-09-27]
+               }
+             ] =
+               Reporting.seconds_to_first_reply_metrics_by_week(account.id, %{
+                 from_date: ~N[2020-10-01 12:00:00],
+                 to_date: ~N[2020-10-04 13:00:00]
+               })
+    end
+  end
+
   describe "average" do
     test "returns zero for an empty list" do
       assert 0.0 = Reporting.average([])
@@ -852,6 +1063,32 @@ defmodule ChatApi.ReportingTest do
       assert 3 = Reporting.median([3, 1, 2, 5, 4])
       assert 5 = Reporting.median([5, 5, 5])
       assert 0.5 = Reporting.median([-1, 2, -3, 4])
+    end
+  end
+
+  describe "get_weekly_chunks/2" do
+    test "gets the week tuples for the given date range" do
+      from_date = ~N[2020-10-01 12:00:00]
+      to_date = ~N[2020-10-04 13:00:00]
+
+      assert [{~D[2020-09-27] = start, ~D[2020-10-03] = finish}] =
+               Reporting.get_weekly_chunks(from_date, to_date)
+
+      from_date = ~N[2020-10-01 12:00:00]
+      to_date = ~N[2020-11-01 12:00:00]
+      chunks = Reporting.get_weekly_chunks(from_date, to_date)
+
+      assert [
+               {~D[2020-10-25], ~D[2020-10-31]},
+               {~D[2020-10-18], ~D[2020-10-24]},
+               {~D[2020-10-11], ~D[2020-10-17]},
+               {~D[2020-10-04], ~D[2020-10-10]},
+               {~D[2020-09-27], ~D[2020-10-03]}
+             ] = chunks
+
+      # Verify that the start is on a Sunday (7) and the end is on a Saturday (6)
+      assert Enum.all?(chunks, fn {start, _} -> Date.day_of_week(start) == 7 end)
+      assert Enum.all?(chunks, fn {_, finish} -> Date.day_of_week(finish) == 6 end)
     end
   end
 end
