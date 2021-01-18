@@ -4,22 +4,46 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
 
   alias ChatApi.Accounts.Account
 
+  @type t :: %__MODULE__{
+          access_token: String.t(),
+          type: String.t() | nil,
+          app_id: String.t() | nil,
+          authed_user_id: String.t() | nil,
+          bot_user_id: String.t() | nil,
+          channel: String.t() | nil,
+          channel_id: String.t() | nil,
+          configuration_url: String.t() | nil,
+          scope: String.t() | nil,
+          team_id: String.t() | nil,
+          team_name: String.t() | nil,
+          token_type: String.t() | nil,
+          webhook_url: String.t() | nil,
+          metadata: any(),
+          # Relations
+          account_id: any(),
+          account: any(),
+          # Timestamps
+          inserted_at: any(),
+          updated_at: any()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "slack_authorizations" do
-    field :access_token, :string
-    field :type, :string, default: "reply"
-    field :app_id, :string
-    field :authed_user_id, :string
-    field :bot_user_id, :string
-    field :channel, :string
-    field :channel_id, :string
-    field :configuration_url, :string
-    field :scope, :string
-    field :team_id, :string
-    field :team_name, :string
-    field :token_type, :string
-    field :webhook_url, :string
+    field(:access_token, :string)
+    field(:type, :string, default: "reply")
+    field(:app_id, :string)
+    field(:authed_user_id, :string)
+    field(:bot_user_id, :string)
+    field(:channel, :string)
+    field(:channel_id, :string)
+    field(:configuration_url, :string)
+    field(:scope, :string)
+    field(:team_id, :string)
+    field(:team_name, :string)
+    field(:token_type, :string)
+    field(:webhook_url, :string)
+    field(:metadata, :map)
 
     belongs_to(:account, Account)
 
@@ -43,7 +67,8 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
       :scope,
       :team_id,
       :team_name,
-      :token_type
+      :token_type,
+      :metadata
     ])
     |> validate_required([:account_id, :access_token])
     |> validate_inclusion(:type, ["reply", "support"])

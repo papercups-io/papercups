@@ -318,10 +318,9 @@ defmodule ChatApiWeb.SlackController do
       |> Messages.Notification.broadcast_to_customer!()
       |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:webhooks)
-
       # TODO: should we make this configurable? Or only do it from private channels?
       # (Considering temporarily disabling this until we figure out what most users want)
-      # |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.notify(:slack, authorization.metadata)
     end
   end
 
