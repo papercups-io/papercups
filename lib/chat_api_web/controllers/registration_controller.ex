@@ -135,7 +135,7 @@ defmodule ChatApiWeb.RegistrationController do
       # Putting in an async Task for now, since we don't care if this succeeds
       # or fails (and we also don't want it to block anything)
       Task.start(fn ->
-        ChatApi.Slack.Notifications.log("A new user has signed up: #{email}")
+        ChatApi.Slack.Notification.log("A new user has signed up: #{email}")
       end)
     end
 

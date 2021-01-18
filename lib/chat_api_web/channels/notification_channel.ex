@@ -102,7 +102,7 @@ defmodule ChatApiWeb.NotificationChannel do
     broadcast(socket, "shout", Messages.Helpers.format(message))
 
     message
-    |> Messages.Notification.broadcast_to_conversation!()
+    |> Messages.Notification.broadcast_to_customer!()
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:slack_support_channel)
     |> Messages.Notification.notify(:slack_company_channel)

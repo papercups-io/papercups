@@ -227,7 +227,8 @@ defmodule ChatApiWeb.SlackController do
             )
         }
         |> Messages.create_and_fetch!()
-        |> Messages.Notification.broadcast_to_conversation!()
+        |> Messages.Notification.broadcast_to_customer!()
+        |> Messages.Notification.broadcast_to_admin!()
         |> Messages.Notification.notify(:webhooks)
         |> Messages.Notification.notify(:slack_support_channel)
         |> Messages.Notification.notify(:slack_company_channel)
@@ -247,7 +248,8 @@ defmodule ChatApiWeb.SlackController do
               "source" => "slack"
             })
             |> Messages.create_and_fetch!()
-            |> Messages.Notification.broadcast_to_conversation!()
+            |> Messages.Notification.broadcast_to_customer!()
+            |> Messages.Notification.broadcast_to_admin!()
             |> Messages.Notification.notify(:webhooks)
             |> Messages.Notification.notify(:slack)
             |> Messages.Helpers.handle_post_creation_conversation_updates()
@@ -313,10 +315,12 @@ defmodule ChatApiWeb.SlackController do
       |> Conversations.Notification.broadcast_conversation_to_customer!()
 
       Messages.get_message!(message.id)
-      |> Messages.Notification.broadcast_to_conversation!()
-      # notify primary channel only
-      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.broadcast_to_customer!()
+      |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:webhooks)
+      # TODO: should we make this configurable? Or only do it from private channels?
+      # (Considering temporarily disabling this until we figure out what most users want)
+      |> Messages.Notification.notify(:slack, authorization.metadata)
     end
   end
 
@@ -452,10 +456,13 @@ defmodule ChatApiWeb.SlackController do
       |> Conversations.Notification.broadcast_conversation_to_customer!()
 
       Messages.get_message!(message.id)
-      |> Messages.Notification.broadcast_to_conversation!()
-      # notify primary channel only
-      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.broadcast_to_customer!()
+      |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:webhooks)
+      # TODO: should we make this configurable? Or only do it from private channels?
+      # (Leaving this enabled for the emoji reaction use case, since it's an explicit action
+      # as opposed to the auto-syncing that occurs above for all new messages)
+      |> Messages.Notification.notify(:slack)
     end
   end
 
@@ -529,7 +536,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.info(message)
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
-    Task.start(fn -> Slack.Notifications.log(message) end)
+    Task.start(fn -> Slack.Notification.log(message) end)
   end
 
   @spec send_private_channel_instructions(:reply | :support, binary()) :: any()
@@ -549,7 +556,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.info(message)
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
-    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
+    Task.start(fn -> Slack.Notification.log(message, webhook_url) end)
   end
 
   defp send_private_channel_instructions(:support, webhook_url) do
@@ -568,7 +575,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.info(message)
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
-    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
+    Task.start(fn -> Slack.Notification.log(message, webhook_url) end)
   end
 
   @spec send_support_channel_instructions(binary()) :: any()
@@ -588,6 +595,6 @@ defmodule ChatApiWeb.SlackController do
     Logger.info(message)
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
-    Task.start(fn -> Slack.Notifications.log(message, webhook_url) end)
+    Task.start(fn -> Slack.Notification.log(message, webhook_url) end)
   end
 end

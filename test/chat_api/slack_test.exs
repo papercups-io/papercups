@@ -23,7 +23,7 @@ defmodule ChatApi.SlackTest do
   @slack_user_id "U123TEST"
   @slack_channel_id "C123TEST"
 
-  describe "Slack.Notifications" do
+  describe "Slack.Notification" do
     setup do
       account = insert(:account)
       auth = insert(:slack_authorization, account: account, type: "support")
@@ -45,7 +45,7 @@ defmodule ChatApi.SlackTest do
        thread: thread}
     end
 
-    test "Notifications.notify_slack_channel/2 sends a thread reply notification", %{
+    test "Notification.notify_slack_channel/2 sends a thread reply notification", %{
       account: account,
       auth: auth,
       conversation: conversation,
@@ -73,7 +73,7 @@ defmodule ChatApi.SlackTest do
           {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
         end do
         message = Messages.get_message!(message.id)
-        assert :ok = Slack.Notifications.notify_slack_channel(@slack_channel_id, message)
+        assert :ok = Slack.Notification.notify_slack_channel(@slack_channel_id, message)
 
         assert_called(Slack.Client.send_message(:_, :_))
 
@@ -92,7 +92,7 @@ defmodule ChatApi.SlackTest do
       end
     end
 
-    test "Notifications.notify_slack_channel/2 sends a thread reply notification for users without profile info",
+    test "Notification.notify_slack_channel/2 sends a thread reply notification for users without profile info",
          %{
            account: account,
            auth: auth,
@@ -114,7 +114,7 @@ defmodule ChatApi.SlackTest do
           {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
         end do
         message = Messages.get_message!(message.id)
-        assert :ok = Slack.Notifications.notify_slack_channel(@slack_channel_id, message)
+        assert :ok = Slack.Notification.notify_slack_channel(@slack_channel_id, message)
 
         assert_called(Slack.Client.send_message(:_, :_))
 
@@ -132,7 +132,7 @@ defmodule ChatApi.SlackTest do
       end
     end
 
-    test "Notifications.notify_slack_channel/2 does not send a thread reply if channel is not found",
+    test "Notification.notify_slack_channel/2 does not send a thread reply if channel is not found",
          %{
            account: account,
            customer: customer,
@@ -144,10 +144,30 @@ defmodule ChatApi.SlackTest do
         send_message: fn msg, _ ->
           {:ok, %{body: Map.merge(%{"ok" => true}, msg)}}
         end do
-        assert :ok = Slack.Notifications.notify_slack_channel("C123UNKNOWN", message)
+        assert :ok = Slack.Notification.notify_slack_channel("C123UNKNOWN", message)
 
         assert_not_called(Slack.Client.send_message(:_, :_))
       end
+    end
+
+    test "Notification.validate_send_to_primary_channel/2 returns :ok if the message is the initial message",
+         %{thread: thread} do
+      assert :ok =
+               Slack.Notification.validate_send_to_primary_channel(thread, is_first_message: true)
+
+      assert :ok =
+               Slack.Notification.validate_send_to_primary_channel(nil, is_first_message: true)
+    end
+
+    test "Notification.validate_send_to_primary_channel/2 returns :ok if a thread already exists",
+         %{thread: thread} do
+      assert :ok =
+               Slack.Notification.validate_send_to_primary_channel(thread, is_first_message: false)
+    end
+
+    test "Notification.validate_send_to_primary_channel/2 returns :error if the message when the message is not an initial message and a thread does not exist" do
+      assert :error =
+               Slack.Notification.validate_send_to_primary_channel(nil, is_first_message: false)
     end
   end
 

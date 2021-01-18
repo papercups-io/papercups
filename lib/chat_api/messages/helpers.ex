@@ -7,8 +7,12 @@ defmodule ChatApi.Messages.Helpers do
   alias ChatApi.Messages.Message
 
   @spec get_conversation_topic(Message.t()) :: binary()
-  def get_conversation_topic(%{conversation_id: conversation_id} = _message),
+  def get_conversation_topic(%Message{conversation_id: conversation_id} = _message),
     do: "conversation:" <> conversation_id
+
+  @spec get_admin_topic(Message.t()) :: binary()
+  def get_admin_topic(%Message{account_id: account_id} = _message),
+    do: "notification:" <> account_id
 
   @spec format(Message.t()) :: map()
   def format(%Message{} = message),

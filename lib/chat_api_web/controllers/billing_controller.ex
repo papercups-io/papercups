@@ -42,7 +42,7 @@ defmodule ChatApiWeb.BillingController do
       # Putting in an async Task for now, since we don't care if this succeeds
       # or fails (and we also don't want it to block anything)
       Task.start(fn ->
-        ChatApi.Slack.Notifications.log("#{email} set subscription plan to #{plan}")
+        ChatApi.Slack.Notification.log("#{email} set subscription plan to #{plan}")
       end)
     end
 

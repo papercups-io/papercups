@@ -108,7 +108,8 @@ defmodule ChatApi.MessagesTest do
         insert(:message, conversation: conversation, customer: customer, user: nil)
 
       # No conversation updates are necessary on the first customer message
-      assert %{} = Messages.Helpers.build_conversation_updates(initial_customer_message)
+      assert %{read: false} =
+               Messages.Helpers.build_conversation_updates(initial_customer_message)
 
       first_agent_reply = insert(:message, conversation: conversation, user: agent, customer: nil)
       agent_id = agent.id
@@ -120,7 +121,7 @@ defmodule ChatApi.MessagesTest do
       first_customer_reply =
         insert(:message, conversation: conversation, customer: customer, user: nil)
 
-      assert %{} = Messages.Helpers.build_conversation_updates(first_customer_reply)
+      assert %{read: false} = Messages.Helpers.build_conversation_updates(first_customer_reply)
 
       second_agent_reply =
         insert(:message, conversation: conversation, user: agent, customer: nil)

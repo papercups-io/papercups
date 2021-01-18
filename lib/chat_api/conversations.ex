@@ -242,6 +242,23 @@ defmodule ChatApi.Conversations do
     Conversation.changeset(conversation, attrs)
   end
 
+  @spec get_first_message(binary()) :: Message.t() | nil
+  def get_first_message(conversation_id) do
+    Message
+    |> where(conversation_id: ^conversation_id)
+    |> order_by(asc: :inserted_at)
+    |> first()
+    |> Repo.one()
+  end
+
+  @spec is_first_message?(binary(), binary()) :: boolean()
+  def is_first_message?(conversation_id, message_id) do
+    case get_first_message(conversation_id) do
+      %Message{id: ^message_id} -> true
+      _ -> false
+    end
+  end
+
   @spec count_agent_replies(binary()) :: number()
   def count_agent_replies(conversation_id) do
     Message

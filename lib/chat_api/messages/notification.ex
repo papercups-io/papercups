@@ -16,11 +16,19 @@ defmodule ChatApi.Messages.Notification do
     })
   end
 
-  # TODO: rename to `broadcast_to_customer` or something more explicit?
-  @spec broadcast_to_conversation!(Message.t()) :: Message.t()
-  def broadcast_to_conversation!(%Message{} = message) do
+  @spec broadcast_to_customer!(Message.t()) :: Message.t()
+  def broadcast_to_customer!(%Message{} = message) do
     message
     |> Helpers.get_conversation_topic()
+    |> ChatApiWeb.Endpoint.broadcast!("shout", Helpers.format(message))
+
+    message
+  end
+
+  @spec broadcast_to_admin!(Message.t()) :: Message.t()
+  def broadcast_to_admin!(%Message{} = message) do
+    message
+    |> Helpers.get_admin_topic()
     |> ChatApiWeb.Endpoint.broadcast!("shout", Helpers.format(message))
 
     message
@@ -34,7 +42,7 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending notification: :slack")
 
     Task.start(fn ->
-      ChatApi.Slack.Notifications.notify_primary_channel(message)
+      ChatApi.Slack.Notification.notify_primary_channel(message)
     end)
 
     message
@@ -81,7 +89,7 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending notification: :slack_company_channel")
 
     Task.start(fn ->
-      ChatApi.Slack.Notifications.notify_company_channel(message)
+      ChatApi.Slack.Notification.notify_company_channel(message)
     end)
 
     message
@@ -92,7 +100,7 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending notification: :slack_support_channel")
 
     Task.start(fn ->
-      ChatApi.Slack.Notifications.notify_support_channel(message)
+      ChatApi.Slack.Notification.notify_support_channel(message)
     end)
 
     message
@@ -105,4 +113,21 @@ defmodule ChatApi.Messages.Notification do
 
     message
   end
+
+  @spec notify(Message.t(), atom(), map()) :: Message.t()
+  def notify(%Message{} = message, :slack, metadata) do
+    # NB: we currently use the Slack authorization metadata to handle one-off cases
+    # where a user might not want to broadcast to the "reply"-type Slack integration
+    # under certain circumstances.
+    if send_to_slack_reply_channel?(metadata),
+      do: notify(message, :slack),
+      else: message
+  end
+
+  def notify(%Message{} = message, type, _metadata) do
+    notify(message, type)
+  end
+
+  defp send_to_slack_reply_channel?(%{"send_to_reply_channel" => false}), do: false
+  defp send_to_slack_reply_channel?(_), do: true
 end
