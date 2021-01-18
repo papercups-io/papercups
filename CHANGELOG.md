@@ -1,3 +1,26 @@
+### Monday, 18 January
+
+- [[#521](https://github.com/papercups-io/papercups/pull/521)] Added **private conversation notes** so you can send messages internally 🔒  [0]
+- [[#526](https://github.com/papercups-io/papercups/pull/526)] Added **response time metrics** so you can see how long it takes you to reply to customers 📈 [1]
+- [[#514](https://github.com/papercups-io/papercups/pull/514)] Added the ability to **disconnect from Slack** integration 
+- [[#503](https://github.com/papercups-io/papercups/pull/503)] Started setting up the UI for managing **Company information**  [2]
+- [[#483](https://github.com/papercups-io/papercups/pull/483)] Added **private customer notes** so you can keep notes on your users 📔 [3]
+- Set up our beta integration for syncing Slack support channels with Papercups :rocket:
+
+_[0] Private note messages:_
+| Reply (default) | Private note |  
+|---|---|
+| <img alt="Reply" src="https://user-images.githubusercontent.com/5264279/104519403-5eaa3d00-55c7-11eb-8532-a3fa128d1906.png"> | <img alt="Private note" src="https://user-images.githubusercontent.com/5264279/104519402-5eaa3d00-55c7-11eb-8251-0f7cc3f9b204.png"> |
+
+_[1] Response time metrics_
+> <img width="800" alt="Response time metrics" src="https://user-images.githubusercontent.com/5264279/104786355-b9c06900-575a-11eb-9565-22dca06cbe2f.png">
+
+_[2] Company management UI_
+> <img width="800" alt="Company management UI" src="https://user-images.githubusercontent.com/5264279/103591656-c1f8e880-4ebe-11eb-9bcc-7166eefc4b37.gif">
+
+_[2] Private customer notes_
+> <img width="800" alt="Company management UI" src="https://user-images.githubusercontent.com/5264279/102799534-ab13ab80-4380-11eb-863a-4de5d1c2142a.gif">
+
 ### Friday, 18 December
 
 - [[#478](https://github.com/papercups-io/papercups/pull/478)] Added a **new Slack integration** which allows you to sync Slack channel conversations with Papercups [0]
