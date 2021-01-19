@@ -502,6 +502,10 @@ defmodule ChatApiWeb.SlackController do
            Slack.Client.retrieve_message(slack_channel_id, thread_ts, access_token),
          {:ok, message} <- Slack.Helpers.extract_slack_message(response),
          true <- Slack.Helpers.is_bot_message?(message) do
+      # NB: we treat this reply message as if it were the initial message in the thread
+      # (i.e. we set the `ts` field to the original `thread_ts`), in order to ensure all
+      # future replies are in the same thread.
+      # TODO: should we include the original message in the thread somewhere?
       handle_event(%{
         "type" => "message",
         "text" => text,
