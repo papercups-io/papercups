@@ -171,6 +171,7 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec handle_payload(map()) :: any()
   defp handle_payload(
          %{
            "event" => event,
@@ -187,6 +188,7 @@ defmodule ChatApiWeb.SlackController do
 
   defp handle_payload(_), do: nil
 
+  @spec handle_event(map()) :: any()
   defp handle_event(%{"bot_id" => _bot_id} = _event) do
     # Don't do anything on bot events for now
     nil
@@ -255,6 +257,14 @@ defmodule ChatApiWeb.SlackController do
             |> Messages.Helpers.handle_post_creation_conversation_updates()
         end
       end
+    else
+      # If an existing conversation is not found, we check to see if this is a reply to a bot message.
+      # At the moment, we want to start a new thread for replies to bot messages.
+      {:error, :not_found} ->
+        handle_reply_to_bot_event(event)
+
+      error ->
+        error
     end
   end
 
@@ -360,13 +370,15 @@ defmodule ChatApiWeb.SlackController do
   defp handle_event(
          %{
            "type" => "message",
-           "subtype" => "group_join",
+           # Public channels use subtype "channel_join", while private channels use "group_join"
+           "subtype" => subtype,
            "user" => slack_user_id,
            "channel" => slack_channel_id
            #  "inviter" => slack_inviter_id
          } = event
-       ) do
-    Logger.info("Slack group_join event detected:")
+       )
+       when subtype in ["channel_join", "group_join"] do
+    Logger.info("Slack channel_join/group_join event detected:")
     Logger.info(inspect(event))
 
     with %{account_id: account_id, access_token: access_token} <-
@@ -403,6 +415,7 @@ defmodule ChatApiWeb.SlackController do
 
   # TODO: DRY this up with the message event handler above, for now the only difference between this one
   # and that one is: this handler allows admin users to create threads via Slack support channels
+  @spec handle_emoji_reaction_event(map()) :: any()
   defp handle_emoji_reaction_event(
          %{
            "type" => "message",
@@ -466,10 +479,50 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec handle_reply_to_bot_event(map()) :: any()
+  defp handle_reply_to_bot_event(
+         %{
+           "type" => "message",
+           "text" => text,
+           "team" => team,
+           "thread_ts" => thread_ts,
+           "channel" => slack_channel_id,
+           "user" => slack_user_id
+         } = event
+       ) do
+    with %{access_token: access_token} = authorization <-
+           SlackAuthorizations.find_slack_authorization(%{
+             team_id: team,
+             type: "support"
+           }),
+         # TODO: remove after debugging!
+         :ok <- Logger.info("Checking if message event is reply to bot: #{inspect(event)}"),
+         :ok <- validate_channel_supported(authorization, slack_channel_id),
+         {:ok, response} <-
+           Slack.Client.retrieve_message(slack_channel_id, thread_ts, access_token),
+         {:ok, message} <- Slack.Helpers.extract_slack_message(response),
+         true <- Slack.Helpers.is_bot_message?(message) do
+      # NB: we treat this reply message as if it were the initial message in the thread
+      # (i.e. we set the `ts` field to the original `thread_ts`), in order to ensure all
+      # future replies are in the same thread.
+      # TODO: should we include the original message in the thread somewhere?
+      handle_event(%{
+        "type" => "message",
+        "text" => text,
+        "team" => team,
+        "channel" => slack_channel_id,
+        "user" => slack_user_id,
+        "ts" => thread_ts
+      })
+    end
+  end
+
+  defp handle_reply_to_bot_event(_event), do: nil
+
   defp get_thread_conversation(thread_ts, channel) do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
       %{conversation: conversation} -> {:ok, conversation}
-      _ -> {:error, "Not found"}
+      _ -> {:error, :not_found}
     end
   end
 

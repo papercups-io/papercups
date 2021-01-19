@@ -88,7 +88,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
     return {
       key: 'slack',
-      integration: 'Slack',
+      integration: 'Reply from Slack',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,

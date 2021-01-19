@@ -243,6 +243,97 @@ defmodule ChatApiWeb.SlackControllerTest do
       assert [] = Messages.list_messages(account_id)
     end
 
+    test "sending a new thread message event to the webhook in response to a bot message should trigger a new thread",
+         %{
+           conn: conn,
+           account: account
+         } do
+      authorization = insert(:slack_authorization, account: account, type: "support")
+
+      event_params = %{
+        "type" => "message",
+        "text" => "hello world #{System.unique_integer([:positive])}",
+        "team" => authorization.team_id,
+        "thread_ts" => "12345",
+        "channel" => authorization.channel_id,
+        "user" => authorization.authed_user_id
+      }
+
+      slack_user = %{
+        "real_name" => "Test User",
+        "tz" => "America/New_York",
+        "profile" => %{"email" => @email}
+      }
+
+      slack_bot_message = %{
+        "text" => "This is a bot message",
+        "bot_id" => "B123"
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end,
+        retrieve_message: fn _, _, _ ->
+          {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}
+        end,
+        send_message: fn _, _ -> {:ok, nil} end do
+        post(conn, Routes.slack_path(conn, :webhook), %{
+          "event" => event_params
+        })
+
+        assert [%{body: body, conversation: conversation, source: "slack"}] =
+                 Messages.list_messages(account.id)
+
+        assert %{source: "slack"} = conversation
+        assert body == event_params["text"]
+      end
+    end
+
+    test "sending a new thread message event to the webhook in response to a non-bot message should not do anything",
+         %{
+           conn: conn,
+           account: account
+         } do
+      authorization = insert(:slack_authorization, account: account, type: "support")
+
+      event_params = %{
+        "type" => "message",
+        "text" => "hello world #{System.unique_integer([:positive])}",
+        "team" => authorization.team_id,
+        "thread_ts" => "12345",
+        "channel" => authorization.channel_id,
+        "user" => authorization.authed_user_id
+      }
+
+      slack_user = %{
+        "real_name" => "Test User",
+        "tz" => "America/New_York",
+        "profile" => %{"email" => @email}
+      }
+
+      slack_bot_message = %{
+        "text" => "This is a non-bot message",
+        "user" => "U123TEST",
+        "bot_id" => nil
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end,
+        retrieve_message: fn _, _, _ ->
+          {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}
+        end,
+        send_message: fn _, _ -> {:ok, nil} end do
+        post(conn, Routes.slack_path(conn, :webhook), %{
+          "event" => event_params
+        })
+
+        assert [] = Messages.list_messages(account.id)
+      end
+    end
+
     test "sending a new message event to the webhook from the default support channel", %{
       conn: conn,
       account: account

@@ -329,6 +329,9 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
         </Tag>
       </Box>
 
+      {/* TODO: include other recent conversations */}
+      {/* TODO: include link to Slack thread if one exists */}
+
       <DetailsSectionCard>
         <Box mb={2}>
           <Text strong>Conversation Tags</Text>

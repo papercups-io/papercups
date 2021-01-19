@@ -200,12 +200,13 @@ class UpdateCompanyPage extends React.Component<Props, State> {
                 style={{width: '100%'}}
                 placeholder="Select Slack channel"
                 showSearch
+                allowClear
                 disabled={loading}
                 value={slackChannelId || undefined}
                 onChange={(value: string, record: any) => {
                   this.setState({
-                    slackChannelId: value,
-                    slackChannelName: record.label,
+                    slackChannelId: value || '',
+                    slackChannelName: record?.label || '',
                   });
                 }}
                 options={channels.map((channel: any) => {
