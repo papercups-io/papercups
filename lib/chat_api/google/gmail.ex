@@ -83,19 +83,18 @@ defmodule ChatApi.Google.Gmail do
         [key, value] =
           case part do
             %{"mimeType" => "text/plain", "body" => %{"data" => encoded}} ->
-              [:text, decode_message_body(encoded)]
+              [:text, encoded]
 
             %{"mimeType" => "text/html", "body" => %{"data" => encoded}} ->
-              [:html, decode_message_body(encoded)]
+              [:html, encoded]
 
             _ ->
               [:invalid, nil]
           end
 
-        case value do
+        case decode_message_body(value) do
           {:ok, decoded} -> Map.merge(acc, %{key => decoded})
           :error -> acc
-          _ -> acc
         end
       end)
     end)
