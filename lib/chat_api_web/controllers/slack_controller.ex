@@ -256,6 +256,8 @@ defmodule ChatApiWeb.SlackController do
         end
       end
     else
+      # If an existing conversation is not found, we check to see if this is a reply to a bot message.
+      # At the moment, we want to start a new thread for replies to bot messages.
       {:error, :not_found} ->
         handle_reply_to_bot_event(event)
 
