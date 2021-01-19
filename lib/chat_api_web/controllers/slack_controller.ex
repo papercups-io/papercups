@@ -364,20 +364,21 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
-  # NB: this currently listens for the Papercups app being added to a *private* Slack channel.
+  # NB: this currently listens for the Papercups app being added to a Slack channel.
   # At the moment, it doesn't do anything. But in the future, we may auto-create a
   # `company` record based on the Slack channel info (if this use case is common enough)
   defp handle_event(
          %{
            "type" => "message",
-           # Public channels use subtype "channel_join"
-           "subtype" => "group_join",
+           # Public channels use subtype "channel_join", while private channels use "group_join"
+           "subtype" => subtype,
            "user" => slack_user_id,
            "channel" => slack_channel_id
            #  "inviter" => slack_inviter_id
          } = event
-       ) do
-    Logger.info("Slack group_join event detected:")
+       )
+       when subtype in ["channel_join", "group_join"] do
+    Logger.info("Slack channel_join/group_join event detected:")
     Logger.info(inspect(event))
 
     with %{account_id: account_id, access_token: access_token} <-

@@ -142,7 +142,7 @@ class CreateCompanyPage extends React.Component<Props, State> {
                 value={slackChannelId || undefined}
                 onChange={(value: string, record: any) => {
                   this.setState({
-                    slackChannelId: value,
+                    slackChannelId: value || '',
                     slackChannelName: record?.label || '',
                   });
                 }}
