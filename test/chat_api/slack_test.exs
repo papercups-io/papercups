@@ -554,5 +554,15 @@ defmodule ChatApi.SlackTest do
         assert updated_customer.name == "Test Customer"
       end
     end
+
+    test "Helpers.is_bot_message?/1 checks if the Slack message payload is from a bot" do
+      bot_message = %{"bot_id" => "B123", "text" => "I am a bot"}
+      nil_bot_message = %{"bot_id" => nil, "text" => "I am not a bot"}
+      non_bot_message = %{"text" => "I am also not a bot"}
+
+      assert Slack.Helpers.is_bot_message?(bot_message)
+      refute Slack.Helpers.is_bot_message?(nil_bot_message)
+      refute Slack.Helpers.is_bot_message?(non_bot_message)
+    end
   end
 end

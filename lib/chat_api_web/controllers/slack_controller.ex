@@ -171,6 +171,7 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec handle_payload(map()) :: any()
   defp handle_payload(
          %{
            "event" => event,
@@ -187,6 +188,7 @@ defmodule ChatApiWeb.SlackController do
 
   defp handle_payload(_), do: nil
 
+  @spec handle_event(map()) :: any()
   defp handle_event(%{"bot_id" => _bot_id} = _event) do
     # Don't do anything on bot events for now
     nil
@@ -412,6 +414,7 @@ defmodule ChatApiWeb.SlackController do
 
   # TODO: DRY this up with the message event handler above, for now the only difference between this one
   # and that one is: this handler allows admin users to create threads via Slack support channels
+  @spec handle_emoji_reaction_event(map()) :: any()
   defp handle_emoji_reaction_event(
          %{
            "type" => "message",
@@ -475,6 +478,7 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec handle_reply_to_bot_event(map()) :: any()
   defp handle_reply_to_bot_event(
          %{
            "type" => "message",
