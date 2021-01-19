@@ -293,6 +293,9 @@ defmodule ChatApi.Slack.Helpers do
   def get_message_type(%Message{user_id: nil}), do: :customer
   def get_message_type(_message), do: :unknown
 
+  def is_bot_message?(%{"bot_id" => bot_id}) when not is_nil(bot_id), do: true
+  def is_bot_message?(_), do: false
+
   #####################
   # Extractors
   #####################

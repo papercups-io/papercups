@@ -138,11 +138,12 @@ class CreateCompanyPage extends React.Component<Props, State> {
                 style={{width: '100%'}}
                 placeholder="Select Slack channel"
                 showSearch
+                allowClear
                 value={slackChannelId || undefined}
                 onChange={(value: string, record: any) => {
                   this.setState({
                     slackChannelId: value,
-                    slackChannelName: record.label,
+                    slackChannelName: record?.label || '',
                   });
                 }}
                 options={channels.map((channel: any) => {

@@ -255,6 +255,12 @@ defmodule ChatApiWeb.SlackController do
             |> Messages.Helpers.handle_post_creation_conversation_updates()
         end
       end
+    else
+      {:error, :not_found} ->
+        handle_reply_to_bot_event(event)
+
+      error ->
+        error
     end
   end
 
@@ -354,12 +360,13 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
-  # NB: this currently listens for the Papercups app being added to a Slack channel.
+  # NB: this currently listens for the Papercups app being added to a *private* Slack channel.
   # At the moment, it doesn't do anything. But in the future, we may auto-create a
   # `company` record based on the Slack channel info (if this use case is common enough)
   defp handle_event(
          %{
            "type" => "message",
+           # Public channels use subtype "channel_join"
            "subtype" => "group_join",
            "user" => slack_user_id,
            "channel" => slack_channel_id
@@ -466,10 +473,45 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  defp handle_reply_to_bot_event(
+         %{
+           "type" => "message",
+           "text" => text,
+           "team" => team,
+           "thread_ts" => thread_ts,
+           "channel" => slack_channel_id,
+           "user" => slack_user_id
+         } = event
+       ) do
+    with %{access_token: access_token} = authorization <-
+           SlackAuthorizations.find_slack_authorization(%{
+             team_id: team,
+             type: "support"
+           }),
+         # TODO: remove after debugging!
+         :ok <- Logger.info("Checking if message event is reply to bot: #{inspect(event)}"),
+         :ok <- validate_channel_supported(authorization, slack_channel_id),
+         {:ok, response} <-
+           Slack.Client.retrieve_message(slack_channel_id, thread_ts, access_token),
+         {:ok, message} <- Slack.Helpers.extract_slack_message(response),
+         true <- Slack.Helpers.is_bot_message?(message) do
+      handle_event(%{
+        "type" => "message",
+        "text" => text,
+        "team" => team,
+        "channel" => slack_channel_id,
+        "user" => slack_user_id,
+        "ts" => thread_ts
+      })
+    end
+  end
+
+  defp handle_reply_to_bot_event(_event), do: nil
+
   defp get_thread_conversation(thread_ts, channel) do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
       %{conversation: conversation} -> {:ok, conversation}
-      _ -> {:error, "Not found"}
+      _ -> {:error, :not_found}
     end
   end
 
