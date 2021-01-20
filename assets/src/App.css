@@ -50,6 +50,14 @@ body {
   color: #fff;
 }
 
+.Button--faded {
+  opacity: 0.6;
+}
+
+.Button--faded:hover {
+  opacity: 1;
+}
+
 /* Replayer */
 #SessionPlayer .replayer-wrapper {
   left: auto !important;

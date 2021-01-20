@@ -1,11 +1,13 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, colors, Result} from '../common';
-import {SmileOutlined} from '../icons';
+import {Button, colors, Divider, Result, shadows} from '../common';
+import {SmileOutlined, UpOutlined} from '../icons';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
 import {Customer, Message, User} from '../../types';
+
+const noop = () => {};
 
 const EmptyMessagesPlaceholder = () => {
   return (
@@ -44,9 +46,11 @@ const ConversationMessages = ({
   loading,
   isClosing,
   showGetStarted,
+  history = [],
   sx = {},
   setScrollRef,
   isAgentMessage,
+  onLoadPreviousConversation = noop,
 }: {
   messages: Array<Message>;
   currentUser?: User | null;
@@ -54,9 +58,11 @@ const ConversationMessages = ({
   loading?: boolean;
   isClosing?: boolean;
   showGetStarted?: boolean;
+  history?: Array<Message>;
   sx?: any;
   setScrollRef: (el: any) => void;
   isAgentMessage?: (message: Message) => boolean;
+  onLoadPreviousConversation?: () => void;
 }) => {
   // Sets old behavior as default, but eventually we may just want to show
   // any message with a `user_id` (as opposed to `customer_id`) as an agent
@@ -93,6 +99,54 @@ const ConversationMessages = ({
           backgroundColor={colors.white}
           sx={{minHeight: '100%', p: 4, ...sx}}
         >
+          {history && history.length ? (
+            <>
+              <Box sx={{opacity: 0.6}}>
+                {history.map((msg: Message, key: number) => {
+                  // Slight hack
+                  const next = messages[key + 1];
+                  const isMe = isAgentMsg(msg);
+                  const isLastInGroup = next
+                    ? msg.customer_id !== next.customer_id
+                    : true;
+
+                  // TODO: fix `isMe` logic for multiple agents
+                  return (
+                    <ChatMessage
+                      key={key}
+                      message={msg}
+                      customer={customer}
+                      isMe={isMe}
+                      isLastInGroup={isLastInGroup}
+                      shouldDisplayTimestamp={isLastInGroup}
+                    />
+                  );
+                })}
+              </Box>
+              <Divider />
+            </>
+          ) : (
+            // TODO: only render if callback is defined
+            // TODO: figure out best way to keep scroll position the same after history is loaded
+            <Flex
+              sx={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                position: 'relative',
+                top: -16,
+              }}
+            >
+              <Button
+                className="Button--faded"
+                size="small"
+                icon={<UpOutlined />}
+                onClick={onLoadPreviousConversation}
+              >
+                Load previous conversation
+              </Button>
+            </Flex>
+          )}
+
           {messages.length ? (
             messages.map((msg: Message, key: number) => {
               // Slight hack

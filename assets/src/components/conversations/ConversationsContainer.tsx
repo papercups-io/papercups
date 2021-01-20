@@ -33,12 +33,13 @@ type State = {
   loading: boolean;
   selected: string | null;
   closing: Array<string>;
+  history: Array<any>;
 };
 
 class ConversationsContainer extends React.Component<Props, State> {
   scrollToEl: any = null;
 
-  state: State = {loading: true, selected: null, closing: []};
+  state: State = {loading: true, selected: null, closing: [], history: []};
 
   componentDidMount() {
     const q = qs.parse(window.location.search);
@@ -297,8 +298,22 @@ class ConversationsContainer extends React.Component<Props, State> {
     );
   };
 
+  handleLoadPreviousConversation = () => {
+    const {selected: selectedConversationId} = this.state;
+    const {messagesByConversation = {}} = this.props;
+    const messages = selectedConversationId
+      ? messagesByConversation[selectedConversationId]
+      : [];
+
+    this.setState({history: messages});
+  };
+
   render() {
-    const {selected: selectedConversationId, closing = []} = this.state;
+    const {
+      selected: selectedConversationId,
+      closing = [],
+      history = [],
+    } = this.state;
     const {
       title,
       account,
@@ -411,11 +426,13 @@ class ConversationsContainer extends React.Component<Props, State> {
           >
             <ConversationMessages
               messages={messages}
+              history={history}
               currentUser={currentUser}
               customer={selectedCustomer}
               loading={loading}
               isClosing={isClosingSelected}
               showGetStarted={showGetStarted}
+              onLoadPreviousConversation={this.handleLoadPreviousConversation}
               setScrollRef={(el) => (this.scrollToEl = el)}
             />
 
