@@ -7,6 +7,8 @@ defmodule ChatApi.Messages.Message do
   alias ChatApi.Customers.Customer
   alias ChatApi.Users.User
 
+  alias ChatApi.Attachments.Attachment
+
   @type t :: %__MODULE__{
           body: String.t(),
           sent_at: DateTime.t() | nil,
@@ -44,6 +46,9 @@ defmodule ChatApi.Messages.Message do
     belongs_to(:account, Account)
     belongs_to(:customer, Customer)
     belongs_to(:user, User, type: :integer)
+
+    has_many(:attachments, Attachment)
+    has_many(:uploads, through: [:attachments, :upload])
 
     timestamps()
   end

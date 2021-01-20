@@ -2,16 +2,18 @@ defmodule ChatApi.Uploads.Upload do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias ChatApi.Messages.Message
+  alias ChatApi.Attachments.Attachment
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
-  schema "upload" do
+  schema "uploads" do
     field(:filename, :string)
     field(:file_url, :string)
     field(:content_type, :string)
-    belongs_to(:message, Message)
+
+    has_many(:attachments, Attachment)
+    has_many(:messages, through: [:attachments, :messages])
 
     timestamps()
   end
@@ -19,7 +21,7 @@ defmodule ChatApi.Uploads.Upload do
   @doc false
   def changeset(upload, attrs) do
     upload
-    |> cast(attrs, [:filename, :file_url, :message_id, :content_type])
-    |> validate_required([:filename, :file_url, :message_id, :content_type])
+    |> cast(attrs, [:filename, :file_url, :content_type])
+    |> validate_required([:filename, :file_url, :content_type])
   end
 end
