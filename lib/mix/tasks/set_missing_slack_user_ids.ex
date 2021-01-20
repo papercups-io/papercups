@@ -24,6 +24,13 @@ defmodule Mix.Tasks.SetMissingSlackUserIds do
   def run(_args) do
     Application.ensure_all_started(:chat_api)
 
+    # The way this works:
+    #   1. We fetch all Slack authorizations and group them by account
+    #   2. We look for an authorization with the correct scopes for retrieving user info
+    #   3. If a valid authorization is found, we use this to fetch the Slack users for the account
+    #   4. Then, we compare the email field on the Slack user objects with the internal Papercups users' emails
+    #   5. If we find a match, we update the user's `slack_user_id` field on their profile
+    #
     ChatApi.SlackAuthorizations.list_slack_authorizations()
     |> Enum.group_by(& &1.account_id)
     |> Stream.map(fn {account_id, authorizations} ->
