@@ -76,6 +76,16 @@ defmodule ChatApiWeb.ConversationController do
     render(conn, "index.json", conversations: conversations)
   end
 
+  @spec previous(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def previous(conn, %{"conversation_id" => conversation_id}) do
+    with %Conversation{} = conversation <- Conversations.get_conversation(conversation_id) do
+      # TODO: should we just return the conversation ID?
+      previous = Conversations.get_previous_conversation(conversation)
+
+      render(conn, "show.json", conversation: previous)
+    end
+  end
+
   @spec share(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def share(conn, %{"conversation_id" => conversation_id}) do
     with %{account_id: account_id} <- conn.assigns.current_user,
