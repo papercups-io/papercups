@@ -18,12 +18,7 @@ defmodule ChatApi.Conversations do
   end
 
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
-  def list_conversations_by_account(nil, _) do
-    # TODO: raise an exception if nil account is passed in?
-    []
-  end
-
-  def list_conversations_by_account(account_id, attrs) do
+  def list_conversations_by_account(account_id, filters \\ %{}) do
     Conversation
     |> join(
       :left_lateral,
@@ -34,16 +29,42 @@ defmodule ChatApi.Conversations do
       )
     )
     |> where(account_id: ^account_id)
-    |> where(^filter_where(attrs))
+    |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
     |> order_by([c, f], desc: f)
     |> preload([:customer, messages: [user: :profile]])
     |> Repo.all()
   end
 
-  @spec list_conversations_by_account(binary()) :: [Conversation.t()]
-  def list_conversations_by_account(account_id) do
-    list_conversations_by_account(account_id, %{})
+  @spec get_previous_conversation(Conversation.t(), map()) :: Conversation.t() | nil
+  def get_previous_conversation(
+        %Conversation{
+          id: conversation_id,
+          inserted_at: inserted_at,
+          account_id: account_id,
+          customer_id: customer_id
+        } = _conversation,
+        filters \\ %{}
+      ) do
+    Conversation
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
+        c.id
+      )
+    )
+    |> where(account_id: ^account_id)
+    |> where(customer_id: ^customer_id)
+    |> where([c], c.inserted_at < ^inserted_at)
+    |> where([c], c.id != ^conversation_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by([c, f], desc: f)
+    |> preload([:customer, messages: [user: :profile]])
+    |> first()
+    |> Repo.one()
   end
 
   @customer_conversations_limit 3
