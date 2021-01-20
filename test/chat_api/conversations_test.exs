@@ -457,6 +457,90 @@ defmodule ChatApi.ConversationsTest do
                earlier_conversation.id
     end
 
+    test "get_previous_conversation_id/2 gets the previous conversation from the same customer if one exists",
+         %{account: account, conversation: conversation, customer: customer} do
+      refute Conversations.get_previous_conversation_id(conversation)
+
+      previous_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          inserted_at: ~N[2020-12-01 20:00:00]
+        )
+
+      insert(:message,
+        account: account,
+        conversation: previous_conversation,
+        inserted_at: ~N[2020-12-02 20:00:00]
+      )
+
+      assert Conversations.get_previous_conversation_id(conversation) ==
+               previous_conversation.id
+
+      refute Conversations.get_previous_conversation_id(previous_conversation)
+
+      earlier_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          inserted_at: ~N[2020-11-01 20:00:00]
+        )
+
+      insert(:message,
+        account: account,
+        conversation: earlier_conversation,
+        inserted_at: ~N[2020-11-02 20:00:00]
+      )
+
+      # Assert that this hasn't changed
+      assert Conversations.get_previous_conversation_id(conversation) ==
+               previous_conversation.id
+
+      assert Conversations.get_previous_conversation_id(previous_conversation) ==
+               earlier_conversation.id
+    end
+
+    test "get_previous_conversation_id/2 gets the previous conversation based on message activity",
+         %{account: account, conversation: conversation, customer: customer} do
+      previous_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          inserted_at: ~N[2020-12-01 20:00:00]
+        )
+
+      insert(:message,
+        account: account,
+        conversation: previous_conversation,
+        inserted_at: ~N[2020-12-02 20:00:00]
+      )
+
+      earlier_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          inserted_at: ~N[2020-11-01 20:00:00]
+        )
+
+      insert(:message,
+        account: account,
+        conversation: earlier_conversation,
+        inserted_at: ~N[2020-11-02 20:00:00]
+      )
+
+      assert Conversations.get_previous_conversation_id(conversation) ==
+               previous_conversation.id
+
+      # Create a new message in the earlier conversation for right now, making it more recently active
+      insert(:message,
+        account: account,
+        conversation: earlier_conversation
+      )
+
+      assert Conversations.get_previous_conversation_id(conversation) ==
+               earlier_conversation.id
+    end
+
     defp days_ago(days) do
       DateTime.utc_now()
       |> DateTime.add(days * 60 * 60 * 24 * -1)

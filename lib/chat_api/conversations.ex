@@ -67,6 +67,42 @@ defmodule ChatApi.Conversations do
     |> Repo.one()
   end
 
+  # Alternative to `get_previous_conversation/2` above
+  @spec get_previous_conversation_id(Conversation.t(), map()) :: binary() | nil
+  def get_previous_conversation_id(
+        %Conversation{
+          id: conversation_id,
+          inserted_at: inserted_at,
+          account_id: account_id,
+          customer_id: customer_id
+        } = _conversation,
+        filters \\ %{}
+      ) do
+    Conversation
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
+        c.id
+      )
+    )
+    |> where(account_id: ^account_id)
+    |> where(customer_id: ^customer_id)
+    |> where([c], c.inserted_at < ^inserted_at)
+    |> where([c], c.id != ^conversation_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by([c, f], desc: f)
+    |> select([:id])
+    |> first()
+    |> Repo.one()
+    |> case do
+      %Conversation{id: conversation_id} -> conversation_id
+      _ -> nil
+    end
+  end
+
   @customer_conversations_limit 3
 
   @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
