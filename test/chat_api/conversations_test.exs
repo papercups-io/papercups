@@ -384,6 +384,12 @@ defmodule ChatApi.ConversationsTest do
           inserted_at: ~N[2020-12-01 20:00:00]
         )
 
+      insert(:message,
+        account: account,
+        conversation: previous_conversation,
+        inserted_at: ~N[2020-12-02 20:00:00]
+      )
+
       assert Conversations.get_previous_conversation(conversation) |> Map.get(:id) ==
                previous_conversation.id
 
@@ -395,6 +401,12 @@ defmodule ChatApi.ConversationsTest do
           customer: customer,
           inserted_at: ~N[2020-11-01 20:00:00]
         )
+
+      insert(:message,
+        account: account,
+        conversation: earlier_conversation,
+        inserted_at: ~N[2020-11-02 20:00:00]
+      )
 
       # Assert that this hasn't changed
       assert Conversations.get_previous_conversation(conversation) |> Map.get(:id) ==
