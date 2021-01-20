@@ -329,6 +329,26 @@ defmodule ChatApi.Slack.Helpers do
   def extract_slack_channel(response),
     do: {:error, "Invalid response: #{inspect(response)}"}
 
+  @slackbot_user_id "USLACKBOT"
+
+  @spec extract_valid_slack_users(map()) :: {:ok, [map()]} | {:error, String.t()}
+  def extract_valid_slack_users(%{body: %{"ok" => true, "members" => members}}) do
+    users =
+      Enum.reject(members, fn member ->
+        Map.get(member, "is_bot") ||
+          Map.get(member, "deleted") ||
+          member["id"] == @slackbot_user_id
+      end)
+
+    {:ok, users}
+  end
+
+  def extract_valid_slack_users(%{body: %{"ok" => true, "members" => []}}),
+    do: {:error, "No users were found"}
+
+  def extract_valid_slack_users(response),
+    do: {:error, "Invalid response: #{inspect(response)}"}
+
   # TODO: refactor extractors below to return :ok/:error tuples rather than raising?
 
   @spec extract_slack_conversation_thread_info(map()) :: map()
