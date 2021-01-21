@@ -5,38 +5,39 @@ defmodule ChatApi.ConversationsTest do
 
   alias ChatApi.Repo
   alias ChatApi.{Conversations, SlackConversationThreads}
+  alias ChatApi.Conversations.Conversation
+  alias ChatApi.SlackConversationThreads.SlackConversationThread
+  alias ChatApi.Messages.Message
 
-  describe "conversations" do
-    alias ChatApi.Conversations.Conversation
-    alias ChatApi.SlackConversationThreads.SlackConversationThread
-    alias ChatApi.Messages.Message
+  @update_attrs %{status: "closed"}
+  @invalid_attrs %{status: nil}
 
-    @update_attrs %{status: "closed"}
-    @invalid_attrs %{status: nil}
+  setup do
+    account = insert(:account)
+    customer = insert(:customer, account: account)
+    conversation = insert(:conversation, account: account, customer: customer)
 
-    setup do
-      account = insert(:account)
-      customer = insert(:customer, account: account)
-      conversation = insert(:conversation, account: account, customer: customer)
+    {:ok, account: account, conversation: conversation, customer: customer}
+  end
 
-      {:ok, account: account, conversation: conversation, customer: customer}
-    end
-
-    test "list_conversations/0 returns all conversations",
+  describe "list_conversations/0 " do
+    test "returns all conversations",
          %{conversation: conversation} do
       result_ids = Conversations.list_conversations() |> Enum.map(& &1.id)
 
       assert result_ids == [conversation.id]
     end
+  end
 
-    test "list_conversations_by_account/1 returns all conversations for an account",
+  describe "list_conversations_by_account/1 " do
+    test "returns all conversations for an account",
          %{account: account, conversation: conversation} do
       result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
 
       assert result_ids == [conversation.id]
     end
 
-    test "list_conversations_by_account/1 sorts the conversations by most recent message",
+    test "sorts the conversations by most recent message",
          %{account: account, customer: customer, conversation: conversation_1} do
       [conversation_2, conversation_3] =
         insert_pair(:conversation, account: account, customer: customer)
@@ -60,7 +61,7 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [conversation_1.id, conversation_3.id, conversation_2.id]
     end
 
-    test "list_conversations_by_account/1 returns all not archived conversations for an account",
+    test "returns all not archived conversations for an account",
          %{account: account, conversation: conversation} do
       not_archived_conversation = insert(:conversation, account: account)
       _archived_conversation = Conversations.archive_conversation(conversation)
@@ -69,15 +70,17 @@ defmodule ChatApi.ConversationsTest do
 
       assert result_ids == [not_archived_conversation.id]
     end
+  end
 
-    test "find_by_customer/2 returns all conversations for a customer",
+  describe "find_by_customer/2 " do
+    test "returns all conversations for a customer",
          %{account: account, conversation: conversation, customer: customer} do
       result_ids = Enum.map(Conversations.find_by_customer(customer.id, account.id), & &1.id)
 
       assert result_ids == [conversation.id]
     end
 
-    test "find_by_customer/2 does not include archived conversations for a customer",
+    test "does not include archived conversations for a customer",
          %{account: account, conversation: conversation, customer: customer} do
       _archived_conversation =
         insert(:conversation, account: account, customer: customer)
@@ -88,7 +91,7 @@ defmodule ChatApi.ConversationsTest do
       assert result_ids == [conversation.id]
     end
 
-    test "find_by_customer/2 does not include closed conversations for a customer",
+    test "does not include closed conversations for a customer",
          %{account: account, customer: customer} do
       closed = insert(:conversation, account: account, customer: customer, status: "closed")
 
@@ -99,7 +102,7 @@ defmodule ChatApi.ConversationsTest do
       assert Enum.all?(results, fn conv -> conv.status == "open" end)
     end
 
-    test "find_by_customer/2 does not include private messages in the conversation results",
+    test "does not include private messages in the conversation results",
          %{account: account, customer: customer, conversation: conversation} do
       user = insert(:user, account: account)
 
@@ -126,15 +129,19 @@ defmodule ChatApi.ConversationsTest do
       assert message.body == reply.body
       refute message.private
     end
+  end
 
-    test "get_conversation!/1 returns the conversation with given id",
+  describe "get_conversation!/1" do
+    test "returns the conversation with given id",
          %{conversation: conversation} do
       found_conversation = Conversations.get_conversation!(conversation.id)
 
       assert found_conversation.id == conversation.id
     end
+  end
 
-    test "create_conversation/1 with valid data creates a conversation" do
+  describe "create_conversation/1" do
+    test "with valid data creates a conversation" do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.create_conversation(params_with_assocs(:conversation))
 
@@ -142,18 +149,20 @@ defmodule ChatApi.ConversationsTest do
       assert conversation.source == "chat"
     end
 
-    test "create_conversation/1 with invalid data returns error changeset" do
+    test "with invalid data returns error changeset" do
       assert {:error, %Ecto.Changeset{}} = Conversations.create_conversation(@invalid_attrs)
     end
 
-    test "create_conversation/1 with invalid source returns error changeset" do
+    test "with invalid source returns error changeset" do
       assert {:error, %Ecto.Changeset{errors: errors}} =
                Conversations.create_conversation(%{status: "closed", source: "unknown"})
 
       assert {"is invalid", _} = errors[:source]
     end
+  end
 
-    test "update_conversation/2 with valid data updates the conversation",
+  describe "update_conversation/2" do
+    test "with valid data updates the conversation",
          %{conversation: conversation} do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.update_conversation(conversation, @update_attrs)
@@ -161,7 +170,7 @@ defmodule ChatApi.ConversationsTest do
       assert conversation.status == "closed"
     end
 
-    test "update_conversation/2 with invalid data returns error changeset",
+    test "with invalid data returns error changeset",
          %{conversation: conversation} do
       assert {:error, %Ecto.Changeset{}} =
                Conversations.update_conversation(conversation, @invalid_attrs)
@@ -169,13 +178,29 @@ defmodule ChatApi.ConversationsTest do
       assert _conversation = Conversations.get_conversation!(conversation.id)
     end
 
-    test "delete_conversation/1 deletes the conversation",
+    test "sets the closed_at field based on updated status", %{
+      conversation: conversation
+    } do
+      assert {:ok, %Conversation{} = closed_conversation} =
+               Conversations.update_conversation(conversation, @update_attrs)
+
+      assert %DateTime{} = closed_conversation.closed_at
+
+      assert {:ok, %Conversation{} = open_conversation} =
+               Conversations.update_conversation(conversation, %{status: "open"})
+
+      assert open_conversation.closed_at == nil
+    end
+  end
+
+  describe "delete_conversation/1" do
+    test "deletes the conversation",
          %{conversation: conversation} do
       assert {:ok, %Conversation{}} = Conversations.delete_conversation(conversation)
       assert_raise Ecto.NoResultsError, fn -> Conversations.get_conversation!(conversation.id) end
     end
 
-    test "delete_conversation/1 deletes the conversation if associated slack_conversation_threads exist" do
+    test "deletes the conversation if associated slack_conversation_threads exist" do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.create_conversation(params_with_assocs(:conversation))
 
@@ -201,12 +226,16 @@ defmodule ChatApi.ConversationsTest do
         SlackConversationThreads.get_slack_conversation_thread!(slack_conversation_thread.id)
       end
     end
+  end
 
-    test "change_conversation/1 returns a conversation changeset", %{conversation: conversation} do
+  describe "change_conversation/1" do
+    test "returns a conversation changeset", %{conversation: conversation} do
       assert %Ecto.Changeset{} = Conversations.change_conversation(conversation)
     end
+  end
 
-    test "has_agent_replied?/1 checks if an agent has replied to the conversation",
+  describe "has_agent_replied?/1" do
+    test "checks if an agent has replied to the conversation",
          %{account: account, customer: customer, conversation: conversation} do
       refute Conversations.has_agent_replied?(conversation.id)
 
@@ -220,16 +249,20 @@ defmodule ChatApi.ConversationsTest do
 
       assert Conversations.has_agent_replied?(conversation.id)
     end
+  end
 
-    test "archive_conversation/1 sets the archive_at field of a conversation",
+  describe "archive_conversation/1" do
+    test "sets the archive_at field of a conversation",
          %{conversation: conversation} do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.archive_conversation(conversation)
 
       assert %DateTime{} = conversation.archived_at
     end
+  end
 
-    test "query_conversations_closed_for/1 returns an Ecto.Query for conversations which have been closed for more than 14 days" do
+  describe "query_conversations_closed_for/1" do
+    test "returns an Ecto.Query for conversations which have been closed for more than 14 days" do
       _closed_conversation = insert(:conversation, status: "closed")
 
       ready_to_archive_conversation =
@@ -241,8 +274,10 @@ defmodule ChatApi.ConversationsTest do
 
       assert result_ids == [ready_to_archive_conversation.id]
     end
+  end
 
-    test "query_free_tier_conversations_inactive_for/1 returns an Ecto.Query for free tier conversations that have been inactive for X days" do
+  describe "query_free_tier_conversations_inactive_for/1" do
+    test "returns an Ecto.Query for free tier conversations that have been inactive for X days" do
       active_conversation = insert(:conversation, inserted_at: days_ago(31))
       insert(:message, conversation: active_conversation, inserted_at: days_ago(30))
       insert(:message, conversation: active_conversation, inserted_at: days_ago(20))
@@ -260,8 +295,10 @@ defmodule ChatApi.ConversationsTest do
 
       assert result_ids == [inactive_conversation.id]
     end
+  end
 
-    test "archive_conversations/1 archives conversations which have been closed for more than 14 days" do
+  describe "archive_conversations/1" do
+    test "archives conversations which have been closed for more than 14 days" do
       past = DateTime.add(DateTime.utc_now(), -:timer.hours(336))
 
       closed_conversation = insert(:conversation, status: "closed")
@@ -279,7 +316,7 @@ defmodule ChatApi.ConversationsTest do
       refute closed_conversation.archived_at
     end
 
-    test "archive_conversations/1 archives inactive free tier conversations" do
+    test "archives inactive free tier conversations" do
       conv1 = insert(:conversation, inserted_at: days_ago(31))
       insert(:message, conversation: conv1, inserted_at: days_ago(31))
 
@@ -301,7 +338,7 @@ defmodule ChatApi.ConversationsTest do
       refute conv2.archived_at
     end
 
-    test "archive_conversations/1 does not archive free tier conversations with recently active message" do
+    test "does not archive free tier conversations with recently active message" do
       conv1 = insert(:conversation, inserted_at: days_ago(31))
       insert(:message, conversation: conv1, inserted_at: days_ago(3))
 
@@ -322,22 +359,10 @@ defmodule ChatApi.ConversationsTest do
       conv2 = Conversations.get_conversation!(conv2.id)
       refute conv2.archived_at
     end
+  end
 
-    test "update_conversation/2 sets the closed_at field based on updated status", %{
-      conversation: conversation
-    } do
-      assert {:ok, %Conversation{} = closed_conversation} =
-               Conversations.update_conversation(conversation, @update_attrs)
-
-      assert %DateTime{} = closed_conversation.closed_at
-
-      assert {:ok, %Conversation{} = open_conversation} =
-               Conversations.update_conversation(conversation, %{status: "open"})
-
-      assert open_conversation.closed_at == nil
-    end
-
-    test "get_first_message/1 returns the first message of the conversation",
+  describe "get_first_message/1" do
+    test "returns the first message of the conversation",
          %{account: account, conversation: conversation} do
       refute Conversations.get_first_message(conversation.id)
 
@@ -352,8 +377,10 @@ defmodule ChatApi.ConversationsTest do
 
       assert %Message{id: ^message_id} = Conversations.get_first_message(conversation.id)
     end
+  end
 
-    test "is_first_message?/2 checks if the message is the first message of the conversation",
+  describe "is_first_message?/2" do
+    test "checks if the message is the first message of the conversation",
          %{account: account, conversation: conversation} do
       first_message =
         insert(:message,
@@ -372,8 +399,10 @@ defmodule ChatApi.ConversationsTest do
       assert Conversations.is_first_message?(conversation.id, first_message.id)
       refute Conversations.is_first_message?(conversation.id, second_message.id)
     end
+  end
 
-    test "get_previous_conversation/2 gets the previous conversation from the same customer if one exists",
+  describe "get_previous_conversation/2" do
+    test "gets the previous conversation from the same customer if one exists",
          %{account: account, conversation: conversation, customer: customer} do
       refute Conversations.get_previous_conversation(conversation)
 
@@ -416,7 +445,7 @@ defmodule ChatApi.ConversationsTest do
                earlier_conversation.id
     end
 
-    test "get_previous_conversation/2 gets the previous conversation based on message activity",
+    test "gets the previous conversation based on message activity",
          %{account: account, conversation: conversation, customer: customer} do
       previous_conversation =
         insert(:conversation,
@@ -456,8 +485,10 @@ defmodule ChatApi.ConversationsTest do
       assert Conversations.get_previous_conversation(conversation) |> Map.get(:id) ==
                earlier_conversation.id
     end
+  end
 
-    test "get_previous_conversation_id/2 gets the previous conversation from the same customer if one exists",
+  describe "get_previous_conversation_id/2" do
+    test "gets the previous conversation from the same customer if one exists",
          %{account: account, conversation: conversation, customer: customer} do
       refute Conversations.get_previous_conversation_id(conversation)
 
@@ -500,7 +531,7 @@ defmodule ChatApi.ConversationsTest do
                earlier_conversation.id
     end
 
-    test "get_previous_conversation_id/2 gets the previous conversation based on message activity",
+    test "gets the previous conversation based on message activity",
          %{account: account, conversation: conversation, customer: customer} do
       previous_conversation =
         insert(:conversation,
@@ -540,12 +571,157 @@ defmodule ChatApi.ConversationsTest do
       assert Conversations.get_previous_conversation_id(conversation) ==
                earlier_conversation.id
     end
+  end
 
-    defp days_ago(days) do
-      DateTime.utc_now()
-      |> DateTime.add(days * 60 * 60 * 24 * -1)
-      |> DateTime.truncate(:second)
-      |> DateTime.to_naive()
+  describe "list_other_recent_conversations/2" do
+    test "gets other recent conversations related to the conversation customer",
+         %{account: account, conversation: conversation, customer: customer} do
+      latest_conversation_id = conversation.id
+
+      %Conversation{id: previous_conversation_id} =
+        previous_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          inserted_at: ~N[2020-12-01 20:00:00]
+        )
+
+      insert(:message,
+        account: account,
+        conversation: previous_conversation,
+        inserted_at: ~N[2020-12-02 20:00:00]
+      )
+
+      %Conversation{id: earlier_conversation_id} =
+        earlier_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          inserted_at: ~N[2020-11-01 20:00:00]
+        )
+
+      insert(:message,
+        account: account,
+        conversation: earlier_conversation,
+        inserted_at: ~N[2020-11-02 20:00:00]
+      )
+
+      # Verify that the results are sorted from most recent to least
+      assert [
+               %Conversation{id: ^previous_conversation_id},
+               %Conversation{id: ^earlier_conversation_id}
+             ] = Conversations.list_other_recent_conversations(conversation)
+
+      assert [
+               %Conversation{id: ^latest_conversation_id},
+               %Conversation{id: ^earlier_conversation_id}
+             ] = Conversations.list_other_recent_conversations(previous_conversation)
+
+      assert [
+               %Conversation{id: ^latest_conversation_id},
+               %Conversation{id: ^previous_conversation_id}
+             ] = Conversations.list_other_recent_conversations(earlier_conversation)
+
+      # Verify that the `limit` param works
+      assert [
+               %Conversation{id: ^previous_conversation_id}
+             ] = Conversations.list_other_recent_conversations(conversation, 1)
+
+      assert [
+               %Conversation{id: ^latest_conversation_id}
+             ] = Conversations.list_other_recent_conversations(previous_conversation, 1)
     end
+
+    test "handles no other recent conversations", %{
+      conversation: conversation
+    } do
+      assert [] = Conversations.list_other_recent_conversations(conversation)
+    end
+  end
+
+  describe "list_recent_by_customer/3" do
+    test "gets recently active conversations for the given customer",
+         %{account: account, conversation: conversation, customer: customer} do
+      latest_conversation_id = conversation.id
+
+      insert(:message,
+        account: account,
+        conversation: conversation,
+        body: "Latest message"
+      )
+
+      %Conversation{id: previous_conversation_id} =
+        previous_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          inserted_at: ~N[2020-12-01 20:00:00]
+        )
+
+      insert(:message,
+        account: account,
+        conversation: previous_conversation,
+        inserted_at: ~N[2020-12-01 20:00:00],
+        body: "Previous conversation message #1"
+      )
+
+      insert(:message,
+        account: account,
+        conversation: previous_conversation,
+        inserted_at: ~N[2020-12-02 20:00:00],
+        body: "Previous conversation message #2"
+      )
+
+      %Conversation{id: earlier_conversation_id} =
+        earlier_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          inserted_at: ~N[2020-11-01 20:00:00]
+        )
+
+      insert(:message,
+        account: account,
+        conversation: earlier_conversation,
+        inserted_at: ~N[2020-11-01 20:00:00],
+        body: "Earlier conversation message #1"
+      )
+
+      insert(:message,
+        account: account,
+        conversation: earlier_conversation,
+        inserted_at: ~N[2020-11-02 20:00:00],
+        body: "Earlier conversation message #2"
+      )
+
+      # Verify that the results are sorted from most recent to least, and only include the latest message
+      assert [
+               %Conversation{
+                 id: ^latest_conversation_id,
+                 messages: [%Message{body: "Latest message"}]
+               },
+               %Conversation{
+                 id: ^previous_conversation_id,
+                 messages: [%Message{body: "Previous conversation message #2"}]
+               },
+               %Conversation{
+                 id: ^earlier_conversation_id,
+                 messages: [%Message{body: "Earlier conversation message #2"}]
+               }
+             ] = Conversations.list_recent_by_customer(customer.id, account.id)
+    end
+
+    test "handles no recent conversations", %{account: account} do
+      new_customer = insert(:customer, account: account)
+
+      assert [] = Conversations.list_recent_by_customer(new_customer.id, account.id)
+    end
+  end
+
+  defp days_ago(days) do
+    DateTime.utc_now()
+    |> DateTime.add(days * 60 * 60 * 24 * -1)
+    |> DateTime.truncate(:second)
+    |> DateTime.to_naive()
   end
 end

@@ -137,6 +137,7 @@ defmodule ChatApi.Conversations do
           messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
         ]
 
+    # We just want to query the most recent message
     messages_query =
       from m in Message,
         join: r in subquery(ranking_query),
