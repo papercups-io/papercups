@@ -50,6 +50,7 @@ body {
   color: #fff;
 }
 
+/* Mimic behavior of antd "text"-type Button */
 a.RelatedCustomerConversation--link {
   display: block;
   color: rgba(0, 0, 0, 0.45);
