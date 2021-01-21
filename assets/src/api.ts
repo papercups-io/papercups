@@ -444,6 +444,20 @@ export const fetchPreviousConversation = async (
     .then((res) => res.body.data);
 };
 
+export const fetchRelatedConversations = async (
+  id: string,
+  token = getAccessToken()
+): Promise<Array<Conversation>> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/conversations/${id}/related`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const generateShareConversationToken = async (
   conversationId: string,
   token = getAccessToken()

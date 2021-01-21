@@ -28,6 +28,7 @@ import {
   SidebarConversationTags,
 } from './SidebarTagSection';
 import SidebarCustomerNotes from './SidebarCustomerNotes';
+import RelatedCustomerConversations from './RelatedCustomerConversations';
 import * as API from '../../api';
 import {Conversation, Customer} from '../../types';
 import logger from '../../logger';
@@ -337,6 +338,15 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
           <Text strong>Conversation Tags</Text>
         </Box>
         <SidebarConversationTags conversationId={conversationId} />
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Latest conversations</Text>
+        </Box>
+        <Box mx={-2} mb={-2}>
+          <RelatedCustomerConversations conversationId={conversationId} />
+        </Box>
       </DetailsSectionCard>
 
       <Box px={2} mt={3} mb={3}>

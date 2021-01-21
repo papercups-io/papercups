@@ -111,6 +111,7 @@ defmodule ChatApiWeb.Router do
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
 
     get("/conversations/:conversation_id/previous", ConversationController, :previous)
+    get("/conversations/:conversation_id/related", ConversationController, :related)
     post("/conversations/:conversation_id/share", ConversationController, :share)
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
