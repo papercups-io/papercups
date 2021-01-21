@@ -11,7 +11,10 @@ import ChatMessageBox from './ChatMessageBox';
 
 dayjs.extend(utc);
 
-const getSenderIdentifier = (customer?: Customer | null, user?: User) => {
+export const getSenderIdentifier = (
+  customer?: Customer | null,
+  user?: User
+) => {
   if (user) {
     const {display_name, full_name, email} = user;
 
@@ -25,15 +28,17 @@ const getSenderIdentifier = (customer?: Customer | null, user?: User) => {
   }
 };
 
-const SenderAvatar = ({
+export const SenderAvatar = ({
   isAgent,
   name,
   user,
+  size = 32,
   color = colors.gold,
 }: {
   isAgent: boolean;
   name: string;
   user?: User;
+  size?: number;
   color?: string;
 }) => {
   const profilePhotoUrl = user && user.profile_photo_url;
@@ -44,8 +49,8 @@ const SenderAvatar = ({
         <Box
           mr={2}
           style={{
-            height: 32,
-            width: 32,
+            height: size,
+            width: size,
             borderRadius: '50%',
             justifyContent: 'center',
             alignItems: 'center',
@@ -65,8 +70,9 @@ const SenderAvatar = ({
         mr={2}
         sx={{
           bg: isAgent ? colors.primary : color,
-          height: 32,
-          width: 32,
+          height: size,
+          width: size,
+          fontSize: size < 24 ? 12 : 'inherit',
           borderRadius: '50%',
           justifyContent: 'center',
           alignItems: 'center',
@@ -76,7 +82,9 @@ const SenderAvatar = ({
         {isAgent ? (
           name.slice(0, 1).toUpperCase()
         ) : (
-          <UserOutlined style={{color: colors.white}} />
+          <UserOutlined
+            style={{color: colors.white, fontSize: size < 24 ? 12 : 'inherit'}}
+          />
         )}
       </Flex>
     </Tooltip>

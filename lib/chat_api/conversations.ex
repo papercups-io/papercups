@@ -38,6 +38,25 @@ defmodule ChatApi.Conversations do
         limit \\ 5,
         filters \\ %{}
       ) do
+    # TODO: eventually DRY this up with `list_recent_by_customer/3` below... but for now
+    # we're cool with some code duplication while we're still figuring out the shape of our APIs
+
+    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
+    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
+    ranking_query =
+      from m in Message,
+        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
+        windows: [
+          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
+        ]
+
+    # We just want to query the most recent message
+    messages_query =
+      from m in Message,
+        join: r in subquery(ranking_query),
+        on: m.id == r.id and r.row_number <= 1,
+        preload: [:customer, user: :profile]
+
     Conversation
     |> where(account_id: ^account_id)
     |> where(customer_id: ^customer_id)
@@ -46,7 +65,7 @@ defmodule ChatApi.Conversations do
     |> where([c], is_nil(c.archived_at))
     |> order_by_most_recent_message()
     |> limit(^limit)
-    |> preload([:customer, messages: [user: :profile]])
+    |> preload([:customer, messages: ^messages_query])
     |> Repo.all()
   end
 
@@ -427,6 +446,12 @@ defmodule ChatApi.Conversations do
 
       {"assignee_id", value}, dynamic ->
         dynamic([p], ^dynamic and p.assignee_id == ^value)
+
+      {"customer_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.customer_id == ^value)
+
+      {"account_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.account_id == ^value)
 
       {_, _}, dynamic ->
         # Not a where parameter

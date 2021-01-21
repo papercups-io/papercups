@@ -28,8 +28,12 @@ import {
   SidebarConversationTags,
 } from './SidebarTagSection';
 import SidebarCustomerNotes from './SidebarCustomerNotes';
+import Spinner from '../Spinner';
+import {getSenderIdentifier, SenderAvatar} from '../conversations/ChatMessage';
+import {getColorByUuid} from '../conversations/support';
 import * as API from '../../api';
 import {Conversation, Customer} from '../../types';
+import {formatShortRelativeTime} from '../../utils';
 import logger from '../../logger';
 
 // TODO: create date utility methods so we don't have to do this everywhere
@@ -78,6 +82,97 @@ const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
         View live
       </Button>
     </Link>
+  );
+};
+
+const RelatedCustomerConversations = ({
+  conversationId,
+}: {
+  conversationId: string;
+}) => {
+  const [loading, setLoading] = React.useState(false);
+  const [conversations, setRelatedConversations] = React.useState<
+    Array<Conversation>
+  >([]);
+
+  React.useEffect(() => {
+    setLoading(true);
+
+    API.fetchRelatedConversations(conversationId)
+      .then((results) => setRelatedConversations(results))
+      .catch((err) =>
+        logger.error('Error retrieving related conversations:', err)
+      )
+      .then(() => setLoading(false));
+  }, [conversationId]);
+
+  if (loading) {
+    return <Spinner size={16} />;
+  } else if (!conversations || !conversations.length) {
+    return (
+      <Box mx={2} mb={2}>
+        <Text type="secondary">None</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {conversations.map(({id, status, created_at, messages = []}) => {
+        const [recent] = messages;
+        const ts = recent ? recent.created_at : created_at;
+        const created = dayjs.utc(ts);
+        const date = formatShortRelativeTime(created);
+        const {user, customer} = recent;
+        const name = getSenderIdentifier(customer, user);
+        const isAgent = !!user;
+        const preview = recent.body ? recent.body : '...';
+        const customerId = customer && customer.id;
+        const color = customerId ? getColorByUuid(customerId) : colors.gray[0];
+        const isOpen = status === 'open';
+        const url = isOpen
+          ? `/conversations/all?cid=${id}`
+          : `/conversations/closed?cid=${id}`;
+
+        return (
+          <a className="RelatedCustomerConversations" href={url}>
+            <Box
+              key={id}
+              p={2}
+              sx={{
+                borderTop: '1px solid #f0f0f0',
+              }}
+            >
+              <Flex
+                mb={1}
+                sx={{alignItems: 'center', justifyContent: 'space-between'}}
+              >
+                <SenderAvatar
+                  isAgent={isAgent}
+                  color={color}
+                  size={20}
+                  name={name}
+                  user={user}
+                />
+                <Text type="secondary" style={{fontSize: 12}}>
+                  {date}
+                </Text>
+              </Flex>
+              <Box
+                sx={{
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                <Text type="secondary">{preview}</Text>
+              </Box>
+            </Box>
+          </a>
+        );
+      })}
+    </Box>
   );
 };
 
@@ -337,6 +432,15 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
           <Text strong>Conversation Tags</Text>
         </Box>
         <SidebarConversationTags conversationId={conversationId} />
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Latest conversations</Text>
+        </Box>
+        <Box mx={-2} mb={-2}>
+          <RelatedCustomerConversations conversationId={conversationId} />
+        </Box>
       </DetailsSectionCard>
 
       <Box px={2} mt={3} mb={3}>

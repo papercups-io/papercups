@@ -50,6 +50,16 @@ body {
   color: #fff;
 }
 
+a.RelatedCustomerConversations {
+  display: block;
+  color: rgba(0, 0, 0, 0.45);
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+a.RelatedCustomerConversations:hover {
+  background: rgba(0, 0, 0, 0.018);
+}
+
 /* Replayer */
 #SessionPlayer .replayer-wrapper {
   left: auto !important;

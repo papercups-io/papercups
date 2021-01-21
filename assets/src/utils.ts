@@ -30,6 +30,23 @@ export const formatRelativeTime = (date: dayjs.Dayjs) => {
   }
 };
 
+export const formatShortRelativeTime = (date: dayjs.Dayjs) => {
+  const seconds = dayjs().diff(date, 'second');
+  const mins = Math.floor(seconds / 60);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+
+  if (seconds < 60) {
+    return `${seconds}s`;
+  } else if (mins <= 60) {
+    return `${mins}m`;
+  } else if (hrs <= 24) {
+    return `${hrs}h`;
+  } else {
+    return `${days}d`;
+  }
+};
+
 export const formatDiffDuration = (start: dayjs.Dayjs, finish: dayjs.Dayjs) => {
   const diff = finish.diff(start, 's');
   const seconds = diff % 60;

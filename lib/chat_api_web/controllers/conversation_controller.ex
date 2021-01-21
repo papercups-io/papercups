@@ -86,6 +86,17 @@ defmodule ChatApiWeb.ConversationController do
     end
   end
 
+  @spec related(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def related(conn, %{"conversation_id" => conversation_id} = params) do
+    with %Conversation{} = conversation <-
+           Conversations.get_conversation(conversation_id) do
+      limit = Map.get(params, "limit", 3)
+      results = Conversations.list_other_recent_conversations(conversation, limit)
+
+      render(conn, "index.json", conversations: results)
+    end
+  end
+
   @spec share(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def share(conn, %{"conversation_id" => conversation_id}) do
     with %{account_id: account_id} <- conn.assigns.current_user,
