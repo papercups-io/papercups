@@ -2,11 +2,11 @@ defmodule ChatApiWeb.Router do
   use ChatApiWeb, :router
 
   pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_session
-    plug :fetch_flash
-    plug :protect_from_forgery
-    plug :put_secure_browser_headers
+    plug(:accepts, ["html"])
+    plug(:fetch_session)
+    plug(:fetch_flash)
+    plug(:protect_from_forgery)
+    plug(:put_secure_browser_headers)
   end
 
   pipeline :api do
@@ -28,7 +28,7 @@ defmodule ChatApiWeb.Router do
 
   # Swagger
   scope "/api/swagger" do
-    forward "/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :chat_api, swagger_file: "swagger.json"
+    forward("/", PhoenixSwagger.Plug.SwaggerUI, otp_app: :chat_api, swagger_file: "swagger.json")
   end
 
   # Public routes
@@ -110,6 +110,7 @@ defmodule ChatApiWeb.Router do
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
 
+    get("/conversations/:conversation_id/previous", ConversationController, :previous)
     post("/conversations/:conversation_id/share", ConversationController, :share)
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
@@ -145,14 +146,14 @@ defmodule ChatApiWeb.Router do
   end
 
   scope "/", ChatApiWeb do
-    pipe_through :browser
+    pipe_through(:browser)
 
-    get "/", PageController, :index
+    get("/", PageController, :index)
     # TODO: move somewhere else?
-    get "/gmail/auth", GmailController, :index
+    get("/gmail/auth", GmailController, :index)
 
     # Fallback to index, which renders React app
-    get "/*path", PageController, :index
+    get("/*path", PageController, :index)
   end
 
   def swagger_info do

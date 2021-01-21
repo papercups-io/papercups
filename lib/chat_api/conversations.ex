@@ -18,36 +18,92 @@ defmodule ChatApi.Conversations do
   end
 
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
-  def list_conversations_by_account(nil, _) do
-    # TODO: raise an exception if nil account is passed in?
-    []
-  end
-
-  def list_conversations_by_account(account_id, attrs) do
+  def list_conversations_by_account(account_id, filters \\ %{}) do
     Conversation
-    |> join(
-      :left_lateral,
-      [c],
-      f in fragment(
-        "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
-        c.id
-      )
-    )
     |> where(account_id: ^account_id)
-    |> where(^filter_where(attrs))
+    |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
-    |> order_by([c, f], desc: f)
+    |> order_by_most_recent_message()
     |> preload([:customer, messages: [user: :profile]])
     |> Repo.all()
   end
 
-  @spec list_conversations_by_account(binary()) :: [Conversation.t()]
-  def list_conversations_by_account(account_id) do
-    list_conversations_by_account(account_id, %{})
+  @spec list_other_recent_conversations(Conversation.t(), integer(), map()) :: [Conversation.t()]
+  def list_other_recent_conversations(
+        %Conversation{
+          id: conversation_id,
+          account_id: account_id,
+          customer_id: customer_id
+        } = _conversation,
+        limit \\ 5,
+        filters \\ %{}
+      ) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(customer_id: ^customer_id)
+    |> where([c], c.id != ^conversation_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by_most_recent_message()
+    |> limit(^limit)
+    |> preload([:customer, messages: [user: :profile]])
+    |> Repo.all()
+  end
+
+  @spec get_previous_conversation(Conversation.t(), map()) :: Conversation.t() | nil
+  def get_previous_conversation(
+        %Conversation{
+          id: conversation_id,
+          inserted_at: inserted_at,
+          account_id: account_id,
+          customer_id: customer_id
+        } = _conversation,
+        filters \\ %{}
+      ) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(customer_id: ^customer_id)
+    |> where([c], c.inserted_at < ^inserted_at)
+    |> where([c], c.id != ^conversation_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by_most_recent_message()
+    |> preload([:customer, messages: [user: :profile]])
+    |> first()
+    |> Repo.one()
+  end
+
+  # Alternative to `get_previous_conversation/2` above
+  @spec get_previous_conversation_id(Conversation.t(), map()) :: binary() | nil
+  def get_previous_conversation_id(
+        %Conversation{
+          id: conversation_id,
+          inserted_at: inserted_at,
+          account_id: account_id,
+          customer_id: customer_id
+        } = _conversation,
+        filters \\ %{}
+      ) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(customer_id: ^customer_id)
+    |> where([c], c.inserted_at < ^inserted_at)
+    |> where([c], c.id != ^conversation_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by_most_recent_message()
+    |> select([:id])
+    |> first()
+    |> Repo.one()
+    |> case do
+      %Conversation{id: conversation_id} -> conversation_id
+      _ -> nil
+    end
   end
 
   @customer_conversations_limit 3
 
+  # Used externally in chat widget
   @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
   def find_by_customer(customer_id, account_id) do
     # NB: this is the method used to fetch conversations for a customer in the widget,
@@ -69,11 +125,49 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
-  @doc """
-  Gets a single conversation.
+  # Used internally in dashboard
+  @spec list_recent_by_customer(binary(), binary(), integer()) :: [Conversation.t()]
+  def list_recent_by_customer(customer_id, account_id, limit \\ 5) do
+    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
+    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
+    ranking_query =
+      from m in Message,
+        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
+        windows: [
+          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
+        ]
 
-  Raises `Ecto.NoResultsError` if the Conversation does not exist.
-  """
+    # We just want to query the most recent message
+    messages_query =
+      from m in Message,
+        join: r in subquery(ranking_query),
+        on: m.id == r.id and r.row_number <= 1,
+        preload: [:customer, user: :profile]
+
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(customer_id: ^customer_id)
+    |> where([c], is_nil(c.archived_at))
+    |> order_by_most_recent_message()
+    |> limit(^limit)
+    |> preload([:customer, messages: ^messages_query])
+    |> Repo.all()
+  end
+
+  @spec order_by_most_recent_message(Ecto.Query.t()) :: Ecto.Query.t()
+  def order_by_most_recent_message(query) do
+    query
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
+        c.id
+      )
+    )
+    |> order_by([c, f], desc: f)
+  end
+
   @spec get_conversation!(binary()) :: Conversation.t()
   def get_conversation!(id) do
     # TODO: make sure messages are sorted properly?
