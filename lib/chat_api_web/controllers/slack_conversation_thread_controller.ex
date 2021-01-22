@@ -14,9 +14,6 @@ defmodule ChatApiWeb.SlackConversationThreadController do
         "conversation_id" => conversation_id
       })
 
-    IO.inspect("!!! YO !!!")
-    IO.inspect(slack_conversation_threads)
-
     render(conn, "index.json", slack_conversation_threads: slack_conversation_threads)
   end
 end
