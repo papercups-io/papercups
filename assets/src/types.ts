@@ -69,6 +69,7 @@ export type Message = {
 
 export type Conversation = {
   id: string;
+  source?: string;
   account_id: string;
   customer_id: string;
   customer: Customer;

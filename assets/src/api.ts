@@ -458,6 +458,21 @@ export const fetchRelatedConversations = async (
     .then((res) => res.body.data);
 };
 
+export const fetchSlackConversationThreads = async (
+  conversationId: string,
+  token = getAccessToken()
+): Promise<Array<Conversation>> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/slack_conversation_threads`)
+    .query({conversation_id: conversationId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const generateShareConversationToken = async (
   conversationId: string,
   token = getAccessToken()

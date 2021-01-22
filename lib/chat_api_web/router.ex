@@ -110,6 +110,7 @@ defmodule ChatApiWeb.Router do
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
 
+    get("/slack_conversation_threads", SlackConversationThreadController, :index)
     get("/conversations/:conversation_id/previous", ConversationController, :previous)
     get("/conversations/:conversation_id/related", ConversationController, :related)
     post("/conversations/:conversation_id/share", ConversationController, :share)

@@ -22,6 +22,7 @@ defmodule ChatApiWeb.ConversationView do
     %{
       id: conversation.id,
       object: "conversation",
+      source: conversation.source,
       created_at: conversation.inserted_at,
       closed_at: conversation.closed_at,
       status: conversation.status,
@@ -37,6 +38,7 @@ defmodule ChatApiWeb.ConversationView do
     %{
       id: conversation.id,
       object: "conversation",
+      source: conversation.source,
       created_at: conversation.inserted_at,
       closed_at: conversation.closed_at,
       status: conversation.status,
