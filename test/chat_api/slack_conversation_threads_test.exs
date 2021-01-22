@@ -2,6 +2,7 @@ defmodule ChatApi.SlackConversationThreadsTest do
   use ChatApi.DataCase, async: true
 
   import ChatApi.Factory
+  import Mock
   alias ChatApi.SlackConversationThreads
 
   describe "slack_conversation_threads" do
@@ -18,19 +19,86 @@ defmodule ChatApi.SlackConversationThreadsTest do
     @invalid_attrs %{slack_thread_ts: nil, slack_channel: nil}
 
     setup do
-      conversation = insert(:conversation)
-      slack_conversation_thread = insert(:slack_conversation_thread, conversation: conversation)
+      account = insert(:account)
+      conversation = insert(:conversation, account: account)
 
-      {:ok, conversation: conversation, slack_conversation_thread: slack_conversation_thread}
+      slack_conversation_thread =
+        insert(:slack_conversation_thread, conversation: conversation, account: account)
+
+      {:ok,
+       account: account,
+       conversation: conversation,
+       slack_conversation_thread: slack_conversation_thread}
     end
 
     test "list_slack_conversation_threads/0 returns all slack_conversation_threads",
          %{slack_conversation_thread: slack_conversation_thread} do
-      conversation_ids =
+      thread_ids =
         SlackConversationThreads.list_slack_conversation_threads()
         |> Enum.map(& &1.id)
 
-      assert conversation_ids == [slack_conversation_thread.id]
+      assert thread_ids == [slack_conversation_thread.id]
+    end
+
+    test "list_slack_conversation_threads_by_account/2 returns all slack_conversation_threads for the account",
+         %{account: account, slack_conversation_thread: slack_conversation_thread} do
+      other_conversation = insert(:conversation)
+
+      _other_slack_conversation_thread =
+        insert(:slack_conversation_thread, conversation: other_conversation)
+
+      thread_ids =
+        SlackConversationThreads.list_slack_conversation_threads_by_account(account.id)
+        |> Enum.map(& &1.id)
+
+      assert thread_ids == [slack_conversation_thread.id]
+    end
+
+    test "list_slack_conversation_threads_by_account/2 can filter by conversation_id",
+         %{
+           account: account,
+           conversation: conversation,
+           slack_conversation_thread: slack_conversation_thread
+         } do
+      thread_ids =
+        SlackConversationThreads.list_slack_conversation_threads_by_account(account.id, %{
+          "conversation_id" => conversation.id
+        })
+        |> Enum.map(& &1.id)
+
+      assert thread_ids == [slack_conversation_thread.id]
+
+      other_conversation = insert(:conversation)
+
+      assert [] =
+               SlackConversationThreads.list_slack_conversation_threads_by_account(account.id, %{
+                 "conversation_id" => other_conversation.id
+               })
+    end
+
+    test "list_slack_conversation_threads_by_account/2 includes the permalink if possible",
+         %{
+           account: account,
+           conversation: conversation,
+           slack_conversation_thread: slack_conversation_thread
+         } do
+      insert(:slack_authorization, account: account, type: "support")
+      permalink = "https://slack.com/archives/C12345"
+
+      with_mock ChatApi.Slack.Client,
+        get_message_permalink: fn _, _, _ ->
+          {:ok, %{body: %{"permalink" => permalink}}}
+        end do
+        assert [%{id: slack_conversation_thread_id, permalink: ^permalink}] =
+                 SlackConversationThreads.list_slack_conversation_threads_by_account(
+                   account.id,
+                   %{
+                     "conversation_id" => conversation.id
+                   }
+                 )
+
+        assert slack_conversation_thread.id == slack_conversation_thread_id
+      end
     end
 
     test "get_slack_conversation_thread!/1 returns the slack_conversation_thread with given id",
