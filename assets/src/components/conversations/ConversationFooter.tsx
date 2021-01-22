@@ -1,7 +1,17 @@
 import React from 'react';
+import RcUpload from 'rc-upload';
+
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Menu, TextArea} from '../common';
+import {colors, Button, Menu, Popover, TextArea, Upload} from '../common';
 import {Message, MessageType} from '../../types';
+// import { Upload, Button } from 'antd';
+// import { UploadOutlined } from '@ant-design/icons';
+
+import {PaperClipOutlined} from '../icons';
+import {UploadChangeParam} from 'antd/lib/upload';
+import {UploadFile} from 'antd/lib/upload/interface';
+// import { RcFile } from 'rc-upload/lib/interface';
+import FileUpload from './FileUpload';
 
 const ConversationFooter = ({
   sx = {},
@@ -39,6 +49,16 @@ const ConversationFooter = ({
     });
 
     setMessage('');
+  };
+
+  var state = {
+    isSendButtonDisabled: false,
+    nameFMFile: null,
+    buttonUploadFMDisabled: false,
+    buttonDeleteFMDisabled: false,
+    hasErrorFormatFM: false,
+    hasErrorSizeFM: false,
+    uploadIsOnProgress: false,
   };
 
   return (
@@ -110,7 +130,13 @@ const ConversationFooter = ({
                 onChange={handleMessageChange}
               />
             </Box>
-            <Flex sx={{justifyContent: 'flex-end'}}>
+            <Flex
+              sx={{
+                alignItems: 'row',
+                justifyContent: 'space-between',
+              }}
+            >
+              <FileUpload></FileUpload>
               <Button type="primary" htmlType="submit">
                 Send
               </Button>

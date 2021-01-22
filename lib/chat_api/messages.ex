@@ -83,10 +83,11 @@ defmodule ChatApi.Messages do
 
   @spec add_uploads(ChatApi.Messages.Message.t(), binary()) :: [Attachment.t()] | nil
   def add_uploads(%Message{id: id, account_id: account_id} = _message, upload_ids) do
-    change_sets = upload_ids
-    |> Enum.map(fn upload_id ->
-      %{message_id: id, account_id: account_id, upload_id: upload_id}
-    end)
+    change_sets =
+      upload_ids
+      |> Enum.map(fn upload_id ->
+        %{message_id: id, account_id: account_id, upload_id: upload_id}
+      end)
 
     Repo.insert_all(Attachment, change_sets)
   end

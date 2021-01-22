@@ -1096,3 +1096,7 @@ export const fetchReportingData = async (
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const uploadToS3 = (s3Url: string, file: File) => {
+  return request.put(s3Url).set('Content-Type', file.type).send(file);
+};

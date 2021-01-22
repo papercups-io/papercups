@@ -21,6 +21,7 @@ import Table from 'antd/lib/table';
 import Tag from 'antd/lib/tag';
 import Tooltip from 'antd/lib/tooltip';
 import Typography from 'antd/lib/typography';
+import Upload from 'antd/lib/upload';
 
 import {
   blue,
@@ -126,4 +127,5 @@ export {
   Table,
   Tag,
   Tooltip,
+  Upload,
 };

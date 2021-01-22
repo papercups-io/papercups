@@ -8,7 +8,7 @@ defmodule ChatApiWeb.UploadController do
 
   def create(conn, %{
         "filename" => filename,
-        "content_type" => content_type,
+        "content_type" => content_type
       }) do
     file_uuid = UUID.uuid4(:hex)
     filename = String.replace(filename, " ", "-")

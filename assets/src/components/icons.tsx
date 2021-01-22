@@ -15,6 +15,7 @@ import LinkOutlined from '@ant-design/icons/LinkOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
+import PaperClipOutlined from '@ant-design/icons/PaperClipOutlined';
 import PhoneOutlined from '@ant-design/icons/PhoneOutlined';
 import PlusOutlined from '@ant-design/icons/PlusOutlined';
 import RightCircleOutlined from '@ant-design/icons/RightCircleOutlined';
@@ -48,6 +49,7 @@ export {
   LoadingOutlined,
   LogoutOutlined,
   MailOutlined,
+  PaperClipOutlined,
   PhoneOutlined,
   PlusOutlined,
   RightCircleOutlined,
