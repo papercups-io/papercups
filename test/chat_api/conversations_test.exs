@@ -20,7 +20,7 @@ defmodule ChatApi.ConversationsTest do
     {:ok, account: account, conversation: conversation, customer: customer}
   end
 
-  describe "list_conversations/0 " do
+  describe "list_conversations/0" do
     test "returns all conversations",
          %{conversation: conversation} do
       result_ids = Conversations.list_conversations() |> Enum.map(& &1.id)
@@ -29,7 +29,7 @@ defmodule ChatApi.ConversationsTest do
     end
   end
 
-  describe "list_conversations_by_account/1 " do
+  describe "list_conversations_by_account/1" do
     test "returns all conversations for an account",
          %{account: account, conversation: conversation} do
       result_ids = Enum.map(Conversations.list_conversations_by_account(account.id), & &1.id)
@@ -72,7 +72,7 @@ defmodule ChatApi.ConversationsTest do
     end
   end
 
-  describe "find_by_customer/2 " do
+  describe "find_by_customer/2" do
     test "returns all conversations for a customer",
          %{account: account, conversation: conversation, customer: customer} do
       result_ids = Enum.map(Conversations.find_by_customer(customer.id, account.id), & &1.id)
