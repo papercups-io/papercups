@@ -85,7 +85,7 @@ class Login extends React.Component<Props, State> {
           }}
         >
           <Title style={{textAlign: 'center', fontWeight: 300}} level={1}>
-            Sign In
+            Sign in
           </Title>
           <form onSubmit={this.handleSubmit}>
             <Box mb={3}>
@@ -136,7 +136,7 @@ class Login extends React.Component<Props, State> {
             </Box> */}
             <Box my={3}>
               <Text style={{textAlign: 'center'}}>
-                If you have forgotten your password, kindly contact:
+                Forgot Password? Contact:&nbsp;
                 <a href="mailto:akhil.varyani@botcart.co">
                   akhil.varyani@botcart.co
                 </a>
