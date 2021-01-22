@@ -20,10 +20,6 @@ const SlackConversationThreads = ({
     setLoading(true);
 
     API.fetchSlackConversationThreads(conversationId)
-      .then(console.log)
-      .catch(console.log);
-
-    API.fetchSlackConversationThreads(conversationId)
       .then((results) => setSlackConversationThreads(results))
       .catch((err) =>
         logger.error('Error retrieving Slack conversation threads:', err)
