@@ -29,6 +29,7 @@ import {
 } from './SidebarTagSection';
 import SidebarCustomerNotes from './SidebarCustomerNotes';
 import RelatedCustomerConversations from './RelatedCustomerConversations';
+import SlackConversationThreads from './SlackConversationThreads';
 import * as API from '../../api';
 import {Conversation, Customer} from '../../types';
 import logger from '../../logger';
@@ -288,7 +289,7 @@ const openShareConversationUrlNotification = (url: string) => {
 };
 
 const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
-  const {id: conversationId, status} = conversation;
+  const {id: conversationId, status, source} = conversation;
 
   const share = () => {
     API.generateShareConversationToken(conversationId)
@@ -323,15 +324,15 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
           <Text>{conversationId.toLowerCase()}</Text>
         </Tooltip>
       </Box>
-      <Box px={2} mb={3}>
+      <Box px={2} mb={1}>
         <Text type="secondary">Status:</Text>{' '}
         <Tag color={status === 'open' ? colors.primary : colors.red}>
           {status}
         </Tag>
       </Box>
-
-      {/* TODO: include other recent conversations */}
-      {/* TODO: include link to Slack thread if one exists */}
+      <Box px={2} mb={3}>
+        <Text type="secondary">Source:</Text> <Tag>{source}</Tag>
+      </Box>
 
       <DetailsSectionCard>
         <Box mb={2}>
@@ -347,6 +348,13 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
         <Box mx={-2} mb={-2}>
           <RelatedCustomerConversations conversationId={conversationId} />
         </Box>
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Text strong>Slack threads</Text>
+        </Box>
+        <SlackConversationThreads conversationId={conversationId} />
       </DetailsSectionCard>
 
       <Box px={2} mt={3} mb={3}>

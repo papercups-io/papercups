@@ -2,9 +2,8 @@ defmodule ChatApiWeb.ConversationController do
   use ChatApiWeb, :controller
   use PhoenixSwagger
 
-  alias ChatApi.Conversations
+  alias ChatApi.{Conversations, Messages}
   alias ChatApi.Conversations.{Conversation, Helpers}
-  alias ChatApi.Messages
 
   action_fallback(ChatApiWeb.FallbackController)
 
