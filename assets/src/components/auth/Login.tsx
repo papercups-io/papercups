@@ -5,6 +5,7 @@ import qs from 'query-string';
 import {Button, Input, Text, Title} from '../common';
 import {useAuth} from './AuthProvider';
 import logger from '../../logger';
+import loginLogo from '../../login.svg';
 
 type Props = RouteComponentProps & {
   onSubmit: (params: any) => Promise<void>;
@@ -73,12 +74,21 @@ class Login extends React.Component<Props, State> {
           alignItems: 'center',
         }}
       >
-        <Box sx={{width: '100%', maxWidth: 320}}>
-          <Title style={{textAlign: 'center'}} level={1}>
-            Welcome to BotCart
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: 480,
+            marginTop: '3rem',
+            borderRadius: '10px',
+            padding: '4rem 4rem 0 4rem',
+            boxShadow: '0px 0px 4px 1px #ccc',
+          }}
+        >
+          <Title style={{textAlign: 'center', fontWeight: 300}} level={1}>
+            Sign In
           </Title>
           <form onSubmit={this.handleSubmit}>
-            <Box mb={2}>
+            <Box mb={3}>
               <label htmlFor="email">Email</label>
               <Input
                 id="email"
@@ -90,7 +100,7 @@ class Login extends React.Component<Props, State> {
               />
             </Box>
 
-            <Box mb={2}>
+            <Box mb={3}>
               <label htmlFor="password">Password</label>
               <Input
                 id="password"
@@ -102,7 +112,7 @@ class Login extends React.Component<Props, State> {
               />
             </Box>
 
-            <Box mt={3}>
+            <Box mt={4}>
               <Button
                 block
                 size="large"
@@ -132,16 +142,13 @@ class Login extends React.Component<Props, State> {
                 </a>
               </Text>
             </Box>
-            <Box style={{textAlign: 'center'}}>
-              <Image width={'130px'} src="../../logo.svg" />
-            </Box>
-            <Box m={2} style={{textAlign: 'center'}}>
+            <Box style={{textAlign: 'center', padding: '4rem 0 2rem 0'}}>
               <a
                 href="https://botcart.co/"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                www.botcart.co
+                <Image width={'180px'} src={loginLogo} />
               </a>
             </Box>
           </form>
