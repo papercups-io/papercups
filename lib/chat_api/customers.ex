@@ -7,7 +7,7 @@ defmodule ChatApi.Customers do
   alias ChatApi.Repo
 
   alias ChatApi.Customers.Customer
-  alias ChatApi.Tags.CustomerTag
+  alias ChatApi.Tags.{CustomerTag, Tag}
 
   @spec list_customers(binary(), map()) :: [Customer.t()]
   def list_customers(account_id, filters \\ %{}) do
