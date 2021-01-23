@@ -251,7 +251,7 @@ defmodule ChatApi.Customers do
   end
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
-  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
+  @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}
   def filter_where(params) do
     Enum.reduce(params, dynamic(true), fn
       {"company_id", value}, dynamic ->

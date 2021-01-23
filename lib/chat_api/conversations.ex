@@ -435,7 +435,7 @@ defmodule ChatApi.Conversations do
   #####################
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
-  @spec filter_where(map) :: Ecto.Query.DynamicExpr.t()
+  @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}
   defp filter_where(attrs) do
     Enum.reduce(attrs, dynamic(true), fn
       {"status", value}, dynamic ->
