@@ -4,6 +4,17 @@ defmodule ChatApi.Tags.ConversationTag do
 
   alias ChatApi.{Accounts.Account, Conversations.Conversation, Tags.Tag, Users.User}
 
+  @type t :: %__MODULE__{
+          # Foreign keys
+          account_id: Ecto.UUID.t(),
+          conversation_id: Ecto.UUID.t(),
+          tag_id: Ecto.UUID.t(),
+          creator_id: integer(),
+          # Timestamps
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "conversation_tags" do

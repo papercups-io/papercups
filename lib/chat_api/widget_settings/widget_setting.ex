@@ -4,6 +4,23 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
 
   alias ChatApi.Accounts.Account
 
+  @type t :: %__MODULE__{
+          title: String.t() | nil,
+          subtitle: String.t() | nil,
+          color: String.t() | nil,
+          greeting: String.t() | nil,
+          new_message_placeholder: String.t() | nil,
+          base_url: String.t() | nil,
+          host: String.t() | nil,
+          pathname: String.t() | nil,
+          last_seen_at: DateTime.t() | nil,
+          # Foreign keys
+          account_id: Ecto.UUID.t(),
+          # Timestamps
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "widget_settings" do

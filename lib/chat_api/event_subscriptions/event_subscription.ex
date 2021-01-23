@@ -4,6 +4,17 @@ defmodule ChatApi.EventSubscriptions.EventSubscription do
 
   alias ChatApi.Accounts.Account
 
+  @type t :: %__MODULE__{
+          scope: String.t() | nil,
+          webhook_url: String.t(),
+          verified: boolean() | nil,
+          # Foreign keys
+          account_id: Ecto.UUID.t(),
+          # Timestamps
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "event_subscriptions" do

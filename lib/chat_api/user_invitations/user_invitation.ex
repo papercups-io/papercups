@@ -4,6 +4,15 @@ defmodule ChatApi.UserInvitations.UserInvitation do
 
   alias ChatApi.Accounts.Account
 
+  @type t :: %__MODULE__{
+          expires_at: DateTime.t(),
+          # Foreign keys
+          account_id: Ecto.UUID.t(),
+          # Timestamps
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
