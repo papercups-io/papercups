@@ -7,7 +7,7 @@ defmodule ChatApi.Accounts do
   require Logger
   alias ChatApi.Repo
 
-  alias ChatApi.Accounts.{Account, WorkingHours}
+  alias ChatApi.Accounts.{Account, Settings, WorkingHours}
   alias ChatApi.Users.User
 
   @spec list_accounts() :: [Account.t()]
@@ -137,6 +137,15 @@ defmodule ChatApi.Accounts do
     |> select([:subscription_plan])
     |> Repo.one!()
     |> Map.get(:subscription_plan)
+  end
+
+  @spec get_account_settings!(binary()) :: Settings.t()
+  def get_account_settings!(account_id) do
+    Account
+    |> where(id: ^account_id)
+    |> select([:settings])
+    |> Repo.one!()
+    |> Map.get(:settings, %{})
   end
 
   @starter_plan_max_users 2

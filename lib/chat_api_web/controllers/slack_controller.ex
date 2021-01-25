@@ -234,6 +234,7 @@ defmodule ChatApiWeb.SlackController do
         |> Messages.Notification.notify(:webhooks)
         |> Messages.Notification.notify(:slack_support_channel)
         |> Messages.Notification.notify(:slack_company_channel)
+        |> Messages.Notification.notify(:conversation_reply_email)
         |> Messages.Helpers.handle_post_creation_conversation_updates()
       else
         case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do

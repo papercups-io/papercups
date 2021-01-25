@@ -2,7 +2,7 @@ defmodule ChatApi.Accounts.Account do
   use Ecto.Schema
   import Ecto.Changeset
 
-  alias ChatApi.Accounts.WorkingHours
+  alias ChatApi.Accounts.{Settings, WorkingHours}
   alias ChatApi.Customers.Customer
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
@@ -25,6 +25,7 @@ defmodule ChatApi.Accounts.Account do
           users: any(),
           widget_settings: any(),
           working_hours: any(),
+          settings: any(),
           # Timestamps
           inserted_at: any(),
           updated_at: any()
@@ -48,12 +49,14 @@ defmodule ChatApi.Accounts.Account do
     has_many(:users, User)
     has_one(:widget_settings, WidgetSetting)
 
+    embeds_one(:settings, Settings, on_replace: :delete)
     embeds_many(:working_hours, WorkingHours, on_replace: :delete)
 
     timestamps()
   end
 
   @doc false
+  @spec changeset(any(), map()) :: Ecto.Changeset.t()
   def changeset(account, attrs) do
     account
     |> cast(attrs, [
@@ -61,9 +64,11 @@ defmodule ChatApi.Accounts.Account do
       :time_zone
     ])
     |> cast_embed(:working_hours, with: &working_hours_changeset/2)
+    |> cast_embed(:settings, with: &account_settings_changeset/2)
     |> validate_required([:company_name])
   end
 
+  @spec billing_details_changeset(any(), map()) :: Ecto.Changeset.t()
   def billing_details_changeset(account, attrs) do
     account
     |> cast(attrs, [
@@ -76,8 +81,15 @@ defmodule ChatApi.Accounts.Account do
     |> validate_required([:subscription_plan])
   end
 
+  @spec working_hours_changeset(any(), map()) :: Ecto.Changeset.t()
   defp working_hours_changeset(schema, params) do
     schema
     |> cast(params, [:day, :start_minute, :end_minute])
+  end
+
+  @spec account_settings_changeset(any(), map()) :: Ecto.Changeset.t()
+  def account_settings_changeset(schema, params) do
+    schema
+    |> cast(params, [:disable_automated_reply_emails])
   end
 end

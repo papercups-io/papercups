@@ -12,7 +12,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
   def perform(%Oban.Job{args: %{"message" => message}}) do
-    if has_valid_email_domain?() && reply_emails_enabled?() do
+    if enabled?(message) do
       Logger.info("Checking if we need to send reply email: #{inspect(message)}")
 
       send_email(message)
@@ -58,9 +58,6 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
 
         {:warning, reason} ->
           Logger.warn(reason)
-
-        error ->
-          Logger.error("Unexpected failure when sending reply email: #{inspect(error)}")
       end
     else
       Logger.info("Skipping reply email: no unseen messages")
@@ -97,6 +94,25 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
     case Conversations.get_conversation!(conversation_id) do
       %{source: "chat"} -> Conversations.has_unseen_messages?(conversation_id)
       _ -> false
+    end
+  end
+
+  @spec enabled?(map()) :: boolean()
+  def enabled?(%{"account_id" => account_id}) do
+    has_valid_email_domain?() &&
+      reply_emails_enabled?() &&
+      account_reply_emails_enabled?(account_id)
+  end
+
+  def enabled(_), do: false
+
+  @spec account_reply_emails_enabled?(binary()) :: boolean()
+  def account_reply_emails_enabled?(account_id) do
+    case Accounts.get_account_settings!(account_id) do
+      # We only disable this if the account has explicitly opted out;
+      # Otherwise we assume all accounts want this featured enabled (for now)
+      %{disable_automated_reply_emails: true} -> false
+      _ -> true
     end
   end
 
