@@ -2,6 +2,8 @@ defmodule ChatApi.Emails.Email do
   import Swoosh.Email
   import Ecto.Changeset
 
+  @type t :: Swoosh.Email.t()
+
   @from_address System.get_env("FROM_ADDRESS") || ""
   @backend_url System.get_env("BACKEND_URL") || ""
 

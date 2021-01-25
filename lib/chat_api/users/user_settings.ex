@@ -4,6 +4,15 @@ defmodule ChatApi.Users.UserSettings do
 
   alias ChatApi.Users.User
 
+  @type t :: %__MODULE__{
+          email_alert_on_new_message: boolean(),
+          # Foreign keys
+          user_id: integer(),
+          # Timestamps
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "user_settings" do

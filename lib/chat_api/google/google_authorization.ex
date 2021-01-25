@@ -5,6 +5,21 @@ defmodule ChatApi.Google.GoogleAuthorization do
   alias ChatApi.Accounts.Account
   alias ChatApi.Users.User
 
+  @type t :: %__MODULE__{
+          client: String.t(),
+          access_token: String.t() | nil,
+          refresh_token: String.t(),
+          token_type: String.t() | nil,
+          expires_at: integer(),
+          scope: String.t() | nil,
+          # Foreign keys
+          account_id: Ecto.UUID.t(),
+          user_id: integer(),
+          # Timestamps
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "google_authorizations" do

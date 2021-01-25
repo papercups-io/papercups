@@ -9,22 +9,24 @@ defmodule ChatApi.Messages.Message do
 
   @type t :: %__MODULE__{
           body: String.t(),
-          sent_at: any(),
-          seen_at: any(),
-          source: String.t() | nil,
-          metadata: any(),
+          sent_at: DateTime.t() | nil,
+          seen_at: DateTime.t() | nil,
+          source: String.t(),
+          type: String.t(),
+          private: boolean() | nil,
+          metadata: map() | nil,
           # Foreign keys
-          conversation_id: any(),
+          conversation_id: Ecto.UUID.t(),
           conversation: any(),
-          account_id: any(),
+          account_id: Ecto.UUID.t(),
           account: any(),
-          customer_id: any(),
+          customer_id: Ecto.UUID.t(),
           customer: any(),
-          user_id: any(),
+          user_id: integer(),
           user: any(),
           # Timestamps
-          inserted_at: any(),
-          updated_at: any()
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
         }
 
   @primary_key {:id, :binary_id, autogenerate: true}
