@@ -84,12 +84,55 @@ defmodule ChatApi.SlackConversationThreadsTest do
          } do
       insert(:slack_authorization, account: account, type: "support")
       permalink = "https://slack.com/archives/C12345"
+      slack_channel_name = "support"
 
       with_mock ChatApi.Slack.Client,
         get_message_permalink: fn _, _, _ ->
           {:ok, %{body: %{"permalink" => permalink}}}
+        end,
+        retrieve_channel_info: fn _, _ ->
+          {:ok, %{body: %{"channel" => %{"name" => slack_channel_name}}}}
         end do
-        assert [%{id: slack_conversation_thread_id, permalink: ^permalink}] =
+        assert [
+                 %{
+                   id: slack_conversation_thread_id,
+                   permalink: ^permalink,
+                   slack_channel_name: ^slack_channel_name
+                 }
+               ] =
+                 SlackConversationThreads.list_slack_conversation_threads_by_account(
+                   account.id,
+                   %{
+                     "conversation_id" => conversation.id
+                   }
+                 )
+
+        assert slack_conversation_thread.id == slack_conversation_thread_id
+      end
+    end
+
+    test "list_slack_conversation_threads_by_account/2 returns nil for dynamic fields if they fail",
+         %{
+           account: account,
+           conversation: conversation,
+           slack_conversation_thread: slack_conversation_thread
+         } do
+      insert(:slack_authorization, account: account, type: "support")
+
+      with_mock ChatApi.Slack.Client,
+        get_message_permalink: fn _, _, _ ->
+          {:error, "Something went wrong"}
+        end,
+        retrieve_channel_info: fn _, _ ->
+          {:error, "Something went wrong"}
+        end do
+        assert [
+                 %{
+                   id: slack_conversation_thread_id,
+                   permalink: nil,
+                   slack_channel_name: nil
+                 }
+               ] =
                  SlackConversationThreads.list_slack_conversation_threads_by_account(
                    account.id,
                    %{
