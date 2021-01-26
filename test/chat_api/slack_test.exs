@@ -612,7 +612,7 @@ defmodule ChatApi.SlackTest do
       end
     end
 
-    test "Helpers.sanitize_slack_message/2 returns @unknown for unrecognized user IDs", %{
+    test "Helpers.sanitize_slack_message/2 doesn't do anything for unrecognized user IDs", %{
       account: account
     } do
       authorization = insert(:slack_authorization, account: account)
@@ -622,7 +622,7 @@ defmodule ChatApi.SlackTest do
           {:ok, "Something went wrong!"}
         end do
         assert capture_log(fn ->
-                 assert "What's up, @unknown?" =
+                 assert "What's up, <@U123INVALID>?" =
                           Slack.Helpers.sanitize_slack_message(
                             "What's up, <@U123INVALID>?",
                             authorization

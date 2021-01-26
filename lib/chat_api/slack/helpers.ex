@@ -352,9 +352,11 @@ defmodule ChatApi.Slack.Helpers do
         Enum.reduce(results, text, fn [match, id], acc ->
           # TODO: figure out best way to handle unrecognized user IDs
           slack_user_id = "U#{id}"
-          username = get_slack_username(slack_user_id, access_token) || "unknown"
 
-          String.replace(acc, match, "@#{username}")
+          case get_slack_username(slack_user_id, access_token) do
+            nil -> acc
+            username -> String.replace(acc, match, "@#{username}")
+          end
         end)
     end
   end
