@@ -1,6 +1,8 @@
 defmodule ChatApiWeb.S3Controller do
   use ChatApiWeb, :controller
 
+  alias ChatApi.Uploads.Upload
+  alias ChatApi.Uploads
   action_fallback ChatApiWeb.FallbackController
 
   def presigned_upload_url(conn, %{
@@ -9,7 +11,7 @@ defmodule ChatApiWeb.S3Controller do
     file_uuid = UUID.uuid4(:hex)
     filename = String.replace(filename, " ", "-")
 
-    unique_filename = "#{file_uuid}-#{filename}"
+    unique_filename = "#{filename}"
 
     bucket_name = System.get_env("BUCKET_NAME")
 

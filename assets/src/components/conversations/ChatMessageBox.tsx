@@ -4,6 +4,8 @@ import breaks from 'remark-breaks';
 import {Twemoji} from 'react-emoji-render';
 import {Box} from 'theme-ui';
 import {allowedNodeTypes} from '../common';
+import {Upload} from '../../types';
+import {PaperClipOutlined} from '../icons';
 
 const renderers = {
   text: (props: any) => {
@@ -15,9 +17,17 @@ type ChatMessageBoxProps = {
   className?: string;
   content: string;
   sx?: Record<any, any>;
+  uploads?: Upload[];
+  uploadColor?: string;
 };
 
-const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
+const ChatMessageBox = ({
+  className,
+  content,
+  sx,
+  uploads,
+  uploadColor,
+}: ChatMessageBoxProps) => {
   const parsedSx = Object.assign(sx, {
     borderRadius: 4,
     p: {
@@ -39,6 +49,24 @@ const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
         renderers={renderers}
         plugins={[breaks]}
       />
+      {uploads &&
+        uploads.length > 0 &&
+        uploads.map((u) => {
+          return (
+            <div>
+              <PaperClipOutlined
+                style={{color: uploadColor}}
+              ></PaperClipOutlined>
+              <a
+                href={u.file_url}
+                style={{color: uploadColor, textDecoration: 'underline'}}
+              >
+                {' '}
+                {u.filename}
+              </a>
+            </div>
+          );
+        })}
     </Box>
   );
 };

@@ -18,7 +18,11 @@ defmodule ChatApi.Attachments.Attachment do
   @doc false
   def changeset(attachment, attrs) do
     attachment
-    |> cast(attrs, [])
-    |> validate_required([])
+    |> cast(attrs, [
+      :account_id,
+      :message_id,
+      :upload_id,
+    ])
+    |> validate_required([:account_id, :message_id, :upload_id])
   end
 end

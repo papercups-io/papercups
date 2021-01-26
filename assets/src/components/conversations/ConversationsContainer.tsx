@@ -425,6 +425,7 @@ class ConversationsContainer extends React.Component<Props, State> {
               <ConversationFooter
                 key={selectedConversation.id}
                 onSendMessage={this.handleSendMessage}
+                currentUser={currentUser}
               />
             )}
 

@@ -1,6 +1,6 @@
 defmodule ChatApiWeb.MessageView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.{CustomerView, MessageView, UserView}
+  alias ChatApiWeb.{CustomerView, MessageView, UserView, UploadView}
 
   def render("index.json", %{messages: messages}) do
     %{data: render_many(messages, MessageView, "message.json")}
@@ -42,7 +42,8 @@ defmodule ChatApiWeb.MessageView do
       user_id: message.user_id,
       user: render_one(message.user, UserView, "user.json"),
       customer_id: message.customer_id,
-      customer: render_one(message.customer, CustomerView, "basic.json")
+      customer: render_one(message.customer, CustomerView, "basic.json"),
+      uploads: render_many(message.uploads, UploadView, "upload.json")
     }
   end
 
@@ -60,7 +61,8 @@ defmodule ChatApiWeb.MessageView do
       account_id: message.account_id,
       customer_id: message.customer_id,
       user_id: message.user_id,
-      user: render_one(message.user, UserView, "user.json")
+      user: render_one(message.user, UserView, "user.json"),
+      uploads: render_many(message.uploads, UploadView, "upload.json")
     }
   end
 end

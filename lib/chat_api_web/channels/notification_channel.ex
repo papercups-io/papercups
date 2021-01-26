@@ -5,6 +5,7 @@ defmodule ChatApiWeb.NotificationChannel do
   alias Phoenix.Socket.Broadcast
   alias ChatApi.{Messages, Conversations}
   alias ChatApi.Messages.Message
+  alias ChatApi.Attachments
 
   require Logger
 
@@ -33,6 +34,8 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   def handle_in("shout", payload, socket) do
+    upload_ids = payload["upload_ids"]
+
     with %{current_user: current_user} <- socket.assigns,
          %{id: user_id, account_id: account_id} <- current_user do
       {:ok, message} =
@@ -40,6 +43,7 @@ defmodule ChatApiWeb.NotificationChannel do
         |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
         |> Messages.create_message()
 
+      Attachments.create_attachments(message.id, upload_ids, account_id)
       message
       |> Map.get(:id)
       |> Messages.get_message!()

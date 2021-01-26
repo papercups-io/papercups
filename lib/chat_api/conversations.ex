@@ -192,7 +192,7 @@ defmodule ChatApi.Conversations do
     # TODO: make sure messages are sorted properly?
     Conversation
     |> Repo.get!(id)
-    |> Repo.preload([:customer, :tags, messages: [user: :profile]])
+    |> Repo.preload([:customer, :tags, messages: [:uploads, user: :profile]])
   end
 
   @spec get_conversation(binary()) :: Conversation.t() | nil

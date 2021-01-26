@@ -22,7 +22,7 @@ defmodule ChatApi.Messages do
     |> where(account_id: ^account_id, conversation_id: ^conversation_id)
     |> order_by(desc: :inserted_at)
     |> limit(^limit)
-    |> preload([:customer, [user: :profile]])
+    |> preload([:uploads, :customer, [user: :profile]])
     |> Repo.all()
   end
 
@@ -39,7 +39,7 @@ defmodule ChatApi.Messages do
 
   @spec get_message!(binary()) :: Message.t()
   def get_message!(id) do
-    Message |> Repo.get!(id) |> Repo.preload([:conversation, :customer, [user: :profile]])
+    Message |> Repo.get!(id) |> Repo.preload([:uploads, :conversation, :customer, [user: :profile]])
   end
 
   @spec create_message(map()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}

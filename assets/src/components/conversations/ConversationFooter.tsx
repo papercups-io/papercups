@@ -1,26 +1,26 @@
 import React from 'react';
-import RcUpload from 'rc-upload';
 
 import {Box, Flex} from 'theme-ui';
 import {colors, Button, Menu, Popover, TextArea, Upload} from '../common';
-import {Message, MessageType} from '../../types';
-// import { Upload, Button } from 'antd';
-// import { UploadOutlined } from '@ant-design/icons';
+import {Message, MessageType, User} from '../../types';
+import '../../index.css';
 
 import {PaperClipOutlined} from '../icons';
 import {UploadChangeParam} from 'antd/lib/upload';
 import {UploadFile} from 'antd/lib/upload/interface';
-// import { RcFile } from 'rc-upload/lib/interface';
-import FileUpload from './FileUpload';
+import {FRONTEND_BASE_URL} from '../../config';
 
 const ConversationFooter = ({
   sx = {},
   onSendMessage,
+  currentUser,
 }: {
   sx?: any;
   onSendMessage: (message: Partial<Message>) => void;
+  currentUser?: User | null;
 }) => {
   const [message, setMessage] = React.useState<string>('');
+  const [fileList, setFileList] = React.useState<UploadFile[]>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
 
   const isPrivateNote = messageType === 'note';
@@ -46,19 +46,17 @@ const ConversationFooter = ({
       body: message,
       type: messageType,
       private: isPrivateNote,
+      upload_ids: fileList.map((f) => f.response?.data?.id),
     });
 
     setMessage('');
   };
 
-  var state = {
-    isSendButtonDisabled: false,
-    nameFMFile: null,
-    buttonUploadFMDisabled: false,
-    buttonDeleteFMDisabled: false,
-    hasErrorFormatFM: false,
-    hasErrorSizeFM: false,
-    uploadIsOnProgress: false,
+  //Antd takes a url to make the post request and data that gets added to the request https://ant.design/components/upload/
+  const action = FRONTEND_BASE_URL + '/api/upload';
+  const data = {account_id: currentUser?.account_id, user_id: currentUser?.id};
+  const onUpdateFileList = (info: UploadChangeParam) => {
+    setFileList(info.fileList);
   };
 
   return (
@@ -132,11 +130,22 @@ const ConversationFooter = ({
             </Box>
             <Flex
               sx={{
-                alignItems: 'row',
+                alignItems: 'flex-end',
                 justifyContent: 'space-between',
               }}
             >
-              <FileUpload></FileUpload>
+              <Upload
+                className="upload"
+                action={action}
+                onChange={onUpdateFileList}
+                data={data}
+              >
+                <Button
+                  icon={<PaperClipOutlined />}
+                  type="ghost"
+                  style={{border: 'none', background: 'none'}}
+                ></Button>
+              </Upload>
               <Button type="primary" htmlType="submit">
                 Send
               </Button>

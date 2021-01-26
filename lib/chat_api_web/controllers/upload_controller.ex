@@ -6,25 +6,33 @@ defmodule ChatApiWeb.UploadController do
 
   action_fallback ChatApiWeb.FallbackController
 
-  def create(conn, %{
-        "filename" => filename,
-        "content_type" => content_type
-      }) do
+  def create(conn, %{"file" => file, "account_id" => account_id, "user_id" => user_id}) do
     file_uuid = UUID.uuid4(:hex)
-    filename = String.replace(filename, " ", "-")
+    filename = String.replace(file.filename, " ", "-")
 
     unique_filename = "#{file_uuid}-#{filename}"
-
+    {:ok, file_binary} = File.read(file.path)
     bucket_name = System.get_env("BUCKET_NAME")
 
     if bucket_name == nil do
       raise "s3 bucket is not specified"
     end
 
+    upload_result =
+      ExAws.S3.put_object(bucket_name, unique_filename, file_binary)
+      |> ExAws.request!()
+
+    if upload_result.status_code != 200 do
+      raise "s3 upload failed"
+    end
+
     updated_params = %{
-      "filename" => "#{unique_filename}",
+      "filename" => "#{filename}",
+      "unique_filename" => "#{unique_filename}",
       "file_url" => "https://#{bucket_name}.s3.amazonaws.com/#{bucket_name}/#{unique_filename}",
-      "content_type" => content_type
+      "content_type" => file.content_type,
+      "account_id" => account_id,
+      "user_id" => user_id,
     }
 
     with {:ok, %Upload{} = upload} <- Uploads.create_upload(updated_params) do

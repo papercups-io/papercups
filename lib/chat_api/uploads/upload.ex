@@ -10,6 +10,7 @@ defmodule ChatApi.Uploads.Upload do
   schema "uploads" do
     field(:filename, :string)
     field(:file_url, :string)
+    field(:unique_filename, :string)
     field(:content_type, :string)
 
     has_many(:attachments, Attachment)
@@ -21,7 +22,7 @@ defmodule ChatApi.Uploads.Upload do
   @doc false
   def changeset(upload, attrs) do
     upload
-    |> cast(attrs, [:filename, :file_url, :content_type])
+    |> cast(attrs, [:filename, :file_url, :unique_filename, :content_type])
     |> validate_required([:filename, :file_url, :content_type])
   end
 end

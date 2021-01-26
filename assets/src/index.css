@@ -12,26 +12,13 @@ code {
     monospace;
 }
 
-.ant-upload.ant-upload-drag {
-  width: 80%;
-  margin: 20px;
-}
-.ant-upload-list.ant-upload-list-picture {
-  width: 100%;
-  margin: 20px;
-}
-
-.App {
-  padding: 50px;
-  width: 700px;
-  border: 2px solid green;
-}
-
-.parent {
-  background-color: blue;
+.upload {
   display: flex;
   flex-direction: column-reverse;
-  justify-content: space-around;
-  align-items: center;
-  border-top: 100px solid gray;
+  float: left;
+}
+
+.upload .ant-upload-list.ant-upload-list-text {
+  display: flex;
+  float: right;
 }
