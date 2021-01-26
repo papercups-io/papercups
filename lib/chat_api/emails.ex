@@ -34,8 +34,9 @@ defmodule ChatApi.Emails do
   @spec format_sender_name(User.t(), Account.t()) :: binary
   def format_sender_name(user, account) do
     case user.profile do
-      nil -> account.company_name
-      profile -> profile.display_name || profile.full_name
+      %{display_name: display_name} when not is_nil(display_name) -> display_name
+      %{full_name: full_name} when not is_nil(full_name) -> full_name
+      _ -> account.company_name
     end
   end
 
