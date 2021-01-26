@@ -23,7 +23,9 @@ defmodule ChatApi.SlackConversationThreads do
     |> where(^filter_where(filters))
     |> Repo.all()
     |> Enum.map(fn thread ->
-      Map.merge(thread, %{permalink: get_slack_conversation_thread_permalink(thread)})
+      thread
+      |> Map.merge(%{permalink: get_slack_conversation_thread_permalink(thread)})
+      |> Map.merge(%{slack_channel_name: get_slack_conversation_thread_channel_name(thread)})
     end)
   end
 
@@ -114,6 +116,29 @@ defmodule ChatApi.SlackConversationThreads do
     case match do
       %{access_token: access_token} = auth when not is_nil(access_token) -> auth
       _ -> Enum.find(authorizations, fn auth -> auth.type == "support" end)
+    end
+  end
+
+  @spec get_slack_conversation_thread_channel_name(SlackConversationThread.t()) :: binary() | nil
+  def get_slack_conversation_thread_channel_name(
+        %SlackConversationThread{
+          slack_channel: channel
+        } = slack_conversation_thread
+      ) do
+    with %{access_token: access_token} <-
+           find_matching_slack_authorization(slack_conversation_thread),
+         {:ok, response} <- Slack.Client.retrieve_channel_info(channel, access_token),
+         %{body: %{"channel" => %{"name" => slack_channel_name}}} <- response do
+      slack_channel_name
+    else
+      error ->
+        Logger.info(
+          "Could not get channel name for Slack thread #{inspect(slack_conversation_thread)} -- #{
+            inspect(error)
+          }"
+        )
+
+        nil
     end
   end
 

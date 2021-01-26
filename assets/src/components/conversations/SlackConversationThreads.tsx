@@ -27,26 +27,30 @@ const SlackConversationThreads = ({
       .then(() => setLoading(false));
   }, [conversationId]);
 
+  const threads = slackConversationThreads.filter(
+    (thread) => thread.permalink && thread.permalink.length > 0
+  );
+
   if (loading) {
     return <Spinner size={16} />;
-  } else if (!slackConversationThreads || !slackConversationThreads.length) {
+  } else if (!threads || !threads.length) {
     return <Text type="secondary">None</Text>;
   }
 
   return (
     <Box>
-      {slackConversationThreads
-        .filter((thread) => thread.permalink && thread.permalink.length > 0)
-        .map(({id, permalink}) => {
-          return (
-            <Flex key={id} mb={1} sx={{alignItems: 'center'}}>
-              <Image src="/slack.svg" alt="Slack" sx={{height: 16, mr: 1}} />
-              <a href={permalink} target="_blank" rel="noopener noreferrer">
-                Link to thread
-              </a>
-            </Flex>
-          );
-        })}
+      {threads.map(({id, permalink, slack_channel_name: slackChannelName}) => {
+        return (
+          <Flex key={id} mb={1} sx={{alignItems: 'center'}}>
+            <Image src="/slack.svg" alt="Slack" sx={{height: 16, mr: 1}} />
+            <a href={permalink} target="_blank" rel="noopener noreferrer">
+              {slackChannelName
+                ? `View in #${slackChannelName}`
+                : 'Link to thread'}
+            </a>
+          </Flex>
+        );
+      })}
     </Box>
   );
 };

@@ -34,9 +34,11 @@ defmodule ChatApiWeb.SlackConversationThreadView do
       conversation_id: slack_conversation_thread.conversation_id,
       created_at: slack_conversation_thread.inserted_at,
       updated_at: slack_conversation_thread.updated_at,
-      permalink: slack_conversation_thread.permalink,
       slack_channel: slack_conversation_thread.slack_channel,
-      slack_thread_ts: slack_conversation_thread.slack_thread_ts
+      slack_thread_ts: slack_conversation_thread.slack_thread_ts,
+      # Computed params
+      permalink: slack_conversation_thread.permalink,
+      slack_channel_name: slack_conversation_thread.slack_channel_name
     }
   end
 end

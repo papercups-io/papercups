@@ -21,6 +21,8 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "slack_conversation_threads" do
+    # NB: this represents the slack_channel_id, not the name... might be worth
+    # renaming this at some point, and also including a field for the slack_channel_name)
     field :slack_channel, :string
     field :slack_thread_ts, :string
 
