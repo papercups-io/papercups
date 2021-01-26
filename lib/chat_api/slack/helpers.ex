@@ -6,17 +6,23 @@ defmodule ChatApi.Slack.Helpers do
   require Logger
 
   alias ChatApi.{
+    Companies,
     Conversations,
+    Customers,
+    Slack,
     SlackAuthorizations,
     SlackConversationThreads,
-    Users.User,
-    Customers.Customer,
-    Messages.Message
+    Users
   }
+
+  alias ChatApi.Customers.Customer
+  alias ChatApi.Messages.Message
+  alias ChatApi.SlackAuthorizations.SlackAuthorization
+  alias ChatApi.Users.User
 
   @spec get_user_email(binary(), binary()) :: nil | binary()
   def get_user_email(slack_user_id, access_token) do
-    case ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token) do
+    case Slack.Client.retrieve_user_info(slack_user_id, access_token) do
       {:ok, nil} ->
         Logger.debug("Invalid Slack token - returning nil for user email")
 
@@ -39,15 +45,41 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @spec get_slack_username(binary(), binary()) :: nil | binary()
+  def get_slack_username(slack_user_id, access_token) do
+    with {:ok, response} <- Slack.Client.retrieve_user_info(slack_user_id, access_token),
+         %{body: %{"ok" => true, "user" => %{"name" => username} = user}} <- response do
+      [
+        get_in(user, ["profile", "display_name"]),
+        get_in(user, ["profile", "real_name"]),
+        username
+      ]
+      |> Enum.filter(fn value ->
+        case value do
+          nil -> false
+          "" -> false
+          value when not is_binary(value) -> false
+          _value -> true
+        end
+      end)
+      |> List.first()
+    else
+      error ->
+        Logger.error("Unable to retrieve Slack username: #{inspect(error)}")
+
+        nil
+    end
+  end
+
   @spec find_or_create_customer_from_slack_user_id(any(), binary(), binary()) ::
           {:ok, Customer.t()} | {:error, any()}
   def find_or_create_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id) do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
-           ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token),
+           Slack.Client.retrieve_user_info(slack_user_id, access_token),
          %{"profile" => %{"email" => email} = profile} <- user do
       company_attrs =
-        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+        case Companies.find_by_slack_channel(account_id, slack_channel_id) do
           %{id: company_id} -> %{company_id: company_id}
           _ -> %{}
         end
@@ -61,7 +93,7 @@ defmodule ChatApi.Slack.Helpers do
         |> Map.new()
         |> Map.merge(company_attrs)
 
-      ChatApi.Customers.find_or_create_by_email(email, account_id, attrs)
+      Customers.find_or_create_by_email(email, account_id, attrs)
     else
       # NB: This may occur in test mode, or when the Slack.Client is disabled
       {:ok, error} ->
@@ -83,10 +115,10 @@ defmodule ChatApi.Slack.Helpers do
   def create_or_update_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id) do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
-           ChatApi.Slack.Client.retrieve_user_info(slack_user_id, access_token),
+           Slack.Client.retrieve_user_info(slack_user_id, access_token),
          %{"profile" => %{"email" => email} = profile} <- user do
       company_attrs =
-        case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
+        case Companies.find_by_slack_channel(account_id, slack_channel_id) do
           %{id: company_id} -> %{company_id: company_id}
           _ -> %{}
         end
@@ -100,7 +132,7 @@ defmodule ChatApi.Slack.Helpers do
         |> Map.new()
         |> Map.merge(company_attrs)
 
-      ChatApi.Customers.create_or_update_by_email(email, account_id, attrs)
+      Customers.create_or_update_by_email(email, account_id, attrs)
     else
       # NB: This may occur in test mode, or when the Slack.Client is disabled
       {:ok, error} ->
@@ -121,7 +153,7 @@ defmodule ChatApi.Slack.Helpers do
       %{access_token: access_token, account_id: account_id} ->
         slack_user_id
         |> get_user_email(access_token)
-        |> ChatApi.Customers.find_by_email(account_id)
+        |> Customers.find_by_email(account_id)
 
       _ ->
         nil
@@ -134,7 +166,7 @@ defmodule ChatApi.Slack.Helpers do
       %{access_token: access_token, account_id: account_id} ->
         slack_user_id
         |> get_user_email(access_token)
-        |> ChatApi.Users.find_user_by_email(account_id)
+        |> Users.find_user_by_email(account_id)
 
       _ ->
         nil
@@ -199,7 +231,7 @@ defmodule ChatApi.Slack.Helpers do
 
   @spec get_slack_authorization(binary()) ::
           %{access_token: binary(), channel: binary(), channel_id: binary()}
-          | SlackAuthorizations.SlackAuthorization.t()
+          | SlackAuthorization.t()
   def get_slack_authorization(account_id) do
     case SlackAuthorizations.get_authorization_by_account(account_id) do
       # Supports a fallback access token as an env variable to make it easier to
@@ -207,7 +239,7 @@ defmodule ChatApi.Slack.Helpers do
       # TODO: deprecate
       nil ->
         %{
-          access_token: ChatApi.Slack.Token.get_default_access_token(),
+          access_token: Slack.Token.get_default_access_token(),
           channel: "#bots",
           channel_id: "1"
         }
@@ -295,6 +327,79 @@ defmodule ChatApi.Slack.Helpers do
 
   def is_bot_message?(%{"bot_id" => bot_id}) when not is_nil(bot_id), do: true
   def is_bot_message?(_), do: false
+
+  @spec sanitize_slack_message(binary(), SlackAuthorization.t()) :: binary()
+  def sanitize_slack_message(text, %SlackAuthorization{
+        access_token: access_token
+      }) do
+    text
+    |> sanitize_slack_user_ids(access_token)
+    |> sanitize_slack_links()
+    |> sanitize_slack_mailto_links()
+  end
+
+  @slack_user_id_regex ~r/<@U(.*?)>/
+  @slack_link_regex ~r/<http(.*?)>/
+  @slack_mailto_regex ~r/<mailto(.*?)>/
+
+  @spec sanitize_slack_user_ids(binary(), binary()) :: binary()
+  def sanitize_slack_user_ids(text, access_token) do
+    case Regex.scan(@slack_user_id_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match, id], acc ->
+          # TODO: figure out best way to handle unrecognized user IDs
+          slack_user_id = "U#{id}"
+          username = get_slack_username(slack_user_id, access_token) || "unknown"
+
+          String.replace(acc, match, "@#{username}")
+        end)
+    end
+  end
+
+  @spec sanitize_slack_links(binary()) :: binary()
+  def sanitize_slack_links(text) do
+    case Regex.scan(@slack_link_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match, _], acc ->
+          markdown = slack_link_to_markdown(match)
+
+          String.replace(acc, match, markdown)
+        end)
+    end
+  end
+
+  @spec sanitize_slack_mailto_links(binary()) :: binary()
+  def sanitize_slack_mailto_links(text) do
+    case Regex.scan(@slack_mailto_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match, _], acc ->
+          markdown = slack_link_to_markdown(match)
+
+          String.replace(acc, match, markdown)
+        end)
+    end
+  end
+
+  @spec slack_link_to_markdown(binary) :: binary
+  def slack_link_to_markdown(text) do
+    text
+    |> String.replace(["<", ">"], "")
+    |> String.split("|")
+    |> case do
+      [link] -> "[#{link}](#{link})"
+      [link, display] -> "[#{display}](#{link})"
+      _ -> text
+    end
+  end
 
   #####################
   # Extractors
