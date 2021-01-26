@@ -612,6 +612,25 @@ defmodule ChatApi.SlackTest do
       end
     end
 
+    test "Helpers.sanitize_slack_message/2 returns @unknown for unrecognized user IDs", %{
+      account: account
+    } do
+      authorization = insert(:slack_authorization, account: account)
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, "Something went wrong!"}
+        end do
+        assert capture_log(fn ->
+                 assert "What's up, @unknown?" =
+                          Slack.Helpers.sanitize_slack_message(
+                            "What's up, <@U123INVALID>?",
+                            authorization
+                          )
+               end) =~ "Unable to retrieve Slack username"
+      end
+    end
+
     test "Helpers.sanitize_slack_message/2 formats links properly", %{account: account} do
       authorization = insert(:slack_authorization, account: account)
 
