@@ -217,7 +217,7 @@ defmodule ChatApiWeb.SlackController do
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
       if Slack.Helpers.is_primary_channel?(primary_reply_authorization, slack_channel_id) do
         %{
-          "body" => text,
+          "body" => Slack.Helpers.sanitize_slack_message(text, primary_reply_authorization),
           "conversation_id" => conversation_id,
           "account_id" => account_id,
           "source" => "slack",
@@ -245,7 +245,7 @@ defmodule ChatApiWeb.SlackController do
             authorization
             |> Slack.Helpers.format_sender_id!(slack_user_id, slack_channel_id)
             |> Map.merge(%{
-              "body" => text,
+              "body" => Slack.Helpers.sanitize_slack_message(text, authorization),
               "conversation_id" => conversation_id,
               "account_id" => account_id,
               "source" => "slack"
@@ -311,7 +311,7 @@ defmodule ChatApiWeb.SlackController do
              account_id: account_id,
              conversation_id: conversation.id,
              customer_id: customer.id,
-             body: text,
+             body: Slack.Helpers.sanitize_slack_message(text, authorization),
              source: "slack"
            }),
          {:ok, _slack_conversation_thread} <-
@@ -455,7 +455,7 @@ defmodule ChatApiWeb.SlackController do
              account_id: account_id,
              conversation_id: conversation.id,
              customer_id: customer.id,
-             body: text,
+             body: Slack.Helpers.sanitize_slack_message(text, authorization),
              source: "slack"
            }),
          {:ok, _slack_conversation_thread} <-
