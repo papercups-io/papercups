@@ -70,8 +70,8 @@ defmodule ChatApi.Messages.Notification do
 
   def notify(%Message{} = message, :conversation_reply_email) do
     Logger.info("Sending notification: :conversation_reply_email")
-    # 2 minutes (TODO: make this configurable?)
-    schedule_in = 2 * 60
+    # 20 minutes (TODO: make this configurable?)
+    schedule_in = 20 * 60
     formatted = Helpers.format(message)
 
     # TODO: not sure the best way to handle this, but basically we want to only

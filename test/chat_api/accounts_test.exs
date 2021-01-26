@@ -52,6 +52,16 @@ defmodule ChatApi.AccountsTest do
       assert account.subscription_plan != "team"
     end
 
+    test "update_account/2 updates the account's embedded settings",
+         %{account: account} do
+      assert {:ok, %Account{} = account} =
+               Accounts.update_account(account, %{
+                 settings: %{disable_automated_reply_emails: true}
+               })
+
+      assert %Accounts.Settings{disable_automated_reply_emails: true} = account.settings
+    end
+
     test "update_account/2 with invalid data returns error changeset",
          %{account: account} do
       assert {:error, %Ecto.Changeset{}} = Accounts.update_account(account, @invalid_attrs)

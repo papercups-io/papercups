@@ -4,7 +4,8 @@ defmodule ChatApi.Factory do
   # Factories
   def account_factory do
     %ChatApi.Accounts.Account{
-      company_name: sequence("some company_name")
+      company_name: sequence("some company_name"),
+      settings: %{}
     }
   end
 

@@ -5,12 +5,9 @@ defmodule ChatApi.UsersTest do
   import ChatApi.Factory
 
   alias ChatApi.Users
-  alias ChatApi.Users.User
-  alias ChatApi.Users.UserSettings
+  alias ChatApi.Users.{User, UserProfile, UserSettings}
 
-  describe "profiles" do
-    alias ChatApi.Users.UserProfile
-
+  describe "user_profiles" do
     @valid_attrs %{
       display_name: "some display_name",
       full_name: "some full_name",
@@ -51,7 +48,7 @@ defmodule ChatApi.UsersTest do
       assert id == user.id
     end
 
-    test "update_profile/2 with valid data updates the user_profile",
+    test "update_user_profile/2 with valid data updates the user_profile",
          %{user: user} do
       assert {:ok, %UserProfile{} = user_profile} =
                Users.update_user_profile(user.id, @valid_attrs)
@@ -64,10 +61,63 @@ defmodule ChatApi.UsersTest do
       assert user_profile.display_name == @update_attrs.display_name
     end
 
-    test "create_user/1 create user with default setting & profile",
+    test "get_user_profile/1 and Users.get_user_settings/1 get the profile and settings",
          %{user: user} do
       assert %UserProfile{} = Users.get_user_profile(user.id)
       assert %UserSettings{} = Users.get_user_settings(user.id)
+    end
+  end
+
+  describe "emails" do
+    @company_name "Test Inc"
+
+    setup do
+      account = insert(:account, company_name: @company_name)
+      user = insert(:user, account: account)
+
+      {:ok, account: account, user: user}
+    end
+
+    test "Emails.format_sender_name/1 returns the company name when no profile is set",
+         %{account: account, user: user} do
+      user = Users.get_user_info(user.id)
+
+      refute user.profile
+      assert "Test Inc" = ChatApi.Emails.format_sender_name(user, account)
+    end
+
+    test "Emails.format_sender_name/1 returns the company name when no display_name or full_name are set",
+         %{account: account, user: user} do
+      assert {:ok, %UserProfile{}} =
+               Users.update_user_profile(user.id, %{display_name: nil, full_name: nil})
+
+      user = Users.get_user_info(user.id)
+
+      assert "Test Inc" = ChatApi.Emails.format_sender_name(user, account)
+    end
+
+    test "Emails.format_sender_name/1 prioritizes the display_name if both display_name and full_name are set",
+         %{account: account, user: user} do
+      assert {:ok, %UserProfile{}} =
+               Users.update_user_profile(user.id, %{display_name: "Alex", full_name: "Alex R"})
+
+      user = Users.get_user_info(user.id)
+
+      assert "Alex" = ChatApi.Emails.format_sender_name(user, account)
+
+      assert {:ok, %UserProfile{}} =
+               Users.update_user_profile(user.id, %{display_name: nil, full_name: "Alex R"})
+
+      user = Users.get_user_info(user.id)
+
+      assert "Alex R" = ChatApi.Emails.format_sender_name(user, account)
+
+      assert {:ok, %UserProfile{}} =
+               Users.update_user_profile(user.id, %{display_name: "Alex", full_name: nil})
+
+      user = Users.get_user_info(user.id)
+
+      assert "Alex" = ChatApi.Emails.format_sender_name(user, account)
     end
   end
 
