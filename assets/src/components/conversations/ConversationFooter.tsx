@@ -22,6 +22,7 @@ const ConversationFooter = ({
   const [message, setMessage] = React.useState<string>('');
   const [fileList, setFileList] = React.useState<UploadFile[]>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
+  const [disableSend, setDisableSend] = React.useState<boolean>(false);
 
   const isPrivateNote = messageType === 'note';
 
@@ -57,7 +58,18 @@ const ConversationFooter = ({
   const action = FRONTEND_BASE_URL + '/api/upload';
   const data = {account_id: currentUser?.account_id, user_id: currentUser?.id};
   const onUpdateFileList = (info: UploadChangeParam) => {
-    setFileList(info.fileList);
+    const {file, fileList, event} = info;
+    setFileList(fileList);
+
+    //disable when file upload is in progress
+    if (event) {
+      setDisableSend(true);
+    }
+
+    //enable when the server has responded
+    if (file && file.response) {
+      setDisableSend(false);
+    }
   };
 
   return (
@@ -148,7 +160,7 @@ const ConversationFooter = ({
                   style={{border: 'none', background: 'none'}}
                 ></Button>
               </Upload>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" disabled={disableSend}>
                 Send
               </Button>
             </Flex>
