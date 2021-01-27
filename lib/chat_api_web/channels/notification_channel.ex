@@ -44,6 +44,7 @@ defmodule ChatApiWeb.NotificationChannel do
         |> Messages.create_message()
 
       Attachments.create_attachments(message.id, upload_ids, account_id)
+
       message
       |> Map.get(:id)
       |> Messages.get_message!()

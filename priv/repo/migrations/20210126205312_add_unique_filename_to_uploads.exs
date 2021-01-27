@@ -5,6 +5,5 @@ defmodule ChatApi.Repo.Migrations.AddUniqueFilenameToUploads do
     alter table(:uploads) do
       add(:unique_filename, :string)
     end
-
   end
 end

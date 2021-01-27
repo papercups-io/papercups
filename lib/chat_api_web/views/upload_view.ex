@@ -7,6 +7,11 @@ defmodule ChatApiWeb.UploadView do
   end
 
   def render("upload.json", %{upload: upload}) do
-    %{id: upload.id, file_url: upload.file_url, content_type: upload.content_type, filename: upload.filename}
+    %{
+      id: upload.id,
+      file_url: upload.file_url,
+      content_type: upload.content_type,
+      filename: upload.filename
+    }
   end
 end

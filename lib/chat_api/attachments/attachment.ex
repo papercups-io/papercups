@@ -21,7 +21,7 @@ defmodule ChatApi.Attachments.Attachment do
     |> cast(attrs, [
       :account_id,
       :message_id,
-      :upload_id,
+      :upload_id
     ])
     |> validate_required([:account_id, :message_id, :upload_id])
   end

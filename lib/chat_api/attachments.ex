@@ -58,8 +58,15 @@ defmodule ChatApi.Attachments do
   def create_attachments(message_id, upload_ids, account_id) do
     time = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
 
-    change_sets = Enum.map(upload_ids, fn upload_id ->
-        %{message_id: message_id, account_id: account_id, upload_id: upload_id, inserted_at: time, updated_at: time}
+    change_sets =
+      Enum.map(upload_ids, fn upload_id ->
+        %{
+          message_id: message_id,
+          account_id: account_id,
+          upload_id: upload_id,
+          inserted_at: time,
+          updated_at: time
+        }
       end)
 
     Repo.insert_all(Attachment, change_sets)

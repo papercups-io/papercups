@@ -32,7 +32,7 @@ defmodule ChatApiWeb.UploadController do
       "file_url" => "https://#{bucket_name}.s3.amazonaws.com/#{bucket_name}/#{unique_filename}",
       "content_type" => file.content_type,
       "account_id" => account_id,
-      "user_id" => user_id,
+      "user_id" => user_id
     }
 
     with {:ok, %Upload{} = upload} <- Uploads.create_upload(updated_params) do

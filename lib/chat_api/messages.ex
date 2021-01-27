@@ -39,7 +39,9 @@ defmodule ChatApi.Messages do
 
   @spec get_message!(binary()) :: Message.t()
   def get_message!(id) do
-    Message |> Repo.get!(id) |> Repo.preload([:uploads, :conversation, :customer, [user: :profile]])
+    Message
+    |> Repo.get!(id)
+    |> Repo.preload([:uploads, :conversation, :customer, [user: :profile]])
   end
 
   @spec create_message(map()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}
