@@ -7,7 +7,6 @@ defmodule ChatApi.Messages do
 
   alias ChatApi.Repo
   alias ChatApi.Messages.Message
-  alias ChatApi.Attachments.Attachment
 
   require Logger
 

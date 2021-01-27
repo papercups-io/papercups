@@ -70,6 +70,7 @@ export type Message = {
 };
 
 export type Upload = {
+  id: string;
   filename: string;
   file_url: string;
   content_type: string;

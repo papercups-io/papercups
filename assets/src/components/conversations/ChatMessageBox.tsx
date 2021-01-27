@@ -54,7 +54,7 @@ const ChatMessageBox = ({
         uploads.length > 0 &&
         uploads.map((u) => {
           return (
-            <div>
+            <div key={u.id}>
               <PaperClipOutlined
                 style={{color: uploadColor}}
               ></PaperClipOutlined>

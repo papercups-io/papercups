@@ -43,7 +43,11 @@ defmodule ChatApiWeb.MessageView do
       user: render_one(message.user, UserView, "user.json"),
       customer_id: message.customer_id,
       customer: render_one(message.customer, CustomerView, "basic.json"),
-      uploads: render_many(message.uploads, UploadView, "upload.json")
+      uploads:
+        case message.uploads do
+          uploads when is_list(uploads) -> render_many(uploads, UploadView, "upload.json")
+          _ -> nil
+        end
     }
   end
 
@@ -62,7 +66,11 @@ defmodule ChatApiWeb.MessageView do
       customer_id: message.customer_id,
       user_id: message.user_id,
       user: render_one(message.user, UserView, "user.json"),
-      uploads: render_many(message.uploads, UploadView, "upload.json")
+      uploads:
+        case message.uploads do
+          uploads when is_list(uploads) -> render_many(uploads, UploadView, "upload.json")
+          _ -> nil
+        end
     }
   end
 end
