@@ -42,25 +42,4 @@ defmodule ChatApiWeb.UploadController do
       |> render("show.json", upload: upload)
     end
   end
-
-  def show(conn, %{"id" => id}) do
-    upload = Uploads.get_upload!(id)
-    render(conn, "show.json", upload: upload)
-  end
-
-  def delete(conn, %{"id" => id}) do
-    upload = Uploads.get_upload!(id)
-
-    bucket_name = System.get_env("BUCKET_NAME")
-
-    if bucket_name == nil do
-      raise "s3 bucket is not specified"
-    end
-
-    result = ExAws.S3.delete_object(bucket_name, upload.filename) |> ExAws.request!()
-
-    with {:ok, %Upload{}} <- Uploads.delete_upload(upload) do
-      send_resp(conn, :no_content, "")
-    end
-  end
 end

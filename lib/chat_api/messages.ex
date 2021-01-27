@@ -75,22 +75,4 @@ defmodule ChatApi.Messages do
   def change_message(%Message{} = message, attrs \\ %{}) do
     Message.changeset(message, attrs)
   end
-
-  @spec get_attachments(Message.t()) :: [Attachment.t()] | nil
-  def get_attachments(%Message{id: id, account_id: account_id} = _message) do
-    Attachment
-    |> where(account_id: ^account_id, message_id_id: ^id)
-    |> Repo.all()
-  end
-
-  @spec add_uploads(ChatApi.Messages.Message.t(), binary()) :: [Attachment.t()] | nil
-  def add_uploads(%Message{id: id, account_id: account_id} = _message, upload_ids) do
-    change_sets =
-      upload_ids
-      |> Enum.map(fn upload_id ->
-        %{message_id: id, account_id: account_id, upload_id: upload_id}
-      end)
-
-    Repo.insert_all(Attachment, change_sets)
-  end
 end
