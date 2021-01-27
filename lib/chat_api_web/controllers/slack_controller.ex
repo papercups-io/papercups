@@ -269,6 +269,53 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  # NB: this currently listens for the Papercups app being added to a Slack channel.
+  # At the moment, it doesn't do anything. But in the future, we may auto-create a
+  # `company` record based on the Slack channel info (if this use case is common enough)
+  defp handle_event(
+         %{
+           "type" => "message",
+           # Public channels use subtype "channel_join", while private channels use "group_join"
+           "subtype" => subtype,
+           "user" => slack_user_id,
+           "channel" => slack_channel_id,
+           "inviter" => _slack_inviter_id
+         } = event
+       )
+       when subtype in ["channel_join", "group_join"] do
+    Logger.info("Slack channel_join/group_join event detected:")
+    Logger.info(inspect(event))
+
+    with %{account_id: account_id, access_token: access_token} <-
+           SlackAuthorizations.find_slack_authorization(%{
+             bot_user_id: slack_user_id,
+             type: "support"
+           }),
+         :ok <- validate_no_existing_company(account_id, slack_channel_id),
+         {:ok, response} <- Slack.Client.retrieve_channel_info(slack_channel_id, access_token),
+         {:ok, channel} <- Slack.Helpers.extract_slack_channel(response),
+         %{"name" => name, "purpose" => purpose, "topic" => topic} <- channel do
+      company = %{
+        # Set default company name to Slack channel name
+        name: name,
+        description: purpose["value"] || topic["value"],
+        account_id: account_id,
+        slack_channel_name: "##{name}",
+        slack_channel_id: slack_channel_id
+      }
+
+      send_internal_notification(
+        "Papercups app was added to Slack channel `##{name}` for account `#{account_id}`"
+      )
+
+      # TODO: should we do this? might make onboarding a bit easier, but would also set up
+      # companies with "weird" names (i.e. in the format of a Slack channel name)
+      {:ok, result} = Companies.create_company(company)
+      Logger.info("Successfully auto-created company:")
+      Logger.info(inspect(result))
+    end
+  end
+
   # TODO: ignore message if it's from a bot?
   defp handle_event(
          %{
@@ -362,53 +409,6 @@ defmodule ChatApiWeb.SlackController do
       message
       |> Map.merge(%{"channel" => channel})
       |> handle_emoji_reaction_event()
-    end
-  end
-
-  # NB: this currently listens for the Papercups app being added to a Slack channel.
-  # At the moment, it doesn't do anything. But in the future, we may auto-create a
-  # `company` record based on the Slack channel info (if this use case is common enough)
-  defp handle_event(
-         %{
-           "type" => "message",
-           # Public channels use subtype "channel_join", while private channels use "group_join"
-           "subtype" => subtype,
-           "user" => slack_user_id,
-           "channel" => slack_channel_id
-           #  "inviter" => slack_inviter_id
-         } = event
-       )
-       when subtype in ["channel_join", "group_join"] do
-    Logger.info("Slack channel_join/group_join event detected:")
-    Logger.info(inspect(event))
-
-    with %{account_id: account_id, access_token: access_token} <-
-           SlackAuthorizations.find_slack_authorization(%{
-             bot_user_id: slack_user_id,
-             type: "support"
-           }),
-         :ok <- validate_no_existing_company(account_id, slack_channel_id),
-         {:ok, response} <- Slack.Client.retrieve_channel_info(slack_channel_id, access_token),
-         {:ok, channel} <- Slack.Helpers.extract_slack_channel(response),
-         %{"name" => name, "purpose" => purpose, "topic" => topic} <- channel do
-      company = %{
-        # Set default company name to Slack channel name
-        name: name,
-        description: purpose["value"] || topic["value"],
-        account_id: account_id,
-        slack_channel_name: "##{name}",
-        slack_channel_id: slack_channel_id
-      }
-
-      send_internal_notification(
-        "Papercups app was added to Slack channel `##{name}` for account `#{account_id}`"
-      )
-
-      # TODO: should we do this? might make onboarding a bit easier, but would also set up
-      # companies with "weird" names (i.e. in the format of a Slack channel name)
-      {:ok, result} = Companies.create_company(company)
-      Logger.info("Successfully auto-created company:")
-      Logger.info(inspect(result))
     end
   end
 
