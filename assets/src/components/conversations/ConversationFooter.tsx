@@ -154,11 +154,13 @@ const ConversationFooter = ({
                 data={data}
                 fileList={fileList}
               >
-                <Button
-                  icon={<PaperClipOutlined />}
-                  type="ghost"
-                  style={{border: 'none', background: 'none'}}
-                ></Button>
+                <Popover content="Attach a file">
+                  <Button
+                    icon={<PaperClipOutlined />}
+                    type="ghost"
+                    style={{border: 'none', background: 'none'}}
+                  ></Button>
+                </Popover>
               </Upload>
               <Button type="primary" htmlType="submit" disabled={disableSend}>
                 Send
