@@ -690,6 +690,125 @@ defmodule ChatApi.SlackTest do
       end)
     end
 
+    test "Helpers.find_slack_user_mentions/1 extracts @mentions in a Slack message" do
+      assert ["<@UABC123>"] =
+               Slack.Helpers.find_slack_user_mentions("Hi <@UABC123>! How can we help you?")
+
+      assert ["<@UABC123>", "<@UDEF234>"] =
+               Slack.Helpers.find_slack_user_mentions(
+                 "Hi <@UABC123>! Did you talk to <@UDEF234>?"
+               )
+
+      # All these should have no matches
+      [
+        "Hi there!",
+        "<this is not a link or user ID>",
+        "@papercups is awesome",
+        "Yo | yo | yo",
+        "<links-must-start-with-http.com>",
+        "<#C123> is a link to a channel"
+      ]
+      |> Enum.each(fn text ->
+        assert [] = Slack.Helpers.find_slack_user_mentions(text)
+      end)
+    end
+
+    test "Helpers.find_slack_links/1 extracts links in a Slack message" do
+      assert ["<http://papercups.io|www.papercups.io>"] =
+               Slack.Helpers.find_slack_links(
+                 "Check out our website: <http://papercups.io|www.papercups.io>"
+               )
+
+      assert [
+               "<https://papercups.io>",
+               "<http://papercups.io|papercups.io>",
+               "<http://papercups.io|www.papercups.io>"
+             ] =
+               Slack.Helpers.find_slack_links("""
+               Check out my favorite links:
+               - <https://papercups.io> and
+               - <http://papercups.io|papercups.io> and
+               - <http://papercups.io|www.papercups.io>
+               """)
+
+      # All these should have no matches
+      [
+        "Hi there!",
+        "<this is not a link or user ID>",
+        "@papercups is awesome",
+        "Yo | yo | yo",
+        "<links-must-start-with-http.com>",
+        "<#C123> is a link to a channel"
+      ]
+      |> Enum.each(fn text ->
+        assert [] = Slack.Helpers.find_slack_links(text)
+      end)
+    end
+
+    test "Helpers.find_slack_mailto_links/1 extracts mailto links in a Slack message" do
+      assert ["<mailto:alex@test.com|alex@test.com>"] =
+               Slack.Helpers.find_slack_mailto_links(
+                 "Email me at <mailto:alex@test.com|alex@test.com>"
+               )
+
+      assert [
+               "<mailto:alex@test.com|alex@test.com>",
+               "<mailto:alex@test.com|test@alex.com>"
+             ] =
+               Slack.Helpers.find_slack_mailto_links(
+                 "Email me at <mailto:alex@test.com|alex@test.com> or <mailto:alex@test.com|test@alex.com>"
+               )
+
+      # All these should have no matches
+      [
+        "Hi there!",
+        "<this is not a link or user ID>",
+        "@papercups is awesome",
+        "Yo | yo | yo",
+        "<links-must-start-with-http.com>",
+        "<#C123> is a link to a channel"
+      ]
+      |> Enum.each(fn text ->
+        assert [] = Slack.Helpers.find_slack_mailto_links(text)
+      end)
+    end
+
+    test "Helpers.get_slack_message_metadata/1 extracts mentions/links metadata in a Slack message" do
+      assert %{
+               mentions: ["<@UABC123>"]
+             } = Slack.Helpers.get_slack_message_metadata("Hi there <@UABC123>!")
+
+      assert %{
+               mentions: ["<@UABC123>"],
+               links: ["<https://papercups.io|papercups.io>"]
+             } =
+               Slack.Helpers.get_slack_message_metadata(
+                 "Hi there <@UABC123>! Check out our website <https://papercups.io|papercups.io>"
+               )
+
+      assert %{
+               links: ["<https://papercups.io|papercups.io>"],
+               mailto_links: ["<mailto:alex@papercups.io|alex@papercups.io>"],
+               mentions: ["<@UABC123>"]
+             } =
+               Slack.Helpers.get_slack_message_metadata(
+                 "Hi there <@UABC123>! Check out our website <https://papercups.io|papercups.io> or email us at <mailto:alex@papercups.io|alex@papercups.io>"
+               )
+
+      # All these should have no metadata
+      [
+        "Hi there!",
+        "<this is not a link or user ID>",
+        "@papercups is awesome",
+        "Yo | yo | yo",
+        "<links-must-start-with-http.com>",
+        "<#C123> is a link to a channel"
+      ]
+      |> Enum.each(fn text ->
+        refute Slack.Helpers.get_slack_message_metadata(text)
+      end)
+    end
+
     test "Helpers.is_bot_message?/1 checks if the Slack message payload is from a bot" do
       bot_message = %{"bot_id" => "B123", "text" => "I am a bot"}
       nil_bot_message = %{"bot_id" => nil, "text" => "I am not a bot"}

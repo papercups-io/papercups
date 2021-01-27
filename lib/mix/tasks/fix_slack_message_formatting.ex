@@ -40,7 +40,8 @@ defmodule Mix.Tasks.FixSlackMessageFormatting do
       case find_valid_slack_authorization(account_id) do
         %SlackAuthorization{} = authorization ->
           Messages.update_message(message, %{
-            body: Slack.Helpers.sanitize_slack_message(body, authorization)
+            body: Slack.Helpers.sanitize_slack_message(body, authorization),
+            metadata: Slack.Helpers.get_slack_message_metadata(body)
           })
 
         _ ->
