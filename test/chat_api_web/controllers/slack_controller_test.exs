@@ -537,7 +537,7 @@ defmodule ChatApiWeb.SlackControllerTest do
 
       slack_channel_info = %{
         "name" => "test",
-        "purpose" => %{"value" => "To test"},
+        "purpose" => %{"value" => "To test channel_join"},
         "topic" => %{"value" => "Testing"}
       }
 
@@ -574,7 +574,7 @@ defmodule ChatApiWeb.SlackControllerTest do
 
       slack_channel_info = %{
         "name" => "test",
-        "purpose" => %{"value" => "To test"},
+        "purpose" => %{"value" => "To test group_join"},
         "topic" => %{"value" => "Testing"}
       }
 
