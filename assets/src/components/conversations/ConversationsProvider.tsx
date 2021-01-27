@@ -455,9 +455,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
       );
     }
 
-    const {body} = message;
+    const {body, upload_ids} = message;
 
-    if (!this.channel || !body || body.trim().length === 0) {
+    const emptyBody = !body || body.trim().length === 0;
+    const emptyUpload = !upload_ids || upload_ids.length === 0;
+
+    if (!this.channel || (emptyBody && emptyUpload)) {
       return;
     }
 

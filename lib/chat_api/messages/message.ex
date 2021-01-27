@@ -69,7 +69,7 @@ defmodule ChatApi.Messages.Message do
       :source,
       :metadata
     ])
-    |> validate_required([:body, :account_id, :conversation_id])
+    |> validate_required([:account_id, :conversation_id])
     |> validate_inclusion(:type, ["reply", "note"])
     |> validate_inclusion(:source, ["chat", "slack", "email"])
   end
