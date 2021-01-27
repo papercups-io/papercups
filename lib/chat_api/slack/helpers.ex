@@ -338,6 +338,27 @@ defmodule ChatApi.Slack.Helpers do
     |> sanitize_slack_mailto_links()
   end
 
+  @spec get_slack_message_metadata(binary()) :: map() | nil
+  def get_slack_message_metadata(text) do
+    %{
+      mentions: Slack.Helpers.find_slack_user_mentions(text),
+      links: Slack.Helpers.find_slack_links(text),
+      mailto_links: Slack.Helpers.find_slack_mailto_links(text)
+    }
+    |> Enum.filter(fn {_key, value} ->
+      case value do
+        nil -> false
+        [] -> false
+        "" -> false
+        _ -> true
+      end
+    end)
+    |> case do
+      [] -> nil
+      list -> Map.new(list)
+    end
+  end
+
   @slack_user_id_regex ~r/<@U(.*?)>/
   @slack_link_regex ~r/<http(.*?)>/
   @slack_mailto_regex ~r/<mailto(.*?)>/
