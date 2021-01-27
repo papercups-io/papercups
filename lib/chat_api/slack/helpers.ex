@@ -342,6 +342,13 @@ defmodule ChatApi.Slack.Helpers do
   @slack_link_regex ~r/<http(.*?)>/
   @slack_mailto_regex ~r/<mailto(.*?)>/
 
+  @spec find_slack_user_mentions(binary()) :: [binary()]
+  def find_slack_user_mentions(text) do
+    @slack_user_id_regex
+    |> Regex.scan(text)
+    |> Enum.map(fn [match, _id] -> match end)
+  end
+
   @spec sanitize_slack_user_ids(binary(), binary()) :: binary()
   def sanitize_slack_user_ids(text, access_token) do
     case Regex.scan(@slack_user_id_regex, text) do
@@ -361,6 +368,13 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @spec find_slack_links(binary()) :: [binary()]
+  def find_slack_links(text) do
+    @slack_link_regex
+    |> Regex.scan(text)
+    |> Enum.map(fn [match, _] -> match end)
+  end
+
   @spec sanitize_slack_links(binary()) :: binary()
   def sanitize_slack_links(text) do
     case Regex.scan(@slack_link_regex, text) do
@@ -374,6 +388,13 @@ defmodule ChatApi.Slack.Helpers do
           String.replace(acc, match, markdown)
         end)
     end
+  end
+
+  @spec find_slack_mailto_links(binary()) :: [binary()]
+  def find_slack_mailto_links(text) do
+    @slack_mailto_regex
+    |> Regex.scan(text)
+    |> Enum.map(fn [match, _] -> match end)
   end
 
   @spec sanitize_slack_mailto_links(binary()) :: binary()

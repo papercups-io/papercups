@@ -40,7 +40,8 @@ defmodule Mix.Tasks.FixSlackMessageFormatting do
       case find_valid_slack_authorization(account_id) do
         %SlackAuthorization{} = authorization ->
           Messages.update_message(message, %{
-            body: Slack.Helpers.sanitize_slack_message(body, authorization)
+            body: Slack.Helpers.sanitize_slack_message(body, authorization),
+            metadata: get_message_metadata(body)
           })
 
         _ ->
@@ -57,6 +58,27 @@ defmodule Mix.Tasks.FixSlackMessageFormatting do
       String.contains?(auth.scope, "users:read") &&
         String.contains?(auth.scope, "users:read.email")
     end)
+  end
+
+  @spec get_message_metadata(binary()) :: map() | nil
+  def get_message_metadata(text) do
+    %{
+      mentions: Slack.Helpers.find_slack_user_mentions(text),
+      links: Slack.Helpers.find_slack_links(text),
+      mailto_links: Slack.Helpers.find_slack_mailto_links(text)
+    }
+    |> Enum.filter(fn {_key, value} ->
+      case value do
+        nil -> false
+        [] -> false
+        "" -> false
+        _ -> true
+      end
+    end)
+    |> case do
+      [] -> nil
+      list -> Map.new(list)
+    end
   end
 
   @spec filter_args(Ecto.Query.t(), [binary()] | []) :: Ecto.Query.t()
