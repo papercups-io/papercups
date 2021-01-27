@@ -49,12 +49,12 @@ const ChatMessageBox = ({
         renderers={renderers}
         plugins={[breaks]}
       />
+      {uploads && uploads.length > 0 && <br></br>}
       {uploads &&
         uploads.length > 0 &&
         uploads.map((u) => {
           return (
             <div>
-              <br></br>
               <PaperClipOutlined
                 style={{color: uploadColor}}
               ></PaperClipOutlined>

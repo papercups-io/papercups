@@ -20,5 +20,6 @@ code {
 
 .upload .ant-upload-list.ant-upload-list-text {
   display: flex;
+  flex-wrap: wrap;
   float: right;
 }
