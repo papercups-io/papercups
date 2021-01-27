@@ -257,6 +257,7 @@ export const SidebarConversationTags = ({
       API.fetchAllTags(),
     ])
       .then(([conversation, tags]) => {
+        // TODO: just fetch tags, no need for other conversation info
         const {tags: conversationTags = []} = conversation;
 
         dispatch({

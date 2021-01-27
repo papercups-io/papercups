@@ -20,6 +20,11 @@ const RelatedConversationItem = ({
   conversation: Conversation;
 }) => {
   const {id, status, created_at, messages = []} = conversation;
+
+  if (!messages || messages.length === 0) {
+    return null;
+  }
+
   const [recent] = messages;
   const ts = recent ? recent.created_at : created_at;
   const created = dayjs.utc(ts);
@@ -94,9 +99,15 @@ const RelatedCustomerConversations = ({
       .then(() => setLoading(false));
   }, [conversationId]);
 
+  const conversationsWithMessages = conversations.filter((conversation) => {
+    const {messages = []} = conversation;
+
+    return messages && messages.length > 0;
+  });
+
   if (loading) {
     return <Spinner size={16} />;
-  } else if (!conversations || !conversations.length) {
+  } else if (conversationsWithMessages.length === 0) {
     return (
       <Box mx={2} mb={2}>
         <Text type="secondary">None</Text>
@@ -106,7 +117,7 @@ const RelatedCustomerConversations = ({
 
   return (
     <Box>
-      {conversations.map((conversation) => {
+      {conversationsWithMessages.map((conversation) => {
         return (
           <RelatedConversationItem
             key={conversation.id}
