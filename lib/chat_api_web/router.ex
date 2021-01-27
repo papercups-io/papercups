@@ -59,9 +59,6 @@ defmodule ChatApiWeb.Router do
     post("/browser_sessions/:id/identify", BrowserSessionController, :identify)
     get("/browser_sessions/:id/exists", BrowserSessionController, :exists)
 
-    get("/s3/presigned_upload_url/:filename", S3Controller, :presigned_upload_url)
-    get("/s3/upload/", S3Controller, :test)
-
     # TODO: figure out a better name?
     get("/conversations/customer", ConversationController, :find_by_customer)
     get("/conversations/shared", ConversationController, :shared)
