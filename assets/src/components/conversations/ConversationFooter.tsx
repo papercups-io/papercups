@@ -49,6 +49,7 @@ const ConversationFooter = ({
       upload_ids: fileList.map((f) => f.response?.data?.id),
     });
 
+    setFileList([]);
     setMessage('');
   };
 
@@ -139,6 +140,7 @@ const ConversationFooter = ({
                 action={action}
                 onChange={onUpdateFileList}
                 data={data}
+                fileList={fileList}
               >
                 <Button
                   icon={<PaperClipOutlined />}
