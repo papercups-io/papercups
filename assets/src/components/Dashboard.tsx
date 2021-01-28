@@ -62,6 +62,16 @@ const shouldDisplayChat = (pathname: string) => {
   return isHostedProd && pathname !== '/account/getting-started';
 };
 
+const getSectionKey = (pathname: string) => {
+  if (pathname.startsWith('/companies')) {
+    return ['customers', 'companies'];
+  } else if (pathname.startsWith('/customers')) {
+    return ['customers', 'people'];
+  } else {
+    return pathname.split('/').slice(1); // Slice off initial slash
+  }
+};
+
 // TODO: not sure if this is the best way to handle this, but the goal
 // of this component is to flash the number of unread messages in the
 // tab (i.e. HTML title) so users can see when new messages arrive
@@ -100,7 +110,7 @@ const Dashboard = (props: RouteComponentProps) => {
   const {pathname} = useLocation();
   const {currentUser, unreadByCategory: unread} = useConversations();
 
-  const [section, key] = pathname.split('/').slice(1); // Slice off initial slash
+  const [section, key] = getSectionKey(pathname);
   const totalNumUnread = (unread && unread.all) || 0;
   const shouldDisplayBilling = hasValidStripeKey();
 
@@ -237,13 +247,19 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/sessions/setup">Set up Storytime</Link>
                 </Menu.Item>
               </Menu.SubMenu>
-              <Menu.Item
-                title="Customers"
-                icon={<TeamOutlined />}
+
+              <Menu.SubMenu
                 key="customers"
+                icon={<TeamOutlined />}
+                title="Customers"
               >
-                <Link to="/customers">Customers</Link>
-              </Menu.Item>
+                <Menu.Item key="people">
+                  <Link to="/customers">People</Link>
+                </Menu.Item>
+                <Menu.Item key="companies">
+                  <Link to="/companies">Companies</Link>
+                </Menu.Item>
+              </Menu.SubMenu>
               <Menu.Item
                 title="Reporting"
                 icon={<LineChartOutlined />}
