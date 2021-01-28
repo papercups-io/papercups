@@ -341,12 +341,7 @@ class ConversationsContainer extends React.Component<Props, State> {
             left: 220,
           }}
         >
-          <Box
-            pl={3}
-            pt={3}
-            pb={'11.5px'}
-            sx={{borderBottom: '1px solid #f0f0f0'}}
-          >
+          <Box p={3} sx={{borderBottom: '1px solid #f0f0f0'}}>
             <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
               {title || 'Conversations'}
             </Title>

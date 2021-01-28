@@ -64,15 +64,6 @@ defmodule ChatApiWeb.MessageController do
     end
   end
 
-  @spec add_attachment(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def add_attachment(conn, %{"message_id" => id, "upload_ids" => upload_ids}) do
-    message = Messages.get_message!(id)
-
-    with {:ok, _result} <- Messages.add_attachment(message, upload_ids) do
-      json(conn, %{data: %{ok: true}})
-    end
-  end
-
   swagger_path :create do
     post("/api/messages")
     summary("Create a message")

@@ -13,11 +13,11 @@ defmodule ChatApi.Attachments do
 
   ## Examples
 
-      iex> list_attachment()
+      iex> list_attachments()
       [%Attachment{}, ...]
 
   """
-  def list_attachment do
+  def list_attachments do
     Repo.all(Attachment)
   end
 
