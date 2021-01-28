@@ -139,10 +139,27 @@ defmodule ChatApi.Slack.Client do
 
   @spec retrieve_channel_info(binary(), binary()) :: {:ok, nil} | Tesla.Env.result()
   def retrieve_channel_info(channel, access_token) do
-    # TODO: we need channels:read scope to access this
+    # NB: we need channels:read scope to access this
     if should_execute?(access_token) do
       get("/conversations.info",
         query: [channel: channel],
+        headers: [
+          {"Authorization", "Bearer " <> access_token}
+        ]
+      )
+    else
+      Logger.info("Invalid access token")
+
+      {:ok, nil}
+    end
+  end
+
+  @spec retrieve_conversation_replies(binary(), binary(), binary()) ::
+          {:ok, nil} | Tesla.Env.result()
+  def retrieve_conversation_replies(channel, thread_ts, access_token) do
+    if should_execute?(access_token) do
+      get("/conversations.replies",
+        query: [channel: channel, ts: thread_ts],
         headers: [
           {"Authorization", "Bearer " <> access_token}
         ]

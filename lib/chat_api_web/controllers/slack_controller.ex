@@ -286,11 +286,14 @@ defmodule ChatApiWeb.SlackController do
     Logger.info("Slack channel_join/group_join event detected:")
     Logger.info(inspect(event))
 
-    with %{account_id: account_id, access_token: access_token} <-
+    with %{account_id: account_id, access_token: access_token, channel_id: channel_id} <-
            SlackAuthorizations.find_slack_authorization(%{
              bot_user_id: slack_user_id,
              type: "support"
            }),
+         # This validates that the channel doesn't match the initially connected channel on
+         # the `slack_authorization` record, since we currently treat that channel slightly differently
+         true <- channel_id != slack_channel_id,
          :ok <- validate_no_existing_company(account_id, slack_channel_id),
          {:ok, response} <- Slack.Client.retrieve_channel_info(slack_channel_id, access_token),
          {:ok, channel} <- Slack.Helpers.extract_slack_channel(response),
