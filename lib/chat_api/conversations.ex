@@ -24,7 +24,7 @@ defmodule ChatApi.Conversations do
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
     |> order_by_most_recent_message()
-    |> preload([:customer, messages: [user: :profile]])
+    |> preload([:customer, messages: [:uploads, user: :profile]])
     |> Repo.all()
   end
 
