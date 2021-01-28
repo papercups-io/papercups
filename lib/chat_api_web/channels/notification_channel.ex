@@ -43,7 +43,9 @@ defmodule ChatApiWeb.NotificationChannel do
         |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
         |> Messages.create_message()
 
-      Attachments.create_attachments(message.id, upload_ids, account_id)
+      if(is_list(upload_ids)) do
+        Attachments.create_attachments(message.id, upload_ids, account_id)
+      end
 
       message
       |> Map.get(:id)

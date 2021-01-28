@@ -1,14 +1,12 @@
 import React from 'react';
 
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Menu, Popover, TextArea, Upload} from '../common';
+import {colors, Button, Menu, TextArea, Upload, Tooltip} from '../common';
 import {Message, MessageType, User} from '../../types';
-import '../../index.css';
 
 import {PaperClipOutlined} from '../icons';
 import {UploadChangeParam} from 'antd/lib/upload';
 import {UploadFile} from 'antd/lib/upload/interface';
-import {FRONTEND_BASE_URL} from '../../config';
 
 const ConversationFooter = ({
   sx = {},
@@ -55,7 +53,7 @@ const ConversationFooter = ({
   };
 
   //Antd takes a url to make the post request and data that gets added to the request https://ant.design/components/upload/
-  const action = FRONTEND_BASE_URL + '/api/upload';
+  const action = '/api/upload';
   const data = {account_id: currentUser?.account_id, user_id: currentUser?.id};
   const onUpdateFileList = (info: UploadChangeParam) => {
     const {file, fileList, event} = info;
@@ -154,13 +152,13 @@ const ConversationFooter = ({
                 data={data}
                 fileList={fileList}
               >
-                <Popover content="Attach a file">
+                <Tooltip title="Attach a file">
                   <Button
                     icon={<PaperClipOutlined />}
                     type="ghost"
                     style={{border: 'none', background: 'none'}}
                   ></Button>
-                </Popover>
+                </Tooltip>
               </Upload>
               <Button type="primary" htmlType="submit" disabled={disableSend}>
                 Send

@@ -72,3 +72,15 @@ a.RelatedCustomerConversation--link:hover {
   border-radius: 4px;
   box-shadow: 0 24px 48px rgba(17, 16, 62, 0.12);
 }
+
+.upload {
+  display: flex;
+  flex-direction: column-reverse;
+  float: left;
+}
+
+.upload .ant-upload-list.ant-upload-list-text {
+  display: flex;
+  flex-wrap: wrap;
+  float: right;
+}

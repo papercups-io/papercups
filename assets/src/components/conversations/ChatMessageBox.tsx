@@ -49,25 +49,26 @@ const ChatMessageBox = ({
         renderers={renderers}
         plugins={[breaks]}
       />
-      {uploads && uploads.length > 0 && <br></br>}
-      {uploads &&
-        uploads.length > 0 &&
-        uploads.map((u) => {
-          return (
-            <div key={u.id}>
-              <PaperClipOutlined
-                style={{color: uploadColor}}
-              ></PaperClipOutlined>
-              <a
-                href={u.file_url}
-                style={{color: uploadColor, textDecoration: 'underline'}}
-              >
-                {' '}
-                {u.filename}
-              </a>
-            </div>
-          );
-        })}
+      {uploads && uploads.length > 0 && (
+        <Box mt={2}>
+          {uploads.map((u) => {
+            return (
+              <Box key={u.id}>
+                <PaperClipOutlined
+                  style={{color: uploadColor}}
+                ></PaperClipOutlined>
+                <a
+                  href={u.file_url}
+                  style={{color: uploadColor, textDecoration: 'underline'}}
+                >
+                  {' '}
+                  {u.filename}
+                </a>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
     </Box>
   );
 };

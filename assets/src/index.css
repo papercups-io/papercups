@@ -11,15 +11,3 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-
-.upload {
-  display: flex;
-  flex-direction: column-reverse;
-  float: left;
-}
-
-.upload .ant-upload-list.ant-upload-list-text {
-  display: flex;
-  flex-wrap: wrap;
-  float: right;
-}

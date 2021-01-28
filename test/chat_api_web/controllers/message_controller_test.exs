@@ -7,7 +7,6 @@ defmodule ChatApiWeb.MessageControllerTest do
   @update_attrs %{
     body: "some updated body"
   }
-  @invalid_attrs %{body: nil}
 
   setup %{conn: conn} do
     account = insert(:account)
@@ -65,11 +64,6 @@ defmodule ChatApiWeb.MessageControllerTest do
                "body" => "some body"
              } = json_response(conn, 200)["data"]
     end
-
-    test "renders errors when data is invalid", %{authed_conn: authed_conn} do
-      conn = post(authed_conn, Routes.message_path(authed_conn, :create), message: @invalid_attrs)
-      assert json_response(conn, 422)["errors"] != %{}
-    end
   end
 
   describe "update message" do
@@ -88,16 +82,6 @@ defmodule ChatApiWeb.MessageControllerTest do
                "id" => _id,
                "body" => "some updated body"
              } = json_response(conn, 200)["data"]
-    end
-
-    test "renders errors when data is invalid",
-         %{authed_conn: authed_conn, message: message} do
-      conn =
-        put(authed_conn, Routes.message_path(authed_conn, :update, message),
-          message: @invalid_attrs
-        )
-
-      assert json_response(conn, 422)["errors"] != %{}
     end
   end
 
