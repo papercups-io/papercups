@@ -11,6 +11,7 @@ import DownOutlined from '@ant-design/icons/DownOutlined';
 import GlobalOutlined from '@ant-design/icons/GlobalOutlined';
 import InfoCircleOutlined from '@ant-design/icons/InfoCircleOutlined';
 import LineChartOutlined from '@ant-design/icons/LineChartOutlined';
+import LinkOutlined from '@ant-design/icons/LinkOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
 import LogoutOutlined from '@ant-design/icons/LogoutOutlined';
 import MailOutlined from '@ant-design/icons/MailOutlined';
@@ -43,6 +44,7 @@ export {
   GlobalOutlined,
   InfoCircleOutlined,
   LineChartOutlined,
+  LinkOutlined,
   LoadingOutlined,
   LogoutOutlined,
   MailOutlined,

@@ -38,7 +38,7 @@ defmodule ChatApi.Customers do
 
   @spec get_customer!(binary()) :: Customer.t() | nil
   def get_customer!(id) do
-    Customer |> Repo.get!(id) |> Repo.preload(:tags)
+    Customer |> Repo.get!(id) |> Repo.preload([:company, :tags])
   end
 
   @spec find_by_external_id(binary(), binary(), map()) :: Customer.t() | nil

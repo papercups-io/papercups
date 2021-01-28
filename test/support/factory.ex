@@ -56,6 +56,7 @@ defmodule ChatApi.Factory do
       last_seen: ~D[2020-01-01],
       email: sequence(:email, &"test-#{&1}@test.com"),
       account: build(:account),
+      company: build(:company),
       customer_tags: [],
       tags: []
     }

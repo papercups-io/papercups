@@ -1,5 +1,6 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+import {Image} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
@@ -18,8 +19,10 @@ import {
 import {
   CalendarOutlined,
   GlobalOutlined,
+  LinkOutlined,
   MailOutlined,
   PhoneOutlined,
+  TeamOutlined,
   UserOutlined,
   VideoCameraOutlined,
 } from '../icons';
@@ -31,7 +34,7 @@ import SidebarCustomerNotes from './SidebarCustomerNotes';
 import RelatedCustomerConversations from './RelatedCustomerConversations';
 import SlackConversationThreads from './SlackConversationThreads';
 import * as API from '../../api';
-import {Conversation, Customer} from '../../types';
+import {Company, Conversation, Customer} from '../../types';
 import logger from '../../logger';
 
 // TODO: create date utility methods so we don't have to do this everywhere
@@ -80,6 +83,67 @@ const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
         View live
       </Button>
     </Link>
+  );
+};
+
+const CustomerCompanyDetails = ({customerId}: {customerId: string}) => {
+  const [loading, setLoading] = React.useState(false);
+  const [company, setCompany] = React.useState<Company | null>(null);
+
+  React.useEffect(() => {
+    setLoading(true);
+
+    API.fetchCustomer(customerId)
+      .then((customer) => {
+        const {company} = customer;
+
+        setCompany(company);
+      })
+      .catch((err) => logger.error('Error retrieving company:', err))
+      .then(() => setLoading(false));
+  }, [customerId]);
+
+  if (loading || !company) {
+    return null;
+  }
+
+  const {
+    id: companyId,
+    name = 'Unknown',
+    website_url: websiteUrl,
+    slack_channel_id: slackChannelId,
+    slack_channel_name: slackChannelName,
+  } = company;
+
+  return (
+    <DetailsSectionCard>
+      <Flex mb={2} sx={{alignItems: 'center', justifyContent: 'space-between'}}>
+        <Text strong>Company</Text>
+        <Link to={`/companies/${companyId}`}>
+          <Button size="small">View</Button>
+        </Link>
+      </Flex>
+      <Box mb={1}>
+        <TeamOutlined /> {name}
+      </Box>
+      {websiteUrl && (
+        <Box mb={1}>
+          <LinkOutlined /> {websiteUrl || 'Unknown'}
+        </Box>
+      )}
+      {slackChannelId && slackChannelName && (
+        <Box mb={1}>
+          <Image src="/slack.svg" alt="Slack" sx={{height: 16, mr: 1}} />
+          <a
+            href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {slackChannelName}
+          </a>
+        </Box>
+      )}
+    </DetailsSectionCard>
   );
 };
 
@@ -238,6 +302,8 @@ const CustomerDetails = ({
           <Text type="secondary">IP:</Text> {lastIpAddress || 'Unknown'}
         </Box>
       </DetailsSectionCard>
+
+      <CustomerCompanyDetails customerId={customerId} />
 
       <DetailsSectionCard>
         <Box mb={2}>
