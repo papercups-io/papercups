@@ -98,6 +98,7 @@ defmodule ChatApi.Customers.Customer do
       :name,
       :phone,
       :external_id,
+      :profile_photo_url,
       :browser,
       :browser_version,
       :browser_language,
