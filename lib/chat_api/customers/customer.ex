@@ -18,6 +18,7 @@ defmodule ChatApi.Customers.Customer do
           name: String.t() | nil,
           phone: String.t() | nil,
           external_id: String.t() | nil,
+          profile_photo_url: String.t() | nil,
           # Browser metadata
           browser: String.t() | nil,
           browser_version: String.t() | nil,
@@ -52,6 +53,7 @@ defmodule ChatApi.Customers.Customer do
     field(:name, :string)
     field(:phone, :string)
     field(:external_id, :string)
+    field(:profile_photo_url, :string)
 
     # Metadata
     field(:browser, :string)

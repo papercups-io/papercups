@@ -126,7 +126,8 @@ defmodule ChatApi.Slack.Helpers do
       attrs =
         %{
           name: Map.get(profile, "real_name"),
-          time_zone: Map.get(user, "tz")
+          time_zone: Map.get(user, "tz"),
+          profile_photo_url: Map.get(profile, "image_original")
         }
         |> Enum.reject(fn {_k, v} -> is_nil(v) end)
         |> Map.new()
