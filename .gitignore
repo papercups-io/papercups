@@ -33,3 +33,5 @@ chat_api-*.tar
 
 # Jetbrain IDE files
 .idea/
+
+.DS_Store
