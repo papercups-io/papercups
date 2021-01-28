@@ -25,7 +25,7 @@ defmodule ChatApi.CustomersTest do
 
     setup do
       account = insert(:account)
-      customer = insert(:customer, account: account)
+      customer = insert(:customer, account: account, company: nil)
 
       {:ok, account: account, customer: customer}
     end

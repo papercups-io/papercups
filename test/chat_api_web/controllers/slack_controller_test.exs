@@ -523,12 +523,13 @@ defmodule ChatApiWeb.SlackControllerTest do
       account: account
     } do
       authorization = insert(:slack_authorization, account: account, type: "support")
+      channel_id = "C123TEST"
 
       event_params = %{
         "type" => "message",
         "subtype" => "channel_join",
         "text" => "@papercups has joined the channel",
-        "channel" => authorization.channel_id,
+        "channel" => channel_id,
         "team" => authorization.team_id,
         "user" => authorization.bot_user_id,
         "inviter" => authorization.authed_user_id,
@@ -551,7 +552,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         })
 
         assert [] = Messages.list_messages(account.id)
-        assert %Company{} = Companies.find_by_slack_channel(authorization.channel_id)
+        assert %Company{} = Companies.find_by_slack_channel(channel_id)
       end
     end
 
@@ -560,12 +561,13 @@ defmodule ChatApiWeb.SlackControllerTest do
       account: account
     } do
       authorization = insert(:slack_authorization, account: account, type: "support")
+      channel_id = "G123TEST"
 
       event_params = %{
         "type" => "message",
         "subtype" => "group_join",
         "text" => "@papercups has joined the channel",
-        "channel" => authorization.channel_id,
+        "channel" => channel_id,
         "team" => authorization.team_id,
         "user" => authorization.bot_user_id,
         "inviter" => authorization.authed_user_id,
@@ -588,7 +590,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         })
 
         assert [] = Messages.list_messages(account.id)
-        assert %Company{} = Companies.find_by_slack_channel(authorization.channel_id)
+        assert %Company{} = Companies.find_by_slack_channel(channel_id)
       end
     end
   end
