@@ -13,21 +13,46 @@ const renderers = {
   },
 };
 
-type ChatMessageBoxProps = {
+const ChatMessageAttachment = ({
+  attachment,
+  color,
+}: {
+  attachment: Upload;
+  color?: string;
+}) => {
+  const {id, filename, file_url: fileUrl} = attachment;
+
+  return (
+    <Box key={id}>
+      <PaperClipOutlined />{' '}
+      <a
+        href={fileUrl}
+        style={{
+          color,
+          textDecoration: 'underline',
+        }}
+      >
+        {filename}
+      </a>
+    </Box>
+  );
+};
+
+type Props = {
   className?: string;
   content: string;
   sx?: Record<any, any>;
-  uploads?: Upload[];
-  uploadColor?: string;
+  attachments?: Upload[];
+  attachmentTextColor?: string;
 };
 
 const ChatMessageBox = ({
   className,
   content,
   sx,
-  uploads,
-  uploadColor,
-}: ChatMessageBoxProps) => {
+  attachments,
+  attachmentTextColor,
+}: Props) => {
   const parsedSx = Object.assign(sx, {
     borderRadius: 4,
     p: {
@@ -49,22 +74,16 @@ const ChatMessageBox = ({
         renderers={renderers}
         plugins={[breaks]}
       />
-      {uploads && uploads.length > 0 && (
-        <Box mt={2}>
-          {uploads.map((u) => {
+
+      {attachments && attachments.length > 0 && (
+        <Box mt={2} className={className}>
+          {attachments.map((attachment) => {
             return (
-              <Box key={u.id}>
-                <PaperClipOutlined
-                  style={{color: uploadColor}}
-                ></PaperClipOutlined>
-                <a
-                  href={u.file_url}
-                  style={{color: uploadColor, textDecoration: 'underline'}}
-                >
-                  {' '}
-                  {u.filename}
-                </a>
-              </Box>
+              <ChatMessageAttachment
+                key={attachment.id}
+                attachment={attachment}
+                color={attachmentTextColor}
+              />
             );
           })}
         </Box>

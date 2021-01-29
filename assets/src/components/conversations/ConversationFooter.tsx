@@ -1,12 +1,40 @@
 import React from 'react';
-
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Menu, TextArea, Upload, Tooltip} from '../common';
+import {colors, Button, Menu, TextArea, Upload} from '../common';
 import {Message, MessageType, User} from '../../types';
-
 import {PaperClipOutlined} from '../icons';
 import {UploadChangeParam} from 'antd/lib/upload';
 import {UploadFile} from 'antd/lib/upload/interface';
+
+const AttachFileButton = ({
+  fileList,
+  currentUser,
+  onUpdateFileList,
+}: {
+  fileList: any;
+  currentUser: User;
+  onUpdateFileList: (info: UploadChangeParam) => void;
+}) => {
+  // Antd takes a url to make the post request and data that gets added to the request
+  // (See https://ant.design/components/upload/ for more information)
+  const action = '/api/upload';
+  // TODO: figure out a better way to set these!
+  const data = {account_id: currentUser.account_id, user_id: currentUser.id};
+
+  return (
+    <Upload
+      className="upload"
+      action={action}
+      onChange={onUpdateFileList}
+      data={data}
+      fileList={fileList}
+    >
+      <Button icon={<PaperClipOutlined />} size="small" type="text">
+        Attach a file
+      </Button>
+    </Upload>
+  );
+};
 
 const ConversationFooter = ({
   sx = {},
@@ -18,9 +46,9 @@ const ConversationFooter = ({
   currentUser?: User | null;
 }) => {
   const [message, setMessage] = React.useState<string>('');
-  const [fileList, setFileList] = React.useState<UploadFile[]>([]);
+  const [fileList, setFileList] = React.useState<Array<UploadFile>>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
-  const [disableSend, setDisableSend] = React.useState<boolean>(false);
+  const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
 
   const isPrivateNote = messageType === 'note';
 
@@ -52,21 +80,17 @@ const ConversationFooter = ({
     setMessage('');
   };
 
-  //Antd takes a url to make the post request and data that gets added to the request https://ant.design/components/upload/
-  const action = '/api/upload';
-  const data = {account_id: currentUser?.account_id, user_id: currentUser?.id};
-  const onUpdateFileList = (info: UploadChangeParam) => {
-    const {file, fileList, event} = info;
+  const onUpdateFileList = ({file, fileList, event}: UploadChangeParam) => {
     setFileList(fileList);
 
-    //disable when file upload is in progress
+    // Disable send button when file upload is in progress
     if (event) {
-      setDisableSend(true);
+      setSendDisabled(true);
     }
 
-    //enable when the server has responded
+    // Enable send button again when the server has responded
     if (file && file.response) {
-      setDisableSend(false);
+      setSendDisabled(false);
     }
   };
 
@@ -145,22 +169,18 @@ const ConversationFooter = ({
                 justifyContent: 'space-between',
               }}
             >
-              <Upload
-                className="upload"
-                action={action}
-                onChange={onUpdateFileList}
-                data={data}
-                fileList={fileList}
+              {currentUser && (
+                <AttachFileButton
+                  fileList={fileList}
+                  currentUser={currentUser}
+                  onUpdateFileList={onUpdateFileList}
+                />
+              )}
+              <Button
+                type="primary"
+                htmlType="submit"
+                disabled={isSendDisabled}
               >
-                <Tooltip title="Attach a file">
-                  <Button
-                    icon={<PaperClipOutlined />}
-                    type="ghost"
-                    style={{border: 'none', background: 'none'}}
-                  ></Button>
-                </Tooltip>
-              </Upload>
-              <Button type="primary" htmlType="submit" disabled={disableSend}>
                 Send
               </Button>
             </Flex>

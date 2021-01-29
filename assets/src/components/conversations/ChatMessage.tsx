@@ -138,8 +138,8 @@ const ChatMessage = ({
               py: 2,
               background: isPrivate ? colors.note : colors.primary,
             }}
-            uploadColor={isPrivate ? 'black' : 'white'}
-            uploads={uploads}
+            attachmentTextColor={isPrivate ? colors.text : colors.white}
+            attachments={uploads}
           />
         </Flex>
         {shouldDisplayTimestamp && (
@@ -172,7 +172,7 @@ const ChatMessage = ({
             background: isPrivate ? colors.note : 'rgb(245, 245, 245)',
             maxWidth: '80%',
           }}
-          uploads={uploads}
+          attachments={uploads}
         />
       </Flex>
       {shouldDisplayTimestamp && (
