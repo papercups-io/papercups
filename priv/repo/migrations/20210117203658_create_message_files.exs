@@ -2,7 +2,7 @@ defmodule ChatApi.Repo.Migrations.CreateMessageFiles do
   use Ecto.Migration
 
   def change do
-    create table(:files, primary_key: false) do
+    create_if_not_exists table(:files, primary_key: false) do
       add(:id, :binary_id, primary_key: true)
       add(:filename, :string, null: false)
       add(:file_url, :string, null: false)
@@ -20,7 +20,7 @@ defmodule ChatApi.Repo.Migrations.CreateMessageFiles do
     create_if_not_exists(index(:files, [:customer_id]))
     create_if_not_exists(index(:files, [:user_id]))
 
-    create table(:message_files, primary_key: false) do
+    create_if_not_exists table(:message_files, primary_key: false) do
       add :id, :binary_id, primary_key: true
       add(:message_id, references(:messages, type: :uuid), null: false)
       add(:file_id, references(:files, type: :uuid), null: false)
