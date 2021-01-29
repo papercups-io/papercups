@@ -167,16 +167,33 @@ defmodule ChatApi.Slack.Notification do
   def validate_send_to_primary_channel(_thread, _opts), do: :error
 
   @spec format_slack_message_text(Message.t()) :: String.t()
-  defp format_slack_message_text(%Message{} = message) do
-    case message do
-      %{body: body, user: %User{} = user} when not is_nil(user) ->
-        body
+  def format_slack_message_text(%Message{} = message) do
+    # NB: `message.body` can be `nil` when attachments are present
+    default_text = message.body || ""
 
-      %{body: body, customer: %Customer{} = customer} when not is_nil(customer) ->
-        "*:wave: #{Slack.Helpers.identify_customer(customer)}*: #{body}"
+    base =
+      case message do
+        %{user: %User{} = user} when not is_nil(user) ->
+          default_text
 
-      message ->
-        message.body
+        %{customer: %Customer{} = customer} when not is_nil(customer) ->
+          "*:wave: #{Slack.Helpers.identify_customer(customer)}*: #{default_text}"
+
+        _ ->
+          default_text
+      end
+
+    case message.uploads do
+      [_ | _] = files ->
+        formatted_attachments =
+          files
+          |> Stream.map(fn file -> "> <#{file.file_url}|#{file.filename}>" end)
+          |> Enum.join("\n")
+
+        base <> "\n\n" <> formatted_attachments
+
+      _ ->
+        base
     end
   end
 

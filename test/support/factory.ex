@@ -137,6 +137,14 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def upload_factory do
+    %ChatApi.Uploads.Upload{
+      filename: sequence("some filename"),
+      file_url: sequence("https://image.jpg"),
+      content_type: "image/png"
+    }
+  end
+
   def user_invitation_factory do
     %ChatApi.UserInvitations.UserInvitation{
       account: build(:account),
