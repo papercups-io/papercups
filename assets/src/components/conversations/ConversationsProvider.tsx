@@ -457,10 +457,10 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
     const {body, upload_ids} = message;
 
-    const emptyBody = !body || body.trim().length === 0;
-    const emptyUpload = !upload_ids || upload_ids.length === 0;
+    const hasEmptyBody = !body || body.trim().length === 0;
+    const hasNoAttachments = !upload_ids || upload_ids.length === 0;
 
-    if (!this.channel || (emptyBody && emptyUpload)) {
+    if (!this.channel || (hasEmptyBody && hasNoAttachments)) {
       return;
     }
 

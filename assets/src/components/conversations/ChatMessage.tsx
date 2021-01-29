@@ -113,7 +113,7 @@ const ChatMessage = ({
     user,
     seen_at,
     private: isPrivate,
-    uploads,
+    attachments = [],
   } = message;
   const isAgent = !!user;
   const tooltip = getSenderIdentifier(customer, user);
@@ -139,7 +139,7 @@ const ChatMessage = ({
               background: isPrivate ? colors.note : colors.primary,
             }}
             attachmentTextColor={isPrivate ? colors.text : colors.white}
-            attachments={uploads}
+            attachments={attachments}
           />
         </Flex>
         {shouldDisplayTimestamp && (
@@ -172,7 +172,7 @@ const ChatMessage = ({
             background: isPrivate ? colors.note : 'rgb(245, 245, 245)',
             maxWidth: '80%',
           }}
-          attachments={uploads}
+          attachments={attachments}
         />
       </Flex>
       {shouldDisplayTimestamp && (

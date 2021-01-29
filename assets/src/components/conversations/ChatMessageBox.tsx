@@ -4,7 +4,7 @@ import breaks from 'remark-breaks';
 import {Twemoji} from 'react-emoji-render';
 import {Box} from 'theme-ui';
 import {allowedNodeTypes} from '../common';
-import {Upload} from '../../types';
+import {Attachment} from '../../types';
 import {PaperClipOutlined} from '../icons';
 
 const renderers = {
@@ -17,7 +17,7 @@ const ChatMessageAttachment = ({
   attachment,
   color,
 }: {
-  attachment: Upload;
+  attachment: Attachment;
   color?: string;
 }) => {
   const {id, filename, file_url: fileUrl} = attachment;
@@ -42,7 +42,7 @@ type Props = {
   className?: string;
   content: string;
   sx?: Record<any, any>;
-  attachments?: Upload[];
+  attachments?: Attachment[];
   attachmentTextColor?: string;
 };
 

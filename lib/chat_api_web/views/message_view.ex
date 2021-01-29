@@ -43,11 +43,7 @@ defmodule ChatApiWeb.MessageView do
       user: render_one(message.user, UserView, "user.json"),
       customer_id: message.customer_id,
       customer: render_one(message.customer, CustomerView, "basic.json"),
-      uploads:
-        case message.uploads do
-          uploads when is_list(uploads) -> render_many(uploads, UploadView, "upload.json")
-          _ -> nil
-        end
+      attachments: render_attachments(message.uploads)
     }
   end
 
@@ -66,11 +62,13 @@ defmodule ChatApiWeb.MessageView do
       customer_id: message.customer_id,
       user_id: message.user_id,
       user: render_one(message.user, UserView, "user.json"),
-      uploads:
-        case message.uploads do
-          uploads when is_list(uploads) -> render_many(uploads, UploadView, "upload.json")
-          _ -> nil
-        end
+      attachments: render_attachments(message.uploads)
     }
   end
+
+  # TODO: figure out the best way to handle this idiomatically
+  defp render_attachments([_ | _] = uploads),
+    do: render_many(uploads, UploadView, "upload.json")
+
+  defp render_attachments(_uploads), do: []
 end

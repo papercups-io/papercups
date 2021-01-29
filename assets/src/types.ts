@@ -66,10 +66,17 @@ export type Message = {
   user_id?: number;
   user?: User;
   upload_ids?: string[];
-  uploads: Upload[];
+  attachments: Attachment[];
 };
 
-export type Upload = {
+export type Attachment = {
+  id: string;
+  filename: string;
+  file_url: string;
+  content_type: string;
+};
+
+export type FileUpload = {
   id: string;
   filename: string;
   file_url: string;
