@@ -16,9 +16,9 @@ defmodule ChatApi.Repo.Migrations.CreateMessageFiles do
       timestamps()
     end
 
-    create(index(:files, [:account_id]))
-    create(index(:files, [:customer_id]))
-    create(index(:files, [:user_id]))
+    create_if_not_exists(index(:files, [:account_id]))
+    create_if_not_exists(index(:files, [:customer_id]))
+    create_if_not_exists(index(:files, [:user_id]))
 
     create table(:message_files, primary_key: false) do
       add :id, :binary_id, primary_key: true
@@ -29,9 +29,9 @@ defmodule ChatApi.Repo.Migrations.CreateMessageFiles do
       timestamps()
     end
 
-    create(index(:message_files, [:message_id]))
-    create(index(:message_files, [:file_id]))
-    create(index(:message_files, [:account_id]))
-    create(unique_index(:message_files, [:message_id, :file_id]))
+    create_if_not_exists(index(:message_files, [:message_id]))
+    create_if_not_exists(index(:message_files, [:file_id]))
+    create_if_not_exists(index(:message_files, [:account_id]))
+    create_if_not_exists(unique_index(:message_files, [:message_id, :file_id]))
   end
 end
