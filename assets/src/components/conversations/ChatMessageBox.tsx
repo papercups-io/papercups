@@ -50,7 +50,7 @@ const ChatMessageBox = ({
   className,
   content,
   sx,
-  attachments,
+  attachments = [],
   attachmentTextColor,
 }: Props) => {
   const parsedSx = Object.assign(sx, {

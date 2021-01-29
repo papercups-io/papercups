@@ -5,7 +5,6 @@ defmodule ChatApi.Attachments do
 
   import Ecto.Query, warn: false
   alias ChatApi.Repo
-
   alias ChatApi.Attachments.Attachment
 
   @doc """
