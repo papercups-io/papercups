@@ -24,11 +24,10 @@ defmodule ChatApiWeb.UploadControllerTest do
     test "it successfully creates a file", %{conn: conn, account: account} do
       file = %Plug.Upload{filename: "Test File", content_type: "image/jpg", path: "/path/to/file"}
 
-      with_mock ChatApi.Aws,
-                [:passthrough],
-                upload: fn _, _ ->
-                  {:ok, %{}}
-                end do
+      with_mocks([
+        {ChatApi.Aws, [:passthrough], upload: fn _, _ -> {:ok, %{}} end},
+        {ChatApi.Aws.Config, [:passthrough], validate: fn -> {:ok, @config} end}
+      ]) do
         resp = post(conn, Routes.upload_path(conn, :create), file: file, account_id: account.id)
 
         assert %{

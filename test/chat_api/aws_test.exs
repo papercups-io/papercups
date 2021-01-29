@@ -17,7 +17,7 @@ defmodule ChatApi.AwsTest do
            }} ->
             true
 
-          {:error, [_ | _]} ->
+          {:error, :invalid_aws_config, _} ->
             true
 
           _ ->
