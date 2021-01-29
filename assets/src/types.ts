@@ -69,19 +69,15 @@ export type Message = {
   attachments?: Attachment[];
 };
 
-export type Attachment = {
-  id: string;
-  filename: string;
-  file_url: string;
-  content_type: string;
-};
-
 export type FileUpload = {
   id: string;
   filename: string;
   file_url: string;
   content_type: string;
 };
+
+// Alias
+export type Attachment = FileUpload;
 
 export type Conversation = {
   id: string;
