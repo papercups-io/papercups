@@ -150,6 +150,66 @@ defmodule ChatApi.SlackTest do
       end
     end
 
+    test "Notification.format_slack_message_text/1 formats messages without attachments",
+         %{
+           account: account,
+           customer: customer,
+           conversation: conversation
+         } do
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer
+        )
+
+      assert Slack.Notification.format_slack_message_text(message) =~ message.body
+    end
+
+    test "Notification.format_slack_message_text/1 formats messages with attachments",
+         %{
+           account: account,
+           customer: customer,
+           conversation: conversation
+         } do
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer,
+          attachments: [
+            insert(:file, filename: "Test File", file_url: "https://file.jpg")
+          ]
+        )
+
+      assert Slack.Notification.format_slack_message_text(message) =~
+               "<https://file.jpg|Test File>"
+
+      assert Slack.Notification.format_slack_message_text(message) =~
+               message.body
+    end
+
+    test "Notification.format_slack_message_text/1 formats messages with attachments and no body text",
+         %{
+           account: account,
+           customer: customer,
+           conversation: conversation
+         } do
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer,
+          body: nil,
+          attachments: [
+            insert(:file, filename: "Test File", file_url: "https://file.jpg")
+          ]
+        )
+
+      assert Slack.Notification.format_slack_message_text(message) =~
+               "<https://file.jpg|Test File>"
+    end
+
     test "Notification.validate_send_to_primary_channel/2 returns :ok if the message is the initial message",
          %{thread: thread} do
       assert :ok =

@@ -4,6 +4,8 @@ import breaks from 'remark-breaks';
 import {Twemoji} from 'react-emoji-render';
 import {Box} from 'theme-ui';
 import {allowedNodeTypes} from '../common';
+import {Attachment} from '../../types';
+import {PaperClipOutlined} from '../icons';
 
 const renderers = {
   text: (props: any) => {
@@ -11,13 +13,46 @@ const renderers = {
   },
 };
 
-type ChatMessageBoxProps = {
+const ChatMessageAttachment = ({
+  attachment,
+  color,
+}: {
+  attachment: Attachment;
+  color?: string;
+}) => {
+  const {id, filename, file_url: fileUrl} = attachment;
+
+  return (
+    <Box key={id}>
+      <PaperClipOutlined />{' '}
+      <a
+        href={fileUrl}
+        style={{
+          color,
+          textDecoration: 'underline',
+        }}
+      >
+        {filename}
+      </a>
+    </Box>
+  );
+};
+
+type Props = {
   className?: string;
   content: string;
   sx?: Record<any, any>;
+  attachments?: Attachment[];
+  attachmentTextColor?: string;
 };
 
-const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
+const ChatMessageBox = ({
+  className,
+  content,
+  sx,
+  attachments = [],
+  attachmentTextColor,
+}: Props) => {
   const parsedSx = Object.assign(sx, {
     borderRadius: 4,
     p: {
@@ -39,6 +74,20 @@ const ChatMessageBox = ({className, content, sx}: ChatMessageBoxProps) => {
         renderers={renderers}
         plugins={[breaks]}
       />
+
+      {attachments && attachments.length > 0 && (
+        <Box mt={2} className={className}>
+          {attachments.map((attachment) => {
+            return (
+              <ChatMessageAttachment
+                key={attachment.id}
+                attachment={attachment}
+                color={attachmentTextColor}
+              />
+            );
+          })}
+        </Box>
+      )}
     </Box>
   );
 };

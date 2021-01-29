@@ -1,19 +1,79 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Menu, TextArea} from '../common';
-import {Message, MessageType} from '../../types';
+import {
+  colors,
+  Button,
+  Menu,
+  Text,
+  TextArea,
+  Upload,
+  UploadChangeParam,
+  UploadFile,
+} from '../common';
+import {Message, MessageType, User} from '../../types';
+import {PaperClipOutlined} from '../icons';
+
+const {REACT_APP_FILE_UPLOADS_ENABLED} = process.env;
+
+const fileUploadsEnabled = (accountId?: string) => {
+  const enabled = REACT_APP_FILE_UPLOADS_ENABLED || '';
+
+  switch (enabled) {
+    case '1':
+    case 'true':
+      return true;
+    default:
+      return accountId && accountId.length && enabled.includes(accountId);
+  }
+};
+
+const AttachFileButton = ({
+  fileList,
+  currentUser,
+  onUpdateFileList,
+}: {
+  fileList: any;
+  currentUser: User;
+  onUpdateFileList: (info: UploadChangeParam) => void;
+}) => {
+  // Antd takes a url to make the post request and data that gets added to the request
+  // (See https://ant.design/components/upload/ for more information)
+  const action = '/api/upload';
+  // TODO: figure out a better way to set these!
+  const data = {account_id: currentUser.account_id, user_id: currentUser.id};
+
+  return (
+    <Upload
+      className="AttachFileButton"
+      action={action}
+      onChange={onUpdateFileList}
+      data={data}
+      fileList={fileList}
+    >
+      <Button icon={<PaperClipOutlined />} size="small" type="text">
+        <Text type="secondary">Attach a file</Text>
+      </Button>
+    </Upload>
+  );
+};
 
 const ConversationFooter = ({
   sx = {},
   onSendMessage,
+  currentUser,
 }: {
   sx?: any;
   onSendMessage: (message: Partial<Message>) => void;
+  currentUser?: User | null;
 }) => {
   const [message, setMessage] = React.useState<string>('');
+  const [fileList, setFileList] = React.useState<Array<UploadFile>>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
+  const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
 
   const isPrivateNote = messageType === 'note';
+  const accountId = currentUser?.account_id;
+  const shouldDisplayUploadButton = fileUploadsEnabled(accountId);
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
     setMessage(e.target.value);
@@ -36,9 +96,25 @@ const ConversationFooter = ({
       body: message,
       type: messageType,
       private: isPrivateNote,
+      file_ids: fileList.map((f) => f.response?.data?.id),
     });
 
+    setFileList([]);
     setMessage('');
+  };
+
+  const onUpdateFileList = ({file, fileList, event}: UploadChangeParam) => {
+    setFileList(fileList);
+
+    // Disable send button when file upload is in progress
+    if (event) {
+      setSendDisabled(true);
+    }
+
+    // Enable send button again when the server has responded
+    if (file && file.response) {
+      setSendDisabled(false);
+    }
   };
 
   return (
@@ -110,11 +186,39 @@ const ConversationFooter = ({
                 onChange={handleMessageChange}
               />
             </Box>
-            <Flex sx={{justifyContent: 'flex-end'}}>
-              <Button type="primary" htmlType="submit">
-                Send
-              </Button>
-            </Flex>
+            {shouldDisplayUploadButton ? (
+              <Flex
+                sx={{
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                }}
+              >
+                {currentUser && (
+                  <AttachFileButton
+                    fileList={fileList}
+                    currentUser={currentUser}
+                    onUpdateFileList={onUpdateFileList}
+                  />
+                )}
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  disabled={isSendDisabled}
+                >
+                  Send
+                </Button>
+              </Flex>
+            ) : (
+              <Flex sx={{justifyContent: 'flex-end'}}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  disabled={isSendDisabled}
+                >
+                  Send
+                </Button>
+              </Flex>
+            )}
           </form>
         </Box>
       </Box>

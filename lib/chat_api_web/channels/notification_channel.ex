@@ -40,6 +40,11 @@ defmodule ChatApiWeb.NotificationChannel do
         |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
         |> Messages.create_message()
 
+      case Map.get(payload, "file_ids") do
+        file_ids when is_list(file_ids) -> Messages.create_attachments(message, file_ids)
+        _ -> nil
+      end
+
       message
       |> Map.get(:id)
       |> Messages.get_message!()

@@ -37,6 +37,7 @@ defmodule ChatApiWeb.Router do
 
     resources("/registration", RegistrationController, singleton: true, only: [:create])
     resources("/session", SessionController, singleton: true, only: [:create, :delete])
+    resources("/upload", UploadController, only: [:create, :show, :delete])
     post("/session/renew", SessionController, :renew)
 
     # TODO: figure out a way to secure these methods so they aren't abused

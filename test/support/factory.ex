@@ -71,6 +71,15 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def file_factory do
+    %ChatApi.Files.FileUpload{
+      account: build(:account),
+      filename: sequence("some filename"),
+      file_url: sequence("https://image.jpg"),
+      content_type: "image/png"
+    }
+  end
+
   def google_authorization_factory do
     %ChatApi.Google.GoogleAuthorization{
       client: "some client",

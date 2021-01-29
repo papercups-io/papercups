@@ -6,6 +6,7 @@ defmodule ChatApi.Messages.Message do
   alias ChatApi.Accounts.Account
   alias ChatApi.Customers.Customer
   alias ChatApi.Users.User
+  alias ChatApi.Messages.MessageFile
 
   @type t :: %__MODULE__{
           body: String.t(),
@@ -45,6 +46,9 @@ defmodule ChatApi.Messages.Message do
     belongs_to(:customer, Customer)
     belongs_to(:user, User, type: :integer)
 
+    has_many(:message_files, MessageFile)
+    has_many(:attachments, through: [:message_files, :file])
+
     timestamps()
   end
 
@@ -64,7 +68,7 @@ defmodule ChatApi.Messages.Message do
       :source,
       :metadata
     ])
-    |> validate_required([:body, :account_id, :conversation_id])
+    |> validate_required([:account_id, :conversation_id])
     |> validate_inclusion(:type, ["reply", "note"])
     |> validate_inclusion(:source, ["chat", "slack", "email"])
   end

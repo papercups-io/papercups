@@ -6,7 +6,7 @@ defmodule ChatApi.Messages do
   import Ecto.Query, warn: false
 
   alias ChatApi.Repo
-  alias ChatApi.Messages.Message
+  alias ChatApi.Messages.{Message, MessageFile}
 
   require Logger
 
@@ -21,7 +21,7 @@ defmodule ChatApi.Messages do
     |> where(account_id: ^account_id, conversation_id: ^conversation_id)
     |> order_by(desc: :inserted_at)
     |> limit(^limit)
-    |> preload([:customer, [user: :profile]])
+    |> preload([:attachments, :customer, [user: :profile]])
     |> Repo.all()
   end
 
@@ -38,7 +38,9 @@ defmodule ChatApi.Messages do
 
   @spec get_message!(binary()) :: Message.t()
   def get_message!(id) do
-    Message |> Repo.get!(id) |> Repo.preload([:conversation, :customer, [user: :profile]])
+    Message
+    |> Repo.get!(id)
+    |> Repo.preload([:attachments, :conversation, :customer, [user: :profile]])
   end
 
   @spec create_message(map()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}
@@ -71,5 +73,23 @@ defmodule ChatApi.Messages do
   @spec change_message(Message.t(), map()) :: Ecto.Changeset.t()
   def change_message(%Message{} = message, attrs \\ %{}) do
     Message.changeset(message, attrs)
+  end
+
+  @spec create_attachments(Message.t(), [binary()]) :: any()
+  def create_attachments(%Message{id: message_id, account_id: account_id}, file_ids) do
+    now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+
+    changesets =
+      Enum.map(file_ids, fn file_id ->
+        %{
+          message_id: message_id,
+          account_id: account_id,
+          file_id: file_id,
+          inserted_at: now,
+          updated_at: now
+        }
+      end)
+
+    Repo.insert_all(MessageFile, changesets)
   end
 end

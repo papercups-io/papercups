@@ -110,6 +110,25 @@ case System.get_env("PAPERCUPS_STRIPE_SECRET") do
     nil
 end
 
+aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
+aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
+bucket_name = System.get_env("BUCKET_NAME")
+region = System.get_env("AWS_REGION")
+
+if aws_key_id != nil and
+     aws_secret_key != nil and
+     bucket_name != nil and
+     region != nil do
+  config :ex_aws,
+    access_key_id: aws_key_id,
+    secret_access_key: aws_secret_key,
+    s3: [
+      scheme: "https://",
+      host: bucket_name <> ".s3.amazonaws.com",
+      region: region
+    ]
+end
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env()}.exs"
