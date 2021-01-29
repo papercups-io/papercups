@@ -65,7 +65,7 @@ export type Message = {
   conversation_id: string;
   user_id?: number;
   user?: User;
-  upload_ids?: string[];
+  file_ids?: string[];
   attachments?: Attachment[];
 };
 

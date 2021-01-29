@@ -1,16 +1,16 @@
-defmodule ChatApi.Attachments.Attachment do
+defmodule ChatApi.Messages.MessageFile do
   use Ecto.Schema
   import Ecto.Changeset
 
   alias ChatApi.Messages.Message
-  alias ChatApi.Uploads.Upload
+  alias ChatApi.Files.FileUpload
   alias ChatApi.Accounts.Account
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  schema "attachments" do
+  schema "message_files" do
     belongs_to(:message, Message)
-    belongs_to(:upload, Upload)
+    belongs_to(:file, FileUpload, foreign_key: :file_id)
     belongs_to(:account, Account)
     timestamps()
   end
@@ -21,8 +21,8 @@ defmodule ChatApi.Attachments.Attachment do
     |> cast(attrs, [
       :account_id,
       :message_id,
-      :upload_id
+      :file_id
     ])
-    |> validate_required([:account_id, :message_id, :upload_id])
+    |> validate_required([:account_id, :message_id, :file_id])
   end
 end

@@ -1,6 +1,6 @@
 defmodule ChatApiWeb.MessageView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.{CustomerView, MessageView, UserView, UploadView}
+  alias ChatApiWeb.{CustomerView, FileView, MessageView, UserView}
 
   def render("index.json", %{messages: messages}) do
     %{data: render_many(messages, MessageView, "message.json")}
@@ -43,7 +43,7 @@ defmodule ChatApiWeb.MessageView do
       user: render_one(message.user, UserView, "user.json"),
       customer_id: message.customer_id,
       customer: render_one(message.customer, CustomerView, "basic.json"),
-      attachments: render_attachments(message.uploads)
+      attachments: render_attachments(message.attachments)
     }
   end
 
@@ -62,13 +62,13 @@ defmodule ChatApiWeb.MessageView do
       customer_id: message.customer_id,
       user_id: message.user_id,
       user: render_one(message.user, UserView, "user.json"),
-      attachments: render_attachments(message.uploads)
+      attachments: render_attachments(message.attachments)
     }
   end
 
   # TODO: figure out the best way to handle this idiomatically
-  defp render_attachments([_ | _] = uploads),
-    do: render_many(uploads, UploadView, "upload.json")
+  defp render_attachments([_ | _] = attachments),
+    do: render_many(attachments, FileView, "file.json")
 
-  defp render_attachments(_uploads), do: []
+  defp render_attachments(_attachments), do: []
 end

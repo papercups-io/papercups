@@ -455,10 +455,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
       );
     }
 
-    const {body, upload_ids} = message;
-
+    const {body, file_ids} = message;
     const hasEmptyBody = !body || body.trim().length === 0;
-    const hasNoAttachments = !upload_ids || upload_ids.length === 0;
+    const hasNoAttachments = !file_ids || file_ids.length === 0;
 
     if (!this.channel || (hasEmptyBody && hasNoAttachments)) {
       return;

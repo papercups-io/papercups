@@ -183,7 +183,7 @@ defmodule ChatApi.Slack.Notification do
           default_text
       end
 
-    case message.uploads do
+    case message.attachments do
       [_ | _] = files ->
         formatted_attachments =
           files

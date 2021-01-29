@@ -1,8 +1,9 @@
 defmodule ChatApiWeb.UploadController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{Aws, Uploads}
-  alias ChatApi.Uploads.Upload
+  alias ChatApiWeb.FileView
+  alias ChatApi.{Aws, Files}
+  alias ChatApi.Files.FileUpload
 
   action_fallback ChatApiWeb.FallbackController
 
@@ -30,11 +31,11 @@ defmodule ChatApiWeb.UploadController do
       })
 
     with {:ok, _result} = ChatApi.Aws.upload(file, unique_filename),
-         {:ok, %Upload{} = upload} <- Uploads.create_upload(uploaded_file_params) do
+         {:ok, %FileUpload{} = file} <- Files.create_file(uploaded_file_params) do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", Routes.upload_path(conn, :show, upload))
-      |> render("show.json", upload: upload)
+      |> put_view(FileView)
+      |> render("show.json", file: file)
     end
   end
 end

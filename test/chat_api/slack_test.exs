@@ -177,8 +177,8 @@ defmodule ChatApi.SlackTest do
           account: account,
           conversation: conversation,
           customer: customer,
-          uploads: [
-            insert(:upload, filename: "Test File", file_url: "https://file.jpg")
+          attachments: [
+            insert(:file, filename: "Test File", file_url: "https://file.jpg")
           ]
         )
 
@@ -201,8 +201,8 @@ defmodule ChatApi.SlackTest do
           conversation: conversation,
           customer: customer,
           body: nil,
-          uploads: [
-            insert(:upload, filename: "Test File", file_url: "https://file.jpg")
+          attachments: [
+            insert(:file, filename: "Test File", file_url: "https://file.jpg")
           ]
         )
 

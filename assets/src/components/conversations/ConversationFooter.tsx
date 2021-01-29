@@ -73,7 +73,7 @@ const ConversationFooter = ({
       body: message,
       type: messageType,
       private: isPrivateNote,
-      upload_ids: fileList.map((f) => f.response?.data?.id),
+      file_ids: fileList.map((f) => f.response?.data?.id),
     });
 
     setFileList([]);
