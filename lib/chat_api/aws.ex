@@ -3,12 +3,7 @@ defmodule ChatApi.Aws do
   A module to handle interactions with AWS
   """
 
-  @config %{
-    aws_key_id: System.get_env("AWS_ACCESS_KEY_ID", ""),
-    aws_secret_key: System.get_env("AWS_SECRET_ACCESS_KEY", ""),
-    bucket_name: System.get_env("BUCKET_NAME", ""),
-    region: System.get_env("AWS_REGION", "")
-  }
+  alias ChatApi.Aws.Config
 
   @type config() :: %{
           aws_key_id: binary(),
@@ -19,7 +14,7 @@ defmodule ChatApi.Aws do
 
   @spec upload(Plug.Upload.t(), binary()) :: {:error, any} | {:ok, any()}
   def upload(file, identifier) do
-    with {:ok, %{bucket_name: bucket_name}} <- validate_config(),
+    with {:ok, %{bucket_name: bucket_name}} <- Config.validate(),
          {:ok, file_binary} = File.read(file.path) do
       bucket_name
       |> ExAws.S3.put_object(identifier, file_binary)
@@ -29,6 +24,7 @@ defmodule ChatApi.Aws do
         result -> {:error, result}
       end
     else
+      {:error, error} -> {:error, error}
       error -> {:error, error}
     end
   end
@@ -38,9 +34,12 @@ defmodule ChatApi.Aws do
     "https://#{bucket}.s3.amazonaws.com/#{bucket}/#{identifier}"
   end
 
-  @spec get_file_url(binary()) :: binary()
+  @spec get_file_url(binary()) :: binary() | nil
   def get_file_url(identifier) do
-    get_file_url(identifier, @config.bucket_name)
+    case Config.validate() do
+      {:ok, %{bucket_name: bucket}} -> get_file_url(identifier, bucket)
+      _ -> nil
+    end
   end
 
   @spec generate_unique_filename(Plug.Upload.t() | binary()) :: binary()
@@ -52,22 +51,5 @@ defmodule ChatApi.Aws do
     sanitized_filename = String.replace(filename, " ", "-")
 
     "#{uuid}-#{sanitized_filename}"
-  end
-
-  @spec validate_config :: {:error, [any()]} | {:ok, config()}
-  def validate_config() do
-    missing_env_keys =
-      Enum.filter(@config, fn {_key, value} ->
-        case value do
-          "" -> true
-          nil -> true
-          _ -> false
-        end
-      end)
-
-    case missing_env_keys do
-      [] -> {:ok, @config}
-      missing -> {:error, missing}
-    end
   end
 end

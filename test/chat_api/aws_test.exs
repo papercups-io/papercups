@@ -7,7 +7,7 @@ defmodule ChatApi.AwsTest do
     test "validate_config/0 validates that all the environment variables are set" do
       # Not sure the best way to test environment variables...
       validation =
-        case Aws.validate_config() do
+        case Aws.Config.validate() do
           {:ok,
            %{
              aws_key_id: _aws_key_id,

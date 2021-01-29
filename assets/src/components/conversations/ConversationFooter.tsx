@@ -6,6 +6,20 @@ import {PaperClipOutlined} from '../icons';
 import {UploadChangeParam} from 'antd/lib/upload';
 import {UploadFile} from 'antd/lib/upload/interface';
 
+const {REACT_APP_FILE_UPLOADS_ENABLED} = process.env;
+
+const fileUploadsEnabled = (accountId?: string) => {
+  const enabled = REACT_APP_FILE_UPLOADS_ENABLED || '';
+
+  switch (enabled) {
+    case '1':
+    case 'true':
+      return true;
+    default:
+      return accountId && accountId.length && enabled.includes(accountId);
+  }
+};
+
 const AttachFileButton = ({
   fileList,
   currentUser,
@@ -51,6 +65,8 @@ const ConversationFooter = ({
   const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
 
   const isPrivateNote = messageType === 'note';
+  const accountId = currentUser?.account_id;
+  const shouldDisplayUploadButton = fileUploadsEnabled(accountId);
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
     setMessage(e.target.value);
@@ -163,27 +179,39 @@ const ConversationFooter = ({
                 onChange={handleMessageChange}
               />
             </Box>
-            <Flex
-              sx={{
-                alignItems: 'flex-end',
-                justifyContent: 'space-between',
-              }}
-            >
-              {currentUser && (
-                <AttachFileButton
-                  fileList={fileList}
-                  currentUser={currentUser}
-                  onUpdateFileList={onUpdateFileList}
-                />
-              )}
-              <Button
-                type="primary"
-                htmlType="submit"
-                disabled={isSendDisabled}
+            {shouldDisplayUploadButton ? (
+              <Flex
+                sx={{
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                }}
               >
-                Send
-              </Button>
-            </Flex>
+                {currentUser && (
+                  <AttachFileButton
+                    fileList={fileList}
+                    currentUser={currentUser}
+                    onUpdateFileList={onUpdateFileList}
+                  />
+                )}
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  disabled={isSendDisabled}
+                >
+                  Send
+                </Button>
+              </Flex>
+            ) : (
+              <Flex sx={{justifyContent: 'flex-end'}}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  disabled={isSendDisabled}
+                >
+                  Send
+                </Button>
+              </Flex>
+            )}
           </form>
         </Box>
       </Box>
