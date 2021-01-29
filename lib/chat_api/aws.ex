@@ -54,6 +54,7 @@ defmodule ChatApi.Aws do
     "#{uuid}-#{sanitized_filename}"
   end
 
+  @spec validate_config :: {:error, [any()]} | {:ok, config()}
   def validate_config() do
     missing_env_keys =
       Enum.filter(@config, fn {_key, value} ->

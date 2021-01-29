@@ -5,7 +5,6 @@ defmodule ChatApi.Files do
 
   import Ecto.Query, warn: false
   alias ChatApi.Repo
-
   alias ChatApi.Files.FileUpload
 
   @spec get_file!(binary()) :: FileUpload.t()
@@ -18,6 +17,7 @@ defmodule ChatApi.Files do
     |> Repo.insert()
   end
 
+  @spec delete_file(FileUpload.t()) :: {:ok, FileUpload.t()} | {:error, Ecto.Changeset.t()}
   def delete_file(%FileUpload{} = file) do
     Repo.delete(file)
   end
