@@ -73,13 +73,14 @@ a.RelatedCustomerConversation--link:hover {
   box-shadow: 0 24px 48px rgba(17, 16, 62, 0.12);
 }
 
-.upload {
+/* Wrapper class for antd Upload component style overrides */
+.AttachFileButton {
   display: flex;
   flex-direction: column-reverse;
   float: left;
 }
 
-.upload .ant-upload-list.ant-upload-list-text {
+.AttachFileButton .ant-upload-list.ant-upload-list-text {
   display: flex;
   flex-wrap: wrap;
   float: right;

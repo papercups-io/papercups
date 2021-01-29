@@ -23,7 +23,7 @@ const AttachFileButton = ({
 
   return (
     <Upload
-      className="upload"
+      className="AttachFileButton"
       action={action}
       onChange={onUpdateFileList}
       data={data}
