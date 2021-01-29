@@ -37,6 +37,9 @@ import {
 
 import DatePicker from './DatePicker';
 
+export type {UploadChangeParam} from 'antd/lib/upload';
+export type {UploadFile} from 'antd/lib/upload/interface';
+
 const {Title, Text, Paragraph} = Typography;
 const {Header, Content, Footer, Sider} = Layout;
 const {RangePicker} = DatePicker;

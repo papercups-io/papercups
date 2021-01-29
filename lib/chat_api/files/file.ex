@@ -37,7 +37,7 @@ defmodule ChatApi.Files.FileUpload do
     belongs_to(:customer, Customer)
     belongs_to(:user, User, type: :integer)
 
-    has_many(:message_files, MessageFile)
+    has_many(:message_files, MessageFile, foreign_key: :file_id)
     has_many(:messages, through: [:message_files, :messages])
 
     timestamps()

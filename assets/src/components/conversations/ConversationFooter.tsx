@@ -1,10 +1,16 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Menu, TextArea, Upload} from '../common';
+import {
+  colors,
+  Button,
+  Menu,
+  TextArea,
+  Upload,
+  UploadChangeParam,
+  UploadFile,
+} from '../common';
 import {Message, MessageType, User} from '../../types';
 import {PaperClipOutlined} from '../icons';
-import {UploadChangeParam} from 'antd/lib/upload';
-import {UploadFile} from 'antd/lib/upload/interface';
 
 const {REACT_APP_FILE_UPLOADS_ENABLED} = process.env;
 
