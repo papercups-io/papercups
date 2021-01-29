@@ -13,6 +13,8 @@ defmodule ChatApi.Uploads.Upload do
     field(:unique_filename, :string)
     field(:content_type, :string)
 
+    # TODO: add account/user/customer associations
+
     has_many(:attachments, Attachment)
     has_many(:messages, through: [:attachments, :messages])
 

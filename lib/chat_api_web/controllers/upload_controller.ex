@@ -7,22 +7,27 @@ defmodule ChatApiWeb.UploadController do
   action_fallback ChatApiWeb.FallbackController
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def create(conn, %{
-        "file" => %Plug.Upload{} = file,
-        "account_id" => account_id,
-        "user_id" => user_id
-      }) do
+  def create(
+        conn,
+        %{
+          "file" => %Plug.Upload{} = file,
+          "account_id" => account_id
+        } = params
+      ) do
+    # TODO: get `account_id` from request context rather than params
     filename = String.replace(file.filename, " ", "-")
     unique_filename = Aws.generate_unique_filename(filename)
 
-    uploaded_file_params = %{
-      "filename" => filename,
-      "unique_filename" => unique_filename,
-      "file_url" => Aws.get_file_url(unique_filename),
-      "content_type" => file.content_type,
-      "account_id" => account_id,
-      "user_id" => user_id
-    }
+    uploaded_file_params =
+      params
+      |> Map.delete("file")
+      |> Map.merge(%{
+        "filename" => filename,
+        "unique_filename" => unique_filename,
+        "file_url" => Aws.get_file_url(unique_filename),
+        "content_type" => file.content_type,
+        "account_id" => account_id
+      })
 
     with {:ok, _result} = ChatApi.Aws.upload(file, unique_filename),
          {:ok, %Upload{} = upload} <- Uploads.create_upload(uploaded_file_params) do
