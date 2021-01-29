@@ -30,12 +30,25 @@ defmodule ChatApiWeb.UploadController do
         "account_id" => account_id
       })
 
-    with {:ok, _result} = ChatApi.Aws.upload(file, unique_filename),
+    with {:ok, _result} <- Aws.upload(file, unique_filename),
          {:ok, %FileUpload{} = file} <- Files.create_file(uploaded_file_params) do
       conn
       |> put_status(:created)
       |> put_view(FileView)
       |> render("show.json", file: file)
+    else
+      {:error, :invalid_aws_config, errors} ->
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "Missing AWS keys: #{inspect(errors)}"}})
+
+      {:error, :file_error, error} ->
+        conn
+        |> put_status(422)
+        |> json(%{error: %{status: 422, message: "Invalid or malformed file: #{inspect(error)}"}})
+
+      error ->
+        error
     end
   end
 end

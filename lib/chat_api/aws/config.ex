@@ -23,7 +23,7 @@ defmodule ChatApi.Aws.Config do
 
     case missing_env_keys do
       [] -> {:ok, config}
-      missing -> {:error, missing}
+      missing -> {:error, :invalid_aws_config, missing}
     end
   end
 

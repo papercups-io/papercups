@@ -15,7 +15,7 @@ defmodule ChatApi.Aws do
   @spec upload(Plug.Upload.t(), binary()) :: {:error, any} | {:ok, any()}
   def upload(file, identifier) do
     with {:ok, %{bucket_name: bucket_name}} <- Config.validate(),
-         {:ok, file_binary} = File.read(file.path) do
+         {:ok, file_binary} <- File.read(file.path) do
       bucket_name
       |> ExAws.S3.put_object(identifier, file_binary)
       |> ExAws.request!()
@@ -24,8 +24,9 @@ defmodule ChatApi.Aws do
         result -> {:error, result}
       end
     else
-      {:error, error} -> {:error, error}
-      error -> {:error, error}
+      {:error, :invalid_aws_config, errors} -> {:error, :invalid_aws_config, errors}
+      {:error, error} -> {:error, :file_error, error}
+      error -> error
     end
   end
 
