@@ -657,6 +657,14 @@ defmodule ChatApi.Slack.Helpers do
     raise "Unrecognized params for Slack payload: #{text} #{inspect(params)}"
   end
 
+  @spec send_internal_notification(binary()) :: any()
+  def send_internal_notification(message) do
+    Logger.info(message)
+    # Putting in an async Task for now, since we don't care if this succeeds
+    # or fails (and we also don't want it to block anything)
+    Task.start(fn -> Slack.Notification.log(message) end)
+  end
+
   @spec reply_broadcast_enabled?(Message.t()) :: boolean()
   # We only want to enable this for messages from customers
   defp reply_broadcast_enabled?(%Message{
