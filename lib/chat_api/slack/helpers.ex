@@ -465,6 +465,20 @@ defmodule ChatApi.Slack.Helpers do
   def extract_slack_message(response),
     do: {:error, "Invalid response: #{inspect(response)}"}
 
+  @spec extract_slack_messages(map()) :: {:ok, [map()]} | {:error, String.t()}
+  def extract_slack_messages(%{body: %{"ok" => true, "messages" => messages}})
+      when is_list(messages),
+      do: {:ok, messages}
+
+  def extract_slack_messages(%{body: %{"ok" => false} = body}) do
+    Logger.error("conversations.replies returned ok=false: #{inspect(body)}")
+
+    {:error, "conversations.replies returned ok=false: #{inspect(body)}"}
+  end
+
+  def extract_slack_messages(response),
+    do: {:error, "Invalid response: #{inspect(response)}"}
+
   @spec extract_slack_channel(map()) :: {:ok, map()} | {:error, String.t()}
   def extract_slack_channel(%{body: %{"ok" => true, "channel" => channel}}) when is_map(channel),
     do: {:ok, channel}

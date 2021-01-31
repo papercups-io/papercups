@@ -278,16 +278,20 @@ defmodule ChatApiWeb.SlackControllerTest do
         retrieve_message: fn _, _, _ ->
           {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}
         end,
+        retrieve_conversation_replies: fn _, _, _ ->
+          {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message, event_params]}}}
+        end,
         send_message: fn _, _ -> {:ok, nil} end do
         post(conn, Routes.slack_path(conn, :webhook), %{
           "event" => event_params
         })
 
-        assert [%{body: body, conversation: conversation, source: "slack"}] =
+        assert [%{body: body, conversation: conversation, source: "slack"}, reply] =
                  Messages.list_messages(account.id)
 
         assert %{source: "slack"} = conversation
-        assert body == event_params["text"]
+        assert body == slack_bot_message["text"]
+        assert reply.body == event_params["text"]
       end
     end
 
@@ -324,6 +328,9 @@ defmodule ChatApiWeb.SlackControllerTest do
           {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
         end,
         retrieve_message: fn _, _, _ ->
+          {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}
+        end,
+        retrieve_conversation_replies: fn _, _, _ ->
           {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}
         end,
         send_message: fn _, _ -> {:ok, nil} end do

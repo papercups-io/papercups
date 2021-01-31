@@ -12,6 +12,7 @@ defmodule ChatApiWeb.SlackController do
     SlackConversationThreads
   }
 
+  alias ChatApi.Messages.Message
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -19,85 +20,80 @@ defmodule ChatApiWeb.SlackController do
   @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def oauth(conn, %{"code" => code} = params) do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")
-    # TODO: improve error handling, incorporate these lines into the
-    # `with` statement rather than doing `if Map.get(body, "ok") do...`
-    {:ok, response} = Slack.Client.get_access_token(code)
 
-    Logger.info("Slack OAuth response: #{inspect(response)}")
+    # TODO: improve error handling?
+    with %{account_id: account_id, email: email} <- conn.assigns.current_user,
+         {:ok, response} <- Slack.Client.get_access_token(code),
+         :ok <- Logger.info("Slack OAuth response: #{inspect(response)}"),
+         %{body: body} <- response,
+         %{
+           "access_token" => access_token,
+           "app_id" => app_id,
+           "bot_user_id" => bot_user_id,
+           "scope" => scope,
+           "token_type" => token_type,
+           "authed_user" => authed_user,
+           "team" => team,
+           "incoming_webhook" => incoming_webhook
+         } <- body,
+         %{"id" => authed_user_id} <- authed_user,
+         %{"id" => team_id, "name" => team_name} <- team,
+         %{
+           "channel" => channel,
+           "channel_id" => channel_id,
+           "configuration_url" => configuration_url,
+           "url" => webhook_url
+         } <- incoming_webhook do
+      integration_type = Map.get(params, "type", "reply")
 
-    %{body: body} = response
+      params = %{
+        account_id: account_id,
+        access_token: access_token,
+        app_id: app_id,
+        authed_user_id: authed_user_id,
+        bot_user_id: bot_user_id,
+        scope: scope,
+        token_type: token_type,
+        channel: channel,
+        channel_id: channel_id,
+        configuration_url: configuration_url,
+        team_id: team_id,
+        team_name: team_name,
+        webhook_url: webhook_url,
+        type: integration_type
+      }
 
-    if Map.get(body, "ok") do
-      with %{account_id: account_id, email: email} <- conn.assigns.current_user,
-           %{
-             "access_token" => access_token,
-             "app_id" => app_id,
-             "bot_user_id" => bot_user_id,
-             "scope" => scope,
-             "token_type" => token_type,
-             "authed_user" => authed_user,
-             "team" => team,
-             "incoming_webhook" => incoming_webhook
-           } <- body,
-           %{"id" => authed_user_id} <- authed_user,
-           %{"id" => team_id, "name" => team_name} <- team,
-           %{
-             "channel" => channel,
-             "channel_id" => channel_id,
-             "configuration_url" => configuration_url,
-             "url" => webhook_url
-           } <- incoming_webhook do
-        integration_type = Map.get(params, "type", "reply")
+      # TODO: after creating, check if connected channel is private;
+      # If yes, use webhook_url to send notification that Papercups app needs
+      # to be added manually, along with instructions for how to do so
+      SlackAuthorizations.create_or_update(account_id, params)
 
-        params = %{
-          account_id: account_id,
-          access_token: access_token,
-          app_id: app_id,
-          authed_user_id: authed_user_id,
-          bot_user_id: bot_user_id,
-          scope: scope,
-          token_type: token_type,
-          channel: channel,
-          channel_id: channel_id,
-          configuration_url: configuration_url,
-          team_id: team_id,
-          team_name: team_name,
-          webhook_url: webhook_url,
-          type: integration_type
-        }
+      cond do
+        integration_type == "reply" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
+          send_private_channel_instructions(:reply, webhook_url)
 
-        # TODO: after creating, check if connected channel is private;
-        # If yes, use webhook_url to send notification that Papercups app needs
-        # to be added manually, along with instructions for how to do so
-        SlackAuthorizations.create_or_update(account_id, params)
+        integration_type == "support" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
+          send_private_channel_instructions(:support, webhook_url)
 
-        cond do
-          integration_type == "reply" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
-            send_private_channel_instructions(:reply, webhook_url)
+        integration_type == "support" ->
+          send_support_channel_instructions(webhook_url)
 
-          integration_type == "support" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
-            send_private_channel_instructions(:support, webhook_url)
-
-          integration_type == "support" ->
-            send_support_channel_instructions(webhook_url)
-
-          true ->
-            nil
-        end
-
-        send_internal_notification(
-          "#{email} successfully linked Slack `#{inspect(integration_type)}` integration to channel `#{
-            channel
-          }`"
-        )
-
-        json(conn, %{data: %{ok: true}})
-      else
-        _ ->
-          raise "Unrecognized OAuth response"
+        true ->
+          nil
       end
+
+      send_internal_notification(
+        "#{email} successfully linked Slack `#{inspect(integration_type)}` integration to channel `#{
+          channel
+        }`"
+      )
+
+      json(conn, %{data: %{ok: true}})
     else
-      raise "OAuth access denied"
+      error ->
+        Logger.error(error)
+
+        raise "OAuth access denied: #{inspect(error)}"
     end
   end
 
@@ -323,16 +319,16 @@ defmodule ChatApiWeb.SlackController do
   defp handle_event(
          %{
            "type" => "message",
-           "text" => text,
+           "text" => _text,
            "team" => team,
            "channel" => slack_channel_id,
            "user" => slack_user_id,
-           "ts" => ts
+           "ts" => _ts
          } = event
        ) do
     Logger.debug("Handling Slack new message event: #{inspect(event)}")
 
-    with %{account_id: account_id} = authorization <-
+    with authorization <-
            SlackAuthorizations.find_slack_authorization(%{
              team_id: team,
              type: "support"
@@ -340,48 +336,8 @@ defmodule ChatApiWeb.SlackController do
          # TODO: remove after debugging!
          :ok <- Logger.info("Handling Slack new message event: #{inspect(event)}"),
          :ok <- validate_channel_supported(authorization, slack_channel_id),
-         :ok <- validate_non_admin_user(authorization, slack_user_id),
-         {:ok, customer} <-
-           Slack.Helpers.create_or_update_customer_from_slack_user_id(
-             authorization,
-             slack_user_id,
-             slack_channel_id
-           ),
-         # TODO: should the conversation + thread + message all be handled in a transaction?
-         # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
-         # TODO: should we handle default assignment here as well?
-         {:ok, conversation} <-
-           Conversations.create_conversation(%{
-             account_id: account_id,
-             customer_id: customer.id,
-             source: "slack"
-           }),
-         {:ok, message} <-
-           Messages.create_message(%{
-             account_id: account_id,
-             conversation_id: conversation.id,
-             customer_id: customer.id,
-             body: Slack.Helpers.sanitize_slack_message(text, authorization),
-             source: "slack"
-           }),
-         {:ok, _slack_conversation_thread} <-
-           SlackConversationThreads.create_slack_conversation_thread(%{
-             slack_channel: slack_channel_id,
-             slack_thread_ts: ts,
-             account_id: account_id,
-             conversation_id: conversation.id
-           }) do
-      conversation
-      |> Conversations.Notification.broadcast_conversation_to_admin!()
-      |> Conversations.Notification.broadcast_conversation_to_customer!()
-
-      Messages.get_message!(message.id)
-      |> Messages.Notification.broadcast_to_customer!()
-      |> Messages.Notification.broadcast_to_admin!()
-      |> Messages.Notification.notify(:webhooks)
-      # TODO: should we make this configurable? Or only do it from private channels?
-      # (Considering temporarily disabling this until we figure out what most users want)
-      |> Messages.Notification.notify(:slack, authorization.metadata)
+         :ok <- validate_non_admin_user(authorization, slack_user_id) do
+      create_new_conversation_from_slack_message(event, authorization)
     end
   end
 
@@ -423,22 +379,96 @@ defmodule ChatApiWeb.SlackController do
   defp handle_emoji_reaction_event(
          %{
            "type" => "message",
-           "text" => text,
+           "text" => _text,
            "team" => team,
            "channel" => slack_channel_id,
-           "user" => slack_user_id,
-           "ts" => ts
-         } = _event
+           "user" => _slack_user_id,
+           "ts" => _ts
+         } = event
        ) do
-    with %{account_id: account_id} = authorization <-
+    with authorization <-
            SlackAuthorizations.find_slack_authorization(%{
              team_id: team,
              type: "support"
            }),
+         :ok <- validate_channel_supported(authorization, slack_channel_id) do
+      create_new_conversation_from_slack_message(event, authorization)
+    end
+  end
+
+  @spec handle_reply_to_bot_event(map()) :: any()
+  defp handle_reply_to_bot_event(
+         %{
+           "type" => "message",
+           "text" => _text,
+           "team" => team,
+           "thread_ts" => thread_ts,
+           "channel" => slack_channel_id,
+           "user" => slack_user_id
+         } = event
+       ) do
+    with %{access_token: access_token} = authorization <-
+           SlackAuthorizations.find_slack_authorization(%{
+             team_id: team,
+             type: "support"
+           }),
+         # TODO: remove after debugging!
+         :ok <- Logger.info("Checking if message event is reply to bot: #{inspect(event)}"),
          :ok <- validate_channel_supported(authorization, slack_channel_id),
-         # NB: not ideal, but this may treat an internal/admin user as a "customer",
-         # because at the moment all conversations must have a customer associated with them
-         {:ok, customer} <-
+         {:ok, response} <-
+           Slack.Client.retrieve_conversation_replies(slack_channel_id, thread_ts, access_token),
+         {:ok, [initial_message | replies]} <- Slack.Helpers.extract_slack_messages(response),
+         # TODO: support both bot messages AND messages from admin/internal users
+         true <- Slack.Helpers.is_bot_message?(initial_message) do
+      # Handle initial message first
+      create_new_conversation_from_slack_message(
+        %{
+          "type" => "message",
+          "text" => Map.get(initial_message, "text"),
+          "channel" => slack_channel_id,
+          # TODO: this will currently treat the bot as if it were the user...
+          # We still need to add better support for bot messages
+          "user" => Map.get(initial_message, "user", slack_user_id),
+          "ts" => thread_ts
+        },
+        authorization
+      )
+
+      # Then, handle replies
+      Enum.each(replies, fn msg ->
+        # Wait 1s between each message so they don't have the same `inserted_at`
+        # timestamp... in the future, we should start sorting by `sent_at` instead!
+        Process.sleep(1000)
+
+        handle_event(%{
+          "type" => "message",
+          "text" => Map.get(msg, "text"),
+          "thread_ts" => thread_ts,
+          "channel" => slack_channel_id,
+          "user" => Map.get(msg, "user", slack_user_id)
+        })
+      end)
+    end
+  end
+
+  defp handle_reply_to_bot_event(_event), do: nil
+
+  # TODO: move to Slack.Helpers?
+  @spec create_new_conversation_from_slack_message(map(), SlackAuthorization.t()) ::
+          Message.t() | {:error, any()}
+  defp create_new_conversation_from_slack_message(
+         %{
+           "type" => "message",
+           "text" => text,
+           "channel" => slack_channel_id,
+           "user" => slack_user_id,
+           "ts" => ts
+         } = _event,
+         %SlackAuthorization{account_id: account_id} = authorization
+       ) do
+    # NB: not ideal, but this may treat an internal/admin user as a "customer",
+    # because at the moment all conversations must have a customer associated with them
+    with {:ok, customer} <-
            Slack.Helpers.create_or_update_customer_from_slack_user_id(
              authorization,
              slack_user_id,
@@ -479,49 +509,9 @@ defmodule ChatApiWeb.SlackController do
       # TODO: should we make this configurable? Or only do it from private channels?
       # (Leaving this enabled for the emoji reaction use case, since it's an explicit action
       # as opposed to the auto-syncing that occurs above for all new messages)
-      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.notify(:slack, authorization.metadata)
     end
   end
-
-  @spec handle_reply_to_bot_event(map()) :: any()
-  defp handle_reply_to_bot_event(
-         %{
-           "type" => "message",
-           "text" => text,
-           "team" => team,
-           "thread_ts" => thread_ts,
-           "channel" => slack_channel_id,
-           "user" => slack_user_id
-         } = event
-       ) do
-    with %{access_token: access_token} = authorization <-
-           SlackAuthorizations.find_slack_authorization(%{
-             team_id: team,
-             type: "support"
-           }),
-         # TODO: remove after debugging!
-         :ok <- Logger.info("Checking if message event is reply to bot: #{inspect(event)}"),
-         :ok <- validate_channel_supported(authorization, slack_channel_id),
-         {:ok, response} <-
-           Slack.Client.retrieve_message(slack_channel_id, thread_ts, access_token),
-         {:ok, message} <- Slack.Helpers.extract_slack_message(response),
-         true <- Slack.Helpers.is_bot_message?(message) do
-      # NB: we treat this reply message as if it were the initial message in the thread
-      # (i.e. we set the `ts` field to the original `thread_ts`), in order to ensure all
-      # future replies are in the same thread.
-      # TODO: should we include the original message in the thread somewhere?
-      handle_event(%{
-        "type" => "message",
-        "text" => text,
-        "team" => team,
-        "channel" => slack_channel_id,
-        "user" => slack_user_id,
-        "ts" => thread_ts
-      })
-    end
-  end
-
-  defp handle_reply_to_bot_event(_event), do: nil
 
   defp get_thread_conversation(thread_ts, channel) do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
