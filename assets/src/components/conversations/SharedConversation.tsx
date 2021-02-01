@@ -5,13 +5,12 @@ import qs from 'query-string';
 import {colors} from '../common';
 import ConversationMessages from './ConversationMessages';
 import * as API from '../../api';
-import {Customer, Message} from '../../types';
+import {Message} from '../../types';
 import logger from '../../logger';
 
 type Props = RouteComponentProps<{}>;
 type State = {
   loading: boolean;
-  customer: Customer | null;
   messages: Array<Message>;
 };
 
@@ -21,7 +20,7 @@ class SharedConversationContainer extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    this.state = {loading: true, customer: null, messages: []};
+    this.state = {loading: true, messages: []};
   }
 
   async componentDidMount() {
@@ -30,13 +29,12 @@ class SharedConversationContainer extends React.Component<Props, State> {
       const q = qs.parse(search);
       const conversationId = String(q?.cid);
       const token = String(q?.token);
-      const {customer, messages = []} = await API.fetchSharedConversation(
+      const {messages = []} = await API.fetchSharedConversation(
         conversationId,
         token
       );
 
       this.setState({
-        customer,
         messages: messages.sort(
           (a: Message, b: Message) =>
             +new Date(a.created_at) - +new Date(b.created_at)
@@ -55,11 +53,7 @@ class SharedConversationContainer extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, customer, messages} = this.state;
-
-    if (!customer) {
-      return null;
-    }
+    const {loading, messages} = this.state;
 
     return (
       <Flex
@@ -83,7 +77,6 @@ class SharedConversationContainer extends React.Component<Props, State> {
             sx={{p: 3}}
             loading={loading}
             messages={messages}
-            customer={customer}
             isAgentMessage={(message: Message) => message && !!message.user_id}
             setScrollRef={(el) => (this.scrollToEl = el)}
           />

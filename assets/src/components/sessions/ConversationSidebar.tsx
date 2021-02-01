@@ -49,8 +49,7 @@ class ConversationSidebar extends React.Component<Props, any> {
   };
 
   render() {
-    const {conversation, currentUser, messages = []} = this.props;
-    const {customer} = conversation;
+    const {currentUser, messages = []} = this.props;
 
     return (
       <Flex
@@ -69,7 +68,6 @@ class ConversationSidebar extends React.Component<Props, any> {
           sx={{p: 3}}
           messages={messages}
           currentUser={currentUser}
-          customer={customer}
           setScrollRef={(el) => (this.scrollToEl = el)}
         />
 
