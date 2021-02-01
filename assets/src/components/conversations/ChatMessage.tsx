@@ -104,7 +104,6 @@ export const SenderAvatar = ({
 
 type Props = {
   message: Message;
-  customer?: Customer | null;
   isMe?: boolean;
   isLastInGroup?: boolean;
   shouldDisplayTimestamp?: boolean;
@@ -112,7 +111,6 @@ type Props = {
 
 const ChatMessage = ({
   message,
-  customer,
   isMe,
   isLastInGroup,
   shouldDisplayTimestamp,
@@ -121,6 +119,7 @@ const ChatMessage = ({
     body,
     sent_at,
     created_at,
+    customer,
     user,
     seen_at,
     private: isPrivate,

@@ -5,7 +5,7 @@ import {Button, colors, Result} from '../common';
 import {SmileOutlined} from '../icons';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
-import {Customer, Message, User} from '../../types';
+import {Message, User} from '../../types';
 
 const EmptyMessagesPlaceholder = () => {
   return (
@@ -40,7 +40,6 @@ const GettingStartedRedirect = () => {
 const ConversationMessages = ({
   messages,
   currentUser,
-  customer,
   loading,
   isClosing,
   showGetStarted,
@@ -50,7 +49,6 @@ const ConversationMessages = ({
 }: {
   messages: Array<Message>;
   currentUser?: User | null;
-  customer: Customer | null;
   loading?: boolean;
   isClosing?: boolean;
   showGetStarted?: boolean;
@@ -107,7 +105,6 @@ const ConversationMessages = ({
                 <ChatMessage
                   key={key}
                   message={msg}
-                  customer={customer}
                   isMe={isMe}
                   isLastInGroup={isLastInGroup}
                   shouldDisplayTimestamp={isLastInGroup}

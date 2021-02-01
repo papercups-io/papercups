@@ -20,15 +20,6 @@ defmodule ChatApi.ConversationsTest do
     {:ok, account: account, conversation: conversation, customer: customer}
   end
 
-  describe "list_conversations/0" do
-    test "returns all conversations",
-         %{conversation: conversation} do
-      result_ids = Conversations.list_conversations() |> Enum.map(& &1.id)
-
-      assert result_ids == [conversation.id]
-    end
-  end
-
   describe "list_conversations_by_account/1" do
     test "returns all conversations for an account",
          %{account: account, conversation: conversation} do

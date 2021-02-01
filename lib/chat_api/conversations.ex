@@ -12,11 +12,6 @@ defmodule ChatApi.Conversations do
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
 
-  @spec list_conversations() :: [Conversation.t()]
-  def list_conversations do
-    Conversation |> Repo.all() |> Repo.preload([:customer, :messages])
-  end
-
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(account_id, filters \\ %{}) do
     Conversation
@@ -24,7 +19,7 @@ defmodule ChatApi.Conversations do
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
     |> order_by_most_recent_message()
-    |> preload([:customer, messages: [:attachments, user: :profile]])
+    |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
     |> Repo.all()
   end
 
@@ -87,7 +82,7 @@ defmodule ChatApi.Conversations do
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
     |> order_by_most_recent_message()
-    |> preload([:customer, messages: [user: :profile]])
+    |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
     |> first()
     |> Repo.one()
   end
@@ -131,7 +126,7 @@ defmodule ChatApi.Conversations do
       from m in Message,
         where: m.private == false,
         order_by: m.inserted_at,
-        preload: [user: :profile]
+        preload: [:attachments, user: :profile]
 
     Conversation
     |> where(customer_id: ^customer_id)
@@ -192,7 +187,7 @@ defmodule ChatApi.Conversations do
     # TODO: make sure messages are sorted properly?
     Conversation
     |> Repo.get!(id)
-    |> Repo.preload([:customer, :tags, messages: [:attachments, user: :profile]])
+    |> Repo.preload([:customer, :tags, messages: [:attachments, :customer, user: :profile]])
   end
 
   @spec get_conversation(binary()) :: Conversation.t() | nil
@@ -224,7 +219,7 @@ defmodule ChatApi.Conversations do
     |> where(account_id: ^account_id)
     |> where([c], is_nil(c.archived_at))
     |> Repo.one!()
-    |> Repo.preload([:customer, :tags, messages: [user: :profile]])
+    |> Repo.preload([:customer, :tags, messages: [:attachments, :customer, user: :profile]])
   end
 
   @spec create_conversation(map()) :: {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
