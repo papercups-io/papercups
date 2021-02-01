@@ -85,3 +85,8 @@ a.RelatedCustomerConversation--link:hover {
   flex-wrap: wrap;
   float: right;
 }
+
+.AttachFileButton .ant-upload-list-item {
+  margin-top: 0px;
+  margin-bottom: 4px;
+}
