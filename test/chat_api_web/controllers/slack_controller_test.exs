@@ -261,8 +261,10 @@ defmodule ChatApiWeb.SlackControllerTest do
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
         "team" => authorization.team_id,
-        "ts" => "12345",
-        "thread_ts" => "12345",
+        # Jan 2, 2021
+        "ts" => "1609545600.0000",
+        # Jan 1, 2021
+        "thread_ts" => "1609459200.0000",
         "channel" => authorization.channel_id,
         "user" => authorization.authed_user_id
       }
@@ -293,9 +295,9 @@ defmodule ChatApiWeb.SlackControllerTest do
           "event" => event_params
         })
 
-        assert [%{body: body, conversation: conversation, source: "slack"}, reply] =
-                 Messages.list_messages(account.id)
+        messages = account.id |> Messages.list_messages() |> Enum.sort_by(& &1.sent_at, :asc)
 
+        assert [%{body: body, conversation: conversation, source: "slack"}, reply] = messages
         assert %{source: "slack"} = conversation
         assert body == slack_bot_message["text"]
         assert reply.body == event_params["text"]

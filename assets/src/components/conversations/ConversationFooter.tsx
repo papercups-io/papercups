@@ -4,7 +4,6 @@ import {
   colors,
   Button,
   Menu,
-  Text,
   TextArea,
   Upload,
   UploadChangeParam,
