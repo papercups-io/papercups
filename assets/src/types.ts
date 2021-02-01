@@ -28,6 +28,7 @@ export type Customer = {
   created_at?: string;
   current_url?: string;
   external_id?: any;
+  profile_photo_url?: string;
   first_seen?: any;
   host?: string;
   ip?: string;

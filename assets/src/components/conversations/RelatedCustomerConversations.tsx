@@ -4,7 +4,11 @@ import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
 import {colors, Text} from '../common';
 import Spinner from '../Spinner';
-import {getSenderIdentifier, SenderAvatar} from './ChatMessage';
+import {
+  getSenderIdentifier,
+  getSenderProfilePhoto,
+  SenderAvatar,
+} from './ChatMessage';
 import {getColorByUuid} from './support';
 import * as API from '../../api';
 import {Conversation} from '../../types';
@@ -31,6 +35,7 @@ const RelatedConversationItem = ({
   const date = formatShortRelativeTime(created);
   const {user, customer} = recent;
   const name = getSenderIdentifier(customer, user);
+  const profilePhotoUrl = getSenderProfilePhoto(customer, user);
   const isAgent = !!user;
   const preview = recent.body ? recent.body : '...';
   const customerId = customer && customer.id;
@@ -57,7 +62,7 @@ const RelatedConversationItem = ({
             color={color}
             size={20}
             name={name}
-            user={user}
+            profilePhotoUrl={profilePhotoUrl}
           />
           <Text type="secondary" style={{fontSize: 12}}>
             {date}

@@ -28,21 +28,32 @@ export const getSenderIdentifier = (
   }
 };
 
+export const getSenderProfilePhoto = (
+  customer?: Customer | null,
+  user?: User
+) => {
+  if (user) {
+    return user.profile_photo_url || null;
+  } else if (customer) {
+    return customer.profile_photo_url || null;
+  } else {
+    return null;
+  }
+};
+
 export const SenderAvatar = ({
   isAgent,
   name,
-  user,
+  profilePhotoUrl,
   size = 32,
   color = colors.gold,
 }: {
   isAgent: boolean;
   name: string;
-  user?: User;
+  profilePhotoUrl?: string | null;
   size?: number;
   color?: string;
 }) => {
-  const profilePhotoUrl = user && user.profile_photo_url;
-
   if (profilePhotoUrl) {
     return (
       <Tooltip title={name}>
@@ -123,6 +134,7 @@ const ChatMessage = ({
   const formattedSeenAt = seenAt ? formatRelativeTime(seenAt) : null;
   const customerId = customer && customer.id;
   const color = getColorByUuid(customerId);
+  const profilePhotoUrl = getSenderProfilePhoto(customer, user);
 
   // TODO: might be nice to push the boolean logic related to color down to the ChatMessageBox
   // Maybe have PrivateChatMessageBox, ChatMessageBox, OtherCustomerMessageBox
@@ -160,7 +172,7 @@ const ChatMessage = ({
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
         <SenderAvatar
           name={tooltip}
-          user={user}
+          profilePhotoUrl={profilePhotoUrl}
           isAgent={isAgent}
           color={color}
         />
