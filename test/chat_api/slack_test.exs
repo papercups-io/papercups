@@ -234,21 +234,28 @@ defmodule ChatApi.SlackTest do
   describe "Slack.Helpers" do
     setup do
       account = insert(:account)
+      authorization = insert(:slack_authorization, account: account)
       customer = insert(:customer, account: account)
       conversation = insert(:conversation, account: account, customer: customer)
       thread = insert(:slack_conversation_thread, account: account, conversation: conversation)
 
-      {:ok, conversation: conversation, account: account, customer: customer, thread: thread}
+      {:ok,
+       conversation: conversation,
+       account: account,
+       authorization: authorization,
+       customer: customer,
+       thread: thread}
     end
 
     test "Helpers.get_message_text/1 returns subject for initial slack thread",
-         %{conversation: conversation, customer: customer} do
+         %{authorization: authorization, conversation: conversation, customer: customer} do
+      message = insert(:message, customer: customer, user: nil)
+
       text =
         Slack.Helpers.get_message_text(%{
-          customer: customer,
-          text: "Test message",
-          conversation_id: conversation.id,
-          type: :customer,
+          conversation: conversation,
+          message: message,
+          authorization: authorization,
           thread: nil
         })
 
@@ -258,34 +265,39 @@ defmodule ChatApi.SlackTest do
     end
 
     test "Helpers.get_message_text/1 returns subject for slack reply",
-         %{conversation: conversation, customer: customer, thread: thread} do
-      assert Slack.Helpers.get_message_text(%{
-               text: "Test message",
-               conversation_id: conversation.id,
-               customer: customer,
-               type: :agent,
-               thread: thread
-             }) ==
-               "*:female-technologist: Agent*: Test message"
+         %{
+           account: account,
+           authorization: authorization,
+           conversation: conversation,
+           customer: customer,
+           thread: thread
+         } do
+      user = insert(:user, account: account, email: "test@test.com")
 
       assert Slack.Helpers.get_message_text(%{
-               text: "Test message",
-               conversation_id: conversation.id,
-               customer: customer,
-               type: :customer,
+               conversation: conversation,
+               message: insert(:message, user: user, customer: nil, body: "Test message"),
+               authorization: authorization,
+               thread: thread
+             }) ==
+               "*:female-technologist: #{user.email}*: Test message"
+
+      assert Slack.Helpers.get_message_text(%{
+               conversation: conversation,
+               message: insert(:message, user: nil, customer: customer, body: "Test message"),
+               authorization: authorization,
                thread: thread
              }) ==
                "*:wave: #{customer.email}*: Test message"
 
-      assert_raise ArgumentError, fn ->
-        Slack.Helpers.get_message_text(%{
-          text: "Test message",
-          conversation_id: conversation.id,
-          customer: customer,
-          type: :invalid,
-          thread: thread
-        })
-      end
+      assert capture_log(fn ->
+               assert Slack.Helpers.get_message_text(%{
+                        conversation: conversation,
+                        message: insert(:message, user: nil, customer: nil, body: "Test message"),
+                        authorization: authorization,
+                        thread: thread
+                      }) == "Test message"
+             end) =~ "Unrecognized message format"
     end
 
     test "Helpers.get_message_payload/2 returns payload for initial slack thread",
