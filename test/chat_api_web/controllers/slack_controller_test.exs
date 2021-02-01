@@ -92,6 +92,7 @@ defmodule ChatApiWeb.SlackControllerTest do
       event_params = %{
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
+        "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => @slack_channel,
         "user" => auth.authed_user_id
@@ -116,6 +117,7 @@ defmodule ChatApiWeb.SlackControllerTest do
       event_params = %{
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
+        "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => @slack_channel,
         "user" => auth.authed_user_id
@@ -158,6 +160,7 @@ defmodule ChatApiWeb.SlackControllerTest do
       event_params = %{
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
+        "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => slack_channel,
         "user" => auth.authed_user_id
@@ -192,6 +195,8 @@ defmodule ChatApiWeb.SlackControllerTest do
       event_params = %{
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
+        # Jan 1, 2021
+        "ts" => "1609459200.0000",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => slack_channel,
         "user" => auth.authed_user_id
@@ -214,9 +219,10 @@ defmodule ChatApiWeb.SlackControllerTest do
           "event" => event_params
         })
 
-        assert [%{body: body, conversation: conversation, source: "slack"}] =
+        assert [%{body: body, conversation: conversation, sent_at: sent_at, source: "slack"}] =
                  Messages.list_messages(account.id)
 
+        assert sent_at == ~U[2021-01-01 00:00:00Z]
         assert body == event_params["text"]
         refute conversation.read
       end
@@ -255,6 +261,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
         "team" => authorization.team_id,
+        "ts" => "12345",
         "thread_ts" => "12345",
         "channel" => authorization.channel_id,
         "user" => authorization.authed_user_id

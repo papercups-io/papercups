@@ -63,6 +63,7 @@ defmodule ChatApi.Slack.Event do
           "conversation_id" => conversation_id,
           "account_id" => account_id,
           "source" => "slack",
+          "sent_at" => event |> Map.get("ts") |> Slack.Helpers.slack_ts_to_utc(),
           "user_id" =>
             Slack.Helpers.get_admin_sender_id(
               primary_reply_authorization,
@@ -90,6 +91,7 @@ defmodule ChatApi.Slack.Event do
               "body" => Slack.Helpers.sanitize_slack_message(text, authorization),
               "conversation_id" => conversation_id,
               "account_id" => account_id,
+              "sent_at" => event |> Map.get("ts") |> Slack.Helpers.slack_ts_to_utc(),
               "source" => "slack"
             })
             |> Messages.create_and_fetch!()
@@ -289,6 +291,7 @@ defmodule ChatApi.Slack.Event do
         handle_event(%{
           "type" => "message",
           "text" => Map.get(msg, "text"),
+          "ts" => Map.get(msg, "ts"),
           "thread_ts" => thread_ts,
           "channel" => slack_channel_id,
           "user" => Map.get(msg, "user", slack_user_id)
@@ -335,6 +338,7 @@ defmodule ChatApi.Slack.Event do
              conversation_id: conversation.id,
              customer_id: customer.id,
              body: Slack.Helpers.sanitize_slack_message(text, authorization),
+             sent_at: Slack.Helpers.slack_ts_to_utc(ts),
              source: "slack"
            }),
          {:ok, _slack_conversation_thread} <-
@@ -407,6 +411,8 @@ defmodule ChatApi.Slack.Event do
       _company -> :ok
     end
   end
+
+  defp validate_channel_supported(_authorization, _slack_channel_id), do: :error
 
   @spec validate_no_existing_company(binary(), binary()) :: :ok | :error
   def validate_no_existing_company(account_id, slack_channel_id) do

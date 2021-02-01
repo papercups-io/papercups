@@ -433,7 +433,7 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec slack_link_to_markdown(binary) :: binary
+  @spec slack_link_to_markdown(binary()) :: binary()
   def slack_link_to_markdown(text) do
     text
     |> String.replace(["<", ">"], "")
@@ -442,6 +442,17 @@ defmodule ChatApi.Slack.Helpers do
       [link] -> "[#{link}](#{link})"
       [link, display] -> "[#{display}](#{link})"
       _ -> text
+    end
+  end
+
+  @spec slack_ts_to_utc(binary()) :: DateTime.t()
+  def slack_ts_to_utc(ts) do
+    with {unix, _} <- Float.parse(ts),
+         microseconds <- round(unix * 1_000_000),
+         {:ok, datetime} <- DateTime.from_unix(microseconds, :microsecond) do
+      datetime
+    else
+      _ -> DateTime.utc_now()
     end
   end
 
