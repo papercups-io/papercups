@@ -433,7 +433,7 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec slack_link_to_markdown(binary) :: binary
+  @spec slack_link_to_markdown(binary()) :: binary()
   def slack_link_to_markdown(text) do
     text
     |> String.replace(["<", ">"], "")
@@ -442,6 +442,17 @@ defmodule ChatApi.Slack.Helpers do
       [link] -> "[#{link}](#{link})"
       [link, display] -> "[#{display}](#{link})"
       _ -> text
+    end
+  end
+
+  @spec slack_ts_to_utc(binary()) :: DateTime.t()
+  def slack_ts_to_utc(ts) do
+    with {unix, _} <- Float.parse(ts),
+         microseconds <- round(unix * 1_000_000),
+         {:ok, datetime} <- DateTime.from_unix(microseconds, :microsecond) do
+      datetime
+    else
+      _ -> DateTime.utc_now()
     end
   end
 
@@ -463,6 +474,20 @@ defmodule ChatApi.Slack.Helpers do
   end
 
   def extract_slack_message(response),
+    do: {:error, "Invalid response: #{inspect(response)}"}
+
+  @spec extract_slack_messages(map()) :: {:ok, [map()]} | {:error, String.t()}
+  def extract_slack_messages(%{body: %{"ok" => true, "messages" => messages}})
+      when is_list(messages),
+      do: {:ok, messages}
+
+  def extract_slack_messages(%{body: %{"ok" => false} = body}) do
+    Logger.error("conversations.replies returned ok=false: #{inspect(body)}")
+
+    {:error, "conversations.replies returned ok=false: #{inspect(body)}"}
+  end
+
+  def extract_slack_messages(response),
     do: {:error, "Invalid response: #{inspect(response)}"}
 
   @spec extract_slack_channel(map()) :: {:ok, map()} | {:error, String.t()}
@@ -641,6 +666,14 @@ defmodule ChatApi.Slack.Helpers do
 
   def get_message_payload(text, params) do
     raise "Unrecognized params for Slack payload: #{text} #{inspect(params)}"
+  end
+
+  @spec send_internal_notification(binary()) :: any()
+  def send_internal_notification(message) do
+    Logger.info(message)
+    # Putting in an async Task for now, since we don't care if this succeeds
+    # or fails (and we also don't want it to block anything)
+    Task.start(fn -> Slack.Notification.log(message) end)
   end
 
   @spec reply_broadcast_enabled?(Message.t()) :: boolean()

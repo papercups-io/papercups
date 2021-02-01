@@ -4,7 +4,6 @@ import {
   colors,
   Button,
   Menu,
-  Text,
   TextArea,
   Upload,
   UploadChangeParam,
@@ -50,8 +49,8 @@ const AttachFileButton = ({
       data={data}
       fileList={fileList}
     >
-      <Button icon={<PaperClipOutlined />} size="small" type="text">
-        <Text type="secondary">Attach a file</Text>
+      <Button icon={<PaperClipOutlined />} size="small">
+        Attach a file
       </Button>
     </Upload>
   );

@@ -92,6 +92,7 @@ defmodule ChatApiWeb.SlackControllerTest do
       event_params = %{
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
+        "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => @slack_channel,
         "user" => auth.authed_user_id
@@ -116,6 +117,7 @@ defmodule ChatApiWeb.SlackControllerTest do
       event_params = %{
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
+        "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => @slack_channel,
         "user" => auth.authed_user_id
@@ -158,6 +160,7 @@ defmodule ChatApiWeb.SlackControllerTest do
       event_params = %{
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
+        "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => slack_channel,
         "user" => auth.authed_user_id
@@ -192,6 +195,8 @@ defmodule ChatApiWeb.SlackControllerTest do
       event_params = %{
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
+        # Jan 1, 2021
+        "ts" => "1609459200.0000",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => slack_channel,
         "user" => auth.authed_user_id
@@ -214,9 +219,10 @@ defmodule ChatApiWeb.SlackControllerTest do
           "event" => event_params
         })
 
-        assert [%{body: body, conversation: conversation, source: "slack"}] =
+        assert [%{body: body, conversation: conversation, sent_at: sent_at, source: "slack"}] =
                  Messages.list_messages(account.id)
 
+        assert sent_at == ~U[2021-01-01 00:00:00Z]
         assert body == event_params["text"]
         refute conversation.read
       end
@@ -255,7 +261,10 @@ defmodule ChatApiWeb.SlackControllerTest do
         "type" => "message",
         "text" => "hello world #{System.unique_integer([:positive])}",
         "team" => authorization.team_id,
-        "thread_ts" => "12345",
+        # Jan 2, 2021
+        "ts" => "1609545600.0000",
+        # Jan 1, 2021
+        "thread_ts" => "1609459200.0000",
         "channel" => authorization.channel_id,
         "user" => authorization.authed_user_id
       }
@@ -278,16 +287,20 @@ defmodule ChatApiWeb.SlackControllerTest do
         retrieve_message: fn _, _, _ ->
           {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}
         end,
+        retrieve_conversation_replies: fn _, _, _ ->
+          {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message, event_params]}}}
+        end,
         send_message: fn _, _ -> {:ok, nil} end do
         post(conn, Routes.slack_path(conn, :webhook), %{
           "event" => event_params
         })
 
-        assert [%{body: body, conversation: conversation, source: "slack"}] =
-                 Messages.list_messages(account.id)
+        messages = account.id |> Messages.list_messages() |> Enum.sort_by(& &1.sent_at, :asc)
 
+        assert [%{body: body, conversation: conversation, source: "slack"}, reply] = messages
         assert %{source: "slack"} = conversation
-        assert body == event_params["text"]
+        assert body == slack_bot_message["text"]
+        assert reply.body == event_params["text"]
       end
     end
 
@@ -324,6 +337,9 @@ defmodule ChatApiWeb.SlackControllerTest do
           {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
         end,
         retrieve_message: fn _, _, _ ->
+          {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}
+        end,
+        retrieve_conversation_replies: fn _, _, _ ->
           {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}
         end,
         send_message: fn _, _ -> {:ok, nil} end do
