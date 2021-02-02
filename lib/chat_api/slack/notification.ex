@@ -65,14 +65,12 @@ defmodule ChatApi.Slack.Notification do
         thread: thread
       }
       |> Slack.Helpers.get_message_text()
-      |> IO.inspect(label: "message text")
       |> Slack.Helpers.get_message_payload(%{
         channel: channel,
         customer: customer,
         thread: thread,
         message: message
       })
-      |> IO.inspect(label: "message payload")
       |> Slack.Client.send_message(access_token)
       |> case do
         # Just pass through in test/dev mode (not sure if there's a more idiomatic way to do this)

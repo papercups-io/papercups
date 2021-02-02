@@ -10,6 +10,7 @@ defmodule ChatApi.Slack.Event do
     SlackConversationThreads
   }
 
+  alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
@@ -274,9 +275,9 @@ defmodule ChatApi.Slack.Event do
           "type" => "message",
           "text" => Map.get(initial_message, "text"),
           "channel" => slack_channel_id,
-          # TODO: this will currently treat the bot as if it were the user...
-          # We still need to add better support for bot messages
-          "user" => Map.get(initial_message, "user", slack_user_id),
+          # TODO: test "user" vs "bot" cases
+          "user" => Map.get(initial_message, "user"),
+          "bot" => Map.get(initial_message, "bot_id"),
           "ts" => thread_ts
         },
         authorization
@@ -310,19 +311,14 @@ defmodule ChatApi.Slack.Event do
           "type" => "message",
           "text" => text,
           "channel" => slack_channel_id,
-          "user" => slack_user_id,
           "ts" => ts
-        } = _event,
+        } = event,
         %SlackAuthorization{account_id: account_id} = authorization
       ) do
     # NB: not ideal, but this may treat an internal/admin user as a "customer",
     # because at the moment all conversations must have a customer associated with them
     with {:ok, customer} <-
-           Slack.Helpers.create_or_update_customer_from_slack_user_id(
-             authorization,
-             slack_user_id,
-             slack_channel_id
-           ),
+           Slack.Helpers.create_or_update_customer_from_slack_event(authorization, event),
          # TODO: should the conversation + thread + message all be handled in a transaction?
          # Probably yes at some point, but for now... not too big a deal ¯\_(ツ)_/¯
          # TODO: should we handle default assignment here as well?

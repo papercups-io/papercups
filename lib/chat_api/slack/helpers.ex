@@ -73,6 +73,50 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @spec find_or_create_customer_from_slack_event(SlackAuthorization.t(), map()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def find_or_create_customer_from_slack_event(authorization, %{
+        "channel" => slack_channel_id,
+        "user" => slack_user_id
+      })
+      when not is_nil(slack_user_id) and not is_nil(slack_channel_id) do
+    find_or_create_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id)
+  end
+
+  def find_or_create_customer_from_slack_event(authorization, %{"bot" => slack_bot_id})
+      when not is_nil(slack_bot_id) do
+    find_or_create_customer_from_slack_bot_id(authorization, slack_bot_id)
+  end
+
+  @spec find_or_create_customer_from_slack_bot_id(any(), binary()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def find_or_create_customer_from_slack_bot_id(authorization, slack_bot_id) do
+    with %{access_token: access_token, account_id: account_id} <- authorization,
+         {:ok, %{body: %{"ok" => true, "bot" => bot}}} <-
+           Slack.Client.retrieve_bot_info(slack_bot_id, access_token) do
+      attrs =
+        %{
+          name: Map.get(bot, "name"),
+          profile_photo_url: get_in(bot, ["icons", "image_72"])
+        }
+        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+        |> Map.new()
+
+      Customers.find_or_create_by_external_id(slack_bot_id, account_id, attrs)
+    else
+      # NB: This may occur in test mode, or when the Slack.Client is disabled
+      {:ok, error} ->
+        Logger.error("Error creating customer from Slack bot user: #{inspect(error)}")
+
+        error
+
+      error ->
+        Logger.error("Error creating customer from Slack bot user: #{inspect(error)}")
+
+        error
+    end
+  end
+
   @spec find_or_create_customer_from_slack_user_id(any(), binary(), binary()) ::
           {:ok, Customer.t()} | {:error, any()}
   def find_or_create_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id) do
@@ -89,7 +133,8 @@ defmodule ChatApi.Slack.Helpers do
       attrs =
         %{
           name: Map.get(profile, "real_name"),
-          time_zone: Map.get(user, "tz")
+          time_zone: Map.get(user, "tz"),
+          profile_photo_url: Map.get(profile, "image_original")
         }
         |> Enum.reject(fn {_k, v} -> is_nil(v) end)
         |> Map.new()
@@ -105,6 +150,50 @@ defmodule ChatApi.Slack.Helpers do
 
       error ->
         Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+    end
+  end
+
+  @spec create_or_update_customer_from_slack_event(SlackAuthorization.t(), map()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def create_or_update_customer_from_slack_event(authorization, %{
+        "channel" => slack_channel_id,
+        "user" => slack_user_id
+      })
+      when not is_nil(slack_user_id) and not is_nil(slack_channel_id) do
+    create_or_update_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id)
+  end
+
+  def create_or_update_customer_from_slack_event(authorization, %{"bot" => slack_bot_id})
+      when not is_nil(slack_bot_id) do
+    create_or_update_customer_from_slack_bot_id(authorization, slack_bot_id)
+  end
+
+  @spec create_or_update_customer_from_slack_bot_id(any(), binary()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def create_or_update_customer_from_slack_bot_id(authorization, slack_bot_id) do
+    with %{access_token: access_token, account_id: account_id} <- authorization,
+         {:ok, %{body: %{"ok" => true, "bot" => bot}}} <-
+           Slack.Client.retrieve_bot_info(slack_bot_id, access_token) do
+      attrs =
+        %{
+          name: Map.get(bot, "name"),
+          profile_photo_url: get_in(bot, ["icons", "image_72"])
+        }
+        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+        |> Map.new()
+
+      Customers.create_or_update_by_external_id(slack_bot_id, account_id, attrs)
+    else
+      # NB: This may occur in test mode, or when the Slack.Client is disabled
+      {:ok, error} ->
+        Logger.error("Error creating customer from Slack bot user: #{inspect(error)}")
+
+        error
+
+      error ->
+        Logger.error("Error creating customer from Slack bot user: #{inspect(error)}")
 
         error
     end
@@ -199,7 +288,7 @@ defmodule ChatApi.Slack.Helpers do
             %{"customer_id" => customer_id}
 
           _ ->
-            case find_or_create_customer_from_slack_user_id(
+            case create_or_update_customer_from_slack_user_id(
                    authorization,
                    slack_user_id,
                    slack_channel_id

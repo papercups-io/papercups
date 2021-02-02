@@ -275,6 +275,11 @@ defmodule ChatApiWeb.SlackControllerTest do
         "profile" => %{"email" => @email}
       }
 
+      slack_bot_user = %{
+        "id" => "B123",
+        "name" => "Papercups Bot"
+      }
+
       slack_bot_message = %{
         "text" => "This is a bot message",
         "bot_id" => "B123"
@@ -283,6 +288,9 @@ defmodule ChatApiWeb.SlackControllerTest do
       with_mock ChatApi.Slack.Client,
         retrieve_user_info: fn _, _ ->
           {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end,
+        retrieve_bot_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "bot" => slack_bot_user}}}
         end,
         retrieve_message: fn _, _, _ ->
           {:ok, %{body: %{"ok" => true, "messages" => [slack_bot_message]}}}

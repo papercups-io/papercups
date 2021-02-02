@@ -58,6 +58,58 @@ defmodule ChatApi.Customers do
     external_id |> to_string() |> find_by_external_id(account_id, filters)
   end
 
+  @spec find_or_create_by_external_id(binary() | nil, binary(), map()) ::
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()} | {:error, atom()}
+  def find_or_create_by_external_id(external_id, account_id, attrs \\ %{})
+  def find_or_create_by_external_id(nil, _account_id, _attrs), do: {:error, :external_id_required}
+
+  def find_or_create_by_external_id(external_id, account_id, attrs) do
+    case find_by_external_id(external_id, account_id) do
+      nil ->
+        %{
+          # Defaults
+          first_seen: DateTime.utc_now(),
+          last_seen: DateTime.utc_now(),
+          # TODO: last_seen is stored as a date, while last_seen_at is stored as
+          # a datetime -- we should opt for datetime values whenever possible
+          last_seen_at: DateTime.utc_now()
+        }
+        |> Map.merge(attrs)
+        |> Map.merge(%{external_id: external_id, account_id: account_id})
+        |> create_customer()
+
+      customer ->
+        {:ok, customer}
+    end
+  end
+
+  @spec create_or_update_by_external_id(binary() | nil, binary(), map()) ::
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()} | {:error, atom()}
+  def create_or_update_by_external_id(external_id, account_id, attrs \\ %{})
+
+  def create_or_update_by_external_id(nil, _account_id, _attrs),
+    do: {:error, :external_id_required}
+
+  def create_or_update_by_external_id(external_id, account_id, attrs) do
+    case find_by_external_id(external_id, account_id) do
+      nil ->
+        %{
+          # Defaults
+          first_seen: DateTime.utc_now(),
+          last_seen: DateTime.utc_now(),
+          # TODO: last_seen is stored as a date, while last_seen_at is stored as
+          # a datetime -- we should opt for datetime values whenever possible
+          last_seen_at: DateTime.utc_now()
+        }
+        |> Map.merge(attrs)
+        |> Map.merge(%{external_id: external_id, account_id: account_id})
+        |> create_customer()
+
+      customer ->
+        update_customer(customer, attrs)
+    end
+  end
+
   @spec find_by_email(binary() | nil, binary()) :: Customer.t() | nil
   def find_by_email(nil, _account_id), do: nil
 
