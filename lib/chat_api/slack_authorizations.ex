@@ -81,6 +81,11 @@ defmodule ChatApi.SlackAuthorizations do
     SlackAuthorization.changeset(slack_authorization, attrs)
   end
 
+  @spec has_authorization_scope?(SlackAuthorization.t(), binary()) :: boolean()
+  def has_authorization_scope?(%SlackAuthorization{scope: full_scope}, scope) do
+    String.contains?(full_scope, scope)
+  end
+
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   defp filter_where(params) do
     Enum.reduce(params, dynamic(true), fn

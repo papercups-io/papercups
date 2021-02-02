@@ -15,9 +15,11 @@ defmodule ChatApi.Slack.Helpers do
     Users
   }
 
+  alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
   alias ChatApi.SlackAuthorizations.SlackAuthorization
+  alias ChatApi.SlackConversationThreads.SlackConversationThread
   alias ChatApi.Users.User
 
   @spec get_user_email(binary(), binary()) :: nil | binary()
@@ -253,7 +255,7 @@ defmodule ChatApi.Slack.Helpers do
   # TODO: not sure the most idiomatic way to handle this, but basically this
   # just formats how we show the name/email of the customer if they exist
   @spec identify_customer(Customer.t()) :: binary()
-  def identify_customer(%Customer{} = %{email: email, name: name}) do
+  def identify_customer(%Customer{email: email, name: name}) do
     case [name, email] do
       [nil, nil] -> "Anonymous User"
       [x, nil] -> x
@@ -263,8 +265,7 @@ defmodule ChatApi.Slack.Helpers do
   end
 
   @spec create_new_slack_conversation_thread(binary(), map()) ::
-          {:ok, SlackConversationThreads.SlackConversationThread.t()}
-          | {:error, Ecto.Changeset.t()}
+          {:ok, SlackConversationThread.t()} | {:error, Ecto.Changeset.t()}
   def create_new_slack_conversation_thread(conversation_id, response) do
     with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
          primary_user_id <- get_conversation_primary_user_id(conversation) do
@@ -557,10 +558,9 @@ defmodule ChatApi.Slack.Helpers do
 
   @spec get_message_text(map()) :: binary()
   def get_message_text(%{
-        customer: customer,
-        text: text,
-        conversation_id: conversation_id,
-        type: :customer,
+        conversation: %Conversation{id: conversation_id, customer: %Customer{} = customer},
+        message: %Message{body: text},
+        authorization: _authorization,
         thread: nil
       }) do
     url = System.get_env("BACKEND_URL") || ""
@@ -579,26 +579,45 @@ defmodule ChatApi.Slack.Helpers do
       "\n\nReply to this thread to start chatting, or view in the #{dashboard} :rocket:"
   end
 
+  @slack_chat_write_customize_scope "chat:write.customize"
+
   def get_message_text(%{
-        customer: customer,
-        text: text,
-        type: type,
-        conversation_id: _conversation_id,
-        thread: _thread
+        conversation: %Conversation{} = conversation,
+        message: %Message{body: text} = message,
+        authorization: %SlackAuthorization{} = authorization,
+        thread: %SlackConversationThread{}
       }) do
-    case type do
-      # TODO: get agent name, rather than just showing "Agent"
-      :agent -> "*:female-technologist: Agent*: #{text}"
-      :customer -> "*:wave: #{identify_customer(customer)}*: #{text}"
-      :conversation_update -> "_#{text}_"
-      _ -> raise "Unrecognized sender type: " <> type
+    if SlackAuthorizations.has_authorization_scope?(
+         authorization,
+         @slack_chat_write_customize_scope
+       ) do
+      text
+    else
+      case message do
+        %Message{user: %User{} = user} ->
+          "*:female-technologist: #{Slack.Notification.format_user_name(user)}*: #{text}"
+
+        %Message{customer: %Customer{} = customer} ->
+          "*:wave: #{identify_customer(customer)}*: #{text}"
+
+        %Message{customer_id: nil, user_id: user_id} when not is_nil(user_id) ->
+          "*:female-technologist: Agent*: #{text}"
+
+        %Message{customer_id: customer_id, user_id: nil} when not is_nil(customer_id) ->
+          "*:wave: #{identify_customer(conversation.customer)}*: #{text}"
+
+        _ ->
+          Logger.error("Unrecognized message format: #{inspect(message)}")
+
+          text
+      end
     end
   end
 
   @spec get_message_payload(binary(), map()) :: map()
   def get_message_payload(text, %{
         channel: channel,
-        customer: %{
+        customer: %Customer{
           name: name,
           email: email,
           current_url: current_url,
@@ -654,13 +673,32 @@ defmodule ChatApi.Slack.Helpers do
   def get_message_payload(text, %{
         channel: channel,
         customer: _customer,
-        message: message,
-        thread: %{slack_thread_ts: slack_thread_ts}
+        message: %Message{user: %User{} = user} = message,
+        thread: %SlackConversationThread{slack_thread_ts: slack_thread_ts}
       }) do
     %{
       "channel" => channel,
       "text" => text,
       "thread_ts" => slack_thread_ts,
+      # TODO: figure out where these methods should live
+      "username" => Slack.Notification.format_user_name(user),
+      "icon_url" => Slack.Notification.slack_icon_url(user),
+      "reply_broadcast" => reply_broadcast_enabled?(message)
+    }
+  end
+
+  def get_message_payload(text, %{
+        channel: channel,
+        customer: _customer,
+        message: %Message{customer: %Customer{} = customer} = message,
+        thread: %SlackConversationThread{slack_thread_ts: slack_thread_ts}
+      }) do
+    %{
+      "channel" => channel,
+      "text" => text,
+      "thread_ts" => slack_thread_ts,
+      "username" => identify_customer(customer),
+      "icon_emoji" => ":wave:",
       "reply_broadcast" => reply_broadcast_enabled?(message)
     }
   end

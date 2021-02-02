@@ -43,14 +43,14 @@ defmodule ChatApi.Slack.Notification do
         %Message{
           id: message_id,
           conversation_id: conversation_id,
-          body: text,
+          body: _body,
           account_id: account_id
         } = message
       ) do
     # TODO: handle getting all these fields in a separate function?
-    with %{customer: customer} <-
+    with %{customer: customer} = conversation <-
            Conversations.get_conversation_with!(conversation_id, :customer),
-         %{access_token: access_token, channel: channel, channel_id: channel_id} <-
+         %{access_token: access_token, channel: channel, channel_id: channel_id} = authorization <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}),
          is_first_message <-
            Conversations.is_first_message?(conversation_id, message_id),
@@ -58,21 +58,21 @@ defmodule ChatApi.Slack.Notification do
            SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id),
          :ok <- validate_send_to_primary_channel(thread, is_first_message: is_first_message) do
       # TODO: use a struct here?
-      # TODO: pass through `message` instead of text/conversation_id/type individually?
       %{
-        customer: customer,
-        text: text,
-        conversation_id: conversation_id,
-        type: Slack.Helpers.get_message_type(message),
+        conversation: conversation,
+        message: message,
+        authorization: authorization,
         thread: thread
       }
       |> Slack.Helpers.get_message_text()
+      |> IO.inspect(label: "message text")
       |> Slack.Helpers.get_message_payload(%{
         channel: channel,
         customer: customer,
         thread: thread,
         message: message
       })
+      |> IO.inspect(label: "message payload")
       |> Slack.Client.send_message(access_token)
       |> case do
         # Just pass through in test/dev mode (not sure if there's a more idiomatic way to do this)
@@ -166,6 +166,8 @@ defmodule ChatApi.Slack.Notification do
   def validate_send_to_primary_channel(%SlackConversationThread{}, _opts), do: :ok
   def validate_send_to_primary_channel(_thread, _opts), do: :error
 
+  # TODO: maybe these methods below belong in the Slack.Helpers module?
+
   @spec format_slack_message_text(Message.t()) :: String.t()
   def format_slack_message_text(%Message{} = message) do
     # NB: `message.body` can be `nil` when attachments are present
@@ -198,7 +200,7 @@ defmodule ChatApi.Slack.Notification do
   end
 
   @spec format_user_name(User.t() | nil) :: String.t()
-  defp format_user_name(user) do
+  def format_user_name(%User{} = user) do
     case user do
       %{profile: %UserProfile{display_name: display_name}}
       when not is_nil(display_name) ->
@@ -216,8 +218,18 @@ defmodule ChatApi.Slack.Notification do
     end
   end
 
+  @spec format_customer_name(Customer.t()) :: binary()
+  def format_customer_name(%Customer{email: email, name: name}) do
+    case [name, email] do
+      [nil, nil] -> "Anonymous User"
+      [x, nil] -> x
+      [nil, y] -> y
+      [x, y] -> "#{x} (#{y})"
+    end
+  end
+
   @spec slack_icon_url(User.t() | nil) :: String.t()
-  defp slack_icon_url(user) do
+  def slack_icon_url(%User{} = user) do
     case user do
       %{profile: %UserProfile{profile_photo_url: profile_photo_url}}
       when not is_nil(profile_photo_url) ->
