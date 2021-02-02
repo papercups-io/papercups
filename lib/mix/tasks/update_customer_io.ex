@@ -8,6 +8,16 @@ defmodule Mix.Tasks.UpdateCustomerIo do
 
   @moduledoc """
   This task syncs latest user data with customer.io
+
+  Example:
+  ```
+  $ mix update_customer_io
+  ```
+
+  On Heroku:
+  ```
+  $ heroku run "POOL_SIZE=2 mix update_customer_io"
+  ```
   """
 
   def run(_args) do
