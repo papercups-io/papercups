@@ -4,7 +4,11 @@ import {throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Account, Conversation, Message, User} from '../../types';
-import {isWindowHidden, updateQueryParams} from '../../utils';
+import {
+  isWindowHidden,
+  sortConversationMessages,
+  updateQueryParams,
+} from '../../utils';
 import {SOCKET_URL} from '../../socket';
 import logger from '../../logger';
 
@@ -523,10 +527,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
         return {
           ...acc,
-          [conv.id]: messages.sort(
-            (a: Message, b: Message) =>
-              +new Date(a.created_at) - +new Date(b.created_at)
-          ),
+          [conv.id]: sortConversationMessages(messages),
         };
       },
       {}

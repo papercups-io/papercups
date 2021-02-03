@@ -208,6 +208,7 @@ defmodule ChatApi.Slack.Helpers do
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
            Slack.Client.retrieve_user_info(slack_user_id, access_token),
          %{"profile" => %{"email" => email} = profile} <- user do
+      # TODO: make this part optional
       company_attrs =
         case Companies.find_by_slack_channel(account_id, slack_channel_id) do
           %{id: company_id} -> %{company_id: company_id}
@@ -223,6 +224,37 @@ defmodule ChatApi.Slack.Helpers do
         |> Enum.reject(fn {_k, v} -> is_nil(v) end)
         |> Map.new()
         |> Map.merge(company_attrs)
+
+      Customers.create_or_update_by_email(email, account_id, attrs)
+    else
+      # NB: This may occur in test mode, or when the Slack.Client is disabled
+      {:ok, error} ->
+        Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+
+      error ->
+        Logger.error("Error creating customer from Slack user: #{inspect(error)}")
+
+        error
+    end
+  end
+
+  @spec create_or_update_customer_from_slack_user_id(any(), binary()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def create_or_update_customer_from_slack_user_id(authorization, slack_user_id) do
+    with %{access_token: access_token, account_id: account_id} <- authorization,
+         {:ok, %{body: %{"ok" => true, "user" => user}}} <-
+           Slack.Client.retrieve_user_info(slack_user_id, access_token),
+         %{"profile" => %{"email" => email} = profile} <- user do
+      attrs =
+        %{
+          name: Map.get(profile, "real_name"),
+          time_zone: Map.get(user, "tz"),
+          profile_photo_url: Map.get(profile, "image_original")
+        }
+        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+        |> Map.new()
 
       Customers.create_or_update_by_email(email, account_id, attrs)
     else
@@ -265,11 +297,104 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @spec find_matching_bot_customer(any(), binary()) :: Customer.t() | nil
+  def find_matching_bot_customer(authorization, slack_bot_id) do
+    case authorization do
+      %{account_id: account_id} ->
+        Customers.find_by_external_id(slack_bot_id, account_id)
+
+      _ ->
+        nil
+    end
+  end
+
   @spec get_admin_sender_id(any(), binary(), binary()) :: binary()
   def get_admin_sender_id(authorization, slack_user_id, fallback) do
     case find_matching_user(authorization, slack_user_id) do
       %{id: id} -> id
       _ -> fallback
+    end
+  end
+
+  # NB: these methods handle finding the sender info
+  # TODO: set up a GenServer or something to cache Slack user -> Papercups person mapping
+
+  def maybe_find_user(nil, authorization, %{"user" => slack_user_id}) do
+    find_matching_user(authorization, slack_user_id)
+  end
+
+  def maybe_find_user(acc, _, _), do: acc
+
+  def maybe_find_customer(nil, authorization, %{"bot_id" => slack_bot_id}) do
+    find_matching_bot_customer(authorization, slack_bot_id)
+  end
+
+  def maybe_find_customer(nil, authorization, %{"user" => slack_user_id}) do
+    find_matching_customer(authorization, slack_user_id)
+  end
+
+  def maybe_find_customer(acc, _, _), do: acc
+
+  # TODO: make sure this works with "bot" senders
+  @spec get_sender_info(SlackAuthorization.t(), map()) :: User.t() | Customer.t() | nil
+  def get_sender_info(authorization, slack_message) do
+    nil
+    |> maybe_find_user(authorization, slack_message)
+    |> maybe_find_customer(authorization, slack_message)
+    |> case do
+      %User{} = user -> user
+      %Customer{} = customer -> customer
+      _ -> nil
+    end
+  end
+
+  # NB: the methods below handle setting the message sender info
+
+  def maybe_set_user_id(%{"customer_id" => customer_id} = params, _, _)
+      when not is_nil(customer_id),
+      do: params
+
+  def maybe_set_user_id(params, authorization, %{"user" => slack_user_id}) do
+    case find_matching_user(authorization, slack_user_id) do
+      %User{id: user_id} ->
+        Map.merge(params, %{"user_id" => user_id})
+
+      _ ->
+        params
+    end
+  end
+
+  def maybe_set_user_id(params, _, _), do: params
+
+  def maybe_set_customer_id(%{"user_id" => user_id} = params, _, _, _)
+      when not is_nil(user_id),
+      do: params
+
+  def maybe_set_customer_id(params, authorization, event) do
+    case create_or_update_customer_from_slack_event(authorization, event) do
+      {:ok, %Customer{id: customer_id}} ->
+        Map.merge(params, %{"customer_id" => customer_id})
+
+      _ ->
+        params
+    end
+  end
+
+  # TODO: make sure this works with "bot" senders
+  # TODO: make typespec or struct for `event`
+  @spec format_sender_id_v2!(SlackAuthorization.t(), map()) :: map()
+  def format_sender_id_v2!(authorization, event) do
+    %{}
+    |> maybe_set_user_id(authorization, event)
+    |> maybe_set_customer_id(authorization, event)
+    |> case do
+      params when map_size(params) == 1 ->
+        params
+
+      _invalid ->
+        raise "Unable to find matching user or customer ID for Slack event #{inspect(event)} on account authorization #{
+                inspect(authorization)
+              }"
     end
   end
 
@@ -390,7 +515,7 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec get_conversation_primary_user_id(Conversations.Conversation.t()) :: binary()
+  @spec get_conversation_primary_user_id(Conversation.t()) :: binary()
   def get_conversation_primary_user_id(conversation) do
     # TODO: do a round robin here instead of just getting the first user every time?
     conversation
@@ -416,8 +541,25 @@ defmodule ChatApi.Slack.Helpers do
   def get_message_type(%Message{user_id: nil}), do: :customer
   def get_message_type(_message), do: :unknown
 
+  @spec is_bot_message?(map()) :: boolean()
   def is_bot_message?(%{"bot_id" => bot_id}) when not is_nil(bot_id), do: true
   def is_bot_message?(_), do: false
+
+  @spec is_agent_message?(SlackAuthorization.t(), map()) :: boolean()
+  def is_agent_message?(authorization, %{"user" => slack_user_id})
+      when not is_nil(slack_user_id) do
+    case find_matching_user(authorization, slack_user_id) do
+      %User{} -> true
+      _ -> false
+    end
+  end
+
+  def is_agent_message?(_authorization, _), do: false
+
+  @spec is_customer_message?(SlackAuthorization.t(), map()) :: boolean()
+  def is_customer_message?(authorization, slack_message) do
+    !is_bot_message?(slack_message) && !is_agent_message?(authorization, slack_message)
+  end
 
   @spec sanitize_slack_message(binary(), SlackAuthorization.t()) :: binary()
   def sanitize_slack_message(text, %SlackAuthorization{
@@ -536,7 +678,9 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec slack_ts_to_utc(binary()) :: DateTime.t()
+  @spec slack_ts_to_utc(binary() | nil) :: DateTime.t()
+  def slack_ts_to_utc(nil), do: DateTime.utc_now()
+
   def slack_ts_to_utc(ts) do
     with {unix, _} <- Float.parse(ts),
          microseconds <- round(unix * 1_000_000),

@@ -1,5 +1,9 @@
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import qs from 'query-string';
+import {Message} from './types';
+
+dayjs.extend(utc);
 
 const {REACT_APP_STRIPE_PUBLIC_KEY} = process.env;
 
@@ -92,6 +96,19 @@ export const isValidUuid = (id: any) => {
   const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
   return regex.test(id);
+};
+
+export const sortConversationMessages = (messages: Array<Message>) => {
+  return messages.sort((a: Message, b: Message) => {
+    const dateA = a.sent_at
+      ? new Date(a.sent_at)
+      : dayjs.utc(a.created_at).toDate();
+    const dateB = b.sent_at
+      ? new Date(b.sent_at)
+      : dayjs.utc(b.created_at).toDate();
+
+    return +dateA - +dateB;
+  });
 };
 
 export const updateQueryParams = (query: Record<any, any>) => {
