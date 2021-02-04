@@ -379,38 +379,38 @@ defmodule ChatApi.SlackTest do
                })
     end
 
-    test "Extractor.extract_slack_conversation_thread_info/1 extracts thread info from slack response" do
+    test "Extractor.extract_slack_conversation_thread_info!/1 extracts thread info from slack response" do
       channel = "bots"
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
 
       assert %{slack_channel: ^channel, slack_thread_ts: ^ts} =
-               Slack.Extractor.extract_slack_conversation_thread_info(response)
+               Slack.Extractor.extract_slack_conversation_thread_info!(response)
     end
 
-    test "Extractor.extract_slack_conversation_thread_info/1 raises if the slack response has ok=false" do
+    test "Extractor.extract_slack_conversation_thread_info!/1 raises if the slack response has ok=false" do
       response = %{body: %{"ok" => false}}
 
       assert capture_log(fn ->
                assert_raise RuntimeError, fn ->
-                 Slack.Extractor.extract_slack_conversation_thread_info(response)
+                 Slack.Extractor.extract_slack_conversation_thread_info!(response)
                end
              end) =~ "Error sending Slack message"
     end
 
-    test "Extractor.extract_slack_user_email/1 extracts user's email from slack response" do
+    test "Extractor.extract_slack_user_email!/1 extracts user's email from slack response" do
       email = "test@test.com"
       response = %{body: %{"ok" => true, "user" => %{"profile" => %{"email" => email}}}}
 
-      assert email = Slack.Extractor.extract_slack_user_email(response)
+      assert email = Slack.Extractor.extract_slack_user_email!(response)
     end
 
-    test "Extractor.extract_slack_user_email/1 raises if the slack response has ok=false" do
+    test "Extractor.extract_slack_user_email!/1 raises if the slack response has ok=false" do
       response = %{body: %{"ok" => false, "user" => nil}}
 
       assert capture_log(fn ->
                assert_raise RuntimeError, fn ->
-                 Slack.Extractor.extract_slack_user_email(response)
+                 Slack.Extractor.extract_slack_user_email!(response)
                end
              end) =~ "Error retrieving user info"
     end

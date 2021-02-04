@@ -32,7 +32,7 @@ defmodule ChatApi.Slack.Helpers do
 
       {:ok, response} ->
         try do
-          Slack.Extractor.extract_slack_user_email(response)
+          Slack.Extractor.extract_slack_user_email!(response)
         rescue
           error ->
             Logger.error("Unable to retrieve Slack user email: #{inspect(error)}")
@@ -185,14 +185,13 @@ defmodule ChatApi.Slack.Helpers do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
            Slack.Client.retrieve_user_info(slack_user_id, access_token) do
-      # TODO: make this part optional
-      company_attrs =
-        case Companies.find_by_slack_channel(account_id, slack_channel_id) do
-          %{id: company_id} -> %{company_id: company_id}
-          _ -> %{}
-        end
+      case Companies.find_by_slack_channel(account_id, slack_channel_id) do
+        %{id: company_id} ->
+          create_or_update_customer_from_slack_user(user, account_id, %{company_id: company_id})
 
-      create_or_update_customer_from_slack_user(user, account_id, company_attrs)
+        _ ->
+          create_or_update_customer_from_slack_user(user, account_id)
+      end
     else
       # NB: This may occur in test mode, or when the Slack.Client is disabled
       {:ok, error} ->
@@ -332,15 +331,19 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  # NB: these methods handle finding the sender info
   # TODO: set up a GenServer or something to cache Slack user -> Papercups person mapping
 
+  @spec maybe_find_user(User.t() | Customer.t() | nil, SlackAuthorization.t(), map()) ::
+          User.t() | Customer.t() | nil
   def maybe_find_user(nil, authorization, %{"user" => slack_user_id}) do
     find_matching_user(authorization, slack_user_id)
   end
 
-  def maybe_find_user(acc, _, _), do: acc
+  def maybe_find_user(%Customer{} = customer, _, _), do: customer
+  def maybe_find_user(nil, _, _), do: nil
 
+  @spec maybe_find_user(User.t() | Customer.t() | nil, SlackAuthorization.t(), map()) ::
+          User.t() | Customer.t() | nil
   def maybe_find_customer(nil, authorization, %{"bot_id" => slack_bot_id}) do
     find_matching_bot_customer(authorization, slack_bot_id)
   end
@@ -349,7 +352,8 @@ defmodule ChatApi.Slack.Helpers do
     find_matching_customer(authorization, slack_user_id)
   end
 
-  def maybe_find_customer(acc, _, _), do: acc
+  def maybe_find_customer(%User{} = user, _, _), do: user
+  def maybe_find_customer(nil, _, _), do: nil
 
   # TODO: make sure this works with "bot" senders
   @spec get_sender_info(SlackAuthorization.t(), map()) :: User.t() | Customer.t() | nil
@@ -366,7 +370,8 @@ defmodule ChatApi.Slack.Helpers do
 
   # NB: the methods below handle setting the message sender info
 
-  def maybe_set_user_id(%{"customer_id" => customer_id} = params, _authorization, _)
+  @spec maybe_set_user_id(map(), SlackAuthorization.t(), map()) :: map()
+  def maybe_set_user_id(%{"customer_id" => customer_id} = params, _authorization, _event)
       when not is_nil(customer_id),
       do: params
 
@@ -380,8 +385,9 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  def maybe_set_user_id(params, _, _), do: params
+  def maybe_set_user_id(params, _authorization, _event), do: params
 
+  @spec maybe_set_customer_id(map(), SlackAuthorization.t(), map()) :: map()
   def maybe_set_customer_id(%{"user_id" => user_id} = params, _authorization, _event)
       when not is_nil(user_id),
       do: params
@@ -396,8 +402,6 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  # TODO: make sure this works with "bot" senders
-  # TODO: make typespec or struct for `event`
   @spec format_sender_id_v2!(SlackAuthorization.t(), map()) :: map()
   def format_sender_id_v2!(authorization, event) do
     %{}
@@ -484,11 +488,12 @@ defmodule ChatApi.Slack.Helpers do
       # responds to a thread on Slack, we just assume it's the assignee.
       assign_and_broadcast_conversation_updated(conversation, primary_user_id)
 
-      %{
+      response
+      |> Slack.Extractor.extract_slack_conversation_thread_info!()
+      |> Map.merge(%{
         conversation_id: conversation_id,
         account_id: conversation.account_id
-      }
-      |> Map.merge(Slack.Extractor.extract_slack_conversation_thread_info(response))
+      })
       |> SlackConversationThreads.create_slack_conversation_thread()
     end
   end

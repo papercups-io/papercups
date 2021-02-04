@@ -44,7 +44,6 @@ defmodule ChatApi.Slack.Sync do
     end
   end
 
-  # TODO: DRY up with above
   @spec get_syncable_slack_messages(any(), map()) :: [SyncableMessageInfo.t()]
   def get_syncable_slack_messages(
         %SlackAuthorization{access_token: access_token} = authorization,
@@ -171,6 +170,7 @@ defmodule ChatApi.Slack.Sync do
     end
   end
 
+  @spec create_or_update_sender!(map(), SlackAuthorization.t()) :: Customer.t()
   def create_or_update_sender!(%{"user" => slack_user_id}, authorization) do
     case Slack.Helpers.create_or_update_customer_from_slack_user_id(authorization, slack_user_id) do
       {:ok, customer} -> customer

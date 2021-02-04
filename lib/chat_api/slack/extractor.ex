@@ -66,8 +66,8 @@ defmodule ChatApi.Slack.Extractor do
 
   # TODO: refactor extractors below to return :ok/:error tuples rather than raising?
 
-  @spec extract_slack_conversation_thread_info(map()) :: map()
-  def extract_slack_conversation_thread_info(%{body: body}) do
+  @spec extract_slack_conversation_thread_info!(map()) :: map()
+  def extract_slack_conversation_thread_info!(%{body: body}) do
     if Map.get(body, "ok") do
       %{
         slack_channel: Map.get(body, "channel"),
@@ -80,8 +80,8 @@ defmodule ChatApi.Slack.Extractor do
     end
   end
 
-  @spec extract_slack_user_email(map()) :: binary()
-  def extract_slack_user_email(%{body: body}) do
+  @spec extract_slack_user_email!(map()) :: binary()
+  def extract_slack_user_email!(%{body: body}) do
     if Map.get(body, "ok") do
       get_in(body, ["user", "profile", "email"])
     else
