@@ -331,17 +331,26 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  # TODO: set up a GenServer or something to cache Slack user -> Papercups person mapping
+  @doc """
+  Checks for a matching `User` for the Slack message event if the accumulator is `nil`.
 
+  If a matching `User` or `Customer` has already been found, just return it.
+  """
   @spec maybe_find_user(User.t() | Customer.t() | nil, SlackAuthorization.t(), map()) ::
           User.t() | Customer.t() | nil
   def maybe_find_user(nil, authorization, %{"user" => slack_user_id}) do
     find_matching_user(authorization, slack_user_id)
   end
 
+  def maybe_find_user(%User{} = user, _, _), do: user
   def maybe_find_user(%Customer{} = customer, _, _), do: customer
   def maybe_find_user(nil, _, _), do: nil
 
+  @doc """
+  Checks for a matching `Customer` for the Slack message event if the accumulator is `nil`.
+
+  If a matching `User` or `Customer` has already been found, just return it.
+  """
   @spec maybe_find_user(User.t() | Customer.t() | nil, SlackAuthorization.t(), map()) ::
           User.t() | Customer.t() | nil
   def maybe_find_customer(nil, authorization, %{"bot_id" => slack_bot_id}) do
@@ -352,10 +361,13 @@ defmodule ChatApi.Slack.Helpers do
     find_matching_customer(authorization, slack_user_id)
   end
 
+  def maybe_find_customer(%Customer{} = customer, _, _), do: customer
   def maybe_find_customer(%User{} = user, _, _), do: user
   def maybe_find_customer(nil, _, _), do: nil
 
-  # TODO: make sure this works with "bot" senders
+  @doc """
+  Fetches the matching `User` or `Customer` for the Slack message event.
+  """
   @spec get_sender_info(SlackAuthorization.t(), map()) :: User.t() | Customer.t() | nil
   def get_sender_info(authorization, slack_message) do
     nil
@@ -368,8 +380,9 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  # NB: the methods below handle setting the message sender info
-
+  @doc """
+  Updates the params with a "user_id" field if a "customer_id" has not already been set.
+  """
   @spec maybe_set_user_id(map(), SlackAuthorization.t(), map()) :: map()
   def maybe_set_user_id(%{"customer_id" => customer_id} = params, _authorization, _event)
       when not is_nil(customer_id),
@@ -387,6 +400,9 @@ defmodule ChatApi.Slack.Helpers do
 
   def maybe_set_user_id(params, _authorization, _event), do: params
 
+  @doc """
+  Updates the params with a "customer_id" field if a "user_id" has not already been set.
+  """
   @spec maybe_set_customer_id(map(), SlackAuthorization.t(), map()) :: map()
   def maybe_set_customer_id(%{"user_id" => user_id} = params, _authorization, _event)
       when not is_nil(user_id),
