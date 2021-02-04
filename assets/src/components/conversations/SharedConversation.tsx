@@ -4,6 +4,7 @@ import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 import {colors} from '../common';
 import ConversationMessages from './ConversationMessages';
+import {sortConversationMessages} from '../../utils';
 import * as API from '../../api';
 import {Message} from '../../types';
 import logger from '../../logger';
@@ -35,10 +36,7 @@ class SharedConversationContainer extends React.Component<Props, State> {
       );
 
       this.setState({
-        messages: messages.sort(
-          (a: Message, b: Message) =>
-            +new Date(a.created_at) - +new Date(b.created_at)
-        ),
+        messages: sortConversationMessages(messages),
         loading: false,
       });
     } catch (err) {

@@ -34,21 +34,33 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  @spec notify(Message.t(), atom()) :: Message.t()
+  @spec notify(Message.t(), atom(), keyword()) :: Message.t()
+  def notify(message, type, opts \\ [])
+
   def notify(
         %Message{body: _body, conversation_id: _conversation_id} = message,
-        :slack
+        :slack,
+        opts
       ) do
     Logger.info("Sending notification: :slack")
 
-    Task.start(fn ->
-      ChatApi.Slack.Notification.notify_primary_channel(message)
-    end)
+    case opts do
+      [metadata: %{"send_to_reply_channel" => false}] ->
+        nil
+
+      [async: false] ->
+        ChatApi.Slack.Notification.notify_primary_channel(message)
+
+      _ ->
+        Task.start(fn ->
+          ChatApi.Slack.Notification.notify_primary_channel(message)
+        end)
+    end
 
     message
   end
 
-  def notify(%Message{account_id: account_id} = message, :webhooks) do
+  def notify(%Message{account_id: account_id} = message, :webhooks, _opts) do
     Logger.info("Sending notification: :webhooks")
     # TODO: how should we handle errors/retry logic?
     Task.start(fn ->
@@ -58,7 +70,7 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(%Message{} = message, :new_message_email) do
+  def notify(%Message{} = message, :new_message_email, _opts) do
     Logger.info("Sending notification: :new_message_email")
     # TODO: how should we handle errors/retry logic?
     Task.start(fn ->
@@ -68,7 +80,7 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(%Message{} = message, :conversation_reply_email) do
+  def notify(%Message{} = message, :conversation_reply_email, _opts) do
     Logger.info("Sending notification: :conversation_reply_email")
     # 20 minutes (TODO: make this configurable?)
     schedule_in = 20 * 60
@@ -85,7 +97,7 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(%Message{} = message, :slack_company_channel) do
+  def notify(%Message{} = message, :slack_company_channel, _opts) do
     Logger.info("Sending notification: :slack_company_channel")
 
     Task.start(fn ->
@@ -96,7 +108,7 @@ defmodule ChatApi.Messages.Notification do
   end
 
   # TODO: come up with a better name... it's not super clear what `slack_support_channel` means!
-  def notify(%Message{} = message, :slack_support_channel) do
+  def notify(%Message{} = message, :slack_support_channel, _opts) do
     Logger.info("Sending notification: :slack_support_channel")
 
     Task.start(fn ->
@@ -106,28 +118,11 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(message, type) do
+  def notify(message, type, _opts) do
     Logger.error(
       "Unrecognized notification type #{inspect(type)} for message #{inspect(message)}"
     )
 
     message
   end
-
-  @spec notify(Message.t(), atom(), map()) :: Message.t()
-  def notify(%Message{} = message, :slack, metadata) do
-    # NB: we currently use the Slack authorization metadata to handle one-off cases
-    # where a user might not want to broadcast to the "reply"-type Slack integration
-    # under certain circumstances.
-    if send_to_slack_reply_channel?(metadata),
-      do: notify(message, :slack),
-      else: message
-  end
-
-  def notify(%Message{} = message, type, _metadata) do
-    notify(message, type)
-  end
-
-  defp send_to_slack_reply_channel?(%{"send_to_reply_channel" => false}), do: false
-  defp send_to_slack_reply_channel?(_), do: true
 end
