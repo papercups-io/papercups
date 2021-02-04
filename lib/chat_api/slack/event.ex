@@ -103,8 +103,8 @@ defmodule ChatApi.Slack.Event do
         end
       end
     else
-      # If an existing conversation is not found, we check to see if this is a reply to a bot message.
-      # At the moment, we want to start a new thread for replies to bot messages.
+      # If an existing conversation is not found, we check to see if this is a reply to a bot
+      # or agent message. At the moment, we want to start a new thread for replies to these messages.
       {:error, :not_found} ->
         handle_reply_to_unknown_thread(event)
 
@@ -248,7 +248,6 @@ defmodule ChatApi.Slack.Event do
 
   def handle_emoji_reaction_event(_), do: nil
 
-  # TODO: rename this once we handle replies to both bots and agent messages
   @spec handle_reply_to_unknown_thread(map()) :: any()
   def handle_reply_to_unknown_thread(
         %{

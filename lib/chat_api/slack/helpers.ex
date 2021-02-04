@@ -94,13 +94,7 @@ defmodule ChatApi.Slack.Helpers do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "bot" => bot}}} <-
            Slack.Client.retrieve_bot_info(slack_bot_id, access_token) do
-      attrs =
-        %{
-          name: Map.get(bot, "name"),
-          profile_photo_url: get_in(bot, ["icons", "image_72"])
-        }
-        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-        |> Map.new()
+      attrs = customer_params_for_slack_bot(bot)
 
       Customers.find_or_create_by_external_id(slack_bot_id, account_id, attrs)
     else
@@ -123,22 +117,14 @@ defmodule ChatApi.Slack.Helpers do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
            Slack.Client.retrieve_user_info(slack_user_id, access_token),
-         %{"profile" => %{"email" => email} = profile} <- user do
+         %{"profile" => %{"email" => email}} <- user do
       company_attrs =
         case Companies.find_by_slack_channel(account_id, slack_channel_id) do
           %{id: company_id} -> %{company_id: company_id}
           _ -> %{}
         end
 
-      attrs =
-        %{
-          name: Map.get(profile, "real_name"),
-          time_zone: Map.get(user, "tz"),
-          profile_photo_url: Map.get(profile, "image_original")
-        }
-        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-        |> Map.new()
-        |> Map.merge(company_attrs)
+      attrs = customer_params_for_slack_user(user, company_attrs)
 
       Customers.find_or_create_by_email(email, account_id, attrs)
     else
@@ -176,15 +162,7 @@ defmodule ChatApi.Slack.Helpers do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "bot" => bot}}} <-
            Slack.Client.retrieve_bot_info(slack_bot_id, access_token) do
-      attrs =
-        %{
-          name: Map.get(bot, "name"),
-          profile_photo_url: get_in(bot, ["icons", "image_72"])
-        }
-        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-        |> Map.new()
-
-      Customers.create_or_update_by_external_id(slack_bot_id, account_id, attrs)
+      create_or_update_customer_from_slack_bot(bot, account_id)
     else
       # NB: This may occur in test mode, or when the Slack.Client is disabled
       {:ok, error} ->
@@ -206,8 +184,7 @@ defmodule ChatApi.Slack.Helpers do
   def create_or_update_customer_from_slack_user_id(authorization, slack_user_id, slack_channel_id) do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
-           Slack.Client.retrieve_user_info(slack_user_id, access_token),
-         %{"profile" => %{"email" => email} = profile} <- user do
+           Slack.Client.retrieve_user_info(slack_user_id, access_token) do
       # TODO: make this part optional
       company_attrs =
         case Companies.find_by_slack_channel(account_id, slack_channel_id) do
@@ -215,17 +192,7 @@ defmodule ChatApi.Slack.Helpers do
           _ -> %{}
         end
 
-      attrs =
-        %{
-          name: Map.get(profile, "real_name"),
-          time_zone: Map.get(user, "tz"),
-          profile_photo_url: Map.get(profile, "image_original")
-        }
-        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-        |> Map.new()
-        |> Map.merge(company_attrs)
-
-      Customers.create_or_update_by_email(email, account_id, attrs)
+      create_or_update_customer_from_slack_user(user, account_id, company_attrs)
     else
       # NB: This may occur in test mode, or when the Slack.Client is disabled
       {:ok, error} ->
@@ -245,18 +212,8 @@ defmodule ChatApi.Slack.Helpers do
   def create_or_update_customer_from_slack_user_id(authorization, slack_user_id) do
     with %{access_token: access_token, account_id: account_id} <- authorization,
          {:ok, %{body: %{"ok" => true, "user" => user}}} <-
-           Slack.Client.retrieve_user_info(slack_user_id, access_token),
-         %{"profile" => %{"email" => email} = profile} <- user do
-      attrs =
-        %{
-          name: Map.get(profile, "real_name"),
-          time_zone: Map.get(user, "tz"),
-          profile_photo_url: Map.get(profile, "image_original")
-        }
-        |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-        |> Map.new()
-
-      Customers.create_or_update_by_email(email, account_id, attrs)
+           Slack.Client.retrieve_user_info(slack_user_id, access_token) do
+      create_or_update_customer_from_slack_user(user, account_id)
     else
       # NB: This may occur in test mode, or when the Slack.Client is disabled
       {:ok, error} ->
@@ -269,6 +226,71 @@ defmodule ChatApi.Slack.Helpers do
 
         error
     end
+  end
+
+  @spec customer_params_for_slack_user(map(), map()) :: map()
+  def customer_params_for_slack_user(slack_user, attrs \\ %{})
+
+  def customer_params_for_slack_user(%{"profile" => profile} = slack_user, attrs) do
+    %{
+      name: Map.get(profile, "real_name"),
+      time_zone: Map.get(slack_user, "tz"),
+      profile_photo_url: Map.get(profile, "image_original")
+    }
+    |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+    |> Map.new()
+    |> Map.merge(attrs)
+  end
+
+  def customer_params_for_slack_user(slack_user, _attrs) do
+    Logger.error("Unexpected Slack user: #{inspect(slack_user)}")
+
+    %{}
+  end
+
+  @spec create_or_update_customer_from_slack_user(map(), binary(), map()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def create_or_update_customer_from_slack_user(slack_user, account_id, attrs \\ %{})
+
+  def create_or_update_customer_from_slack_user(
+        %{"profile" => %{"email" => email}} = slack_user,
+        account_id,
+        attrs
+      ) do
+    params = customer_params_for_slack_user(slack_user, attrs)
+
+    Customers.create_or_update_by_email(email, account_id, params)
+  end
+
+  def create_or_update_customer_from_slack_user(slack_user, _account_id, _attrs) do
+    {:error, "Invalid Slack user: #{inspect(slack_user)}"}
+  end
+
+  @spec customer_params_for_slack_bot(map()) :: map()
+  def customer_params_for_slack_bot(slack_bot) do
+    %{
+      name: Map.get(slack_bot, "name"),
+      profile_photo_url: get_in(slack_bot, ["icons", "image_72"])
+    }
+    |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+    |> Map.new()
+  end
+
+  @spec create_or_update_customer_from_slack_bot(map(), binary()) ::
+          {:ok, Customer.t()} | {:error, any()}
+  def create_or_update_customer_from_slack_bot(slack_bot, account_id)
+
+  def create_or_update_customer_from_slack_bot(
+        %{"id" => slack_bot_id} = slack_bot,
+        account_id
+      ) do
+    params = customer_params_for_slack_bot(slack_bot)
+
+    Customers.create_or_update_by_external_id(slack_bot_id, account_id, params)
+  end
+
+  def create_or_update_customer_from_slack_bot(slack_bot, _account_id) do
+    {:error, "Invalid Slack bot: #{inspect(slack_bot)}"}
   end
 
   @spec find_matching_customer(SlackAuthorization.t() | nil, binary()) :: Customer.t() | nil
@@ -439,26 +461,6 @@ defmodule ChatApi.Slack.Helpers do
   def is_private_slack_channel?("G" <> _rest), do: true
   def is_private_slack_channel?("C" <> _rest), do: false
   def is_private_slack_channel?(_), do: false
-
-  @spec get_slack_authorization(binary()) ::
-          %{access_token: binary(), channel: binary(), channel_id: binary()}
-          | SlackAuthorization.t()
-  def get_slack_authorization(account_id) do
-    case SlackAuthorizations.get_authorization_by_account(account_id) do
-      # Supports a fallback access token as an env variable to make it easier to
-      # test locally (assumes the existence of a "bots" channel in your workspace)
-      # TODO: deprecate
-      nil ->
-        %{
-          access_token: Slack.Token.get_default_access_token(),
-          channel: "#bots",
-          channel_id: "1"
-        }
-
-      auth ->
-        auth
-    end
-  end
 
   # TODO: not sure the most idiomatic way to handle this, but basically this
   # just formats how we show the name/email of the customer if they exist

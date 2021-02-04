@@ -57,10 +57,6 @@ defmodule ChatApi.Messages.Notification do
         end)
     end
 
-    # Task.start(fn ->
-    #   ChatApi.Slack.Notification.notify_primary_channel(message)
-    # end)
-
     message
   end
 
