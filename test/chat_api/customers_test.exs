@@ -306,5 +306,60 @@ defmodule ChatApi.CustomersTest do
       assert {:error, _error} =
                Customers.create_or_update_by_email(nil, account.id, %{name: "New Customer"})
     end
+
+    test "create_or_update_by_external_id/3 finds the matching customer", %{account: account} do
+      external_id = "a0xxxxxxx1yz"
+      %{id: customer_id} = insert(:customer, %{external_id: external_id, account: account})
+
+      assert {:ok, %Customer{id: ^customer_id}} =
+               Customers.create_or_update_by_external_id(external_id, account.id)
+    end
+
+    test "create_or_update_by_external_id/3 updates the matching customer", %{account: account} do
+      external_id = "a0xxxxxxx1yz"
+      name = "Test User"
+      %{id: customer_id} = insert(:customer, %{external_id: external_id, account: account})
+
+      assert {:ok, %Customer{id: ^customer_id, name: ^name}} =
+               Customers.create_or_update_by_external_id(external_id, account.id, %{name: name})
+    end
+
+    test "create_or_update_by_external_id/3 creates a new customer if necessary", %{
+      account: account
+    } do
+      external_id = "a0xxxxxxx1yz"
+      %{id: customer_id} = insert(:customer, %{external_id: "other@test.com", account: account})
+
+      assert {:ok, %Customer{} = customer} =
+               Customers.create_or_update_by_external_id(external_id, account.id)
+
+      assert customer.id != customer_id
+      assert customer.external_id == external_id
+    end
+
+    test "create_or_update_by_external_id/3 creates a new customer with additional params", %{
+      account: account
+    } do
+      external_id = "a0xxxxxxx1yz"
+      %{id: customer_id} = insert(:customer, %{email: "other@test.com", account: account})
+
+      assert {:ok, %Customer{} = customer} =
+               Customers.create_or_update_by_external_id(external_id, account.id, %{
+                 name: "New Customer"
+               })
+
+      assert customer.id != customer_id
+      assert customer.external_id == external_id
+      assert customer.name == "New Customer"
+    end
+
+    test "create_or_update_by_external_id/3 returns an :error tuple if email is nil", %{
+      account: account
+    } do
+      assert {:error, _error} = Customers.create_or_update_by_external_id(nil, account.id)
+
+      assert {:error, _error} =
+               Customers.create_or_update_by_external_id(nil, account.id, %{name: "New Customer"})
+    end
   end
 end
