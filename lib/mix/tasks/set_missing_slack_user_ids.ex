@@ -94,7 +94,7 @@ defmodule Mix.Tasks.SetMissingSlackUserIds do
 
   defp retrieve_slack_users(access_token) do
     with {:ok, response} <- ChatApi.Slack.Client.list_users(access_token),
-         {:ok, users} <- ChatApi.Slack.Helpers.extract_valid_slack_users(response) do
+         {:ok, users} <- ChatApi.Slack.Extractor.extract_valid_slack_users(response) do
       users
     else
       error ->

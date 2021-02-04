@@ -10,10 +10,8 @@ defmodule ChatApi.Slack.Event do
     SlackConversationThreads
   }
 
-  alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
   alias ChatApi.SlackAuthorizations.SlackAuthorization
-  alias ChatApi.Users.User
 
   @spec handle_payload(map()) :: any()
   def handle_payload(
@@ -55,7 +53,7 @@ defmodule ChatApi.Slack.Event do
       ) do
     Logger.debug("Handling Slack message reply event: #{inspect(event)}")
 
-    with {:ok, conversation} <- get_thread_conversation(thread_ts, slack_channel_id),
+    with {:ok, conversation} <- find_thread_conversation(thread_ts, slack_channel_id),
          %{account_id: account_id, id: conversation_id} <- conversation,
          primary_reply_authorization <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
@@ -108,7 +106,7 @@ defmodule ChatApi.Slack.Event do
       # If an existing conversation is not found, we check to see if this is a reply to a bot message.
       # At the moment, we want to start a new thread for replies to bot messages.
       {:error, :not_found} ->
-        handle_reply_to_bot_event(event)
+        handle_reply_to_unknown_thread(event)
 
       error ->
         error
@@ -140,9 +138,9 @@ defmodule ChatApi.Slack.Event do
          # This validates that the channel doesn't match the initially connected channel on
          # the `slack_authorization` record, since we currently treat that channel slightly differently
          true <- channel_id != slack_channel_id,
-         :ok <- validate_no_existing_company(account_id, slack_channel_id),
+         :ok <- Slack.Validation.validate_no_existing_company(account_id, slack_channel_id),
          {:ok, response} <- Slack.Client.retrieve_channel_info(slack_channel_id, access_token),
-         {:ok, channel} <- Slack.Helpers.extract_slack_channel(response),
+         {:ok, channel} <- Slack.Extractor.extract_slack_channel(response),
          %{"name" => name, "purpose" => purpose, "topic" => topic} <- channel do
       company = %{
         # Set default company name to Slack channel name
@@ -185,8 +183,8 @@ defmodule ChatApi.Slack.Event do
            }),
          # TODO: remove after debugging!
          :ok <- Logger.info("Handling Slack new message event: #{inspect(event)}"),
-         :ok <- validate_channel_supported(authorization, slack_channel_id),
-         :ok <- validate_non_admin_user(authorization, slack_user_id) do
+         :ok <- Slack.Validation.validate_channel_supported(authorization, slack_channel_id),
+         :ok <- Slack.Validation.validate_non_admin_user(authorization, slack_user_id) do
       create_new_conversation_from_slack_message(event, authorization)
     end
   end
@@ -205,12 +203,12 @@ defmodule ChatApi.Slack.Event do
       ) do
     Logger.info("Handling Slack reaction event: #{inspect(event)}")
 
-    with :ok <- validate_no_existing_thread(channel, ts),
+    with :ok <- Slack.Validation.validate_no_existing_thread(channel, ts),
          {:ok, account_id} <- find_account_id_by_support_channel(channel),
          %{access_token: access_token} <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
          {:ok, response} <- Slack.Client.retrieve_message(channel, ts, access_token),
-         {:ok, message} <- Slack.Helpers.extract_slack_message(response) do
+         {:ok, message} <- Slack.Extractor.extract_slack_message(response) do
       Logger.info("Slack emoji reaction detected:")
       Logger.info(inspect(event))
 
@@ -241,191 +239,16 @@ defmodule ChatApi.Slack.Event do
              team_id: team,
              type: "support"
            }),
-         :ok <- validate_channel_supported(authorization, slack_channel_id) do
+         :ok <- Slack.Validation.validate_channel_supported(authorization, slack_channel_id) do
       create_new_conversation_from_slack_message(event, authorization)
     end
   end
 
-  @spec get_syncable_slack_messages(map()) :: any()
-  def get_syncable_slack_messages(
-        %{
-          "type" => "message",
-          "text" => _text,
-          "team" => team,
-          "thread_ts" => thread_ts,
-          "channel" => slack_channel_id
-        } = _event
-      ) do
-    with %{access_token: access_token} = authorization <-
-           SlackAuthorizations.find_slack_authorization(%{
-             team_id: team,
-             type: "support"
-           }),
-         :ok <- validate_channel_supported(authorization, slack_channel_id),
-         {:ok, response} <-
-           Slack.Client.retrieve_conversation_replies(slack_channel_id, thread_ts, access_token),
-         {:ok, slack_messages} <- Slack.Helpers.extract_slack_messages(response) do
-      Enum.map(slack_messages, fn msg ->
-        # TODO: use a struct here?
-        %{
-          message: msg,
-          sender: Slack.Helpers.get_sender_info(authorization, msg),
-          is_bot: Slack.Helpers.is_bot_message?(msg)
-          # event: event
-        }
-      end)
-    else
-      _ -> []
-    end
-  end
-
-  @spec get_syncable_slack_messages(any(), map()) :: any()
-  def get_syncable_slack_messages(
-        %SlackAuthorization{access_token: access_token} = authorization,
-        %{
-          "type" => "message",
-          "text" => _text,
-          "team" => _team,
-          "thread_ts" => thread_ts,
-          "channel" => slack_channel_id
-        } = _event
-      ) do
-    with :ok <- validate_channel_supported(authorization, slack_channel_id),
-         {:ok, response} <-
-           Slack.Client.retrieve_conversation_replies(slack_channel_id, thread_ts, access_token),
-         {:ok, slack_messages} <- Slack.Helpers.extract_slack_messages(response) do
-      Enum.map(slack_messages, fn msg ->
-        # TODO: use a struct here?
-        %{
-          message: msg,
-          sender: Slack.Helpers.get_sender_info(authorization, msg),
-          is_bot: Slack.Helpers.is_bot_message?(msg)
-          # event: event
-        }
-      end)
-    else
-      _ -> []
-    end
-  end
-
-  def should_sync_slack_messages?([initial | replies]) do
-    is_valid_initial =
-      case initial do
-        %{is_bot: true} -> true
-        %{sender: %User{}} -> true
-        _ -> false
-      end
-
-    has_customer_reply =
-      Enum.any?(replies, fn reply ->
-        case reply do
-          %{is_bot: false, sender: %Customer{}} -> true
-          _ -> false
-        end
-      end)
-
-    is_valid_initial && has_customer_reply
-  end
-
-  # TODO: do a better job distinguishing between:
-  # - Slack webhook event
-  # - Slack message payload
-  # - internal data structures (e.g. what is the structure of "items"?)
-  def sync_slack_message_thread(
-        items,
-        %SlackAuthorization{account_id: account_id} = authorization,
-        %{
-          "type" => "message",
-          "thread_ts" => thread_ts,
-          "channel" => slack_channel_id
-        } = _event
-      ) do
-    IO.inspect(items, label: "sync_slack_message_thread")
-
-    with %{sender: %Customer{} = customer} <-
-           Enum.find(items, fn item ->
-             case item do
-               %{is_bot: false, sender: %Customer{}} -> true
-               _ -> false
-             end
-           end),
-         {:ok, conversation} <-
-           Conversations.create_conversation(%{
-             account_id: account_id,
-             customer_id: customer.id,
-             source: "slack"
-           }),
-         {:ok, _slack_conversation_thread} <-
-           SlackConversationThreads.create_slack_conversation_thread(%{
-             slack_channel: slack_channel_id,
-             slack_thread_ts: thread_ts,
-             account_id: account_id,
-             conversation_id: conversation.id
-           }) do
-      conversation
-      |> Conversations.Notification.broadcast_conversation_to_admin!()
-      |> Conversations.Notification.broadcast_conversation_to_customer!()
-
-      Enum.map(items, fn
-        %{
-          message: %{"text" => text} = message,
-          sender: sender
-        } ->
-          sender =
-            case sender do
-              nil -> create_or_update_sender!(message, authorization)
-              sender -> sender
-            end
-
-          message_sender_params =
-            case sender do
-              %User{id: user_id} -> %{"user_id" => user_id}
-              %Customer{id: customer_id} -> %{"customer_id" => customer_id}
-              # TODO: if no sender exists yet, create one!
-              _ -> raise "Unexpected sender #{inspect(sender)}"
-            end
-
-          %{
-            "body" => Slack.Helpers.sanitize_slack_message(text, authorization),
-            "conversation_id" => conversation.id,
-            "account_id" => account_id,
-            "sent_at" => message |> Map.get("ts") |> Slack.Helpers.slack_ts_to_utc(),
-            "source" => "slack"
-          }
-          |> Map.merge(message_sender_params)
-          |> IO.inspect(label: "new message params")
-          |> Messages.create_and_fetch!()
-          |> Messages.Notification.broadcast_to_customer!()
-          |> Messages.Notification.broadcast_to_admin!()
-          |> Messages.Notification.notify(:webhooks)
-          # NB: we need to make sure the messages are created in the correct order, so we set async: false
-          |> Messages.Notification.notify(:slack, async: false)
-          # TODO: not sure we need to do this on every message
-          |> Messages.Helpers.handle_post_creation_conversation_updates()
-
-        _ ->
-          nil
-      end)
-    end
-  end
-
-  def create_or_update_sender!(%{"user" => slack_user_id}, authorization) do
-    case Slack.Helpers.create_or_update_customer_from_slack_user_id(authorization, slack_user_id) do
-      {:ok, customer} -> customer
-      error -> raise "Failed to create customer from Slack user token: #{inspect(error)}"
-    end
-  end
-
-  def create_or_update_sender!(%{"bot_id" => slack_bot_id}, authorization) do
-    case Slack.Helpers.create_or_update_customer_from_slack_bot_id(authorization, slack_bot_id) do
-      {:ok, customer} -> customer
-      error -> raise "Failed to create customer from Slack bot token: #{inspect(error)}"
-    end
-  end
+  def handle_emoji_reaction_event(_), do: nil
 
   # TODO: rename this once we handle replies to both bots and agent messages
-  @spec handle_reply_to_bot_event(map()) :: any()
-  def handle_reply_to_bot_event(
+  @spec handle_reply_to_unknown_thread(map()) :: any()
+  def handle_reply_to_unknown_thread(
         %{
           "type" => "message",
           "text" => _text,
@@ -440,14 +263,14 @@ defmodule ChatApi.Slack.Event do
              team_id: team,
              type: "support"
            }),
-         [_ | _] = messages <- get_syncable_slack_messages(authorization, event),
+         [_ | _] = messages <- Slack.Sync.get_syncable_slack_messages(authorization, event),
          IO.inspect(messages, label: "get_syncable_slack_messages"),
-         true <- should_sync_slack_messages?(messages) do
-      sync_slack_message_thread(messages, authorization, event)
+         true <- Slack.Sync.should_sync_slack_messages?(messages) do
+      Slack.Sync.sync_slack_message_thread(messages, authorization, event)
     end
   end
 
-  def handle_reply_to_bot_event(_event), do: nil
+  def handle_reply_to_unknown_thread(_event), do: nil
 
   # TODO: move to Slack.Helpers?
   @spec create_new_conversation_from_slack_message(map(), SlackAuthorization.t()) ::
@@ -505,9 +328,9 @@ defmodule ChatApi.Slack.Event do
     end
   end
 
-  @spec get_thread_conversation(binary(), binary()) ::
+  @spec find_thread_conversation(binary(), binary()) ::
           {:ok, Conversation.t()} | {:error, :not_found}
-  defp get_thread_conversation(thread_ts, channel) do
+  defp find_thread_conversation(thread_ts, channel) do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
       %{conversation: conversation} -> {:ok, conversation}
       _ -> {:error, :not_found}
@@ -528,49 +351,6 @@ defmodule ChatApi.Slack.Event do
           %{account_id: account_id} -> {:ok, account_id}
           _ -> {:error, :not_found}
         end
-    end
-  end
-
-  @spec validate_non_admin_user(any(), binary()) :: :ok | :error
-  defp validate_non_admin_user(authorization, slack_user_id) do
-    case Slack.Helpers.find_matching_user(authorization, slack_user_id) do
-      nil -> :ok
-      _match -> :error
-    end
-  end
-
-  @spec validate_channel_supported(any(), binary()) :: :ok | :error
-  defp validate_channel_supported(
-         %SlackAuthorization{channel_id: slack_channel_id},
-         slack_channel_id
-       ),
-       do: :ok
-
-  defp validate_channel_supported(
-         %SlackAuthorization{account_id: account_id},
-         slack_channel_id
-       ) do
-    case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
-      nil -> :error
-      _company -> :ok
-    end
-  end
-
-  defp validate_channel_supported(_authorization, _slack_channel_id), do: :error
-
-  @spec validate_no_existing_company(binary(), binary()) :: :ok | :error
-  def validate_no_existing_company(account_id, slack_channel_id) do
-    case ChatApi.Companies.find_by_slack_channel(account_id, slack_channel_id) do
-      nil -> :ok
-      _company -> :error
-    end
-  end
-
-  @spec validate_no_existing_thread(binary(), binary()) :: :ok | :error
-  def validate_no_existing_thread(channel, ts) do
-    case SlackConversationThreads.exists?(%{"slack_thread_ts" => ts, "slack_channel" => channel}) do
-      false -> :ok
-      true -> :error
     end
   end
 end

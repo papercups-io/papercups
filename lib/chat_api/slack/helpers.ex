@@ -32,7 +32,7 @@ defmodule ChatApi.Slack.Helpers do
 
       {:ok, response} ->
         try do
-          extract_slack_user_email(response)
+          Slack.Extractor.extract_slack_user_email(response)
         rescue
           error ->
             Logger.error("Unable to retrieve Slack user email: #{inspect(error)}")
@@ -271,42 +271,36 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec find_matching_customer(any(), binary()) :: Customer.t() | nil
-  def find_matching_customer(authorization, slack_user_id) do
-    case authorization do
-      %{access_token: access_token, account_id: account_id} ->
+  @spec find_matching_customer(SlackAuthorization.t() | nil, binary()) :: Customer.t() | nil
+  def find_matching_customer(
+        %SlackAuthorization{access_token: access_token, account_id: account_id},
         slack_user_id
-        |> get_user_email(access_token)
-        |> Customers.find_by_email(account_id)
-
-      _ ->
-        nil
-    end
+      ) do
+    slack_user_id
+    |> get_user_email(access_token)
+    |> Customers.find_by_email(account_id)
   end
 
-  @spec find_matching_user(any(), binary()) :: User.t() | nil
-  def find_matching_user(authorization, slack_user_id) do
-    case authorization do
-      %{access_token: access_token, account_id: account_id} ->
-        slack_user_id
-        |> get_user_email(access_token)
-        |> Users.find_user_by_email(account_id)
+  def find_matching_customer(_authorization, _slack_user_id), do: nil
 
-      _ ->
-        nil
-    end
+  @spec find_matching_user(SlackAuthorization.t(), binary()) :: User.t() | nil
+  def find_matching_user(
+        %SlackAuthorization{access_token: access_token, account_id: account_id},
+        slack_user_id
+      ) do
+    slack_user_id
+    |> get_user_email(access_token)
+    |> Users.find_user_by_email(account_id)
   end
+
+  def find_matching_user(_authorization, _slack_user_id), do: nil
 
   @spec find_matching_bot_customer(any(), binary()) :: Customer.t() | nil
-  def find_matching_bot_customer(authorization, slack_bot_id) do
-    case authorization do
-      %{account_id: account_id} ->
-        Customers.find_by_external_id(slack_bot_id, account_id)
-
-      _ ->
-        nil
-    end
+  def find_matching_bot_customer(%SlackAuthorization{account_id: account_id}, slack_bot_id) do
+    Customers.find_by_external_id(slack_bot_id, account_id)
   end
+
+  def find_matching_bot_customer(_authorization, _slack_bot_id), do: nil
 
   @spec get_admin_sender_id(any(), binary(), binary()) :: binary()
   def get_admin_sender_id(authorization, slack_user_id, fallback) do
@@ -350,7 +344,7 @@ defmodule ChatApi.Slack.Helpers do
 
   # NB: the methods below handle setting the message sender info
 
-  def maybe_set_user_id(%{"customer_id" => customer_id} = params, _, _)
+  def maybe_set_user_id(%{"customer_id" => customer_id} = params, _authorization, _)
       when not is_nil(customer_id),
       do: params
 
@@ -366,7 +360,7 @@ defmodule ChatApi.Slack.Helpers do
 
   def maybe_set_user_id(params, _, _), do: params
 
-  def maybe_set_customer_id(%{"user_id" => user_id} = params, _, _, _)
+  def maybe_set_customer_id(%{"user_id" => user_id} = params, _authorization, _event)
       when not is_nil(user_id),
       do: params
 
@@ -492,7 +486,7 @@ defmodule ChatApi.Slack.Helpers do
         conversation_id: conversation_id,
         account_id: conversation.account_id
       }
-      |> Map.merge(extract_slack_conversation_thread_info(response))
+      |> Map.merge(Slack.Extractor.extract_slack_conversation_thread_info(response))
       |> SlackConversationThreads.create_slack_conversation_thread()
     end
   end
@@ -692,100 +686,6 @@ defmodule ChatApi.Slack.Helpers do
   end
 
   #####################
-  # Extractors
-  #####################
-
-  @spec extract_slack_message(map()) :: {:ok, map()} | {:error, String.t()}
-  def extract_slack_message(%{body: %{"ok" => true, "messages" => [message | _]}}),
-    do: {:ok, message}
-
-  def extract_slack_message(%{body: %{"ok" => true, "messages" => []}}),
-    do: {:error, "No messages were found"}
-
-  def extract_slack_message(%{body: %{"ok" => false} = body}) do
-    Logger.error("conversations.history returned ok=false: #{inspect(body)}")
-
-    {:error, "conversations.history returned ok=false: #{inspect(body)}"}
-  end
-
-  def extract_slack_message(response),
-    do: {:error, "Invalid response: #{inspect(response)}"}
-
-  @spec extract_slack_messages(map()) :: {:ok, [map()]} | {:error, String.t()}
-  def extract_slack_messages(%{body: %{"ok" => true, "messages" => messages}})
-      when is_list(messages),
-      do: {:ok, messages}
-
-  def extract_slack_messages(%{body: %{"ok" => false} = body}) do
-    Logger.error("conversations.replies returned ok=false: #{inspect(body)}")
-
-    {:error, "conversations.replies returned ok=false: #{inspect(body)}"}
-  end
-
-  def extract_slack_messages(response),
-    do: {:error, "Invalid response: #{inspect(response)}"}
-
-  @spec extract_slack_channel(map()) :: {:ok, map()} | {:error, String.t()}
-  def extract_slack_channel(%{body: %{"ok" => true, "channel" => channel}}) when is_map(channel),
-    do: {:ok, channel}
-
-  def extract_slack_channel(%{body: %{"ok" => false} = body}) do
-    Logger.error("conversations.info returned ok=false: #{inspect(body)}")
-
-    {:error, "conversations.info returned ok=false: #{inspect(body)}"}
-  end
-
-  def extract_slack_channel(response),
-    do: {:error, "Invalid response: #{inspect(response)}"}
-
-  @slackbot_user_id "USLACKBOT"
-
-  @spec extract_valid_slack_users(map()) :: {:ok, [map()]} | {:error, String.t()}
-  def extract_valid_slack_users(%{body: %{"ok" => true, "members" => members}}) do
-    users =
-      Enum.reject(members, fn member ->
-        Map.get(member, "is_bot") ||
-          Map.get(member, "deleted") ||
-          member["id"] == @slackbot_user_id
-      end)
-
-    {:ok, users}
-  end
-
-  def extract_valid_slack_users(%{body: %{"ok" => true, "members" => []}}),
-    do: {:error, "No users were found"}
-
-  def extract_valid_slack_users(response),
-    do: {:error, "Invalid response: #{inspect(response)}"}
-
-  # TODO: refactor extractors below to return :ok/:error tuples rather than raising?
-
-  @spec extract_slack_conversation_thread_info(map()) :: map()
-  def extract_slack_conversation_thread_info(%{body: body}) do
-    if Map.get(body, "ok") do
-      %{
-        slack_channel: Map.get(body, "channel"),
-        slack_thread_ts: Map.get(body, "ts")
-      }
-    else
-      Logger.error("Error sending Slack message: #{inspect(body)}")
-
-      raise "chat.postMessage returned ok=false"
-    end
-  end
-
-  @spec extract_slack_user_email(map()) :: binary()
-  def extract_slack_user_email(%{body: body}) do
-    if Map.get(body, "ok") do
-      get_in(body, ["user", "profile", "email"])
-    else
-      Logger.error("Error retrieving user info: #{inspect(body)}")
-
-      raise "users.info returned ok=false"
-    end
-  end
-
-  #####################
   # Formatters
   #####################
 
@@ -808,6 +708,7 @@ defmodule ChatApi.Slack.Helpers do
     url = base <> "/conversations/all?cid=" <> conversation_id
     dashboard = "<#{url}|dashboard>"
 
+    # TODO: this isn't always a "customer" -- with proactive messaging, it would be an agent
     "*:wave: #{identify_customer(customer)} says*: #{text}" <>
       "\n\nReply to this thread to start chatting, or view in the #{dashboard} :rocket:"
   end
