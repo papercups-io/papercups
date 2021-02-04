@@ -17,13 +17,15 @@ defmodule ChatApi.Messages.Notification do
   end
 
   @spec broadcast_to_customer!(Message.t()) :: Message.t()
-  def broadcast_to_customer!(%Message{} = message) do
+  def broadcast_to_customer!(%Message{private: false} = message) do
     message
     |> Helpers.get_conversation_topic()
     |> ChatApiWeb.Endpoint.broadcast!("shout", Helpers.format(message))
 
     message
   end
+
+  def broadcast_to_customer!(message), do: message
 
   @spec broadcast_to_admin!(Message.t()) :: Message.t()
   def broadcast_to_admin!(%Message{} = message) do
@@ -80,7 +82,7 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(%Message{} = message, :conversation_reply_email, _opts) do
+  def notify(%Message{private: false} = message, :conversation_reply_email, _opts) do
     Logger.info("Sending notification: :conversation_reply_email")
     # 20 minutes (TODO: make this configurable?)
     schedule_in = 20 * 60
@@ -97,7 +99,7 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(%Message{} = message, :slack_company_channel, _opts) do
+  def notify(%Message{private: false} = message, :slack_company_channel, _opts) do
     Logger.info("Sending notification: :slack_company_channel")
 
     Task.start(fn ->
@@ -108,12 +110,20 @@ defmodule ChatApi.Messages.Notification do
   end
 
   # TODO: come up with a better name... it's not super clear what `slack_support_channel` means!
-  def notify(%Message{} = message, :slack_support_channel, _opts) do
+  def notify(%Message{private: false} = message, :slack_support_channel, _opts) do
     Logger.info("Sending notification: :slack_support_channel")
 
     Task.start(fn ->
       ChatApi.Slack.Notification.notify_support_channel(message)
     end)
+
+    message
+  end
+
+  def notify(%Message{private: true} = message, type, _opts) do
+    Logger.debug(
+      "Skipping notification type #{inspect(type)} for private message #{inspect(message)}"
+    )
 
     message
   end

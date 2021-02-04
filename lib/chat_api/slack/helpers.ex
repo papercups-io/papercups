@@ -586,6 +586,7 @@ defmodule ChatApi.Slack.Helpers do
     |> sanitize_slack_user_ids(access_token)
     |> sanitize_slack_links()
     |> sanitize_slack_mailto_links()
+    |> sanitize_private_note()
   end
 
   @spec get_slack_message_metadata(binary()) :: map() | nil
@@ -683,6 +684,27 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @private_note_prefix_v1 ~S(\\ )
+  @private_note_prefix_v2 ~S(;; )
+  @private_note_prefix_regex_v1 ~r/^\\\\ /
+  @private_note_prefix_regex_v2 ~r/^;; /
+
+  @spec sanitize_private_note(binary()) :: binary()
+  def sanitize_private_note(text) do
+    text
+    |> String.replace(@private_note_prefix_regex_v1, "")
+    |> String.replace(@private_note_prefix_regex_v2, "")
+  end
+
+  @spec parse_message_type_params(binary()) :: map()
+  def parse_message_type_params(text) do
+    case text do
+      @private_note_prefix_v1 <> _note -> %{"private" => true, "type" => "note"}
+      @private_note_prefix_v2 <> _note -> %{"private" => true, "type" => "note"}
+      _ -> %{}
+    end
+  end
+
   @spec slack_link_to_markdown(binary()) :: binary()
   def slack_link_to_markdown(text) do
     text
@@ -712,13 +734,8 @@ defmodule ChatApi.Slack.Helpers do
   # Formatters
   #####################
 
-  @spec get_message_text(map()) :: binary()
-  def get_message_text(%{
-        conversation: %Conversation{id: conversation_id, customer: %Customer{} = customer},
-        message: %Message{body: text},
-        authorization: _authorization,
-        thread: nil
-      }) do
+  @spec get_dashboard_conversation_url(binary()) :: binary()
+  def get_dashboard_conversation_url(conversation_id) do
     url = System.get_env("BACKEND_URL") || ""
 
     base =
@@ -728,22 +745,57 @@ defmodule ChatApi.Slack.Helpers do
         "https://" <> url
       end
 
-    url = base <> "/conversations/all?cid=" <> conversation_id
-    dashboard = "<#{url}|dashboard>"
+    "#{base}/conversations/all?cid=#{conversation_id}"
+  end
 
-    # TODO: this isn't always a "customer" -- with proactive messaging, it would be an agent
-    "*:wave: #{identify_customer(customer)} says*: #{text}" <>
-      "\n\nReply to this thread to start chatting, or view in the #{dashboard} :rocket:"
+  @spec get_message_text(map()) :: binary()
+  def get_message_text(%{
+        conversation: %Conversation{customer: %Customer{}} = conversation,
+        message: %Message{body: text} = message,
+        authorization: _authorization,
+        thread: nil
+      }) do
+    dashboard_link = "<#{get_dashboard_conversation_url(conversation.id)}|dashboard>"
+
+    primary_message_text =
+      case message do
+        %Message{user: %User{} = user} ->
+          "*:female-technologist: #{Slack.Notification.format_user_name(user)}*: #{text}"
+
+        %Message{customer: %Customer{} = customer} ->
+          "*:wave: #{identify_customer(customer)}*: #{text}"
+
+        %Message{customer_id: nil, user_id: user_id} when not is_nil(user_id) ->
+          "*:female-technologist: Agent*: #{text}"
+
+        %Message{customer_id: customer_id, user_id: nil} when not is_nil(customer_id) ->
+          "*:wave: #{identify_customer(conversation.customer)}*: #{text}"
+
+        _ ->
+          Logger.error("Unrecognized message format: #{inspect(message)}")
+
+          text
+      end
+
+    primary_message_text <>
+      "\n\n" <>
+      "Reply to this thread to start chatting, or view in the #{dashboard_link} :rocket:"
   end
 
   @slack_chat_write_customize_scope "chat:write.customize"
 
   def get_message_text(%{
         conversation: %Conversation{} = conversation,
-        message: %Message{body: text} = message,
+        message: %Message{body: body} = message,
         authorization: %SlackAuthorization{} = authorization,
         thread: %SlackConversationThread{}
       }) do
+    text =
+      case message do
+        %Message{private: true, type: "note"} -> "\\\\ _#{body}_"
+        _ -> body
+      end
+
     if SlackAuthorizations.has_authorization_scope?(
          authorization,
          @slack_chat_write_customize_scope
