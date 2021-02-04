@@ -47,7 +47,6 @@ defmodule ChatApi.Slack.Notification do
           account_id: account_id
         } = message
       ) do
-    IO.inspect(message, label: "notify_primary_channel")
     # TODO: handle getting all these fields in a separate function?
     with %{customer: customer} = conversation <-
            Conversations.get_conversation_with!(conversation_id, :customer),

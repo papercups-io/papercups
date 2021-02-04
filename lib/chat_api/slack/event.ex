@@ -240,6 +240,8 @@ defmodule ChatApi.Slack.Event do
              type: "support"
            }),
          :ok <- Slack.Validation.validate_channel_supported(authorization, slack_channel_id) do
+      # TODO: sync whole message thread if there are multiple messages already
+      # (See `Slack.Sync.sync_slack_message_thread(messages, authorization, event)`)
       create_new_conversation_from_slack_message(event, authorization)
     end
   end
@@ -264,7 +266,6 @@ defmodule ChatApi.Slack.Event do
              type: "support"
            }),
          [_ | _] = messages <- Slack.Sync.get_syncable_slack_messages(authorization, event),
-         IO.inspect(messages, label: "get_syncable_slack_messages"),
          true <- Slack.Sync.should_sync_slack_messages?(messages) do
       Slack.Sync.sync_slack_message_thread(messages, authorization, event)
     end

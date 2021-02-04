@@ -27,29 +27,18 @@ defmodule ChatApi.Slack.Sync do
   def get_syncable_slack_messages(
         %{
           "type" => "message",
-          "text" => _text,
           "team" => team,
-          "thread_ts" => thread_ts,
-          "channel" => slack_channel_id
-        } = _event
+          "text" => _text,
+          "thread_ts" => _thread_ts,
+          "channel" => _slack_channel_id
+        } = event
       ) do
-    with %{access_token: access_token} = authorization <-
+    with %SlackAuthorization{access_token: _access_token} = authorization <-
            SlackAuthorizations.find_slack_authorization(%{
              team_id: team,
              type: "support"
-           }),
-         :ok <- Slack.Validation.validate_channel_supported(authorization, slack_channel_id),
-         {:ok, response} <-
-           Slack.Client.retrieve_conversation_replies(slack_channel_id, thread_ts, access_token),
-         {:ok, slack_messages} <- Slack.Extractor.extract_slack_messages(response) do
-      Enum.map(slack_messages, fn msg ->
-        # TODO: use a struct here?
-        %SyncableMessageInfo{
-          message: msg,
-          sender: Slack.Helpers.get_sender_info(authorization, msg),
-          is_bot: Slack.Helpers.is_bot_message?(msg)
-        }
-      end)
+           }) do
+      get_syncable_slack_messages(authorization, event)
     else
       _ -> []
     end
@@ -72,7 +61,6 @@ defmodule ChatApi.Slack.Sync do
            Slack.Client.retrieve_conversation_replies(slack_channel_id, thread_ts, access_token),
          {:ok, slack_messages} <- Slack.Extractor.extract_slack_messages(response) do
       Enum.map(slack_messages, fn msg ->
-        # TODO: use a struct here?
         %SyncableMessageInfo{
           message: msg,
           sender: Slack.Helpers.get_sender_info(authorization, msg),
@@ -104,10 +92,7 @@ defmodule ChatApi.Slack.Sync do
     is_valid_initial && has_customer_reply
   end
 
-  # TODO: do a better job distinguishing between:
-  # - Slack webhook event
-  # - Slack message payload
-  # - internal data structures (e.g. what is the structure of "items"?)
+  # TODO: do a better job distinguishing between Slack webhook event and Slack message payload
   @spec sync_slack_message_thread([SyncableMessageInfo.t()], SlackAuthorization.t(), map()) ::
           any()
   def sync_slack_message_thread(
@@ -119,8 +104,7 @@ defmodule ChatApi.Slack.Sync do
           "channel" => slack_channel_id
         } = _event
       ) do
-    IO.inspect(syncable_message_items, label: "sync_slack_message_thread")
-
+    # TODO: make it possible to pass in customer manually
     with %{sender: %Customer{} = customer} <-
            Enum.find(syncable_message_items, fn item ->
              case item do
@@ -172,7 +156,6 @@ defmodule ChatApi.Slack.Sync do
             "source" => "slack"
           }
           |> Map.merge(message_sender_params)
-          |> IO.inspect(label: "new message params")
           |> Messages.create_and_fetch!()
           |> Messages.Notification.broadcast_to_customer!()
           |> Messages.Notification.broadcast_to_admin!()
