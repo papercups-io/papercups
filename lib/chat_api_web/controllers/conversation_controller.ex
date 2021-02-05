@@ -209,8 +209,9 @@ defmodule ChatApiWeb.ConversationController do
 
     with {:ok, %Conversation{} = conversation} <-
            Conversations.update_conversation(conversation, conversation_params) do
+      # Notify Slack of any conversation updates if integration exists
       Task.start(fn ->
-        Helpers.send_conversation_state_update(conversation, conversation_params)
+        Helpers.broadcast_conversation_updates_to_slack(conversation)
       end)
 
       render(conn, "update.json", conversation: conversation)

@@ -4,6 +4,7 @@ defmodule ChatApi.Messages.Helpers do
   """
 
   alias ChatApi.Conversations
+  alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
 
   @spec get_conversation_topic(Message.t()) :: binary()
@@ -28,6 +29,7 @@ defmodule ChatApi.Messages.Helpers do
     message
     |> build_conversation_updates()
     |> update_conversation_and_broadcast_to_admin(message)
+    |> Conversations.Helpers.broadcast_conversation_updates_to_slack()
 
     message
   end
@@ -66,7 +68,7 @@ defmodule ChatApi.Messages.Helpers do
     end
   end
 
-  @spec update_conversation_and_broadcast_to_admin(map(), Message.t()) :: :ok | no_return()
+  @spec update_conversation_and_broadcast_to_admin(map(), Message.t()) :: Conversation.t()
   defp update_conversation_and_broadcast_to_admin(
          updates,
          %Message{
@@ -84,5 +86,7 @@ defmodule ChatApi.Messages.Helpers do
       "id" => conversation_id,
       "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
     })
+
+    conversation
   end
 end

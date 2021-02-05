@@ -69,6 +69,24 @@ defmodule ChatApi.Slack.Client do
     end
   end
 
+  @spec update_message(binary(), binary(), map(), binary()) :: {:ok, nil} | Tesla.Env.result()
+  def update_message(channel, ts, updates, access_token) do
+    if should_execute?(access_token) do
+      post(
+        "/chat.update",
+        Map.merge(updates, %{"channel" => channel, "ts" => ts}),
+        headers: [
+          {"Authorization", "Bearer " <> access_token}
+        ]
+      )
+    else
+      # Inspect what would've been sent for debugging
+      Logger.info("Would have retrieved message #{inspect(ts)} from channel #{inspect(channel)}")
+
+      {:ok, nil}
+    end
+  end
+
   @spec get_message_permalink(binary(), binary(), binary()) :: {:ok, nil} | Tesla.Env.result()
   def get_message_permalink(channel, ts, access_token) do
     if should_execute?(access_token) do

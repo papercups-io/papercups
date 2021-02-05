@@ -4,7 +4,43 @@ defmodule ChatApi.Conversations.Helpers do
   """
 
   require Logger
+  alias ChatApi.{Slack, SlackAuthorizations, SlackConversationThreads}
   alias ChatApi.Conversations.Conversation
+
+  @spec broadcast_conversation_updates_to_slack(Conversation.t()) :: any()
+  def broadcast_conversation_updates_to_slack(
+        %Conversation{id: conversation_id, account_id: account_id} = conversation
+      ) do
+    # TODO: we need to ensure that the Papercups app is added to the channel manually before this can work
+    with %{channel_id: channel, access_token: access_token} <-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}),
+         [%{slack_thread_ts: ts}] <-
+           SlackConversationThreads.get_threads_by_conversation_id(conversation_id, %{
+             "account_id" => account_id,
+             "slack_channel" => channel
+           }),
+         {:ok, response} <-
+           Slack.Client.retrieve_message(channel, ts, access_token),
+         {:ok, %{"blocks" => blocks}} <- Slack.Extractor.extract_slack_message(response) do
+      updated_blocks =
+        Enum.map(blocks, fn block ->
+          case block do
+            %{"fields" => [_ | _] = fields} ->
+              Map.merge(block, %{
+                "fields" =>
+                  Slack.Helpers.update_fields_with_conversation_status(fields, conversation)
+              })
+
+            _ ->
+              block
+          end
+        end)
+
+      Slack.Client.update_message(channel, ts, %{"blocks" => updated_blocks}, access_token)
+    end
+  end
+
+  # TODO: deprecate/remove code below?
 
   @spec send_conversation_state_update(Conversation.t(), map()) ::
           {:ok, String.t()} | {:error, String.t()}

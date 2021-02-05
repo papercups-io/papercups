@@ -684,16 +684,17 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @private_note_prefix_v1 ~S(\\ )
-  @private_note_prefix_v2 ~S(;; )
-  @private_note_prefix_regex_v1 ~r/^\\\\ /
-  @private_note_prefix_regex_v2 ~r/^;; /
+  @private_note_prefix_v1 ~S(\\)
+  @private_note_prefix_v2 ~S(;;)
+  @private_note_prefix_regex_v1 ~r/^\\\\/
+  @private_note_prefix_regex_v2 ~r/^;;/
 
   @spec sanitize_private_note(binary()) :: binary()
   def sanitize_private_note(text) do
     text
     |> String.replace(@private_note_prefix_regex_v1, "")
     |> String.replace(@private_note_prefix_regex_v2, "")
+    |> String.trim()
   end
 
   @spec parse_message_type_params(binary()) :: map()
@@ -826,6 +827,7 @@ defmodule ChatApi.Slack.Helpers do
   @spec get_message_payload(binary(), map()) :: map()
   def get_message_payload(text, %{
         channel: channel,
+        conversation: conversation,
         customer: %Customer{
           name: name,
           email: email,
@@ -872,6 +874,10 @@ defmodule ChatApi.Slack.Helpers do
             %{
               "type" => "mrkdwn",
               "text" => "*Timezone:*\n#{time_zone || "N/A"}"
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
             }
           ]
         }
@@ -915,6 +921,56 @@ defmodule ChatApi.Slack.Helpers do
   def get_message_payload(text, params) do
     raise "Unrecognized params for Slack payload: #{text} #{inspect(params)}"
   end
+
+  @spec update_fields_with_conversation_status([map()], Conversation.t()) :: [map()]
+  def update_fields_with_conversation_status(fields, conversation) do
+    status = get_slack_conversation_status(conversation)
+
+    if Enum.any?(fields, &is_slack_conversation_status_field?/1) do
+      Enum.map(fields, fn field ->
+        if is_slack_conversation_status_field?(field) do
+          Map.merge(field, %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{status}"
+          })
+        else
+          field
+        end
+      end)
+    else
+      fields ++
+        [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{status}"
+          }
+        ]
+    end
+  end
+
+  @spec get_slack_conversation_status(Conversation.t()) :: binary()
+  def get_slack_conversation_status(conversation) do
+    case conversation do
+      %{status: "closed"} ->
+        ":white_check_mark: Closed"
+
+      %{closed_at: closed_at} when not is_nil(closed_at) ->
+        ":white_check_mark: Closed"
+
+      %{status: "open", first_replied_at: nil} ->
+        ":wave: Unhandled"
+
+      %{status: "open", first_replied_at: first_replied_at} when not is_nil(first_replied_at) ->
+        ":speech_balloon: In progress"
+    end
+  end
+
+  @spec is_slack_conversation_status_field?(map()) :: boolean()
+  def is_slack_conversation_status_field?(%{"text" => text} = _field) do
+    text =~ "*Status:*" || text =~ "*Conversation status:*" || text =~ "*Conversation Status:*"
+  end
+
+  def is_slack_conversation_status_field?(_field), do: false
 
   @spec send_internal_notification(binary()) :: any()
   def send_internal_notification(message) do

@@ -67,6 +67,7 @@ defmodule ChatApi.Slack.Notification do
       |> Slack.Helpers.get_message_text()
       |> Slack.Helpers.get_message_payload(%{
         channel: channel,
+        conversation: conversation,
         customer: customer,
         thread: thread,
         message: message
