@@ -951,17 +951,17 @@ defmodule ChatApi.Slack.Helpers do
   @spec get_slack_conversation_status(Conversation.t()) :: binary()
   def get_slack_conversation_status(conversation) do
     case conversation do
-      %{status: "open", first_replied_at: nil} ->
-        ":wave: Unhandled"
-
-      %{status: "open", first_replied_at: first_replied_at} when not is_nil(first_replied_at) ->
-        ":speech_balloon: In progress"
-
       %{status: "closed"} ->
         ":white_check_mark: Closed"
 
       %{closed_at: closed_at} when not is_nil(closed_at) ->
         ":white_check_mark: Closed"
+
+      %{status: "open", first_replied_at: nil} ->
+        ":wave: Unhandled"
+
+      %{status: "open", first_replied_at: first_replied_at} when not is_nil(first_replied_at) ->
+        ":speech_balloon: In progress"
     end
   end
 

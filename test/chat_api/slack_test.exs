@@ -885,6 +885,8 @@ defmodule ChatApi.SlackTest do
 
     test "Helpers.parse_message_type_params/1 removes private note indicator prefixes" do
       assert Slack.Helpers.parse_message_type_params("reply") == %{}
+      assert Slack.Helpers.parse_message_type_params("reply \\\\ reply") == %{}
+      assert Slack.Helpers.parse_message_type_params("reply;;reply") == %{}
 
       assert %{"private" => true, "type" => "note"} =
                Slack.Helpers.parse_message_type_params("\\\\ note")
@@ -1029,6 +1031,102 @@ defmodule ChatApi.SlackTest do
       assert Slack.Helpers.is_bot_message?(bot_message)
       refute Slack.Helpers.is_bot_message?(nil_bot_message)
       refute Slack.Helpers.is_bot_message?(non_bot_message)
+    end
+
+    test "Helpers.get_slack_conversation_status/1 gets the status of a conversation for Slack" do
+      unhandled = build(:conversation, status: "open")
+      in_progress = build(:conversation, status: "open", first_replied_at: DateTime.utc_now())
+      closed_v1 = build(:conversation, status: "closed")
+      closed_v2 = build(:conversation, closed_at: DateTime.utc_now())
+
+      assert ":wave: Unhandled" = Slack.Helpers.get_slack_conversation_status(unhandled)
+
+      assert ":speech_balloon: In progress" =
+               Slack.Helpers.get_slack_conversation_status(in_progress)
+
+      assert ":white_check_mark: Closed" = Slack.Helpers.get_slack_conversation_status(closed_v1)
+      assert ":white_check_mark: Closed" = Slack.Helpers.get_slack_conversation_status(closed_v2)
+    end
+
+    test "Helpers.is_slack_conversation_status_field?/1 checks if a Slack message field is the 'Status' field" do
+      assert Slack.Helpers.is_slack_conversation_status_field?(%{"text" => "*Status:*\nUnhandled"})
+
+      assert Slack.Helpers.is_slack_conversation_status_field?(%{
+               "text" => "*Conversation status:*\nIn progress"
+             })
+
+      assert Slack.Helpers.is_slack_conversation_status_field?(%{
+               "text" => "*Conversation Status:*\nClosed"
+             })
+
+      refute Slack.Helpers.is_slack_conversation_status_field?(%{"text" => "*Name:*\nAlex"})
+      refute Slack.Helpers.is_slack_conversation_status_field?(%{"text" => "*Browser:*\nChrome"})
+
+      refute Slack.Helpers.is_slack_conversation_status_field?(%{
+               "unknown" => "*Status:*\nUnhandled"
+             })
+
+      refute Slack.Helpers.is_slack_conversation_status_field?(%{})
+    end
+
+    test "Helpers.update_fields_with_conversation_status/2 updates Slack message block fields with status" do
+      unhandled_conversation = build(:conversation, status: "open")
+
+      in_progress_conversation =
+        build(:conversation, status: "open", first_replied_at: DateTime.utc_now())
+
+      closed_conversation = build(:conversation, status: "closed")
+
+      fields = [
+        %{
+          "text" => "*Name:*\nAnonymous User"
+        },
+        %{
+          "text" => "*URL:*\nwww.papercups.io"
+        },
+        %{
+          "text" => "*Timezone:*\nNew York"
+        }
+      ]
+
+      latest_fields =
+        Slack.Helpers.update_fields_with_conversation_status(
+          fields,
+          unhandled_conversation
+        )
+
+      assert [
+               %{"text" => "*Name:*\nAnonymous User"},
+               %{"text" => "*URL:*\nwww.papercups.io"},
+               %{"text" => "*Timezone:*\nNew York"},
+               %{"text" => "*Status:*\n:wave: Unhandled"}
+             ] = latest_fields
+
+      latest_fields =
+        Slack.Helpers.update_fields_with_conversation_status(
+          fields,
+          in_progress_conversation
+        )
+
+      assert [
+               %{"text" => "*Name:*\nAnonymous User"},
+               %{"text" => "*URL:*\nwww.papercups.io"},
+               %{"text" => "*Timezone:*\nNew York"},
+               %{"text" => "*Status:*\n:speech_balloon: In progress"}
+             ] = latest_fields
+
+      latest_fields =
+        Slack.Helpers.update_fields_with_conversation_status(
+          fields,
+          closed_conversation
+        )
+
+      assert [
+               %{"text" => "*Name:*\nAnonymous User"},
+               %{"text" => "*URL:*\nwww.papercups.io"},
+               %{"text" => "*Timezone:*\nNew York"},
+               %{"text" => "*Status:*\n:white_check_mark: Closed"}
+             ] = latest_fields
     end
   end
 end
