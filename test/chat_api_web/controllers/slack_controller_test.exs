@@ -106,6 +106,56 @@ defmodule ChatApiWeb.SlackControllerTest do
       assert body == event_params["text"]
     end
 
+    test "sending a new thread message event to the webhook from the primary channel as a private note",
+         %{
+           conn: conn,
+           auth: auth,
+           thread: thread
+         } do
+      account_id = thread.account_id
+
+      post(conn, Routes.slack_path(conn, :webhook), %{
+        "event" => %{
+          "type" => "message",
+          "text" => ~S(\\ This should be private),
+          "ts" => "12345",
+          "thread_ts" => thread.slack_thread_ts,
+          "channel" => @slack_channel,
+          "user" => auth.authed_user_id
+        }
+      })
+
+      assert [%{body: body, source: "slack", type: "note", private: true}] =
+               Messages.list_messages(account_id)
+
+      assert body == "This should be private"
+    end
+
+    test "sending a new thread message event to the webhook from the primary channel as a private note (alternative)",
+         %{
+           conn: conn,
+           auth: auth,
+           thread: thread
+         } do
+      account_id = thread.account_id
+
+      post(conn, Routes.slack_path(conn, :webhook), %{
+        "event" => %{
+          "type" => "message",
+          "text" => ";; This should be private",
+          "ts" => "12345",
+          "thread_ts" => thread.slack_thread_ts,
+          "channel" => @slack_channel,
+          "user" => auth.authed_user_id
+        }
+      })
+
+      assert [%{body: body, source: "slack", type: "note", private: true}] =
+               Messages.list_messages(account_id)
+
+      assert body == "This should be private"
+    end
+
     test "updates the conversation with the assignee after the first agent reply", %{
       conn: conn,
       auth: auth,
