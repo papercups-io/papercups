@@ -58,7 +58,9 @@ defmodule ChatApi.Slack.Event do
          primary_reply_authorization <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
       if Slack.Helpers.is_primary_channel?(primary_reply_authorization, slack_channel_id) do
-        %{
+        text
+        |> Slack.Helpers.parse_message_type_params()
+        |> Map.merge(%{
           "body" => Slack.Helpers.sanitize_slack_message(text, primary_reply_authorization),
           "conversation_id" => conversation_id,
           "account_id" => account_id,
@@ -70,7 +72,7 @@ defmodule ChatApi.Slack.Event do
               slack_user_id,
               conversation.assignee_id
             )
-        }
+        })
         |> Messages.create_and_fetch!()
         |> Messages.Notification.broadcast_to_customer!()
         |> Messages.Notification.broadcast_to_admin!()
