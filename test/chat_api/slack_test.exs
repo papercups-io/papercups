@@ -301,7 +301,7 @@ defmodule ChatApi.SlackTest do
     end
 
     test "Helpers.get_message_payload/2 returns payload for initial slack thread",
-         %{customer: customer, thread: thread} do
+         %{customer: customer, conversation: conversation, thread: thread} do
       text = "Hello world"
       customer_email = "*Email:*\n#{customer.email}"
       channel = thread.slack_channel
@@ -332,7 +332,8 @@ defmodule ChatApi.SlackTest do
                      },
                      %{
                        "text" => "*Timezone:*\nN/A"
-                     }
+                     },
+                     %{"text" => "*Status:*\n:wave: Unhandled"}
                    ]
                  }
                ],
@@ -340,6 +341,7 @@ defmodule ChatApi.SlackTest do
              } =
                Slack.Helpers.get_message_payload(text, %{
                  channel: channel,
+                 conversation: conversation,
                  customer: customer,
                  thread: nil
                })
