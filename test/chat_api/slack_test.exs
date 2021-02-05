@@ -879,6 +879,8 @@ defmodule ChatApi.SlackTest do
       assert "note" = Slack.Helpers.sanitize_slack_message("\\\\ note", authorization)
       assert "note" = Slack.Helpers.sanitize_slack_message(~S(\\ note), authorization)
       assert "note" = Slack.Helpers.sanitize_slack_message(";; note", authorization)
+      assert "note" = Slack.Helpers.sanitize_slack_message(~S(\\note), authorization)
+      assert "note" = Slack.Helpers.sanitize_slack_message(";;note", authorization)
     end
 
     test "Helpers.parse_message_type_params/1 removes private note indicator prefixes" do
@@ -892,6 +894,12 @@ defmodule ChatApi.SlackTest do
 
       assert %{"private" => true, "type" => "note"} =
                Slack.Helpers.parse_message_type_params(";; note")
+
+      assert %{"private" => true, "type" => "note"} =
+               Slack.Helpers.parse_message_type_params(~S(\\note))
+
+      assert %{"private" => true, "type" => "note"} =
+               Slack.Helpers.parse_message_type_params(";;note")
     end
 
     test "Helpers.find_slack_user_mentions/1 extracts @mentions in a Slack message" do

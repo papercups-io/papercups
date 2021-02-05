@@ -684,16 +684,17 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @private_note_prefix_v1 ~S(\\ )
-  @private_note_prefix_v2 ~S(;; )
-  @private_note_prefix_regex_v1 ~r/^\\\\ /
-  @private_note_prefix_regex_v2 ~r/^;; /
+  @private_note_prefix_v1 ~S(\\)
+  @private_note_prefix_v2 ~S(;;)
+  @private_note_prefix_regex_v1 ~r/^\\\\/
+  @private_note_prefix_regex_v2 ~r/^;;/
 
   @spec sanitize_private_note(binary()) :: binary()
   def sanitize_private_note(text) do
     text
     |> String.replace(@private_note_prefix_regex_v1, "")
     |> String.replace(@private_note_prefix_regex_v2, "")
+    |> String.trim()
   end
 
   @spec parse_message_type_params(binary()) :: map()
