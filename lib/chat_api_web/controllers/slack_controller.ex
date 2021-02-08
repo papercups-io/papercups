@@ -146,7 +146,7 @@ defmodule ChatApiWeb.SlackController do
 
   @spec actions(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def actions(conn, %{"payload" => json}) do
-    Logger.debug("Payload from Slack webhook: #{inspect(json)}")
+    Logger.debug("Payload from Slack action: #{inspect(json)}")
 
     with {:ok, %{"actions" => actions}} <- Jason.decode(json) do
       Enum.each(actions, &handle_action/1)
