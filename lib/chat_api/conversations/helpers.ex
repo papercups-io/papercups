@@ -31,6 +31,12 @@ defmodule ChatApi.Conversations.Helpers do
                   Slack.Helpers.update_fields_with_conversation_status(fields, conversation)
               })
 
+            %{"type" => "actions"} ->
+              Map.merge(block, %{
+                "elements" =>
+                  Slack.Helpers.update_action_elements_with_conversation_status(conversation)
+              })
+
             _ ->
               block
           end
