@@ -304,6 +304,7 @@ defmodule ChatApi.SlackTest do
          %{customer: customer, conversation: conversation, thread: thread} do
       text = "Hello world"
       customer_email = "*Email:*\n#{customer.email}"
+      conversation_id = conversation.id
       channel = thread.slack_channel
 
       assert %{
@@ -335,6 +336,19 @@ defmodule ChatApi.SlackTest do
                      },
                      %{"text" => "*Status:*\n:wave: Unhandled"}
                    ]
+                 },
+                 %{"type" => "divider"},
+                 %{
+                   "elements" => [
+                     %{
+                       "action_id" => "close_conversation",
+                       "style" => "primary",
+                       "text" => %{"text" => "Resolve", "type" => "plain_text"},
+                       "type" => "button",
+                       "value" => ^conversation_id
+                     }
+                   ],
+                   "type" => "actions"
                  }
                ],
                "channel" => ^channel

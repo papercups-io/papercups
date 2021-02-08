@@ -3,7 +3,7 @@ defmodule ChatApiWeb.SlackController do
 
   require Logger
 
-  alias ChatApi.{Slack, SlackAuthorizations}
+  alias ChatApi.{Conversations, Slack, SlackAuthorizations}
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -144,6 +144,17 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
+  @spec actions(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def actions(conn, %{"payload" => json}) do
+    Logger.debug("Payload from Slack action: #{inspect(json)}")
+
+    with {:ok, %{"actions" => actions}} <- Jason.decode(json) do
+      Enum.each(actions, &handle_action/1)
+    end
+
+    send_resp(conn, 200, "")
+  end
+
   @spec channels(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def channels(conn, payload) do
     # TODO: figure out the best way to handle errors here... should we just return
@@ -155,6 +166,44 @@ defmodule ChatApiWeb.SlackController do
          {:ok, result} <- Slack.Client.list_channels(access_token),
          %{body: %{"ok" => true, "channels" => channels}} <- result do
       json(conn, %{data: channels})
+    end
+  end
+
+  @spec handle_action(map()) :: any()
+  def handle_action(%{
+        "action_id" => "close_conversation",
+        "type" => "button",
+        "action_ts" => _action_ts,
+        "value" => conversation_id
+      }) do
+    conversation_id
+    |> Conversations.get_conversation!()
+    |> Conversations.update_conversation(%{"status" => "closed"})
+    |> case do
+      {:ok, conversation} ->
+        Conversations.Helpers.broadcast_conversation_updates_to_slack(conversation)
+
+      _ ->
+        nil
+    end
+  end
+
+  @spec handle_action(map()) :: any()
+  def handle_action(%{
+        "action_id" => "open_conversation",
+        "type" => "button",
+        "action_ts" => _action_ts,
+        "value" => conversation_id
+      }) do
+    conversation_id
+    |> Conversations.get_conversation!()
+    |> Conversations.update_conversation(%{"status" => "open"})
+    |> case do
+      {:ok, conversation} ->
+        Conversations.Helpers.broadcast_conversation_updates_to_slack(conversation)
+
+      _ ->
+        nil
     end
   end
 

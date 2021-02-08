@@ -780,7 +780,9 @@ defmodule ChatApi.Slack.Helpers do
 
     primary_message_text <>
       "\n\n" <>
-      "Reply to this thread to start chatting, or view in the #{dashboard_link} :rocket:"
+      "Reply to this thread to start chatting, or view in the #{dashboard_link} :rocket:" <>
+      "\n\n" <>
+      "(Start a message with `;;` or `\\\\` to send an <https://github.com/papercups-io/papercups/pull/562|internal note>.)"
   end
 
   @slack_chat_write_customize_scope "chat:write.customize"
@@ -880,6 +882,24 @@ defmodule ChatApi.Slack.Helpers do
               "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
             }
           ]
+        },
+        %{
+          "type" => "divider"
+        },
+        %{
+          "type" => "actions",
+          "elements" => [
+            %{
+              "type" => "button",
+              "text" => %{
+                "type" => "plain_text",
+                "text" => "Resolve"
+              },
+              "value" => conversation.id,
+              "action_id" => "close_conversation",
+              "style" => "primary"
+            }
+          ]
         }
       ]
     }
@@ -943,6 +963,38 @@ defmodule ChatApi.Slack.Helpers do
           %{
             "type" => "mrkdwn",
             "text" => "*Status:*\n#{status}"
+          }
+        ]
+    end
+  end
+
+  @spec update_action_elements_with_conversation_status(Conversation.t()) :: [map()]
+  def update_action_elements_with_conversation_status(%Conversation{id: id, status: status}) do
+    case status do
+      "open" ->
+        [
+          %{
+            "type" => "button",
+            "text" => %{
+              "type" => "plain_text",
+              "text" => "Mark as resolved"
+            },
+            "value" => id,
+            "action_id" => "close_conversation",
+            "style" => "primary"
+          }
+        ]
+
+      "closed" ->
+        [
+          %{
+            "type" => "button",
+            "text" => %{
+              "type" => "plain_text",
+              "text" => "Reopen conversation"
+            },
+            "value" => id,
+            "action_id" => "open_conversation"
           }
         ]
     end
