@@ -5,7 +5,7 @@ defmodule ChatApiWeb.ReportingController do
 
   alias ChatApi.Reporting
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(%{assigns: %{current_user: %{account_id: account_id}}} = conn, %{
@@ -21,15 +21,17 @@ defmodule ChatApiWeb.ReportingController do
         conversations_by_date: Reporting.count_conversations_by_date(account_id, filters),
         messages_per_user: Reporting.count_messages_per_user(account_id, filters),
         messages_by_weekday: Reporting.count_messages_by_weekday(account_id, filters),
-        first_response_time_by_weekday:
-          Reporting.first_response_time_by_weekday(account_id, filters),
         sent_messages_by_date: Reporting.count_sent_messages_by_date(account_id, filters),
         received_messages_by_date: Reporting.count_received_messages_by_date(account_id, filters),
         average_time_to_first_reply:
           Reporting.average_seconds_to_first_reply(account_id, filters),
         median_time_to_first_reply: Reporting.median_seconds_to_first_reply(account_id, filters),
         first_reply_metrics_by_week:
-          Reporting.seconds_to_first_reply_metrics_by_week(account_id, filters)
+          Reporting.seconds_to_first_reply_metrics_by_week(account_id, filters),
+        average_time_to_resolution: Reporting.average_seconds_to_resolution(account_id, filters),
+        median_time_to_resolution: Reporting.median_seconds_to_resolution(account_id, filters),
+        resolution_metrics_by_week:
+          Reporting.seconds_to_resolution_metrics_by_week(account_id, filters)
         # NB: this are currently unused
         # customer_breakdown_by_browser:
         #   Reporting.get_customer_breakdown(account_id, :browser, filters),

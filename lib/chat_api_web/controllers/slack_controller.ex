@@ -29,6 +29,7 @@ defmodule ChatApiWeb.SlackController do
          } <- body,
          %{"id" => authed_user_id} <- authed_user,
          %{"id" => team_id, "name" => team_name} <- team,
+         # TODO: validate that `channel_id` doesn't match account integration with different `type`
          %{
            "channel" => channel,
            "channel_id" => channel_id,

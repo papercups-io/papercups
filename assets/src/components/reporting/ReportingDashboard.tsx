@@ -4,6 +4,7 @@ import {Box, Flex} from 'theme-ui';
 import * as API from '../../api';
 import {
   colors,
+  Button,
   Divider,
   Paragraph,
   RangePicker,
@@ -42,18 +43,18 @@ interface CustomerBreakdownCount {
   count: number;
 }
 
-type ReplyTimeMetricsByWeek = {
+interface MetricsByWeek {
   start_date: string;
   end_date: string;
   average: number;
   median: number;
-  seconds_to_first_reply_list: Array<number>;
-};
+}
 
 type Props = {};
 type State = {
   fromDate: dayjs.Dayjs;
   toDate: dayjs.Dayjs;
+  rawReportingData: any;
   messagesByDate: Array<DateCount>;
   conversationsByDate: Array<DateCount>;
   messagesPerUser: Array<MessageCount>;
@@ -65,13 +66,17 @@ type State = {
   customerBreakdownByTimezone: Array<CustomerBreakdownCount>;
   averageTimeToFirstReply: number;
   medianTimeToFirstReply: number;
-  firstReplyMetricsByWeek: Array<ReplyTimeMetricsByWeek>;
+  firstReplyMetricsByWeek: Array<MetricsByWeek>;
+  averageTimeToResolution: number;
+  medianTimeToResolution: number;
+  resolutionMetricsByWeek: Array<MetricsByWeek>;
 };
 
 class ReportingDashboard extends React.Component<Props, State> {
   state: State = {
     fromDate: dayjs().subtract(30, 'day'),
     toDate: dayjs(),
+    rawReportingData: {},
     messagesByDate: [],
     conversationsByDate: [],
     messagesPerUser: [],
@@ -84,6 +89,9 @@ class ReportingDashboard extends React.Component<Props, State> {
     averageTimeToFirstReply: 0,
     medianTimeToFirstReply: 0,
     firstReplyMetricsByWeek: [],
+    averageTimeToResolution: 0,
+    medianTimeToResolution: 0,
+    resolutionMetricsByWeek: [],
   };
 
   componentDidMount() {
@@ -102,18 +110,25 @@ class ReportingDashboard extends React.Component<Props, State> {
     logger.debug('Raw reporting data:', data);
 
     this.setState({
+      rawReportingData: data,
       messagesByDate: data?.messages_by_date || [],
       conversationsByDate: data?.conversations_by_date || [],
       messagesPerUser: data?.messages_per_user || [],
       receivedMessagesByDate: data?.received_messages_by_date || [],
       sentMessagesByDate: data?.sent_messages_by_date || [],
       messagesByWeekday: data?.messages_by_weekday || [],
+      // Customer breakdown metrics
       customerBreakdownByBrowser: data?.customer_breakdown_by_browser || [],
       customerBreakdownByOs: data?.customer_breakdown_by_os || [],
       customerBreakdownByTimezone: data?.customer_breakdown_by_time_zone || [],
+      // First response metrics
       averageTimeToFirstReply: data?.average_time_to_first_reply || 0,
       medianTimeToFirstReply: data?.median_time_to_first_reply || 0,
       firstReplyMetricsByWeek: data?.first_reply_metrics_by_week || [],
+      // Resolution metrics
+      averageTimeToResolution: data?.average_time_to_resolution || 0,
+      medianTimeToResolution: data?.median_time_to_resolution || 0,
+      resolutionMetricsByWeek: data?.resolution_metrics_by_week || [],
     });
   };
 
@@ -215,30 +230,31 @@ class ReportingDashboard extends React.Component<Props, State> {
     return `${hours}h ${minutes}m ${seconds}s`;
   };
 
-  formatAverageResponseTimeThisWeek = () => {
-    const {firstReplyMetricsByWeek = []} = this.state;
-    const [current, next] = firstReplyMetricsByWeek;
+  formatMetricsByWeek = (
+    metrics: Array<MetricsByWeek> = [],
+    field: 'average' | 'median'
+  ) => {
+    const [current, next] = metrics;
 
     if (!current) {
       return {};
     }
 
-    const {average: averageThisWeek} = current;
+    const currentValue = current[field];
 
     if (!next) {
       return {
-        title: this.formatDurationInSeconds(averageThisWeek),
+        title: this.formatDurationInSeconds(currentValue),
         description: null,
       };
     }
 
-    const {average: averageLastWeek} = next;
-    const percentage =
-      (averageThisWeek - averageLastWeek) / (averageLastWeek || 1);
+    const nextValue = next[field];
+    const percentage = (currentValue - nextValue) / (nextValue || 1);
     const sign = percentage < 0 ? '-' : '+';
 
     return {
-      title: this.formatDurationInSeconds(averageThisWeek),
+      title: this.formatDurationInSeconds(currentValue),
       description: (
         <Paragraph>
           <Text
@@ -250,60 +266,48 @@ class ReportingDashboard extends React.Component<Props, State> {
     };
   };
 
-  // TODO: DRY this up with function above
-  formatMedianResponseTimeThisWeek = () => {
-    const {firstReplyMetricsByWeek = []} = this.state;
-    const [current, next] = firstReplyMetricsByWeek;
+  download = () => {
+    // Taken from https://stackoverflow.com/a/55613750
+    const {rawReportingData = {}} = this.state;
+    const json = JSON.stringify(rawReportingData);
+    const blob = new Blob([json], {type: 'application/json'});
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement('a');
 
-    if (!current) {
-      return {};
-    }
+    link.href = href;
+    link.download = 'analytics.json';
 
-    const {median: medianThisWeek} = current;
-
-    if (!next) {
-      return {
-        title: this.formatDurationInSeconds(medianThisWeek),
-        description: null,
-      };
-    }
-
-    const {median: medianLastWeek} = next;
-    const percentage =
-      (medianThisWeek - medianLastWeek) / (medianLastWeek || 1);
-    const sign = percentage < 0 ? '-' : '+';
-
-    return {
-      title: this.formatDurationInSeconds(medianThisWeek),
-      description: (
-        <Paragraph>
-          <Text
-            style={{color: percentage < 0 ? colors.green : colors.red}}
-          >{`${sign}${Math.abs(percentage).toFixed(2)}%`}</Text>{' '}
-          <Text type="secondary">from previous week</Text>
-        </Paragraph>
-      ),
-    };
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   render() {
     const {
       fromDate,
       toDate,
-      averageTimeToFirstReply = 0,
-      medianTimeToFirstReply = 0,
+      firstReplyMetricsByWeek = [],
+      resolutionMetricsByWeek = [],
     } = this.state;
     const dailyStats = this.formatDailyStats();
     const userStats = this.formatUserStats();
     const dayOfWeekStats = this.formatDayOfWeekStats();
     const {
-      title: thisWeekAverageTitle,
-      description: thisWeekAverageSubtext,
-    } = this.formatAverageResponseTimeThisWeek();
+      title: thisWeekAverageResponseTitle,
+      description: thisWeekAverageResponseSubtext,
+    } = this.formatMetricsByWeek(firstReplyMetricsByWeek, 'average');
     const {
-      title: thisWeekMedianTitle,
-      description: thisWeekMedianSubtext,
-    } = this.formatMedianResponseTimeThisWeek();
+      title: thisWeekMedianResponseTitle,
+      description: thisWeekMedianResponseSubtext,
+    } = this.formatMetricsByWeek(firstReplyMetricsByWeek, 'median');
+    const {
+      title: thisWeekAverageResolutionTitle,
+      description: thisWeekAverageResolutionSubtext,
+    } = this.formatMetricsByWeek(resolutionMetricsByWeek, 'average');
+    const {
+      title: thisWeekMedianResolutionTitle,
+      description: thisWeekMedianResolutionSubtext,
+    } = this.formatMetricsByWeek(resolutionMetricsByWeek, 'median');
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
@@ -328,52 +332,77 @@ class ReportingDashboard extends React.Component<Props, State> {
         </Flex>
 
         <Box>
-          <Box mb={2}>
-            <Text strong>Response Metrics</Text>
-          </Box>
-          <Box>
-            <Flex mx={-3}>
-              <Box mx={3} sx={{flex: 1}}>
-                <Statistic
-                  title="Average response time this week"
-                  value={thisWeekAverageTitle}
-                />
-                <Text>{thisWeekAverageSubtext}</Text>
+          <Flex sx={{flexDirection: ['column', 'column', 'row']}}>
+            <Box sx={{flex: 1}}>
+              <Box mb={2}>
+                <Text strong>Response Metrics</Text>
               </Box>
+              <Flex mx={-3}>
+                <Box mx={3} sx={{flex: 1}}>
+                  <Statistic
+                    title="Average response time this week"
+                    value={thisWeekAverageResponseTitle}
+                  />
+                  <Text>{thisWeekAverageResponseSubtext}</Text>
+                </Box>
 
-              <Box mx={3} sx={{flex: 1}}>
-                <Statistic
-                  title="Median response time this week"
-                  value={thisWeekMedianTitle}
-                />
-                <Text>{thisWeekMedianSubtext}</Text>
-              </Box>
+                <Box mx={3} sx={{flex: 1}}>
+                  <Statistic
+                    title="Median response time this week"
+                    value={thisWeekMedianResponseTitle}
+                  />
+                  <Text>{thisWeekMedianResponseSubtext}</Text>
+                </Box>
+              </Flex>
+            </Box>
 
-              <Box mx={3} sx={{flex: 1}}>
-                <Statistic
-                  title="Average response time overall"
-                  value={this.formatDurationInSeconds(averageTimeToFirstReply)}
-                />
+            <Box sx={{flex: 1}}>
+              <Box mb={2}>
+                <Text strong>Resolution Metrics</Text>
               </Box>
+              <Flex mx={-3}>
+                <Box mx={3} sx={{flex: 1}}>
+                  <Statistic
+                    title="Average resolution time this week"
+                    value={thisWeekAverageResolutionTitle}
+                  />
+                  <Text>{thisWeekAverageResolutionSubtext}</Text>
+                </Box>
 
-              <Box mx={3} sx={{flex: 1}}>
-                <Statistic
-                  title="Median response time overall"
-                  value={this.formatDurationInSeconds(medianTimeToFirstReply)}
-                />
-              </Box>
-            </Flex>
-          </Box>
+                <Box mx={3} sx={{flex: 1}}>
+                  <Statistic
+                    title="Median resolution time this week"
+                    value={thisWeekMedianResolutionTitle}
+                  />
+                  <Text>{thisWeekMedianResolutionSubtext}</Text>
+                </Box>
+              </Flex>
+            </Box>
+          </Flex>
+
           <Divider />
-          <Flex mx={-3} mb={4}>
-            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+
+          <Flex
+            mx={-3}
+            mb={4}
+            sx={{flexDirection: ['column', 'column', 'row']}}
+          >
+            <Box
+              mb={4}
+              mx={3}
+              sx={{height: 320, maxWidth: ['100%', '100%', '50%'], flex: 1}}
+            >
               <Box mb={2}>
                 <Text strong>New messages per day</Text>
               </Box>
               <MessagesPerDayChart data={dailyStats} />
             </Box>
 
-            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+            <Box
+              mb={4}
+              mx={3}
+              sx={{height: 320, maxWidth: ['100%', '100%', '50%'], flex: 1}}
+            >
               <Box mb={2}>
                 <Text strong>Messages sent vs received</Text>
               </Box>
@@ -381,20 +410,38 @@ class ReportingDashboard extends React.Component<Props, State> {
             </Box>
           </Flex>
 
-          <Flex mx={-3} mb={4}>
-            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+          <Flex
+            mx={-3}
+            mb={4}
+            sx={{flexDirection: ['column', 'column', 'row']}}
+          >
+            <Box
+              mb={4}
+              mx={3}
+              sx={{height: 320, maxWidth: ['100%', '100%', '50%'], flex: 1}}
+            >
               <Box mb={2}>
                 <Text strong>Messages per user</Text>
               </Box>
               <MessagesPerUserChart data={userStats} />
             </Box>
 
-            <Box mb={4} mx={3} sx={{height: 320, maxWidth: '50%', flex: 1}}>
+            <Box
+              mb={4}
+              mx={3}
+              sx={{height: 320, maxWidth: ['100%', '100%', '50%'], flex: 1}}
+            >
               <Box mb={2}>
                 <Text strong>Messages by day of week</Text>
               </Box>
               <MessagesByDayOfWeekChart data={dayOfWeekStats} />
             </Box>
+          </Flex>
+
+          <Divider />
+
+          <Flex sx={{justifyContent: 'flex-end'}}>
+            <Button onClick={this.download}>Download data as JSON</Button>
           </Flex>
 
           {/* Hiding customer breakdown charts for now since they aren't particularly useful ¯\_(ツ)_/¯ */}
