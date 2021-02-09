@@ -214,6 +214,13 @@ class UpdateCompanyPage extends React.Component<Props, State> {
 
                   return {id, key: id, label: `#${name}`, value: id};
                 })}
+                filterOption={(input: string, option: any) => {
+                  const {label = ''} = option;
+
+                  return (
+                    label.toLowerCase().indexOf(input.toLowerCase()) !== -1
+                  );
+                }}
               />
             </Box>
 
