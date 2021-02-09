@@ -35,10 +35,18 @@ defmodule ChatApiWeb.SlackController do
            "channel_id" => channel_id,
            "configuration_url" => configuration_url,
            "url" => webhook_url
-         } <- incoming_webhook do
-      integration_type = Map.get(params, "type", "reply")
-
-      params = %{
+         } <- incoming_webhook,
+         integration_type <- Map.get(params, "type", "reply"),
+         :ok <-
+           Slack.Validation.validate_authorization_channel_id(
+             channel_id,
+             account_id,
+             integration_type
+           ) do
+      # TODO: after creating, check if connected channel is private;
+      # If yes, use webhook_url to send notification that Papercups app needs
+      # to be added manually, along with instructions for how to do so
+      SlackAuthorizations.create_or_update(account_id, %{
         account_id: account_id,
         access_token: access_token,
         app_id: app_id,
@@ -53,12 +61,7 @@ defmodule ChatApiWeb.SlackController do
         team_name: team_name,
         webhook_url: webhook_url,
         type: integration_type
-      }
-
-      # TODO: after creating, check if connected channel is private;
-      # If yes, use webhook_url to send notification that Papercups app needs
-      # to be added manually, along with instructions for how to do so
-      SlackAuthorizations.create_or_update(account_id, params)
+      })
 
       cond do
         integration_type == "reply" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
@@ -82,10 +85,25 @@ defmodule ChatApiWeb.SlackController do
 
       json(conn, %{data: %{ok: true}})
     else
-      error ->
-        Logger.error(error)
+      {:error, :duplicate_channel_id} ->
+        conn
+        |> put_status(400)
+        |> json(%{
+          error: %{
+            status: 400,
+            message: """
+            This Slack channel has already been connected with another integration.
+            Please select another channel, or disconnect the other integration and try again.
+            """
+          }
+        })
 
-        raise "OAuth access denied: #{inspect(error)}"
+      error ->
+        Logger.error(inspect(error))
+
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "OAuth access denied: #{inspect(error)}"}})
     end
   end
 

@@ -115,11 +115,16 @@ defmodule ChatApi.Slack.Notification do
   def notify_company_channel(
         %Message{account_id: account_id, conversation_id: conversation_id} = message
       ) do
-    with %{access_token: access_token} <-
+    with %{access_token: access_token, channel_id: primary_channel_id} <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
-         %{customer: %{company: %{slack_channel_id: channel_id}}} <-
-           Conversations.get_conversation_with(conversation_id, customer: :company) do
-      notify_slack_channel(access_token, channel_id, message)
+         %{customer: %{company: %{slack_channel_id: company_channel_id}}} <-
+           Conversations.get_conversation_with(conversation_id, customer: :company),
+         # If a company has been assigned the channel that matches the primary channel,
+         # we skip sending the notification here to avoid double messages.
+         # In the future we will probably want to deprecated the "primary" support channel,
+         # in which case this check will become irrelevant.
+         false <- primary_channel_id == company_channel_id do
+      notify_slack_channel(access_token, company_channel_id, message)
     end
   end
 

@@ -2,7 +2,7 @@ import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
-import {Button, Paragraph, Text, Title} from '../common';
+import {notification, Button, Paragraph, Text, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
@@ -172,7 +172,20 @@ class IntegrationsOverview extends React.Component<Props, State> {
           .then((result) =>
             logger.debug('Successfully authorized Slack:', result)
           )
-          .catch((err) => logger.error('Failed to authorize Slack:', err));
+          .catch((err) => {
+            logger.error('Failed to authorize Slack:', err);
+
+            const description =
+              err?.response?.body?.error?.message ||
+              err?.message ||
+              String(err);
+
+            notification.error({
+              message: 'Failed to authorize Slack',
+              duration: null,
+              description,
+            });
+          });
       case 'gmail':
         return API.authorizeGmailIntegration(code)
           .then((result) =>
