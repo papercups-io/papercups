@@ -234,7 +234,7 @@ class ReportingDashboard extends React.Component<Props, State> {
     metrics: Array<MetricsByWeek> = [],
     field: 'average' | 'median'
   ) => {
-    const [current, next] = metrics;
+    const [current, previous] = metrics;
 
     if (!current) {
       return {};
@@ -242,15 +242,15 @@ class ReportingDashboard extends React.Component<Props, State> {
 
     const currentValue = current[field];
 
-    if (!next) {
+    if (!previous) {
       return {
         title: this.formatDurationInSeconds(currentValue),
         description: null,
       };
     }
 
-    const nextValue = next[field];
-    const percentage = (currentValue - nextValue) / (nextValue || 1);
+    const previousValue = previous[field];
+    const percentage = (currentValue - previousValue) / (previousValue || 1);
     const sign = percentage < 0 ? '-' : '+';
 
     return {
