@@ -23,6 +23,53 @@ defmodule ChatApi.SlackTest do
   @slack_user_id "U123TEST"
   @slack_channel_id "C123TEST"
 
+  describe "Slack.Validation" do
+    test "Validation.validate_authorization_channel_id/3 checks if another integration has the same Slack channel ID" do
+      account = insert(:account)
+
+      insert(:slack_authorization,
+        account: account,
+        type: "reply",
+        channel_id: @slack_channel_id
+      )
+
+      other_channel_id = "C123OTHER"
+      other_account_id = insert(:account).id
+
+      # :ok if we're connecting to a different channel
+      assert :ok =
+               Slack.Validation.validate_authorization_channel_id(
+                 other_channel_id,
+                 account.id,
+                 "support"
+               )
+
+      # :ok if we're reconnecting to the same integration type
+      assert :ok =
+               Slack.Validation.validate_authorization_channel_id(
+                 @slack_channel_id,
+                 account.id,
+                 "reply"
+               )
+
+      # :ok if the account is different
+      assert :ok =
+               Slack.Validation.validate_authorization_channel_id(
+                 @slack_channel_id,
+                 other_account_id,
+                 "reply"
+               )
+
+      # :error if we're connecting to a new integration type with the same channel
+      assert {:error, :duplicate_channel_id} =
+               Slack.Validation.validate_authorization_channel_id(
+                 @slack_channel_id,
+                 account.id,
+                 "support"
+               )
+    end
+  end
+
   describe "Slack.Notification" do
     setup do
       account = insert(:account)
