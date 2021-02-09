@@ -51,6 +51,16 @@ defmodule ChatApi.Reporting do
     |> Repo.all()
   end
 
+  @spec list_closed_conversations(binary(), map()) :: [Conversation.t()]
+  def list_closed_conversations(account_id, filters \\ %{}) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where([conv], not is_nil(conv.closed_at))
+    |> select([:closed_at, :inserted_at])
+    |> Repo.all()
+  end
+
   @spec conversation_seconds_to_first_reply_by_date(binary(), map()) :: [map()]
   def conversation_seconds_to_first_reply_by_date(account_id, filters \\ %{}) do
     account_id
@@ -68,6 +78,28 @@ defmodule ChatApi.Reporting do
         seconds_to_first_reply_list: seconds_to_first_reply_list,
         average: average(seconds_to_first_reply_list),
         median: median(seconds_to_first_reply_list)
+      }
+    end)
+    |> Enum.sort_by(& &1.date, Date)
+  end
+
+  @spec conversation_seconds_to_resolution_by_date(binary(), map()) :: [map()]
+  def conversation_seconds_to_resolution_by_date(account_id, filters \\ %{}) do
+    account_id
+    |> list_closed_conversations(filters)
+    |> Stream.map(fn conv ->
+      %{
+        date: NaiveDateTime.to_date(conv.inserted_at),
+        seconds_to_resolution: calculate_seconds_to_resolution(conv)
+      }
+    end)
+    |> Enum.group_by(& &1.date, & &1.seconds_to_resolution)
+    |> Stream.map(fn {date, seconds_to_resolution_list} ->
+      %{
+        date: date,
+        seconds_to_resolution_list: seconds_to_resolution_list,
+        average: average(seconds_to_resolution_list),
+        median: median(seconds_to_resolution_list)
       }
     end)
     |> Enum.sort_by(& &1.date, Date)
@@ -102,6 +134,35 @@ defmodule ChatApi.Reporting do
         seconds_to_first_reply_list: seconds_to_first_reply_list,
         average: average(seconds_to_first_reply_list),
         median: median(seconds_to_first_reply_list)
+      }
+    end)
+  end
+
+  @spec seconds_to_resolution_metrics_by_week(binary(), map()) :: [map()]
+  def seconds_to_resolution_metrics_by_week(account_id, filters \\ %{}) do
+    seconds_to_resolution_list_by_date =
+      account_id
+      |> conversation_seconds_to_resolution_by_date(filters)
+      |> Enum.group_by(& &1.date, & &1.seconds_to_resolution_list)
+      |> Enum.map(fn {k, v} -> {k, List.flatten(v)} end)
+      |> Map.new()
+
+    filters
+    |> get_weekly_chunks()
+    |> Enum.map(fn {start_date, end_date} ->
+      seconds_to_resolution_list =
+        start_date
+        |> Date.range(end_date)
+        |> Enum.reduce([], fn date, acc ->
+          acc ++ Map.get(seconds_to_resolution_list_by_date, date, [])
+        end)
+
+      %{
+        start_date: start_date,
+        end_date: end_date,
+        seconds_to_resolution_list: seconds_to_resolution_list,
+        average: average(seconds_to_resolution_list),
+        median: median(seconds_to_resolution_list)
       }
     end)
   end
@@ -186,6 +247,44 @@ defmodule ChatApi.Reporting do
   def compute_median_seconds_to_first_reply(conversations) do
     conversations
     |> Enum.map(&calculate_seconds_to_first_reply/1)
+    |> median()
+  end
+
+  # TODO: move to Conversations context?
+  @spec calculate_seconds_to_resolution(Conversation.t()) :: integer()
+  def calculate_seconds_to_resolution(conversation) do
+    # The `inserted_at` field is a NaiveDateTime, so we need to convert
+    # the `closed_at` field to make this diff work
+    conversation.closed_at
+    |> DateTime.to_naive()
+    |> NaiveDateTime.diff(conversation.inserted_at)
+  end
+
+  @spec average_seconds_to_resolution(binary(), map()) :: float()
+  def average_seconds_to_resolution(account_id, filters \\ %{}) do
+    account_id
+    |> list_closed_conversations(filters)
+    |> compute_average_seconds_to_resolution()
+  end
+
+  @spec compute_average_seconds_to_resolution([Conversation.t()]) :: float()
+  def compute_average_seconds_to_resolution(conversations) do
+    conversations
+    |> Enum.map(&calculate_seconds_to_resolution/1)
+    |> average()
+  end
+
+  @spec median_seconds_to_resolution(binary(), map()) :: float()
+  def median_seconds_to_resolution(account_id, filters \\ %{}) do
+    account_id
+    |> list_closed_conversations(filters)
+    |> compute_median_seconds_to_resolution()
+  end
+
+  @spec compute_median_seconds_to_resolution([Conversation.t()]) :: float()
+  def compute_median_seconds_to_resolution(conversations) do
+    conversations
+    |> Enum.map(&calculate_seconds_to_resolution/1)
     |> median()
   end
 
@@ -278,44 +377,16 @@ defmodule ChatApi.Reporting do
     |> compute_weekday_aggregates()
   end
 
-  @spec first_response_time_by_weekday(binary(), map()) :: [aggregate_average_by_weekday()]
-  def first_response_time_by_weekday(account_id, filters \\ %{}) do
-    Conversation
-    |> where(account_id: ^account_id)
-    |> where(^filter_where(filters))
-    |> where([conv], not is_nil(conv.first_replied_at))
-    |> average_grouped_by_date()
-    |> select_merge([m], %{day: fragment("to_char(date(?), 'Day')", m.inserted_at)})
-    |> Repo.all()
-    |> Enum.group_by(&String.trim(&1.day))
-    |> compute_average_weekday_aggregates()
-  end
-
   @spec count_grouped_by_date(Ecto.Query.t(), atom()) :: Ecto.Query.t()
-  defp count_grouped_by_date(query, field \\ :inserted_at) do
+  def count_grouped_by_date(query, field \\ :inserted_at) do
     query
     |> group_by([r], fragment("date(?)", field(r, ^field)))
     |> select([r], %{date: fragment("date(?)", field(r, ^field)), count: count(r.id)})
     |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
   end
 
-  # TODO: some duplication here with group by date might be good to refactor
-  # TODO: clean this up (see comment about `avg` not doing anything below)
-  @spec average_grouped_by_date(Ecto.Query.t(), atom()) :: Ecto.Query.t()
-  defp average_grouped_by_date(query, field \\ :inserted_at) do
-    query
-    |> group_by([r], fragment("date(?)", field(r, ^field)))
-    |> select([r], %{
-      date: fragment("date(?)", field(r, ^field)),
-      count: count(r.id),
-      # avg doesn't do anything but raises a grouping_error when I remove it...
-      response_time: fragment("extract(epoch FROM ?)", avg(r.first_replied_at - r.inserted_at))
-    })
-    |> order_by([r], asc: fragment("date(?)", field(r, ^field)))
-  end
-
   @spec compute_weekday_aggregates(map()) :: [map()]
-  defp compute_weekday_aggregates(grouped) do
+  def compute_weekday_aggregates(grouped) do
     Enum.map(weekdays(), fn weekday ->
       records = Map.get(grouped, weekday, [])
       total = Enum.reduce(records, 0, fn x, acc -> x.count + acc end)
@@ -324,20 +395,6 @@ defmodule ChatApi.Reporting do
         day: weekday,
         average: total / max(length(records), 1),
         total: total
-      }
-    end)
-  end
-
-  @spec compute_average_weekday_aggregates(map()) :: [aggregate_average_by_weekday()]
-  defp compute_average_weekday_aggregates(grouped) do
-    Enum.map(weekdays(), fn weekday ->
-      records = Map.get(grouped, weekday, [])
-      total = Enum.reduce(records, 0, fn x, acc -> x.response_time + acc end)
-
-      %{
-        day: weekday,
-        average: total / max(length(records), 1),
-        unit: :seconds
       }
     end)
   end
