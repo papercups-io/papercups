@@ -4,20 +4,21 @@ defmodule ChatApi.Slack.Validation do
   alias ChatApi.{
     Companies,
     Slack,
+    SlackAuthorizations,
     SlackConversationThreads
   }
 
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
-  @spec validate_non_admin_user(any(), binary()) :: :ok | :error
+  @spec validate_non_admin_user(SlackAuthorization.t(), binary()) :: :ok | :error
   def validate_non_admin_user(authorization, slack_user_id) do
     case Slack.Helpers.find_matching_user(authorization, slack_user_id) do
       nil -> :ok
-      _match -> :error
+      _match -> {:error, :existing_user_found}
     end
   end
 
-  @spec validate_channel_supported(any(), binary()) :: :ok | :error
+  @spec validate_channel_supported(SlackAuthorization.t(), binary()) :: :ok | :error
   def validate_channel_supported(
         %SlackAuthorization{channel_id: slack_channel_id},
         slack_channel_id
@@ -29,7 +30,7 @@ defmodule ChatApi.Slack.Validation do
         slack_channel_id
       ) do
     case Companies.find_by_slack_channel(account_id, slack_channel_id) do
-      nil -> :error
+      nil -> {:error, :channel_not_supported}
       _company -> :ok
     end
   end
@@ -40,7 +41,7 @@ defmodule ChatApi.Slack.Validation do
   def validate_no_existing_company(account_id, slack_channel_id) do
     case Companies.find_by_slack_channel(account_id, slack_channel_id) do
       nil -> :ok
-      _company -> :error
+      _company -> {:error, :existing_company_found}
     end
   end
 
@@ -48,7 +49,18 @@ defmodule ChatApi.Slack.Validation do
   def validate_no_existing_thread(channel, ts) do
     case SlackConversationThreads.exists?(%{"slack_thread_ts" => ts, "slack_channel" => channel}) do
       false -> :ok
-      true -> :error
+      true -> {:error, :existing_thread_found}
+    end
+  end
+
+  @spec validate_authorization_channel_id(binary(), binary(), binary()) :: :ok | :error
+  def validate_authorization_channel_id(slack_channel_id, account_id, integration_type) do
+    case SlackAuthorizations.get_authorization_by_account(account_id, %{
+           channel_id: slack_channel_id,
+           type: [neq: integration_type]
+         }) do
+      nil -> :ok
+      _match -> {:error, :duplicate_channel_id}
     end
   end
 end
