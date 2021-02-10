@@ -452,7 +452,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   handleSelectConversation = (id: string | null) => {
-    this.setState({selectedConversationId: id}, async () => {
+    this.setState({selectedConversationId: id}, () => {
       if (!id) {
         return;
       }
