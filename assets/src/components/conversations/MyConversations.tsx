@@ -1,5 +1,5 @@
 import React from 'react';
-import ConversationsContainer from './ConversationsContainer';
+import ConversationsDashboard from './ConversationsDashboard';
 import {useConversations} from './ConversationsProvider';
 
 const MyConversations = () => {
@@ -7,11 +7,8 @@ const MyConversations = () => {
     loading,
     currentUser,
     account,
-    isNewUser,
     mine = [],
-    conversationsById = {},
     messagesByConversation = {},
-    currentlyOnline = {},
     fetchMyConversations,
     onSelectConversation,
     onUpdateConversation,
@@ -19,16 +16,16 @@ const MyConversations = () => {
     onSendMessage,
   } = useConversations();
 
+  if (!currentUser) {
+    return null;
+  }
+
   return (
-    <ConversationsContainer
+    <ConversationsDashboard
       loading={loading}
       title="Assigned to me"
       account={account}
-      currentUser={currentUser}
-      currentlyOnline={currentlyOnline}
-      showGetStarted={isNewUser}
       conversationIds={mine}
-      conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
       fetch={fetchMyConversations}
       onSelectConversation={onSelectConversation}
