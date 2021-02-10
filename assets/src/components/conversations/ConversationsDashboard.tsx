@@ -10,16 +10,10 @@ import ConversationContainer from './ConversationContainer';
 type Props = {
   title?: string;
   account: Account | null;
-  // currentUser: User | null;
-  // currentlyOnline?: any;
   loading: boolean;
-  // showGetStarted: boolean;
   conversationIds: Array<string>;
-  // conversationsById: {[key: string]: Conversation};
   messagesByConversation: {[key: string]: Array<Message>};
   fetch: () => Promise<Array<string>>;
-  // fetchById: (id: string) => Promise<Array<string>>;
-  // isCustomerOnline: (customerId: string) => boolean;
   onSelectConversation: (id: string | null, fn?: () => void) => void;
   onUpdateConversation: (id: string, params: any) => Promise<void>;
   onDeleteConversation: (id: string) => Promise<void>;
