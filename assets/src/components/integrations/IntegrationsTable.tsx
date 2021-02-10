@@ -23,7 +23,12 @@ const getSlackAuthUrl = (type = 'reply') => {
     'groups:read',
     'reactions:read',
   ];
-  const userScopes = ['channels:history', 'groups:history', 'chat:write'];
+  const userScopes = [
+    'channels:history',
+    'groups:history',
+    'chat:write',
+    'reactions:read',
+  ];
   const q = {
     state: type,
     scope: scopes.join(' '),

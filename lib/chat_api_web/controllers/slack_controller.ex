@@ -174,6 +174,13 @@ defmodule ChatApiWeb.SlackController do
     send_resp(conn, 200, "")
   end
 
+  @spec actions(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def actions(conn, params) do
+    Logger.debug("Payload from unhandled Slack action: #{inspect(params)}")
+
+    send_resp(conn, 200, "")
+  end
+
   @spec channels(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def channels(conn, payload) do
     # TODO: figure out the best way to handle errors here... should we just return
