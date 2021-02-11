@@ -1,11 +1,13 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Message} from '../../types';
+import {Conversation, Message} from '../../types';
+import * as API from '../../api';
 import {useConversations} from './ConversationsProvider';
 import ConversationHeader from './ConversationHeader';
 import ConversationMessages from './ConversationMessages';
 import ConversationFooter from './ConversationFooter';
 import ConversationDetailsSidebar from './ConversationDetailsSidebar';
+import logger from '../../logger';
 
 const ConversationContainer = ({
   loading,
@@ -42,6 +44,33 @@ const ConversationContainer = ({
     isNewUser,
     isCustomerOnline,
   } = useConversations();
+  const [history, setConversationHistory] = React.useState<Array<Conversation>>(
+    []
+  );
+  const [
+    isLoadingPreviousConversation,
+    setLoadingPreviousConversation,
+  ] = React.useState(false);
+  const [
+    hasPreviousConversations,
+    setHasPreviousConversations,
+  ] = React.useState(false);
+
+  React.useEffect(() => {
+    setConversationHistory([]);
+    setLoadingPreviousConversation(false);
+    setHasPreviousConversations(false);
+
+    if (!selectedConversationId) {
+      return;
+    }
+
+    API.fetchPreviousConversation(selectedConversationId)
+      .then((conversation) => setHasPreviousConversations(!!conversation))
+      .catch((err) =>
+        logger.error('Error retrieving previous conversation:', err)
+      );
+  }, [selectedConversationId]);
 
   const users = (account && account.users) || [];
   const messages = selectedConversationId
@@ -52,6 +81,32 @@ const ConversationContainer = ({
     : null;
   const customer = conversation ? conversation.customer : null;
   const isOnline = customer ? isCustomerOnline(customer.id) : false;
+
+  const fetchPreviousConversation = async (conversationId: string) => {
+    if (!selectedConversationId) {
+      return;
+    }
+
+    setLoadingPreviousConversation(true);
+
+    API.fetchPreviousConversation(conversationId)
+      .then((conversation) => {
+        const previousConversationId = conversation && conversation.id;
+
+        if (previousConversationId) {
+          setConversationHistory([conversation, ...history]);
+
+          return API.fetchPreviousConversation(previousConversationId);
+        }
+
+        return null;
+      })
+      .then((conversation) => setHasPreviousConversations(!!conversation))
+      .catch((err) =>
+        logger.error('Error retrieving previous conversation:', err)
+      )
+      .finally(() => setLoadingPreviousConversation(false));
+  };
 
   return (
     <>
@@ -76,12 +131,18 @@ const ConversationContainer = ({
         }}
       >
         <ConversationMessages
+          conversationId={selectedConversationId}
           messages={messages}
+          history={history}
           currentUser={currentUser}
           loading={loading}
           isClosing={isClosing}
+          isLoadingPreviousConversation={isLoadingPreviousConversation}
+          hasPreviousConversations={hasPreviousConversations}
+          // TODO: move "Getting started" UI out of this component
           showGetStarted={isNewUser}
           setScrollRef={setScrollRef}
+          onLoadPreviousConversation={fetchPreviousConversation}
         />
 
         {conversation && (
