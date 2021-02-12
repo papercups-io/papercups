@@ -137,7 +137,7 @@ export const PricingOptionsModal = ({
             <Paragraph>
               <ul>
                 <li>2 seats included</li>
-                <li>100,000 messages</li>
+                <li>1000 messages/month</li>
                 <li>30 day message retention</li>
                 <li>Customizable chat widget</li>
               </ul>
@@ -147,6 +147,47 @@ export const PricingOptionsModal = ({
         selected={selected === 'starter'}
       />
 
+      <PricingSection
+        title="Lite"
+        description="Essential chat functionality for your business."
+        cta={
+          <Button
+            type="primary"
+            size="large"
+            block
+            disabled={pending}
+            loading={selected === 'lite' && pending}
+            ghost={selected !== 'lite'}
+            onClick={handleSelectTeamPlan}
+          >
+            Select Lite plan
+          </Button>
+        }
+        pricing={
+          <Text>
+            <Text strong>$32</Text>/month
+          </Text>
+        }
+        features={
+          <>
+            <Paragraph>
+              Everything in <Text strong>Starter</Text> plus:
+            </Paragraph>
+
+            <Paragraph>
+              <ul>
+                <li>4 seats included</li>
+                <li>Unlimited messages</li>
+                <li>3 months data retention</li>
+                <li>Private notes</li>
+                <li>Reply from Slack</li>
+              </ul>
+            </Paragraph>
+          </>
+        }
+        bordered
+        selected={selected === 'lite'}
+      />
       <PricingSection
         title="Team"
         description="Supercharge your support, sales, and marketing."
@@ -171,7 +212,7 @@ export const PricingOptionsModal = ({
         features={
           <>
             <Paragraph>
-              Everything in <Text strong>Starter</Text> plus:
+              Everything in <Text strong>Lite</Text> plus:
             </Paragraph>
 
             <Paragraph>

@@ -370,7 +370,7 @@ class BillingOverview extends React.Component<Props, State> {
             <Modal
               title="Select plan"
               visible={displayPricingModal}
-              width={800}
+              width={1000}
               onCancel={this.handleCancelPricingModal}
               footer={[
                 <Button key="cancel" onClick={this.handleCancelPricingModal}>

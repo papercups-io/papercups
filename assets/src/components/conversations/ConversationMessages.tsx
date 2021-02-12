@@ -34,7 +34,6 @@ const GettingStartedRedirect = () => {
           </Link>
         }
       />
-      ,
     </Box>
   );
 };
