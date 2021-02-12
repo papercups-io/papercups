@@ -1,17 +1,14 @@
 import React from 'react';
 import {useConversations} from './ConversationsProvider';
-import ConversationsContainer from './ConversationsContainer';
+import ConversationsDashboard from './ConversationsDashboard';
 
 const AllConversations = () => {
   const {
     loading,
     currentUser,
     account,
-    isNewUser,
     all = [],
-    conversationsById = {},
     messagesByConversation = {},
-    currentlyOnline = {},
     fetchAllConversations,
     onSelectConversation,
     onUpdateConversation,
@@ -19,16 +16,16 @@ const AllConversations = () => {
     onSendMessage,
   } = useConversations();
 
+  if (!currentUser) {
+    return null;
+  }
+
   return (
-    <ConversationsContainer
+    <ConversationsDashboard
       loading={loading}
       title="All conversations"
       account={account}
-      currentUser={currentUser}
-      currentlyOnline={currentlyOnline}
-      showGetStarted={isNewUser}
       conversationIds={all}
-      conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
       fetch={fetchAllConversations}
       onSelectConversation={onSelectConversation}

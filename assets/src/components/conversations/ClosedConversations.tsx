@@ -1,5 +1,5 @@
 import React from 'react';
-import ConversationsContainer from './ConversationsContainer';
+import ConversationsDashboard from './ConversationsDashboard';
 import {useConversations} from './ConversationsProvider';
 
 const ClosedConversations = () => {
@@ -7,11 +7,8 @@ const ClosedConversations = () => {
     loading,
     currentUser,
     account,
-    isNewUser,
     closed = [],
-    conversationsById = {},
     messagesByConversation = {},
-    currentlyOnline = {},
     fetchAllConversations,
     fetchClosedConversations,
     onSelectConversation,
@@ -29,16 +26,16 @@ const ClosedConversations = () => {
     return results;
   };
 
+  if (!currentUser) {
+    return null;
+  }
+
   return (
-    <ConversationsContainer
+    <ConversationsDashboard
       loading={loading}
       title="Closed"
       account={account}
-      currentUser={currentUser}
-      currentlyOnline={currentlyOnline}
-      showGetStarted={isNewUser}
       conversationIds={closed}
-      conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
       fetch={fetch}
       onSelectConversation={onSelectConversation}

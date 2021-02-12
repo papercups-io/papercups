@@ -55,6 +55,7 @@ export type Company = {
 export type MessageType = 'reply' | 'note';
 
 export type Message = {
+  id: string;
   body: string;
   type?: 'reply' | 'note';
   private?: boolean;

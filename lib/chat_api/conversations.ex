@@ -23,6 +23,36 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
+  @spec list_conversations_by_account_v2(binary(), map()) :: [Conversation.t()]
+  def list_conversations_by_account_v2(account_id, filters \\ %{}) do
+    # TODO: eventually DRY this up with `list_recent_by_customer/3` below... but for now
+    # we're cool with some code duplication while we're still figuring out the shape of our APIs
+
+    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
+    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
+    ranking_query =
+      from m in Message,
+        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
+        windows: [
+          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
+        ]
+
+    # We just want to query the most recent message
+    messages_query =
+      from m in Message,
+        join: r in subquery(ranking_query),
+        on: m.id == r.id and r.row_number <= 1,
+        preload: [:attachments, :customer, user: :profile]
+
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by_most_recent_message()
+    |> preload([:customer, messages: ^messages_query])
+    |> Repo.all()
+  end
+
   @spec list_other_recent_conversations(Conversation.t(), integer(), map()) :: [Conversation.t()]
   def list_other_recent_conversations(
         %Conversation{

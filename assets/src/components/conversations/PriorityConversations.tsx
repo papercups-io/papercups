@@ -1,5 +1,5 @@
 import React from 'react';
-import ConversationsContainer from './ConversationsContainer';
+import ConversationsDashboard from './ConversationsDashboard';
 import {useConversations} from './ConversationsProvider';
 
 const PriorityConversations = () => {
@@ -7,11 +7,8 @@ const PriorityConversations = () => {
     loading,
     currentUser,
     account,
-    isNewUser,
     priority = [],
-    conversationsById = {},
     messagesByConversation = {},
-    currentlyOnline = {},
     fetchPriorityConversations,
     onSelectConversation,
     onUpdateConversation,
@@ -19,16 +16,16 @@ const PriorityConversations = () => {
     onSendMessage,
   } = useConversations();
 
+  if (!currentUser) {
+    return null;
+  }
+
   return (
-    <ConversationsContainer
+    <ConversationsDashboard
       loading={loading}
       title="Prioritized"
       account={account}
-      currentUser={currentUser}
-      currentlyOnline={currentlyOnline}
-      showGetStarted={isNewUser}
       conversationIds={priority}
-      conversationsById={conversationsById}
       messagesByConversation={messagesByConversation}
       fetch={fetchPriorityConversations}
       onSelectConversation={onSelectConversation}

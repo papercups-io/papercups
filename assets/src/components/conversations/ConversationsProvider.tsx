@@ -1,6 +1,6 @@
 import React, {useContext} from 'react';
 import {Channel, Socket} from 'phoenix';
-import {throttle} from 'lodash';
+import {debounce, throttle} from 'lodash';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Account, Conversation, Message, User} from '../../types';
@@ -26,6 +26,8 @@ export const ConversationsContext = React.createContext<{
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
   currentlyOnline: {[key: string]: any};
+
+  isCustomerOnline: (customerId: string) => boolean;
 
   onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
@@ -53,6 +55,7 @@ export const ConversationsContext = React.createContext<{
   messagesByConversation: {},
   currentlyOnline: {},
 
+  isCustomerOnline: () => false,
   onSelectConversation: () => {},
   onSendMessage: () => {},
   onUpdateConversation: () => Promise.resolve(),
@@ -194,10 +197,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
       account,
       isNewUser: numTotalMessages === 0,
     });
-    const conversationIds = await this.fetchAllConversations();
     const {id: accountId} = account;
 
-    this.joinNotificationChannel(accountId, conversationIds);
+    this.joinNotificationChannel(accountId);
   }
 
   componentWillUnmount() {
@@ -210,10 +212,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     }
   }
 
-  joinNotificationChannel = (
-    accountId: string,
-    conversationIds: Array<string>
-  ) => {
+  joinNotificationChannel = (accountId: string) => {
     if (this.socket && this.socket.disconnect) {
       logger.debug('Existing socket:', this.socket);
       this.socket.disconnect();
@@ -240,9 +239,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
     // TODO: If no conversations exist, should we create a conversation with us
     // so new users can play around with the chat right away and give us feedback?
-    this.channel = this.socket.channel(`notification:${accountId}`, {
-      ids: conversationIds,
-    });
+    this.channel = this.socket.channel(`notification:${accountId}`, {});
 
     // TODO: rename to message:created?
     this.channel.on('shout', (message) => {
@@ -259,7 +256,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     // TODO: can probably use this for more things
     this.channel.on('conversation:updated', ({id, updates}) => {
       // Handle conversation updated
-      this.handleConversationUpdated(id, updates);
+      debounce(() => this.handleConversationUpdated(id, updates), 1000);
     });
 
     this.channel.on('presence_state', (state) => {
@@ -278,10 +275,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
       .receive('error', (err) => {
         logger.error('Unable to join', err);
         // TODO: double check that this works (retries after 10s)
-        setTimeout(
-          () => this.joinNotificationChannel(accountId, conversationIds),
-          10000
-        );
+        setTimeout(() => this.joinNotificationChannel(accountId), 10000);
       });
   };
 
@@ -307,6 +301,17 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.setState({presence: latest});
   };
 
+  isCustomerOnline = (customerId: string) => {
+    if (!customerId) {
+      return false;
+    }
+
+    const {presence = {}} = this.state;
+    const key = `customer:${customerId}`;
+
+    return !!(presence && presence[key]);
+  };
+
   playNotificationSound = async (volume: number) => {
     try {
       const file = '/alert-v2.mp3';
@@ -328,12 +333,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
   handleNewMessage = async (message: Message) => {
     logger.debug('New message!', message);
 
-    const {
-      messagesByConversation,
-      selectedConversationId,
-      conversationsById,
-    } = this.state;
-    const {conversation_id: conversationId, customer_id: customerId} = message;
+    const {messagesByConversation} = this.state;
+    const {conversation_id: conversationId} = message;
     const existingMessages = messagesByConversation[conversationId] || [];
     const updatedMessagesByConversation = {
       ...messagesByConversation,
@@ -344,46 +345,60 @@ export class ConversationsProvider extends React.Component<Props, State> {
       {
         messagesByConversation: updatedMessagesByConversation,
       },
-      () => {
-        if (isWindowHidden(document || window.document)) {
-          // Play a slightly louder sound if this is the first message
-          const volume = existingMessages.length === 0 ? 0.2 : 0.1;
-
-          this.throttledNotificationSound(volume);
-        }
-        // TODO: this is a bit hacky... there's probably a better way to
-        // handle listening for changes on conversation records...
-        if (selectedConversationId === conversationId) {
-          // If the new message matches the id of the selected conversation,
-          // mark it as read right away and scroll to the latest message
-          this.handleConversationRead(selectedConversationId);
-        } else {
-          // Otherwise, find the updated conversation and mark it as unread
-          const conversation = conversationsById[conversationId];
-          const shouldDisplayAlert =
-            !!customerId && conversation && conversation.status === 'open';
-
-          this.setState({
-            conversationsById: {
-              ...conversationsById,
-              [conversationId]: {...conversation, read: false},
-            },
-          });
-
-          if (shouldDisplayAlert) {
-            notification.open({
-              message: 'New message',
-              description: (
-                <a href={`/conversations/all?cid=${conversationId}`}>
-                  {message.body}
-                </a>
-              ),
-            });
-          }
-        }
-      }
+      () =>
+        this.debouncedNewMessagesCallback(message, {
+          isFirstMessage: existingMessages.length === 0,
+        })
     );
   };
+
+  debouncedNewMessagesCallback = debounce(
+    (message: Message, {isFirstMessage}: {isFirstMessage: boolean}) => {
+      const {selectedConversationId, conversationsById} = this.state;
+      const {
+        conversation_id: conversationId,
+        customer_id: customerId,
+      } = message;
+
+      if (isWindowHidden(document || window.document)) {
+        // Play a slightly louder sound if this is the first message
+        const volume = isFirstMessage ? 0.2 : 0.1;
+
+        this.throttledNotificationSound(volume);
+      }
+      // TODO: this is a bit hacky... there's probably a better way to
+      // handle listening for changes on conversation records...
+      if (selectedConversationId === conversationId) {
+        // If the new message matches the id of the selected conversation,
+        // mark it as read right away and scroll to the latest message
+        this.handleConversationRead(selectedConversationId);
+      } else {
+        // Otherwise, find the updated conversation and mark it as unread
+        const conversation = conversationsById[conversationId];
+        const shouldDisplayAlert =
+          !!customerId && conversation && conversation.status === 'open';
+
+        this.setState({
+          conversationsById: {
+            ...conversationsById,
+            [conversationId]: {...conversation, read: false},
+          },
+        });
+
+        if (shouldDisplayAlert) {
+          notification.open({
+            message: 'New message',
+            description: (
+              <a href={`/conversations/all?cid=${conversationId}`}>
+                {message.body}
+              </a>
+            ),
+          });
+        }
+      }
+    },
+    1000
+  );
 
   handleConversationRead = (conversationId: string | null) => {
     if (!this.channel || !conversationId) {
@@ -718,6 +733,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
           conversationsById,
           messagesByConversation,
           currentlyOnline: presence,
+
+          isCustomerOnline: this.isCustomerOnline,
 
           onSelectConversation: this.handleSelectConversation,
           onUpdateConversation: this.handleUpdateConversation,
