@@ -6,6 +6,7 @@ import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
 import logger from '../../logger';
+import NewTagModal from './NewTagModal';
 
 const TagsTable = ({
   loading,
@@ -61,16 +62,24 @@ const TagsTable = ({
 type Props = {};
 type State = {
   loading: boolean;
+  refreshing: boolean;
+  isNewTagModalVisible: boolean;
   tags: Array<any>;
 };
 
 class TagsOverview extends React.Component<Props, State> {
   state: State = {
     loading: true,
+    refreshing: false,
+    isNewTagModalVisible: false,
     tags: [],
   };
 
   async componentDidMount() {
+    await this.handleRefreshTags();
+  }
+
+  handleRefreshTags = async () => {
     try {
       const tags = await API.fetchAllTags();
 
@@ -80,10 +89,23 @@ class TagsOverview extends React.Component<Props, State> {
 
       this.setState({loading: false});
     }
-  }
+  };
+
+  handleOpenNewTagModal = () => {
+    this.setState({isNewTagModalVisible: true});
+  };
+
+  handleNewTagModalClosed = () => {
+    this.setState({isNewTagModalVisible: false});
+  };
+
+  handleNewTagCreated = () => {
+    this.handleNewTagModalClosed();
+    this.handleRefreshTags();
+  };
 
   render() {
-    const {loading, tags = []} = this.state;
+    const {loading, isNewTagModalVisible, tags = []} = this.state;
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
@@ -91,12 +113,20 @@ class TagsOverview extends React.Component<Props, State> {
           <Title level={3}>Tags (beta)</Title>
 
           {/* TODO: implement me! */}
-          {false && (
-            <Button type="primary" icon={<PlusOutlined />}>
-              New tag
-            </Button>
-          )}
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={this.handleOpenNewTagModal}
+          >
+            New tag
+          </Button>
         </Flex>
+
+        <NewTagModal
+          visible={isNewTagModalVisible}
+          onSuccess={this.handleNewTagCreated}
+          onCancel={this.handleNewTagModalClosed}
+        />
 
         <Box mb={4}>
           <Paragraph>
