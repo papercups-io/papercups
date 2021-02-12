@@ -22,9 +22,7 @@ defmodule ChatApi.Tags do
 
   @spec get_tag!(binary()) :: Tag.t()
   def get_tag!(id) do
-    Tag
-    |> preload([:conversations, :customers])
-    |> Repo.get!(id)
+    Tag |> Repo.get!(id)
   end
 
   @spec create_tag(map()) :: {:ok, Tag.t()} | {:error, Ecto.Changeset.t()}
