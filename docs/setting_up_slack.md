@@ -90,6 +90,7 @@ export PAPERCUPS_SLACK_CLIENT_SECRET='YOUR_CLIENT_SECRET_HERE'
 
 - If you're using Heroku, set the environment variables on the `config`:
 - via heroku CLI (https://devcenter.heroku.com/articles/heroku-cli)
+- via heroku dashboard https://devcenter.heroku.com/articles/config-vars (Scroll to `Using the Heroku Dashboard`)
 ```
 heroku config:set PAPERCUPS_SLACK_CLIENT_ID='YOUR_CLIENT_ID_HERE'
 heroku config:set REACT_APP_SLACK_CLIENT_ID='YOUR_CLIENT_ID_HERE'
