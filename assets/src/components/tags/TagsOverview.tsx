@@ -1,22 +1,22 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Alert, Button, Paragraph, Table, Text, Title} from '../common';
+import {Alert, Button, Paragraph, Table, Tag, Text, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
-import {Company} from '../../types';
+import * as T from '../../types';
 import logger from '../../logger';
 
-const CompaniesTable = ({
+const TagsTable = ({
   loading,
-  companies,
+  tags,
 }: {
   loading?: boolean;
-  companies: Array<Company>;
+  tags: Array<T.Tag>;
 }) => {
-  const data = companies
-    .map((company) => {
-      return {key: company.id, ...company};
+  const data = tags
+    .map((tag) => {
+      return {key: tag.id, ...tag};
     })
     .sort((a, b) => {
       return +new Date(b.updated_at) - +new Date(a.updated_at);
@@ -27,8 +27,8 @@ const CompaniesTable = ({
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (value: string) => {
-        return value;
+      render: (value: string, {color}: T.Tag) => {
+        return <Tag color={color}>{value}</Tag>;
       },
     },
     {
@@ -40,23 +40,6 @@ const CompaniesTable = ({
       },
     },
     {
-      title: 'Website',
-      dataIndex: 'website_url',
-      key: 'website_url',
-      render: (value: string) => {
-        // TODO: check if valid url!
-        if (value && value.length) {
-          return (
-            <a href={value} target="_blank" rel="noopener noreferrer">
-              {value}
-            </a>
-          );
-        } else {
-          return '--';
-        }
-      },
-    },
-    {
       title: '',
       dataIndex: 'action',
       key: 'action',
@@ -64,7 +47,7 @@ const CompaniesTable = ({
         const {id: companyId} = record;
 
         return (
-          <Link to={`/companies/${companyId}`}>
+          <Link to={`/tags/${companyId}`}>
             <Button>View</Button>
           </Link>
         );
@@ -78,44 +61,46 @@ const CompaniesTable = ({
 type Props = {};
 type State = {
   loading: boolean;
-  companies: Array<any>;
+  tags: Array<any>;
 };
 
-class CompaniesPage extends React.Component<Props, State> {
+class TagsOverview extends React.Component<Props, State> {
   state: State = {
     loading: true,
-    companies: [],
+    tags: [],
   };
 
   async componentDidMount() {
     try {
-      const companies = await API.fetchCompanies();
+      const tags = await API.fetchAllTags();
 
-      this.setState({companies, loading: false});
+      this.setState({tags, loading: false});
     } catch (err) {
-      logger.error('Error loading companies!', err);
+      logger.error('Error loading tags!', err);
 
       this.setState({loading: false});
     }
   }
 
   render() {
-    const {loading, companies = []} = this.state;
+    const {loading, tags = []} = this.state;
 
     return (
-      <Box p={4}>
+      <Box p={4} sx={{maxWidth: 1080}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={3}>Companies (beta)</Title>
-          <Link to="/companies/new">
+          <Title level={3}>Tags (beta)</Title>
+
+          {/* TODO: implement me! */}
+          {false && (
             <Button type="primary" icon={<PlusOutlined />}>
-              New company
+              New tag
             </Button>
-          </Link>
+          )}
         </Flex>
 
         <Box mb={4}>
           <Paragraph>
-            View or create companies to group and manage your customers.
+            Use tags to organize and manage your customers and conversations.
           </Paragraph>
 
           <Alert
@@ -131,11 +116,11 @@ class CompaniesPage extends React.Component<Props, State> {
         </Box>
 
         <Box my={4}>
-          <CompaniesTable loading={loading} companies={companies} />
+          <TagsTable loading={loading} tags={tags} />
         </Box>
       </Box>
     );
   }
 }
 
-export default CompaniesPage;
+export default TagsOverview;

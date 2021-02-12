@@ -14,8 +14,17 @@ defmodule ChatApi.Customers do
     Customer
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
+    |> filter_by_tag(filters)
     |> Repo.all()
   end
+
+  def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
+    query
+    |> join(:left, [c], t in assoc(c, :tags))
+    |> where([_c, t], t.id == ^tag_id)
+  end
+
+  def filter_by_tag(query, _filters), do: query
 
   @spec list_customers(binary(), map(), map()) :: Scrivener.Page.t()
   @doc """

@@ -50,6 +50,8 @@ import CompaniesPage from './companies/CompaniesPage';
 import CreateCompanyPage from './companies/CreateCompanyPage';
 import UpdateCompanyPage from './companies/UpdateCompanyPage';
 import CompanyDetailsPage from './companies/CompanyDetailsPage';
+import TagsOverview from './tags/TagsOverview';
+import TagDetailsPage from './tags/TagDetailsPage';
 
 const {
   REACT_APP_STORYTIME_ENABLED,
@@ -353,6 +355,8 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/sessions/list" component={SessionsOverview} />
           <Route path="/sessions/setup" component={InstallingStorytime} />
           <Route path="/sessions*" component={SessionsOverview} />
+          <Route path="/tags/:id" component={TagDetailsPage} />
+          <Route path="/tags" component={TagsOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>

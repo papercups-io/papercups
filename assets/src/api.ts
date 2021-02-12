@@ -1,7 +1,7 @@
 import request from 'superagent';
 import qs from 'query-string';
 import {getAuthTokens} from './storage';
-import {Conversation, User} from './types';
+import {Conversation, Tag, User} from './types';
 
 // TODO: handle this on the server instead
 function now() {
@@ -934,16 +934,41 @@ export const fetchAllTags = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const createTag = async (name: string, token = getAccessToken()) => {
+export const fetchTagById = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/tags/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createTag = async (
+  tag: Partial<Tag>,
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .post(`/api/tags`)
-    .send({tag: {name}})
+    .send({tag})
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export const deleteTag = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/tags/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
 };
 
 export const addConversationTag = async (

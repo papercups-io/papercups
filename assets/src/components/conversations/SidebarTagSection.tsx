@@ -12,13 +12,23 @@ type TagOption = {
   value: string;
 };
 
+const defaultTagColor = (index: number) => {
+  const options = ['magenta', 'red', 'volcano', 'purple', 'blue'];
+
+  return options[index % options.length];
+};
+
 const getTagDiff = (current: Array<T.Tag>, next: Array<TagOption>) => {
   const currentIds = current.map((t) => t.id);
   const remainingIds = next.filter((t) => !!t.id).map((t) => t.id as string);
 
   return {
     // new tags without an id need to be created
-    create: next.filter((t) => !t.id).map((t) => t.value),
+    create: next
+      .map((t, idx) => {
+        return {id: t.id, name: t.value, color: defaultTagColor(idx)};
+      })
+      .filter((t) => !t.id),
     // new tags that don't appear in the current list need to be added
     add: remainingIds.filter((tagId) => currentIds.indexOf(tagId) === -1),
     // if tags from the current state are missing from the next state, remove them
@@ -142,8 +152,8 @@ export const SidebarCustomerTags = ({customerId}: {customerId: string}) => {
     } = getTagDiff(current, updated);
 
     const promises = [
-      ...newTagsToCreate.map((name: string) =>
-        API.createTag(name).then(({id: tagId}) =>
+      ...newTagsToCreate.map(({name, color}) =>
+        API.createTag({name, color}).then(({id: tagId}) =>
           API.addCustomerTag(customerId, tagId)
         )
       ),
@@ -191,9 +201,8 @@ export const SidebarCustomerTags = ({customerId}: {customerId: string}) => {
           <Flex sx={{flexWrap: 'wrap'}}>
             {state.current && state.current.length ? (
               state.current.map((tag: T.Tag, idx: number) => {
-                const options = ['magenta', 'red', 'volcano', 'purple', 'blue'];
-                const color = options[idx % 5];
                 const {id, name} = tag;
+                const color = tag.color ?? defaultTagColor(idx);
 
                 return (
                   <Box key={id} my={1}>
@@ -297,8 +306,8 @@ export const SidebarConversationTags = ({
     } = getTagDiff(current, updated);
 
     const promises = [
-      ...newTagsToCreate.map((name: string) =>
-        API.createTag(name).then(({id: tagId}) =>
+      ...newTagsToCreate.map(({name, color}) =>
+        API.createTag({name, color}).then(({id: tagId}) =>
           API.addConversationTag(conversationId, tagId)
         )
       ),
@@ -346,9 +355,8 @@ export const SidebarConversationTags = ({
           <Flex sx={{flexWrap: 'wrap'}}>
             {state.current && state.current.length ? (
               state.current.map((tag: T.Tag, idx: number) => {
-                const options = ['magenta', 'red', 'volcano', 'purple', 'blue'];
-                const color = options[idx % 5];
                 const {id, name} = tag;
+                const color = tag.color ?? defaultTagColor(idx);
 
                 return (
                   <Box key={id} my={1}>
