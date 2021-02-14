@@ -149,6 +149,7 @@ defmodule ChatApi.Accounts do
   end
 
   @starter_plan_max_users 2
+  @lite_plan_max_users 4
 
   @spec has_reached_user_capacity?(binary()) :: boolean()
   def has_reached_user_capacity?(account_id) do
@@ -165,6 +166,7 @@ defmodule ChatApi.Accounts do
     # (These commands would update your account from the "starter" plan to the "team" plan.)
     case get_subscription_plan!(account_id) do
       "starter" -> count_active_users(account_id) >= @starter_plan_max_users
+      "lite" -> count_active_users(account_id) >= @lite_plan_max_users
       "team" -> false
       _ -> false
     end

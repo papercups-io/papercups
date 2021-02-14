@@ -4,6 +4,7 @@ import {colors, Button, Divider, Paragraph, Text, Title} from '../common';
 import {CheckCircleTwoTone} from '../icons';
 import {SubscriptionPlan} from './support';
 import logger from '../../logger';
+import {LITE_PRICE, STARTER_PRICE, TEAM_PRICE} from '../../constants';
 
 type Props = {};
 type State = {};
@@ -106,6 +107,7 @@ export const PricingOptionsModal = ({
 }) => {
   const handleSelectStarterPlan = () => onSelectPlan('starter');
   const handleSelectTeamPlan = () => onSelectPlan('team');
+  const handleSelectLitePlan = () => onSelectPlan('lite');
 
   return (
     <Flex mx={-2} sx={{maxWidth: 960}}>
@@ -127,7 +129,7 @@ export const PricingOptionsModal = ({
         }
         pricing={
           <Text>
-            <Text strong>$0</Text> forever
+            <Text strong>${STARTER_PRICE}</Text> forever
           </Text>
         }
         features={
@@ -158,14 +160,14 @@ export const PricingOptionsModal = ({
             disabled={pending}
             loading={selected === 'lite' && pending}
             ghost={selected !== 'lite'}
-            onClick={handleSelectTeamPlan}
+            onClick={handleSelectLitePlan}
           >
             Select Lite plan
           </Button>
         }
         pricing={
           <Text>
-            <Text strong>$32</Text>/month
+            <Text strong>${LITE_PRICE}</Text>/month
           </Text>
         }
         features={
@@ -206,7 +208,7 @@ export const PricingOptionsModal = ({
         }
         pricing={
           <Text>
-            <Text strong>$94</Text>/month
+            <Text strong>${TEAM_PRICE}</Text>/month
           </Text>
         }
         features={

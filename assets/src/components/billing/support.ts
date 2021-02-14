@@ -107,6 +107,8 @@ export const shouldRequirePlanUpdate = (
   switch (plan) {
     case 'starter':
       return numUsers > 2 || numMessages > 100000;
+    case 'lite':
+      return numUsers > 4;
     case 'team':
     default:
       return false;
