@@ -7,20 +7,18 @@ import {
   Button,
   Popconfirm,
   Result,
+  Tag,
   Text,
   Title,
 } from '../common';
 import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
-import {Company, Customer} from '../../types';
+import * as T from '../../types';
 import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
 import CustomersTable from '../customers/CustomersTable';
-
-const formatSlackChannel = (name: string) => {
-  return name.startsWith('#') ? name : `#${name}`;
-};
+import UpdateTagModal from './UpdateTagModal';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (
@@ -44,28 +42,30 @@ type State = {
   loading: boolean;
   deleting: boolean;
   refreshing: boolean;
-  company: Company | null;
-  customers: Array<Customer>;
+  isUpdateModalVisible: boolean;
+  tag: T.Tag | null;
+  customers: Array<T.Customer>;
 };
 
-class CompanyDetailsPage extends React.Component<Props, State> {
+class TagDetailsPage extends React.Component<Props, State> {
   state: State = {
     loading: true,
     deleting: false,
     refreshing: false,
-    company: null,
+    isUpdateModalVisible: false,
+    tag: null,
     customers: [],
   };
 
   async componentDidMount() {
     try {
-      const {id: companyId} = this.props.match.params;
-      const company = await API.fetchCompany(companyId);
-      const customers = await API.fetchCustomers({company_id: companyId});
+      const {id: tagId} = this.props.match.params;
+      const tag = await API.fetchTagById(tagId);
+      const customers = await API.fetchCustomers({tag_id: tagId});
 
-      this.setState({company, customers, loading: false});
+      this.setState({tag, customers, loading: false});
     } catch (err) {
-      logger.error('Error loading company!', err);
+      logger.error('Error loading tag!', err);
 
       this.setState({loading: false});
     }
@@ -75,8 +75,8 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     this.setState({refreshing: true});
 
     try {
-      const {id: companyId} = this.props.match.params;
-      const customers = await API.fetchCustomers({company_id: companyId});
+      const {id: tagId} = this.props.match.params;
+      const customers = await API.fetchCustomers({tag_id: tagId});
 
       this.setState({customers, refreshing: false});
     } catch (err) {
@@ -86,23 +86,58 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     }
   };
 
-  handleDeleteCompany = async () => {
+  handleRefreshTag = async () => {
+    this.setState({refreshing: true});
+
+    try {
+      const {id: tagId} = this.props.match.params;
+      const tag = await API.fetchTagById(tagId);
+
+      this.setState({tag, refreshing: false});
+    } catch (err) {
+      logger.error('Error refreshing customers!', err);
+
+      this.setState({refreshing: false});
+    }
+  };
+
+  handleDeleteTag = async () => {
     try {
       this.setState({deleting: true});
-      const {id: companyId} = this.props.match.params;
-      await API.deleteCompany(companyId);
+      const {id: tagId} = this.props.match.params;
+      await API.deleteTag(tagId);
       await sleep(1000);
 
-      this.props.history.push('/companies');
+      this.props.history.push('/tags');
     } catch (err) {
-      logger.error('Error deleting company!', err);
+      logger.error('Error deleting tag!', err);
 
       this.setState({deleting: false});
     }
   };
 
+  handleOpenUpdateTagModal = () => {
+    this.setState({isUpdateModalVisible: true});
+  };
+
+  handleUpdateTagModalClosed = () => {
+    this.setState({isUpdateModalVisible: false});
+  };
+
+  handleTagUpdated = () => {
+    this.handleUpdateTagModalClosed();
+    this.handleRefreshTag();
+  };
+
   render() {
-    const {loading, deleting, refreshing, company, customers = []} = this.state;
+    const {
+      loading,
+      deleting,
+      refreshing,
+      isUpdateModalVisible,
+      tag,
+      customers = [],
+    } = this.state;
 
     if (loading) {
       return (
@@ -117,19 +152,11 @@ class CompanyDetailsPage extends React.Component<Props, State> {
           <Spinner size={40} />
         </Flex>
       );
-    } else if (!company) {
-      return <Result status="error" title="Error retrieving company" />;
+    } else if (!tag) {
+      return <Result status="error" title="Error retrieving tag" />;
     }
 
-    const {
-      name,
-      description,
-      website_url: websiteUrl,
-      external_id: externalId,
-      slack_channel_id: slackChannelId,
-      slack_channel_name: slackChannelName,
-      id: companyId,
-    } = company;
+    const {name, description, color} = tag;
 
     return (
       <Flex
@@ -144,36 +171,52 @@ class CompanyDetailsPage extends React.Component<Props, State> {
           mb={4}
           sx={{justifyContent: 'space-between', alignItems: 'center'}}
         >
-          <Link to="/companies">
-            <Button icon={<ArrowLeftOutlined />}>Back to companies</Button>
+          <Link to="/tags">
+            <Button icon={<ArrowLeftOutlined />}>Back to all tags</Button>
           </Link>
 
-          {(!customers || customers.length === 0) && (
+          {/* TODO: implement me! */}
+          {false && (
             <Popconfirm
-              title="Are you sure you want to delete this company?"
+              title="Are you sure you want to delete this tag?"
               okText="Yes"
               cancelText="No"
               placement="bottomLeft"
-              onConfirm={this.handleDeleteCompany}
+              onConfirm={this.handleDeleteTag}
             >
               <Button danger loading={deleting} icon={<DeleteOutlined />}>
-                Delete company
+                Delete tag
               </Button>
             </Popconfirm>
           )}
         </Flex>
 
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={2}>{name}</Title>
+          <Title level={2}>Tag details</Title>
 
-          <Link to={`/companies/${companyId}/edit`}>
-            <Button>Edit company information</Button>
-          </Link>
+          <Button onClick={this.handleOpenUpdateTagModal}>
+            Edit tag details
+          </Button>
         </Flex>
+
+        <UpdateTagModal
+          visible={isUpdateModalVisible}
+          tag={tag}
+          onCancel={this.handleUpdateTagModalClosed}
+          onSuccess={this.handleTagUpdated}
+        />
 
         <Flex>
           <Box sx={{flex: 1, pr: 4}}>
             <DetailsSectionCard>
+              <Box mb={3}>
+                <Box>
+                  <Text strong>Name</Text>
+                </Box>
+
+                <Text>{name}</Text>
+              </Box>
+
               <Box mb={3}>
                 <Box>
                   <Text strong>Description</Text>
@@ -184,58 +227,13 @@ class CompanyDetailsPage extends React.Component<Props, State> {
 
               <Box mb={3}>
                 <Box>
-                  <Text strong>Website</Text>
+                  <Text strong>Color</Text>
                 </Box>
 
                 <Text>
-                  {websiteUrl ? (
-                    <a
-                      href={websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {websiteUrl}
-                    </a>
-                  ) : (
-                    'N/A'
-                  )}
+                  {color ? <Tag color={color}>{color}</Tag> : <Tag>unset</Tag>}
                 </Text>
               </Box>
-
-              <Box>
-                <Box>
-                  <Text strong>ID</Text>
-                </Box>
-
-                <Text>{externalId || 'N/A'}</Text>
-              </Box>
-            </DetailsSectionCard>
-
-            {slackChannelId && slackChannelName && (
-              <DetailsSectionCard>
-                <Box>
-                  <Text strong>Connected Slack Channel</Text>
-                </Box>
-
-                <Text>
-                  {/* TODO: include Slack team ID if necessary */}
-                  <a
-                    href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {formatSlackChannel(slackChannelName)}
-                  </a>
-                </Text>
-              </DetailsSectionCard>
-            )}
-
-            <DetailsSectionCard>
-              <Box>
-                <Text strong>Metadata</Text>
-              </Box>
-
-              <Text>{'N/A'}</Text>
             </DetailsSectionCard>
           </Box>
 
@@ -259,4 +257,4 @@ class CompanyDetailsPage extends React.Component<Props, State> {
   }
 }
 
-export default CompanyDetailsPage;
+export default TagDetailsPage;

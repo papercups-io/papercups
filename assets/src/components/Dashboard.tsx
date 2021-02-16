@@ -50,6 +50,8 @@ import CompaniesPage from './companies/CompaniesPage';
 import CreateCompanyPage from './companies/CreateCompanyPage';
 import UpdateCompanyPage from './companies/UpdateCompanyPage';
 import CompanyDetailsPage from './companies/CompanyDetailsPage';
+import TagsOverview from './tags/TagsOverview';
+import TagDetailsPage from './tags/TagDetailsPage';
 
 const {
   REACT_APP_STORYTIME_ENABLED,
@@ -67,6 +69,8 @@ const getSectionKey = (pathname: string) => {
     return ['customers', 'companies'];
   } else if (pathname.startsWith('/customers')) {
     return ['customers', 'people'];
+  } else if (pathname.startsWith('/tags')) {
+    return ['customers', 'tags'];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
@@ -259,6 +263,9 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="companies">
                   <Link to="/companies">Companies</Link>
                 </Menu.Item>
+                <Menu.Item key="tags">
+                  <Link to="/tags">Tags</Link>
+                </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
                 title="Reporting"
@@ -353,6 +360,8 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/sessions/list" component={SessionsOverview} />
           <Route path="/sessions/setup" component={InstallingStorytime} />
           <Route path="/sessions*" component={SessionsOverview} />
+          <Route path="/tags/:id" component={TagDetailsPage} />
+          <Route path="/tags" component={TagsOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>

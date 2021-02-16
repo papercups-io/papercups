@@ -14,6 +14,8 @@ defmodule ChatApiWeb.TagView do
     %{
       id: tag.id,
       object: "tag",
+      created_at: tag.inserted_at,
+      updated_at: tag.updated_at,
       name: tag.name,
       description: tag.description,
       color: tag.color
