@@ -34,6 +34,7 @@ import {
 } from './support';
 import logger from '../../logger';
 import './Billing.css';
+import {LITE_PRICE, STARTER_PRICE, TEAM_PRICE} from '../../constants';
 
 const stripe = loadStripe(
   process.env.REACT_APP_STRIPE_PUBLIC_KEY || 'pk_test_xxxxx'
@@ -340,9 +341,8 @@ class BillingOverview extends React.Component<Props, State> {
                 message={
                   <Text>
                     It looks like you've exceeded the limits of your current
-                    plan. Please upgrade to the <Text strong>Team plan</Text> by{' '}
-                    {getFirstOfNextMonth()} to prevent any features from
-                    disabling!
+                    plan. Please upgrade by {getFirstOfNextMonth()} to prevent
+                    any features from disabling!
                   </Text>
                 }
                 type="warning"
@@ -370,7 +370,7 @@ class BillingOverview extends React.Component<Props, State> {
             <Modal
               title="Select plan"
               visible={displayPricingModal}
-              width={800}
+              width={1000}
               onCancel={this.handleCancelPricingModal}
               footer={[
                 <Button key="cancel" onClick={this.handleCancelPricingModal}>
@@ -445,9 +445,14 @@ class BillingOverview extends React.Component<Props, State> {
               }
             >
               <Select.Option value="starter">
-                Starter plan ($0/month)
+                Starter plan (${STARTER_PRICE}/month)
               </Select.Option>
-              <Select.Option value="team">Team plan ($94/month)</Select.Option>
+              <Select.Option value="lite">
+                Lite plan (${LITE_PRICE}/month)
+              </Select.Option>
+              <Select.Option value="team">
+                Team plan (${TEAM_PRICE}/month)
+              </Select.Option>
             </Select>
           </Box>
           {/* TODO: maybe just try Stripe Checkout instead? */}

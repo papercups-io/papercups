@@ -16,7 +16,6 @@ import PasswordResetRequested from './components/auth/PasswordResetRequested';
 import Demo from './components/demo/Demo';
 import BotDemo from './components/demo/BotDemo';
 import Dashboard from './components/Dashboard';
-import Pricing from './components/billing/PricingOverview';
 import Sandbox from './components/Sandbox';
 import SharedConversation from './components/conversations/SharedConversation';
 import './App.css';
@@ -45,7 +44,6 @@ const App = () => {
             path="/reset-password-requested"
             component={PasswordResetRequested}
           />
-          <Route path="/pricing" component={Pricing} />
           <Route path="/sandbox" component={Sandbox} />
           <Route path="/share" component={SharedConversation} />
           <Route
@@ -75,7 +73,6 @@ const App = () => {
         />
         <Route path="/demo" component={Demo} />
         <Route path="/bot/demo" component={BotDemo} />
-        <Route path="/pricing" component={Pricing} />
         <Route path="/sandbox" component={Sandbox} />
         <Route path="/share" component={SharedConversation} />
         <Route path="/" component={Dashboard} />

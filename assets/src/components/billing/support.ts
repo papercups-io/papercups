@@ -1,7 +1,7 @@
 import {capitalize} from 'lodash';
 import dayjs from 'dayjs';
 
-export type SubscriptionPlan = 'starter' | 'team';
+export type SubscriptionPlan = 'starter' | 'lite' | 'team';
 
 export type CreditCardBrand =
   | 'amex'
@@ -62,11 +62,21 @@ export const getPlanInfo = (plan: SubscriptionPlan) => {
         name: 'Team plan',
         includes: [
           {feature: '10 seats'},
-          {feature: 'Reply from Slack'},
           {feature: 'Unlimited data retention'},
           {feature: 'Website screen sharing'},
           {feature: 'Private notes'},
           {feature: 'Webhooks'},
+        ],
+      };
+    case 'lite':
+      return {
+        name: 'Lite plan',
+        includes: [
+          {feature: '4 seats'},
+          {feature: 'Unlimited messages'},
+          {feature: 'Reply from Slack'},
+          {feature: '3 months data retention'},
+          {feature: 'Email support'},
         ],
       };
     case 'starter':
@@ -75,7 +85,7 @@ export const getPlanInfo = (plan: SubscriptionPlan) => {
         name: 'Starter plan',
         includes: [
           {feature: '2 seats'},
-          {feature: '100,000 messages'},
+          {feature: '1,000 messages/month'},
           {feature: '30 day message retention'},
           {feature: 'Customizable chat widget'},
         ],
@@ -97,6 +107,8 @@ export const shouldRequirePlanUpdate = (
   switch (plan) {
     case 'starter':
       return numUsers > 2 || numMessages > 100000;
+    case 'lite':
+      return numUsers > 4;
     case 'team':
     default:
       return false;
