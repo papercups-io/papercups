@@ -640,6 +640,21 @@ export const fetchGmailAuthorization = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const fetchGoogleAuthorization = async (
+  client: 'gmail' | 'sheets',
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/google/authorization`)
+    .query({client})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export type EmailParams = {
   recipient: string;
   subject: string;
@@ -762,6 +777,22 @@ export const authorizeGmailIntegration = async (
   return request
     .get(`/api/gmail/oauth`)
     .query({code})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const authorizeGoogleIntegration = async (
+  code: string,
+  scope?: string | null,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/google/oauth`)
+    .query({code, scope})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

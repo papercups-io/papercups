@@ -9,12 +9,23 @@ defmodule ChatApi.Emails.Email do
 
   defstruct to_address: nil, message: nil
 
-  def generic(to: to, from: from, subject: subject, message: message) do
+  def generic(to: to, from: from, subject: subject, text: text, html: html) do
     new()
     |> to(to)
     |> from(from)
     |> subject(subject)
-    |> text_body(message)
+    |> text_body(text)
+    |> html_body(html)
+  end
+
+  def gmail(%{to: to, from: from, subject: subject, text: text} = params) do
+    new()
+    |> to(to)
+    |> from(from)
+    |> subject(subject)
+    |> bcc(Map.get(params, :bcc, []))
+    |> text_body(text)
+    |> html_body(Map.get(params, :html))
   end
 
   # TODO: Add some recent messages for context, rather than just a single message
