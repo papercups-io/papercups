@@ -66,28 +66,6 @@ defmodule ChatApiWeb.GoogleController do
     end
   end
 
-  # TODO: move somewhere else???
-  @spec subscribe(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def subscribe(conn, %{"newsletter" => newsletter, "email" => email}) do
-    with true <- true do
-      # Get from GoogleAuthorizations for PRIMARY_ACCOUNT_ID?
-      token = "GOOGLE_SHEETS_API_REFRESH_TOKEN"
-
-      case newsletter do
-        "pg" ->
-          # Just hardcode for now or use env variable? (or look at other Sheets APIs to "find by name"?)
-          google_sheet_id = "PG_NEWSLETTER_SHEET_ID"
-          # TODO: handle errors
-          ChatApi.Google.Sheets.append_to_spreadsheet!(token, google_sheet_id, [email])
-
-        _ ->
-          nil
-      end
-
-      json(conn, %{ok: true})
-    end
-  end
-
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, %{"client" => client}) do
     scope =

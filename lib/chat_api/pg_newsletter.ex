@@ -5,6 +5,8 @@ defmodule ChatApi.PgNewsletter do
 
   require Logger
 
+  alias ChatApi.Google
+
   @months [
     "January",
     "February",
@@ -70,12 +72,12 @@ defmodule ChatApi.PgNewsletter do
   end
 
   def notify(token, url, recipients) when is_list(recipients) do
-    with %{"emailAddress" => sender} <- ChatApi.Google.Gmail.get_profile(token) do
+    with %{"emailAddress" => sender} <- Google.Gmail.get_profile(token) do
       case extract_essay_data(url) do
         {:ok, {title, text, html}} ->
           Logger.debug("Sending PG essay #{inspect(url)} to #{inspect(recipients)}")
 
-          ChatApi.Google.Gmail.send_message(token, %{
+          Google.Gmail.send_message(token, %{
             to: sender,
             from: {"PG Essay Newsletter", sender},
             # NB: just sending to all as bcc for now
@@ -102,15 +104,15 @@ defmodule ChatApi.PgNewsletter do
     with {:ok, %{account_id: account_id, sheet_id: sheet_id, start_date: start_date}} <-
            get_config(),
          %{refresh_token: sheets_token} <-
-           ChatApi.Google.get_authorization_by_account(account_id, %{client: "sheets"}),
+           Google.get_authorization_by_account(account_id, %{client: "sheets"}),
          %{refresh_token: gmail_token} <-
-           ChatApi.Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
+           Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
       url = pick_essay_url(Date.utc_today(), start_date)
 
       recipients =
         sheets_token
-        |> ChatApi.Google.Sheets.get_spreadsheet_by_id!(sheet_id)
-        |> ChatApi.Google.Sheets.format_as_json()
+        |> Google.Sheets.get_spreadsheet_by_id!(sheet_id)
+        |> Google.Sheets.format_as_json()
         |> Enum.map(fn record ->
           case record do
             %{"email" => email, "name" => name} when is_nil(name) or name == "" -> email
