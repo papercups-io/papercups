@@ -136,7 +136,7 @@ class SessionsOverview extends React.Component<Props, State> {
     });
 
     return (
-      <Box p={4}>
+      <Box p={4} sx={{maxWidth: 1080}}>
         <Box mb={5}>
           <Title level={3}>Live Sessions (beta)</Title>
 

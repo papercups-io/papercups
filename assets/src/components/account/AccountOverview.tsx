@@ -253,7 +253,7 @@ class AccountOverview extends React.Component<Props, State> {
     const isAdmin = this.hasAdminRole();
 
     return (
-      <Box p={4}>
+      <Box p={4} sx={{maxWidth: 1080}}>
         <Box mb={4}>
           <Title level={3}>Account Overview</Title>
 

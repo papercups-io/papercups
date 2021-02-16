@@ -103,7 +103,7 @@ class CompaniesPage extends React.Component<Props, State> {
     const {loading, companies = []} = this.state;
 
     return (
-      <Box p={4}>
+      <Box p={4} sx={{maxWidth: 1080}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Companies (beta)</Title>
           <Link to="/companies/new">

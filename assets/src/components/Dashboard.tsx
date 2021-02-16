@@ -69,6 +69,8 @@ const getSectionKey = (pathname: string) => {
     return ['customers', 'companies'];
   } else if (pathname.startsWith('/customers')) {
     return ['customers', 'people'];
+  } else if (pathname.startsWith('/tags')) {
+    return ['customers', 'tags'];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
@@ -260,6 +262,9 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
                 <Menu.Item key="companies">
                   <Link to="/companies">Companies</Link>
+                </Menu.Item>
+                <Menu.Item key="tags">
+                  <Link to="/tags">Tags</Link>
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
