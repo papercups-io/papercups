@@ -3,7 +3,7 @@ defmodule ChatApiWeb.NewsletterController do
 
   require Logger
 
-  alias ChatApi.{PgNewsletter, Google}
+  alias ChatApi.{Google, Newsletters}
 
   @spec subscribe(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def subscribe(conn, %{"newsletter" => newsletter, "email" => email}) do
@@ -20,7 +20,7 @@ defmodule ChatApiWeb.NewsletterController do
 
   defp handle_subscription!("pg", email) do
     with {:ok, %{account_id: account_id, sheet_id: sheet_id}} <-
-           PgNewsletter.get_config(),
+           Newsletters.Pg.get_config(),
          %{refresh_token: token} <-
            Google.get_authorization_by_account(account_id, %{client: "sheets"}) do
       Google.Sheets.append_to_spreadsheet!(token, sheet_id, [email])

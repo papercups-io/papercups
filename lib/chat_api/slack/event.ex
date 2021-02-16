@@ -10,6 +10,7 @@ defmodule ChatApi.Slack.Event do
     SlackConversationThreads
   }
 
+  alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 

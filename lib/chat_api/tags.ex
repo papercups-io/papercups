@@ -57,7 +57,7 @@ defmodule ChatApi.Tags do
     |> Map.get(:customers)
   end
 
-  @spec list_customers_by_tag(binary()) :: [Conversation.t()]
+  @spec list_conversations_by_tag(binary()) :: [Conversation.t()]
   def list_conversations_by_tag(tag_id) do
     Tag
     |> preload(:conversations)

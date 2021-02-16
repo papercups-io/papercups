@@ -96,7 +96,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
       description:
-        'Use this integration to reply to messages directly through Slack.',
+        'Reply to messages from your customers directly through Slack.',
     };
   };
 
@@ -110,8 +110,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
-      description:
-        'Use this integration to sync messages from Slack channels with Papercups.',
+      description: 'Sync messages from your Slack channels with Papercups.',
     };
   };
 
@@ -120,13 +119,11 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
     return {
       key: 'gmail',
-      integration: 'Gmail (beta)',
+      integration: 'Gmail (alpha)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/gmail.svg',
-      description:
-        'Use this integration to sync your Gmail inbox with Papercups.',
     };
   };
 
@@ -135,13 +132,11 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
     return {
       key: 'sheets',
-      integration: 'Google Sheets (beta)',
+      integration: 'Google Sheets (alpha)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/sheets.svg',
-      description:
-        'Use this integration to sync customer data with Google Sheets.',
     };
   };
 

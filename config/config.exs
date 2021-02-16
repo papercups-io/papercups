@@ -75,7 +75,8 @@ config :chat_api, Oban,
   crontab: [
     # Hourly example worker
     {"0 * * * *", ChatApi.Workers.Example},
-    {"0 * * * *", ChatApi.Workers.ArchiveStaleClosedConversations}
+    {"0 * * * *", ChatApi.Workers.ArchiveStaleClosedConversations},
+    {"0 8 * * *", ChatApi.Workers.SendPgNewsletter}
     # TODO: uncomment this after testing manually
     # {"0 * * * *", ChatApi.Workers.ArchiveStaleFreeTierConversations}
   ]

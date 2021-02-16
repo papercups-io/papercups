@@ -1,6 +1,6 @@
-defmodule ChatApi.PgNewsletter do
+defmodule ChatApi.Newsletters.Pg do
   @moduledoc """
-  A module to handle sending PG essays.
+  A module to handle parsing and sending PG essays
   """
 
   require Logger
@@ -22,6 +22,7 @@ defmodule ChatApi.PgNewsletter do
     "December"
   ]
 
+  @spec get_essay_urls() :: [binary()]
   def get_essay_urls() do
     {:ok, %{body: html}} = Tesla.get("http://www.paulgraham.com/articles.html")
     {:ok, document} = Floki.parse_document(html)
@@ -33,6 +34,7 @@ defmodule ChatApi.PgNewsletter do
     |> Enum.map(&"http://www.paulgraham.com/#{&1}")
   end
 
+  @spec extract_essay_data(binary()) :: {:error, binary()} | {:ok, {binary(), binary(), binary()}}
   def extract_essay_data(url \\ "http://www.paulgraham.com/useful.html") do
     Logger.debug("Fetching url: #{inspect(url)}")
 
@@ -97,10 +99,7 @@ defmodule ChatApi.PgNewsletter do
 
   def notify(token, url, recipient), do: notify(token, url, [recipient])
 
-  # TODO: set up a worker/script that pulls from the Google Sheet of all the subscribers
-  # and sends them an email with a PG essay on a daily/weekly basis
-
-  def run() do
+  def run!() do
     with {:ok, %{account_id: account_id, sheet_id: sheet_id, start_date: start_date}} <-
            get_config(),
          %{refresh_token: sheets_token} <-
@@ -127,13 +126,14 @@ defmodule ChatApi.PgNewsletter do
     end
   end
 
+  @spec pick_essay_url(Date.t(), Date.t()) :: binary()
   def pick_essay_url(current_date, start_date) do
     index = current_date |> Date.diff(start_date) |> max(0)
 
     top_ranked_urls() |> Enum.at(index)
   end
 
-  @default_start_date ~D[2021-02-14]
+  @default_start_date ~D[2021-02-17]
 
   def config() do
     %{
@@ -160,6 +160,7 @@ defmodule ChatApi.PgNewsletter do
     end
   end
 
+  @spec top_ranked_urls() :: [binary()]
   def top_ranked_urls() do
     # From http://www.solipsys.co.uk/new/PaulGrahamEssaysRanking.html
     [
