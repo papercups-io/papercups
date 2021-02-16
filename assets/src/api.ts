@@ -960,6 +960,22 @@ export const createTag = async (
     .then((res) => res.body.data);
 };
 
+export const updateTag = async (
+  id: string,
+  tag: Partial<Tag>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/tags/${id}`)
+    .send({tag})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const deleteTag = async (id: string, token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');

@@ -18,6 +18,7 @@ import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
 import CustomersTable from '../customers/CustomersTable';
+import UpdateTagModal from './UpdateTagModal';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (
@@ -41,6 +42,7 @@ type State = {
   loading: boolean;
   deleting: boolean;
   refreshing: boolean;
+  isUpdateModalVisible: boolean;
   tag: T.Tag | null;
   customers: Array<T.Customer>;
 };
@@ -50,6 +52,7 @@ class TagDetailsPage extends React.Component<Props, State> {
     loading: true,
     deleting: false,
     refreshing: false,
+    isUpdateModalVisible: false,
     tag: null,
     customers: [],
   };
@@ -83,6 +86,21 @@ class TagDetailsPage extends React.Component<Props, State> {
     }
   };
 
+  handleRefreshTag = async () => {
+    this.setState({refreshing: true});
+
+    try {
+      const {id: tagId} = this.props.match.params;
+      const tag = await API.fetchTagById(tagId);
+
+      this.setState({tag, refreshing: false});
+    } catch (err) {
+      logger.error('Error refreshing customers!', err);
+
+      this.setState({refreshing: false});
+    }
+  };
+
   handleDeleteTag = async () => {
     try {
       this.setState({deleting: true});
@@ -98,8 +116,28 @@ class TagDetailsPage extends React.Component<Props, State> {
     }
   };
 
+  handleOpenUpdateTagModal = () => {
+    this.setState({isUpdateModalVisible: true});
+  };
+
+  handleUpdateTagModalClosed = () => {
+    this.setState({isUpdateModalVisible: false});
+  };
+
+  handleTagUpdated = () => {
+    this.handleUpdateTagModalClosed();
+    this.handleRefreshTag();
+  };
+
   render() {
-    const {loading, deleting, refreshing, tag, customers = []} = this.state;
+    const {
+      loading,
+      deleting,
+      refreshing,
+      isUpdateModalVisible,
+      tag,
+      customers = [],
+    } = this.state;
 
     if (loading) {
       return (
@@ -156,9 +194,17 @@ class TagDetailsPage extends React.Component<Props, State> {
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={2}>Tag details</Title>
 
-          {/* TODO: implement me! */}
-          {false && <Button>Edit tag information</Button>}
+          <Button onClick={this.handleOpenUpdateTagModal}>
+            Edit tag details
+          </Button>
         </Flex>
+
+        <UpdateTagModal
+          visible={isUpdateModalVisible}
+          tag={tag}
+          onCancel={this.handleUpdateTagModalClosed}
+          onSuccess={this.handleTagUpdated}
+        />
 
         <Flex>
           <Box sx={{flex: 1, pr: 4}}>
