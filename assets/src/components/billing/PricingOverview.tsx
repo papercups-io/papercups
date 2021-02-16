@@ -3,49 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {colors, Button, Divider, Paragraph, Text, Title} from '../common';
 import {CheckCircleTwoTone} from '../icons';
 import {SubscriptionPlan} from './support';
-import logger from '../../logger';
 import {LITE_PRICE, STARTER_PRICE, TEAM_PRICE} from '../../constants';
-
-type Props = {};
-type State = {};
-
-const PricingCard = ({
-  title,
-  description,
-  cta,
-  pricing,
-  features,
-}: {
-  title: string;
-  description: string;
-  cta: React.ReactElement;
-  pricing: React.ReactElement;
-  features: React.ReactElement;
-}) => {
-  return (
-    <Box
-      mx={2}
-      p={3}
-      sx={{
-        flex: 1,
-        border: '1px solid #f5f5f5',
-        borderRadius: 4,
-        boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
-      }}
-    >
-      <Title level={3}>{title}</Title>
-      <Paragraph style={{minHeight: 44}}>{description}</Paragraph>
-
-      <Box my={3}>{cta}</Box>
-
-      <Box sx={{fontSize: 16}}>{pricing}</Box>
-
-      <Divider />
-
-      {features}
-    </Box>
-  );
-};
 
 const PricingSection = ({
   title,
