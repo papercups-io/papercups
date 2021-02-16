@@ -5,17 +5,12 @@ import Spinner from '../Spinner';
 import * as API from '../../api';
 import * as T from '../../types';
 import logger from '../../logger';
+import {defaultTagColor} from '../tags/support';
 
 type TagOption = {
   id?: string;
   label: string;
   value: string;
-};
-
-const defaultTagColor = (index: number) => {
-  const options = ['magenta', 'red', 'volcano', 'purple', 'blue'];
-
-  return options[index % options.length];
 };
 
 const getTagDiff = (current: Array<T.Tag>, next: Array<TagOption>) => {

@@ -3,42 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {colors, Button, Input, Modal, Select, Text} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
-import {TAG_COLORS} from './support';
-
-const formatTagErrors = (err: any) => {
-  try {
-    const error = err?.response?.body?.error ?? {};
-    const {errors = {}, message, status} = error;
-
-    if (status === 422 && Object.keys(errors).length > 0) {
-      const messages = Object.keys(errors)
-        .map((field) => {
-          const description = errors[field];
-
-          if (description) {
-            return `${field} ${description}`;
-          } else {
-            return `invalid ${field}`;
-          }
-        })
-        .join(', ');
-
-      return `Error: ${messages}.`;
-    } else {
-      return (
-        message ||
-        err?.message ||
-        'Something went wrong. Please contact us or try again in a few minutes.'
-      );
-    }
-  } catch {
-    return (
-      err?.response?.body?.error?.message ||
-      err?.message ||
-      'Something went wrong. Please contact us or try again in a few minutes.'
-    );
-  }
-};
+import {TAG_COLORS, formatTagErrors} from './support';
 
 const NewTagModal = ({
   visible,
