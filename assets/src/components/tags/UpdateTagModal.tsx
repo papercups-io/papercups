@@ -1,9 +1,10 @@
 import React from 'react';
-import {Box} from 'theme-ui';
-import {Button, Input, Modal, Text} from '../common';
+import {Box, Flex} from 'theme-ui';
+import {colors, Button, Input, Modal, Select, Text} from '../common';
 import * as API from '../../api';
 import {Tag} from '../../types';
 import logger from '../../logger';
+import {TAG_COLORS} from './support';
 
 const formatTagErrors = (err: any) => {
   try {
@@ -51,17 +52,24 @@ const UpdateTagModal = ({
   onSuccess: (params: any) => void;
   onCancel: () => void;
 }) => {
-  const {id: tagId, name: initialName, description: initialDescription} = tag;
+  const {
+    id: tagId,
+    name: initialName,
+    description: initialDescription,
+    color: initialColor,
+  } = tag;
   const [name, setName] = React.useState(initialName);
   const [description, setDescription] = React.useState(initialDescription);
+  const [color, setColor] = React.useState(initialColor);
   const [error, setErrorMessage] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
 
   const resetInputFields = React.useCallback(() => {
     setName(initialName);
     setDescription(initialDescription);
+    setColor(initialColor);
     setErrorMessage(null);
-  }, [initialName, initialDescription]);
+  }, [initialName, initialDescription, initialColor]);
 
   React.useEffect(() => resetInputFields(), [tag, resetInputFields]);
 
@@ -77,7 +85,7 @@ const UpdateTagModal = ({
   const handleCreateTag = async () => {
     setIsSaving(true);
 
-    return API.updateTag(tagId, {name, description})
+    return API.updateTag(tagId, {name, description, color})
       .then((result) => onSuccess(result))
       .catch((err) => {
         logger.error('Error updating tag:', err);
@@ -127,6 +135,38 @@ const UpdateTagModal = ({
             onChange={handleChangeDescription}
           />
         </Box>
+        <Box mb={3}>
+          <label htmlFor="color">Color</label>
+
+          <Select
+            id="color"
+            style={{width: '100%'}}
+            value={color}
+            onChange={setColor}
+          >
+            {TAG_COLORS.map(({name, hex}) => (
+              <Select.Option key={name} value={name}>
+                <Flex sx={{alignItems: 'center'}}>
+                  <Box
+                    mr={2}
+                    sx={{
+                      height: 8,
+                      width: 8,
+                      bg: hex,
+                      borderRadius: '50%',
+                      border:
+                        name === 'default'
+                          ? `1px solid ${colors.gray[0]}`
+                          : null,
+                    }}
+                  ></Box>
+                  <Text>{name}</Text>
+                </Flex>
+              </Select.Option>
+            ))}
+          </Select>
+        </Box>
+
         {error && (
           <Box mb={-3}>
             <Text type="danger">{error}</Text>

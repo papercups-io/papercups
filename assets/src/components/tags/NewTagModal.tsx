@@ -1,8 +1,9 @@
 import React from 'react';
-import {Box} from 'theme-ui';
-import {Button, Input, Modal, Text} from '../common';
+import {Box, Flex} from 'theme-ui';
+import {colors, Button, Input, Modal, Select, Text} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
+import {TAG_COLORS} from './support';
 
 const formatTagErrors = (err: any) => {
   try {
@@ -48,8 +49,10 @@ const NewTagModal = ({
   onSuccess: (params: any) => void;
   onCancel: () => void;
 }) => {
+  const defaultColor = TAG_COLORS[0].name;
   const [name, setName] = React.useState('');
   const [description, setDescription] = React.useState('');
+  const [color, setColor] = React.useState(defaultColor);
   const [error, setErrorMessage] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
 
@@ -58,6 +61,7 @@ const NewTagModal = ({
   const resetInputFields = () => {
     setName('');
     setDescription('');
+    setColor(defaultColor);
     setErrorMessage(null);
   };
 
@@ -69,7 +73,7 @@ const NewTagModal = ({
   const handleCreateTag = async () => {
     setIsSaving(true);
 
-    return API.createTag({name, description})
+    return API.createTag({name, description, color})
       .then((result) => {
         onSuccess(result);
         resetInputFields();
@@ -122,6 +126,38 @@ const NewTagModal = ({
             onChange={handleChangeDescription}
           />
         </Box>
+        <Box mb={3}>
+          <label htmlFor="color">Color</label>
+
+          <Select
+            id="color"
+            style={{width: '100%'}}
+            value={color}
+            onChange={setColor}
+          >
+            {TAG_COLORS.map(({name, hex}) => (
+              <Select.Option key={name} value={name}>
+                <Flex sx={{alignItems: 'center'}}>
+                  <Box
+                    mr={2}
+                    sx={{
+                      height: 8,
+                      width: 8,
+                      bg: hex,
+                      borderRadius: '50%',
+                      border:
+                        name === 'default'
+                          ? `1px solid ${colors.gray[0]}`
+                          : null,
+                    }}
+                  ></Box>
+                  <Text>{name}</Text>
+                </Flex>
+              </Select.Option>
+            ))}
+          </Select>
+        </Box>
+
         {error && (
           <Box mb={-3}>
             <Text type="danger">{error}</Text>
