@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Input, Modal, Select, Text} from '../common';
+import {colors, Button, Input, Modal, Select, Text, TextArea} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
 import {TAG_COLORS, formatTagErrors} from './support';
@@ -84,9 +84,8 @@ const NewTagModal = ({
         </Box>
         <Box mb={3}>
           <label htmlFor="description">Description</label>
-          <Input
+          <TextArea
             id="description"
-            type="text"
             value={description}
             onChange={handleChangeDescription}
           />
