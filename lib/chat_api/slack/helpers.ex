@@ -351,7 +351,7 @@ defmodule ChatApi.Slack.Helpers do
 
   If a matching `User` or `Customer` has already been found, just return it.
   """
-  @spec maybe_find_user(User.t() | Customer.t() | nil, SlackAuthorization.t(), map()) ::
+  @spec maybe_find_customer(User.t() | Customer.t() | nil, SlackAuthorization.t(), map()) ::
           User.t() | Customer.t() | nil
   def maybe_find_customer(nil, authorization, %{"bot_id" => slack_bot_id}) do
     find_matching_bot_customer(authorization, slack_bot_id)

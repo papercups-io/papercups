@@ -174,7 +174,6 @@ defmodule ChatApiWeb.SlackController do
     send_resp(conn, 200, "")
   end
 
-  @spec actions(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def actions(conn, params) do
     Logger.debug("Payload from unhandled Slack action: #{inspect(params)}")
 
@@ -214,7 +213,6 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
-  @spec handle_action(map()) :: any()
   def handle_action(%{
         "action_id" => "open_conversation",
         "type" => "button",

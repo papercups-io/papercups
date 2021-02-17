@@ -58,20 +58,18 @@ defmodule ChatApi.Emails do
     |> deliver()
   end
 
-  @spec send_via_gmail(keyword()) :: deliver_result()
+  @spec send_via_gmail(binary(), map()) :: deliver_result()
   def send_via_gmail(
-        to: to,
-        from: from,
-        subject: subject,
-        message: message,
-        access_token: access_token
+        access_token,
+        %{
+          to: _to,
+          from: _from,
+          subject: _subject,
+          text: _text
+        } = params
       ) do
-    Email.generic(
-      to: to,
-      from: from,
-      subject: subject,
-      message: message
-    )
+    params
+    |> Email.gmail()
     |> deliver(access_token: access_token)
   end
 

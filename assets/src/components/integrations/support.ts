@@ -3,6 +3,7 @@ export type IntegrationType = {
     | 'slack'
     | 'slack:sync'
     | 'gmail'
+    | 'sheets'
     | 'microsoft-teams'
     | 'whatsapp'
     | 'twilio';
@@ -11,6 +12,7 @@ export type IntegrationType = {
   created_at?: string | null;
   authorization_id: string | null;
   icon: string;
+  description?: string;
 };
 
 export type WebhookEventSubscription = {

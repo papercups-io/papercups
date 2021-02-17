@@ -41,10 +41,10 @@ const getSlackAuthUrl = (type = 'reply') => {
   return `https://slack.com/oauth/v2/authorize?${query}`;
 };
 
-const getGmailAuthUrl = () => {
+const getGoogleAuthUrl = (client: 'gmail' | 'sheets') => {
   const origin = isDev ? 'http://localhost:4000' : window.location.origin;
 
-  return `${origin}/gmail/auth`;
+  return `${origin}/google/auth?client=${client}`;
 };
 
 const IntegrationsTable = ({
@@ -62,15 +62,22 @@ const IntegrationsTable = ({
       dataIndex: 'integration',
       key: 'integration',
       render: (value: string, record: IntegrationType) => {
-        const {icon} = record;
+        const {icon, description} = record;
 
         return (
-          <Flex sx={{alignItems: 'center'}}>
-            <img src={icon} alt={value} style={{height: 20}} />
-            <Text strong style={{marginLeft: 8}}>
-              {value}
-            </Text>
-          </Flex>
+          <Box>
+            <Flex sx={{alignItems: 'center'}}>
+              <img src={icon} alt={value} style={{height: 20}} />
+              <Text strong style={{marginLeft: 8}}>
+                {value}
+              </Text>
+            </Flex>
+            {description && (
+              <Box mt={2} sx={{maxWidth: 480}}>
+                <Text type="secondary">{description}</Text>
+              </Box>
+            )}
+          </Box>
         );
       },
     },
@@ -175,7 +182,23 @@ const IntegrationsTable = ({
                   </Box>
                 }
               >
-                <a href={getGmailAuthUrl()}>
+                <a href={getGoogleAuthUrl('gmail')}>
+                  <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
+                </a>
+              </Tooltip>
+            );
+          case 'sheets':
+            return (
+              <Tooltip
+                title={
+                  <Box>
+                    Our verification with the Google API is pending, but you can
+                    still link your Google Sheets account to opt into new
+                    features.
+                  </Box>
+                }
+              >
+                <a href={getGoogleAuthUrl('sheets')}>
                   <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
                 </a>
               </Tooltip>

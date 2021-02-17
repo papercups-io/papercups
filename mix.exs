@@ -73,7 +73,8 @@ defmodule ChatApi.MixProject do
       {:ex_json_schema, "~> 0.5"},
       {:pow_postgres_store, "~> 1.0.0-rc2"},
       {:tzdata, "~> 1.0.5"},
-      {:scrivener_ecto, "~> 2.0"}
+      {:scrivener_ecto, "~> 2.0"},
+      {:floki, "~> 0.30.0"}
     ]
   end
 

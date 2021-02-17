@@ -48,6 +48,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchSlackIntegration(),
         this.fetchSlackSupportIntegration(),
         this.fetchGmailIntegration(),
+        this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
         this.fetchWhatsAppIntegration(),
@@ -70,6 +71,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchSlackIntegration(),
         this.fetchSlackSupportIntegration(),
         this.fetchGmailIntegration(),
+        this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
         this.fetchWhatsAppIntegration(),
@@ -93,6 +95,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
+      description:
+        'Reply to messages from your customers directly through Slack.',
     };
   };
 
@@ -106,19 +110,33 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
+      description: 'Sync messages from your Slack channels with Papercups.',
     };
   };
 
   fetchGmailIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchGmailAuthorization();
+    const auth = await API.fetchGoogleAuthorization('gmail');
 
     return {
       key: 'gmail',
-      integration: 'Gmail (beta)',
+      integration: 'Gmail (alpha)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/gmail.svg',
+    };
+  };
+
+  fetchGoogleSheetsIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchGoogleAuthorization('sheets');
+
+    return {
+      key: 'sheets',
+      integration: 'Google Sheets (alpha)',
+      status: auth ? 'connected' : 'not_connected',
+      created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
+      icon: '/sheets.svg',
     };
   };
 
@@ -186,12 +204,15 @@ class IntegrationsOverview extends React.Component<Props, State> {
               description,
             });
           });
-      case 'gmail':
-        return API.authorizeGmailIntegration(code)
+
+      case 'google':
+        const scope = q.scope ? String(q.scope) : null;
+
+        return API.authorizeGoogleIntegration(code, scope)
           .then((result) =>
-            logger.debug('Successfully authorized Gmail:', result)
+            logger.debug('Successfully authorized Google:', result)
           )
-          .catch((err) => logger.error('Failed to authorize Gmail:', err));
+          .catch((err) => logger.error('Failed to authorize Google:', err));
       default:
         return null;
     }
