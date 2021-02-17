@@ -76,6 +76,7 @@ config :chat_api, Oban,
     # Hourly example worker
     {"0 * * * *", ChatApi.Workers.Example},
     {"0 * * * *", ChatApi.Workers.ArchiveStaleClosedConversations},
+    # Sends everyday at 8am
     {"0 8 * * *", ChatApi.Workers.SendPgNewsletter}
     # TODO: uncomment this after testing manually
     # {"0 * * * *", ChatApi.Workers.ArchiveStaleFreeTierConversations}
