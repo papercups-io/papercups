@@ -81,8 +81,14 @@ defmodule ChatApiWeb.ConversationChannel do
          {:ok, message} <-
            payload
            |> Map.merge(%{"conversation_id" => conversation_id, "account_id" => account_id})
-           |> Messages.create_message(),
-         message <- Messages.get_message!(message.id) do
+           |> Messages.create_message() do
+      case Map.get(payload, "file_ids") do
+        file_ids when is_list(file_ids) -> Messages.create_attachments(message, file_ids)
+        _ -> nil
+      end
+
+      message = Messages.get_message!(message.id)
+
       broadcast_new_message(socket, message)
     else
       _ ->
