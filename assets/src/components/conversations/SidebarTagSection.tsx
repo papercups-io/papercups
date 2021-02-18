@@ -201,9 +201,15 @@ export const SidebarCustomerTags = ({customerId}: {customerId: string}) => {
 
                 return (
                   <Box key={id} my={1}>
-                    <Tag key={id} color={color}>
-                      {name}
-                    </Tag>
+                    <a
+                      href={`/tags/${id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Tag key={id} color={color} style={{cursor: 'pointer'}}>
+                        {name}
+                      </Tag>
+                    </a>
                   </Box>
                 );
               })
@@ -355,9 +361,15 @@ export const SidebarConversationTags = ({
 
                 return (
                   <Box key={id} my={1}>
-                    <Tag key={id} color={color}>
-                      {name}
-                    </Tag>
+                    <a
+                      href={`/tags/${id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Tag key={id} color={color} style={{cursor: 'pointer'}}>
+                        {name}
+                      </Tag>
+                    </a>
                   </Box>
                 );
               })
