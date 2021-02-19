@@ -749,80 +749,109 @@ defmodule ChatApi.Slack.Helpers do
     "#{base}/conversations/all?cid=#{conversation_id}"
   end
 
+  @spec format_message_body(Message.t()) :: binary()
+  def format_message_body(%Message{body: nil}), do: ""
+  def format_message_body(%Message{private: true, type: "note", body: nil}), do: "\\\\ _Note_"
+  def format_message_body(%Message{private: true, type: "note", body: body}), do: "\\\\ _#{body}_"
+  def format_message_body(%Message{body: body}), do: body
+
+  @spec prepend_sender_prefix(binary(), Message.t()) :: binary()
+  def prepend_sender_prefix(text, %Message{} = message) do
+    case message do
+      %Message{user: %User{} = user} ->
+        "*:female-technologist: #{Slack.Notification.format_user_name(user)}*: #{text}"
+
+      %Message{customer: %Customer{} = customer} ->
+        "*:wave: #{identify_customer(customer)}*: #{text}"
+
+      %Message{customer_id: nil, user_id: user_id} when not is_nil(user_id) ->
+        "*:female-technologist: Agent*: #{text}"
+
+      _ ->
+        Logger.error("Unrecognized message format: #{inspect(message)}")
+
+        text
+    end
+  end
+
+  @spec prepend_sender_prefix(binary(), Message.t(), Conversation.t()) :: binary()
+  def prepend_sender_prefix(text, %Message{} = message, %Conversation{} = conversation) do
+    case message do
+      %Message{user: %User{} = user} ->
+        "*:female-technologist: #{Slack.Notification.format_user_name(user)}*: #{text}"
+
+      %Message{customer: %Customer{} = customer} ->
+        "*:wave: #{identify_customer(customer)}*: #{text}"
+
+      %Message{customer_id: nil, user_id: user_id} when not is_nil(user_id) ->
+        "*:female-technologist: Agent*: #{text}"
+
+      %Message{customer_id: customer_id, user_id: nil} when not is_nil(customer_id) ->
+        "*:wave: #{identify_customer(conversation.customer)}*: #{text}"
+
+      _ ->
+        Logger.error("Unrecognized message format: #{inspect(message)}")
+
+        text
+    end
+  end
+
+  @spec append_attachments_text(binary() | nil, Message.t()) :: binary()
+  def append_attachments_text(text, %Message{attachments: [_ | _] = attachments}) do
+    attachments_text =
+      attachments
+      |> Stream.map(fn file -> "> <#{file.file_url}|#{file.filename}>" end)
+      |> Enum.join("\n")
+
+    text <> "\n\n" <> attachments_text
+  end
+
+  def append_attachments_text(text, _message), do: text
+
   @spec get_message_text(map()) :: binary()
   def get_message_text(%{
         conversation: %Conversation{customer: %Customer{}} = conversation,
-        message: %Message{body: text} = message,
+        message: %Message{} = message,
         authorization: _authorization,
         thread: nil
       }) do
     dashboard_link = "<#{get_dashboard_conversation_url(conversation.id)}|dashboard>"
 
-    primary_message_text =
-      case message do
-        %Message{user: %User{} = user} ->
-          "*:female-technologist: #{Slack.Notification.format_user_name(user)}*: #{text}"
+    formatted_text =
+      message
+      |> format_message_body()
+      |> prepend_sender_prefix(message, conversation)
+      |> append_attachments_text(message)
 
-        %Message{customer: %Customer{} = customer} ->
-          "*:wave: #{identify_customer(customer)}*: #{text}"
-
-        %Message{customer_id: nil, user_id: user_id} when not is_nil(user_id) ->
-          "*:female-technologist: Agent*: #{text}"
-
-        %Message{customer_id: customer_id, user_id: nil} when not is_nil(customer_id) ->
-          "*:wave: #{identify_customer(conversation.customer)}*: #{text}"
-
-        _ ->
-          Logger.error("Unrecognized message format: #{inspect(message)}")
-
-          text
-      end
-
-    primary_message_text <>
-      "\n\n" <>
-      "Reply to this thread to start chatting, or view in the #{dashboard_link} :rocket:" <>
-      "\n\n" <>
+    [
+      formatted_text,
+      "Reply to this thread to start chatting, or view in the #{dashboard_link} :rocket:",
       "(Start a message with `;;` or `\\\\` to send an <https://github.com/papercups-io/papercups/pull/562|internal note>.)"
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join("\n\n")
   end
 
   @slack_chat_write_customize_scope "chat:write.customize"
 
   def get_message_text(%{
         conversation: %Conversation{} = conversation,
-        message: %Message{body: body} = message,
+        message: %Message{} = message,
         authorization: %SlackAuthorization{} = authorization,
         thread: %SlackConversationThread{}
       }) do
-    text =
-      case message do
-        %Message{private: true, type: "note"} -> "\\\\ _#{body}_"
-        _ -> body
-      end
-
     if SlackAuthorizations.has_authorization_scope?(
          authorization,
          @slack_chat_write_customize_scope
        ) do
-      text
+      message
+      |> format_message_body()
+      |> append_attachments_text(message)
     else
-      case message do
-        %Message{user: %User{} = user} ->
-          "*:female-technologist: #{Slack.Notification.format_user_name(user)}*: #{text}"
-
-        %Message{customer: %Customer{} = customer} ->
-          "*:wave: #{identify_customer(customer)}*: #{text}"
-
-        %Message{customer_id: nil, user_id: user_id} when not is_nil(user_id) ->
-          "*:female-technologist: Agent*: #{text}"
-
-        %Message{customer_id: customer_id, user_id: nil} when not is_nil(customer_id) ->
-          "*:wave: #{identify_customer(conversation.customer)}*: #{text}"
-
-        _ ->
-          Logger.error("Unrecognized message format: #{inspect(message)}")
-
-          text
-      end
+      message
+      |> format_message_body()
+      |> prepend_sender_prefix(message, conversation)
+      |> append_attachments_text(message)
     end
   end
 
