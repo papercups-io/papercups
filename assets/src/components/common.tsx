@@ -16,6 +16,7 @@ import Radio from 'antd/lib/radio';
 import Result from 'antd/lib/result';
 import Select from 'antd/lib/select';
 import Spin from 'antd/lib/spin';
+import Switch from 'antd/lib/switch';
 import Statistic from 'antd/lib/statistic';
 import Table from 'antd/lib/table';
 import Tag from 'antd/lib/tag';
@@ -126,6 +127,7 @@ export {
   Result,
   Select,
   Spin,
+  Switch,
   Statistic,
   Table,
   Tag,

@@ -7,7 +7,7 @@ import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import ChatWidget from '@papercups-io/chat-widget';
 import * as API from '../../api';
 import {User} from '../../types';
-import {Paragraph, Input, colors, Text, Title} from '../common';
+import {colors, Paragraph, Input, Switch, Text, Title} from '../common';
 import {BASE_URL, FRONTEND_BASE_URL} from '../../config';
 import logger from '../../logger';
 
@@ -19,6 +19,10 @@ type State = {
   subtitle: string;
   greeting?: string;
   newMessagePlaceholder?: string;
+  requireEmailUpfront: boolean;
+  showAgentAvailability: boolean;
+  agentAvailableText?: string;
+  agentUnavailableText?: string;
   currentUser: User | null;
 };
 
@@ -31,6 +35,10 @@ class GettingStartedOverview extends React.Component<Props, State> {
     subtitle: 'Ask us anything in the chat window below 😊',
     greeting: '',
     newMessagePlaceholder: 'Start typing...',
+    requireEmailUpfront: false,
+    showAgentAvailability: false,
+    agentAvailableText: `We're online right now!`,
+    agentUnavailableText: `We're away at the moment.`,
   };
 
   async componentDidMount() {
@@ -93,6 +101,36 @@ class GettingStartedOverview extends React.Component<Props, State> {
   ) => {
     this.setState(
       {newMessagePlaceholder: e.target.value},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleChangeRequireEmailUpfront = (isChecked: boolean) => {
+    this.setState(
+      {requireEmailUpfront: isChecked},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleChangeShowingAgentAvailability = (isChecked: boolean) => {
+    this.setState(
+      {showAgentAvailability: isChecked},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleChangeAgentAvailableText = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState(
+      {agentAvailableText: e.target.value},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleChangeAgentUnavailableText = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    this.setState(
+      {agentUnavailableText: e.target.value},
       this.debouncedUpdateWidgetSettings
     );
   };
@@ -209,12 +247,16 @@ const ExamplePage = () => {
 
   render() {
     const {
+      accountId,
       color,
       title,
       subtitle,
       greeting,
       newMessagePlaceholder,
-      accountId,
+      showAgentAvailability,
+      agentAvailableText,
+      agentUnavailableText,
+      requireEmailUpfront,
     } = this.state;
 
     if (!accountId) {
@@ -250,6 +292,7 @@ const ExamplePage = () => {
               way you like!
             </Text>
           </Paragraph>
+
           <Box mb={3}>
             <label htmlFor="title">Update the title:</label>
             <Input
@@ -261,6 +304,7 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
+
           <Box mb={3}>
             <label htmlFor="subtitle">Update the subtitle:</label>
             <Input
@@ -272,8 +316,11 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
+
           <Box mb={3}>
-            <label htmlFor="greeting">Set a greeting (refresh to view):</label>
+            <label htmlFor="greeting">
+              Set a greeting (requires page refresh to view):
+            </label>
             <Input
               id="greeting"
               type="text"
@@ -283,6 +330,7 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
+
           <Box mb={3}>
             <label htmlFor="new_message_placeholder">
               Update the new message placeholder text:
@@ -296,20 +344,78 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
-          <Box mb={3}>
+
+          <Box mb={4}>
             <Paragraph>Try changing the color:</Paragraph>
             <TwitterPicker
               color={this.state.color}
               onChangeComplete={this.handleChangeColor}
             />
           </Box>
+
+          <Box mb={1}>
+            <label htmlFor="require_email_upfront">
+              Require unidentified customers to provide their email upfront?
+            </label>
+          </Box>
+          <Box mb={3}>
+            <Switch
+              checked={requireEmailUpfront}
+              onChange={this.handleChangeRequireEmailUpfront}
+            />
+          </Box>
+
+          <Box mb={1}>
+            <label htmlFor="show_agent_availability">
+              Show agent availability? (requires page refresh to view)
+            </label>
+          </Box>
+          <Box mb={3}>
+            <Switch
+              checked={showAgentAvailability}
+              onChange={this.handleChangeShowingAgentAvailability}
+            />
+          </Box>
+
+          <Box mb={3}>
+            <label htmlFor="agent_available_text">
+              Set the text displayed when agents are available:
+            </label>
+            <Input
+              id="agent_available_text"
+              type="text"
+              placeholder="We're online right now!"
+              value={agentAvailableText}
+              onChange={this.handleChangeAgentAvailableText}
+              onBlur={this.updateWidgetSettings}
+            />
+          </Box>
+
+          <Box mb={3}>
+            <label htmlFor="agent_unavailable_text">
+              Set the text displayed when agents are unavailable:
+            </label>
+            <Input
+              id="agent_unavailable_text"
+              type="text"
+              placeholder="We're away at the moment."
+              value={agentUnavailableText}
+              onChange={this.handleChangeAgentUnavailableText}
+              onBlur={this.updateWidgetSettings}
+            />
+          </Box>
+
           <ChatWidget
+            accountId={accountId}
             title={title || 'Welcome!'}
             subtitle={subtitle}
             primaryColor={color}
             greeting={greeting}
             newMessagePlaceholder={newMessagePlaceholder}
-            accountId={accountId}
+            requireEmailUpfront={requireEmailUpfront}
+            showAgentAvailability={showAgentAvailability}
+            agentAvailableText={agentAvailableText}
+            agentUnavailableText={agentUnavailableText}
             customer={customer}
             baseUrl={BASE_URL}
             defaultIsOpen
