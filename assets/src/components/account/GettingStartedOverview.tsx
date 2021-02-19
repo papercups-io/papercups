@@ -402,7 +402,7 @@ const ExamplePage = () => {
 
           <Box mb={1}>
             <label htmlFor="show_agent_availability">
-              Show agent availability? (requires page refresh to view)
+              Show agent availability?
             </label>
           </Box>
           <Box mb={3}>
