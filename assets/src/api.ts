@@ -40,6 +40,10 @@ export type WidgetSettingsParams = {
   color: string;
   greeting?: string;
   new_message_placeholder?: string;
+  show_agent_availability?: boolean;
+  agent_available_text?: string;
+  agent_unavailable_text?: string;
+  require_email_upfront?: boolean;
 };
 
 export type EventSubscriptionParams = {
