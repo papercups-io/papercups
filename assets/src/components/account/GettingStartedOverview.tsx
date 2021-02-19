@@ -7,7 +7,7 @@ import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import ChatWidget from '@papercups-io/chat-widget';
 import * as API from '../../api';
 import {User} from '../../types';
-import {Paragraph, Input, colors, Text, Title} from '../common';
+import {colors, Paragraph, Input, Switch, Text, Title} from '../common';
 import {BASE_URL, FRONTEND_BASE_URL} from '../../config';
 import logger from '../../logger';
 
@@ -116,29 +116,34 @@ class GettingStartedOverview extends React.Component<Props, State> {
     );
   };
 
-  handleShowAgentAvailability = (e: any) => {
+  handleChangeRequireEmailUpfront = (isChecked: boolean) => {
     this.setState(
-      {showAgentAvailability: e},
+      {requireEmailUpfront: isChecked},
       this.debouncedUpdateWidgetSettings
     );
   };
 
-  handleAgentAvailableText = (e: any) => {
+  handleChangeShowingAgentAvailability = (isChecked: boolean) => {
+    this.setState(
+      {showAgentAvailability: isChecked},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleChangeAgentAvailableText = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState(
       {agentAvailableText: e.target.value},
       this.debouncedUpdateWidgetSettings
     );
   };
 
-  handleAgentUnavailableText = (e: any) => {
+  handleChangeAgentUnavailableText = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     this.setState(
       {agentUnavailableText: e.target.value},
       this.debouncedUpdateWidgetSettings
     );
-  };
-
-  handleRequireEmailUpfront = (e: any) => {
-    this.setState({requireEmailUpfront: e}, this.debouncedUpdateWidgetSettings);
   };
 
   handleChangeColor = (color: any) => {
@@ -322,6 +327,7 @@ const ExamplePage = () => {
               way you like!
             </Text>
           </Paragraph>
+
           <Box mb={3}>
             <label htmlFor="title">Update the title:</label>
             <Input
@@ -333,6 +339,7 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
+
           <Box mb={3}>
             <label htmlFor="subtitle">Update the subtitle:</label>
             <Input
@@ -344,6 +351,7 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
+
           <Box mb={3}>
             <label htmlFor="greeting">
               Set a greeting (requires page refresh to view):
@@ -357,6 +365,7 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
+
           <Box mb={3}>
             <label htmlFor="new_message_placeholder">
               Update the new message placeholder text:
@@ -370,13 +379,27 @@ const ExamplePage = () => {
               onBlur={this.updateWidgetSettings}
             />
           </Box>
-          <Box mb={3}>
+
+          <Box mb={4}>
             <Paragraph>Try changing the color:</Paragraph>
             <TwitterPicker
               color={this.state.color}
               onChangeComplete={this.handleChangeColor}
             />
           </Box>
+
+          <Box mb={1}>
+            <label htmlFor="require_email_upfront">
+              Require unidentified customers to provide their email upfront?
+            </label>
+          </Box>
+          <Box mb={3}>
+            <Switch
+              checked={requireEmailUpfront}
+              onChange={this.handleChangeRequireEmailUpfront}
+            />
+          </Box>
+
           <Box mb={1}>
             <label htmlFor="show_agent_availability">
               Show agent availability? (requires page refresh to view)
@@ -385,9 +408,10 @@ const ExamplePage = () => {
           <Box mb={3}>
             <Switch
               checked={showAgentAvailability}
-              onChange={this.handleShowAgentAvailability}
+              onChange={this.handleChangeShowingAgentAvailability}
             />
           </Box>
+
           <Box mb={3}>
             <label htmlFor="agent_available_text">
               Set the text displayed when agents are available:
@@ -397,10 +421,11 @@ const ExamplePage = () => {
               type="text"
               placeholder="We're online right now!"
               value={agentAvailableText}
-              onChange={this.handleAgentAvailableText}
+              onChange={this.handleChangeAgentAvailableText}
               onBlur={this.updateWidgetSettings}
             />
           </Box>
+
           <Box mb={3}>
             <label htmlFor="agent_unavailable_text">
               Set the text displayed when agents are unavailable:
@@ -410,21 +435,11 @@ const ExamplePage = () => {
               type="text"
               placeholder="We're away at the moment."
               value={agentUnavailableText}
-              onChange={this.handleAgentUnavailableText}
+              onChange={this.handleChangeAgentUnavailableText}
               onBlur={this.updateWidgetSettings}
             />
           </Box>
-          <Box mb={1}>
-            <label htmlFor="require_email_upfront">
-              Require unidentified customers to provide their email?
-            </label>
-          </Box>
-          <Box mb={3}>
-            <Switch
-              checked={requireEmailUpfront}
-              onChange={this.handleRequireEmailUpfront}
-            />
-          </Box>
+
           <ChatWidget
             title={title || 'Welcome!'}
             subtitle={subtitle}
