@@ -174,32 +174,18 @@ defmodule ChatApi.Slack.Notification do
 
   @spec format_slack_message_text(Message.t()) :: String.t()
   def format_slack_message_text(%Message{} = message) do
-    # NB: `message.body` can be `nil` when attachments are present
-    default_text = message.body || ""
-
-    base =
-      case message do
-        %{user: %User{} = user} when not is_nil(user) ->
-          default_text
-
-        %{customer: %Customer{} = customer} when not is_nil(customer) ->
-          "*:wave: #{Slack.Helpers.identify_customer(customer)}*: #{default_text}"
-
-        _ ->
-          default_text
-      end
-
-    case message.attachments do
-      [_ | _] = files ->
-        formatted_attachments =
-          files
-          |> Stream.map(fn file -> "> <#{file.file_url}|#{file.filename}>" end)
-          |> Enum.join("\n")
-
-        base <> "\n\n" <> formatted_attachments
+    case message do
+      %{customer: %Customer{} = customer} when not is_nil(customer) ->
+        # We only want to prepend sender info for customer messages
+        message
+        |> Slack.Helpers.format_message_body()
+        |> Slack.Helpers.prepend_sender_prefix(message)
+        |> Slack.Helpers.append_attachments_text(message)
 
       _ ->
-        base
+        message
+        |> Slack.Helpers.format_message_body()
+        |> Slack.Helpers.append_attachments_text(message)
     end
   end
 
