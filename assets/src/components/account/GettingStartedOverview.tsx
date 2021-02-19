@@ -4,7 +4,7 @@ import {Box} from 'theme-ui';
 import {TwitterPicker} from 'react-color';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import ChatWidget from '@papercups-io/chat-widget';
+import {ChatWidget} from '@papercups-io/chat-widget';
 import * as API from '../../api';
 import {User} from '../../types';
 import {colors, Paragraph, Input, Switch, Text, Title} from '../common';
@@ -235,7 +235,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
 
     return `
 import React from "react";
-import ChatWidget from "@papercups-io/chat-widget";
+import {ChatWidget} from "@papercups-io/chat-widget";
 
 const ExamplePage = () => {
   return (
