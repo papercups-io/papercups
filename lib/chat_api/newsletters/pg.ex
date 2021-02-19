@@ -167,7 +167,6 @@ defmodule ChatApi.Newsletters.Pg do
       "http://www.paulgraham.com/avg.html",
       "http://www.paulgraham.com/say.html",
       "http://www.paulgraham.com/icad.html",
-      "http://www.paulgraham.com/rootsoflisp.html",
       "http://www.paulgraham.com/essay.html",
       "http://www.paulgraham.com/diff.html",
       "http://www.paulgraham.com/nerds.html",
