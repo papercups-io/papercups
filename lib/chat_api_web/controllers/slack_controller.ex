@@ -64,7 +64,7 @@ defmodule ChatApiWeb.SlackController do
       })
 
       cond do
-        integration_type == "reply" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
+        integration_type == "reply" ->
           send_private_channel_instructions(:reply, webhook_url)
 
         integration_type == "support" && Slack.Helpers.is_private_slack_channel?(channel_id) ->
@@ -235,7 +235,7 @@ defmodule ChatApiWeb.SlackController do
   @spec send_private_channel_instructions(:reply | :support, binary()) :: any()
   defp send_private_channel_instructions(:reply, webhook_url) do
     message = """
-    Hi there! :wave: looks like you've connected Papercups to a private channel.
+    Hi there! :wave: looks like you've connected Papercups to this channel.
 
     In order to complete your setup, you'll need to manually add the *Papercups* app this channel.
 
