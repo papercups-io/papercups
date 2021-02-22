@@ -1,3 +1,30 @@
+### Monday, 22 February
+
+- [[#575](https://github.com/papercups-io/papercups/pull/575)] Added a page to manage your tags and **group customers by tag**
+- [[#569](https://github.com/papercups-io/papercups/pull/569)] Added ability to **load previous conversations** from the context of a single conversation [0]
+- [[#566](https://github.com/papercups-io/papercups/pull/566)] Made it possible to **close/reopen conversations directly from Slack** [1]
+- [[#563](https://github.com/papercups-io/papercups/pull/563)] Display **conversation status** dynamically **in Slack thread** [2]
+- [[#562](https://github.com/papercups-io/papercups/pull/562)] Support **private customer notes** from **within Slack** [3]
+- [[#558](https://github.com/papercups-io/papercups/pull/558)] Improve how we display users and customers in Slack
+- [[#549](https://github.com/papercups-io/papercups/pull/549)] Add link directly to Slack thread from dashboard [4]
+
+_[0] Load previous conversations_
+> <img width="800" alt="Load previous conversations" src="https://user-images.githubusercontent.com/5264279/107700951-32e1ac00-6c86-11eb-88af-2bf3a196b09f.gif">
+
+_[1] Close/reopen conversations from Slack_
+> <img width="800" alt="Close/reopen from Slack" src="https://user-images.githubusercontent.com/5264279/107275210-725a8f00-6a1f-11eb-846f-8752bad59cf5.gif">
+
+_[2] Slack conversation status_
+> <img width="800" alt="Slack conversation status" src="https://user-images.githubusercontent.com/5264279/107083803-28c23800-67c4-11eb-8b04-6054fc605aa1.gif">
+
+_[3] Private notes in Slack:_
+| In Slack (internal) | In dashboard (internal) | In chat widget (external) |  
+|---|---|---|
+| <img width="367" alt="Screen Shot 2021-02-04 at 4 29 16 PM" src="https://user-images.githubusercontent.com/5264279/106957658-4b8e1700-6706-11eb-9ee8-ae1b7a6e7c29.png"> | <img width="564" alt="Screen Shot 2021-02-04 at 4 29 37 PM" src="https://user-images.githubusercontent.com/5264279/106957657-4b8e1700-6706-11eb-86c4-3096d3b1a355.png"> | <img width="373" alt="Screen Shot 2021-02-04 at 4 29 55 PM" src="https://user-images.githubusercontent.com/5264279/106957656-4af58080-6706-11eb-83cf-9927b086a519.png"> |
+
+_[3] Link to Slack thread:_
+> <img width="400" alt="Link to Slack thread" src="https://user-images.githubusercontent.com/5264279/105889246-f5b9c080-5fdb-11eb-9705-896407461d5c.png">
+
 ### Monday, 18 January
 
 - [[#521](https://github.com/papercups-io/papercups/pull/521)] Added **private conversation notes** so you can send messages internally 🔒  [0]
@@ -18,7 +45,7 @@ _[1] Response time metrics_
 _[2] Company management UI_
 > <img width="800" alt="Company management UI" src="https://user-images.githubusercontent.com/5264279/103591656-c1f8e880-4ebe-11eb-9bcc-7166eefc4b37.gif">
 
-_[2] Private customer notes_
+_[3] Private customer notes_
 > <img width="800" alt="Company management UI" src="https://user-images.githubusercontent.com/5264279/102799534-ab13ab80-4380-11eb-863a-4de5d1c2142a.gif">
 
 ### Friday, 18 December
