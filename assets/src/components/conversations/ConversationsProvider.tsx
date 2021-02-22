@@ -256,7 +256,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     // TODO: can probably use this for more things
     this.channel.on('conversation:updated', ({id, updates}) => {
       // Handle conversation updated
-      debounce(() => this.handleConversationUpdated(id, updates), 1000);
+      this.debouncedConversationUpdate(id, updates);
     });
 
     this.channel.on('presence_state', (state) => {
@@ -437,19 +437,22 @@ export class ConversationsProvider extends React.Component<Props, State> {
     logger.debug('Listening to multiple new conversations:', conversationIds);
   };
 
-  handleConversationUpdated = (id: string, updates: any) => {
-    const {conversationsById} = this.state;
-    const conversation = conversationsById[id];
+  debouncedConversationUpdate = debounce(
+    (id: string, updates: Partial<Conversation>) => {
+      const {conversationsById} = this.state;
+      const conversation = conversationsById[id];
 
-    this.setState({
-      conversationsById: {
-        ...conversationsById,
-        [id]: {...conversation, ...updates},
-      },
-    });
+      this.setState({
+        conversationsById: {
+          ...conversationsById,
+          [id]: {...conversation, ...updates},
+        },
+      });
 
-    return this.fetchAllConversations();
-  };
+      return this.fetchAllConversations();
+    },
+    400
+  );
 
   handleSelectConversation = (id: string | null) => {
     this.setState({selectedConversationId: id}, () => {
