@@ -43,7 +43,7 @@ defmodule ChatApi.Conversations.Notification do
       "conversation:updated",
       %{
         "id" => conversation_id,
-        "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
+        "updates" => Helpers.format(conversation)
       }
     )
 
