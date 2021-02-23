@@ -28,8 +28,10 @@ defmodule ChatApi.Messages.Helpers do
   def handle_post_creation_conversation_updates(%Message{} = message) do
     message
     |> build_conversation_updates()
-    |> update_conversation_and_broadcast_to_admin(message)
-    |> Conversations.Helpers.broadcast_conversation_updates_to_slack()
+    |> update_message_conversation(message)
+    |> Conversations.Notification.broadcast_conversation_update_to_admin!()
+    |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
+    |> Conversations.Notification.notify(:slack)
 
     message
   end
@@ -68,24 +70,13 @@ defmodule ChatApi.Messages.Helpers do
     end
   end
 
-  @spec update_conversation_and_broadcast_to_admin(map(), Message.t()) :: Conversation.t()
-  defp update_conversation_and_broadcast_to_admin(
-         updates,
-         %Message{
-           account_id: account_id,
-           conversation_id: conversation_id
-         } = _message
-       ) do
+  @spec update_message_conversation(map(), Message.t()) :: Conversation.t()
+  defp update_message_conversation(updates, %Message{conversation_id: conversation_id}) do
     # TODO: DRY up this logic with other places we do conversation updates w/ broadcasting?
     {:ok, conversation} =
       conversation_id
       |> Conversations.get_conversation!()
       |> Conversations.update_conversation(updates)
-
-    ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:updated", %{
-      "id" => conversation_id,
-      "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
-    })
 
     conversation
   end

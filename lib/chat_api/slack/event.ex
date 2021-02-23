@@ -317,8 +317,9 @@ defmodule ChatApi.Slack.Event do
              conversation_id: conversation.id
            }) do
       conversation
-      |> Conversations.Notification.broadcast_conversation_to_admin!()
-      |> Conversations.Notification.broadcast_conversation_to_customer!()
+      |> Conversations.Notification.broadcast_new_conversation_to_admin!()
+      |> Conversations.Notification.broadcast_new_conversation_to_customer!()
+      |> Conversations.Notification.notify(:webhooks, event: "conversation:created")
 
       Messages.get_message!(message.id)
       |> Messages.Notification.broadcast_to_customer!()

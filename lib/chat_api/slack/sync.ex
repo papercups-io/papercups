@@ -125,8 +125,9 @@ defmodule ChatApi.Slack.Sync do
              conversation_id: conversation.id
            }) do
       conversation
-      |> Conversations.Notification.broadcast_conversation_to_admin!()
-      |> Conversations.Notification.broadcast_conversation_to_customer!()
+      |> Conversations.Notification.broadcast_new_conversation_to_admin!()
+      |> Conversations.Notification.broadcast_new_conversation_to_customer!()
+      |> Conversations.Notification.notify(:webhooks, event: "conversation:created")
 
       Enum.map(syncable_message_items, fn
         %{

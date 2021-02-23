@@ -27,7 +27,8 @@ defmodule ChatApiWeb.NotificationChannel do
   end
 
   def handle_in("read", %{"conversation_id" => id}, socket) do
-    {:ok, _conversation} = Conversations.mark_conversation_read(id)
+    {:ok, conversation} = Conversations.mark_conversation_read(id)
+    Conversations.Notification.notify(conversation, :webhooks, event: "conversation:updated")
 
     {:reply, :ok, socket}
   end

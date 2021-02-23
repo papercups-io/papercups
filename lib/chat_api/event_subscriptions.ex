@@ -123,9 +123,8 @@ defmodule ChatApi.EventSubscriptions do
   def notify_event_subscriptions(account_id, event) do
     account_id
     |> list_verified_event_subscriptions()
-    |> Enum.map(fn sub ->
-      notify_webhook_url(sub.webhook_url, event)
-    end)
+    |> Enum.filter(fn sub -> should_handle_event?(sub, event) end)
+    |> Enum.map(fn sub -> notify_webhook_url(sub.webhook_url, event) end)
   end
 
   @spec notify_webhook_url(binary(), map()) :: Tesla.Env.result()
@@ -137,6 +136,20 @@ defmodule ChatApi.EventSubscriptions do
     |> Tesla.client()
     |> Tesla.post(url, event)
   end
+
+  @spec should_handle_event?(EventSubscription.t(), binary()) :: boolean()
+  # Handling these specific events by default for now
+  def should_handle_event?(_event_subscription, %{"event" => "message:created"}), do: true
+  def should_handle_event?(_event_subscription, %{"event" => "conversation:created"}), do: true
+
+  # Otherwise, check that the scope exists
+  def should_handle_event?(%EventSubscription{scope: nil}, _event), do: false
+
+  def should_handle_event?(%EventSubscription{scope: scope}, %{"event" => event})
+      when is_binary(scope) and is_binary(event),
+      do: String.contains?(scope, event)
+
+  def should_handle_event?(_event_subscription, _event), do: false
 
   @spec is_valid_uri?(binary() | URI.t()) :: boolean()
   def is_valid_uri?(str) do

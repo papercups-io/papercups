@@ -206,7 +206,9 @@ defmodule ChatApiWeb.SlackController do
     |> Conversations.update_conversation(%{"status" => "closed"})
     |> case do
       {:ok, conversation} ->
-        Conversations.Helpers.broadcast_conversation_updates_to_slack(conversation)
+        conversation
+        |> Conversations.Notification.notify(:slack)
+        |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
 
       _ ->
         nil
@@ -224,7 +226,9 @@ defmodule ChatApiWeb.SlackController do
     |> Conversations.update_conversation(%{"status" => "open"})
     |> case do
       {:ok, conversation} ->
-        Conversations.Helpers.broadcast_conversation_updates_to_slack(conversation)
+        conversation
+        |> Conversations.Notification.notify(:slack)
+        |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
 
       _ ->
         nil
