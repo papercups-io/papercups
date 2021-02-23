@@ -7,6 +7,10 @@ defmodule ChatApi.Conversations.Helpers do
   alias ChatApi.{Slack, SlackAuthorizations, SlackConversationThreads}
   alias ChatApi.Conversations.Conversation
 
+  @spec format(Conversation.t()) :: map()
+  def format(%Conversation{} = conversation),
+    do: ChatApiWeb.ConversationView.render("basic.json", conversation: conversation)
+
   @spec broadcast_conversation_updates_to_slack(Conversation.t()) :: any()
   def broadcast_conversation_updates_to_slack(
         %Conversation{id: conversation_id, account_id: account_id} = conversation

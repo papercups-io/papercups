@@ -8,14 +8,6 @@ defmodule ChatApi.Messages.Notification do
 
   require Logger
 
-  @spec send_webhook_notifications(binary(), map()) :: [Tesla.Env.result()]
-  def send_webhook_notifications(account_id, payload) do
-    EventSubscriptions.notify_event_subscriptions(account_id, %{
-      "event" => "message:created",
-      "payload" => payload
-    })
-  end
-
   @spec broadcast_to_customer!(Message.t()) :: Message.t()
   def broadcast_to_customer!(%Message{private: false} = message) do
     message
@@ -44,7 +36,7 @@ defmodule ChatApi.Messages.Notification do
         :slack,
         opts
       ) do
-    Logger.info("Sending notification: :slack")
+    Logger.info("Sending message notification: :slack")
 
     case opts do
       [metadata: %{"send_to_reply_channel" => false}] ->
@@ -63,17 +55,20 @@ defmodule ChatApi.Messages.Notification do
   end
 
   def notify(%Message{account_id: account_id} = message, :webhooks, _opts) do
-    Logger.info("Sending notification: :webhooks")
+    Logger.info("Sending message notification: :webhooks")
     # TODO: how should we handle errors/retry logic?
     Task.start(fn ->
-      send_webhook_notifications(account_id, Helpers.format(message))
+      EventSubscriptions.notify_event_subscriptions(account_id, %{
+        "event" => "message:created",
+        "payload" => Helpers.format(message)
+      })
     end)
 
     message
   end
 
   def notify(%Message{} = message, :new_message_email, _opts) do
-    Logger.info("Sending notification: :new_message_email")
+    Logger.info("Sending message notification: :new_message_email")
     # TODO: how should we handle errors/retry logic?
     Task.start(fn ->
       ChatApi.Emails.send_new_message_alerts(message)
@@ -83,7 +78,7 @@ defmodule ChatApi.Messages.Notification do
   end
 
   def notify(%Message{private: false} = message, :conversation_reply_email, _opts) do
-    Logger.info("Sending notification: :conversation_reply_email")
+    Logger.info("Sending message notification: :conversation_reply_email")
     # 20 minutes (TODO: make this configurable?)
     schedule_in = 20 * 60
     formatted = Helpers.format(message)
@@ -100,7 +95,7 @@ defmodule ChatApi.Messages.Notification do
   end
 
   def notify(%Message{private: false} = message, :slack_company_channel, _opts) do
-    Logger.info("Sending notification: :slack_company_channel")
+    Logger.info("Sending message notification: :slack_company_channel")
 
     Task.start(fn ->
       ChatApi.Slack.Notification.notify_company_channel(message)
@@ -111,7 +106,7 @@ defmodule ChatApi.Messages.Notification do
 
   # TODO: come up with a better name... it's not super clear what `slack_support_channel` means!
   def notify(%Message{private: false} = message, :slack_support_channel, _opts) do
-    Logger.info("Sending notification: :slack_support_channel")
+    Logger.info("Sending message notification: :slack_support_channel")
 
     Task.start(fn ->
       ChatApi.Slack.Notification.notify_support_channel(message)

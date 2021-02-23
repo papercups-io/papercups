@@ -148,8 +148,10 @@ defmodule ChatApiWeb.ConversationController do
            |> Map.merge(%{"account_id" => account_id})
            |> Conversations.create_conversation(),
          :ok <- maybe_create_message(conn, conversation, params) do
-      broadcast_conversation_to_admin!(conversation)
-      broadcast_conversation_to_customer!(conversation)
+      conversation
+      |> Conversations.Notification.broadcast_new_conversation_to_admin!()
+      |> Conversations.Notification.broadcast_new_conversation_to_customer!()
+      |> Conversations.Notification.notify(:webhooks, event: "conversation:created")
 
       conn
       |> put_status(:created)
@@ -162,8 +164,10 @@ defmodule ChatApiWeb.ConversationController do
     # TODO: add support for creating a conversation with an initial message here as well?
     with {:ok, %Conversation{} = conversation} <-
            Conversations.create_conversation(conversation_params) do
-      broadcast_conversation_to_admin!(conversation)
-      broadcast_conversation_to_customer!(conversation)
+      conversation
+      |> Conversations.Notification.broadcast_new_conversation_to_admin!()
+      |> Conversations.Notification.broadcast_new_conversation_to_customer!()
+      |> Conversations.Notification.notify(:webhooks, event: "conversation:created")
 
       conn
       |> put_status(:created)
@@ -209,10 +213,10 @@ defmodule ChatApiWeb.ConversationController do
 
     with {:ok, %Conversation{} = conversation} <-
            Conversations.update_conversation(conversation, conversation_params) do
-      # Notify Slack of any conversation updates if integration exists
-      Task.start(fn ->
-        Helpers.broadcast_conversation_updates_to_slack(conversation)
-      end)
+      # Broadcast updates asynchronously if these channels have been configured
+      conversation
+      |> Conversations.Notification.notify(:slack)
+      |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
 
       render(conn, "update.json", conversation: conversation)
     end
@@ -275,28 +279,4 @@ defmodule ChatApiWeb.ConversationController do
   end
 
   defp maybe_create_message(_conn, _conversation, _), do: :ok
-
-  defp broadcast_conversation_to_admin!(
-         %Conversation{id: conversation_id, account_id: account_id} = conversation
-       ) do
-    ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:created", %{
-      "id" => conversation_id
-    })
-
-    conversation
-  end
-
-  defp broadcast_conversation_to_customer!(
-         %Conversation{id: conversation_id, customer_id: customer_id} = conversation
-       ) do
-    ChatApiWeb.Endpoint.broadcast!(
-      "conversation:lobby:" <> customer_id,
-      "conversation:created",
-      %{
-        "id" => conversation_id
-      }
-    )
-
-    conversation
-  end
 end

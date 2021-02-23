@@ -514,22 +514,15 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec assign_and_broadcast_conversation_updated(map(), binary()) :: :ok | {:error, term()}
+  @spec assign_and_broadcast_conversation_updated(Conversation.t(), binary()) :: Conversation.t()
   def assign_and_broadcast_conversation_updated(conversation, primary_user_id) do
-    case Conversations.update_conversation(conversation, %{assignee_id: primary_user_id}) do
-      {:ok, update} ->
-        ChatApiWeb.Endpoint.broadcast!(
-          "notification:" <> conversation.account_id,
-          "conversation:updated",
-          %{
-            "id" => conversation.id,
-            "updates" => ChatApiWeb.ConversationView.render("basic.json", conversation: update)
-          }
-        )
+    # TODO: how should we handle errors here?
+    {:ok, conversation} =
+      Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
 
-      error ->
-        error
-    end
+    conversation
+    |> Conversations.Notification.broadcast_conversation_update_to_admin!()
+    |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
   end
 
   @spec get_conversation_primary_user_id(Conversation.t()) :: binary()
