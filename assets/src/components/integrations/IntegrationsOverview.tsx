@@ -7,19 +7,24 @@ import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
 import logger from '../../logger';
-import {IntegrationType, WebhookEventSubscription} from './support';
+import {EventSubscription, PersonalApiKey} from '../../types';
+import {IntegrationType} from './support';
 import IntegrationsTable from './IntegrationsTable';
 import WebhooksTable from './WebhooksTable';
 import NewWebhookModal from './NewWebhookModal';
+import PersonalApiKeysTable from './PersonalApiKeysTable';
+import NewApiKeyModal from './NewApiKeyModal';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
   loading: boolean;
   refreshing: boolean;
   isWebhookModalOpen: boolean;
-  selectedWebhook: WebhookEventSubscription | null;
+  isApiKeyModalOpen: boolean;
+  selectedWebhook: EventSubscription | null;
   integrations: Array<IntegrationType>;
-  webhooks: Array<WebhookEventSubscription>;
+  webhooks: Array<EventSubscription>;
+  personalApiKeys: Array<PersonalApiKey>;
 };
 
 class IntegrationsOverview extends React.Component<Props, State> {
@@ -27,9 +32,11 @@ class IntegrationsOverview extends React.Component<Props, State> {
     loading: true,
     refreshing: false,
     isWebhookModalOpen: false,
+    isApiKeyModalOpen: false,
     selectedWebhook: null,
     integrations: [],
     webhooks: [],
+    personalApiKeys: [],
   };
 
   async componentDidMount() {
@@ -54,8 +61,9 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchWhatsAppIntegration(),
       ]);
       const webhooks = await API.fetchEventSubscriptions();
+      const personalApiKeys = await API.fetchPersonalApiKeys();
 
-      this.setState({integrations, webhooks, loading: false});
+      this.setState({integrations, webhooks, personalApiKeys, loading: false});
     } catch (err) {
       logger.error('Error loading integrations:', err);
 
@@ -230,11 +238,15 @@ class IntegrationsOverview extends React.Component<Props, State> {
     this.setState({isWebhookModalOpen: true});
   };
 
-  handleUpdateWebhook = (webhook: WebhookEventSubscription) => {
+  handleAddApiKey = () => {
+    this.setState({isApiKeyModalOpen: true});
+  };
+
+  handleUpdateWebhook = (webhook: EventSubscription) => {
     this.setState({isWebhookModalOpen: true, selectedWebhook: webhook});
   };
 
-  handleDeleteWebhook = async (webhook: WebhookEventSubscription) => {
+  handleDeleteWebhook = async (webhook: EventSubscription) => {
     const {id: webhookId} = webhook;
 
     if (!webhookId) {
@@ -243,6 +255,17 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
     await API.deleteEventSubscription(webhookId);
     await this.refreshEventSubscriptions();
+  };
+
+  handleDeleteApiKey = async (personalApiKey: PersonalApiKey) => {
+    const {id: apiKeyId} = personalApiKey;
+
+    if (!apiKeyId) {
+      return;
+    }
+
+    await API.deletePersonalApiKey(apiKeyId);
+    await this.refreshPersonalApiKeys();
   };
 
   refreshEventSubscriptions = async () => {
@@ -255,7 +278,17 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
   };
 
-  handleWebhookModalSuccess = (webhook: WebhookEventSubscription) => {
+  refreshPersonalApiKeys = async () => {
+    try {
+      const personalApiKeys = await API.fetchPersonalApiKeys();
+
+      this.setState({personalApiKeys});
+    } catch (err) {
+      logger.error('Error refreshing personal API keys:', err);
+    }
+  };
+
+  handleWebhookModalSuccess = (webhook: EventSubscription) => {
     this.setState({
       isWebhookModalOpen: false,
       selectedWebhook: null,
@@ -268,14 +301,25 @@ class IntegrationsOverview extends React.Component<Props, State> {
     this.setState({isWebhookModalOpen: false, selectedWebhook: null});
   };
 
+  handleApiKeyModalSuccess = (personalApiKey: any) => {
+    this.setState({isApiKeyModalOpen: false});
+    this.refreshPersonalApiKeys();
+  };
+
+  handleApiKeyModalCancel = () => {
+    this.setState({isApiKeyModalOpen: false});
+  };
+
   render() {
     const {
       loading,
       refreshing,
       isWebhookModalOpen,
+      isApiKeyModalOpen,
       selectedWebhook,
       webhooks = [],
       integrations = [],
+      personalApiKeys = [],
     } = this.state;
 
     if (loading) {
@@ -295,7 +339,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
-        <Box mb={4}>
+        <Box mb={5}>
           <Title level={4}>Integrations</Title>
 
           <Paragraph>
@@ -316,7 +360,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
           </Box>
         </Box>
 
-        <Box mb={4}>
+        <Box mb={5}>
           <Title level={4}>Event Subscriptions</Title>
 
           <Flex sx={{justifyContent: 'space-between', alignItems: 'baseline'}}>
@@ -348,6 +392,36 @@ class IntegrationsOverview extends React.Component<Props, State> {
           visible={isWebhookModalOpen}
           onSuccess={this.handleWebhookModalSuccess}
           onCancel={this.handleWebhookModalCancel}
+        />
+
+        <Box mb={5}>
+          <Title level={4}>Personal API keys</Title>
+
+          <Flex sx={{justifyContent: 'space-between', alignItems: 'baseline'}}>
+            <Paragraph>
+              <Text>
+                Generate personal API keys to interact directly with the
+                Papercups API.
+              </Text>
+            </Paragraph>
+
+            <Button icon={<PlusOutlined />} onClick={this.handleAddApiKey}>
+              Generate new API key
+            </Button>
+          </Flex>
+
+          <Box my={4}>
+            <PersonalApiKeysTable
+              personalApiKeys={personalApiKeys}
+              onDeleteApiKey={this.handleDeleteApiKey}
+            />
+          </Box>
+        </Box>
+
+        <NewApiKeyModal
+          visible={isApiKeyModalOpen}
+          onSuccess={this.handleApiKeyModalSuccess}
+          onCancel={this.handleApiKeyModalCancel}
         />
       </Box>
     );

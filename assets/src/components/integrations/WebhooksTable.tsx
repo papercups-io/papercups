@@ -2,16 +2,16 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import {colors, Button, Popconfirm, Table, Tag, Text} from '../common';
-import {WebhookEventSubscription} from './support';
+import {EventSubscription} from '../../types';
 
 const WebhooksTable = ({
   webhooks,
   onUpdateWebhook,
   onDeleteWebhook,
 }: {
-  webhooks: Array<WebhookEventSubscription>;
-  onUpdateWebhook: (webhook: WebhookEventSubscription) => void;
-  onDeleteWebhook: (webhook: WebhookEventSubscription) => void;
+  webhooks: Array<EventSubscription>;
+  onUpdateWebhook: (webhook: EventSubscription) => void;
+  onDeleteWebhook: (webhook: EventSubscription) => void;
 }) => {
   const columns = [
     {
@@ -54,7 +54,7 @@ const WebhooksTable = ({
       title: '',
       dataIndex: 'action',
       key: 'action',
-      render: (action: any, record: WebhookEventSubscription) => {
+      render: (action: any, record: EventSubscription) => {
         return (
           <Flex mx={-1}>
             <Box mx={1}>
@@ -78,7 +78,14 @@ const WebhooksTable = ({
     },
   ];
 
-  return <Table rowKey="id" dataSource={webhooks} columns={columns} />;
+  return (
+    <Table
+      rowKey="id"
+      dataSource={webhooks}
+      columns={columns}
+      pagination={false}
+    />
+  );
 };
 
 export default WebhooksTable;

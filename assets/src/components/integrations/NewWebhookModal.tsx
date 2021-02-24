@@ -4,7 +4,7 @@ import {Button, Divider, Input, Modal, Paragraph, Text} from '../common';
 import * as API from '../../api';
 import {sleep} from '../../utils';
 import logger from '../../logger';
-import {WebhookEventSubscription} from './support';
+import {EventSubscription} from '../../types';
 
 // TODO: clean up a bit
 const NewWebhookModal = ({
@@ -13,9 +13,9 @@ const NewWebhookModal = ({
   onSuccess,
   onCancel,
 }: {
-  webhook?: WebhookEventSubscription | null;
+  webhook?: EventSubscription | null;
   visible: boolean;
-  onSuccess: (webhook: WebhookEventSubscription) => void;
+  onSuccess: (webhook: EventSubscription) => void;
   onCancel: () => void;
 }) => {
   const defaultWebhookUrl = webhook?.webhook_url ?? '';
