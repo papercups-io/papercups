@@ -14,10 +14,3 @@ export type IntegrationType = {
   icon: string;
   description?: string;
 };
-
-export type WebhookEventSubscription = {
-  id?: string;
-  webhook_url: string;
-  verified: boolean;
-  created_at?: string | null;
-};

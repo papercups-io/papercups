@@ -126,6 +126,20 @@ export type BrowserSession = {
   ts?: string | Date;
 };
 
+export type EventSubscription = {
+  id?: string;
+  webhook_url: string;
+  verified: boolean;
+  created_at?: string | null;
+};
+
+export type PersonalApiKey = {
+  id?: string;
+  label: string;
+  value: string;
+  created_at?: string | null;
+};
+
 export enum Alignment {
   Right = 'right',
   Left = 'left',

@@ -1172,3 +1172,43 @@ export const fetchReportingData = async (
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const fetchPersonalApiKeys = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/personal_api_keys`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createPersonalApiKey = async (
+  label: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/personal_api_keys`)
+    .send({label})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deletePersonalApiKey = async (
+  id: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/personal_api_keys/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};

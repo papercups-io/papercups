@@ -211,7 +211,12 @@ const IntegrationsTable = ({
   ];
 
   return (
-    <Table loading={loading} dataSource={integrations} columns={columns} />
+    <Table
+      loading={loading}
+      dataSource={integrations}
+      columns={columns}
+      pagination={false}
+    />
   );
 };
 
