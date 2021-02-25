@@ -115,9 +115,10 @@ defmodule ChatApiWeb.MessageController do
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id, "message" => message_params}) do
-    message = Messages.get_message!(id)
-
-    with {:ok, %Message{} = message} <- Messages.update_message(message, message_params) do
+    with %Message{user_id: user_id} = message <- Messages.get_message!(id),
+         %{id: ^user_id, account_id: account_id} <- conn.assigns.current_user,
+         sanitized_updates <- Map.merge(message_params, %{"account_id" => account_id}),
+         {:ok, %Message{} = message} <- Messages.update_message(message, sanitized_updates) do
       render(conn, "show.json", message: message)
     end
   end
