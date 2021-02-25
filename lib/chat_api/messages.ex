@@ -12,7 +12,11 @@ defmodule ChatApi.Messages do
 
   @spec list_messages(binary()) :: [Message.t()]
   def list_messages(account_id) do
-    Message |> where(account_id: ^account_id) |> preload(:conversation) |> Repo.all()
+    Message
+    |> where(account_id: ^account_id)
+    |> order_by(desc: :inserted_at)
+    |> preload(:conversation)
+    |> Repo.all()
   end
 
   @spec list_by_conversation(binary(), binary(), keyword()) :: [Message.t()]

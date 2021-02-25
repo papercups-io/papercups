@@ -12,7 +12,9 @@ defmodule ChatApiWeb.MessageControllerTest do
     account = insert(:account)
     user = insert(:user, account: account)
     conversation = insert(:conversation, account: account)
-    message = insert(:message, account: account, conversation: conversation)
+
+    message =
+      insert(:message, account: account, conversation: conversation, user: user, customer: nil)
 
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
