@@ -11,12 +11,7 @@ use Mix.Config
 # before starting your production server.
 use Mix.Config
 
-database_url =
-  System.get_env("DATABASE_URL") ||
-    raise """
-    environment variable DATABASE_URL is missing.
-    For example: ecto://USER:PASS@HOST/DATABASE
-    """
+database_url = System.get_env("DATABASE_URL") || "ecto://postgres:postgres@localhost/chat_api"
 
 config :chat_api, ChatApi.Repo,
   ssl: true,
@@ -25,10 +20,7 @@ config :chat_api, ChatApi.Repo,
 
 secret_key_base =
   System.get_env("SECRET_KEY_BASE") ||
-    raise """
-    environment variable SECRET_KEY_BASE is missing.
-    You can generate one by calling: mix phx.gen.secret
-    """
+    "dvPPvOjpgX2Wk8Y3ONrqWsgM9ZtU4sSrs4l/5CFD1sLm4H+CjLU+EidjNGuSz7bz"
 
 config :chat_api, ChatApiWeb.Endpoint,
   http: [

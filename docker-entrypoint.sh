@@ -1,7 +1,14 @@
 #!/bin/sh
 set -e
 
-POOL_SIZE=2 mix ecto.setup
-mix deps.compile certifi
-echo "Run: mix phx.swagger.generate to generate swagger docs"
-MIX_ENV=dev mix phx.server
+if [[ "$1" = 'run' ]]; then
+    exec /app/bin/papercups start
+
+elif [[ "$1" = 'db' ]]; then
+    exec /app/"$2".sh
+else
+    exec "$@"
+
+fi
+
+exec "$@"

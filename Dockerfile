@@ -9,7 +9,7 @@ ENV APP_VERSION=$APP_VER
 RUN mkdir /app
 WORKDIR /app
 
-RUN apk add --no-cache git nodejs yarn python npm ca-certificates wget gnupg make erlang gcc libc-dev && \
+RUN apk add --no-cache git nodejs yarn python3 npm ca-certificates wget gnupg make erlang gcc libc-dev && \
     npm install npm@latest -g 
 
 # Client side
@@ -38,7 +38,7 @@ WORKDIR /app
 COPY rel rel
 RUN mix release papercups
 
-FROM alpine:3.9 AS app
+FROM alpine:3.13 AS app
 RUN apk add --no-cache openssl ncurses-libs
 ENV LANG=C.UTF-8
 EXPOSE 4000
