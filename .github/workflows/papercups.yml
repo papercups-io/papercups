@@ -2,7 +2,7 @@ name: Papercups
 
 on:
   push:
-    branches: [docker-build-fix]
+    branches: [master]
   pull_request:
 
 jobs:
