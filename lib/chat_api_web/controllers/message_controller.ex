@@ -48,9 +48,9 @@ defmodule ChatApiWeb.MessageController do
   end
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def index(conn, _params) do
+  def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      messages = Messages.list_messages(account_id)
+      messages = Messages.list_messages(account_id, params)
       render(conn, "index.json", messages: messages)
     end
   end
