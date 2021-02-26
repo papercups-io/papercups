@@ -306,14 +306,44 @@ defmodule ChatApi.Customers do
       {"company_id", value}, dynamic ->
         dynamic([r], ^dynamic and r.company_id == ^value)
 
+      {"account_id", value}, dynamic ->
+        dynamic([r], ^dynamic and r.account_id == ^value)
+
+      {"external_id", value}, dynamic ->
+        dynamic([r], ^dynamic and r.external_id == ^value)
+
+      {"browser_version", value}, dynamic ->
+        dynamic([r], ^dynamic and r.browser_version == ^value)
+
+      {"browser_language", value}, dynamic ->
+        dynamic([r], ^dynamic and r.browser_language == ^value)
+
       {"name", value}, dynamic ->
         dynamic([r], ^dynamic and ilike(r.name, ^value))
 
       {"email", value}, dynamic ->
         dynamic([r], ^dynamic and ilike(r.email, ^value))
 
+      {"phone", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.phone, ^value))
+
       {"host", value}, dynamic ->
         dynamic([r], ^dynamic and ilike(r.host, ^value))
+
+      {"browser", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.browser, ^value))
+
+      {"os", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.os, ^value))
+
+      {"current_url", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.current_url, ^value))
+
+      {"pathname", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.pathname, ^value))
+
+      {"time_zone", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.time_zone, ^value))
 
       {_, _}, dynamic ->
         # Not a where parameter
