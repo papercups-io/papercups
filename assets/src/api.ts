@@ -1,7 +1,7 @@
 import request from 'superagent';
 import qs from 'query-string';
 import {getAuthTokens} from './storage';
-import {Conversation, Tag, User} from './types';
+import {Account, Conversation, Tag, User, WidgetSettings} from './types';
 
 // TODO: handle this on the server instead
 function now() {
@@ -31,19 +31,6 @@ export type RegisterParams = LoginParams & {
 export type ResetPasswordParams = {
   password: string;
   passwordConfirmation: string;
-};
-
-export type WidgetSettingsParams = {
-  id?: string;
-  title: string;
-  subtitle: string;
-  color: string;
-  greeting?: string;
-  new_message_placeholder?: string;
-  show_agent_availability?: boolean;
-  agent_available_text?: string;
-  agent_unavailable_text?: string;
-  require_email_upfront?: boolean;
 };
 
 export type EventSubscriptionParams = {
@@ -283,7 +270,9 @@ export const createNewConversation = async (
     .then((res) => res.body.data);
 };
 
-export const fetchAccountInfo = async (token = getAccessToken()) => {
+export const fetchAccountInfo = async (
+  token = getAccessToken()
+): Promise<Account> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -802,7 +791,7 @@ export const authorizeGoogleIntegration = async (
 };
 
 export const updateWidgetSettings = async (
-  widgetSettingsParams: WidgetSettingsParams,
+  widgetSettingsParams: Partial<WidgetSettings>,
   token = getAccessToken()
 ) => {
   if (!token) {

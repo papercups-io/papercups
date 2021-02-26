@@ -4,7 +4,7 @@ export type Account = {
   time_zone?: string;
   subscription_plan?: string;
   users?: Array<User>;
-  widget_settings: any;
+  widget_settings: WidgetSettings;
   working_hours: Array<any>;
 };
 
@@ -138,6 +138,34 @@ export type PersonalApiKey = {
   label: string;
   value: string;
   created_at?: string | null;
+};
+
+export type WidgetIconVariant = 'outlined' | 'filled';
+
+export type WidgetSettings = {
+  id?: string;
+  title?: string;
+  subtitle?: string;
+  color?: string;
+  greeting?: string;
+  new_message_placeholder?: string;
+  show_agent_availability?: boolean;
+  agent_available_text?: string;
+  agent_unavailable_text?: string;
+  require_email_upfront?: boolean;
+  is_open_by_default?: boolean;
+  custom_icon_url?: string;
+  iframe_url_override?: string;
+  icon_variant?: WidgetIconVariant;
+  email_input_placeholder?: string;
+  new_messages_notification_text?: string;
+  base_url?: string;
+  host?: string;
+  pathname?: string;
+  last_seen_at: string | null;
+  account_id: string;
+  inserted_at: string | null;
+  updated_at: string | null;
 };
 
 export enum Alignment {
