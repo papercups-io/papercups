@@ -10,10 +10,11 @@ defmodule ChatApi.Messages do
 
   require Logger
 
-  @spec list_messages(binary()) :: [Message.t()]
-  def list_messages(account_id) do
+  @spec list_messages(binary(), map()) :: [Message.t()]
+  def list_messages(account_id, filters \\ %{}) do
     Message
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
     |> preload(:conversation)
     |> Repo.all()
@@ -95,5 +96,35 @@ defmodule ChatApi.Messages do
       end)
 
     Repo.insert_all(MessageFile, changesets)
+  end
+
+  @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}
+  def filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"customer_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.customer_id == ^value)
+
+      {"user_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.user_id == ^value)
+
+      {"conversation_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.conversation_id == ^value)
+
+      {"account_id", value}, dynamic ->
+        dynamic([p], ^dynamic and p.account_id == ^value)
+
+      {"source", value}, dynamic ->
+        dynamic([p], ^dynamic and p.source == ^value)
+
+      {"type", value}, dynamic ->
+        dynamic([p], ^dynamic and p.type == ^value)
+
+      {"body", value}, dynamic ->
+        dynamic([r], ^dynamic and ilike(r.body, ^value))
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end
