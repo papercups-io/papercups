@@ -390,7 +390,7 @@ defmodule ChatApi.SlackTest do
                      %{
                        "action_id" => "close_conversation",
                        "style" => "primary",
-                       "text" => %{"text" => "Resolve", "type" => "plain_text"},
+                       "text" => %{"text" => "Mark as resolved", "type" => "plain_text"},
                        "type" => "button",
                        "value" => ^conversation_id
                      }
