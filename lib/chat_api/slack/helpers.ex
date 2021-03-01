@@ -915,7 +915,7 @@ defmodule ChatApi.Slack.Helpers do
               "type" => "button",
               "text" => %{
                 "type" => "plain_text",
-                "text" => "Resolve"
+                "text" => "Mark as resolved"
               },
               "value" => conversation.id,
               "action_id" => "close_conversation",
