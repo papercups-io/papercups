@@ -13,7 +13,12 @@ use Mix.Config
 
 database_url = System.get_env("DATABASE_URL") || "ecto://postgres:postgres@localhost/chat_api"
 
-require_db_ssl = System.get_env("REQUIRE_DB_SSL") || true
+require_db_ssl =
+  case System.get_env("REQUIRE_DB_SSL") do
+    "true" -> true
+    "false" -> false
+    _ -> true
+  end
 
 config :chat_api, ChatApi.Repo,
   ssl: require_db_ssl,
