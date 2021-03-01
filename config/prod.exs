@@ -13,8 +13,10 @@ use Mix.Config
 
 database_url = System.get_env("DATABASE_URL") || "ecto://postgres:postgres@localhost/chat_api"
 
+require_db_ssl = System.get_env("REQUIRE_DB_SSL") || true
+
 config :chat_api, ChatApi.Repo,
-  ssl: true,
+  ssl: require_db_ssl,
   url: database_url,
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
