@@ -1,13 +1,23 @@
 import React from 'react';
-import {debounce} from 'lodash';
+import {capitalize, debounce} from 'lodash';
 import {Box} from 'theme-ui';
 import {TwitterPicker} from 'react-color';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
-import {ChatWidget} from '@papercups-io/chat-widget';
+import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
 import * as API from '../../api';
-import {User} from '../../types';
-import {colors, Paragraph, Input, Switch, Text, Title} from '../common';
+import {User, WidgetIconVariant} from '../../types';
+import {
+  colors,
+  Paragraph,
+  Popover,
+  Input,
+  Select,
+  Switch,
+  Text,
+  Title,
+} from '../common';
+import {InfoCircleTwoTone} from '../icons';
 import {BASE_URL, FRONTEND_BASE_URL} from '../../config';
 import logger from '../../logger';
 
@@ -24,6 +34,7 @@ type State = {
   agentAvailableText?: string;
   agentUnavailableText?: string;
   requireEmailUpfront: boolean;
+  iconVariant: WidgetIconVariant;
 };
 
 class GettingStartedOverview extends React.Component<Props, State> {
@@ -39,6 +50,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
     agentAvailableText: `We're online right now!`,
     agentUnavailableText: `We're away at the moment.`,
     requireEmailUpfront: false,
+    iconVariant: 'outlined',
   };
 
   async componentDidMount() {
@@ -61,6 +73,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
         agent_available_text: agentAvailableText,
         agent_unavailable_text: agentUnavailableText,
         require_email_upfront: requireEmailUpfront,
+        icon_variant: iconVariant,
       } = widgetSettings;
 
       this.setState({
@@ -78,6 +91,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
           agentUnavailableText || this.state.agentUnavailableText,
         requireEmailUpfront:
           requireEmailUpfront || this.state.requireEmailUpfront,
+        iconVariant: iconVariant || this.state.iconVariant,
       });
     } else {
       this.setState({accountId, currentUser, title: `Welcome to ${company}`});
@@ -146,6 +160,13 @@ class GettingStartedOverview extends React.Component<Props, State> {
     );
   };
 
+  handleChangeIconVariant = (variant: 'outlined' | 'filled') => {
+    // Ensure the chat is closed to view the icon
+    Papercups.close();
+
+    this.setState({iconVariant: variant}, this.debouncedUpdateWidgetSettings);
+  };
+
   handleChangeColor = (color: any) => {
     this.setState({color: color.hex}, this.debouncedUpdateWidgetSettings);
   };
@@ -161,6 +182,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
       agentAvailableText,
       agentUnavailableText,
       requireEmailUpfront,
+      iconVariant,
     } = this.state;
 
     API.updateWidgetSettings({
@@ -173,6 +195,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
       agent_available_text: agentAvailableText,
       agent_unavailable_text: agentUnavailableText,
       require_email_upfront: requireEmailUpfront,
+      icon_variant: iconVariant,
     })
       .then((res) => logger.debug('Updated widget settings:', res))
       .catch((err) => logger.error('Error updating widget settings:', err));
@@ -190,6 +213,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
       agentAvailableText,
       agentUnavailableText,
       requireEmailUpfront,
+      iconVariant,
     } = this.state;
 
     return `
@@ -206,7 +230,17 @@ class GettingStartedOverview extends React.Component<Props, State> {
       agentAvailableText: "${agentAvailableText}",
       agentUnavailableText: "${agentUnavailableText}",
       requireEmailUpfront: ${requireEmailUpfront},
-      baseUrl: "${BASE_URL}"
+      iconVariant: "${iconVariant}",
+      baseUrl: "${BASE_URL}",
+      // Optionally include data about your customer here to identify them
+      // customer: {
+      //   name: __CUSTOMER__.name,
+      //   email: __CUSTOMER__.email,
+      //   external_id: __CUSTOMER__.id,
+      //   metadata: {
+      //     plan: "premium"
+      //   }
+      // }
     },
   };
 </script>
@@ -231,6 +265,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
       agentAvailableText,
       agentUnavailableText,
       requireEmailUpfront,
+      iconVariant,
     } = this.state;
 
     return `
@@ -256,7 +291,17 @@ const ExamplePage = () => {
         agentAvailableText="${agentAvailableText}"
         agentUnavailableText="${agentUnavailableText}"
         requireEmailUpfront={${requireEmailUpfront}}
+        iconVariant={${iconVariant}}
         baseUrl="${BASE_URL}"
+        // Optionally include data about your customer here to identify them
+        // customer={{
+        //   name: __CUSTOMER__.name,
+        //   email: __CUSTOMER__.email,
+        //   external_id: __CUSTOMER__.id,
+        //   metadata: {
+        //     plan: "premium"
+        //   }
+        // }}
       />
     </>
   );
@@ -292,6 +337,7 @@ const ExamplePage = () => {
       agentAvailableText,
       agentUnavailableText,
       requireEmailUpfront,
+      iconVariant,
     } = this.state;
 
     if (!accountId) {
@@ -388,9 +434,46 @@ const ExamplePage = () => {
             />
           </Box>
 
+          <Box mb={4}>
+            <label htmlFor="icon_variant">
+              Icon style (close the chat to view)
+            </label>
+
+            <Box>
+              <Select
+                id="icon_variant"
+                style={{width: 280}}
+                value={iconVariant}
+                onChange={this.handleChangeIconVariant}
+                options={['outlined', 'filled'].map((variant) => {
+                  return {value: variant, label: capitalize(variant)};
+                })}
+              />
+            </Box>
+          </Box>
+
           <Box mb={1}>
             <label htmlFor="require_email_upfront">
-              Require unidentified customers to provide their email upfront?
+              Require unidentified customers to provide their email upfront?{' '}
+              <Popover
+                content={
+                  <Box sx={{maxWidth: 200}}>
+                    This will only show up for anonymous users. To see an
+                    example of what this looks like, visit{' '}
+                    <a
+                      href="https://papercups.io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      https://papercups.io
+                    </a>{' '}
+                    and open the chat.
+                  </Box>
+                }
+                title={null}
+              >
+                <InfoCircleTwoTone twoToneColor={colors.primary} />
+              </Popover>
             </label>
           </Box>
           <Box mb={3}>
@@ -453,6 +536,7 @@ const ExamplePage = () => {
             accountId={accountId}
             customer={customer}
             baseUrl={BASE_URL}
+            iconVariant={iconVariant}
             defaultIsOpen
           />
         </Box>

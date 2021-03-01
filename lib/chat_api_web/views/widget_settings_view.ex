@@ -23,6 +23,12 @@ defmodule ChatApiWeb.WidgetSettingsView do
       agent_available_text: widget_settings.agent_available_text,
       agent_unavailable_text: widget_settings.agent_unavailable_text,
       require_email_upfront: widget_settings.require_email_upfront,
+      is_open_by_default: widget_settings.is_open_by_default,
+      custom_icon_url: widget_settings.custom_icon_url,
+      iframe_url_override: widget_settings.iframe_url_override,
+      icon_variant: widget_settings.icon_variant,
+      email_input_placeholder: widget_settings.email_input_placeholder,
+      new_messages_notification_text: widget_settings.new_messages_notification_text,
       base_url: widget_settings.base_url
     }
   end
@@ -39,6 +45,12 @@ defmodule ChatApiWeb.WidgetSettingsView do
       agent_available_text: widget_settings.agent_available_text,
       agent_unavailable_text: widget_settings.agent_unavailable_text,
       require_email_upfront: widget_settings.require_email_upfront,
+      is_open_by_default: widget_settings.is_open_by_default,
+      custom_icon_url: widget_settings.custom_icon_url,
+      iframe_url_override: widget_settings.iframe_url_override,
+      icon_variant: widget_settings.icon_variant,
+      email_input_placeholder: widget_settings.email_input_placeholder,
+      new_messages_notification_text: widget_settings.new_messages_notification_text,
       base_url: widget_settings.base_url,
       account: render_one(widget_settings.account, AccountView, "basic.json")
     }

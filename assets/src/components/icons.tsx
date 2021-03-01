@@ -10,6 +10,7 @@ import DeleteTwoTone from '@ant-design/icons/DeleteTwoTone';
 import DownOutlined from '@ant-design/icons/DownOutlined';
 import GlobalOutlined from '@ant-design/icons/GlobalOutlined';
 import InfoCircleOutlined from '@ant-design/icons/InfoCircleOutlined';
+import InfoCircleTwoTone from '@ant-design/icons/InfoCircleTwoTone';
 import LineChartOutlined from '@ant-design/icons/LineChartOutlined';
 import LinkOutlined from '@ant-design/icons/LinkOutlined';
 import LoadingOutlined from '@ant-design/icons/LoadingOutlined';
@@ -44,6 +45,7 @@ export {
   DownOutlined,
   GlobalOutlined,
   InfoCircleOutlined,
+  InfoCircleTwoTone,
   LineChartOutlined,
   LinkOutlined,
   LoadingOutlined,
