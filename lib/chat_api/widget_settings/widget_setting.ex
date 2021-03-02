@@ -15,6 +15,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
           agent_unavailable_text: String.t() | nil,
           require_email_upfront: boolean() | nil,
           is_open_by_default: boolean() | nil,
+          is_branding_hidden: boolean() | nil,
           custom_icon_url: String.t() | nil,
           iframe_url_override: String.t() | nil,
           icon_variant: String.t() | nil,
@@ -44,6 +45,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
     field(:agent_unavailable_text, :string)
     field(:require_email_upfront, :boolean)
     field(:is_open_by_default, :boolean, default: false)
+    field(:is_branding_hidden, :boolean, default: false)
     field(:custom_icon_url, :string)
     field(:iframe_url_override, :string)
     field(:icon_variant, :string, default: "outlined")
@@ -74,6 +76,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
       :agent_unavailable_text,
       :require_email_upfront,
       :is_open_by_default,
+      :is_branding_hidden,
       :custom_icon_url,
       :iframe_url_override,
       :icon_variant,
