@@ -17,7 +17,7 @@ import MessagesPerUserChart from './MessagesPerUserChart';
 import MessagesSentVsReceivedChart from './MessagesSentVsReceivedChart';
 import MessagesByDayOfWeekChart from './MessagesByDayOfWeekChart';
 import {ReportingDatum} from './support';
-import {formatSecondsToHoursAndMinutes} from '../../utils';
+import {download, formatSecondsToHoursAndMinutes} from '../../utils';
 import logger from '../../logger';
 
 type DateCount = {
@@ -266,20 +266,12 @@ class ReportingDashboard extends React.Component<Props, State> {
     };
   };
 
-  download = () => {
-    // Taken from https://stackoverflow.com/a/55613750
-    const {rawReportingData = {}} = this.state;
-    const json = JSON.stringify(rawReportingData);
-    const blob = new Blob([json], {type: 'application/json'});
-    const href = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+  exportReportingData = () => {
+    const {fromDate, toDate, rawReportingData = {}} = this.state;
+    const from = fromDate.format('YYYYMMDD');
+    const to = toDate.format('YYYYMMDD');
 
-    link.href = href;
-    link.download = 'analytics.json';
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    download(rawReportingData, `analytics-${from}-${to}`);
   };
 
   render() {
@@ -441,7 +433,9 @@ class ReportingDashboard extends React.Component<Props, State> {
           <Divider />
 
           <Flex sx={{justifyContent: 'flex-end'}}>
-            <Button onClick={this.download}>Download data as JSON</Button>
+            <Button onClick={this.exportReportingData}>
+              Download data as JSON
+            </Button>
           </Flex>
 
           {/* Hiding customer breakdown charts for now since they aren't particularly useful ¯\_(ツ)_/¯ */}

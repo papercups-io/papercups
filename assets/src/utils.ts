@@ -176,3 +176,18 @@ export const addVisibilityEventListener = (
 
   return () => document.removeEventListener(event, handler);
 };
+
+export const download = (data = {}, name = 'data') => {
+  // Taken from https://stackoverflow.com/a/55613750
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], {type: 'application/json'});
+  const href = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = href;
+  link.download = `${name}-${+new Date()}.json`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
