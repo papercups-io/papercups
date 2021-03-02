@@ -59,29 +59,31 @@ defmodule ChatApiWeb.CustomerController do
           "account_id" => account_id
         } = params
       ) do
-    # TODO: support whitelisting urls for an account so we only enable this and
-    # other chat widget-related APIs for incoming requests from supported urls?
-    if Accounts.exists?(account_id) do
-      # TODO: make "host" a required param? (but would have to ignore on mobile...)
-      filters =
-        params
-        |> Map.take(["email", "host"])
-        |> Enum.reject(fn {_k, v} -> blank?(v) end)
-        |> Map.new()
+    cond do
+      !Customers.is_secure_external_id?(external_id) ->
+        json(conn, %{data: %{customer_id: nil}})
 
-      case Customers.find_by_external_id(external_id, account_id, filters) do
-        %{id: customer_id} ->
-          json(conn, %{
-            data: %{
-              customer_id: customer_id
-            }
-          })
+      Accounts.exists?(account_id) ->
+        filters =
+          params
+          |> Map.take(["email", "host"])
+          |> Enum.reject(fn {_k, v} -> blank?(v) end)
+          |> Map.new()
 
-        _ ->
-          json(conn, %{data: %{customer_id: nil}})
-      end
-    else
-      send_account_not_found_error(conn, account_id)
+        case Customers.list_by_external_id(external_id, account_id, filters) do
+          [%Customer{id: customer_id}] ->
+            json(conn, %{
+              data: %{
+                customer_id: customer_id
+              }
+            })
+
+          _ ->
+            json(conn, %{data: %{customer_id: nil}})
+        end
+
+      true ->
+        send_account_not_found_error(conn, account_id)
     end
   end
 

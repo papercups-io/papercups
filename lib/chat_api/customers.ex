@@ -50,9 +50,27 @@ defmodule ChatApi.Customers do
     Customer |> Repo.get!(id) |> Repo.preload([:company, :tags])
   end
 
+  @spec list_by_external_id(binary(), binary(), map()) :: [Customer.t()]
+  def list_by_external_id(external_id, account_id, filters \\ %{})
+
+  def list_by_external_id(external_id, account_id, filters) when is_binary(external_id) do
+    Customer
+    |> where(account_id: ^account_id, external_id: ^external_id)
+    |> where(^filter_where(filters))
+    |> order_by(desc: :updated_at)
+    |> Repo.all()
+  end
+
+  @spec list_by_external_id(integer(), binary(), map()) :: [Customer.t()]
+  def list_by_external_id(external_id, account_id, filters) when is_integer(external_id) do
+    external_id |> to_string() |> list_by_external_id(account_id, filters)
+  end
+
   @spec find_by_external_id(binary(), binary(), map()) :: Customer.t() | nil
   def find_by_external_id(external_id, account_id, filters \\ %{})
 
+  # TODO: return list rather than just one, and then ignore situations where there are multiple with the same ID
+  # TODO: factor in IP address as well? eh, maybe not... but it might be better to just make this super restrictive?
   def find_by_external_id(external_id, account_id, filters) when is_binary(external_id) do
     Customer
     |> where(account_id: ^account_id, external_id: ^external_id)
@@ -298,6 +316,15 @@ defmodule ChatApi.Customers do
     |> get_tag(tag_id)
     |> Repo.delete()
   end
+
+  @spec is_secure_external_id?(any()) :: boolean()
+  def is_secure_external_id?(external_id) when is_binary(external_id) do
+    String.length(external_id) >= 8 &&
+      !String.match?(external_id, ~r/^[[:alpha:]]+$/) &&
+      !String.match?(external_id, ~r/^[[:digit:]]+$/)
+  end
+
+  def is_secure_external_id?(_external_id), do: false
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}
