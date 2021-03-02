@@ -17,22 +17,31 @@ defmodule Mix.Tasks.SendSlackUpdateNotification do
   Example:
   ```
   $ mix send_slack_update_notification
+  $ mix send_slack_update_notification debug
   ```
 
   On Heroku:
   ```
   $ heroku run "POOL_SIZE=2 mix send_slack_update_notification"
+  $ heroku run "POOL_SIZE=2 mix send_slack_update_notification debug"
   ```
 
   """
 
-  @spec run(any()) :: list()
-  def run(_args) do
+  @spec run([binary()]) :: list()
+  def run(args) do
     Application.ensure_all_started(:chat_api)
+
+    is_debug_mode =
+      case args do
+        ["debug"] -> true
+        ["DEBUG"] -> true
+        _ -> false
+      end
 
     SlackAuthorizations.list_slack_authorizations(%{type: "reply"})
     |> Enum.filter(&should_notify_channel?/1)
-    |> Enum.map(&notify_papercups_app_required/1)
+    |> Enum.map(fn auth -> notify_papercups_app_required(auth, debug: is_debug_mode) end)
   end
 
   @spec should_notify_channel?(SlackAuthorization.t()) :: boolean()
@@ -56,11 +65,39 @@ defmodule Mix.Tasks.SendSlackUpdateNotification do
 
   def should_notify_channel?(_), do: false
 
-  @spec notify_papercups_app_required(SlackAuthorization.t()) :: any()
-  def notify_papercups_app_required(%SlackAuthorization{
-        webhook_url: webhook_url
-      }) do
+  @spec notify_papercups_app_required(SlackAuthorization.t(), keyword()) :: any()
+  def notify_papercups_app_required(authorization, opts \\ [])
+
+  def notify_papercups_app_required(%SlackAuthorization{} = authorization, debug: true) do
     message = """
+    Would have send message:
+
+    #{inspect(slack_notification_message())}
+
+    To Slack channel:
+
+    #{inspect(Map.take(authorization, [:channel, :team_name, :webhook_url]))}
+    """
+
+    Logger.info(message)
+  end
+
+  def notify_papercups_app_required(
+        %SlackAuthorization{
+          webhook_url: webhook_url
+        },
+        _opts
+      ) do
+    message = slack_notification_message()
+    Logger.info(message)
+    Slack.Notification.log(message, webhook_url)
+  end
+
+  def notify_papercups_app_required(_authorization, _opts), do: nil
+
+  @spec slack_notification_message() :: String.t()
+  def slack_notification_message() do
+    """
     Hi there! :wave: This is an automated message from the Papercups team.
 
     We recently added some enhancements to our Slack integration that allow you to resolve, reopen, and view your conversations' status directly from Slack. :rocket: In order to do this, you'll need to add the *Papercups app* to this channel.
@@ -71,11 +108,5 @@ defmodule Mix.Tasks.SendSlackUpdateNotification do
 
     If you're still having trouble, feel free to email us at founders@papercups.io. We're happy to help!
     """
-
-    Logger.info(message)
-
-    Slack.Notification.log(message, webhook_url)
   end
-
-  def notify_papercups_app_required(_), do: nil
 end
