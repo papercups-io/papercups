@@ -114,7 +114,12 @@ defmodule ChatApiWeb.CustomerController do
     updates =
       metadata
       |> Map.merge(%{
-        "ip" => conn.remote_ip |> :inet_parse.ntoa() |> to_string(),
+        "ip" =>
+          if ip_collection_enabled?() do
+            conn.remote_ip |> :inet_parse.ntoa() |> to_string()
+          else
+            nil
+          end,
         "last_seen_at" => DateTime.utc_now()
       })
       |> Customers.sanitize_metadata()
@@ -181,5 +186,13 @@ defmodule ChatApiWeb.CustomerController do
         host: System.get_env("BACKEND_URL") || "localhost"
       }
     })
+  end
+
+  @spec ip_collection_enabled?() :: boolean()
+  defp ip_collection_enabled?() do
+    case System.get_env("PAPERCUPS_IP_COLLECTION_ENABLED") do
+      x when x == "1" or x == "true" -> true
+      _ -> false
+    end
   end
 end
