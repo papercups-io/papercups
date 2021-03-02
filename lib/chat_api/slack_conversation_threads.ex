@@ -32,6 +32,15 @@ defmodule ChatApi.SlackConversationThreads do
   @spec get_slack_conversation_thread!(binary()) :: SlackConversationThread.t()
   def get_slack_conversation_thread!(id), do: Repo.get!(SlackConversationThread, id)
 
+  @spec get_latest_slack_conversation_thread(map()) :: SlackConversationThread.t() | nil
+  def get_latest_slack_conversation_thread(filters \\ %{}) do
+    SlackConversationThread
+    |> where(^filter_where(filters))
+    |> order_by(desc: :inserted_at)
+    |> first()
+    |> Repo.one()
+  end
+
   @spec get_thread_by_conversation_id(binary(), binary()) :: SlackConversationThread.t() | nil
   def get_thread_by_conversation_id(conversation_id, slack_channel) do
     SlackConversationThread
