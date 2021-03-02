@@ -46,6 +46,19 @@ defmodule ChatApiWeb.CustomerController do
   end
 
   @spec show(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def show(conn, %{"id" => id, "expand" => expand}) do
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      preloaded =
+        expand
+        |> Stream.map(&String.to_atom/1)
+        |> Enum.filter(&Customers.is_valid_association?/1)
+
+      customer = Customers.get_customer!(id, account_id, preloaded)
+
+      render(conn, "show.json", customer: customer)
+    end
+  end
+
   def show(conn, %{"id" => id}) do
     customer = Customers.get_customer!(id)
     render(conn, "show.json", customer: customer)

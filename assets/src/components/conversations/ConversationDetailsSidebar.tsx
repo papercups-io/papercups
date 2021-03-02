@@ -15,10 +15,12 @@ import {
   Tag,
   Text,
   Tooltip,
+  Popover,
 } from '../common';
 import {
   CalendarOutlined,
   GlobalOutlined,
+  InfoCircleOutlined,
   LinkOutlined,
   MailOutlined,
   PhoneOutlined,
@@ -35,6 +37,7 @@ import RelatedCustomerConversations from './RelatedCustomerConversations';
 import SlackConversationThreads from './SlackConversationThreads';
 import * as API from '../../api';
 import {Company, Conversation, Customer} from '../../types';
+import {download} from '../../utils';
 import logger from '../../logger';
 
 // TODO: create date utility methods so we don't have to do this everywhere
@@ -93,7 +96,7 @@ const CustomerCompanyDetails = ({customerId}: {customerId: string}) => {
   React.useEffect(() => {
     setLoading(true);
 
-    API.fetchCustomer(customerId)
+    API.fetchCustomer(customerId, {expand: ['company']})
       .then((customer) => {
         const {company} = customer;
 
@@ -174,6 +177,18 @@ const CustomerDetails = ({
   const formattedTimezone =
     timezone && timezone.length ? timezone.split('_').join(' ') : null;
 
+  const exportCustomerData = async () => {
+    try {
+      const customer = await API.fetchCustomer(customerId, {
+        expand: ['company', 'conversations', 'messages', 'tags', 'notes'],
+      });
+
+      download(customer, `customer-${customerId}`);
+    } catch (err) {
+      logger.error('Failed to export customer:', err);
+    }
+  };
+
   return (
     <Box px={2} py={3}>
       <Box px={2} mb={3}>
@@ -181,9 +196,34 @@ const CustomerDetails = ({
       </Box>
 
       <DetailsSectionCard>
-        <Box mb={2}>
+        <Flex
+          mb={2}
+          sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
+        >
           <Text strong>{name || 'Anonymous User'}</Text>
-        </Box>
+
+          <Popover
+            placement="left"
+            content={
+              <Box>
+                <Button
+                  type="primary"
+                  style={{width: '100%'}}
+                  onClick={exportCustomerData}
+                >
+                  Download
+                </Button>
+              </Box>
+            }
+            title="Export customer data as JSON"
+          >
+            <Box>
+              <InfoCircleOutlined
+                style={{color: colors.secondary, opacity: 0.8}}
+              />
+            </Box>
+          </Popover>
+        </Flex>
 
         <Flex mb={1} sx={{alignItems: 'center'}}>
           <MailOutlined style={{color: colors.primary}} />

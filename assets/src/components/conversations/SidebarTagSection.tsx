@@ -108,7 +108,10 @@ export const SidebarCustomerTags = ({customerId}: {customerId: string}) => {
   }
 
   async function refreshLatestTags() {
-    return Promise.all([API.fetchCustomer(customerId), API.fetchAllTags()])
+    return Promise.all([
+      API.fetchCustomer(customerId, {expand: ['tags']}),
+      API.fetchAllTags(),
+    ])
       .then(([customer, tags]) => {
         dispatch({
           type: 'tags/init',
