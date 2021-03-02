@@ -29,6 +29,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
       icon_variant: widget_settings.icon_variant,
       email_input_placeholder: widget_settings.email_input_placeholder,
       new_messages_notification_text: widget_settings.new_messages_notification_text,
+      is_branding_hidden: widget_settings.is_branding_hidden,
       base_url: widget_settings.base_url
     }
   end
@@ -51,6 +52,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
       icon_variant: widget_settings.icon_variant,
       email_input_placeholder: widget_settings.email_input_placeholder,
       new_messages_notification_text: widget_settings.new_messages_notification_text,
+      is_branding_hidden: widget_settings.is_branding_hidden,
       base_url: widget_settings.base_url,
       account: render_one(widget_settings.account, AccountView, "basic.json")
     }
