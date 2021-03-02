@@ -1,7 +1,18 @@
 defmodule ChatApiWeb.CustomerView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.{CompanyView, CustomerView, TagView, CSVHelpers}
+
+  alias ChatApiWeb.{
+    CompanyView,
+    ConversationView,
+    CustomerView,
+    MessageView,
+    NoteView,
+    TagView,
+    CSVHelpers
+  }
+
   alias ChatApi.Companies.Company
+  alias ChatApi.Customers.Customer
 
   @customer_csv_ordered_fields ~w(id name email created_at updated_at)a ++
                                  ~w(first_seen last_seen phone external_id)a ++
@@ -64,16 +75,49 @@ defmodule ChatApiWeb.CustomerView do
       os: customer.os,
       ip: customer.ip,
       metadata: customer.metadata,
-      time_zone: customer.time_zone,
-      company: render_company(customer.company),
-      tags: render_tags(customer.tags)
+      time_zone: customer.time_zone
     }
+    |> maybe_render_tags(customer)
+    |> maybe_render_notes(customer)
+    |> maybe_render_conversations(customer)
+    |> maybe_render_messages(customer)
+    |> maybe_render_company(customer)
   end
 
-  # TODO: figure out a better way to handle this
-  defp render_tags([_ | _] = tags), do: render_many(tags, TagView, "tag.json")
-  defp render_tags(_tags), do: []
+  defp maybe_render_tags(json, %Customer{tags: tags}) when is_list(tags),
+    do: Map.merge(json, %{tags: render_many(tags, TagView, "tag.json")})
 
-  defp render_company(%Company{} = company), do: render_one(company, CompanyView, "company.json")
-  defp render_company(_company), do: nil
+  defp maybe_render_tags(json, _), do: json
+
+  defp maybe_render_notes(json, %Customer{notes: notes}) when is_list(notes),
+    do: Map.merge(json, %{notes: render_many(notes, NoteView, "note.json")})
+
+  defp maybe_render_notes(json, _), do: json
+
+  defp maybe_render_conversations(json, %Customer{conversations: conversations})
+       when is_list(conversations) do
+    Map.merge(json, %{conversations: render_many(conversations, ConversationView, "basic.json")})
+  end
+
+  defp maybe_render_conversations(json, _), do: json
+
+  defp maybe_render_messages(json, %Customer{messages: messages}) when is_list(messages),
+    do: Map.merge(json, %{messages: render_many(messages, MessageView, "message.json")})
+
+  defp maybe_render_messages(json, _), do: json
+
+  defp maybe_render_company(json, %Customer{company: company}) do
+    case company do
+      nil ->
+        Map.merge(json, %{company: nil})
+
+      %Company{} = company ->
+        Map.merge(json, %{company: render_one(company, CompanyView, "company.json")})
+
+      _ ->
+        json
+    end
+  end
+
+  defp maybe_render_company(json, _), do: json
 end

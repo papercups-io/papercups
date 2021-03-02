@@ -93,7 +93,7 @@ const CustomerCompanyDetails = ({customerId}: {customerId: string}) => {
   React.useEffect(() => {
     setLoading(true);
 
-    API.fetchCustomer(customerId)
+    API.fetchCustomer(customerId, {expand: ['company']})
       .then((customer) => {
         const {company} = customer;
 

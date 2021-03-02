@@ -47,7 +47,26 @@ defmodule ChatApi.Customers do
 
   @spec get_customer!(binary()) :: Customer.t() | nil
   def get_customer!(id) do
-    Customer |> Repo.get!(id) |> Repo.preload([:company, :tags])
+    # TODO: deprecate
+    Customer
+    |> Repo.get!(id)
+    |> Repo.preload([:company, :tags])
+  end
+
+  @spec get_customer!(binary(), binary(), keyword()) :: Customer.t() | nil
+  def get_customer!(id, account_id, preloaded \\ []) do
+    Customer
+    |> where(account_id: ^account_id)
+    |> Repo.get!(id)
+    |> Repo.preload(preloaded)
+  end
+
+  @spec is_valid_association?(atom()) :: boolean()
+  def is_valid_association?(field) do
+    Enum.any?(
+      [:messages, :conversations, :notes, :tags, :company],
+      fn association -> association == field end
+    )
   end
 
   @spec find_by_external_id(binary(), binary(), map()) :: Customer.t() | nil

@@ -159,13 +159,20 @@ export const fetchCustomers = async (
     .then((res) => res.body.data);
 };
 
-export const fetchCustomer = async (id: string, token = getAccessToken()) => {
+export const fetchCustomer = async (
+  id: string,
+  query: {expand?: Array<string>} = {},
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
+  const {expand = []} = query;
+
   return request
     .get(`/api/customers/${id}`)
+    .query(qs.stringify({expand}, {arrayFormat: 'bracket'}))
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
