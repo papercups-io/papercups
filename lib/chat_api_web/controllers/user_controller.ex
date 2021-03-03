@@ -90,6 +90,28 @@ defmodule ChatApiWeb.UserController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def delete(conn, %{"id" => user_id}) do
+    parsed_id = String.to_integer(user_id)
+
+    case conn.assigns.current_user do
+      %{id: ^parsed_id, account_id: account_id} ->
+        {:ok, _user} = user_id |> Users.find_by_id(account_id) |> Users.delete_user()
+        json(conn, %{data: %{ok: true}})
+
+
+      %{id: _id} ->
+        conn
+        |> put_status(400)
+        |> json(%{error: %{status: 400, message: "You cannot delete other user."}})
+
+      nil ->
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "Not authenticated"}})
+    end
+  end
+
   @spec enable(Plug.Conn.t(), map) :: Plug.Conn.t()
   def enable(conn, %{"id" => user_id}) do
     parsed_id = String.to_integer(user_id)

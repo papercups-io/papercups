@@ -15,7 +15,7 @@ defmodule ChatApi.UsersTest do
       {:ok, user: insert(:user)}
     end
 
-    test "delete/1 deletes user's profile and settings", %{user: user} do
+    test "delete/1 deletes user's associated data", %{user: user} do
       user_profile = insert(:user_profile, user: user)
       user_settings = insert(:user_settings, user: user)
       conversation = insert(:conversation, assignee: user)
