@@ -33,7 +33,7 @@ defmodule ChatApi.Repo.Migrations.AddCascadeDeletesToUserReferences do
       end
 
       alter table(:tags) do
-        modify(:creator_id, references(:users, on_delete: :delete_all))
+        modify(:creator_id, references(:users, on_delete: :nilify_all))
       end
 
       alter table(:conversation_tags) do

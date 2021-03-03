@@ -9,7 +9,6 @@ defmodule ChatApi.UsersTest do
   alias ChatApi.Users
   alias ChatApi.Users.{User, UserProfile, UserSettings}
 
-
   describe "user" do
     setup do
       {:ok, user: insert(:user)}
@@ -26,14 +25,14 @@ defmodule ChatApi.UsersTest do
       note = insert(:note, author: user)
       file = insert(:file, user: user)
 
-      {:ok, _user } = Users.delete_user(user)
+      {:ok, _user} = Users.delete_user(user)
 
       assert Repo.get(UserSettings, user_settings.id) == nil
       assert Repo.get(UserProfile, user_profile.id) == nil
       assert Repo.get(ChatApi.Messages.Message, message.id) == nil
       assert Repo.get(ChatApi.Conversations.Conversation, conversation.id).assignee_id == nil
       assert Repo.get(ChatApi.Google.GoogleAuthorization, google_authorization.id) == nil
-      assert Repo.get(ChatApi.Tags.Tag, tag.id) == nil
+      assert Repo.get(ChatApi.Tags.Tag, tag.id).creator_id == nil
       assert Repo.get(ChatApi.Tags.ConversationTag, conversation_tag.id) == nil
       assert Repo.get(ChatApi.Notes.Note, note.id) == nil
       assert Repo.get(ChatApi.Files.FileUpload, file.id) == nil
