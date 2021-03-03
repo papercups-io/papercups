@@ -103,14 +103,21 @@ export const sortConversationMessages = (messages: Array<Message>) => {
     // NB: `created_at` is stored as UTC implicitly, whereas `sent_at` is stored
     // as UTC explicitly. This means that we have to convert `created_at` to a
     // UTC date on the frontend first in order to compare the two properly.
-    const dateA = a.sent_at
-      ? new Date(a.sent_at)
-      : dayjs.utc(a.created_at).toDate();
-    const dateB = b.sent_at
-      ? new Date(b.sent_at)
-      : dayjs.utc(b.created_at).toDate();
 
-    return +dateA - +dateB;
+    // FIXME: there are issues where `sent_at` may be set a few minutes to an hour
+    // ahead of `created_at` for some reason. For now, we only sort by `sent_at` if
+    // it comes before `created_at`, since that is the expected behavior.
+    // (i.e. `sent_at` is the timestamp set in the client before it's sent to the server)
+
+    const sentAtA = a.sent_at ? +new Date(a.sent_at) : null;
+    const sentAtB = b.sent_at ? +new Date(b.sent_at) : null;
+    const createdAtA = +dayjs.utc(a.created_at).toDate();
+    const createdAtB = +dayjs.utc(b.created_at).toDate();
+
+    const dateA = sentAtA && sentAtA < createdAtA ? sentAtA : createdAtA;
+    const dateB = sentAtB && sentAtB < createdAtB ? sentAtB : createdAtB;
+
+    return dateA - dateB;
   });
 };
 
