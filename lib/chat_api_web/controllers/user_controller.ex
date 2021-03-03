@@ -99,7 +99,6 @@ defmodule ChatApiWeb.UserController do
         {:ok, _user} = user_id |> Users.find_by_id(account_id) |> Users.delete_user()
         json(conn, %{data: %{ok: true}})
 
-
       %{id: _id} ->
         conn
         |> put_status(400)

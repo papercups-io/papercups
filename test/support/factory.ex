@@ -173,7 +173,7 @@ defmodule ChatApi.Factory do
   def user_settings_factory do
     %ChatApi.Users.UserSettings{
       user: build(:user),
-      email_alert_on_new_message: true,
+      email_alert_on_new_message: true
     }
   end
 
