@@ -35,3 +35,5 @@ chat_api-*.tar
 .idea/
 
 .DS_Store
+
+fly.toml
