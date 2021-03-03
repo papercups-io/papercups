@@ -146,6 +146,15 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def conversation_tag_factory do
+    %ChatApi.Tags.ConversationTag{
+      account: build(:account),
+      conversation: build(:conversation),
+      tag: build(:tag),
+      creator: build(:user)
+    }
+  end
+
   def user_invitation_factory do
     %ChatApi.UserInvitations.UserInvitation{
       account: build(:account),
@@ -158,6 +167,13 @@ defmodule ChatApi.Factory do
       email: sequence(:email, &"company_name-#{&1}@example.com"),
       account: build(:account),
       password: "supersecret123"
+    }
+  end
+
+  def user_settings_factory do
+    %ChatApi.Users.UserSettings{
+      user: build(:user),
+      email_alert_on_new_message: true,
     }
   end
 

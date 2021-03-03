@@ -131,6 +131,12 @@ defmodule ChatApi.Users do
     |> Repo.insert()
   end
 
+  @spec delete_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
+  def delete_user(user) do
+    user
+    |> Repo.delete()
+  end
+
   @spec set_admin_role(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
   def set_admin_role(user) do
     user

@@ -1,11 +1,44 @@
 defmodule ChatApi.UsersTest do
   use ChatApi.DataCase, async: true
+  require Logger
   @moduledoc false
 
   import ChatApi.Factory
 
+  alias ChatApi.Repo
   alias ChatApi.Users
   alias ChatApi.Users.{User, UserProfile, UserSettings}
+
+
+  describe "user" do
+    setup do
+      {:ok, user: insert(:user)}
+    end
+
+    test "delete/1 deletes user's profile and settings", %{user: user} do
+      user_profile = insert(:user_profile, user: user)
+      user_settings = insert(:user_settings, user: user)
+      conversation = insert(:conversation, assignee: user)
+      message = insert(:message, user: user, conversation: conversation)
+      google_authorization = insert(:google_authorization, user: user)
+      tag = insert(:tag, creator: user)
+      conversation_tag = insert(:conversation_tag, creator: user)
+      note = insert(:note, author: user)
+      file = insert(:file, user: user)
+
+      {:ok, _user } = Users.delete_user(user)
+
+      assert Repo.get(UserSettings, user_settings.id) == nil
+      assert Repo.get(UserProfile, user_profile.id) == nil
+      assert Repo.get(ChatApi.Messages.Message, message.id) == nil
+      assert Repo.get(ChatApi.Conversations.Conversation, conversation.id).assignee_id == nil
+      assert Repo.get(ChatApi.Google.GoogleAuthorization, google_authorization.id) == nil
+      assert Repo.get(ChatApi.Tags.Tag, tag.id) == nil
+      assert Repo.get(ChatApi.Tags.ConversationTag, conversation_tag.id) == nil
+      assert Repo.get(ChatApi.Notes.Note, note.id) == nil
+      assert Repo.get(ChatApi.Files.FileUpload, file.id) == nil
+    end
+  end
 
   describe "user_profiles" do
     @valid_attrs %{
