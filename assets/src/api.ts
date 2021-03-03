@@ -307,6 +307,17 @@ export const updateAccountInfo = async (
     .then((res) => res.body.data);
 };
 
+export const deleteMyAccount = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/accounts/me`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const fetchUserProfile = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
