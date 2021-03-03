@@ -51,7 +51,7 @@ defmodule ChatApi.Repo.Migrations.AddCascadeDeletesToUserReferences do
 
   def down do
       drop constraint("messages", "messages_user_id_fkey")
-      # drop constraint("conversations", "conversations_assignee_id_fkey")
+      drop constraint("conversations", "conversations_assignee_id_fkey")
       drop constraint("user_profiles", "user_profiles_user_id_fkey")
       drop constraint("user_settings", "user_settings_user_id_fkey")
       drop constraint("google_authorizations", "google_authorizations_user_id_fkey")
@@ -64,16 +64,16 @@ defmodule ChatApi.Repo.Migrations.AddCascadeDeletesToUserReferences do
         modify(:user_id, references(:users, on_delete: :nothing))
       end
 
-      # alter table(:conversations) do
-      #   modify(:assignee_id, references(:users, on_delete: :nothing))
-      # end
+      alter table(:conversations) do
+        modify(:assignee_id, references(:users, on_delete: :nothing))
+      end
 
       alter table(:user_profiles) do
         modify(:user_id, references(:users, on_delete: :nothing))
       end
 
       alter table(:user_settings) do
-        modify(:user_id, references(:users, on_delete: :delete_all))
+        modify(:user_id, references(:users, on_delete: :nothing))
       end
 
       alter table(:google_authorizations) do
