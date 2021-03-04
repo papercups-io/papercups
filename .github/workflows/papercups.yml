@@ -3,6 +3,7 @@ name: Papercups
 on:
   push:
     branches: [master]
+  pull_request:
 
 jobs:
   mix-format:

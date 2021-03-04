@@ -23,8 +23,7 @@ require_db_ssl =
 config :chat_api, ChatApi.Repo,
   ssl: require_db_ssl,
   url: database_url,
-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-  socket_options: [:inet6]
+  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
 secret_key_base =
   System.get_env("SECRET_KEY_BASE") ||
