@@ -33,7 +33,7 @@ defmodule ChatApi.UsersTest do
       assert Repo.get(ChatApi.Conversations.Conversation, conversation.id).assignee_id == nil
       assert Repo.get(ChatApi.Google.GoogleAuthorization, google_authorization.id) == nil
       assert Repo.get(ChatApi.Tags.Tag, tag.id).creator_id == nil
-      assert Repo.get(ChatApi.Tags.ConversationTag, conversation_tag.id) == nil
+      assert Repo.get(ChatApi.Tags.ConversationTag, conversation_tag.id).creator_id == nil
       assert Repo.get(ChatApi.Notes.Note, note.id) == nil
       assert Repo.get(ChatApi.Files.FileUpload, file.id) == nil
     end
