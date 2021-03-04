@@ -118,13 +118,13 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
-  @spec create_admin(map()) :: {:ok, %User{}} | {:error, Ecto.Changeset.t()}
+  @spec create_admin(map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def create_admin(params) do
     Map.merge(params, %{role: "admin"})
     |> create_user()
   end
 
-  @spec create_user(map()) :: {:ok, %User{}} | {:error, Ecto.Changeset.t()}
+  @spec create_user(map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def create_user(params) do
     %User{}
     |> User.changeset(params)
