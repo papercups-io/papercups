@@ -96,6 +96,7 @@ defmodule ChatApiWeb.Router do
     put("/profile", UserProfileController, :update)
     get("/user_settings", UserSettingsController, :show)
     put("/user_settings", UserSettingsController, :update)
+    delete("/users/:id", UserController, :delete)
     post("/users/:id/disable", UserController, :disable)
     post("/users/:id/enable", UserController, :enable)
     post("/payment_methods", PaymentMethodController, :create)

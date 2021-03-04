@@ -90,6 +90,28 @@ defmodule ChatApiWeb.UserController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def delete(conn, %{"id" => user_id}) do
+    parsed_id = String.to_integer(user_id)
+
+    case conn.assigns.current_user do
+      %{id: ^parsed_id, account_id: account_id} ->
+        {:ok, _user} = user_id |> Users.find_by_id(account_id) |> Users.delete_user()
+        json(conn, %{data: %{ok: true}})
+
+      # TODO: should we support an admin user deleting a non-admin user on the same account?
+      %{id: _id} ->
+        conn
+        |> put_status(403)
+        |> json(%{error: %{status: 403, message: "You cannot delete another user."}})
+
+      nil ->
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "Not authenticated"}})
+    end
+  end
+
   @spec enable(Plug.Conn.t(), map) :: Plug.Conn.t()
   def enable(conn, %{"id" => user_id}) do
     parsed_id = String.to_integer(user_id)
