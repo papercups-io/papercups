@@ -31,6 +31,7 @@ import UploadOutlined from '@ant-design/icons/UploadOutlined';
 import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import VideoCameraOutlined from '@ant-design/icons/VideoCameraOutlined';
+import WarningTwoTone from '@ant-design/icons/WarningTwoTone';
 
 export {
   ApiOutlined,
@@ -66,4 +67,5 @@ export {
   UpOutlined,
   UserOutlined,
   VideoCameraOutlined,
+  WarningTwoTone,
 };

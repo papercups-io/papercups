@@ -3,10 +3,20 @@ import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {capitalize} from 'lodash';
-import {Button, Modal, Paragraph, Text, Input} from '../common';
+import {
+  Button,
+  Modal,
+  Paragraph,
+  Text,
+  Input,
+  Popconfirm,
+  colors,
+} from '../common';
+import {WarningTwoTone} from '../icons';
 import * as API from '../../api';
 import {Customer} from '../../types';
 import logger from '../../logger';
+import {sleep} from '../../utils';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -57,6 +67,7 @@ type State = {
   updates: any;
   isEditing: boolean;
   isSaving: boolean;
+  isDeleting: boolean;
 };
 
 class CustomerDetailsModal extends React.Component<Props, State> {
@@ -64,6 +75,7 @@ class CustomerDetailsModal extends React.Component<Props, State> {
     updates: this.getInitialUpdates(),
     isEditing: false,
     isSaving: false,
+    isDeleting: false,
   };
 
   getInitialUpdates() {
@@ -130,9 +142,27 @@ class CustomerDetailsModal extends React.Component<Props, State> {
     this.props.onClose();
   };
 
+  handleDeleteCustomer = async () => {
+    this.setState({isDeleting: true});
+
+    const {customer, onUpdate} = this.props;
+    const {id: customerId} = customer;
+
+    try {
+      const result = await API.deleteCustomer(customerId);
+
+      await sleep(1000);
+      await onUpdate(result);
+    } catch (err) {
+      logger.error('Failed to update customer', err);
+    }
+
+    this.setState({isDeleting: false});
+  };
+
   render() {
     const {customer, isVisible} = this.props;
-    const {isEditing, isSaving, updates} = this.state;
+    const {isEditing, isSaving, isDeleting, updates} = this.state;
     const {
       browser,
       os,
@@ -171,7 +201,34 @@ class CustomerDetailsModal extends React.Component<Props, State> {
             </Flex>
           ) : (
             <Flex sx={{justifyContent: 'space-between'}}>
-              <Button onClick={this.onModalClose}>Close</Button>
+              <Flex>
+                <Button onClick={this.onModalClose} type="link">
+                  Close
+                </Button>
+                <Popconfirm
+                  title={
+                    <Box sx={{maxWidth: 320}}>
+                      <Paragraph>
+                        Are you sure you want to delete this customer and all of
+                        their data?
+                      </Paragraph>
+                      <Paragraph>
+                        <Text strong>Warning:</Text> this cannot be undone.
+                      </Paragraph>
+                    </Box>
+                  }
+                  icon={<WarningTwoTone twoToneColor={colors.red} />}
+                  okText="Yes"
+                  cancelText="No"
+                  placement="bottomLeft"
+                  onConfirm={this.handleDeleteCustomer}
+                >
+                  <Button danger loading={isDeleting}>
+                    Delete
+                  </Button>
+                </Popconfirm>
+              </Flex>
+
               <Button type="primary" onClick={this.handleStartEditing}>
                 Edit
               </Button>
