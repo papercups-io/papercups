@@ -21,9 +21,12 @@ defmodule ChatApiWeb.UserControllerTest do
       assert %{"ok" => true} = json_response(resp, 200)["data"]
     end
 
-    test "returns 400 when trying to delete other users", %{authed_conn: authed_conn, user: user} do
+    test "returns 403 (forbidden) when trying to delete other users", %{
+      authed_conn: authed_conn,
+      user: user
+    } do
       resp = delete(authed_conn, Routes.user_path(authed_conn, :delete, user.id + 1))
-      assert resp.status == 400
+      assert resp.status == 403
     end
   end
 end

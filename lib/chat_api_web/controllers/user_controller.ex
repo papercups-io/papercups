@@ -99,10 +99,11 @@ defmodule ChatApiWeb.UserController do
         {:ok, _user} = user_id |> Users.find_by_id(account_id) |> Users.delete_user()
         json(conn, %{data: %{ok: true}})
 
+      # TODO: should we support an admin user deleting a non-admin user on the same account?
       %{id: _id} ->
         conn
-        |> put_status(400)
-        |> json(%{error: %{status: 400, message: "You cannot delete other user."}})
+        |> put_status(403)
+        |> json(%{error: %{status: 403, message: "You cannot delete another user."}})
 
       nil ->
         conn
