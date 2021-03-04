@@ -6,7 +6,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
 import * as API from '../../api';
-import {User, WidgetIconVariant} from '../../types';
+import {Account, User, WidgetIconVariant} from '../../types';
 import {
   colors,
   Paragraph,
@@ -24,6 +24,7 @@ import logger from '../../logger';
 type Props = {};
 type State = {
   accountId: string | null;
+  account: Account | null;
   color: string;
   title: string;
   subtitle: string;
@@ -40,6 +41,7 @@ type State = {
 class GettingStartedOverview extends React.Component<Props, State> {
   state: State = {
     accountId: null,
+    account: null,
     currentUser: null,
     color: colors.primary,
     title: 'Welcome!',
@@ -78,6 +80,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
 
       this.setState({
         accountId,
+        account,
         currentUser,
         greeting,
         color: color || this.state.color,
@@ -94,7 +97,12 @@ class GettingStartedOverview extends React.Component<Props, State> {
         iconVariant: iconVariant || this.state.iconVariant,
       });
     } else {
-      this.setState({accountId, currentUser, title: `Welcome to ${company}`});
+      this.setState({
+        accountId,
+        account,
+        currentUser,
+        title: `Welcome to ${company}`,
+      });
     }
   }
 
@@ -310,9 +318,9 @@ const ExamplePage = () => {
   };
 
   getUserMetadata = () => {
-    const {currentUser} = this.state;
+    const {account, currentUser} = this.state;
 
-    if (!currentUser) {
+    if (!account || !currentUser) {
       return {};
     }
 
@@ -322,6 +330,10 @@ const ExamplePage = () => {
     return {
       email: email,
       external_id: [id, email].join('|'),
+      metadata: {
+        company_name: account.company_name,
+        subscription_plan: account.subscription_plan,
+      },
     };
   };
 

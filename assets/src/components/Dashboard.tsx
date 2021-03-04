@@ -112,7 +112,7 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
-  const {currentUser, unreadByCategory: unread} = useConversations();
+  const {account, currentUser, unreadByCategory: unread} = useConversations();
 
   const [section, key] = getSectionKey(pathname);
   const totalNumUnread = (unread && unread.all) || 0;
@@ -377,6 +377,10 @@ const Dashboard = (props: RouteComponentProps) => {
           customer={{
             external_id: [currentUser.id, currentUser.email].join('|'),
             email: currentUser.email,
+            metadata: {
+              company_name: account?.company_name,
+              subscription_plan: account?.subscription_plan,
+            },
           }}
         />
       )}
