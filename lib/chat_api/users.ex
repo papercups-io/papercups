@@ -118,54 +118,54 @@ defmodule ChatApi.Users do
     |> Repo.update()
   end
 
-  @spec create_admin(map()) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  @spec create_admin(map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def create_admin(params) do
     Map.merge(params, %{role: "admin"})
     |> create_user()
   end
 
-  @spec create_user(map()) :: {:ok, %User{}} | {:error, Ecto.Changeset.User}
+  @spec create_user(map()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def create_user(params) do
     %User{}
     |> User.changeset(params)
     |> Repo.insert()
   end
 
-  @spec delete_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
+  @spec delete_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def delete_user(user) do
     user
     |> Repo.delete()
   end
 
-  @spec set_admin_role(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
+  @spec set_admin_role(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def set_admin_role(user) do
     user
     |> User.role_changeset(%{role: "admin"})
     |> Repo.update()
   end
 
-  @spec set_user_role(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
+  @spec set_user_role(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def set_user_role(user) do
     user
     |> User.role_changeset(%{role: "user"})
     |> Repo.update()
   end
 
-  @spec archive_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
+  @spec archive_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def archive_user(user) do
     user
     |> User.disabled_at_changeset(%{archived_at: DateTime.utc_now()})
     |> Repo.update()
   end
 
-  @spec disable_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
+  @spec disable_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def disable_user(user) do
     user
     |> User.disabled_at_changeset(%{disabled_at: DateTime.utc_now()})
     |> Repo.update()
   end
 
-  @spec enable_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.User}
+  @spec enable_user(User.t()) :: {:ok, User.t()} | {:error, Ecto.Changeset.t()}
   def enable_user(user) do
     user
     |> User.disabled_at_changeset(%{disabled_at: nil})
