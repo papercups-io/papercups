@@ -195,6 +195,17 @@ export const updateCustomer = async (
     .then((res) => res.body.data);
 };
 
+export const deleteCustomer = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/customers/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const createNewCompany = async (
   params: Record<string, any>,
   token = getAccessToken()
