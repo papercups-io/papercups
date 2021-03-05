@@ -19,6 +19,7 @@ import Spin from 'antd/lib/spin';
 import Statistic from 'antd/lib/statistic';
 import Switch from 'antd/lib/switch';
 import Table from 'antd/lib/table';
+import Tabs from 'antd/lib/tabs';
 import Tag from 'antd/lib/tag';
 import Tooltip from 'antd/lib/tooltip';
 import Typography from 'antd/lib/typography';
@@ -130,6 +131,7 @@ export {
   Spin,
   Statistic,
   Table,
+  Tabs,
   Tag,
   Tooltip,
   Upload,

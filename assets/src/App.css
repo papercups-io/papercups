@@ -98,3 +98,11 @@ a.RelatedCustomerConversation--link:hover {
   margin-top: 0px;
   margin-bottom: 4px;
 }
+
+.GettingStartedCode .ant-tabs-nav::before {
+  border-bottom-color: #d9d9d9;
+}
+
+.GettingStartedCode .ant-tabs-nav .ant-tabs-tab {
+  border-color: #d9d9d9;
+}

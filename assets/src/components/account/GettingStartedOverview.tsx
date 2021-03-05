@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {FunctionComponent} from 'react';
 import {capitalize, debounce} from 'lodash';
 import {Box} from 'theme-ui';
 import {TwitterPicker} from 'react-color';
@@ -16,6 +16,7 @@ import {
   Switch,
   Text,
   Title,
+  Tabs,
 } from '../common';
 import {InfoCircleTwoTone} from '../icons';
 import {BASE_URL, FRONTEND_BASE_URL} from '../../config';
@@ -207,114 +208,6 @@ class GettingStartedOverview extends React.Component<Props, State> {
     })
       .then((res) => logger.debug('Updated widget settings:', res))
       .catch((err) => logger.error('Error updating widget settings:', err));
-  };
-
-  generateHtmlCode = () => {
-    const {
-      accountId,
-      title,
-      subtitle,
-      color,
-      greeting,
-      newMessagePlaceholder,
-      showAgentAvailability,
-      agentAvailableText,
-      agentUnavailableText,
-      requireEmailUpfront,
-      iconVariant,
-    } = this.state;
-
-    return `
-<script>
-  window.Papercups = {
-    config: {
-      accountId: "${accountId}",
-      title: "${title}",
-      subtitle: "${subtitle}",
-      primaryColor: "${color}",
-      greeting: "${greeting || ''}",
-      newMessagePlaceholder: "${newMessagePlaceholder || ''}",
-      showAgentAvailability: ${showAgentAvailability},
-      agentAvailableText: "${agentAvailableText}",
-      agentUnavailableText: "${agentUnavailableText}",
-      requireEmailUpfront: ${requireEmailUpfront},
-      iconVariant: "${iconVariant}",
-      baseUrl: "${BASE_URL}",
-      // Optionally include data about your customer here to identify them
-      // customer: {
-      //   name: __CUSTOMER__.name,
-      //   email: __CUSTOMER__.email,
-      //   external_id: __CUSTOMER__.id,
-      //   metadata: {
-      //     plan: "premium"
-      //   }
-      // }
-    },
-  };
-</script>
-<script
-  type="text/javascript"
-  async
-  defer
-  src="${FRONTEND_BASE_URL}/widget.js"
-></script>
-  `.trim();
-  };
-
-  generateReactCode = () => {
-    const {
-      accountId,
-      title,
-      subtitle,
-      color,
-      greeting,
-      newMessagePlaceholder,
-      showAgentAvailability,
-      agentAvailableText,
-      agentUnavailableText,
-      requireEmailUpfront,
-      iconVariant,
-    } = this.state;
-
-    return `
-import React from "react";
-import {ChatWidget} from "@papercups-io/chat-widget";
-
-const ExamplePage = () => {
-  return (
-    <>
-      {/*
-        Put <ChatWidget /> at the bottom of whatever pages you would
-        like to render the widget on, or in your root/router component
-        if you would like it to render on every page
-      */}
-      <ChatWidget
-        accountId="${accountId}"
-        title="${title}"
-        subtitle="${subtitle}"
-        primaryColor="${color}"
-        greeting="${greeting || ''}"
-        newMessagePlaceholder="${newMessagePlaceholder}"
-        showAgentAvailability={${showAgentAvailability}}
-        agentAvailableText="${agentAvailableText}"
-        agentUnavailableText="${agentUnavailableText}"
-        requireEmailUpfront={${requireEmailUpfront}}
-        iconVariant={${iconVariant}}
-        baseUrl="${BASE_URL}"
-        // Optionally include data about your customer here to identify them
-        // customer={{
-        //   name: __CUSTOMER__.name,
-        //   email: __CUSTOMER__.email,
-        //   external_id: __CUSTOMER__.id,
-        //   metadata: {
-        //     plan: "premium"
-        //   }
-        // }}
-      />
-    </>
-  );
-};
-  `.trim();
   };
 
   getUserMetadata = () => {
@@ -566,53 +459,19 @@ const ExamplePage = () => {
           </Paragraph>
         </Box>
 
-        <Box mb={4}>
-          <Title level={3}>Usage in HTML</Title>
-          <Paragraph>
-            <Text>
-              Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
-              <Text code>{'</head>'}</Text> tags:
-            </Text>
-          </Paragraph>
-
-          <SyntaxHighlighter language="html" style={atomOneLight}>
-            {this.generateHtmlCode()}
-          </SyntaxHighlighter>
-        </Box>
-
-        <Box mb={4}>
-          <Title level={3}>Usage in React</Title>
-          <Paragraph>
-            <Text>
-              First, install the <Text code>@papercups-io/chat-widget</Text>{' '}
-              package:
-            </Text>
-          </Paragraph>
-
-          <Paragraph>
-            <pre
-              style={{
-                backgroundColor: '#f6f8fa',
-                color: colors.black,
-                fontSize: 12,
-              }}
-            >
-              <Box p={3}>npm install --save @papercups-io/chat-widget</Box>
-            </pre>
-          </Paragraph>
-
-          <Paragraph>
-            <Text>
-              Your account token has been prefilled in the code below. Simply
-              copy and paste the code into whichever pages you would like to
-              display the chat widget!
-            </Text>
-          </Paragraph>
-
-          <SyntaxHighlighter language="typescript" style={atomOneLight}>
-            {this.generateReactCode()}
-          </SyntaxHighlighter>
-        </Box>
+        <CodeSnippet
+          accountId={accountId}
+          title={title}
+          subtitle={subtitle}
+          color={color}
+          greeting={greeting}
+          newMessagePlaceholder={newMessagePlaceholder}
+          showAgentAvailability={showAgentAvailability}
+          agentAvailableText={agentAvailableText}
+          agentUnavailableText={agentUnavailableText}
+          requireEmailUpfront={requireEmailUpfront}
+          iconVariant={iconVariant}
+        />
 
         <Title level={3}>Learn more</Title>
         <Paragraph>
@@ -632,5 +491,174 @@ const ExamplePage = () => {
     );
   }
 }
+
+enum Languages {
+  HTML = 'HTML',
+  REACT = 'REACT',
+}
+
+const StandardSyntaxHighlighter: FunctionComponent<{language: string}> = ({
+  language,
+  children,
+}) => {
+  return (
+    <SyntaxHighlighter language={language} style={syntaxHighlightingLanguage}>
+      {children}
+    </SyntaxHighlighter>
+  );
+};
+
+const CodeSnippet: FunctionComponent<Pick<
+  State,
+  | 'accountId'
+  | 'title'
+  | 'subtitle'
+  | 'color'
+  | 'greeting'
+  | 'newMessagePlaceholder'
+  | 'showAgentAvailability'
+  | 'agentAvailableText'
+  | 'agentUnavailableText'
+  | 'requireEmailUpfront'
+  | 'iconVariant'
+>> = ({
+  accountId,
+  title,
+  subtitle,
+  color,
+  greeting,
+  newMessagePlaceholder,
+  showAgentAvailability,
+  agentAvailableText,
+  agentUnavailableText,
+  requireEmailUpfront,
+  iconVariant,
+}) => {
+  return (
+    <Tabs
+      defaultActiveKey={Languages.HTML}
+      type="card"
+      className="GettingStartedCode"
+    >
+      <Tabs.TabPane tab="HTML" key={Languages.HTML}>
+        <Box mb={4}>
+          <Title level={3}>Usage in HTML</Title>
+          <Paragraph>
+            <Text>
+              Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
+              <Text code>{'</head>'}</Text> tags:
+            </Text>
+          </Paragraph>
+
+          <StandardSyntaxHighlighter language="html">
+            {`
+<script>
+window.Papercups = {
+  config: {
+    accountId: "${accountId}",
+    title: "${title}",
+    subtitle: "${subtitle}",
+    primaryColor: "${color}",
+    greeting: "${greeting || ''}",
+    newMessagePlaceholder: "${newMessagePlaceholder || ''}",
+    showAgentAvailability: ${showAgentAvailability},
+    agentAvailableText: "${agentAvailableText}",
+    agentUnavailableText: "${agentUnavailableText}",
+    requireEmailUpfront: ${requireEmailUpfront},
+    iconVariant: "${iconVariant}",
+    baseUrl: "${BASE_URL}",
+    // Optionally include data about your customer here to identify them
+    // customer: {
+    //   name: __CUSTOMER__.name,
+    //   email: __CUSTOMER__.email,
+    //   external_id: __CUSTOMER__.id,
+    //   metadata: {
+    //     plan: "premium"
+    //   }
+    // }
+  },
+};
+</script>
+<script
+type="text/javascript"
+async
+defer
+src="${FRONTEND_BASE_URL}/widget.js"
+></script>
+`.trim()}
+          </StandardSyntaxHighlighter>
+        </Box>
+      </Tabs.TabPane>
+
+      <Tabs.TabPane tab="React" tabKey={Languages.REACT}>
+        <Box mb={4}>
+          <Title level={3}>Usage in React</Title>
+          <Paragraph>
+            <Text>
+              First, install the <Text code>@papercups-io/chat-widget</Text>{' '}
+              package:
+            </Text>
+          </Paragraph>
+
+          <Paragraph>
+            <StandardSyntaxHighlighter language="bash">
+              npm install --save @papercups-io/chat-widget
+            </StandardSyntaxHighlighter>
+          </Paragraph>
+
+          <Paragraph>
+            <Text>
+              Your account token has been prefilled in the code below. Simply
+              copy and paste the code into whichever pages you would like to
+              display the chat widget!
+            </Text>
+          </Paragraph>
+
+          <StandardSyntaxHighlighter language="typescript">
+            {`
+import React from "react";
+import {ChatWidget} from "@papercups-io/chat-widget";
+
+const ExamplePage = () => {
+  return (
+    <>
+      {/*
+        Put <ChatWidget /> at the bottom of whatever pages you would
+        like to render the widget on, or in your root/router component
+        if you would like it to render on every page
+      */}
+      <ChatWidget
+        accountId="${accountId}"
+        title="${title}"
+        subtitle="${subtitle}"
+        primaryColor="${color}"
+        greeting="${greeting || ''}"
+        newMessagePlaceholder="${newMessagePlaceholder}"
+        showAgentAvailability={${showAgentAvailability}}
+        agentAvailableText="${agentAvailableText}"
+        agentUnavailableText="${agentUnavailableText}"
+        requireEmailUpfront={${requireEmailUpfront}}
+        iconVariant={${iconVariant}}
+        baseUrl="${BASE_URL}"
+        // Optionally include data about your customer here to identify them
+        // customer={{
+        //   name: __CUSTOMER__.name,
+        //   email: __CUSTOMER__.email,
+        //   external_id: __CUSTOMER__.id,
+        //   metadata: {
+        //     plan: "premium"
+        //   }
+        // }}
+      />
+    </>
+  );
+};
+`.trim()}
+          </StandardSyntaxHighlighter>
+        </Box>
+      </Tabs.TabPane>
+    </Tabs>
+  );
+};
 
 export default GettingStartedOverview;
