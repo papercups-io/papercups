@@ -2,9 +2,9 @@ import React from 'react';
 import {capitalize, debounce} from 'lodash';
 import {Box} from 'theme-ui';
 import {TwitterPicker} from 'react-color';
-import SyntaxHighlighter from 'react-syntax-highlighter';
-import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import {prism as syntaxHighlightingLanguage} from 'react-syntax-highlighter/dist/esm/styles/prism';
 import * as API from '../../api';
 import {Account, User, WidgetIconVariant} from '../../types';
 import {
