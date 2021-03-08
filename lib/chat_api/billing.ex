@@ -9,7 +9,7 @@ defmodule ChatApi.Billing do
 
   require Logger
 
-  @trial_period_days 30
+  @trial_period_days 14
 
   @type billing_info() :: %{
           subscription: nil | Stripe.Subscription.t(),
