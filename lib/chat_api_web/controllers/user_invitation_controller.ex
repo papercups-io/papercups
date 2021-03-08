@@ -28,7 +28,7 @@ defmodule ChatApiWeb.UserInvitationController do
           status: 403,
           message:
             "You've hit the user limit for our free tier. " <>
-              "Try the premium plan free for 30 days to invite more users to your account!"
+              "Try the premium plan free for 14 days to invite more users to your account!"
         }
       })
     else
