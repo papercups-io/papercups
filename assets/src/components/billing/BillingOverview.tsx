@@ -32,7 +32,6 @@ import {
   calculateSubscriptionDiscount,
   calculateSubscriptionPrice,
 } from './support';
-import {isEuEdition} from '../../config';
 import logger from '../../logger';
 import {LITE_PRICE, STARTER_PRICE, TEAM_PRICE} from '../../constants';
 import './Billing.css';
