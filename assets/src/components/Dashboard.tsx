@@ -366,7 +366,7 @@ const Dashboard = (props: RouteComponentProps) => {
         </Switch>
       </Layout>
 
-      {isHostedProd && currentUser && (
+      {currentUser && shouldDisplayChat(pathname) && (
         <ChatWidget
           title="Need help with anything?"
           subtitle="Ask us in the chat window below 😊"
