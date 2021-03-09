@@ -3,7 +3,7 @@ defmodule ChatApiWeb.BillingController do
   use ChatApiWeb, :controller
   alias ChatApi.{Accounts, Billing}
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, _params) do
@@ -18,6 +18,7 @@ defmodule ChatApiWeb.BillingController do
   def create(conn, %{"plan" => plan}) do
     with %{account_id: account_id} <- conn.assigns.current_user,
          account <- Accounts.get_account!(account_id),
+         plan <- format_plan_by_edition(plan),
          {:ok, _account} <- Billing.create_subscription_plan(account, plan) do
       conn
       |> notify_slack(plan)
@@ -29,6 +30,7 @@ defmodule ChatApiWeb.BillingController do
   def update(conn, %{"plan" => plan}) do
     with %{account_id: account_id} <- conn.assigns.current_user,
          account <- Accounts.get_account!(account_id),
+         plan <- format_plan_by_edition(plan),
          {:ok, _account} <- Billing.update_subscription_plan(account, plan) do
       conn
       |> notify_slack(plan)
@@ -47,5 +49,22 @@ defmodule ChatApiWeb.BillingController do
     end
 
     conn
+  end
+
+  @spec format_plan_by_edition(binary()) :: binary()
+  defp format_plan_by_edition(plan) do
+    if is_eu_edition?() do
+      "eu-" <> plan
+    else
+      plan
+    end
+  end
+
+  @spec is_eu_edition?() :: boolean()
+  defp is_eu_edition?() do
+    case System.get_env("REACT_APP_EU_EDITION") do
+      x when x == "1" or x == "true" -> true
+      _ -> false
+    end
   end
 end

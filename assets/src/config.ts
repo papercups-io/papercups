@@ -10,6 +10,10 @@ export const isDev = Boolean(
 
 export const isHostedProd = window.location.hostname === 'app.papercups.io';
 
+export const isEuEdition =
+  process.env.REACT_APP_EU_EDITION === 'true' ||
+  process.env.REACT_APP_EU_EDITION === '1';
+
 export const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
 
 export const BASE_URL = isDev

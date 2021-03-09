@@ -32,9 +32,10 @@ import {
   calculateSubscriptionDiscount,
   calculateSubscriptionPrice,
 } from './support';
+import {isEuEdition} from '../../config';
 import logger from '../../logger';
-import './Billing.css';
 import {LITE_PRICE, STARTER_PRICE, TEAM_PRICE} from '../../constants';
+import './Billing.css';
 
 const stripe = loadStripe(
   process.env.REACT_APP_STRIPE_PUBLIC_KEY || 'pk_test_xxxxx'
