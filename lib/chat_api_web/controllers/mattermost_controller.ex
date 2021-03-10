@@ -46,13 +46,13 @@ defmodule ChatApiWeb.MattermostController do
          "token" => token,
          "user_id" => user_id
        }) do
-    with %{access_token: access_token, account_id: account_id} = authorization <-
+    with %{account_id: account_id} = authorization <-
            Mattermost.find_mattermost_authorization(%{
              channel_id: channel_id,
              verification_token: token
            }),
          {:ok, %{body: %{"root_id" => root_id} = response}} <-
-           Mattermost.Client.get_message(post_id, access_token),
+           Mattermost.Client.get_message(post_id, authorization),
          false <- get_in(response, ["props", "from_bot"]) == "true",
          %{conversation: conversation} <-
            Mattermost.find_mattermost_conversation_thread(%{
@@ -76,6 +76,7 @@ defmodule ChatApiWeb.MattermostController do
       |> Messages.Notification.broadcast_to_customer!()
       |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:webhooks)
+      |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:conversation_reply_email)
       |> Messages.Helpers.handle_post_creation_conversation_updates()
     end

@@ -272,6 +272,7 @@ defmodule ChatApiWeb.ConversationController do
       |> Messages.Notification.broadcast_to_customer!()
       |> Messages.Notification.broadcast_to_admin!()
       |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.notify(:mattermost)
       |> Messages.Notification.notify(:webhooks)
 
       :ok
