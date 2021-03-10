@@ -28,7 +28,7 @@ socket_options =
   end
 
 config :chat_api, ChatApi.Repo,
-  ssl: false,
+  ssl: require_db_ssl,
   url: database_url,
   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
   socket_options: socket_options
