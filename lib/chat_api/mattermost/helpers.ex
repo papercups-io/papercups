@@ -4,7 +4,8 @@ defmodule ChatApi.Mattermost.Helpers do
   """
 
   alias ChatApi.{Mattermost, Users}
-  alias ChatApi.Mattermost.{MattermostAuthorization}
+  alias ChatApi.Mattermost.MattermostAuthorization
+  alias ChatApi.Users.User
 
   @spec find_matching_user(MattermostAuthorization.t(), binary()) :: User.t() | nil
   def find_matching_user(
