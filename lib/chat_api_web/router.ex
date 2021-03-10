@@ -35,6 +35,9 @@ defmodule ChatApiWeb.Router do
   scope "/api", ChatApiWeb do
     pipe_through(:api)
 
+    get("/ping", PingController, :ping)
+    post("/ping", PingController, :ping)
+
     resources("/registration", RegistrationController, singleton: true, only: [:create])
     resources("/session", SessionController, singleton: true, only: [:create, :delete])
     resources("/upload", UploadController, only: [:create, :show, :delete])
@@ -65,6 +68,7 @@ defmodule ChatApiWeb.Router do
 
     post("/slack/webhook", SlackController, :webhook)
     post("/slack/actions", SlackController, :actions)
+    post("/mattermost/webhook", MattermostController, :webhook)
     # TODO: move to protected route after testing?
     get("/hubspot/oauth", HubspotController, :oauth)
 

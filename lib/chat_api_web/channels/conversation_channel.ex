@@ -145,6 +145,7 @@ defmodule ChatApiWeb.ConversationChannel do
     # TODO: check if :slack_support_channel and :slack_company_channel are relevant
     |> Messages.Notification.notify(:slack_support_channel)
     |> Messages.Notification.notify(:slack_company_channel)
+    |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:new_message_email)
     |> Messages.Notification.notify(:webhooks)
   end
