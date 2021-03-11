@@ -1,7 +1,6 @@
 defmodule ChatApi.Repo do
   @cursor_pagination_defaults [
     maximum_limit: 50,
-    include_total_count: true,
   ]
 
   use Ecto.Repo,
