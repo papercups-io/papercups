@@ -30,6 +30,7 @@ defmodule ChatApi.Conversations do
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
     |> order_by_most_recent_message()
+    |> order_by(desc: :id)
     |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
     |> Repo.paginate_with_cursor(filter_pagination(filters))
   end
@@ -218,7 +219,8 @@ defmodule ChatApi.Conversations do
       f in fragment(
         "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
         c.id
-      )
+      ),
+      as: :messages
     )
     |> order_by([c, f], desc: f)
   end
@@ -496,6 +498,28 @@ defmodule ChatApi.Conversations do
   end
 
   @spec filter_pagination(map) :: Keyword.t()
-  def filter_pagination(%{"cursor_after" => cursor_after}), do: [after: cursor_after]
-  def filter_pagination(_), do: []
+  def filter_pagination(args) do
+    Enum.reduce(
+      args,
+      [
+        cursor_fields: [{:messages, :inserted_at}, :id],
+        sort_direction: :desc,
+        fetch_cursor_value_fun: fn
+          schema, {:messages, :inserted_at} ->
+            case Enum.sort_by(schema.messages, & &1.inserted_at, :desc) do
+              [head | _] -> head.inserted_at
+              _ -> nil
+            end
+
+          post, field ->
+            Paginator.default_fetch_cursor_value(post, field)
+        end
+      ],
+      fn
+        {"limit", value}, acc -> acc ++ [limit: value]
+        {"after", value}, acc -> acc ++ [after: value]
+        _, acc -> acc
+      end
+    )
+  end
 end

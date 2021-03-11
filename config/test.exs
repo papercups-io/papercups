@@ -32,4 +32,4 @@ config :sentry,
   root_source_code_path: File.cwd!()
 
 # Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :debug
