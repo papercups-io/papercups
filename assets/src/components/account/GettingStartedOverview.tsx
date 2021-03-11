@@ -30,6 +30,7 @@ type State = {
   title: string;
   subtitle: string;
   greeting?: string;
+  awayMessage?: string;
   newMessagePlaceholder?: string;
   currentUser: User | null;
   showAgentAvailability: boolean;
@@ -48,6 +49,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
     title: 'Welcome!',
     subtitle: 'Ask us anything in the chat window below 😊',
     greeting: '',
+    awayMessage: '',
     newMessagePlaceholder: 'Start typing...',
     showAgentAvailability: false,
     agentAvailableText: `We're online right now!`,
@@ -77,6 +79,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
         agent_unavailable_text: agentUnavailableText,
         require_email_upfront: requireEmailUpfront,
         icon_variant: iconVariant,
+        away_message: awayMessage,
       } = widgetSettings;
 
       this.setState({
@@ -84,6 +87,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
         account,
         currentUser,
         greeting,
+        awayMessage,
         color: color || this.state.color,
         subtitle: subtitle || this.state.subtitle,
         title: title || `Welcome to ${company}`,
@@ -126,6 +130,13 @@ class GettingStartedOverview extends React.Component<Props, State> {
   handleChangeGreeting = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState(
       {greeting: e.target.value},
+      this.debouncedUpdateWidgetSettings
+    );
+  };
+
+  handleChangeAwayMessage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState(
+      {awayMessage: e.target.value},
       this.debouncedUpdateWidgetSettings
     );
   };
@@ -186,6 +197,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
       title,
       subtitle,
       greeting,
+      awayMessage,
       newMessagePlaceholder,
       showAgentAvailability,
       agentAvailableText,
@@ -199,6 +211,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
       title,
       subtitle,
       greeting,
+      away_message: awayMessage,
       new_message_placeholder: newMessagePlaceholder,
       show_agent_availability: showAgentAvailability,
       agent_available_text: agentAvailableText,
@@ -237,6 +250,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
       title,
       subtitle,
       greeting,
+      awayMessage,
       newMessagePlaceholder,
       showAgentAvailability,
       agentAvailableText,
@@ -313,6 +327,21 @@ class GettingStartedOverview extends React.Component<Props, State> {
               placeholder="Hello! Any questions?"
               value={greeting}
               onChange={this.handleChangeGreeting}
+              onBlur={this.updateWidgetSettings}
+            />
+          </Box>
+
+          <Box mb={3}>
+            <label htmlFor="away_message">
+              Set an away message (will replace greeting message outside working
+              hours):
+            </label>
+            <Input
+              id="away_message"
+              type="text"
+              placeholder="Sorry, we're away at the moment!"
+              value={awayMessage}
+              onChange={this.handleChangeAwayMessage}
               onBlur={this.updateWidgetSettings}
             />
           </Box>
