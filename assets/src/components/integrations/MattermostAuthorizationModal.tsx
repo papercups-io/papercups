@@ -22,10 +22,6 @@ const MattermostAuthorizationModal = ({
   >([]);
   const [isSaving, setSaving] = React.useState(false);
 
-  React.useEffect(() => {
-    API.fetchMattermostAuthorization().then(console.log).catch(console.log);
-  }, []);
-
   const handleRefreshChannels = async (query: MattermostAuthorization) => {
     if (!query.access_token || !query.mattermost_url) {
       return;
