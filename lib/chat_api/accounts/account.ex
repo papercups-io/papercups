@@ -8,6 +8,7 @@ defmodule ChatApi.Accounts.Account do
   alias ChatApi.Messages.Message
   alias ChatApi.Users.User
   alias ChatApi.WidgetSettings.WidgetSetting
+  alias ChatApi.CannedResponses.CannedResponse
 
   @type t :: %__MODULE__{
           company_name: String.t(),
@@ -24,6 +25,7 @@ defmodule ChatApi.Accounts.Account do
           messages: any(),
           users: any(),
           widget_settings: any(),
+          canned_responses: any(),
           working_hours: any(),
           settings: any(),
           # Timestamps
@@ -48,6 +50,7 @@ defmodule ChatApi.Accounts.Account do
     has_many(:messages, Message)
     has_many(:users, User)
     has_one(:widget_settings, WidgetSetting)
+    has_many(:canned_responses, CannedResponse)
 
     embeds_one(:settings, Settings, on_replace: :delete)
     embeds_many(:working_hours, WorkingHours, on_replace: :delete)
