@@ -2,23 +2,64 @@ defmodule ChatApiWeb.MattermostController do
   use ChatApiWeb, :controller
 
   alias ChatApi.{Mattermost, Messages}
+  alias ChatApi.Mattermost.MattermostAuthorization
 
   require Logger
 
   action_fallback(ChatApiWeb.FallbackController)
 
-  @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def oauth(conn, params) do
-    Logger.info("Params from Mattermost OAuth: #{inspect(params)}")
-    # TODO: implement me!
-    json(conn, %{data: nil})
+  @spec auth(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def auth(conn, %{"authorization" => authorization}) do
+    Logger.info("Params from Mattermost auth: #{inspect(authorization)}")
+
+    with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
+         params <- Map.merge(authorization, %{"account_id" => account_id, "user_id" => user_id}),
+         {:ok, result} <- Mattermost.create_mattermost_authorization(params) do
+      json(conn, %{data: %{ok: true, id: result.id}})
+    else
+      _ -> json(conn, %{data: %{ok: false}})
+    end
   end
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def authorization(conn, _payload) do
-    # TODO: implement me!
-    # (See implementation in Slack controller - this will look similar)
-    json(conn, %{data: nil})
+    authorization =
+      conn
+      |> Pow.Plug.current_user()
+      |> Map.get(:account_id)
+      |> Mattermost.get_authorization_by_account()
+
+    case authorization do
+      nil ->
+        json(conn, %{data: nil})
+
+      auth ->
+        json(conn, %{
+          data: %{
+            id: auth.id,
+            created_at: auth.inserted_at,
+            channel: auth.channel_name,
+            team_name: auth.team_domain
+          }
+        })
+    end
+  end
+
+  @spec channels(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def channels(conn, %{"mattermost_url" => mattermost_url, "access_token" => access_token}) do
+    authorization = %MattermostAuthorization{
+      access_token: access_token,
+      mattermost_url: mattermost_url,
+      account_id: conn.assigns.current_user.account_id,
+      user_id: conn.assigns.current_user.id
+    }
+
+    # TODO: figure out the best way to handle errors here... should we just return
+    # an empty list of channels if the call fails, or indicate that an error occurred?
+    case Mattermost.Client.list_channels(authorization) do
+      {:ok, %{body: channels}} -> json(conn, %{data: channels})
+      _ -> json(conn, %{data: []})
+    end
   end
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
