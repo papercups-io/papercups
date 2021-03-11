@@ -21,61 +21,52 @@ defmodule ChatApi.ConversationsTest do
   end
 
   describe "list_conversations_by_account_paginated/1" do
-    test "paginates results" do
-      account = insert(:account)
-      customer = insert(:customer, account: account)
-      insert_list(15, :conversation, account: account, customer: customer)
-
-      %{metadata: metadata1, entries: entries1} =
-        Conversations.list_conversations_by_account_paginated(account.id, %{
-          "limit" => 10
-        })
-
-      assert metadata1.after != nil
-      assert length(entries1) == 10
-
-      %{metadata: metadata2, entries: entries2} =
-        Conversations.list_conversations_by_account_paginated(account.id, %{
-          "limit" => 10,
-          "after" => metadata1.after
-        })
-
-      assert metadata2.after == nil
-      assert length(entries2) == 5
-    end
-
     test "sorts the conversations by most recent message" do
       account = insert(:account)
       customer = insert(:customer, account: account)
 
-      [conversation_1, conversation_2, conversation_3, conversation_4] =
-        insert_list(4, :conversation, account: account, customer: customer)
+      [conversation_1, conversation_2, conversation_3, conversation_4, conversation_5] =
+        insert_list(5, :conversation, account: account, customer: customer)
 
       insert(:message,
         account: account,
-        conversation: conversation_4,
-        inserted_at: ~N[2020-10-02 20:00:00]
+        conversation: conversation_5,
+        inserted_at: ~N[2020-11-04 20:00:00]
       )
 
       insert(:message,
         account: account,
-        conversation: conversation_2,
-        inserted_at: ~N[2020-11-02 20:00:00]
+        conversation: conversation_4,
+        inserted_at: ~N[2020-11-03 20:00:00]
       )
 
       insert(:message,
         account: account,
         conversation: conversation_3,
-        inserted_at: ~N[2020-11-03 20:00:00]
+        inserted_at: ~N[2020-11-02 20:00:00]
+      )
+
+      insert(:message,
+        account: account,
+        conversation: conversation_2,
+        inserted_at: ~N[2020-10-02 20:00:00]
+      )
+
+      insert(:message,
+        account: account,
+        conversation: conversation_1,
+        inserted_at: ~N[2020-10-01 20:00:00]
       )
 
       %{metadata: metadata1, entries: entries1} =
         Conversations.list_conversations_by_account_paginated(account.id, %{"limit" => 3})
 
-      result_ids = Enum.map(entries1, & &1.id)
-
       # Sorted by conversation with most recent message to least recent
-      assert result_ids == [conversation_1.id, conversation_3.id, conversation_2.id]
+      assert Enum.map(entries1, & &1.id) == [
+               conversation_5.id,
+               conversation_4.id,
+               conversation_3.id
+             ]
 
       %{metadata: metadata2, entries: entries2} =
         Conversations.list_conversations_by_account_paginated(account.id, %{
@@ -83,10 +74,12 @@ defmodule ChatApi.ConversationsTest do
           "after" => metadata1.after
         })
 
+      assert Enum.map(entries2, & &1.id) == [
+               conversation_2.id,
+               conversation_1.id
+             ]
 
-      result_ids2 = Enum.map(entries2, & &1.id)
-
-      assert result_ids2 == [conversation_4.id]
+      assert metadata2.after == nil
     end
   end
 

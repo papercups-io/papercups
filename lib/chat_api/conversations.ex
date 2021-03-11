@@ -513,13 +513,13 @@ defmodule ChatApi.Conversations do
         sort_direction: :desc,
         fetch_cursor_value_fun: fn
           schema, {:messages, :inserted_at} ->
-            case Enum.sort_by(schema.messages, & &1.inserted_at, :desc) do
-              [head | _] -> head.inserted_at
-              _ -> nil
-            end
+            # Get the `inserted_at` field of the most recent message
+            Enum.sort_by(schema.messages, & &1.inserted_at, :desc)
+            |> Enum.map(& &1.inserted_at)
+            |> List.first()
 
-          post, field ->
-            Paginator.default_fetch_cursor_value(post, field)
+          schema, field ->
+            Paginator.default_fetch_cursor_value(schema, field)
         end
       ],
       fn
