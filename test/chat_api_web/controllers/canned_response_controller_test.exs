@@ -2,10 +2,6 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
   use ChatApiWeb.ConnCase
   import ChatApi.Factory
 
-  @update_attrs %{
-    content: "some updated content",
-    name: "some updated name"
-  }
   @invalid_attrs %{content: nil, name: nil}
 
   setup %{conn: conn} do
@@ -20,23 +16,52 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
   describe "index" do
     test "lists all canned_responses",
          %{authed_conn: authed_conn} do
-      authed_conn = get(authed_conn, Routes.canned_response_path(authed_conn, :index))
-      assert json_response(authed_conn, 200)["data"] == []
+      conn = get(authed_conn, Routes.canned_response_path(authed_conn, :index))
+      assert json_response(conn, 200)["data"] == []
+    end
+
+    test "returns unauthorized when auth is invalid", %{conn: conn} do
+      conn = get(conn, Routes.canned_response_path(conn, :index))
+
+      assert json_response(conn, 401)["errors"] != %{}
+    end
+
+    test "lists canned_responses only for this account",
+         %{authed_conn: authed_conn, account: account} do
+      insert(:canned_response, %{
+        name: "First response name",
+        content: "First response content",
+        account: account
+      })
+
+      conn = get(authed_conn, Routes.canned_response_path(authed_conn, :index))
+
+      assert json_response(conn, 200)["data"] |> length() == 1
+
+      # Nw, make another account and canned response, and make sure we can't see that one in our query
+
+      another_account = insert(:account)
+
+      insert(:canned_response, %{
+        name: "Another canned response name",
+        content: "Another canned response content",
+        account: another_account
+      })
+
+      conn = get(authed_conn, Routes.canned_response_path(authed_conn, :index))
+
+      assert json_response(conn, 200)["data"] |> length() == 1
     end
   end
 
   describe "create canned_response" do
     test "renders canned_response when data is valid", %{
-      authed_conn: authed_conn,
-      account: account
+      authed_conn: authed_conn
     } do
       conn =
         post(authed_conn, Routes.canned_response_path(authed_conn, :create),
-          canned_response: %{
-            content: "some content",
-            name: "some name",
-            account_id: account.id
-          }
+          content: "some content",
+          name: "some name"
         )
 
       assert %{"id" => id} = json_response(conn, 201)["data"]
@@ -51,10 +76,7 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
     end
 
     test "renders errors when data is invalid", %{authed_conn: authed_conn} do
-      conn =
-        post(authed_conn, Routes.canned_response_path(authed_conn, :create),
-          canned_response: @invalid_attrs
-        )
+      conn = post(authed_conn, Routes.canned_response_path(authed_conn, :create), @invalid_attrs)
 
       assert json_response(conn, 422)["errors"] != %{}
     end
@@ -70,11 +92,8 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
 
       conn =
         post(authed_conn, Routes.canned_response_path(authed_conn, :create),
-          canned_response: %{
-            name: first_canned_response.name,
-            content: "New content",
-            account_id: account.id
-          }
+          name: first_canned_response.name,
+          content: "New content"
         )
 
       assert json_response(conn, 422)["error"]["errors"]
@@ -94,7 +113,8 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
 
       conn =
         put(authed_conn, Routes.canned_response_path(authed_conn, :update, canned_response),
-          canned_response: @update_attrs
+          content: "some updated content",
+          name: "some updated name"
         )
 
       assert %{"id" => ^id} = json_response(conn, 200)["data"]
@@ -117,7 +137,16 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
 
       conn =
         put(authed_conn, Routes.canned_response_path(authed_conn, :update, canned_response),
-          canned_response: @invalid_attrs
+          content: "some updated content",
+          name: nil
+        )
+
+      assert json_response(conn, 422)["errors"] != %{}
+
+      conn =
+        put(authed_conn, Routes.canned_response_path(authed_conn, :update, canned_response),
+          content: nil,
+          name: "some updated name"
         )
 
       assert json_response(conn, 422)["errors"] != %{}
@@ -143,11 +172,8 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
         put(
           authed_conn,
           Routes.canned_response_path(authed_conn, :update, second_canned_response),
-          canned_response: %{
-            name: first_canned_response.name,
-            content: "New content",
-            account_id: account.id
-          }
+          name: first_canned_response.name,
+          content: "New content"
         )
 
       assert json_response(conn, 422)["error"]["errors"]

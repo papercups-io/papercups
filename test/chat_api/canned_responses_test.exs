@@ -35,7 +35,7 @@ defmodule ChatApi.ChatApi.CannedResponsesTest do
       assert CannedResponses.list_canned_responses_by_account(account.id) == [canned_response]
 
       # insert another canned_response with the same account and assert that we're getting both now
-      second_canned_response = insert(:canned_response, account: account, name: "another name")
+      insert(:canned_response, account: account, name: "another name")
 
       assert CannedResponses.list_canned_responses_by_account(account.id) |> length() == 2
     end
