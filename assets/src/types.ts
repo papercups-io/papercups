@@ -148,6 +148,7 @@ export type WidgetSettings = {
   subtitle?: string;
   color?: string;
   greeting?: string;
+  away_message?: string;
   new_message_placeholder?: string;
   show_agent_availability?: boolean;
   agent_available_text?: string;
