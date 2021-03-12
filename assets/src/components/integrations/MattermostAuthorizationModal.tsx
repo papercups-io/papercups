@@ -1,6 +1,14 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Button, Input, Modal, Select, Text} from '../common';
+import {
+  Button,
+  Divider,
+  Input,
+  Modal,
+  Paragraph,
+  Select,
+  Text,
+} from '../common';
 import * as API from '../../api';
 import {MattermostAuthorization, MattermostChannel} from '../../types';
 import logger from '../../logger';
@@ -127,6 +135,24 @@ const MattermostAuthorizationModal = ({
       ]}
     >
       <Box>
+        <Paragraph>
+          <Text type="secondary">
+            At the moment, we only support integrations with{' '}
+            <Text strong>self-hosted Mattermost</Text> instances. In order to
+            get set up, please follow{' '}
+            <a
+              href="https://docs.papercups.io/reply-from-mattermost"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              these instructions
+            </a>
+            .
+          </Text>
+        </Paragraph>
+
+        <Divider />
+
         <Box mb={3}>
           <label htmlFor="mattermost_url">
             <Text strong>Mattermost URL</Text>
