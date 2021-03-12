@@ -509,6 +509,7 @@ defmodule ChatApi.Conversations do
     Enum.reduce(
       args,
       [
+        # These are paginator options from https://hexdocs.pm/paginator/Paginator.html#c:paginate/3-options
         cursor_fields: [{:messages, :inserted_at}, :id],
         sort_direction: :desc,
         fetch_cursor_value_fun: fn
