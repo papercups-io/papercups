@@ -462,6 +462,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
             subtitle={subtitle}
             primaryColor={color}
             greeting={greeting}
+            awayMessage={awayMessage}
             showAgentAvailability={showAgentAvailability}
             agentAvailableText={agentAvailableText}
             agentUnavailableText={agentUnavailableText}
@@ -494,6 +495,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
           subtitle={subtitle}
           color={color}
           greeting={greeting}
+          awayMessage={awayMessage}
           newMessagePlaceholder={newMessagePlaceholder}
           showAgentAvailability={showAgentAvailability}
           agentAvailableText={agentAvailableText}
@@ -544,6 +546,7 @@ const CodeSnippet: FunctionComponent<Pick<
   | 'subtitle'
   | 'color'
   | 'greeting'
+  | 'awayMessage'
   | 'newMessagePlaceholder'
   | 'showAgentAvailability'
   | 'agentAvailableText'
@@ -556,6 +559,7 @@ const CodeSnippet: FunctionComponent<Pick<
   subtitle,
   color,
   greeting,
+  awayMessage,
   newMessagePlaceholder,
   showAgentAvailability,
   agentAvailableText,
@@ -589,6 +593,7 @@ window.Papercups = {
     subtitle: "${subtitle}",
     primaryColor: "${color}",
     greeting: "${greeting || ''}",
+    awayMessage: "${awayMessage || ''}",
     newMessagePlaceholder: "${newMessagePlaceholder || ''}",
     showAgentAvailability: ${showAgentAvailability},
     agentAvailableText: "${agentAvailableText}",
@@ -662,6 +667,7 @@ const ExamplePage = () => {
         subtitle="${subtitle}"
         primaryColor="${color}"
         greeting="${greeting || ''}"
+        awayMessage="${awayMessage || ''}"
         newMessagePlaceholder="${newMessagePlaceholder}"
         showAgentAvailability={${showAgentAvailability}}
         agentAvailableText="${agentAvailableText}"
