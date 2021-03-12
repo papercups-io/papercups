@@ -98,6 +98,10 @@ type SubscriptionUsage = {
   numMessages?: number;
 };
 
+export const isSupportedCurrency = (currency: string) => {
+  return currency.toLowerCase() === 'usd';
+};
+
 export const shouldRequirePlanUpdate = (
   plan: SubscriptionPlan,
   usage: SubscriptionUsage
@@ -152,6 +156,15 @@ export const calculateSubscriptionPrice = (
   }
 
   const {prices = []} = subscription;
+  const hasValidCurrency = prices.every(({currency}) =>
+    isSupportedCurrency(currency)
+  );
+
+  if (!hasValidCurrency) {
+    throw new Error(
+      'Prices should all have the same currency (in either USD or EUR)'
+    );
+  }
 
   return prices.reduce((total: number, price: any) => {
     const {
@@ -162,7 +175,7 @@ export const calculateSubscriptionPrice = (
       unit_amount: amount = 0,
     } = price;
     const isValidPrice =
-      currency.toLowerCase() === 'usd' &&
+      isSupportedCurrency(currency) &&
       interval === 'month' &&
       intervalCount === 1;
 
@@ -203,7 +216,7 @@ export const calculateSubscriptionDiscount = (
     return 0;
   }
 
-  const isValidCurrency = currency ? currency.toLowerCase() === 'usd' : true;
+  const isValidCurrency = currency ? isSupportedCurrency(currency) : true;
 
   if (!valid || !isValidCurrency) {
     throw new Error(`Invalid discount: ${JSON.stringify(discount)}`);
