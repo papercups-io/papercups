@@ -114,6 +114,7 @@ defmodule ChatApiWeb.Router do
     resources("/tags", TagController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
+    resources("/canned_responses", CannedResponseController)
 
     get("/slack_conversation_threads", SlackConversationThreadController, :index)
     get("/conversations/:conversation_id/previous", ConversationController, :previous)

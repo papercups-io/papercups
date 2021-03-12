@@ -34,6 +34,14 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def canned_response_factory do
+    %ChatApi.CannedResponses.CannedResponse{
+      account: build(:account),
+      name: "Test response name",
+      content: "Test response content"
+    }
+  end
+
   def company_factory do
     %ChatApi.Companies.Company{
       account: build(:account),
