@@ -87,7 +87,7 @@ export const PricingOptionsModal = ({
         }
         pricing={
           <Text>
-            <Text strong>${STARTER_PRICE}</Text> forever
+            <Text strong>${STARTER_PRICE}</Text>/month
           </Text>
         }
         features={
