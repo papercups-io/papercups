@@ -42,6 +42,20 @@ defmodule ChatApi.Mattermost do
     |> Repo.update()
   end
 
+  @spec create_or_update_authorization!(map()) ::
+          {:ok, MattermostAuthorization.t()} | {:error, Ecto.Changeset.t()}
+  def create_or_update_authorization!(attrs \\ %{}) do
+    case attrs do
+      %{"id" => id} when is_binary(id) ->
+        id
+        |> get_mattermost_authorization!()
+        |> update_mattermost_authorization(attrs)
+
+      params ->
+        create_mattermost_authorization(params)
+    end
+  end
+
   @spec delete_mattermost_authorization(MattermostAuthorization.t()) ::
           {:ok, MattermostAuthorization.t()} | {:error, Ecto.Changeset.t()}
   def delete_mattermost_authorization(%MattermostAuthorization{} = mattermost_authorization) do

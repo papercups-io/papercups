@@ -14,7 +14,7 @@ defmodule ChatApiWeb.MattermostController do
 
     with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
          params <- Map.merge(authorization, %{"account_id" => account_id, "user_id" => user_id}),
-         {:ok, result} <- Mattermost.create_mattermost_authorization(params) do
+         {:ok, result} <- Mattermost.create_or_update_authorization!(params) do
       json(conn, %{data: %{ok: true, id: result.id}})
     else
       _ -> json(conn, %{data: %{ok: false}})
@@ -63,10 +63,13 @@ defmodule ChatApiWeb.MattermostController do
   end
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def delete(conn, %{"id" => _id}) do
-    # TODO: implement me!
-    # (See implementation in Slack controller - this will look similar)
-    send_resp(conn, :no_content, "")
+  def delete(conn, %{"id" => id}) do
+    with %{account_id: _account_id} <- conn.assigns.current_user,
+         %MattermostAuthorization{} = auth <-
+           Mattermost.get_mattermost_authorization!(id),
+         {:ok, %MattermostAuthorization{}} <- Mattermost.delete_mattermost_authorization(auth) do
+      send_resp(conn, :no_content, "")
+    end
   end
 
   @spec webhook(Plug.Conn.t(), map()) :: Plug.Conn.t()

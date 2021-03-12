@@ -1,16 +1,19 @@
 import React from 'react';
-import {Box} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 import {Button, Input, Modal, Select, Text} from '../common';
 import * as API from '../../api';
 import {MattermostAuthorization, MattermostChannel} from '../../types';
 import logger from '../../logger';
+import {IntegrationType} from './support';
 
 const MattermostAuthorizationModal = ({
   visible,
+  authorizationId,
   onSuccess,
   onCancel,
 }: {
   visible: boolean;
+  authorizationId?: string | null;
   onSuccess: (authorization: MattermostAuthorization) => void;
   onCancel: () => void;
 }) => {
@@ -36,11 +39,14 @@ const MattermostAuthorizationModal = ({
     }
   };
 
-  const handleCreateAuthorization = async () => {
+  const handleSetAuthorization = async () => {
     setSaving(true);
 
     try {
-      const result = await API.createMattermostAuthorization(authorization);
+      const params = authorizationId
+        ? {...authorization, id: authorizationId}
+        : authorization;
+      const result = await API.createMattermostAuthorization(params);
 
       return onSuccess(result);
     } catch (err) {
@@ -104,7 +110,7 @@ const MattermostAuthorizationModal = ({
     <Modal
       title="Connect to Mattermost"
       visible={visible}
-      onOk={handleCreateAuthorization}
+      onOk={handleSetAuthorization}
       onCancel={handleCancel}
       footer={[
         <Button key="cancel" onClick={handleCancel}>
@@ -114,7 +120,7 @@ const MattermostAuthorizationModal = ({
           key="submit"
           type="primary"
           loading={isSaving}
-          onClick={handleCreateAuthorization}
+          onClick={handleSetAuthorization}
         >
           Save
         </Button>,
@@ -145,7 +151,6 @@ const MattermostAuthorizationModal = ({
             id="bot_access_token"
             type="text"
             value={accessToken}
-            autoFocus
             placeholder="ab12cd34"
             onChange={handleChangeBotToken}
           />
@@ -188,13 +193,69 @@ const MattermostAuthorizationModal = ({
             id="outgoing_webhook_token"
             type="text"
             value={verificationToken}
-            autoFocus
             placeholder="ef56gh78"
             onChange={handleChangeWebhookToken}
           />
         </Box>
       </Box>
     </Modal>
+  );
+};
+
+export const MattermostAuthorizationButton = ({
+  integration,
+  onUpdate,
+}: {
+  integration: IntegrationType;
+  onUpdate: () => void;
+}) => {
+  const [isOpen, setOpen] = React.useState(false);
+
+  const {status, authorization_id: authorizationId} = integration;
+  const isConnected = status === 'connected' && !!authorizationId;
+
+  const handleOpenModal = () => setOpen(true);
+  const handlCloseModal = () => setOpen(false);
+  const handleSuccess = () => {
+    onUpdate();
+    handlCloseModal();
+  };
+
+  const handleDisconnect = async () => {
+    if (!authorizationId) {
+      return;
+    }
+
+    return API.deleteMattermostAuthorization(authorizationId)
+      .then(() => onUpdate())
+      .catch((err) =>
+        logger.error('Error deleting Mattermost authorization!', err)
+      );
+  };
+
+  return (
+    <>
+      {isConnected ? (
+        <Flex mx={-1}>
+          <Box mx={1}>
+            <Button onClick={handleOpenModal}>Update</Button>
+          </Box>
+          <Box mx={1}>
+            <Button danger onClick={handleDisconnect}>
+              Disconnect
+            </Button>
+          </Box>
+        </Flex>
+      ) : (
+        <Button onClick={handleOpenModal}>Connect</Button>
+      )}
+      <MattermostAuthorizationModal
+        visible={isOpen}
+        authorizationId={authorizationId}
+        onSuccess={handleSuccess}
+        onCancel={handlCloseModal}
+      />
+    </>
   );
 };
 

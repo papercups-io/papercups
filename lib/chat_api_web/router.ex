@@ -94,6 +94,7 @@ defmodule ChatApiWeb.Router do
     post("/mattermost/auth", MattermostController, :auth)
     get("/mattermost/channels", MattermostController, :channels)
     get("/mattermost/authorization", MattermostController, :authorization)
+    delete("/mattermost/authorizations/:id", MattermostController, :delete)
     get("/google/auth", GoogleController, :auth)
     get("/google/oauth", GoogleController, :callback)
     get("/google/authorization", GoogleController, :authorization)

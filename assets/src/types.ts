@@ -141,6 +141,7 @@ export type PersonalApiKey = {
 };
 
 export type MattermostAuthorization = {
+  id?: string;
   access_token?: string;
   channel_id?: string;
   channel_name?: string;

@@ -694,6 +694,19 @@ export const fetchMattermostAuthorization = async (
     .then((res) => res.body.data);
 };
 
+export const deleteMattermostAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/mattermost/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
 export const fetchGmailAuthorization = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
