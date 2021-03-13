@@ -179,13 +179,41 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
       assert json_response(conn, 422)["error"]["errors"]
              |> Map.has_key?("unique_canned_response_per_account")
     end
+
+    test "renders errors when editing another account's canned response",
+         %{conn: conn, account: account} do
+      # Add a canned response for the first account
+      canned_response =
+        insert(:canned_response, %{
+          name: "Canned response name",
+          content: "Canned response content",
+          account: account
+        })
+
+      new_account = insert(:account)
+      new_user = insert(:user, account: new_account)
+      new_conn = put_req_header(conn, "accept", "application/json")
+      new_authed_conn = Pow.Plug.assign_current_user(new_conn, new_user, [])
+
+      conn =
+        put(
+          new_authed_conn,
+          Routes.canned_response_path(new_authed_conn, :update, canned_response),
+          name: "New name",
+          content: "New content"
+        )
+
+      assert json_response(conn, 403)["error"]["message"] == "Forbidden"
+    end
   end
 
   describe "delete canned_response" do
     test "deletes chosen canned_response", %{
-      authed_conn: authed_conn
+      authed_conn: authed_conn,
+      account: account
     } do
-      canned_response = insert(:canned_response, %{name: "Name", content: "Content"})
+      canned_response =
+        insert(:canned_response, %{name: "Name", content: "Content", account: account})
 
       conn =
         delete(authed_conn, Routes.canned_response_path(authed_conn, :delete, canned_response))
@@ -195,6 +223,36 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
       assert_error_sent 404, fn ->
         get(authed_conn, Routes.canned_response_path(authed_conn, :show, canned_response))
       end
+    end
+
+    test "renders error when trying to delete another account's canned_response",
+         %{conn: conn, authed_conn: authed_conn, account: account} do
+      # Add a canned response for the first account
+      canned_response =
+        insert(:canned_response, %{
+          name: "Canned response name",
+          content: "Canned response content",
+          account: account
+        })
+
+      new_account = insert(:account)
+      new_user = insert(:user, account: new_account)
+      new_conn = put_req_header(conn, "accept", "application/json")
+      new_authed_conn = Pow.Plug.assign_current_user(new_conn, new_user, [])
+
+      conn =
+        delete(
+          new_authed_conn,
+          Routes.canned_response_path(new_authed_conn, :delete, canned_response)
+        )
+
+      assert json_response(conn, 403)["error"]["message"] == "Forbidden"
+
+      # verify the canned response is still there for the right user
+
+      conn = get(authed_conn, Routes.canned_response_path(authed_conn, :show, canned_response.id))
+
+      assert canned_response = json_response(conn, 200)["data"]
     end
   end
 end

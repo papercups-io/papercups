@@ -22,6 +22,17 @@ defmodule ChatApiWeb.FallbackController do
     })
   end
 
+  def call(conn, {:error, :forbidden}) do
+    conn
+    |> put_status(403)
+    |> json(%{
+      error: %{
+        status: 403,
+        message: "Forbidden"
+      }
+    })
+  end
+
   def call(conn, {:error, %Ecto.Changeset{} = changeset}) do
     errors = Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
 

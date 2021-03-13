@@ -39,14 +39,21 @@ defmodule ChatApiWeb.CannedResponseController do
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, %{"id" => id}) do
     canned_response = CannedResponses.get_canned_response!(id)
-    render(conn, "show.json", canned_response: canned_response)
+
+    with :ok <- is_authorized?(conn.assigns.current_user, canned_response) do
+      render(conn, "show.json", canned_response: canned_response)
+    end
   end
 
   def update(conn, %{"id" => id, "content" => content, "name" => name}) do
     canned_response = CannedResponses.get_canned_response!(id)
 
-    with {:ok, %CannedResponse{} = canned_response} <-
-           CannedResponses.update_canned_response(canned_response, %{name: name, content: content}) do
+    with :ok <- is_authorized?(conn.assigns.current_user, canned_response),
+         {:ok, %CannedResponse{} = canned_response} <-
+           CannedResponses.update_canned_response(canned_response, %{
+             name: name,
+             content: content
+           }) do
       render(conn, "show.json", canned_response: canned_response)
     end
   end
@@ -54,8 +61,22 @@ defmodule ChatApiWeb.CannedResponseController do
   def delete(conn, %{"id" => id}) do
     canned_response = CannedResponses.get_canned_response!(id)
 
-    with {:ok, %CannedResponse{}} <- CannedResponses.delete_canned_response(canned_response) do
+    with :ok <- is_authorized?(conn.assigns.current_user, canned_response),
+         {:ok, %CannedResponse{}} <- CannedResponses.delete_canned_response(canned_response) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  defp is_authorized?(user, canned_response) do
+    cond do
+      user.role == "admin" ->
+        :ok
+
+      user.account_id == canned_response.account_id ->
+        :ok
+
+      true ->
+        {:error, :forbidden}
     end
   end
 end
