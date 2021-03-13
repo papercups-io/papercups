@@ -45,6 +45,7 @@ defmodule ChatApiWeb.CannedResponseController do
     end
   end
 
+  @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id, "content" => content, "name" => name}) do
     canned_response = CannedResponses.get_canned_response!(id)
 
@@ -58,6 +59,7 @@ defmodule ChatApiWeb.CannedResponseController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
     canned_response = CannedResponses.get_canned_response!(id)
 

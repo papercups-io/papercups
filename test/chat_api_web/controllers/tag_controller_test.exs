@@ -66,6 +66,23 @@ defmodule ChatApiWeb.TagControllerTest do
       conn = put(authed_conn, Routes.tag_path(authed_conn, :update, tag), tag: @invalid_attrs)
       assert json_response(conn, 422)["errors"] != %{}
     end
+
+    # test "renders errors when editing another account's tag",
+    #      %{conn: conn, account: account, tag: %Tag{id: id} = tag} do
+    #   new_account = insert(:account)
+    #   new_user = insert(:user, account: new_account)
+    #   new_conn = put_req_header(conn, "accept", "application/json")
+    #   new_authed_conn = Pow.Plug.assign_current_user(new_conn, new_user, [])
+
+    #   conn =
+    #     put(
+    #       new_authed_conn,
+    #       Routes.tag_path(new_authed_conn, :update, tag),
+    #       tag: @update_attrs
+    #     )
+
+    #   assert json_response(conn, 401)["error"]["errors"]
+    # end
   end
 
   describe "delete tag" do
