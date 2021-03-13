@@ -38,7 +38,9 @@ defmodule ChatApi.MessagesTest do
       attrs = params_with_assocs(:message, body: "valid message body")
 
       assert {:ok, %Message{} = message} = Messages.create_message(attrs)
-      assert ChatApi.Conversations.get_conversation!(message.conversation_id).last_activity_at != nil
+
+      assert ChatApi.Conversations.get_conversation!(message.conversation_id).last_activity_at !=
+               nil
     end
 
     test "create_message/1 with invalid source returns error changeset" do
