@@ -6,6 +6,7 @@ defmodule ChatApi.Messages do
   import Ecto.Query, warn: false
 
   alias ChatApi.Repo
+  alias ChatApi.Conversations
   alias ChatApi.Messages.{Message, MessageFile}
 
   require Logger
@@ -50,9 +51,15 @@ defmodule ChatApi.Messages do
 
   @spec create_message(map()) :: {:ok, Message.t()} | {:error, Ecto.Changeset.t()}
   def create_message(attrs \\ %{}) do
-    %Message{}
-    |> Message.changeset(attrs)
-    |> Repo.insert()
+    with {:ok, message} <-
+           %Message{}
+           |> Message.changeset(attrs)
+           |> Repo.insert() do
+      Conversations.mark_activity(message.conversation_id)
+      {:ok, message}
+    else
+      error -> error
+    end
   end
 
   @spec create_and_fetch!(map()) :: Message.t() | {:error, Ecto.Changeset.t()}

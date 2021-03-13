@@ -17,6 +17,7 @@ defmodule ChatApi.Conversations.Conversation do
           read: boolean(),
           archived_at: any(),
           closed_at: any(),
+          last_activity_at: any(),
           metadata: any(),
           # Relations
           assignee_id: any(),
@@ -44,6 +45,7 @@ defmodule ChatApi.Conversations.Conversation do
     field(:archived_at, :utc_datetime)
     field(:first_replied_at, :utc_datetime)
     field(:closed_at, :utc_datetime)
+    field(:last_activity_at, :utc_datetime)
     field(:metadata, :map)
 
     has_many(:messages, Message)
@@ -78,6 +80,11 @@ defmodule ChatApi.Conversations.Conversation do
     |> put_closed_at()
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:customer_id)
+  end
+
+  def last_activity_changeset(conversation, attrs) do
+    conversation
+    |> cast(attrs, [:last_activity_at])
   end
 
   defp put_closed_at(%Ecto.Changeset{valid?: true, changes: %{status: status}} = changeset) do
