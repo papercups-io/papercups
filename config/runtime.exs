@@ -1,5 +1,9 @@
 import Config
 
+if config_env() in [:dev, :test] do
+  Envy.auto_load()
+end
+
 IO.inspect("running RUNTIME.EXS")
 
 database_url =
@@ -34,7 +38,7 @@ IO.inspect(backend_url)
 
 # use_ip_v6 = toBool(System.get("USE_IP_V6"), false)
 require_db_ssl = String.to_existing_atom(System.get_env("REQUIRE_DB_SSL", "true"))
-port = String.to_integer(System.get_env("PORT") || "10")
+port = String.to_integer(System.get_env("PORT") || "4000")
 use_ip_v6 = String.to_existing_atom(System.get_env("USE_IP_V6", "false"))
 IO.inspect("use_ip_v6")
 IO.inspect(use_ip_v6)
@@ -91,7 +95,6 @@ config :chat_api, ChatApi.Repo,
   ssl: require_db_ssl,
   url: database_url,
   pool_size: pool_size,
-  socket_options: socket_options
 
 # # Configure your database
 # config :chat_api, ChatApi.Repo,
@@ -103,36 +106,40 @@ ssl_key_path = System.get_env("SSL_KEY_PATH")
 ssl_cert_path = System.get_env("SSL_CERT_PATH")
 https = (ssl_cert_path && ssl_key_path) != nil
 
-# if https do
+config :chat_api, ChatApiWeb.Endpoint,
+  http: [
+    port: port
+    # transport_options: [socket_opts: [:inet6]]
+  ],
+  secret_key_base: secret_key_base
+
+if https do
+  config :chat_api, ChatApiWeb.Endpoint,
+    url: [host: backend_url],
+    pubsub_server: ChatApi.PubSub,
+    socket_options: socket_options,
+    https: [
+      port: 443,
+      cipher_suite: :strong,
+      otp_app: :hello,
+      keyfile: ssl_key_path,
+      certfile: ssl_cert_path
+    ],
+    server: true
+end
+
+# else
 #   config :chat_api, ChatApiWeb.Endpoint,
 #     http: [
 #       port: port,
 #       transport_options: [socket_opts: [:inet6]]
 #     ],
-#     url: [host: backend_url],
-#     pubsub_server: ChatApi.PubSub,
-#     secret_key_base: secret_key_base,
-#     socket_options: socket_options,
-#     https: [
-#       port: 443,
-#       cipher_suite: :strong,
-#       otp_app: :hello,
-#       keyfile: ssl_key_path,
-#       certfile: ssl_cert_path
-#     ],
-#     server: true
-# else
-config :chat_api, ChatApiWeb.Endpoint,
-  http: [
-    port: String.to_integer(System.get_env("PORT") || "4000"),
-    transport_options: [socket_opts: [:inet6]]
-  ],
-  url: [scheme: "https", host: {:system, "BACKEND_URL"}, port: 443],
-  # FIXME: not sure the best way to handle this, but we want
-  # to allow our customers' websites to connect to our server
-  check_origin: false,
-  force_ssl: [rewrite_on: [:x_forwarded_proto]],
-  secret_key_base: secret_key_base
+#     url: [scheme: "https", host: {:system, "BACKEND_URL"}, port: 443],
+#     # FIXME: not sure the best way to handle this, but we want
+#     # to allow our customers' websites to connect to our server
+#     check_origin: false,
+#     force_ssl: [rewrite_on: [:x_forwarded_proto]]
+# end
 
 # config :chat_api, ChatApiWeb.Endpoint,
 #   http: [
