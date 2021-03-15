@@ -94,66 +94,26 @@ end
 config :chat_api, ChatApi.Repo,
   ssl: require_db_ssl,
   url: database_url,
+  socket_options: socket_options,
   pool_size: pool_size
-
-# # Configure your database
-# config :chat_api, ChatApi.Repo,
-#   ssl: require_db_ssl,
-#   url: database_url,
-#   pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
 
 ssl_key_path = System.get_env("SSL_KEY_PATH")
 ssl_cert_path = System.get_env("SSL_CERT_PATH")
 https = (ssl_cert_path && ssl_key_path) != nil
 
-config :chat_api, ChatApiWeb.Endpoint,
-  http: [
-    port: port
-    # transport_options: [socket_opts: [:inet6]]
-  ],
-  secret_key_base: secret_key_base
-
-if https do
+if config_env() in [:prod] do
   config :chat_api, ChatApiWeb.Endpoint,
-    url: [host: backend_url],
-    pubsub_server: ChatApi.PubSub,
-    socket_options: socket_options,
-    https: [
-      port: 443,
-      cipher_suite: :strong,
-      otp_app: :hello,
-      keyfile: ssl_key_path,
-      certfile: ssl_cert_path
+    http: [
+      port: String.to_integer(System.get_env("PORT") || "4000"),
+      transport_options: [socket_opts: [:inet6]]
     ],
-    server: true
+    url: [scheme: "https", host: {:system, "BACKEND_URL"}, port: 443],
+    # FIXME: not sure the best way to handle this, but we want
+    # to allow our customers' websites to connect to our server
+    check_origin: false,
+    force_ssl: [rewrite_on: [:x_forwarded_proto]],
+    secret_key_base: secret_key_base
 end
-
-# else
-#   config :chat_api, ChatApiWeb.Endpoint,
-#     http: [
-#       port: port,
-#       transport_options: [socket_opts: [:inet6]]
-#     ],
-#     url: [scheme: "https", host: {:system, "BACKEND_URL"}, port: 443],
-#     # FIXME: not sure the best way to handle this, but we want
-#     # to allow our customers' websites to connect to our server
-#     check_origin: false,
-#     force_ssl: [rewrite_on: [:x_forwarded_proto]]
-# end
-
-# config :chat_api, ChatApiWeb.Endpoint,
-#   http: [
-#     port: String.to_integer(System.get_env("PORT") || "4000"),
-#     transport_options: [socket_opts: [:inet6]]
-#   ],
-#   url: [scheme: "https", host: {:system, "BACKEND_URL"}, port: 443],
-#   # FIXME: not sure the best way to handle this, but we want
-#   # to allow our customers' websites to connect to our server
-#   check_origin: false,
-#   force_ssl: [rewrite_on: [:x_forwarded_proto]],
-#   secret_key_base: secret_key_base
-
-# end
 
 # Configure Sentry
 sentry_dsn = System.get_env("SENTRY_DSN")
