@@ -1,5 +1,7 @@
 use Mix.Config
 
+IO.inspect("running test.exs")
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
@@ -16,11 +18,13 @@ config :chat_api, ChatApi.Repo,
   # in sandbox mode may produces get connection timeout
   queue_target: 500
 
-# We don't run a server during test. If one is required,
-# you can enable the server option below.
 config :chat_api, ChatApiWeb.Endpoint,
-  http: [port: 4002],
-  server: false
+  url: [host: "localhost"],
+  secret_key_base: "9YWmWz498gUjiMQXLq2PX/GcB5uSlqPmcxKPJ49k0vR+6ytuSydFFyDDD3zwRRWi",
+  render_errors: [view: ChatApiWeb.ErrorView, accepts: ~w(json), layout: false],
+  pubsub_server: ChatApi.PubSub,
+  live_view: [signing_salt: "pRVXwt3k"],
+  http: [port: 4002]
 
 config :chat_api, Oban, crontab: false, queues: false, plugins: false
 

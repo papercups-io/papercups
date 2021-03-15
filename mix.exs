@@ -44,6 +44,7 @@ defmodule ChatApi.MixProject do
       {:ex_machina, "~> 2.4", only: [:test]},
       {:mock, "~> 0.3.0", only: :test},
       {:customerio, "~> 0.2"},
+      {:envy, "~> 1.1.1"},
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
       {:swoosh, "~> 1.0"},

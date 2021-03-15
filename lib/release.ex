@@ -1,3 +1,5 @@
+IO.inspect("Running release.ex singular")
+
 defmodule ChatApi.Release do
   @moduledoc """
   Export functions to run in the context of Elixir releases.

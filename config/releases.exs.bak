@@ -1,4 +1,5 @@
 import Config
+IO.inspect("RUNNING IN RELEASES.EXS")
 
 database_url =
   System.get_env("DATABASE_URL") ||
@@ -59,20 +60,3 @@ else
     secret_key_base: secret_key_base,
     server: true
 end
-
-# https = (ssl_cert_path && ssl_key_path) != nil
-# # ## SSL Support
-# #
-# # To get SSL working, you will need to add the `https` key
-# # to the previous section and set your `:url` port to 443:
-# if ssl_key_path && ssl_cert_path do
-#   config :chat_api, ChatApiWeb.Endpoint,
-#     url: [host: "example.com", port: 443],
-#     https: [
-#       port: 443,
-#       cipher_suite: :strong,
-#       keyfile: ssl_key_path,
-#       certfile: ssl_cert_path,
-#       transport_options: [socket_opts: [:inet6]]
-#     ]
-# end
