@@ -651,6 +651,62 @@ export const fetchSlackChannels = async (
     .then((res) => res.body.data);
 };
 
+export const fetchMattermostChannels = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/mattermost/channels`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createMattermostAuthorization = async (
+  authorization = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/mattermost/auth`)
+    .send({authorization})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchMattermostAuthorization = async (
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/mattermost/authorization`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteMattermostAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/mattermost/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
 export const fetchGmailAuthorization = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');

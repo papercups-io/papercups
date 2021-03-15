@@ -2,6 +2,7 @@ export type IntegrationType = {
   key:
     | 'slack'
     | 'slack:sync'
+    | 'mattermost'
     | 'gmail'
     | 'sheets'
     | 'microsoft-teams'
