@@ -19,7 +19,7 @@ defmodule ChatApi.CannedResponsesTest do
       {:ok, account: account, canned_response: canned_response}
     end
 
-    test "list_canned_responses/0 returns all canned_responses", %{
+    test "list_canned_responses/1 returns all canned_responses", %{
       account: account,
       canned_response: canned_response
     } do

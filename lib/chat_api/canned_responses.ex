@@ -37,7 +37,7 @@ defmodule ChatApi.CannedResponses do
   end
 
   @spec delete_canned_response(CannedResponse.t()) ::
-          {:ok, Tag.t()} | {:error, Ecto.Changeset.t()}
+          {:ok, CannedResponse.t()} | {:error, Ecto.Changeset.t()}
   def delete_canned_response(%CannedResponse{} = canned_response) do
     Repo.delete(canned_response)
   end
