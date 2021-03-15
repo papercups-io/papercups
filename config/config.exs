@@ -36,13 +36,11 @@ config :chat_api, :phoenix_swagger,
 
 # database_url = System.get_env("DATABASE_URL") || "ecto://postgres:postgres@localhost/chat_api_dev"
 
-# # Configures the endpoint
-# config :chat_api, ChatApiWeb.Endpoint,
-#   url: [host: "localhost"],
-#   secret_key_base: "9YWmWz498gUjiMQXLq2PX/GcB5uSlqPmcxKPJ49k0vR+6ytuSydFFyDDD3zwRRWi",
-#   render_errors: [view: ChatApiWeb.ErrorView, accepts: ~w(json), layout: false],
-#   pubsub_server: ChatApi.PubSub,
-#   live_view: [signing_salt: "pRVXwt3k"]
+# Configures the endpoint
+config :chat_api, ChatApiWeb.Endpoint,
+  render_errors: [view: ChatApiWeb.ErrorView, accepts: ~w(json), layout: false],
+  pubsub_server: ChatApi.PubSub,
+  live_view: [signing_salt: "pRVXwt3k"]
 
 config :pow, Pow.Postgres.Store,
   repo: ChatApi.Repo,

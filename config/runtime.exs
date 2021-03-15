@@ -94,7 +94,7 @@ end
 config :chat_api, ChatApi.Repo,
   ssl: require_db_ssl,
   url: database_url,
-  pool_size: pool_size,
+  pool_size: pool_size
 
 # # Configure your database
 # config :chat_api, ChatApi.Repo,
