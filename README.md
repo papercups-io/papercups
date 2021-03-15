@@ -43,7 +43,7 @@ Check out our [blog](https://papercups.io/blog) for more updates and learnings
 
 ## Documentation
 
-[Getting setup for development](https://github.com/papercups-io/papercups/wiki/Development-Setup#getting-started)
+Check out our docs at [docs.papercups.io](https://docs.papercups.io/)
 
 ## Contributing
 
