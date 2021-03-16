@@ -7,6 +7,19 @@ defmodule ChatApiWeb.ConversationController do
 
   action_fallback(ChatApiWeb.FallbackController)
 
+  plug :authorize when action in [:show, :update, :delete]
+
+  defp authorize(conn, _) do
+    id = conn.path_params["id"]
+
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         conversation = %{account_id: ^account_id} <- Conversations.get_conversation!(id) do
+      assign(conn, :current_conversation, conversation)
+    else
+      _ -> ChatApiWeb.FallbackController.call(conn, {:error, :not_found}) |> halt()
+    end
+  end
+
   def swagger_definitions do
     %{
       Conversation:
@@ -189,9 +202,8 @@ defmodule ChatApiWeb.ConversationController do
   end
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def show(conn, %{"id" => id}) do
-    conversation = Conversations.get_conversation!(id)
-    render(conn, "show.json", conversation: conversation)
+  def show(conn, _params) do
+    render(conn, "show.json", conversation: conn.assigns.current_conversation)
   end
 
   swagger_path :update do
@@ -208,10 +220,10 @@ defmodule ChatApiWeb.ConversationController do
   end
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def update(conn, %{"id" => id, "conversation" => conversation_params}) do
-    conversation = Conversations.get_conversation!(id)
+  def update(conn, %{"conversation" => conversation_params}) do
+    conversation = conn.assigns.current_conversation
 
-    with {:ok, %Conversation{} = conversation} <-
+    with {:ok, conversation} <-
            Conversations.update_conversation(conversation, conversation_params) do
       # Broadcast updates asynchronously if these channels have been configured
       conversation
@@ -223,8 +235,8 @@ defmodule ChatApiWeb.ConversationController do
   end
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def delete(conn, %{"id" => id}) do
-    conversation = Conversations.get_conversation!(id)
+  def delete(conn, _params) do
+    conversation = conn.assigns.current_conversation
 
     # Sending a message to Slack first before deleting since there's no conversation to
     # send to after it's deleted.
