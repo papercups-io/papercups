@@ -226,12 +226,12 @@ defmodule ChatApiWeb.ConversationControllerTest do
 
       assert json_response(resp, 404)["error"]["message"] == "Not found"
     end
-  end
 
-  defp unauthorized_conversation() do
-    account = insert(:account)
-    customer = insert(:customer, account: account)
+    defp unauthorized_conversation() do
+      account = insert(:account)
+      customer = insert(:customer, account: account)
 
-    insert(:conversation, account: account, customer: customer)
+      insert(:conversation, account: account, customer: customer)
+    end
   end
 end
