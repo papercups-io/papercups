@@ -455,7 +455,7 @@ defmodule ChatApi.Conversations do
     |> Repo.delete()
   end
 
-  @spec mark_activity(Conversation.t()) ::
+  @spec mark_activity(String.t()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
   def mark_activity(id) do
     %Conversation{id: id}

@@ -3,7 +3,9 @@ defmodule ChatApi.MessagesTest do
 
   import ChatApi.Factory
   alias ChatApi.Messages
+  alias ChatApi.Workers
   alias ChatApi.Messages.Message
+  use Oban.Testing, repo: ChatApi.Repo
 
   describe "messages" do
     @update_attrs %{body: "some updated body"}
@@ -34,13 +36,12 @@ defmodule ChatApi.MessagesTest do
       assert message.source == "chat"
     end
 
-    test "create_message/1 sets conversation's last activity time" do
+    test "create_message/1 queues a MessageCreatedActions job " do
       attrs = params_with_assocs(:message, body: "valid message body")
 
       assert {:ok, %Message{} = message} = Messages.create_message(attrs)
 
-      assert ChatApi.Conversations.get_conversation!(message.conversation_id).last_activity_at !=
-               nil
+      assert_enqueued worker: Workers.MessageCreatedActions, args: %{"id" => message.id}
     end
 
     test "create_message/1 with invalid source returns error changeset" do
