@@ -33,6 +33,85 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
       conn = get(authed_conn, Routes.canned_response_path(authed_conn, :index))
       assert json_response(conn, 200)["data"] == []
     end
+
+    test "returns unauthorized when auth is invalid", %{conn: conn} do
+      conn = get(conn, Routes.canned_response_path(conn, :index))
+
+      assert json_response(conn, 401)["errors"] != %{}
+    end
+
+    test "lists canned_responses only for this account",
+         %{authed_conn: authed_conn, account: account} do
+      insert(:canned_response, %{
+        name: "First response name",
+        content: "First response content",
+        account: account
+      })
+
+      conn = get(authed_conn, Routes.canned_response_path(authed_conn, :index))
+
+      assert json_response(conn, 200)["data"] |> length() == 1
+
+      # Add another account and canned response
+
+      another_account = insert(:account)
+
+      insert(:canned_response, %{
+        name: "Another canned response name",
+        content: "Another canned response content",
+        account: another_account
+      })
+
+      conn = get(authed_conn, Routes.canned_response_path(authed_conn, :index))
+
+      # Make sure we don't get the original canned_response when checking as the new user
+      assert json_response(conn, 200)["data"] |> length() == 1
+    end
+  end
+
+  describe "show canned_response" do
+    test "shows canned_response by id", %{
+      account: account,
+      authed_conn: authed_conn
+    } do
+      canned_response =
+        insert(:canned_response, %{
+          name: "Another canned response name",
+          content: "Another canned response content",
+          account: account
+        })
+
+      conn =
+        get(
+          authed_conn,
+          Routes.canned_response_path(authed_conn, :show, canned_response.id)
+        )
+
+      assert json_response(conn, 200)["data"]
+    end
+
+    test "renders 404 when asking for another user's canned_response", %{
+      authed_conn: authed_conn
+    } do
+      # Create a new account and give it a canned_response
+      another_account = insert(:account)
+
+      canned_response =
+        insert(:canned_response, %{
+          name: "Another canned response name",
+          content: "Another canned response content",
+          account: another_account
+        })
+
+      # Using the original session, try to delete the new account's canned_response
+      conn =
+        get(
+          authed_conn,
+          Routes.canned_response_path(authed_conn, :show, canned_response.id)
+        )
+
+      assert json_response(conn, 404)
+    end
   end
 
   describe "create canned_response" do
@@ -126,6 +205,30 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
 
       assert json_response(conn, 422)["errors"] != %{}
     end
+
+    test "renders 404 when editing another account's canned response",
+         %{authed_conn: authed_conn} do
+      # Create a new account and give it a canned_response
+      another_account = insert(:account)
+
+      canned_response =
+        insert(:canned_response, %{
+          name: "Another canned response name",
+          content: "Another canned response content",
+          account: another_account
+        })
+
+      # Using the original session, try to update the new account's canned_response
+      conn =
+        put(
+          authed_conn,
+          Routes.canned_response_path(authed_conn, :update, canned_response),
+          name: "New name",
+          content: "New content"
+        )
+
+      assert json_response(conn, 404)
+    end
   end
 
   describe "delete canned_response" do
@@ -143,6 +246,28 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
       assert_error_sent 404, fn ->
         get(authed_conn, Routes.canned_response_path(authed_conn, :show, canned_response))
       end
+    end
+
+    test "renders 404 when deleting another account's canned response",
+         %{authed_conn: authed_conn} do
+      # Create a new account and give it a canned_response
+      another_account = insert(:account)
+
+      canned_response =
+        insert(:canned_response, %{
+          name: "Another canned response name",
+          content: "Another canned response content",
+          account: another_account
+        })
+
+      # Using the original session, try to delete the new account's canned_response
+      conn =
+        delete(
+          authed_conn,
+          Routes.canned_response_path(authed_conn, :delete, canned_response)
+        )
+
+      assert json_response(conn, 404)
     end
   end
 
