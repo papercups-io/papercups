@@ -41,7 +41,7 @@ defmodule ChatApi.MessagesTest do
 
       assert {:ok, %Message{} = message} = Messages.create_message(attrs)
 
-      assert_enqueued worker: Workers.MessageCreatedActions, args: %{"id" => message.id}
+      assert_enqueued(worker: Workers.MessageCreatedActions, args: %{"id" => message.id})
     end
 
     test "create_message/1 with invalid source returns error changeset" do
