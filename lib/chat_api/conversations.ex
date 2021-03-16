@@ -23,6 +23,19 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
+  @spec list_conversations_by_account_paginated(binary(), map()) :: Paginator.Page.t()
+  def list_conversations_by_account_paginated(account_id, filters \\ %{}) do
+    Conversation
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> order_by(desc: :last_activity_at, desc: :id)
+    |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
+    |> Repo.paginate_with_cursor(
+      filter_pagination([cursor_fields: [last_activity_at: :desc, id: :desc]], filters)
+    )
+  end
+
   @spec list_conversations_by_account_v2(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account_v2(account_id, filters \\ %{}) do
     # TODO: eventually DRY this up with `list_recent_by_customer/3` below... but for now
@@ -492,5 +505,18 @@ defmodule ChatApi.Conversations do
         # Not a where parameter
         dynamic
     end)
+  end
+
+  @spec filter_pagination(Keyword.t(), map) :: Keyword.t()
+  def filter_pagination(initial_options, args) do
+    Enum.reduce(
+      args,
+      initial_options,
+      fn
+        {"limit", value}, acc -> acc ++ [limit: value]
+        {"after", value}, acc -> acc ++ [after: value]
+        _, acc -> acc
+      end
+    )
   end
 end

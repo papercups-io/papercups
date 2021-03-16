@@ -709,6 +709,40 @@ defmodule ChatApi.ConversationsTest do
     end
   end
 
+  describe "list_conversations_by_account_paginated/1" do
+    test "sorts the conversations by most recent message" do
+      account = insert(:account)
+      base = DateTime.from_naive!(~N[2020-12-01 00:00:00], "Etc/UTC")
+
+      {last_5, first_5} =
+        10..1
+        |> Enum.map(
+          &insert(:conversation,
+            account: account,
+            last_activity_at: DateTime.add(base, &1 * 3600, :second)
+          )
+        )
+        |> Enum.split(5)
+
+
+      %{metadata: metadata1, entries: entries1} =
+        Conversations.list_conversations_by_account_paginated(account.id, %{"limit" => 5})
+
+      # Sorted by conversation with most recent message to least recent
+      assert Enum.map(entries1, & &1.id) == Enum.map(last_5, & &1.id)
+
+      %{metadata: metadata2, entries: entries2} =
+        Conversations.list_conversations_by_account_paginated(account.id, %{
+          "limit" => 5,
+          "after" => metadata1.after
+        })
+
+      assert Enum.map(entries2, & &1.id) == Enum.map(first_5, & &1.id)
+
+      assert metadata2.after == nil
+    end
+  end
+
   defp days_ago(days) do
     DateTime.utc_now()
     |> DateTime.add(days * 60 * 60 * 24 * -1)
