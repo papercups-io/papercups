@@ -49,14 +49,17 @@
     "remark-breaks": "^2.0.0",
     "rrweb": "^0.9.7",
     "rrweb-player": "^0.6.2",
+    "source-map-explorer": "^2.5.2",
     "superagent": "^5.3.1",
     "theme-ui": "^0.3.1",
-    "typescript": "~3.9.7"
+    "typescript": "~3.9.7",
+    "web-vitals": "^1.1.1"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "postbuild": "mkdirp ../priv/static && cpx \"./build/**\" \"../priv/static\" --clean",
+    "analyze": "source-map-explorer 'build/static/js/*.js'",
+    "postbuild": "gzip -r build && mkdirp ../priv/static && cpx \"./build/**\" \"../priv/static\" --clean",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "deploy": "npm run build",
