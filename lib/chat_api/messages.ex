@@ -131,7 +131,8 @@ defmodule ChatApi.Messages do
   end
 
   defp after_message_created({:ok, message} = params) do
-    Workers.MessageCreatedActions.new(%{"id" => message.id})
+    %{"id" => message.id}
+    |> Workers.MessageCreatedActions.new()
     |> Oban.insert()
 
     params
