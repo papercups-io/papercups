@@ -70,6 +70,26 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
   end
 
   describe "show canned_response" do
+    test "shows canned_response by id", %{
+      account: account,
+      authed_conn: authed_conn
+    } do
+      canned_response =
+        insert(:canned_response, %{
+          name: "Another canned response name",
+          content: "Another canned response content",
+          account: account
+        })
+
+      conn =
+        get(
+          authed_conn,
+          Routes.canned_response_path(authed_conn, :show, canned_response.id)
+        )
+
+      assert json_response(conn, 200)["data"]
+    end
+
     test "renders 404 when asking for another user's canned_response", %{
       authed_conn: authed_conn
     } do
