@@ -336,4 +336,37 @@ defmodule ChatApiWeb.CustomerControllerTest do
              } = json_response(resp, 200)["data"]
     end
   end
+
+  describe "authorization is required" do
+    test "for :show route", %{authed_conn: authed_conn} do
+      customer = unauthorized_customer()
+      resp = get(authed_conn, Routes.customer_path(authed_conn, :show, customer))
+
+      assert json_response(resp, 404)["error"]["message"] == "Not found"
+    end
+
+    test "for :update route", %{authed_conn: authed_conn} do
+      customer = unauthorized_customer()
+
+      resp =
+        put(authed_conn, Routes.customer_path(authed_conn, :delete, customer),
+          customer: @update_attrs
+        )
+
+      assert json_response(resp, 404)["error"]["message"] == "Not found"
+    end
+
+    test "for :delete route", %{authed_conn: authed_conn} do
+      customer = unauthorized_customer()
+      resp = delete(authed_conn, Routes.customer_path(authed_conn, :delete, customer))
+
+      assert json_response(resp, 404)["error"]["message"] == "Not found"
+    end
+
+    defp unauthorized_customer() do
+      account = insert(:account)
+
+      insert(:customer, account: account)
+    end
+  end
 end
