@@ -6,6 +6,7 @@ defmodule ChatApi.Messages do
   import Ecto.Query, warn: false
 
   alias ChatApi.Repo
+  alias ChatApi.Workers
   alias ChatApi.Messages.{Message, MessageFile}
 
   require Logger
@@ -53,6 +54,7 @@ defmodule ChatApi.Messages do
     %Message{}
     |> Message.changeset(attrs)
     |> Repo.insert()
+    |> after_message_created()
   end
 
   @spec create_and_fetch!(map()) :: Message.t() | {:error, Ecto.Changeset.t()}
@@ -127,4 +129,14 @@ defmodule ChatApi.Messages do
         dynamic
     end)
   end
+
+  defp after_message_created({:ok, message} = params) do
+    %{"id" => message.id}
+    |> Workers.MessageCreatedActions.new()
+    |> Oban.insert()
+
+    params
+  end
+
+  defp after_message_created(params), do: params
 end
