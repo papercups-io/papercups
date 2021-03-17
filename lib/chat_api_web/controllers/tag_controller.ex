@@ -6,6 +6,19 @@ defmodule ChatApiWeb.TagController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  plug :authorize when action in [:show, :update, :delete]
+
+  defp authorize(conn, _) do
+    id = conn.path_params["id"]
+
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         tag = %{account_id: ^account_id} <- Tags.get_tag!(id) do
+      assign(conn, :current_tag, tag)
+    else
+      _ -> ChatApiWeb.FallbackController.call(conn, {:error, :not_found}) |> halt()
+    end
+  end
+
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(%{assigns: %{current_user: %{account_id: account_id}}} = conn, _params) do
     tags = Tags.list_tags(account_id)
@@ -28,27 +41,18 @@ defmodule ChatApiWeb.TagController do
     end
   end
 
-  def show(conn, %{"id" => id}) do
-    tag = Tags.get_tag!(id)
-    render(conn, "show.json", tag: tag)
+  def show(conn, _params) do
+    render(conn, "show.json", tag: conn.assigns.current_tag)
   end
 
-  def update(%{assigns: %{current_user: %{account_id: account_id}}} = conn, %{
-        "id" => id,
-        "tag" => tag_params
-      }) do
-    tag = Tags.get_tag!(id)
-
-    with updates <- Map.merge(tag_params, %{"account_id" => account_id}),
-         {:ok, %Tag{} = tag} <- Tags.update_tag(tag, updates) do
+  def update(conn, %{"tag" => tag_params}) do
+    with {:ok, %Tag{} = tag} <- Tags.update_tag(conn.assigns.current_tag, tag_params) do
       render(conn, "show.json", tag: tag)
     end
   end
 
-  def delete(conn, %{"id" => id}) do
-    tag = Tags.get_tag!(id)
-
-    with {:ok, %Tag{}} <- Tags.delete_tag(tag) do
+  def delete(conn, _params) do
+    with {:ok, %Tag{}} <- Tags.delete_tag(conn.assigns.current_tag) do
       send_resp(conn, :no_content, "")
     end
   end

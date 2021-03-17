@@ -47,6 +47,46 @@ defmodule ChatApiWeb.TagControllerTest do
     end
   end
 
+  describe "show tag" do
+    setup [:create_tag]
+
+    test "shows tag by id", %{
+      account: account,
+      authed_conn: authed_conn,
+      tag: tag
+    } do
+      conn =
+        get(
+          authed_conn,
+          Routes.tag_path(authed_conn, :show, tag.id)
+        )
+
+      assert json_response(conn, 200)["data"]
+    end
+
+    test "renders 404 when asking for another user's tag", %{
+      authed_conn: authed_conn
+    } do
+      # Create a new account and give it a tag
+      another_account = insert(:account)
+
+      another_tag =
+        insert(:tag, %{
+          name: "Another canned response name",
+          account: another_account
+        })
+
+      # Using the original session, try to delete the new account's tag
+      conn =
+        get(
+          authed_conn,
+          Routes.tag_path(authed_conn, :show, another_tag.id)
+        )
+
+      assert json_response(conn, 404)
+    end
+  end
+
   describe "update tag" do
     setup [:create_tag]
 
@@ -66,6 +106,28 @@ defmodule ChatApiWeb.TagControllerTest do
       conn = put(authed_conn, Routes.tag_path(authed_conn, :update, tag), tag: @invalid_attrs)
       assert json_response(conn, 422)["errors"] != %{}
     end
+
+    test "renders 404 when updating another account's tag",
+         %{authed_conn: authed_conn} do
+      # Create a new account and give it a tag
+      another_account = insert(:account)
+
+      another_tag =
+        insert(:tag, %{
+          name: "Another canned response name",
+          account: another_account
+        })
+
+      # Using the original session, try to update the new account's tag
+      conn =
+        put(
+          authed_conn,
+          Routes.tag_path(authed_conn, :update, another_tag),
+          tag: @update_attrs
+        )
+
+      assert json_response(conn, 404)
+    end
   end
 
   describe "delete tag" do
@@ -78,6 +140,23 @@ defmodule ChatApiWeb.TagControllerTest do
       assert_error_sent 404, fn ->
         get(authed_conn, Routes.tag_path(authed_conn, :show, tag))
       end
+    end
+
+    test "renders 404 when deleting another account's canned response",
+         %{authed_conn: authed_conn} do
+      # Create a new account and give it a tag
+      another_account = insert(:account)
+
+      tag =
+        insert(:tag, %{
+          name: "Another canned response name",
+          account: another_account
+        })
+
+      # Using the original session, try to delete the new account's tag
+      conn = delete(authed_conn, Routes.tag_path(authed_conn, :delete, tag))
+
+      assert json_response(conn, 404)
     end
   end
 
