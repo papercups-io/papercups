@@ -24,9 +24,10 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL, isDev, isHostedProd} from '../config';
+import {BASE_URL, isDev, isEuEdition, isHostedProd} from '../config';
 import analytics from '../analytics';
 import {hasValidStripeKey} from '../utils';
+import {Account, User} from '../types';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
 import UserProfile from './account/UserProfile';
@@ -74,6 +75,57 @@ const getSectionKey = (pathname: string) => {
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
+};
+
+const ChatWithUs = ({
+  currentUser,
+  account,
+}: {
+  currentUser: User;
+  account?: Account | null;
+}) => {
+  if (isEuEdition) {
+    return (
+      <ChatWidget
+        title="Need help with anything?"
+        subtitle="Ask us in the chat window below 😊"
+        greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
+        primaryColor="#1890ff"
+        accountId={REACT_APP_ADMIN_ACCOUNT_ID}
+        hideToggleButton
+        baseUrl="https://app.papercups-eu.io"
+        customer={{
+          external_id: [currentUser.id, currentUser.email].join('|'),
+          email: currentUser.email,
+          metadata: {
+            company_name: account?.company_name,
+            subscription_plan: account?.subscription_plan,
+            edition: 'EU',
+          },
+        }}
+      />
+    );
+  }
+
+  return (
+    <ChatWidget
+      title="Need help with anything?"
+      subtitle="Ask us in the chat window below 😊"
+      greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
+      primaryColor="#1890ff"
+      accountId={REACT_APP_ADMIN_ACCOUNT_ID}
+      hideToggleButton
+      customer={{
+        external_id: [currentUser.id, currentUser.email].join('|'),
+        email: currentUser.email,
+        metadata: {
+          company_name: account?.company_name,
+          subscription_plan: account?.subscription_plan,
+          edition: 'US',
+        },
+      }}
+    />
+  );
 };
 
 // TODO: not sure if this is the best way to handle this, but the goal
@@ -367,22 +419,7 @@ const Dashboard = (props: RouteComponentProps) => {
       </Layout>
 
       {currentUser && shouldDisplayChat(pathname) && (
-        <ChatWidget
-          title="Need help with anything?"
-          subtitle="Ask us in the chat window below 😊"
-          greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
-          primaryColor="#1890ff"
-          accountId={REACT_APP_ADMIN_ACCOUNT_ID}
-          hideToggleButton
-          customer={{
-            external_id: [currentUser.id, currentUser.email].join('|'),
-            email: currentUser.email,
-            metadata: {
-              company_name: account?.company_name,
-              subscription_plan: account?.subscription_plan,
-            },
-          }}
-        />
+        <ChatWithUs currentUser={currentUser} account={account} />
       )}
     </Layout>
   );
