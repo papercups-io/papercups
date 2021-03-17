@@ -206,6 +206,34 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
       assert json_response(conn, 422)["errors"] != %{}
     end
 
+    test "renders errors when editing to a name already taken on the same account", %{
+      authed_conn: authed_conn,
+      account: account
+    } do
+      first_canned_response =
+        insert(:canned_response, %{
+          name: "A canned response name",
+          content: "A canned response content",
+          account: account
+        })
+
+      second_canned_response =
+        insert(:canned_response, %{
+          name: "Another canned response name",
+          content: "Another canned response content",
+          account: account
+        })
+
+      conn =
+        put(
+          authed_conn,
+          Routes.canned_response_path(authed_conn, :update, second_canned_response),
+          canned_response: %{name: first_canned_response.name, content: "New content"}
+        )
+
+      assert json_response(conn, 422)["errors"] != %{}
+    end
+
     test "renders 404 when editing another account's canned response",
          %{authed_conn: authed_conn} do
       # Create a new account and give it a canned_response
@@ -223,8 +251,7 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
         put(
           authed_conn,
           Routes.canned_response_path(authed_conn, :update, canned_response),
-          name: "New name",
-          content: "New content"
+          canned_response: %{name: "New name", content: "New content"}
         )
 
       assert json_response(conn, 404)
