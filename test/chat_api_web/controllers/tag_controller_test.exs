@@ -71,7 +71,7 @@ defmodule ChatApiWeb.TagControllerTest do
 
       another_tag =
         insert(:tag, %{
-          name: "Another canned response name",
+          name: "Another tag name",
           account: another_account
         })
 
@@ -113,7 +113,7 @@ defmodule ChatApiWeb.TagControllerTest do
 
       another_tag =
         insert(:tag, %{
-          name: "Another canned response name",
+          name: "Another tag name",
           account: another_account
         })
 
@@ -141,14 +141,14 @@ defmodule ChatApiWeb.TagControllerTest do
       end
     end
 
-    test "renders 404 when deleting another account's canned response",
+    test "renders 404 when deleting another account's tag",
          %{authed_conn: authed_conn} do
       # Create a new account and give it a tag
       another_account = insert(:account)
 
       tag =
         insert(:tag, %{
-          name: "Another canned response name",
+          name: "Another tag name",
           account: another_account
         })
 
