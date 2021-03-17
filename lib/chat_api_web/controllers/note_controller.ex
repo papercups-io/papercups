@@ -6,6 +6,19 @@ defmodule ChatApiWeb.NoteController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  plug :authorize when action in [:show, :update, :delete]
+
+  def authorize(conn, _) do
+    id = conn.path_params["id"]
+
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         note = %{account_id: ^account_id} <- Notes.get_note!(id) do
+      assign(conn, :current_note, note)
+    else
+      _ -> ChatApiWeb.FallbackController.call(conn, {:error, :not_found}) |> halt()
+    end
+  end
+
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, filters) do
     with %{account_id: account_id} <- conn.assigns.current_user do
@@ -37,14 +50,13 @@ defmodule ChatApiWeb.NoteController do
   end
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def show(conn, %{"id" => id}) do
-    note = Notes.get_note!(id)
-    render(conn, "show.json", note: note)
+  def show(conn, _params) do
+    render(conn, "show.json", note: conn.assigns.current_note)
   end
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def update(conn, %{"id" => id, "note" => note_params}) do
-    note = Notes.get_note!(id)
+  def update(conn, %{"note" => note_params}) do
+    note = conn.assigns.current_note
 
     with {:ok, %Note{} = note} <- Notes.update_note(note, note_params) do
       render(conn, "show.json", note: note)
@@ -52,8 +64,8 @@ defmodule ChatApiWeb.NoteController do
   end
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def delete(conn, %{"id" => id}) do
-    note = Notes.get_note!(id)
+  def delete(conn, _params) do
+    note = conn.assigns.current_note
 
     with {:ok, %Note{}} <- Notes.delete_note(note) do
       send_resp(conn, :no_content, "")
