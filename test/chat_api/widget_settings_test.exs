@@ -12,7 +12,8 @@ defmodule ChatApi.WidgetSettingsTest do
       subtitle: "some updated subtitle",
       title: "some updated title",
       pathname:
-        "/test/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe"
+        "/test/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe",
+      away_message: "some away message"
     }
 
     @valid_metadata %{"host" => "app.papercups.io", "pathname" => "/"}
@@ -47,6 +48,7 @@ defmodule ChatApi.WidgetSettingsTest do
       assert widget_setting.subtitle == @update_attrs.subtitle
       assert widget_setting.title == @update_attrs.title
       assert widget_setting.pathname == @update_attrs.pathname
+      assert widget_setting.away_message == @update_attrs.away_message
     end
 
     test "update_widget_metadata/2 with valid data updates the metadata if no settings exist yet",

@@ -7,6 +7,19 @@ defmodule ChatApiWeb.MessageController do
 
   action_fallback(ChatApiWeb.FallbackController)
 
+  plug :authorize when action in [:show, :update, :delete]
+
+  defp authorize(conn, _) do
+    id = conn.path_params["id"]
+
+    with %{id: user_id, account_id: account_id} <- conn.assigns.current_user,
+         message = %{account_id: ^account_id, user_id: ^user_id} <- Messages.get_message!(id) do
+      assign(conn, :current_message, message)
+    else
+      _ -> ChatApiWeb.FallbackController.call(conn, {:error, :not_found}) |> halt()
+    end
+  end
+
   def swagger_definitions do
     %{
       Message:
@@ -108,15 +121,16 @@ defmodule ChatApiWeb.MessageController do
   end
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def show(conn, %{"id" => id}) do
-    message = Messages.get_message!(id)
+  def show(conn, _params) do
+    message = conn.assigns.current_message
     render(conn, "show.json", message: message)
   end
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def update(conn, %{"id" => id, "message" => message_params}) do
-    with %Message{user_id: user_id} = message <- Messages.get_message!(id),
-         %{id: ^user_id, account_id: account_id} <- conn.assigns.current_user,
+  def update(conn, %{"message" => message_params}) do
+    message = conn.assigns.current_message
+
+    with %{account_id: account_id} <- conn.assigns.current_user,
          sanitized_updates <- Map.merge(message_params, %{"account_id" => account_id}),
          {:ok, %Message{} = message} <- Messages.update_message(message, sanitized_updates) do
       render(conn, "show.json", message: message)
@@ -124,8 +138,8 @@ defmodule ChatApiWeb.MessageController do
   end
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def delete(conn, %{"id" => id}) do
-    message = Messages.get_message!(id)
+  def delete(conn, _params) do
+    message = conn.assigns.current_message
 
     with {:ok, %Message{}} <- Messages.delete_message(message) do
       send_resp(conn, :no_content, "")
@@ -139,6 +153,7 @@ defmodule ChatApiWeb.MessageController do
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:slack_support_channel)
     |> Messages.Notification.notify(:slack_company_channel)
+    |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
   end
 end

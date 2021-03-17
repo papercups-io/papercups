@@ -45,20 +45,11 @@ defmodule ChatApi.Customers do
     |> Repo.paginate(pagination_params)
   end
 
-  @spec get_customer!(binary()) :: Customer.t() | nil
-  def get_customer!(id) do
-    # TODO: deprecate
+  @spec get_customer!(binary(), atom() | list(atom()) | keyword()) :: Customer.t() | nil
+  def get_customer!(id, preloads \\ [:company, :tags]) do
     Customer
     |> Repo.get!(id)
-    |> Repo.preload([:company, :tags])
-  end
-
-  @spec get_customer!(binary(), binary(), keyword()) :: Customer.t() | nil
-  def get_customer!(id, account_id, preloaded \\ []) do
-    Customer
-    |> where(account_id: ^account_id)
-    |> Repo.get!(id)
-    |> Repo.preload(preloaded)
+    |> Repo.preload(preloads)
   end
 
   @spec is_valid_association?(atom()) :: boolean()

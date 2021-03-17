@@ -25,6 +25,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
           host: String.t() | nil,
           pathname: String.t() | nil,
           last_seen_at: DateTime.t() | nil,
+          away_message: String.t() | nil,
           # Foreign keys
           account_id: Ecto.UUID.t(),
           # Timestamps
@@ -52,6 +53,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
     field(:email_input_placeholder, :string)
     field(:new_messages_notification_text, :string)
     field(:base_url, :string)
+    field(:away_message, :string)
 
     field(:host, :string)
     field(:pathname, :string)
@@ -86,7 +88,8 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
       :account_id,
       :host,
       :pathname,
-      :last_seen_at
+      :last_seen_at,
+      :away_message
     ])
     |> validate_required([:account_id])
     |> unique_constraint(:account_id)

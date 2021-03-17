@@ -20,10 +20,18 @@ require_db_ssl =
     _ -> true
   end
 
+socket_options =
+  case System.get_env("USE_IP_V6") do
+    "true" -> [:inet6]
+    "false" -> [:inet]
+    _ -> [:inet]
+  end
+
 config :chat_api, ChatApi.Repo,
   ssl: require_db_ssl,
   url: database_url,
-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10")
+  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+  socket_options: socket_options
 
 secret_key_base =
   System.get_env("SECRET_KEY_BASE") ||
