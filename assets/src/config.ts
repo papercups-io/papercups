@@ -8,7 +8,9 @@ export const isDev = Boolean(
     )
 );
 
-export const isHostedProd = window.location.hostname === 'app.papercups.io';
+const hostname = window.location.hostname;
+export const isHostedProd =
+  hostname === 'app.papercups.io' || hostname === 'app.papercups-eu.io';
 
 export const isEuEdition =
   process.env.REACT_APP_EU_EDITION === 'true' ||
