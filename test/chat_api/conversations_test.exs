@@ -710,36 +710,47 @@ defmodule ChatApi.ConversationsTest do
   end
 
   describe "list_conversations_by_account_paginated/1" do
-    test "sorts the conversations by most recent message" do
+    test "sorts the conversations by most recent activity" do
       account = insert(:account)
-      base = DateTime.from_naive!(~N[2020-12-01 00:00:00], "Etc/UTC")
+      filter = %{"limit" => 5}
+      base_last_activity_at = DateTime.from_naive!(~N[2020-12-01 00:00:00], "Etc/UTC")
 
-      {last_5, first_5} =
-        10..1
+      [third_batch, second_batch, first_batch] =
+        15..1
         |> Enum.map(
           &insert(:conversation,
             account: account,
-            last_activity_at: DateTime.add(base, &1 * 3600, :second)
+            last_activity_at: DateTime.add(base_last_activity_at, &1 * 3600, :second)
           )
         )
-        |> Enum.split(5)
-
+        |> Enum.chunk_every(5)
 
       %{metadata: metadata1, entries: entries1} =
-        Conversations.list_conversations_by_account_paginated(account.id, %{"limit" => 5})
+        Conversations.list_conversations_by_account_paginated(account.id, filter)
 
-      # Sorted by conversation with most recent message to least recent
-      assert Enum.map(entries1, & &1.id) == Enum.map(last_5, & &1.id)
+      assert Enum.map(entries1, & &1.id) == Enum.map(third_batch, & &1.id)
 
       %{metadata: metadata2, entries: entries2} =
-        Conversations.list_conversations_by_account_paginated(account.id, %{
-          "limit" => 5,
-          "after" => metadata1.after
-        })
+        Conversations.list_conversations_by_account_paginated(
+          account.id,
+          Map.merge(filter, %{
+            "after" => metadata1.after
+          })
+        )
 
-      assert Enum.map(entries2, & &1.id) == Enum.map(first_5, & &1.id)
+      assert Enum.map(entries2, & &1.id) == Enum.map(second_batch, & &1.id)
 
-      assert metadata2.after == nil
+      %{metadata: metadata3, entries: entries3} =
+        Conversations.list_conversations_by_account_paginated(
+          account.id,
+          Map.merge(filter, %{
+            "after" => metadata2.after
+          })
+        )
+
+      assert Enum.map(entries3, & &1.id) == Enum.map(first_batch, & &1.id)
+
+      assert metadata3.after == nil
     end
   end
 
