@@ -828,9 +828,14 @@ export const deleteEventSubscription = async (
     .set('Authorization', token);
 };
 
+type SlackAuthorizationParams = {
+  code: string;
+  type: string;
+  redirect_url?: string;
+};
+
 export const authorizeSlackIntegration = async (
-  code: string,
-  type: string,
+  params: SlackAuthorizationParams,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -839,7 +844,7 @@ export const authorizeSlackIntegration = async (
 
   return request
     .get(`/api/slack/oauth`)
-    .query({code, type})
+    .query(params)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

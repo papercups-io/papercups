@@ -8,7 +8,7 @@ import Spinner from '../Spinner';
 import * as API from '../../api';
 import logger from '../../logger';
 import {EventSubscription, PersonalApiKey} from '../../types';
-import {IntegrationType} from './support';
+import {IntegrationType, getSlackRedirectUrl} from './support';
 import IntegrationsTable from './IntegrationsTable';
 import WebhooksTable from './WebhooksTable';
 import NewWebhookModal from './NewWebhookModal';
@@ -213,7 +213,11 @@ class IntegrationsOverview extends React.Component<Props, State> {
       case 'slack':
         const authorizationType = state || 'reply';
 
-        return API.authorizeSlackIntegration(code, authorizationType)
+        return API.authorizeSlackIntegration({
+          code,
+          type: authorizationType,
+          redirect_url: getSlackRedirectUrl(),
+        })
           .then((result) =>
             logger.debug('Successfully authorized Slack:', result)
           )
