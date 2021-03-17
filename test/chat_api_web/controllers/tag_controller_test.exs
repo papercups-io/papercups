@@ -51,7 +51,6 @@ defmodule ChatApiWeb.TagControllerTest do
     setup [:create_tag]
 
     test "shows tag by id", %{
-      account: account,
       authed_conn: authed_conn,
       tag: tag
     } do
