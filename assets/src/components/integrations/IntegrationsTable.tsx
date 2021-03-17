@@ -1,52 +1,9 @@
 import React from 'react';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
-import qs from 'query-string';
 import {colors, Button, Popconfirm, Table, Tag, Text, Tooltip} from '../common';
-import {SLACK_CLIENT_ID, isDev} from '../../config';
-import {IntegrationType} from './support';
+import {IntegrationType, getSlackAuthUrl, getGoogleAuthUrl} from './support';
 import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
-
-const getSlackAuthUrl = (type = 'reply') => {
-  const origin = window.location.origin;
-  const redirect = `${origin}/integrations/slack`;
-  const scopes = [
-    'incoming-webhook',
-    'chat:write',
-    'channels:history',
-    'channels:manage',
-    'channels:read',
-    'chat:write.public',
-    'chat:write.customize',
-    'users:read',
-    'users:read.email',
-    'groups:history',
-    'groups:read',
-    'reactions:read',
-  ];
-  const userScopes = [
-    'channels:history',
-    'groups:history',
-    'chat:write',
-    'reactions:read',
-  ];
-  const q = {
-    state: type,
-    scope: scopes.join(' '),
-    user_scope: userScopes.join(' '),
-    client_id: SLACK_CLIENT_ID,
-    redirect_uri: redirect,
-  };
-  const query = qs.stringify(q);
-
-  return `https://slack.com/oauth/v2/authorize?${query}`;
-};
-
-const getGoogleAuthUrl = (client: 'gmail' | 'sheets') => {
-  const origin = isDev ? 'http://localhost:4000' : window.location.origin;
-
-  return `${origin}/google/auth?client=${client}`;
-};
 
 const IntegrationsTable = ({
   loading,

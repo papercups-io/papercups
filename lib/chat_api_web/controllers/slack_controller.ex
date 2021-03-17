@@ -14,7 +14,8 @@ defmodule ChatApiWeb.SlackController do
 
     # TODO: improve error handling?
     with %{account_id: account_id, email: email} <- conn.assigns.current_user,
-         {:ok, response} <- Slack.Client.get_access_token(code),
+         redirect_uri <- Map.get(params, "redirect_url"),
+         {:ok, response} <- Slack.Client.get_access_token(code, redirect_uri),
          :ok <- Logger.info("Slack OAuth response: #{inspect(response)}"),
          %{body: body} <- response,
          %{

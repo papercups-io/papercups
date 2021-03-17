@@ -26,6 +26,28 @@ defmodule ChatApi.Slack.Client do
     )
   end
 
+  @spec get_access_token(binary(), binary() | nil) :: Tesla.Env.result()
+  def get_access_token(code, nil) do
+    case System.get_env("PAPERCUPS_SLACK_REDIRECT_URI") do
+      nil -> get_access_token(code)
+      redirect_uri -> get_access_token(code, redirect_uri)
+    end
+  end
+
+  def get_access_token(code, redirect_uri) do
+    client_id = System.get_env("PAPERCUPS_SLACK_CLIENT_ID")
+    client_secret = System.get_env("PAPERCUPS_SLACK_CLIENT_SECRET")
+
+    get("/oauth.v2.access",
+      query: [
+        code: code,
+        redirect_uri: redirect_uri,
+        client_id: client_id,
+        client_secret: client_secret
+      ]
+    )
+  end
+
   @spec send_message(map(), binary()) :: Tesla.Env.result() | {:ok, nil}
   @doc """
   `message` looks like:
