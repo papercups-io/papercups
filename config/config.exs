@@ -21,10 +21,21 @@ config :chat_api, ChatApiWeb.Endpoint,
   pubsub_server: ChatApi.PubSub,
   live_view: [signing_salt: "pRVXwt3k"]
 
+config :logger,
+  backends: [:console, Sentry.LoggerBackend]
+
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
+
+config :logger, Sentry.LoggerBackend,
+  # Also send warn messages
+  level: :warn,
+  # Send messages from Plug/Cowboy
+  excluded_domains: [],
+  # Send messages like `Logger.error("error")` to Sentry
+  capture_log_messages: true
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
