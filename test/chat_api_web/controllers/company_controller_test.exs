@@ -46,6 +46,49 @@ defmodule ChatApiWeb.CompanyControllerTest do
     end
   end
 
+  describe "show company" do
+    test "shows company by id", %{
+      account: account,
+      authed_conn: authed_conn
+    } do
+      company =
+        insert(:company, %{
+          name: "Another company name",
+          account: account
+        })
+
+      conn =
+        get(
+          authed_conn,
+          Routes.company_path(authed_conn, :show, company.id)
+        )
+
+      assert json_response(conn, 200)["data"]
+    end
+
+    test "renders 404 when asking for another user's company", %{
+      authed_conn: authed_conn
+    } do
+      # Create a new account and give it a company
+      another_account = insert(:account)
+
+      company =
+        insert(:company, %{
+          name: "Another company name",
+          account: another_account
+        })
+
+      # Using the original session, try to delete the new account's company
+      conn =
+        get(
+          authed_conn,
+          Routes.company_path(authed_conn, :show, company.id)
+        )
+
+      assert json_response(conn, 404)
+    end
+  end
+
   describe "create company" do
     test "renders company when data is valid", %{
       authed_conn: authed_conn,
@@ -113,6 +156,28 @@ defmodule ChatApiWeb.CompanyControllerTest do
 
       assert json_response(conn, 422)["errors"] != %{}
     end
+
+    test "renders 404 when editing another account's company",
+         %{authed_conn: authed_conn} do
+      # Create a new account and give it a company
+      another_account = insert(:account)
+
+      company =
+        insert(:company, %{
+          name: "Another company name",
+          account: another_account
+        })
+
+      # Using the original session, try to update the new account's company
+      conn =
+        put(
+          authed_conn,
+          Routes.company_path(authed_conn, :update, company),
+          company: @update_attrs
+        )
+
+      assert json_response(conn, 404)
+    end
   end
 
   describe "delete company" do
@@ -123,6 +188,27 @@ defmodule ChatApiWeb.CompanyControllerTest do
       assert_error_sent 404, fn ->
         get(authed_conn, Routes.company_path(authed_conn, :show, company))
       end
+    end
+
+    test "renders 404 when deleting another account's company",
+         %{authed_conn: authed_conn} do
+      # Create a new account and give it a company
+      another_account = insert(:account)
+
+      company =
+        insert(:company, %{
+          name: "Another company name",
+          account: another_account
+        })
+
+      # Using the original session, try to delete the new account's company
+      conn =
+        delete(
+          authed_conn,
+          Routes.company_path(authed_conn, :delete, company)
+        )
+
+      assert json_response(conn, 404)
     end
   end
 end
