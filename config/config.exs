@@ -27,6 +27,14 @@ config :logger, :console,
   metadata: [:request_id],
   backends: [:console, Sentry.LoggerBackend]
 
+config :logger, Sentry.LoggerBackend,
+  # Also send warn messages
+  level: :warn,
+  # Send messages from Plug/Cowboy
+  excluded_domains: [],
+  # Send messages like `Logger.error("error")` to Sentry
+  capture_log_messages: true
+
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
