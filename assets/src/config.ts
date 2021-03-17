@@ -9,6 +9,7 @@ export const isDev = Boolean(
 );
 
 const hostname = window.location.hostname;
+
 export const isHostedProd =
   hostname === 'app.papercups.io' || hostname === 'app.papercups-eu.io';
 
