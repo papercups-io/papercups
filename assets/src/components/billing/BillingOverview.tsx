@@ -33,8 +33,8 @@ import {
   calculateSubscriptionPrice,
 } from './support';
 import logger from '../../logger';
-import './Billing.css';
 import {LITE_PRICE, STARTER_PRICE, TEAM_PRICE} from '../../constants';
+import './Billing.css';
 
 const stripe = loadStripe(
   process.env.REACT_APP_STRIPE_PUBLIC_KEY || 'pk_test_xxxxx'
@@ -235,17 +235,12 @@ class BillingOverview extends React.Component<Props, State> {
 
   handleSelectSubscriptionPlan = (plan: SubscriptionPlan) => {
     logger.debug('Selected plan!', plan);
-
-    if (plan === this.state.selectedSubscriptionPlan) {
-      this.setState({displayPricingModal: false});
-
-      return;
-    }
+    const {selectedSubscriptionPlan: previouslySelectedPlan} = this.state;
 
     this.setState({selectedSubscriptionPlan: plan}, async () => {
       const {defaultPaymentMethod} = this.state;
 
-      if (defaultPaymentMethod) {
+      if (defaultPaymentMethod && plan !== previouslySelectedPlan) {
         this.setState({updating: true});
         await this.createOrUpdateSubscription(plan);
         this.setState({

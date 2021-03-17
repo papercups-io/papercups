@@ -18,6 +18,7 @@ defmodule ChatApi.Conversations do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
+    |> filter_by_tag(filters)
     |> order_by_most_recent_message()
     |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
     |> Repo.all()
@@ -48,6 +49,7 @@ defmodule ChatApi.Conversations do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
+    |> filter_by_tag(filters)
     |> order_by_most_recent_message()
     |> preload([:customer, messages: ^messages_query])
     |> Repo.all()
@@ -453,6 +455,25 @@ defmodule ChatApi.Conversations do
     conversation
     |> get_tag(tag_id)
     |> Repo.delete()
+  end
+
+  @spec filter_by_tag(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
+    query
+    |> join(:left, [c], t in assoc(c, :tags))
+    |> where([_c, t], t.id == ^tag_id)
+  end
+
+  def filter_by_tag(query, _filters), do: query
+
+  @spec mark_activity(String.t()) ::
+          {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
+  def mark_activity(id) do
+    %Conversation{id: id}
+    |> Conversation.last_activity_changeset(%{
+      last_activity_at: DateTime.utc_now() |> DateTime.truncate(:second)
+    })
+    |> Repo.update()
   end
 
   #####################

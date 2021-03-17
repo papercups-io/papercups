@@ -77,6 +77,16 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  def notify(%Message{} = message, :mattermost, _opts) do
+    Logger.info("Sending message notification: :mattermost")
+
+    Task.start(fn ->
+      ChatApi.Mattermost.Notification.notify_primary_channel(message)
+    end)
+
+    message
+  end
+
   def notify(%Message{private: false} = message, :conversation_reply_email, _opts) do
     Logger.info("Sending message notification: :conversation_reply_email")
     # 20 minutes (TODO: make this configurable?)

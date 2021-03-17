@@ -1,60 +1,20 @@
 import React from 'react';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
-import qs from 'query-string';
 import {colors, Button, Popconfirm, Table, Tag, Text, Tooltip} from '../common';
-import {SLACK_CLIENT_ID, isDev} from '../../config';
-import {IntegrationType} from './support';
-
-const getSlackAuthUrl = (type = 'reply') => {
-  const origin = window.location.origin;
-  const redirect = `${origin}/integrations/slack`;
-  const scopes = [
-    'incoming-webhook',
-    'chat:write',
-    'channels:history',
-    'channels:manage',
-    'channels:read',
-    'chat:write.public',
-    'chat:write.customize',
-    'users:read',
-    'users:read.email',
-    'groups:history',
-    'groups:read',
-    'reactions:read',
-  ];
-  const userScopes = [
-    'channels:history',
-    'groups:history',
-    'chat:write',
-    'reactions:read',
-  ];
-  const q = {
-    state: type,
-    scope: scopes.join(' '),
-    user_scope: userScopes.join(' '),
-    client_id: SLACK_CLIENT_ID,
-    redirect_uri: redirect,
-  };
-  const query = qs.stringify(q);
-
-  return `https://slack.com/oauth/v2/authorize?${query}`;
-};
-
-const getGoogleAuthUrl = (client: 'gmail' | 'sheets') => {
-  const origin = isDev ? 'http://localhost:4000' : window.location.origin;
-
-  return `${origin}/google/auth?client=${client}`;
-};
+import {IntegrationType, getSlackAuthUrl, getGoogleAuthUrl} from './support';
+import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
 
 const IntegrationsTable = ({
   loading,
   integrations,
   onDisconnectSlack,
+  onUpdateIntegration,
 }: {
   loading?: boolean;
   integrations: Array<IntegrationType>;
   onDisconnectSlack: (id: string) => void;
+  onUpdateIntegration: (data?: any) => void;
 }) => {
   const columns = [
     {
@@ -143,34 +103,12 @@ const IntegrationsTable = ({
                 <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
               </a>
             );
-          case 'slack:sync':
-            if (isConnected && authorizationId) {
-              return (
-                <Flex mx={-1}>
-                  <Box mx={1}>
-                    <a href={getSlackAuthUrl('support')}>
-                      <Button>Reconnect</Button>
-                    </a>
-                  </Box>
-                  <Box mx={1}>
-                    <Popconfirm
-                      title="Are you sure you want to disconnect from Slack?"
-                      okText="Yes"
-                      cancelText="No"
-                      placement="topLeft"
-                      onConfirm={() => onDisconnectSlack(authorizationId)}
-                    >
-                      <Button danger>Disconnect</Button>
-                    </Popconfirm>
-                  </Box>
-                </Flex>
-              );
-            }
-
+          case 'mattermost':
             return (
-              <a href={getSlackAuthUrl('support')}>
-                <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-              </a>
+              <MattermostAuthorizationButton
+                integration={record}
+                onUpdate={onUpdateIntegration}
+              />
             );
           case 'gmail':
             return (
@@ -202,6 +140,36 @@ const IntegrationsTable = ({
                   <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
                 </a>
               </Tooltip>
+            );
+          // TODO: deprecate
+          case 'slack:sync':
+            if (isConnected && authorizationId) {
+              return (
+                <Flex mx={-1}>
+                  <Box mx={1}>
+                    <a href={getSlackAuthUrl('support')}>
+                      <Button>Reconnect</Button>
+                    </a>
+                  </Box>
+                  <Box mx={1}>
+                    <Popconfirm
+                      title="Are you sure you want to disconnect from Slack?"
+                      okText="Yes"
+                      cancelText="No"
+                      placement="topLeft"
+                      onConfirm={() => onDisconnectSlack(authorizationId)}
+                    >
+                      <Button danger>Disconnect</Button>
+                    </Popconfirm>
+                  </Box>
+                </Flex>
+              );
+            }
+
+            return (
+              <a href={getSlackAuthUrl('support')}>
+                <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
+              </a>
             );
           default:
             return <Button disabled>Coming soon!</Button>;

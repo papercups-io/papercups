@@ -15,6 +15,7 @@ ARG REACT_APP_ADMIN_ACCOUNT_ID
 ARG PAPERCUPS_STRIPE_SECRET
 ARG REACT_APP_STRIPE_PUBLIC_KEY
 ARG REACT_APP_EU_EDITION=false
+ARG REACT_APP_FILE_UPLOADS_ENABLED
 
 ENV REACT_APP_FILE_UPLOADS_ENABLED=1
 ENV APP_VERSION=$APP_VER
@@ -35,7 +36,7 @@ RUN mkdir /app
 WORKDIR /app
 
 RUN apk add --no-cache git nodejs yarn python3 npm ca-certificates wget gnupg make erlang gcc libc-dev && \
-    npm install npm@latest -g 
+    npm install npm@latest -g
 
 # Client side
 COPY assets/package.json assets/package-lock.json ./assets/

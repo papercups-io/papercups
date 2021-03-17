@@ -35,6 +35,9 @@ defmodule ChatApiWeb.Router do
   scope "/api", ChatApiWeb do
     pipe_through(:api)
 
+    get("/ping", PingController, :ping)
+    post("/ping", PingController, :ping)
+
     resources("/registration", RegistrationController, singleton: true, only: [:create])
     resources("/session", SessionController, singleton: true, only: [:create, :delete])
     resources("/upload", UploadController, only: [:create, :show, :delete])
@@ -65,6 +68,7 @@ defmodule ChatApiWeb.Router do
 
     post("/slack/webhook", SlackController, :webhook)
     post("/slack/actions", SlackController, :actions)
+    post("/mattermost/webhook", MattermostController, :webhook)
     # TODO: move to protected route after testing?
     get("/hubspot/oauth", HubspotController, :oauth)
 
@@ -87,6 +91,10 @@ defmodule ChatApiWeb.Router do
     get("/slack/authorization", SlackController, :authorization)
     delete("/slack/authorizations/:id", SlackController, :delete)
     get("/slack/channels", SlackController, :channels)
+    post("/mattermost/auth", MattermostController, :auth)
+    get("/mattermost/channels", MattermostController, :channels)
+    get("/mattermost/authorization", MattermostController, :authorization)
+    delete("/mattermost/authorizations/:id", MattermostController, :delete)
     get("/google/auth", GoogleController, :auth)
     get("/google/oauth", GoogleController, :callback)
     get("/google/authorization", GoogleController, :authorization)
@@ -114,6 +122,7 @@ defmodule ChatApiWeb.Router do
     resources("/tags", TagController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
+    resources("/canned_responses", CannedResponseController, except: [:new, :edit])
 
     get("/slack_conversation_threads", SlackConversationThreadController, :index)
     get("/conversations/:conversation_id/previous", ConversationController, :previous)

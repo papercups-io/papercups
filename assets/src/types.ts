@@ -140,6 +140,27 @@ export type PersonalApiKey = {
   created_at?: string | null;
 };
 
+export type MattermostAuthorization = {
+  id?: string;
+  access_token?: string;
+  channel_id?: string;
+  channel_name?: string;
+  team_id?: string;
+  team_domain?: string;
+  verification_token?: string;
+  mattermost_url?: string;
+};
+
+export type MattermostChannel = {
+  display_name: string;
+  id: string;
+  name: string;
+  purpose: string;
+  team_display_name: string;
+  team_id: string;
+  team_name: string;
+};
+
 export type WidgetIconVariant = 'outlined' | 'filled';
 
 export type WidgetSettings = {
@@ -148,6 +169,7 @@ export type WidgetSettings = {
   subtitle?: string;
   color?: string;
   greeting?: string;
+  away_message?: string;
   new_message_placeholder?: string;
   show_agent_availability?: boolean;
   agent_available_text?: string;

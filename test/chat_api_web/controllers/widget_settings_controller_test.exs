@@ -21,7 +21,8 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
       settings = %{
         title: "Test title",
         subtitle: "Test subtitle",
-        color: "Test color"
+        color: "Test color",
+        away_message: "Test away message"
       }
 
       resp =
@@ -33,7 +34,8 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
                "object" => "widget_settings",
                "title" => "Test title",
                "subtitle" => "Test subtitle",
-               "color" => "Test color"
+               "color" => "Test color",
+               "away_message" => "Test away message"
              } = json_response(resp, 200)["data"]
 
       resp =

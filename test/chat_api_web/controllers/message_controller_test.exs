@@ -98,4 +98,39 @@ defmodule ChatApiWeb.MessageControllerTest do
       end)
     end
   end
+
+  describe "authorization is required" do
+    test "for :show route", %{authed_conn: authed_conn} do
+      message = unauthorized_message()
+      resp = get(authed_conn, Routes.message_path(authed_conn, :show, message))
+
+      assert json_response(resp, 404)["error"]["message"] == "Not found"
+    end
+
+    test "for :update route", %{authed_conn: authed_conn} do
+      message = unauthorized_message()
+
+      resp =
+        put(authed_conn, Routes.message_path(authed_conn, :update, message),
+          message: @update_attrs
+        )
+
+      assert json_response(resp, 404)["error"]["message"] == "Not found"
+    end
+
+    test "for :delete route", %{authed_conn: authed_conn} do
+      message = unauthorized_message()
+      resp = delete(authed_conn, Routes.message_path(authed_conn, :delete, message))
+
+      assert json_response(resp, 404)["error"]["message"] == "Not found"
+    end
+
+    defp unauthorized_message() do
+      account = insert(:account)
+      user = insert(:user, account: account)
+      conversation = insert(:conversation, account: account)
+
+      insert(:message, account: account, conversation: conversation, user: user, customer: nil)
+    end
+  end
 end

@@ -127,4 +127,38 @@ defmodule ChatApiWeb.NoteControllerTest do
       end
     end
   end
+
+  describe "check if account is authorized" do
+    test "render error if note does not belong to the current account", %{
+      authed_conn: authed_conn
+    } do
+      note = unauthorized_note()
+      conn = get(authed_conn, Routes.note_path(authed_conn, :show, note))
+
+      assert json_response(conn, 404)
+    end
+
+    test "render error if note to update does not belong to the current account", %{
+      authed_conn: authed_conn
+    } do
+      note = unauthorized_note()
+      conn = put(authed_conn, Routes.note_path(authed_conn, :update, note), note: @update_attrs)
+
+      assert json_response(conn, 404)
+    end
+
+    test "render error if note to delete does not belong to the current account", %{
+      authed_conn: authed_conn
+    } do
+      note = unauthorized_note()
+      conn = delete(authed_conn, Routes.note_path(authed_conn, :delete, note))
+
+      assert json_response(conn, 404)
+    end
+
+    defp unauthorized_note() do
+      account = insert(:account)
+      insert(:note, account: account)
+    end
+  end
 end

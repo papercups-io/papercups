@@ -8,6 +8,25 @@ defmodule ChatApiWeb.CustomerController do
 
   action_fallback(ChatApiWeb.FallbackController)
 
+  plug :authorize when action in [:show, :update, :delete]
+
+  defp authorize(conn, _) do
+    id = conn.path_params["id"]
+
+    preloads =
+      (conn.path_params["expand"] || ["company", "tags"])
+      |> Enum.map(&String.to_existing_atom/1)
+      |> Enum.filter(&Customers.is_valid_association?/1)
+
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         customer = %{account_id: ^account_id} <-
+           Customers.get_customer!(id, preloads) do
+      assign(conn, :current_customer, customer)
+    else
+      _ -> ChatApiWeb.FallbackController.call(conn, {:error, :not_found}) |> halt()
+    end
+  end
+
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
   def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
@@ -46,22 +65,8 @@ defmodule ChatApiWeb.CustomerController do
   end
 
   @spec show(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def show(conn, %{"id" => id, "expand" => expand}) do
-    with %{account_id: account_id} <- conn.assigns.current_user do
-      preloaded =
-        expand
-        |> Stream.map(&String.to_atom/1)
-        |> Enum.filter(&Customers.is_valid_association?/1)
-
-      customer = Customers.get_customer!(id, account_id, preloaded)
-
-      render(conn, "show.json", customer: customer)
-    end
-  end
-
-  def show(conn, %{"id" => id}) do
-    customer = Customers.get_customer!(id)
-    render(conn, "show.json", customer: customer)
+  def show(conn, _params) do
+    render(conn, "show.json", customer: conn.assigns.current_customer)
   end
 
   @spec identify(Plug.Conn.t(), map) :: Plug.Conn.t()
@@ -112,8 +117,8 @@ defmodule ChatApiWeb.CustomerController do
   end
 
   @spec update(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def update(conn, %{"id" => id, "customer" => customer_params}) do
-    customer = Customers.get_customer!(id)
+  def update(conn, %{"customer" => customer_params}) do
+    customer = conn.assigns.current_customer
 
     with {:ok, %Customer{} = customer} <- Customers.update_customer(customer, customer_params) do
       render(conn, "show.json", customer: customer)
@@ -144,8 +149,8 @@ defmodule ChatApiWeb.CustomerController do
   end
 
   @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def delete(conn, %{"id" => id}) do
-    customer = Customers.get_customer!(id)
+  def delete(conn, _params) do
+    customer = conn.assigns.current_customer
 
     with {:ok, %Customer{}} <- Customers.delete_customer(customer) do
       send_resp(conn, :no_content, "")

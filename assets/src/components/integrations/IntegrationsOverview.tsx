@@ -8,7 +8,7 @@ import Spinner from '../Spinner';
 import * as API from '../../api';
 import logger from '../../logger';
 import {EventSubscription, PersonalApiKey} from '../../types';
-import {IntegrationType} from './support';
+import {IntegrationType, getSlackRedirectUrl} from './support';
 import IntegrationsTable from './IntegrationsTable';
 import WebhooksTable from './WebhooksTable';
 import NewWebhookModal from './NewWebhookModal';
@@ -53,12 +53,14 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
       const integrations = await Promise.all([
         this.fetchSlackIntegration(),
-        this.fetchSlackSupportIntegration(),
+        this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
         this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
         this.fetchWhatsAppIntegration(),
+        // TODO: deprecate
+        this.fetchSlackSupportIntegration(),
       ]);
       const webhooks = await API.fetchEventSubscriptions();
       const personalApiKeys = await API.fetchPersonalApiKeys();
@@ -77,12 +79,14 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
       const integrations = await Promise.all([
         this.fetchSlackIntegration(),
-        this.fetchSlackSupportIntegration(),
+        this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
         this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
         this.fetchWhatsAppIntegration(),
+        // TODO: deprecate
+        this.fetchSlackSupportIntegration(),
       ]);
 
       this.setState({integrations, refreshing: false});
@@ -105,6 +109,21 @@ class IntegrationsOverview extends React.Component<Props, State> {
       icon: '/slack.svg',
       description:
         'Reply to messages from your customers directly through Slack.',
+    };
+  };
+
+  fetchMattermostIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchMattermostAuthorization();
+
+    return {
+      key: 'mattermost',
+      integration: 'Reply from Mattermost',
+      status: auth ? 'connected' : 'not_connected',
+      created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
+      icon: '/mattermost.svg',
+      description:
+        'Reply to messages from your customers directly from Mattermost.',
     };
   };
 
@@ -194,7 +213,11 @@ class IntegrationsOverview extends React.Component<Props, State> {
       case 'slack':
         const authorizationType = state || 'reply';
 
-        return API.authorizeSlackIntegration(code, authorizationType)
+        return API.authorizeSlackIntegration({
+          code,
+          type: authorizationType,
+          redirect_url: getSlackRedirectUrl(),
+        })
           .then((result) =>
             logger.debug('Successfully authorized Slack:', result)
           )
@@ -356,6 +379,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
               loading={refreshing}
               integrations={integrations}
               onDisconnectSlack={this.handleDisconnectSlack}
+              onUpdateIntegration={this.refreshAllIntegrations}
             />
           </Box>
         </Box>

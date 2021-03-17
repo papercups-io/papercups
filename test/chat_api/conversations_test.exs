@@ -61,6 +61,25 @@ defmodule ChatApi.ConversationsTest do
 
       assert result_ids == [not_archived_conversation.id]
     end
+
+    test "filters conversations for an account by tag", %{
+      account: account,
+      conversation: conversation
+    } do
+      tag = insert(:tag)
+      Conversations.add_tag(conversation, tag.id)
+
+      result_ids =
+        account.id
+        |> Conversations.list_conversations_by_account(%{"tag_id" => tag.id})
+        |> Enum.map(& &1.id)
+
+      assert result_ids == [conversation.id]
+
+      Conversations.remove_tag(conversation, tag.id)
+
+      assert [] = Conversations.list_conversations_by_account(account.id, %{"tag_id" => tag.id})
+    end
   end
 
   describe "find_by_customer/2" do
