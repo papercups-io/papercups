@@ -14,6 +14,7 @@ import WebhooksTable from './WebhooksTable';
 import NewWebhookModal from './NewWebhookModal';
 import PersonalApiKeysTable from './PersonalApiKeysTable';
 import NewApiKeyModal from './NewApiKeyModal';
+import {isEuEdition} from '../../config';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
@@ -65,7 +66,14 @@ class IntegrationsOverview extends React.Component<Props, State> {
       const webhooks = await API.fetchEventSubscriptions();
       const personalApiKeys = await API.fetchPersonalApiKeys();
 
-      this.setState({integrations, webhooks, personalApiKeys, loading: false});
+      this.setState({
+        webhooks,
+        personalApiKeys,
+        loading: false,
+        integrations: integrations.filter(({key}) =>
+          isEuEdition ? !key.startsWith('slack') : true
+        ),
+      });
     } catch (err) {
       logger.error('Error loading integrations:', err);
 
@@ -89,7 +97,12 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchSlackSupportIntegration(),
       ]);
 
-      this.setState({integrations, refreshing: false});
+      this.setState({
+        integrations: integrations.filter(({key}) =>
+          isEuEdition ? !key.startsWith('slack') : true
+        ),
+        refreshing: false,
+      });
     } catch (err) {
       logger.error('Error refreshing integrations:', err);
 
