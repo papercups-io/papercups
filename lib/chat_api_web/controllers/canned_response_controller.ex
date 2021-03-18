@@ -6,9 +6,10 @@ defmodule ChatApiWeb.CannedResponseController do
 
   action_fallback ChatApiWeb.FallbackController
 
-  plug :get_canned_response when action in [:show, :update, :delete]
+  @unauthorized_actions [:index, :create]
 
-  # Do the check
+  plug :get_canned_response when action not in @unauthorized_actions
+
   plug Bodyguard.Plug.Authorize,
        [
          policy: CannedResponses.Policy,
@@ -17,7 +18,7 @@ defmodule ChatApiWeb.CannedResponseController do
          params: {__MODULE__, :extract_canned_response},
          fallback: ChatApiWeb.FallbackController
        ]
-       when action in [:show, :update, :delete]
+       when action not in @unauthorized_actions
 
   # Helper for the Authorize plug
   def current_user(conn), do: conn.assigns.current_user
