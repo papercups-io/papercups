@@ -11,8 +11,9 @@ import {
 } from '../common';
 import {Message, MessageType, User} from '../../types';
 import {PaperClipOutlined} from '../icons';
+import {env} from '../../config';
 
-const {REACT_APP_FILE_UPLOADS_ENABLED} = process.env;
+const {REACT_APP_FILE_UPLOADS_ENABLED} = env;
 
 const fileUploadsEnabled = (accountId?: string) => {
   const enabled = REACT_APP_FILE_UPLOADS_ENABLED || '';

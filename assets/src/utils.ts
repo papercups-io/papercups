@@ -1,11 +1,12 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import qs from 'query-string';
+import {env} from './config';
 import {Message} from './types';
 
 dayjs.extend(utc);
 
-const {REACT_APP_STRIPE_PUBLIC_KEY} = process.env;
+const {REACT_APP_STRIPE_PUBLIC_KEY} = env;
 
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 

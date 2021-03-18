@@ -8,16 +8,24 @@ export const isDev = Boolean(
     )
 );
 
+const serverEnvData = (window as any).__ENV__ || {};
+
+export const env = {
+  ...process.env,
+  ...serverEnvData,
+};
+
+console.log('!!!', env);
+
 const hostname = window.location.hostname;
 
 export const isHostedProd =
   hostname === 'app.papercups.io' || hostname === 'app.papercups-eu.io';
 
 export const isEuEdition =
-  process.env.REACT_APP_EU_EDITION === 'true' ||
-  process.env.REACT_APP_EU_EDITION === '1';
+  env.REACT_APP_EU_EDITION === 'true' || env.REACT_APP_EU_EDITION === '1';
 
-export const REACT_URL = process.env.REACT_APP_URL || 'app.papercups.io';
+export const REACT_URL = env.REACT_APP_URL || 'app.papercups.io';
 
 export const BASE_URL = isDev
   ? 'http://localhost:4000'
@@ -28,4 +36,4 @@ export const FRONTEND_BASE_URL = isDev ? 'http://localhost:3000' : BASE_URL;
 
 // Defaults to Papercups client ID (it's ok for this value to be public)
 export const SLACK_CLIENT_ID =
-  process.env.REACT_APP_SLACK_CLIENT_ID || '1192316529232.1250363411891';
+  env.REACT_APP_SLACK_CLIENT_ID || '1192316529232.1250363411891';
