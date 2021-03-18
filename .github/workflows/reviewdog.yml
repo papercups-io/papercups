@@ -4,10 +4,16 @@ jobs:
   credo:
     name: runner / credo
     runs-on: ubuntu-latest
-    container:
-      image: elixir:1.9.1-slim
+
     steps:
       - uses: actions/checkout@v1
+
+      - name: Initial setup
+        uses: erlef/setup-elixir@v1
+        with:
+          elixir-version: "1.10.4"
+          otp-version: "22.2.6"
+
       - name: Install Dependencies
         run: |
           mix local.rebar --force
