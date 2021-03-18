@@ -7,6 +7,10 @@ You can check out how our chat widget looks and play around with customizing it 
 _Watch how easy it is to get set up with our Slack integration 🚀 :_
 ![slack-setup](https://user-images.githubusercontent.com/4218509/88716918-a0583180-d0d4-11ea-93b3-12437ac51138.gif)
 
+## Join our Slack channel!
+
+Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)! :wave:
+
 ## One click Heroku deployment
 
 The fastest way to get started is one click deploy on Heroku with:
@@ -48,10 +52,6 @@ Check out our docs at [docs.papercups.io](https://docs.papercups.io/)
 ## Contributing
 
 We :heart: contributions big or small. See [CONTRIBUTING.md](https://github.com/papercups-io/papercups/blob/master/CONTRIBUTING.md) for a guide on how to get started.
-
-## Get in touch
-
-Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)! :wave:
 
 ## Thanks to all of our contributors!
 
