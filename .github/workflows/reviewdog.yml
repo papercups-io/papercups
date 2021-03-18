@@ -1,18 +1,14 @@
+
 name: reviewdog
 on: [pull_request]
 jobs:
   credo:
     name: runner / credo
     runs-on: ubuntu-latest
-
+    container:
+      image: elixir:1.9.1-slim
     steps:
-      - name: Check out code.
-        uses: actions/checkout@v2
-      - name: Initial setup
-        uses: erlef/setup-elixir@v1
-        with:
-          elixir-version: "1.10.4"
-          otp-version: "22.2.6"
+      - uses: actions/checkout@v1
       - name: Install Dependencies
         run: |
           mix local.rebar --force
@@ -22,8 +18,4 @@ jobs:
         uses: red-shirts/reviewdog-action-credo@v1
         with:
           github_token: ${{ secrets.github_token }}
-      - name: credo-pr-review
-        uses: red-shirts/reviewdog-action-credo@v1
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-review
+          reporter: github-pr-review # Change reporter.
