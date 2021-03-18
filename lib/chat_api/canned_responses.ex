@@ -1,4 +1,6 @@
 defmodule ChatApi.CannedResponses do
+  defdelegate authorize(action, user, params), to: ChatApi.CannedResponses.Policy
+
   @moduledoc """
   The CannedResponses context.
   """
@@ -46,4 +48,25 @@ defmodule ChatApi.CannedResponses do
   def change_canned_response(%CannedResponse{} = canned_response, attrs \\ %{}) do
     CannedResponse.changeset(canned_response, attrs)
   end
+end
+
+defmodule ChatApi.CannedResponses.Policy do
+  @behaviour Bodyguard.Policy
+
+  # Require account_id check for getting, updating, deleting
+  def authorize(
+        action,
+        %{account_id: account_id} = _user,
+        %{account_id: account_id} = _canned_response
+      )
+      when action in [:get_canned_response!, :update_canned_response, :delete_canned_response],
+      do: :ok
+
+  # Don't require authorization check when listing or creating
+  def authorize(action, _, _)
+      when action in [:list_canned_responses, :create_canned_response],
+      do: :ok
+
+  # Catch-all: deny everything else
+  def authorize(_, _, _), do: {:error, :not_found}
 end
