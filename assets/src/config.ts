@@ -15,8 +15,6 @@ export const env = {
   ...serverEnvData,
 };
 
-console.log('!!!', env);
-
 const hostname = window.location.hostname;
 
 export const isHostedProd =
