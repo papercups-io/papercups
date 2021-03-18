@@ -12,7 +12,6 @@ mailgun_api_key = System.get_env("MAILGUN_API_KEY")
 domain = System.get_env("DOMAIN")
 site_id = System.get_env("CUSTOMER_IO_SITE_ID")
 customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
-stripe_secret_key = System.get_env("PAPERCUPS_STRIPE_SECRET")
 aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
 aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
 bucket_name = System.get_env("BUCKET_NAME")
@@ -70,6 +69,7 @@ config :chat_api, :phoenix_swagger,
     ]
   }
 
+# Configure Sentry
 config :sentry,
   dsn: sentry_dsn,
   environment_name: Mix.env(),
@@ -100,6 +100,7 @@ config :chat_api, Oban,
     # {"0 * * * *", ChatApi.Workers.ArchiveStaleFreeTierConversations}
   ]
 
+# Configure Mailgun
 config :chat_api, ChatApi.Mailers.Mailgun,
   adapter: Swoosh.Adapters.Mailgun,
   api_key: mailgun_api_key,
@@ -111,7 +112,13 @@ config :customerio,
   site_id: site_id,
   api_key: customerio_api_key
 
-config :stripity_stripe, api_key: stripe_secret_key
+case System.get_env("PAPERCUPS_STRIPE_SECRET") do
+  "sk_" <> _rest = api_key ->
+    config :stripity_stripe, api_key: api_key
+
+  _ ->
+    nil
+end
 
 config :ex_aws,
   access_key_id: aws_key_id,
