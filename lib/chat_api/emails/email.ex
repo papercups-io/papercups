@@ -207,7 +207,7 @@ defmodule ChatApi.Emails.Email do
   end
 
   defp get_app_domain() do
-    if Mix.env() == :dev do
+    if Application.get_env(:chat_api, :environment) == :dev do
       "http://localhost:3000"
     else
       "https://" <> System.get_env("BACKEND_URL", "app.papercups.io")

@@ -733,7 +733,7 @@ defmodule ChatApi.Slack.Helpers do
     url = System.get_env("BACKEND_URL") || ""
 
     base =
-      if Mix.env() == :dev do
+      if Application.get_env(:chat_api, :environment) == :dev do
         "http://localhost:3000"
       else
         "https://" <> url

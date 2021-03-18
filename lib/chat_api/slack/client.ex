@@ -229,6 +229,7 @@ defmodule ChatApi.Slack.Client do
 
   @spec should_execute?(binary()) :: boolean()
   defp should_execute?(access_token) do
-    Mix.env() != :test && ChatApi.Slack.Token.is_valid_access_token?(access_token)
+    Application.get_env(:chat_api, :environment) != :test &&
+      ChatApi.Slack.Token.is_valid_access_token?(access_token)
   end
 end

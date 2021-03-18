@@ -7,7 +7,19 @@
 # General application configuration
 use Mix.Config
 
+sentry_dsn = System.get_env("SENTRY_DSN")
+mailgun_api_key = System.get_env("MAILGUN_API_KEY")
+domain = System.get_env("DOMAIN")
+site_id = System.get_env("CUSTOMER_IO_SITE_ID")
+customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
+stripe_secret_key = System.get_env("PAPERCUPS_STRIPE_SECRET")
+aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
+aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
+bucket_name = System.get_env("BUCKET_NAME")
+region = System.get_env("AWS_REGION")
+
 config :chat_api,
+  environment: Mix.env(),
   ecto_repos: [ChatApi.Repo],
   generators: [binary_id: true]
 
@@ -58,17 +70,12 @@ config :chat_api, :phoenix_swagger,
     ]
   }
 
-# Configure Sentry
-sentry_dsn = System.get_env("SENTRY_DSN")
-
-if sentry_dsn != nil do
-  config :sentry,
-    dsn: sentry_dsn,
-    environment_name: Mix.env(),
-    included_environments: [:prod],
-    enable_source_code_context: true,
-    root_source_code_path: File.cwd!()
-end
+config :sentry,
+  dsn: sentry_dsn,
+  environment_name: Mix.env(),
+  included_environments: [:prod],
+  enable_source_code_context: true,
+  root_source_code_path: File.cwd!()
 
 config :pow, Pow.Postgres.Store,
   repo: ChatApi.Repo,
@@ -93,54 +100,27 @@ config :chat_api, Oban,
     # {"0 * * * *", ChatApi.Workers.ArchiveStaleFreeTierConversations}
   ]
 
-# Configure Mailgun
-mailgun_api_key = System.get_env("MAILGUN_API_KEY")
-domain = System.get_env("DOMAIN")
-
-if mailgun_api_key != nil and domain != nil do
-  config :chat_api, ChatApi.Mailers.Mailgun,
-    adapter: Swoosh.Adapters.Mailgun,
-    api_key: mailgun_api_key,
-    domain: domain
-end
+config :chat_api, ChatApi.Mailers.Mailgun,
+  adapter: Swoosh.Adapters.Mailgun,
+  api_key: mailgun_api_key,
+  domain: domain
 
 config :chat_api, ChatApi.Mailers.Gmail, adapter: Swoosh.Adapters.Gmail
 
-site_id = System.get_env("CUSTOMER_IO_SITE_ID")
-customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
+config :customerio,
+  site_id: site_id,
+  api_key: customerio_api_key
 
-if site_id != nil and customerio_api_key != nil do
-  config :customerio,
-    site_id: site_id,
-    api_key: customerio_api_key
-end
+config :stripity_stripe, api_key: stripe_secret_key
 
-case System.get_env("PAPERCUPS_STRIPE_SECRET") do
-  "sk_" <> _rest = api_key ->
-    config :stripity_stripe, api_key: api_key
-
-  _ ->
-    nil
-end
-
-aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
-aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
-bucket_name = System.get_env("BUCKET_NAME")
-region = System.get_env("AWS_REGION")
-
-if aws_key_id != nil and
-     aws_secret_key != nil and
-     bucket_name != nil and
-     region != nil do
-  config :ex_aws,
-    access_key_id: aws_key_id,
-    secret_access_key: aws_secret_key,
-    s3: [
-      scheme: "https://",
-      host: bucket_name <> ".s3.amazonaws.com",
-      region: region
-    ]
-end
+config :ex_aws,
+  access_key_id: aws_key_id,
+  secret_access_key: aws_secret_key,
+  s3: [
+    scheme: "https://",
+    host: bucket_name <> ".s3.amazonaws.com",
+    region: region
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
