@@ -6,6 +6,28 @@ defmodule ChatApiWeb.CannedResponseController do
 
   action_fallback ChatApiWeb.FallbackController
 
+  plug :get_canned_response when action in [:show, :update, :delete]
+
+  # Do the check
+  plug Bodyguard.Plug.Authorize,
+       [
+         policy: CannedResponses.Policy,
+         action: :get_canned_response!,
+         user: {__MODULE__, :current_user},
+         params: {__MODULE__, :extract_canned_response},
+         fallback: ChatApiWeb.FallbackController
+       ]
+       when action in [:show, :update, :delete]
+
+  # Helper for the Authorize plug
+  def current_user(conn), do: conn.assigns.current_user
+  def extract_canned_response(conn), do: conn.assigns.current_canned_response
+
+  defp get_canned_response(conn, _) do
+    current_canned_response = CannedResponses.get_canned_response!(conn.params["id"])
+    assign(conn, :current_canned_response, current_canned_response)
+  end
+
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, _params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
@@ -29,34 +51,25 @@ defmodule ChatApiWeb.CannedResponseController do
   end
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def show(conn, %{"id" => id}) do
-    user = conn.assigns.current_user
-    canned_response = CannedResponses.get_canned_response!(id)
-
-    with :ok <- Bodyguard.permit(CannedResponses, :get_canned_response!, user, canned_response) do
-      render(conn, "show.json", canned_response: canned_response)
-    end
+  def show(conn, _params) do
+    render(conn, "show.json", canned_response: conn.assigns.current_canned_response)
   end
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def update(conn, %{"id" => id, "canned_response" => canned_response_params}) do
-    user = conn.assigns.current_user
-    canned_response = CannedResponses.get_canned_response!(id)
-
-    with :ok <- Bodyguard.permit(CannedResponses, :update_canned_response, user, canned_response),
-         {:ok, %CannedResponse{} = canned_response} <-
-           CannedResponses.update_canned_response(canned_response, canned_response_params) do
-      render(conn, "show.json", canned_response: canned_response)
+  def update(conn, %{"canned_response" => canned_response_params}) do
+    with {:ok, %CannedResponse{} = updated_canned_response} <-
+           CannedResponses.update_canned_response(
+             conn.assigns.current_canned_response,
+             canned_response_params
+           ) do
+      render(conn, "show.json", canned_response: updated_canned_response)
     end
   end
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def delete(conn, %{"id" => id}) do
-    user = conn.assigns.current_user
-    canned_response = CannedResponses.get_canned_response!(id)
-
-    with :ok <- Bodyguard.permit(CannedResponses, :delete_canned_response, user, canned_response),
-         {:ok, %CannedResponse{}} <- CannedResponses.delete_canned_response(canned_response) do
+  def delete(conn, _params) do
+    with {:ok, %CannedResponse{}} <-
+           CannedResponses.delete_canned_response(conn.assigns.current_canned_response) do
       send_resp(conn, :no_content, "")
     end
   end
