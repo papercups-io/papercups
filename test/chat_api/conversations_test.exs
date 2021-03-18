@@ -734,7 +734,7 @@ defmodule ChatApi.ConversationsTest do
         Conversations.list_conversations_by_account_paginated(
           account.id,
           %{},
-          Keyword.merge(pagination_options, [after: metadata1.after])
+          Keyword.merge(pagination_options, after: metadata1.after)
         )
 
       assert Enum.map(entries2, & &1.id) == Enum.map(second_batch, & &1.id)
@@ -743,7 +743,7 @@ defmodule ChatApi.ConversationsTest do
         Conversations.list_conversations_by_account_paginated(
           account.id,
           %{},
-          Keyword.merge(pagination_options, [after: metadata2.after])
+          Keyword.merge(pagination_options, after: metadata2.after)
         )
 
       assert Enum.map(entries3, & &1.id) == Enum.map(third_batch, & &1.id)
