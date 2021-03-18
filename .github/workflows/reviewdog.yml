@@ -1,0 +1,20 @@
+name: reviewdog
+on: [pull_request]
+jobs:
+  credo:
+    name: runner / credo
+    runs-on: ubuntu-latest
+    container:
+      image: elixir:1.9.1-slim
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Dependencies
+        run: |
+          mix local.rebar --force
+          mix local.hex --force
+          mix deps.get
+      - name: credo
+        uses: red-shirts/reviewdog-action-credo@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review # Change reporter.
