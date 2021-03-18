@@ -6,7 +6,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - name: Check out code.
+        uses: actions/checkout@v2
+
 
       - name: Initial setup
         uses: erlef/setup-elixir@v1
