@@ -14,7 +14,7 @@ site_id = System.get_env("CUSTOMER_IO_SITE_ID")
 customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
 aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
 aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
-bucket_name = System.get_env("BUCKET_NAME")
+bucket_name = System.get_env("BUCKET_NAME", "papercups-files")
 region = System.get_env("AWS_REGION")
 
 config :chat_api,
