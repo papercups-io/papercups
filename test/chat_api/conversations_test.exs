@@ -712,10 +712,10 @@ defmodule ChatApi.ConversationsTest do
   describe "list_conversations_by_account_paginated/1" do
     test "sorts the conversations by most recent activity" do
       account = insert(:account)
-      filter = %{"limit" => 5}
+      pagination_options = [limit: 5]
       base_last_activity_at = DateTime.from_naive!(~N[2020-12-01 00:00:00], "Etc/UTC")
 
-      [third_batch, second_batch, first_batch] =
+      [first_batch, second_batch, third_batch] =
         15..1
         |> Enum.map(
           &insert(:conversation,
@@ -726,16 +726,15 @@ defmodule ChatApi.ConversationsTest do
         |> Enum.chunk_every(5)
 
       %{metadata: metadata1, entries: entries1} =
-        Conversations.list_conversations_by_account_paginated(account.id, filter)
+        Conversations.list_conversations_by_account_paginated(account.id, %{}, pagination_options)
 
-      assert Enum.map(entries1, & &1.id) == Enum.map(third_batch, & &1.id)
+      assert Enum.map(entries1, & &1.id) == Enum.map(first_batch, & &1.id)
 
       %{metadata: metadata2, entries: entries2} =
         Conversations.list_conversations_by_account_paginated(
           account.id,
-          Map.merge(filter, %{
-            "after" => metadata1.after
-          })
+          %{},
+          Keyword.merge(pagination_options, [after: metadata1.after])
         )
 
       assert Enum.map(entries2, & &1.id) == Enum.map(second_batch, & &1.id)
@@ -743,12 +742,11 @@ defmodule ChatApi.ConversationsTest do
       %{metadata: metadata3, entries: entries3} =
         Conversations.list_conversations_by_account_paginated(
           account.id,
-          Map.merge(filter, %{
-            "after" => metadata2.after
-          })
+          %{},
+          Keyword.merge(pagination_options, [after: metadata2.after])
         )
 
-      assert Enum.map(entries3, & &1.id) == Enum.map(first_batch, & &1.id)
+      assert Enum.map(entries3, & &1.id) == Enum.map(third_batch, & &1.id)
 
       assert metadata3.after == nil
     end
