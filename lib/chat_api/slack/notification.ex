@@ -47,6 +47,7 @@ defmodule ChatApi.Slack.Notification do
           account_id: account_id
         } = message
       ) do
+    Logger.info("Calling ChatApi.Slack.Notification.notify_primary_channel")
     # TODO: handle getting all these fields in a separate function?
     with %{customer: customer} = conversation <-
            Conversations.get_conversation_with!(conversation_id, :customer),
@@ -97,6 +98,9 @@ defmodule ChatApi.Slack.Notification do
         error ->
           Logger.error("Unable to send Slack message: #{inspect(error)}")
       end
+    else
+      error ->
+        Logger.info("Skipped sending Slack message: #{inspect(error)}")
     end
   end
 
