@@ -26,7 +26,6 @@ defmodule ChatApiWeb.Endpoint do
     at: "/",
     from: :chat_api,
     gzip: true,
-    only: ~w(static js css),
     headers: [{"cache-control", "max-age=31536000"}]
   )
 
