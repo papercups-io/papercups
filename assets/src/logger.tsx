@@ -4,7 +4,7 @@ import qs from 'query-string';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {notification, Divider} from './components/common';
-import {isHostedProd} from './config';
+import {env, isHostedProd} from './config';
 
 const noop = () => {};
 
@@ -104,7 +104,7 @@ const stringify = (data: any) => {
 
 const {debug = 0} = qs.parse(window?.location?.search || '');
 const forceDebugModeEnabled =
-  !!Number(debug) || !!Number(process.env.REACT_APP_DEBUG_MODE_ENABLED);
+  !!Number(debug) || !!Number(env.REACT_APP_DEBUG_MODE_ENABLED);
 
 const callback = (type: Level, ...args: any) => {
   const description = args.map((arg: any, idx: number) => {

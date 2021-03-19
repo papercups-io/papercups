@@ -24,7 +24,7 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL, isDev, isEuEdition, isHostedProd} from '../config';
+import {BASE_URL, env, isDev, isEuEdition, isHostedProd} from '../config';
 import analytics from '../analytics';
 import {hasValidStripeKey} from '../utils';
 import {Account, User} from '../types';
@@ -57,7 +57,7 @@ import TagDetailsPage from './tags/TagDetailsPage';
 const {
   REACT_APP_STORYTIME_ENABLED,
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
-} = process.env;
+} = env;
 
 const TITLE_FLASH_INTERVAL = 2000;
 

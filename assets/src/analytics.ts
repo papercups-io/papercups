@@ -1,14 +1,14 @@
 import * as Sentry from '@sentry/react';
 import LogRocket from 'logrocket';
 import posthog from 'posthog-js';
-import {isDev} from './config';
+import {isDev, env} from './config';
 
 const {
   REACT_APP_SENTRY_DSN,
   REACT_APP_LOGROCKET_ID,
   REACT_APP_POSTHOG_TOKEN = 'cQo4wipp5ipWWXhTN8kTacBItgqo457yDRtzCMOr-Tw',
   REACT_APP_POSTHOG_API_HOST = 'https://app.posthog.com',
-} = process.env;
+} = env;
 
 export const isSentryEnabled = REACT_APP_SENTRY_DSN && !isDev;
 export const isLogRocketEnabled = REACT_APP_LOGROCKET_ID && !isDev;
