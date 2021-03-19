@@ -25,9 +25,11 @@
     -->
     <title>Papercups</title>
 
-    <script>
-      window.__ENV__ = __SERVER_ENV_DATA__;
-    </script>
+    <% if (process.env.NODE_ENV === 'production') { %>
+      <script>
+        window.__ENV__ = __SERVER_ENV_DATA__;
+      </script>
+    <% } %>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <!-- TODO: move Google Analytics id to environment variable -->
