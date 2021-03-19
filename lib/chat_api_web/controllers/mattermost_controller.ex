@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.MattermostController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{Mattermost, Messages}
+  alias ChatApi.{Mattermost, Messages, Slack}
   alias ChatApi.Mattermost.MattermostAuthorization
 
   require Logger
@@ -104,8 +104,10 @@ defmodule ChatApiWeb.MattermostController do
              mattermost_post_root_id: root_id,
              account_id: account_id
            }) do
-      %{
-        "body" => text,
+      text
+      |> Slack.Helpers.parse_message_type_params()
+      |> Map.merge(%{
+        "body" => Slack.Helpers.sanitize_private_note(text),
         "conversation_id" => conversation.id,
         "account_id" => account_id,
         "source" => "mattermost",
@@ -115,7 +117,7 @@ defmodule ChatApiWeb.MattermostController do
             nil -> conversation.assignee_id
             user -> user.id
           end
-      }
+      })
       |> Messages.create_and_fetch!()
       |> Messages.Notification.broadcast_to_customer!()
       |> Messages.Notification.broadcast_to_admin!()
