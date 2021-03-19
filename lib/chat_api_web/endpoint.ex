@@ -22,9 +22,13 @@ defmodule ChatApiWeb.Endpoint do
   #
   # You should set gzip to true if you are running phx.digest
   # when deploying your static files in production.
-  plug Plug.Static,
+  plug(Plug.Static,
     at: "/",
-    from: :chat_api
+    from: :chat_api,
+    gzip: true,
+    only: ~w(static js css),
+    headers: [{"cache-control", "max-age=31536000"}]
+  )
 
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.

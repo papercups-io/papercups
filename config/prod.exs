@@ -40,6 +40,7 @@ secret_key_base =
 config :chat_api, ChatApiWeb.Endpoint,
   http: [
     port: String.to_integer(System.get_env("PORT") || "4000"),
+    compress: true,
     transport_options: [socket_opts: [:inet6]]
   ],
   url: [scheme: "https", host: {:system, "BACKEND_URL"}, port: 443],
