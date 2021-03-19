@@ -40,6 +40,7 @@ defmodule ChatApi.MixProject do
   defp deps do
     [
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_machina, "~> 2.4", only: [:test]},
       {:mock, "~> 0.3.0", only: :test},
@@ -75,7 +76,7 @@ defmodule ChatApi.MixProject do
       {:tzdata, "~> 1.0.5"},
       {:scrivener_ecto, "~> 2.0"},
       {:floki, "~> 0.30.0"},
-      {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
+      {:ex_twilio, "~> 0.9.0"}
     ]
   end
 

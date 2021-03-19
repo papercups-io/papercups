@@ -120,6 +120,7 @@ case System.get_env("PAPERCUPS_STRIPE_SECRET") do
     nil
 end
 
+# AWS
 config :ex_aws,
   access_key_id: aws_key_id,
   secret_access_key: aws_secret_key,
@@ -128,6 +129,13 @@ config :ex_aws,
     host: bucket_name <> ".s3.amazonaws.com",
     region: region
   ]
+
+# Twilio
+config :ex_twilio,
+  account_sid: {:system, "TWILIO_ACCOUNT_SID"},
+  auth_token: {:system, "TWILIO_AUTH_TOKEN"},
+  # Optional:
+  workspace_sid: {:system, "TWILIO_WORKSPACE_SID"}
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
