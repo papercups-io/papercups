@@ -1,13 +1,13 @@
 defmodule ChatApi.SendConversationReplyEmailTest do
   use ChatApi.DataCase, async: true
-  alias ChatApi.{Users.User, Conversations.Conversation}
+  alias ChatApi.{Users.User, Conversations.Conversation, Workers.SendSlackReminders}
 
   import ChatApi.Factory
 
   setup do
     account = insert(:account)
     user = insert(:user, account: account)
-    customer = insert(:customer, account: account)
+    customer = insert(:customer, account: account, name: "Cust O Mer")
 
     {:ok, account: account, customer: customer, user: user}
   end
@@ -19,7 +19,7 @@ defmodule ChatApi.SendConversationReplyEmailTest do
     } do
       insert(:conversation, account: account, customer: customer, source: "chat")
 
-      assert [] = ChatApi.Workers.SendSlackReminders.list_forgotten_conversations()
+      assert [] = SendSlackReminders.list_forgotten_conversations()
     end
 
     test "finds conversation only if last message was from customer, sent more than 24 hours ago",
@@ -39,7 +39,7 @@ defmodule ChatApi.SendConversationReplyEmailTest do
         sent_at: DateTime.add(DateTime.utc_now(), -:timer.hours(26), :millisecond)
       )
 
-      assert [conversation] = ChatApi.Workers.SendSlackReminders.list_forgotten_conversations()
+      assert [conversation] = SendSlackReminders.list_forgotten_conversations()
 
       insert(:message,
         body: "Hello customer, I am a user",
@@ -50,7 +50,7 @@ defmodule ChatApi.SendConversationReplyEmailTest do
         sent_at: DateTime.add(DateTime.utc_now(), -:timer.hours(25), :millisecond)
       )
 
-      assert [] = ChatApi.Workers.SendSlackReminders.list_forgotten_conversations()
+      assert [] = SendSlackReminders.list_forgotten_conversations()
 
       insert(:message,
         body: "Hello user, customer here. goodbye now",
@@ -62,13 +62,13 @@ defmodule ChatApi.SendConversationReplyEmailTest do
         sent_at: DateTime.add(DateTime.utc_now(), -:timer.hours(3), :millisecond)
       )
 
-      assert [] = ChatApi.Workers.SendSlackReminders.list_forgotten_conversations()
+      assert [] = SendSlackReminders.list_forgotten_conversations()
     end
   end
 
   describe "find_slackable_users/1" do
     test "works with no conversations" do
-      assert [] = ChatApi.Workers.SendSlackReminders.find_slackable_users([])
+      assert [] = SendSlackReminders.find_slackable_users([])
     end
 
     test "filters conversations without assignees", %{
@@ -77,7 +77,7 @@ defmodule ChatApi.SendConversationReplyEmailTest do
     } do
       conversation = insert(:conversation, account: account, customer: customer, source: "chat")
 
-      assert [] = ChatApi.Workers.SendSlackReminders.find_slackable_users([conversation])
+      assert [] = SendSlackReminders.find_slackable_users([conversation])
     end
 
     test "gets users if they have a slack_user_id in their profiel", %{
@@ -93,14 +93,14 @@ defmodule ChatApi.SendConversationReplyEmailTest do
           assignee_id: user.id
         )
 
-      assert [] = ChatApi.Workers.SendSlackReminders.find_slackable_users([conversation])
+      assert [] = SendSlackReminders.find_slackable_users([conversation])
 
       insert(:user_profile,
         user: user,
         slack_user_id: "some_id"
       )
 
-      assert [user] = ChatApi.Workers.SendSlackReminders.find_slackable_users([conversation])
+      assert [user] = SendSlackReminders.find_slackable_users([conversation])
     end
   end
 
@@ -119,7 +119,7 @@ defmodule ChatApi.SendConversationReplyEmailTest do
         )
 
       assert [] =
-               ChatApi.Workers.SendSlackReminders.group_conversations_by_slackable_user([
+               SendSlackReminders.group_conversations_by_slackable_user([
                  conversation
                ])
     end
@@ -174,12 +174,63 @@ defmodule ChatApi.SendConversationReplyEmailTest do
                {new_user = %User{},
                 [third_conversation = %Conversation{}, fourth_conversation = %Conversation{}]}
              ] =
-               ChatApi.Workers.SendSlackReminders.group_conversations_by_slackable_user([
+               SendSlackReminders.group_conversations_by_slackable_user([
                  conversation,
                  second_conversation,
                  third_conversation,
                  fourth_conversation
                ])
+    end
+  end
+
+  describe "format_slack_reminder/1" do
+    test "formats slack reminder", %{
+      user: user,
+      account: account,
+      customer: customer
+    } do
+      insert(:user_profile, user: user, slack_user_id: "some_id")
+
+      conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          source: "chat",
+          assignee_id: user.id
+        )
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        sent_at: DateTime.add(DateTime.utc_now(), -:timer.hours(26), :millisecond)
+      )
+
+      second_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          source: "chat",
+          assignee_id: user.id
+        )
+
+      insert(:message,
+        body: "I am also a customer",
+        account: account,
+        conversation: second_conversation,
+        customer: customer,
+        user: nil,
+        sent_at: DateTime.add(DateTime.utc_now(), -:timer.hours(26), :millisecond)
+      )
+
+      assert [string] =
+               SendSlackReminders.list_forgotten_conversations()
+               |> SendSlackReminders.group_conversations_by_slackable_user()
+               |> Enum.map(&SendSlackReminders.format_slack_reminder/1)
+
+      assert is_binary(string)
     end
   end
 end

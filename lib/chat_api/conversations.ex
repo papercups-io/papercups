@@ -96,7 +96,9 @@ defmodule ChatApi.Conversations do
         on: not is_nil(most_recent_message.customer_id)
       )
 
-    Repo.all(query)
+    query
+    |> preload([:customer, messages: ^most_recent_message_query])
+    |> Repo.all()
   end
 
   @spec list_other_recent_conversations(Conversation.t(), integer(), map()) :: [Conversation.t()]

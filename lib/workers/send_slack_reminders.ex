@@ -30,4 +30,20 @@ defmodule ChatApi.Workers.SendSlackReminders do
       {user, conversations}
     end)
   end
+
+  def format_slack_reminder({user, conversations}) do
+    header =
+      "Hey #{user.profile.display_name}! Here are some conversations you haven't gotten back to in over 24 hours:"
+
+    conversation_summaries = Enum.map(conversations, &format_conversation_line/1)
+
+    ([header] ++ conversation_summaries)
+    |> Enum.join("\n\n")
+  end
+
+  def format_conversation_line(conversation) do
+    customer = conversation.customer_id |> Customers.get_customer!()
+    last_customer_message = conversation.messages |> hd()
+    "**#{customer.name}** (#{last_customer_message.inserted_at}): '#{last_customer_message.body}'"
+  end
 end
