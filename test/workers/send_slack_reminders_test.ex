@@ -1,5 +1,6 @@
 defmodule ChatApi.SendConversationReplyEmailTest do
   use ChatApi.DataCase, async: true
+  alias ChatApi.{Users.User, Conversations.Conversation}
 
   import ChatApi.Factory
 
@@ -100,6 +101,85 @@ defmodule ChatApi.SendConversationReplyEmailTest do
       )
 
       assert [user] = ChatApi.Workers.SendSlackReminders.find_slackable_users([conversation])
+    end
+  end
+
+  describe "group_forgotten_messages/1" do
+    test "ignores users without slack user id ", %{
+      user: user,
+      account: account,
+      customer: customer
+    } do
+      conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          source: "chat",
+          assignee_id: user.id
+        )
+
+      assert [] =
+               ChatApi.Workers.SendSlackReminders.group_conversations_by_slackable_user([
+                 conversation
+               ])
+    end
+
+    test "groups conversation by slackable assignee", %{
+      user: user,
+      account: account,
+      customer: customer
+    } do
+      insert(:user_profile, user: user, slack_user_id: "some_id")
+
+      conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          source: "chat",
+          assignee_id: user.id
+        )
+
+      second_conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          source: "chat",
+          assignee_id: user.id
+        )
+
+      new_account = insert(:account)
+      new_user = insert(:user, account: new_account)
+      new_customer = insert(:customer, account: new_account)
+      insert(:user_profile, user: new_user, slack_user_id: "some_new_id")
+
+      third_conversation =
+        insert(:conversation,
+          account: new_account,
+          customer: new_customer,
+          source: "chat",
+          assignee_id: new_user.id
+        )
+
+      fourth_conversation =
+        insert(:conversation,
+          account: new_account,
+          customer: new_customer,
+          source: "chat",
+          assignee_id: new_user.id
+        )
+
+      assert [
+               {user = %User{},
+                [conversation = %Conversation{}, second_conversation = %Conversation{}]},
+               {new_user = %User{},
+                [third_conversation = %Conversation{}, fourth_conversation = %Conversation{}]}
+             ] =
+               ChatApi.Workers.SendSlackReminders.group_conversations_by_slackable_user([
+                 conversation,
+                 second_conversation,
+                 third_conversation,
+                 fourth_conversation
+               ])
     end
   end
 end
