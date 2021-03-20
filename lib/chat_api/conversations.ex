@@ -73,6 +73,32 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
+  @spec list_forgotten_conversations(integer()) :: [Conversation.t()]
+  def list_forgotten_conversations(age \\ 24) do
+    ranking_query =
+      from m in Message,
+        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
+        windows: [
+          messages_partition: [partition_by: :conversation_id, order_by: [desc: :sent_at]]
+        ]
+
+    most_recent_message_query =
+      from m in Message,
+        join: r in subquery(ranking_query),
+        on: m.id == r.id and r.row_number <= 1
+
+    query =
+      from(c in Conversation,
+        where: c.status == "open",
+        join: m in assoc(c, :messages),
+        inner_lateral_join: most_recent_message in subquery(most_recent_message_query),
+        on: most_recent_message.sent_at < ago(^age, "hour"),
+        on: not is_nil(most_recent_message.customer_id)
+      )
+
+    Repo.all(query)
+  end
+
   @spec list_other_recent_conversations(Conversation.t(), integer(), map()) :: [Conversation.t()]
   def list_other_recent_conversations(
         %Conversation{
