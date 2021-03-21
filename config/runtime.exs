@@ -100,3 +100,25 @@ customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
 config :customerio,
   site_id: site_id,
   api_key: customerio_api_key
+
+aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
+aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
+bucket_name = System.get_env("BUCKET_NAME", "papercups-files")
+region = System.get_env("AWS_REGION")
+
+config :ex_aws,
+  access_key_id: aws_key_id,
+  secret_access_key: aws_secret_key,
+  s3: [
+    scheme: "https://",
+    host: bucket_name <> ".s3.amazonaws.com",
+    region: region
+  ]
+
+case System.get_env("PAPERCUPS_STRIPE_SECRET") do
+  "sk_" <> _rest = api_key ->
+    config :stripity_stripe, api_key: api_key
+
+  _ ->
+    nil
+end
