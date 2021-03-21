@@ -1,45 +1,102 @@
 import Config
+IO.inspect("In runtime.exs")
 
-IO.inspect("runtime.exs")
-
-database_url = System.get_env("DATABASE_URL") || "ecto://postgres:postgres@localhost/chat_api"
-
-require_db_ssl =
-  case System.get_env("REQUIRE_DB_SSL") do
-    "true" -> true
-    "false" -> false
-    _ -> true
-  end
-
-socket_options =
-  case System.get_env("USE_IP_V6") do
-    "true" -> [:inet6]
-    "false" -> [:inet]
-    _ -> [:inet]
-  end
-
-config :chat_api, ChatApi.Repo,
-  ssl: false,
-  url: database_url,
-  pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-  socket_options: socket_options
+database_url =
+  System.get_env("DATABASE_URL") ||
+    raise """
+    environment variable DATABASE_URL is missing.
+    For example: ecto://USER:PASS@HOST/DATABASE
+    """
 
 secret_key_base =
   System.get_env("SECRET_KEY_BASE") ||
-    "dvPPvOjpgX2Wk8Y3ONrqWsgM9ZtU4sSrs4l/5CFD1sLm4H+CjLU+EidjNGuSz7bz"
+    raise """
+    environment variable SECRET_KEY_BASE is missing.
+    You can generate one by calling: mix phx.gen.secret
+    """
 
-config :chat_api, ChatApiWeb.Endpoint,
-  http: [
-    port: String.to_integer(System.get_env("PORT") || "4000"),
-    compress: true,
-    transport_options: [socket_opts: [:inet6]]
-  ],
-  url: [scheme: "https", host: {:system, "BACKEND_URL"}, port: 443],
-  # FIXME: not sure the best way to handle this, but we want
-  # to allow our customers' websites to connect to our server
-  check_origin: false,
-  # force_ssl: [rewrite_on: [:x_forwarded_proto]],
-  secret_key_base: secret_key_base
+backend_url =
+  System.get_env("BACKEND_URL") ||
+    raise """
+    environment variable BACKEND_URL is missing.
+    For example: myselfhostedwebsite.com or papercups.io
+    """
 
-# Do not print debug messages in production
-config :logger, level: :info
+# Configure your database
+config :chat_api, ChatApi.Repo,
+  url: database_url,
+  show_sensitive_data_on_connection_error: false,
+  pool_size: 10
+
+ssl_key_path = System.get_env("SSL_KEY_PATH")
+ssl_cert_path = System.get_env("SSL_CERT_PATH")
+https = (ssl_cert_path && ssl_key_path) != nil
+
+if https do
+  config :chat_api, ChatApiWeb.Endpoint,
+    http: [
+      port: String.to_integer(System.get_env("PORT") || "4000"),
+      transport_options: [socket_opts: [:inet6]]
+    ],
+    url: [host: backend_url],
+    pubsub_server: ChatApi.PubSub,
+    secret_key_base: secret_key_base,
+    https: [
+      port: 443,
+      cipher_suite: :strong,
+      otp_app: :hello,
+      keyfile: ssl_key_path,
+      certfile: ssl_cert_path
+    ],
+    server: true,
+    check_origin: false
+else
+  config :chat_api, ChatApiWeb.Endpoint,
+    http: [
+      port: String.to_integer(System.get_env("PORT") || "4000"),
+      transport_options: [socket_opts: [:inet6]]
+    ],
+    url: [host: backend_url],
+    pubsub_server: ChatApi.PubSub,
+    secret_key_base: secret_key_base,
+    server: true,
+    check_origin: false
+end
+
+# Optional
+sentry_dsn = System.get_env("SENTRY_DSN")
+mailgun_api_key = System.get_env("MAILGUN_API_KEY")
+
+# Configure Sentry
+config :sentry,
+  dsn: sentry_dsn,
+  environment_name: config_env(),
+  included_environments: [:prod],
+  enable_source_code_context: true,
+  root_source_code_path: File.cwd!()
+
+config :logger,
+  backends: [:console, Sentry.LoggerBackend]
+
+config :logger, Sentry.LoggerBackend,
+  # Also send warn messages
+  level: :warn,
+  # Send messages from Plug/Cowboy
+  excluded_domains: [],
+  # Send messages like `Logger.error("error")` to Sentry
+  capture_log_messages: true
+
+# Domain is the email address that mailgun is sent from
+domain = System.get_env("DOMAIN")
+# Configure Mailgun
+config :chat_api, ChatApi.Mailers.Mailgun,
+  adapter: Swoosh.Adapters.Mailgun,
+  api_key: mailgun_api_key,
+  domain: domain
+
+site_id = System.get_env("CUSTOMER_IO_SITE_ID")
+customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
+
+config :customerio,
+  site_id: site_id,
+  api_key: customerio_api_key

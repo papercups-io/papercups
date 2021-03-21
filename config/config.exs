@@ -7,7 +7,6 @@
 # General application configuration
 use Mix.Config
 
-sentry_dsn = System.get_env("SENTRY_DSN")
 mailgun_api_key = System.get_env("MAILGUN_API_KEY")
 domain = System.get_env("DOMAIN")
 site_id = System.get_env("CUSTOMER_IO_SITE_ID")
@@ -32,21 +31,10 @@ config :chat_api, ChatApiWeb.Endpoint,
   pubsub_server: ChatApi.PubSub,
   live_view: [signing_salt: "pRVXwt3k"]
 
-config :logger,
-  backends: [:console, Sentry.LoggerBackend]
-
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
-
-config :logger, Sentry.LoggerBackend,
-  # Also send warn messages
-  level: :warn,
-  # Send messages from Plug/Cowboy
-  excluded_domains: [],
-  # Send messages like `Logger.error("error")` to Sentry
-  capture_log_messages: true
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
@@ -68,14 +56,6 @@ config :chat_api, :phoenix_swagger,
       endpoint: ChatApiWeb.Endpoint
     ]
   }
-
-# Configure Sentry
-config :sentry,
-  dsn: sentry_dsn,
-  environment_name: Mix.env(),
-  included_environments: [:prod],
-  enable_source_code_context: true,
-  root_source_code_path: File.cwd!()
 
 config :pow, Pow.Postgres.Store,
   repo: ChatApi.Repo,
