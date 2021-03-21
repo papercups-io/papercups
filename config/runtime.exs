@@ -1,5 +1,4 @@
 import Config
-IO.inspect("In runtime.exs")
 
 database_url =
   System.get_env("DATABASE_URL") ||
@@ -22,25 +21,49 @@ backend_url =
     For example: myselfhostedwebsite.com or papercups.io
     """
 
+require_db_ssl =
+  case System.get_env("REQUIRE_DB_SSL") do
+    "true" -> true
+    "false" -> false
+    _ -> true
+  end
+
+socket_options =
+  case System.get_env("USE_IP_V6") do
+    "true" -> [:inet6]
+    "false" -> [:inet]
+    _ -> [:inet]
+  end
+
+pool_size = String.to_integer(System.get_env("POOL_SIZE") || "10")
+
 # Configure your database
 config :chat_api, ChatApi.Repo,
+  ssl: require_db_ssl,
   url: database_url,
   show_sensitive_data_on_connection_error: false,
-  pool_size: 10
+  socket_options: socket_options,
+  pool_size: pool_size
 
 ssl_key_path = System.get_env("SSL_KEY_PATH")
 ssl_cert_path = System.get_env("SSL_CERT_PATH")
 https = (ssl_cert_path && ssl_key_path) != nil
+port = String.to_integer(System.get_env("PORT") || "4000")
+
+config :chat_api, ChatApiWeb.Endpoint,
+  http: [
+    port: port,
+    compress: true,
+    transport_options: [socket_opts: [:inet6]]
+  ],
+  url: [host: backend_url],
+  pubsub_server: ChatApi.PubSub,
+  secret_key_base: secret_key_base,
+  server: true,
+  check_origin: false
 
 if https do
   config :chat_api, ChatApiWeb.Endpoint,
-    http: [
-      port: String.to_integer(System.get_env("PORT") || "4000"),
-      transport_options: [socket_opts: [:inet6]]
-    ],
-    url: [host: backend_url],
-    pubsub_server: ChatApi.PubSub,
-    secret_key_base: secret_key_base,
     https: [
       port: 443,
       cipher_suite: :strong,
@@ -48,19 +71,7 @@ if https do
       keyfile: ssl_key_path,
       certfile: ssl_cert_path
     ],
-    server: true,
-    check_origin: false
-else
-  config :chat_api, ChatApiWeb.Endpoint,
-    http: [
-      port: String.to_integer(System.get_env("PORT") || "4000"),
-      transport_options: [socket_opts: [:inet6]]
-    ],
-    url: [host: backend_url],
-    pubsub_server: ChatApi.PubSub,
-    secret_key_base: secret_key_base,
-    server: true,
-    check_origin: false
+    force_ssl: [rewrite_on: [:x_forwarded_proto]]
 end
 
 # Optional
