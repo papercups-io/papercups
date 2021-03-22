@@ -220,6 +220,7 @@ defmodule ChatApi.Conversations do
 
   @spec order_by_most_recent_message(Ecto.Query.t()) :: Ecto.Query.t()
   def order_by_most_recent_message(query) do
+    # TODO: replace with sorting by `last_activity_at`
     query
     |> join(
       :left_lateral,
@@ -227,9 +228,10 @@ defmodule ChatApi.Conversations do
       f in fragment(
         "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
         c.id
-      )
+      ),
+      as: :last_message_created_at
     )
-    |> order_by([c, f], desc: f)
+    |> order_by([c, last_message_created_at: l], desc: l)
   end
 
   @spec get_conversation!(binary()) :: Conversation.t()
@@ -478,8 +480,8 @@ defmodule ChatApi.Conversations do
   @spec filter_by_tag(Ecto.Query.t(), map()) :: Ecto.Query.t()
   def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
     query
-    |> join(:left, [c], t in assoc(c, :tags))
-    |> where([_c, t], t.id == ^tag_id)
+    |> join(:left, [c], t in assoc(c, :tags), as: :tags)
+    |> where([_c, tags: t], t.id == ^tag_id)
   end
 
   def filter_by_tag(query, _filters), do: query
