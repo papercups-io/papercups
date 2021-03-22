@@ -1,21 +1,4 @@
-# This file is responsible for configuring your application
-# and its dependencies with the aid of the Mix.Config module.
-#
-# This configuration file is loaded before any dependency and
-# is restricted to this project.
-
-# General application configuration
 use Mix.Config
-
-sentry_dsn = System.get_env("SENTRY_DSN")
-mailgun_api_key = System.get_env("MAILGUN_API_KEY")
-domain = System.get_env("DOMAIN")
-site_id = System.get_env("CUSTOMER_IO_SITE_ID")
-customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
-aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
-aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
-bucket_name = System.get_env("BUCKET_NAME", "papercups-files")
-region = System.get_env("AWS_REGION")
 
 config :chat_api,
   environment: Mix.env(),
@@ -32,21 +15,10 @@ config :chat_api, ChatApiWeb.Endpoint,
   pubsub_server: ChatApi.PubSub,
   live_view: [signing_salt: "pRVXwt3k"]
 
-config :logger,
-  backends: [:console, Sentry.LoggerBackend]
-
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
-
-config :logger, Sentry.LoggerBackend,
-  # Also send warn messages
-  level: :warn,
-  # Send messages from Plug/Cowboy
-  excluded_domains: [],
-  # Send messages like `Logger.error("error")` to Sentry
-  capture_log_messages: true
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
@@ -68,14 +40,6 @@ config :chat_api, :phoenix_swagger,
       endpoint: ChatApiWeb.Endpoint
     ]
   }
-
-# Configure Sentry
-config :sentry,
-  dsn: sentry_dsn,
-  environment_name: Mix.env(),
-  included_environments: [:prod],
-  enable_source_code_context: true,
-  root_source_code_path: File.cwd!()
 
 config :pow, Pow.Postgres.Store,
   repo: ChatApi.Repo,
@@ -100,34 +64,7 @@ config :chat_api, Oban,
     # {"0 * * * *", ChatApi.Workers.ArchiveStaleFreeTierConversations}
   ]
 
-# Configure Mailgun
-config :chat_api, ChatApi.Mailers.Mailgun,
-  adapter: Swoosh.Adapters.Mailgun,
-  api_key: mailgun_api_key,
-  domain: domain
-
 config :chat_api, ChatApi.Mailers.Gmail, adapter: Swoosh.Adapters.Gmail
-
-config :customerio,
-  site_id: site_id,
-  api_key: customerio_api_key
-
-case System.get_env("PAPERCUPS_STRIPE_SECRET") do
-  "sk_" <> _rest = api_key ->
-    config :stripity_stripe, api_key: api_key
-
-  _ ->
-    nil
-end
-
-config :ex_aws,
-  access_key_id: aws_key_id,
-  secret_access_key: aws_secret_key,
-  s3: [
-    scheme: "https://",
-    host: bucket_name <> ".s3.amazonaws.com",
-    region: region
-  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

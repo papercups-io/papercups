@@ -1,0 +1,137 @@
+import Config
+
+database_url =
+  System.get_env("DATABASE_URL") ||
+    raise """
+    environment variable DATABASE_URL is missing.
+    For example: ecto://USER:PASS@HOST/DATABASE
+    """
+
+secret_key_base =
+  System.get_env("SECRET_KEY_BASE") ||
+    raise """
+    environment variable SECRET_KEY_BASE is missing.
+    You can generate one by calling: mix phx.gen.secret
+    """
+
+backend_url =
+  System.get_env("BACKEND_URL") ||
+    raise """
+    environment variable BACKEND_URL is missing.
+    For example: myselfhostedwebsite.com or papercups.io
+    """
+
+require_db_ssl =
+  case System.get_env("REQUIRE_DB_SSL") do
+    "true" -> true
+    "false" -> false
+    _ -> true
+  end
+
+socket_options =
+  case System.get_env("USE_IP_V6") do
+    "true" -> [:inet6]
+    "false" -> [:inet]
+    _ -> [:inet]
+  end
+
+pool_size = String.to_integer(System.get_env("POOL_SIZE") || "10")
+
+if config_env() === :prod do
+  # Configure your database
+  config :chat_api, ChatApi.Repo,
+    ssl: false,
+    url: database_url,
+    show_sensitive_data_on_connection_error: false,
+    socket_options: socket_options,
+    pool_size: pool_size
+
+  ssl_key_path = System.get_env("SSL_KEY_PATH")
+  ssl_cert_path = System.get_env("SSL_CERT_PATH")
+  https = (ssl_cert_path && ssl_key_path) != nil
+  port = String.to_integer(System.get_env("PORT") || "4000")
+
+  config :chat_api, ChatApiWeb.Endpoint,
+    http: [
+      port: port,
+      compress: true,
+      transport_options: [socket_opts: [:inet6]]
+    ],
+    url: [host: backend_url],
+    pubsub_server: ChatApi.PubSub,
+    secret_key_base: secret_key_base,
+    server: true,
+    check_origin: false
+
+  if https do
+    config :chat_api, ChatApiWeb.Endpoint,
+      https: [
+        port: 443,
+        cipher_suite: :strong,
+        otp_app: :hello,
+        keyfile: ssl_key_path,
+        certfile: ssl_cert_path
+      ],
+      force_ssl: [rewrite_on: [:x_forwarded_proto]]
+  end
+end
+
+# Optional
+sentry_dsn = System.get_env("SENTRY_DSN")
+mailgun_api_key = System.get_env("MAILGUN_API_KEY")
+
+# Configure Sentry
+config :sentry,
+  dsn: sentry_dsn,
+  environment_name: config_env(),
+  included_environments: [:prod],
+  enable_source_code_context: true,
+  root_source_code_path: File.cwd!()
+
+config :logger,
+  backends: [:console, Sentry.LoggerBackend]
+
+config :logger, Sentry.LoggerBackend,
+  # Also send warn messages
+  level: :warn,
+  # Send messages from Plug/Cowboy
+  excluded_domains: [],
+  # Send messages like `Logger.error("error")` to Sentry
+  capture_log_messages: true
+
+# Domain is the email address that mailgun is sent from
+domain = System.get_env("DOMAIN")
+# Configure Mailgun
+config :chat_api, ChatApi.Mailers.Mailgun,
+  adapter: Swoosh.Adapters.Mailgun,
+  api_key: mailgun_api_key,
+  domain: domain
+
+site_id = System.get_env("CUSTOMER_IO_SITE_ID")
+customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
+
+config :customerio,
+  site_id: site_id,
+  api_key: customerio_api_key
+
+aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
+aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
+bucket_name = System.get_env("BUCKET_NAME", "papercups-files")
+region = System.get_env("AWS_REGION")
+
+config :ex_aws,
+  access_key_id: aws_key_id,
+  secret_access_key: aws_secret_key,
+  s3: [
+    scheme: "https://",
+    host: bucket_name <> ".s3.amazonaws.com",
+    region: region
+  ]
+
+case System.get_env("PAPERCUPS_STRIPE_SECRET") do
+  "sk_" <> _rest = api_key ->
+    config :stripity_stripe, api_key: api_key
+
+  _ ->
+    nil
+end
