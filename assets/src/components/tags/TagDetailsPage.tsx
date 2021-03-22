@@ -267,7 +267,7 @@ class TagDetailsPage extends React.Component<Props, State> {
               <CustomersTable
                 loading={loading || refreshing}
                 customers={customers}
-                currentlyOnline={{}}
+                shouldIncludeAnonymous
                 onUpdate={this.handleRefreshCustomers}
               />
             </DetailsSectionCard>

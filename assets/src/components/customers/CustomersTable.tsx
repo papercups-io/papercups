@@ -11,12 +11,14 @@ dayjs.extend(utc);
 const CustomersTable = ({
   loading,
   customers,
-  currentlyOnline,
+  currentlyOnline = {},
+  shouldIncludeAnonymous,
   onUpdate,
 }: {
   loading?: boolean;
   customers: Array<any>;
-  currentlyOnline: any;
+  currentlyOnline?: any;
+  shouldIncludeAnonymous?: boolean;
   onUpdate: () => Promise<void>;
 }) => {
   const [selectedCustomerId, setSelectedCustomerId] = React.useState(null);
@@ -28,7 +30,8 @@ const CustomersTable = ({
   };
 
   const data = customers
-    .filter((customer) => !!customer.email) // Only show customers with email for now
+    // Only show customers with email by default
+    .filter((customer) => (shouldIncludeAnonymous ? true : !!customer.email))
     .map((customer) => {
       return {key: customer.id, ...customer};
     })
@@ -57,7 +60,7 @@ const CustomersTable = ({
       dataIndex: 'name',
       key: 'name',
       render: (value: string) => {
-        return value || '--';
+        return value || 'Anonymous User';
       },
     },
     {
