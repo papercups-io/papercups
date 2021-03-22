@@ -138,7 +138,15 @@ class TagDetailsPage extends React.Component<Props, State> {
   };
 
   handleSelectConversation = (conversationId: string) => {
-    this.props.history.push(`/conversations/all?cid=${conversationId}`);
+    const conversation = this.state.conversations.find(
+      (conversation) => conversation.id === conversationId
+    );
+    const isClosed = conversation && conversation.status === 'closed';
+    const url = isClosed
+      ? `/conversations/closed?cid=${conversationId}`
+      : `/conversations/all?cid=${conversationId}`;
+
+    this.props.history.push(url);
   };
 
   render() {
