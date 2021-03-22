@@ -1,26 +1,5 @@
 import Config
 
-database_url =
-  System.get_env("DATABASE_URL") ||
-    raise """
-    environment variable DATABASE_URL is missing.
-    For example: ecto://USER:PASS@HOST/DATABASE
-    """
-
-secret_key_base =
-  System.get_env("SECRET_KEY_BASE") ||
-    raise """
-    environment variable SECRET_KEY_BASE is missing.
-    You can generate one by calling: mix phx.gen.secret
-    """
-
-backend_url =
-  System.get_env("BACKEND_URL") ||
-    raise """
-    environment variable BACKEND_URL is missing.
-    For example: myselfhostedwebsite.com or papercups.io
-    """
-
 require_db_ssl =
   case System.get_env("REQUIRE_DB_SSL") do
     "true" -> true
@@ -38,9 +17,30 @@ socket_options =
 pool_size = String.to_integer(System.get_env("POOL_SIZE") || "10")
 
 if config_env() === :prod do
+  database_url =
+    System.get_env("DATABASE_URL") ||
+      raise """
+      environment variable DATABASE_URL is missing.
+      For example: ecto://USER:PASS@HOST/DATABASE
+      """
+
+  secret_key_base =
+    System.get_env("SECRET_KEY_BASE") ||
+      raise """
+      environment variable SECRET_KEY_BASE is missing.
+      You can generate one by calling: mix phx.gen.secret
+      """
+
+  backend_url =
+    System.get_env("BACKEND_URL") ||
+      raise """
+      environment variable BACKEND_URL is missing.
+      For example: myselfhostedwebsite.com or papercups.io
+      """
+
   # Configure your database
   config :chat_api, ChatApi.Repo,
-    ssl: false,
+    ssl: require_db_ssl,
     url: database_url,
     show_sensitive_data_on_connection_error: false,
     socket_options: socket_options,
