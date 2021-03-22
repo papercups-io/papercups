@@ -5,6 +5,7 @@ import Checkbox from 'antd/lib/checkbox';
 import Divider from 'antd/lib/divider';
 import Drawer from 'antd/lib/drawer';
 import Dropdown from 'antd/lib/dropdown';
+import Empty from 'antd/lib/empty';
 import Input from 'antd/lib/input';
 import Layout from 'antd/lib/layout';
 import Menu from 'antd/lib/menu';
@@ -117,6 +118,7 @@ export {
   Divider,
   Drawer,
   Dropdown,
+  Empty,
   Input,
   Menu,
   Modal,
