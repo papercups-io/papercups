@@ -49,8 +49,11 @@ class CustomerDetailsPage extends React.Component<Props, State> {
       const customer = await API.fetchCustomer(customerId, {
         expand: ['company', 'tags'],
       });
+      const conversations = await API.fetchConversations({
+        customer_id: customerId,
+      });
 
-      this.setState({customer, loading: false});
+      this.setState({customer, conversations, loading: false});
     } catch (err) {
       logger.error('Error loading customer!', err);
 
