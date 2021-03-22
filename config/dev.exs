@@ -1,4 +1,3 @@
-IO.inspect("Running dev.exs")
 use Mix.Config
 
 database_url = System.get_env("DATABASE_URL") || "ecto://postgres:postgres@localhost/chat_api_dev"
