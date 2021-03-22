@@ -1,4 +1,5 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -169,6 +170,7 @@ class CustomerDetailsModal extends React.Component<Props, State> {
       email,
       name,
       phone,
+      id: customerId,
       external_id: externalId,
       created_at: createdAt,
       updated_at: lastUpdatedAt,
@@ -237,25 +239,36 @@ class CustomerDetailsModal extends React.Component<Props, State> {
         }
       >
         <Box>
-          <Box mb={2}>
-            <Box>
-              <Text strong>Name</Text>
-            </Box>
-            {!isEditing ? (
-              <Paragraph>{name || 'Unknown'}</Paragraph>
-            ) : (
-              <Box pr={2} mb={12}>
-                <Input
-                  style={{marginBottom: -8}}
-                  id="name"
-                  type="text"
-                  size="small"
-                  value={updates.name}
-                  onChange={this.handleChangeName}
-                />
+          <Flex sx={{justifyContent: 'space-between'}}>
+            <Box mb={2} sx={{flex: 1}}>
+              <Box>
+                <Text strong>Name</Text>
               </Box>
-            )}
-          </Box>
+              {!isEditing ? (
+                <Paragraph>{name || 'Unknown'}</Paragraph>
+              ) : (
+                <Box pr={2} mb={12}>
+                  <Input
+                    style={{marginBottom: -8}}
+                    id="name"
+                    type="text"
+                    size="small"
+                    value={updates.name}
+                    onChange={this.handleChangeName}
+                  />
+                </Box>
+              )}
+            </Box>
+            <Box mb={2} sx={{flex: 1}}>
+              <Box>
+                <Text strong>Profile</Text>
+              </Box>
+
+              <Paragraph>
+                <Link to={`/customers/${customerId}`}>View full profile</Link>
+              </Paragraph>
+            </Box>
+          </Flex>
 
           <Flex sx={{justifyContent: 'space-between'}}>
             <Box mb={2} sx={{flex: 1}}>
