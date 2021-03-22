@@ -83,6 +83,9 @@ class CustomerDetailsPage extends React.Component<Props, State> {
       );
     }
 
+    const {name, email} = customer;
+    const title = name || email || 'Anonymous User';
+
     return (
       <Flex
         p={4}
@@ -102,7 +105,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
         </Flex>
 
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={2}>Customer details</Title>
+          <Title level={2}>{title}</Title>
         </Flex>
 
         <Flex>
