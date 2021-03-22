@@ -5,6 +5,7 @@ import {
   colors,
   shadows,
   Button,
+  Empty,
   Popconfirm,
   Result,
   Tag,
@@ -268,25 +269,29 @@ class TagDetailsPage extends React.Component<Props, State> {
                 <Title level={4}>Conversations</Title>
               </Box>
 
-              {conversations.map((conversation) => {
-                const {
-                  id: conversationId,
-                  customer_id: customerId,
-                  messages = [],
-                } = conversation;
-                const color = getColorByUuid(customerId);
-                const sorted = sortConversationMessages(messages);
+              {conversations.length > 0 ? (
+                conversations.map((conversation) => {
+                  const {
+                    id: conversationId,
+                    customer_id: customerId,
+                    messages = [],
+                  } = conversation;
+                  const color = getColorByUuid(customerId);
+                  const sorted = sortConversationMessages(messages);
 
-                return (
-                  <ConversationItem
-                    key={conversationId}
-                    conversation={conversation}
-                    messages={sorted}
-                    color={color}
-                    onSelectConversation={this.handleSelectConversation}
-                  />
-                );
-              })}
+                  return (
+                    <ConversationItem
+                      key={conversationId}
+                      conversation={conversation}
+                      messages={sorted}
+                      color={color}
+                      onSelectConversation={this.handleSelectConversation}
+                    />
+                  );
+                })
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
             </DetailsSectionCard>
           </Box>
         </Flex>
