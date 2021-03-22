@@ -37,41 +37,43 @@ socket_options =
 
 pool_size = String.to_integer(System.get_env("POOL_SIZE") || "10")
 
-# Configure your database
-config :chat_api, ChatApi.Repo,
-  ssl: require_db_ssl,
-  url: database_url,
-  show_sensitive_data_on_connection_error: false,
-  socket_options: socket_options,
-  pool_size: pool_size
+if config_env() === :prod do
+  # Configure your database
+  config :chat_api, ChatApi.Repo,
+    ssl: false,
+    url: database_url,
+    show_sensitive_data_on_connection_error: false,
+    socket_options: socket_options,
+    pool_size: pool_size
 
-ssl_key_path = System.get_env("SSL_KEY_PATH")
-ssl_cert_path = System.get_env("SSL_CERT_PATH")
-https = (ssl_cert_path && ssl_key_path) != nil
-port = String.to_integer(System.get_env("PORT") || "4000")
+  ssl_key_path = System.get_env("SSL_KEY_PATH")
+  ssl_cert_path = System.get_env("SSL_CERT_PATH")
+  https = (ssl_cert_path && ssl_key_path) != nil
+  port = String.to_integer(System.get_env("PORT") || "4000")
 
-config :chat_api, ChatApiWeb.Endpoint,
-  http: [
-    port: port,
-    compress: true,
-    transport_options: [socket_opts: [:inet6]]
-  ],
-  url: [host: backend_url],
-  pubsub_server: ChatApi.PubSub,
-  secret_key_base: secret_key_base,
-  server: true,
-  check_origin: false
-
-if https do
   config :chat_api, ChatApiWeb.Endpoint,
-    https: [
-      port: 443,
-      cipher_suite: :strong,
-      otp_app: :hello,
-      keyfile: ssl_key_path,
-      certfile: ssl_cert_path
+    http: [
+      port: port,
+      compress: true,
+      transport_options: [socket_opts: [:inet6]]
     ],
-    force_ssl: [rewrite_on: [:x_forwarded_proto]]
+    url: [host: backend_url],
+    pubsub_server: ChatApi.PubSub,
+    secret_key_base: secret_key_base,
+    server: true,
+    check_origin: false
+
+  if https do
+    config :chat_api, ChatApiWeb.Endpoint,
+      https: [
+        port: 443,
+        cipher_suite: :strong,
+        otp_app: :hello,
+        keyfile: ssl_key_path,
+        certfile: ssl_cert_path
+      ],
+      force_ssl: [rewrite_on: [:x_forwarded_proto]]
+  end
 end
 
 # Optional
