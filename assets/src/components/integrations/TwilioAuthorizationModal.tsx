@@ -91,8 +91,8 @@ const TwilioAuthorizationModal = ({
       <Box>
         <Paragraph>
           <Text type="secondary">
-            Please provide your Twilio API credentials to get started. (TODO:
-            link to docs with walkthrough)
+            Please provide your Twilio API credentials to get started.
+            {/* TODO: add link to docs once https://github.com/papercups-io/papercups/issues/677 is completed */}
           </Text>
         </Paragraph>
 
