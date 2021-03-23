@@ -205,15 +205,18 @@ class ConversationsDashboard extends React.Component<Props, State> {
   refreshSelectedConversation = async () => {
     const nextId = this.getNextConversationId();
     const {data: conversations} = await this.props.fetcher();
-    const updatedIds = this.props.onRetrieveConversations(conversations);
+
+    this.props.onRetrieveConversations(conversations);
+
+    const {conversationIds = []} = this.props;
     const {selectedConversationId} = this.state;
     const hasValidSelectedId =
       selectedConversationId &&
-      updatedIds.indexOf(selectedConversationId) !== -1;
+      conversationIds.indexOf(selectedConversationId) !== -1;
 
     if (!hasValidSelectedId) {
-      const hasValidNextId = nextId && updatedIds.indexOf(nextId) !== -1;
-      const nextSelectedId = hasValidNextId ? nextId : updatedIds[0];
+      const hasValidNextId = nextId && conversationIds.indexOf(nextId) !== -1;
+      const nextSelectedId = hasValidNextId ? nextId : conversationIds[0];
 
       this.handleSelectConversation(nextSelectedId);
     }
