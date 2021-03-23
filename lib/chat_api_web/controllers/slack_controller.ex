@@ -149,11 +149,13 @@ defmodule ChatApiWeb.SlackController do
 
     case payload do
       %{"event" => _event, "is_ext_shared_channel" => true} ->
-        Slack.Event.handle_payload(payload)
+        Task.start(fn -> Slack.Event.handle_payload(payload) end)
+
         send_resp(conn, 200, "")
 
       %{"event" => event} ->
-        Slack.Event.handle_event(event)
+        Task.start(fn -> Slack.Event.handle_event(event) end)
+
         send_resp(conn, 200, "")
 
       %{"challenge" => challenge} ->
@@ -169,7 +171,9 @@ defmodule ChatApiWeb.SlackController do
     Logger.debug("Payload from Slack action: #{inspect(json)}")
 
     with {:ok, %{"actions" => actions}} <- Jason.decode(json) do
-      Enum.each(actions, &handle_action/1)
+      Task.start(fn ->
+        Enum.each(actions, &handle_action/1)
+      end)
     end
 
     send_resp(conn, 200, "")
