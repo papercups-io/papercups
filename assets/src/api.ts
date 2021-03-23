@@ -385,10 +385,23 @@ export const updateUserSettings = async (
     .then((res) => res.body.data);
 };
 
+export type PaginationOptions = {
+  limit?: number;
+  next?: string | null;
+  previous?: string | null;
+  total?: number;
+};
+
+export type ConversationsListResponse = {
+  data: Array<Conversation>;
+  next: string | null;
+  previous: string | null;
+};
+
 export const fetchConversations = async (
   query = {},
   token = getAccessToken()
-): Promise<Array<Conversation>> => {
+): Promise<ConversationsListResponse> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -397,28 +410,50 @@ export const fetchConversations = async (
     .get(`/api/conversations`)
     .query(query)
     .set('Authorization', token)
-    .then((res) => res.body.data);
+    .then((res) => res.body);
 };
 
 export const fetchAllConversations = async (
+  query = {},
   token = getAccessToken()
-): Promise<Array<Conversation>> => {
-  return fetchConversations({status: 'open'}, token);
+) => {
+  return fetchConversations({...query, status: 'open'}, token);
 };
 
 export const fetchMyConversations = async (
   userId: number,
+  query = {},
   token = getAccessToken()
 ) => {
-  return fetchConversations({assignee_id: userId, status: 'open'}, token);
+  return fetchConversations(
+    {
+      ...query,
+      assignee_id: userId,
+      status: 'open',
+    },
+    token
+  );
 };
 
-export const fetchPriorityConversations = async (token = getAccessToken()) => {
-  return fetchConversations({priority: 'priority', status: 'open'}, token);
+export const fetchPriorityConversations = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  return fetchConversations(
+    {
+      ...query,
+      priority: 'priority',
+      status: 'open',
+    },
+    token
+  );
 };
 
-export const fetchClosedConversations = async (token = getAccessToken()) => {
-  return fetchConversations({status: 'closed'}, token);
+export const fetchClosedConversations = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  return fetchConversations({...query, status: 'closed'}, token);
 };
 
 export const fetchConversation = async (

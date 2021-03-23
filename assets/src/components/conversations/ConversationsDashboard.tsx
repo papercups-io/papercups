@@ -3,7 +3,8 @@ import {Box} from 'theme-ui';
 import qs from 'query-string';
 import {colors, Layout, notification, Sider, Title} from '../common';
 import {sleep} from '../../utils';
-import {Account, Message} from '../../types';
+import {ConversationsListResponse, PaginationOptions} from '../../api';
+import {Account, Conversation, Message} from '../../types';
 import ConversationsPreviewList from './ConversationsPreviewList';
 import ConversationContainer from './ConversationContainer';
 
@@ -13,41 +14,52 @@ type Props = {
   loading: boolean;
   conversationIds: Array<string>;
   messagesByConversation: {[key: string]: Array<Message>};
-  fetch: () => Promise<Array<string>>;
+  fetcher: (query?: any) => Promise<ConversationsListResponse>;
+  onRetrieveConversations: (
+    conversations: Array<Conversation>
+  ) => Array<string>;
   onSelectConversation: (id: string | null, fn?: () => void) => void;
   onUpdateConversation: (id: string, params: any) => Promise<void>;
   onDeleteConversation: (id: string) => Promise<void>;
   onSendMessage: (message: Partial<Message>, fn: () => void) => void;
+  // TODO: deprecate
+  fetch?: () => Promise<Array<string>>;
 };
 
 type State = {
   loading: boolean;
   selectedConversationId: string | null;
+  pagination: PaginationOptions;
   closing: Array<string>;
 };
 
 class ConversationsDashboard extends React.Component<Props, State> {
   scrollToEl: any = null;
 
-  state: State = {loading: true, selectedConversationId: null, closing: []};
+  state: State = {
+    loading: true,
+    selectedConversationId: null,
+    pagination: {},
+    closing: [],
+  };
 
   componentDidMount() {
     const q = qs.parse(window.location.search);
     const selectedConversationId = q.cid ? String(q.cid) : null;
+    const {fetcher, onRetrieveConversations} = this.props;
 
-    this.props
-      .fetch()
-      .then((ids) => {
-        const [first] = ids;
-        const selectedId = ids.find((id) => id === selectedConversationId)
-          ? selectedConversationId
-          : first;
+    fetcher().then((result) => {
+      const {data: conversations = [], ...pagination} = result;
+      const ids = onRetrieveConversations(conversations);
+      const [first] = ids;
+      const selectedId = ids.find((id) => id === selectedConversationId)
+        ? selectedConversationId
+        : first;
 
-        this.setState({loading: false});
-        this.handleSelectConversation(selectedId);
-        this.setupKeyboardShortcuts();
-      })
-      .then(() => this.scrollIntoView());
+      this.setState({pagination, loading: false});
+      this.handleSelectConversation(selectedId);
+      this.setupKeyboardShortcuts();
+    });
   }
 
   componentWillUnmount() {
@@ -83,6 +95,19 @@ class ConversationsDashboard extends React.Component<Props, State> {
 
   scrollIntoView = () => {
     this.scrollToEl && this.scrollToEl.scrollIntoView();
+  };
+
+  handleLoadMoreConversations = () => {
+    const {pagination = {}} = this.state;
+    const {fetcher, onRetrieveConversations} = this.props;
+
+    fetcher({after: pagination.next}).then((result) => {
+      const {data: conversations = [], ...pagination} = result;
+
+      this.setState({pagination, loading: false}, () =>
+        onRetrieveConversations(conversations)
+      );
+    });
   };
 
   handleKeyboardShortcut = (e: any) => {
@@ -178,9 +203,10 @@ class ConversationsDashboard extends React.Component<Props, State> {
 
   // TODO: make sure this works as expected
   refreshSelectedConversation = async () => {
-    const {selectedConversationId} = this.state;
     const nextId = this.getNextConversationId();
-    const updatedIds = await this.props.fetch();
+    const {data: conversations} = await this.props.fetcher();
+    const updatedIds = this.props.onRetrieveConversations(conversations);
+    const {selectedConversationId} = this.state;
     const hasValidSelectedId =
       selectedConversationId &&
       updatedIds.indexOf(selectedConversationId) !== -1;
@@ -285,9 +311,10 @@ class ConversationsDashboard extends React.Component<Props, State> {
   };
 
   render() {
-    const {selectedConversationId, closing = []} = this.state;
+    const {selectedConversationId, pagination = {}, closing = []} = this.state;
     const {title, conversationIds = []} = this.props;
     const loading = this.props.loading || this.state.loading;
+    const hasMoreConversations = !!pagination.next;
     const isClosingSelected =
       !!selectedConversationId &&
       closing.indexOf(selectedConversationId) !== -1;
@@ -315,10 +342,12 @@ class ConversationsDashboard extends React.Component<Props, State> {
             loading={loading}
             selectedConversationId={selectedConversationId}
             conversationIds={conversationIds}
+            hasMoreConversations={hasMoreConversations}
             isConversationClosing={(conversationId) =>
               closing.indexOf(conversationId) !== -1
             }
             onSelectConversation={this.handleSelectConversation}
+            onLoadMoreConversations={this.handleLoadMoreConversations}
           />
         </Sider>
         <Layout style={{marginLeft: 280, background: colors.white}}>

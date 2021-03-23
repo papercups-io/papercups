@@ -34,6 +34,16 @@ export const ConversationsContext = React.createContext<{
   onDeleteConversation: (id: string) => Promise<any>;
   onSendMessage: (message: Partial<Message>, cb?: () => void) => any;
 
+  onSetAllConversations: (conversations: Array<Conversation>) => Array<string>;
+  onSetMyConversations: (conversations: Array<Conversation>) => Array<string>;
+  onSetPriorityConversations: (
+    conversations: Array<Conversation>
+  ) => Array<string>;
+  onSetClosedConversations: (
+    conversations: Array<Conversation>
+  ) => Array<string>;
+  onSetSingleConversation: (conversation: Conversation) => Array<string>;
+
   fetchAllConversations: () => Promise<Array<string>>;
   fetchMyConversations: () => Promise<Array<string>>;
   fetchPriorityConversations: () => Promise<Array<string>>;
@@ -58,8 +68,16 @@ export const ConversationsContext = React.createContext<{
   isCustomerOnline: () => false,
   onSelectConversation: () => {},
   onSendMessage: () => {},
+
+  onSetAllConversations: () => [],
+  onSetMyConversations: () => [],
+  onSetPriorityConversations: () => [],
+  onSetClosedConversations: () => [],
+  onSetSingleConversation: () => [],
+
   onUpdateConversation: () => Promise.resolve(),
   onDeleteConversation: () => Promise.resolve(),
+
   fetchAllConversations: () => Promise.resolve([]),
   fetchMyConversations: () => Promise.resolve([]),
   fetchPriorityConversations: () => Promise.resolve([]),
@@ -590,47 +608,43 @@ export class ConversationsProvider extends React.Component<Props, State> {
       messagesByConversation: updatedMessagesByConversation,
     };
 
-    switch (type) {
-      case 'all':
-        const conversations = state.conversationIds
-          .map((id) => updates.conversationsById[id])
-          .filter((c) => c.status === 'open');
-        const all = conversations.map((c) => c.id);
-        const mine = conversations
-          .filter((c) => c.assignee_id === currentUserId && c.status === 'open')
-          .map((c) => c.id);
-        const priority = conversations
-          .filter((c) => c.priority === 'priority' && c.status === 'open')
-          .map((c) => c.id);
+    // TODO: double check this logic
+    const conversationIds = Object.keys(updatedConversationsById);
+    const allConversations = conversationIds.map(
+      (id) => updates.conversationsById[id]
+    );
+    const openConversations = allConversations.filter(
+      (c) => c.status === 'open'
+    );
+    const all = openConversations.map((c) => c.id);
+    const mine = openConversations
+      .filter((c) => c.assignee_id === currentUserId && c.status === 'open')
+      .map((c) => c.id);
+    const priority = openConversations
+      .filter((c) => c.priority === 'priority' && c.status === 'open')
+      .map((c) => c.id);
+    const closed = allConversations
+      .filter((c) => c.status !== 'open')
+      .map((c) => c.id);
 
-        return this.setState({
-          ...updates,
-          all,
-          mine,
-          priority,
-        });
-      case 'mine':
-        return this.setState({
-          ...updates,
-          mine: state.conversationIds,
-        });
-      case 'priority':
-        return this.setState({
-          ...updates,
-          priority: state.conversationIds,
-        });
-      case 'closed':
-        return this.setState({
-          ...updates,
-          closed: state.conversationIds,
-        });
-    }
+    return this.setState({
+      ...updates,
+      all,
+      mine,
+      priority,
+      closed,
+    });
   };
 
   fetchAllConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchAllConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
+    const {data: conversations} = await API.fetchAllConversations();
+    const conversationIds = this.handleSetAllConversations(conversations);
 
+    return conversationIds;
+  };
+
+  handleSetAllConversations = (conversations: Array<Conversation>) => {
+    const {conversationIds} = this.formatConversationState(conversations);
     this.updateConversationState(conversations, 'all');
 
     return conversationIds;
@@ -640,6 +654,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
     conversationId: string
   ): Promise<Array<string>> => {
     const conversation = await API.fetchConversation(conversationId);
+    const conversationIds = this.handleSetSingleConversation(conversation);
+
+    return conversationIds;
+  };
+
+  handleSetSingleConversation = (conversation: Conversation) => {
     const conversations = [conversation];
     const {conversationIds} = this.formatConversationState(conversations);
     const isClosed = conversation && conversation.status === 'closed';
@@ -662,27 +682,42 @@ export class ConversationsProvider extends React.Component<Props, State> {
     }
 
     const {id: currentUserId} = currentUser;
-    const conversations = await API.fetchMyConversations(currentUserId);
-    const {conversationIds} = this.formatConversationState(conversations);
+    const {data: conversations} = await API.fetchMyConversations(currentUserId);
+    const conversationIds = this.handleSetMyConversations(conversations);
 
+    return conversationIds;
+  };
+
+  handleSetMyConversations = (conversations: Array<Conversation>) => {
+    const {conversationIds} = this.formatConversationState(conversations);
     this.updateConversationState(conversations, 'mine');
 
     return conversationIds;
   };
 
   fetchPriorityConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchPriorityConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
+    const {data: conversations} = await API.fetchPriorityConversations();
+    const conversationIds = this.handleSetPriorityConversations(conversations);
 
+    return conversationIds;
+  };
+
+  handleSetPriorityConversations = (conversations: Array<Conversation>) => {
+    const {conversationIds} = this.formatConversationState(conversations);
     this.updateConversationState(conversations, 'priority');
 
     return conversationIds;
   };
 
   fetchClosedConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchClosedConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
+    const {data: conversations} = await API.fetchClosedConversations();
+    const conversationIds = this.handleSetClosedConversations(conversations);
 
+    return conversationIds;
+  };
+
+  handleSetClosedConversations = (conversations: Array<Conversation>) => {
+    const {conversationIds} = this.formatConversationState(conversations);
     this.updateConversationState(conversations, 'closed');
     this.handleJoinMultipleConversations(conversationIds);
 
@@ -743,6 +778,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
           onUpdateConversation: this.handleUpdateConversation,
           onDeleteConversation: this.handleDeleteConversation,
           onSendMessage: this.handleSendMessage,
+
+          onSetAllConversations: this.handleSetAllConversations,
+          onSetMyConversations: this.handleSetMyConversations,
+          onSetPriorityConversations: this.handleSetPriorityConversations,
+          onSetClosedConversations: this.handleSetClosedConversations,
+          onSetSingleConversation: this.handleSetSingleConversation,
 
           fetchAllConversations: this.fetchAllConversations,
           fetchConversationById: this.fetchConversationById,

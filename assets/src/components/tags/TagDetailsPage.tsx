@@ -65,7 +65,7 @@ class TagDetailsPage extends React.Component<Props, State> {
   async componentDidMount() {
     try {
       const {id: tagId} = this.props.match.params;
-      const [tag, customers, conversations] = await Promise.all([
+      const [tag, customers, {data: conversations}] = await Promise.all([
         API.fetchTagById(tagId),
         API.fetchCustomers({tag_id: tagId}),
         API.fetchConversations({tag_id: tagId}),
