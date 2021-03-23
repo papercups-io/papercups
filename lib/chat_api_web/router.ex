@@ -69,6 +69,7 @@ defmodule ChatApiWeb.Router do
     post("/slack/webhook", SlackController, :webhook)
     post("/slack/actions", SlackController, :actions)
     post("/mattermost/webhook", MattermostController, :webhook)
+    post("/twilio/webhook", TwilioController, :webhook)
     # TODO: move to protected route after testing?
     get("/hubspot/oauth", HubspotController, :oauth)
 
@@ -95,6 +96,9 @@ defmodule ChatApiWeb.Router do
     get("/mattermost/channels", MattermostController, :channels)
     get("/mattermost/authorization", MattermostController, :authorization)
     delete("/mattermost/authorizations/:id", MattermostController, :delete)
+    post("/twilio/auth", TwilioController, :auth)
+    get("/twilio/authorization", TwilioController, :authorization)
+    delete("/twilio/authorizations/:id", TwilioController, :delete)
     get("/google/auth", GoogleController, :auth)
     get("/google/oauth", GoogleController, :callback)
     get("/google/authorization", GoogleController, :authorization)

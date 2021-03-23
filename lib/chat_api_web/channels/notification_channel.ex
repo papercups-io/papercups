@@ -117,6 +117,7 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:conversation_reply_email)
+    |> Messages.Notification.notify(:sms)
   end
 
   @spec authorized?(any(), binary()) :: boolean()

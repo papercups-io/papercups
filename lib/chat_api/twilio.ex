@@ -38,6 +38,7 @@ defmodule ChatApi.Twilio do
   @spec create_or_update_authorization!(map()) ::
           {:ok, TwilioAuthorization.t()} | {:error, Ecto.Changeset.t()}
   def create_or_update_authorization!(attrs \\ %{}) do
+    # TODO: should we take the "account_id" into account as well?
     case attrs do
       %{"id" => id} when is_binary(id) ->
         id
