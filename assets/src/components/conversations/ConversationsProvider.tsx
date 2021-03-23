@@ -609,7 +609,21 @@ export class ConversationsProvider extends React.Component<Props, State> {
     };
 
     // TODO: double check this logic
-    const conversationIds = Object.keys(updatedConversationsById);
+
+    const conversationIds = Object.keys(updatedConversationsById)
+      .map((conversationId) => updates.conversationsById[conversationId])
+      .sort((a: Conversation, b: Conversation) => {
+        const left = a.last_activity_at
+          ? +new Date(a.last_activity_at)
+          : -Infinity;
+        const right = b.last_activity_at
+          ? +new Date(b.last_activity_at)
+          : -Infinity;
+
+        return right - left;
+      })
+      .map((conversation) => conversation.id);
+
     const allConversations = conversationIds.map(
       (id) => updates.conversationsById[id]
     );

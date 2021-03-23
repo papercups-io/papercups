@@ -314,7 +314,10 @@ class ConversationsDashboard extends React.Component<Props, State> {
     const {selectedConversationId, pagination = {}, closing = []} = this.state;
     const {title, conversationIds = []} = this.props;
     const loading = this.props.loading || this.state.loading;
-    const hasMoreConversations = !!pagination.next;
+    const hasMoreConversations =
+      !!pagination.next &&
+      !!pagination.total &&
+      conversationIds.length < pagination.total;
     const isClosingSelected =
       !!selectedConversationId &&
       closing.indexOf(selectedConversationId) !== -1;
