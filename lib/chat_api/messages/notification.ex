@@ -13,6 +13,7 @@ defmodule ChatApi.Messages.Notification do
     message
     |> Helpers.get_conversation_topic()
     |> ChatApiWeb.Endpoint.broadcast!("shout", Helpers.format(message))
+    |> IO.inspect(label: "[broadcast_to_customer!] message: #{inspect(message.id)}")
 
     message
   end
@@ -24,6 +25,7 @@ defmodule ChatApi.Messages.Notification do
     message
     |> Helpers.get_admin_topic()
     |> ChatApiWeb.Endpoint.broadcast!("shout", Helpers.format(message))
+    |> IO.inspect(label: "[broadcast_to_admin!] message: #{inspect(message.id)}")
 
     message
   end
