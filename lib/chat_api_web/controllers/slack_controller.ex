@@ -149,12 +149,12 @@ defmodule ChatApiWeb.SlackController do
 
     case payload do
       %{"event" => _event, "is_ext_shared_channel" => true} ->
-        Task.start(fn -> Slack.Event.handle_payload(payload) end)
+        run_async(fn -> Slack.Event.handle_payload(payload) end)
 
         send_resp(conn, 200, "")
 
       %{"event" => event} ->
-        Task.start(fn -> Slack.Event.handle_event(event) end)
+        run_async(fn -> Slack.Event.handle_event(event) end)
 
         send_resp(conn, 200, "")
 
@@ -171,7 +171,7 @@ defmodule ChatApiWeb.SlackController do
     Logger.debug("Payload from Slack action: #{inspect(json)}")
 
     with {:ok, %{"actions" => actions}} <- Jason.decode(json) do
-      Task.start(fn ->
+      run_async(fn ->
         Enum.each(actions, &handle_action/1)
       end)
     end
@@ -298,5 +298,13 @@ defmodule ChatApiWeb.SlackController do
     # Putting in an async Task for now, since we don't care if this succeeds
     # or fails (and we also don't want it to block anything)
     Task.start(fn -> Slack.Notification.log(message, webhook_url) end)
+  end
+
+  # TODO: figure out a better way to handle this
+  defp run_async(f) do
+    case Application.get_env(:chat_api, :environment) do
+      :test -> f.()
+      _ -> Task.start(fn -> f.() end)
+    end
   end
 end
