@@ -864,6 +864,7 @@ defmodule ChatApi.Slack.Helpers do
       }) do
     %{
       "channel" => channel,
+      "unfurl_links" => false,
       "blocks" => [
         %{
           "type" => "section",
