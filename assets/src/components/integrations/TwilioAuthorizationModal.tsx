@@ -21,6 +21,7 @@ const TwilioAuthorizationModal = ({
     {}
   );
   const [isSaving, setSaving] = React.useState(false);
+  const [error, setErrorMessage] = React.useState<string | null>(null);
 
   const handleSetAuthorization = async () => {
     setSaving(true);
@@ -31,7 +32,15 @@ const TwilioAuthorizationModal = ({
         : authorization;
       const result = await API.createTwilioAuthorization(params);
 
-      return onSuccess(result);
+      if (result.ok) {
+        setErrorMessage(null);
+
+        return onSuccess(result);
+      } else {
+        setErrorMessage(
+          'Invalid Twilio authorization details. Please check the inputs above and try again.'
+        );
+      }
     } catch (err) {
       logger.error('Error creating Twilio authorization!', err);
     } finally {
@@ -130,6 +139,10 @@ const TwilioAuthorizationModal = ({
             placeholder="+16501235555"
             onChange={handleChangePhoneNumber}
           />
+        </Box>
+
+        <Box>
+          <Text type="danger">{error}</Text>
         </Box>
       </Box>
     </Modal>

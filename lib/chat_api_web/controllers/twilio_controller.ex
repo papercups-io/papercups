@@ -12,13 +12,17 @@ defmodule ChatApiWeb.TwilioController do
   def auth(conn, %{"authorization" => authorization}) do
     Logger.info("Params from Twilio auth: #{inspect(authorization)}")
 
-    # TODO: verify that auth info works with Twilio API before creating?
     with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
          params <- Map.merge(authorization, %{"account_id" => account_id, "user_id" => user_id}),
+         :ok <- verify_authorization(params),
          {:ok, result} <- Twilio.create_or_update_authorization!(params) do
       json(conn, %{data: %{ok: true, id: result.id}})
     else
-      _ -> json(conn, %{data: %{ok: false}})
+      {:error, :invalid_twilio_authorization, _} ->
+        json(conn, %{data: %{ok: false, error: "Invalid Twilio authorization details."}})
+
+      error ->
+        json(conn, %{data: %{ok: false}})
     end
   end
 
@@ -61,4 +65,29 @@ defmodule ChatApiWeb.TwilioController do
     # TODO: implement me!
     send_resp(conn, 200, "")
   end
+
+  @spec verify_authorization(map()) :: :ok | {:error, atom(), any()}
+  defp verify_authorization(
+         %{
+           "twilio_auth_token" => twilio_auth_token,
+           "twilio_account_sid" => twilio_account_sid
+         } = params
+       )
+       when not is_nil(twilio_auth_token) and not is_nil(twilio_account_sid) do
+    authorization = %TwilioAuthorization{
+      twilio_auth_token: twilio_auth_token,
+      twilio_account_sid: twilio_account_sid,
+      from_phone_number: params["from_phone_number"],
+      account_id: params["account_id"],
+      user_id: params["user_id"]
+    }
+
+    case Twilio.Client.list_messages(authorization) do
+      {:ok, %{status: 200}} -> :ok
+      error -> {:error, :invalid_twilio_authorization, error}
+    end
+  end
+
+  defp verify_authorization(_params),
+    do: {:error, :invalid_twilio_authorization, "Missing required params."}
 end

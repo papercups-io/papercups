@@ -6,11 +6,14 @@ defmodule ChatApi.Twilio.Client do
   require Logger
 
   @spec client(map() | map()) :: Tesla.Client.t()
-  def client(%{auth_token: token, account_sid: account_sid}) do
+  def client(%{twilio_auth_token: twilio_auth_token, twilio_account_sid: twilio_account_sid}) do
     middleware = [
       {Tesla.Middleware.BaseUrl, "https://api.twilio.com/2010-04-01"},
       {Tesla.Middleware.Headers,
-       [{"Authorization", Plug.BasicAuth.encode_basic_auth(account_sid, token)}]},
+       [
+         {"Authorization",
+          Plug.BasicAuth.encode_basic_auth(twilio_account_sid, twilio_auth_token)}
+       ]},
       Tesla.Middleware.FormUrlencoded,
       Tesla.Middleware.Logger
     ]
@@ -19,11 +22,20 @@ defmodule ChatApi.Twilio.Client do
   end
 
   @spec send_message(map(), map()) :: Tesla.Env.result()
-  def send_message(params, %{account_sid: account_sid} = authorization) do
+  def send_message(params, %{twilio_account_sid: twilio_account_sid} = authorization) do
     message = Map.new(params, fn {k, v} -> {k |> to_string() |> Macro.camelize(), v} end)
 
     authorization
     |> client()
-    |> Tesla.post("/Accounts/#{account_sid}/Messages.json", message)
+    |> Tesla.post("/Accounts/#{twilio_account_sid}/Messages.json", message)
+  end
+
+  @spec list_messages(map(), map()) :: Tesla.Env.result()
+  def list_messages(%{twilio_account_sid: twilio_account_sid} = authorization, params \\ %{}) do
+    query = Map.new(params, fn {k, v} -> {k |> to_string() |> Macro.camelize(), v} end)
+
+    authorization
+    |> client()
+    |> Tesla.get("/Accounts/#{twilio_account_sid}/Messages.json", query: query)
   end
 end
