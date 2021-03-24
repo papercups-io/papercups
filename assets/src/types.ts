@@ -162,6 +162,13 @@ export type MattermostChannel = {
   team_name: string;
 };
 
+export type TwilioAuthorization = {
+  id?: string;
+  twilio_auth_token?: string;
+  twilio_account_sid?: string;
+  from_phone_number?: string;
+};
+
 export type WidgetIconVariant = 'outlined' | 'filled';
 
 export type WidgetSettings = {

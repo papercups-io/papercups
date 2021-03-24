@@ -4,6 +4,7 @@ import {Box, Flex} from 'theme-ui';
 import {colors, Button, Popconfirm, Table, Tag, Text, Tooltip} from '../common';
 import {IntegrationType, getSlackAuthUrl, getGoogleAuthUrl} from './support';
 import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
+import {TwilioAuthorizationButton} from './TwilioAuthorizationModal';
 
 const IntegrationsTable = ({
   loading,
@@ -140,6 +141,13 @@ const IntegrationsTable = ({
                   <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
                 </a>
               </Tooltip>
+            );
+          case 'twilio':
+            return (
+              <TwilioAuthorizationButton
+                integration={record}
+                onUpdate={onUpdateIntegration}
+              />
             );
           // TODO: deprecate
           case 'slack:sync':

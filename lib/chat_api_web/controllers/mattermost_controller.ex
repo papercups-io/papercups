@@ -12,6 +12,7 @@ defmodule ChatApiWeb.MattermostController do
   def auth(conn, %{"authorization" => authorization}) do
     Logger.info("Params from Mattermost auth: #{inspect(authorization)}")
 
+    # TODO: verify that auth info works with Mattermost API before creating?
     with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
          params <- Map.merge(authorization, %{"account_id" => account_id, "user_id" => user_id}),
          {:ok, result} <- Mattermost.create_or_update_authorization!(params) do
@@ -125,6 +126,7 @@ defmodule ChatApiWeb.MattermostController do
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:conversation_reply_email)
       |> Messages.Notification.notify(:gmail)
+      |> Messages.Notification.notify(:sms)
       |> Messages.Helpers.handle_post_creation_conversation_updates()
     end
   end

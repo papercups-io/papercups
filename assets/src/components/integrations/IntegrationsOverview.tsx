@@ -192,12 +192,14 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   fetchTwilioIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchTwilioAuthorization();
+
     return {
       key: 'twilio',
       integration: 'Twilio',
-      status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      status: auth ? 'connected' : 'not_connected',
+      created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
       icon: '/twilio.svg',
     };
   };
