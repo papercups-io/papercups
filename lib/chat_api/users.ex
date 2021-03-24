@@ -28,6 +28,18 @@ defmodule ChatApi.Users do
     |> Repo.preload([:profile, :settings])
   end
 
+  @spec list_slackable_users_from_ids(binary()) :: [User.t()]
+  def list_slackable_users_from_ids(user_ids) do
+    user_query =
+      from u in User,
+        where: u.id in ^user_ids,
+        join: p in assoc(u, :profile),
+        where: not is_nil(p.slack_user_id)
+
+    Repo.all(user_query)
+    |> Repo.preload([:profile, :settings])
+  end
+
   @spec find_by_id!(integer() | binary()) :: User.t()
   def find_by_id!(user_id) do
     Repo.get!(User, user_id)
