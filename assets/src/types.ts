@@ -89,6 +89,7 @@ export type Conversation = {
   customer_id: string;
   customer: Customer;
   created_at?: string;
+  last_activity_at?: string;
   date: string;
   preview: string;
   messages?: Array<Message>;

@@ -1,6 +1,7 @@
 import React from 'react';
 import ConversationsDashboard from './ConversationsDashboard';
 import {useConversations} from './ConversationsProvider';
+import * as API from '../../api';
 
 const PriorityConversations = () => {
   const {
@@ -9,7 +10,7 @@ const PriorityConversations = () => {
     account,
     priority = [],
     messagesByConversation = {},
-    fetchPriorityConversations,
+    onSetPriorityConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
@@ -27,7 +28,8 @@ const PriorityConversations = () => {
       account={account}
       conversationIds={priority}
       messagesByConversation={messagesByConversation}
-      fetch={fetchPriorityConversations}
+      fetcher={API.fetchPriorityConversations}
+      onRetrieveConversations={onSetPriorityConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}

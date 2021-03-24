@@ -49,7 +49,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
       const customer = await API.fetchCustomer(customerId, {
         expand: ['company', 'tags'],
       });
-      const conversations = await API.fetchConversations({
+      const {data: conversations} = await API.fetchConversations({
         customer_id: customerId,
       });
 
