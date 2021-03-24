@@ -54,6 +54,22 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  def notify(%Message{private: false} = message, :sms, _opts) do
+    Logger.info("Sending message notification: :sms")
+
+    Task.start(fn ->
+      # TODO: implement me!
+      #
+      # First, check if message parent conversation has `source: "sms"`
+      # Also check that the conversation customer has a valid phone number
+      # If true, use the message account ID to check for a twilio_authorization record
+      # If one exists, use it to send a message to the customer's phone number
+      nil
+    end)
+
+    message
+  end
+
   def notify(%Message{account_id: account_id} = message, :webhooks, _opts) do
     Logger.info("Sending message notification: :webhooks")
     # TODO: how should we handle errors/retry logic?
