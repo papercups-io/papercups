@@ -15,8 +15,8 @@ config :logger, level: :info
 
 # Heroku needs ssl to be set to true and it doesn't run
 config :chat_api, ChatApi.Repo,
-  ssl: require_db_ssl,
+  ssl: false,
   url: database_url,
   show_sensitive_data_on_connection_error: true,
-  socket_options: [:inet],
-  pool_size: pool_size
+  socket_options: [:inet6],
+  pool_size: 15

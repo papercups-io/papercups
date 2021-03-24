@@ -40,11 +40,11 @@ if config_env() === :prod do
 
   # Configure your database
   config :chat_api, ChatApi.Repo,
-    ssl: require_db_ssl,
+    ssl: false,
     url: database_url,
     show_sensitive_data_on_connection_error: false,
-    socket_options: socket_options,
-    pool_size: pool_size
+    socket_options: [:inet6],
+    pool_size: 15
 
   ssl_key_path = System.get_env("SSL_KEY_PATH")
   ssl_cert_path = System.get_env("SSL_CERT_PATH")
