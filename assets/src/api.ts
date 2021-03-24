@@ -626,6 +626,21 @@ export const generateUserInvitation = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const sendUserInvitationEmail = async (
+  to_address: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/user_invitation_emails`)
+    .send({to_address})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchSlackAuthorization = async (
   type = 'reply',
   token = getAccessToken()

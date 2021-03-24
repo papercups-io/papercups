@@ -26,9 +26,11 @@ type State = {
   companyName: string;
   currentUser: User | null;
   inviteUrl: string;
+  inviteUserEmail: string;
   isLoading: boolean;
   isEditing: boolean;
   isRefreshing: boolean;
+  showInviteMoreInput: boolean;
 };
 
 class AccountOverview extends React.Component<Props, State> {
@@ -39,9 +41,11 @@ class AccountOverview extends React.Component<Props, State> {
     companyName: '',
     currentUser: null,
     inviteUrl: '',
+    inviteUserEmail: '',
     isLoading: true,
     isEditing: false,
     isRefreshing: false,
+    showInviteMoreInput: false,
   };
 
   async componentDidMount() {
@@ -107,6 +111,49 @@ class AccountOverview extends React.Component<Props, State> {
     }
   };
 
+  handleSendInviteEmail = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      const {inviteUserEmail} = this.state;
+      await API.sendUserInvitationEmail(inviteUserEmail);
+      notification.success({
+        message: `Invitation was successfully sent to ${inviteUserEmail}!`,
+        duration: 10, // 10 seconds
+      });
+
+      this.setState({inviteUserEmail: ''});
+    } catch (err) {
+      // TODO: consolidate error logic with handleGenerateInviteUrl
+      const hasServerErrorMessage = !!err?.response?.body?.error?.message;
+      const shouldDisplayBillingLink =
+        hasServerErrorMessage && hasValidStripeKey();
+      const description =
+        err?.response?.body?.error?.message || err?.message || String(err);
+
+      notification.error({
+        message: hasServerErrorMessage
+          ? 'Please upgrade to add more users!'
+          : 'Failed to generate user invitation!',
+        description,
+        duration: 10, // 10 seconds
+        btn: (
+          <a
+            href={
+              shouldDisplayBillingLink
+                ? '/billing'
+                : 'https://papercups.io/pricing'
+            }
+          >
+            <Button type="primary" size="small">
+              Upgrade subscription
+            </Button>
+          </a>
+        ),
+      });
+    }
+  };
+
   focusAndHighlightInput = () => {
     if (!this.input) {
       return;
@@ -127,6 +174,10 @@ class AccountOverview extends React.Component<Props, State> {
 
   handleChangeCompanyName = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({companyName: e.target.value});
+  };
+
+  handleChangeInviteUserEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({inviteUserEmail: e.target.value});
   };
 
   handleStartEditing = () => {
@@ -216,15 +267,21 @@ class AccountOverview extends React.Component<Props, State> {
       .then(() => this.setState({isRefreshing: false}));
   };
 
+  handleClickOnInviteMoreLink = () => {
+    this.setState({showInviteMoreInput: true});
+  };
+
   render() {
     const {
       account,
       currentUser,
       companyName,
       inviteUrl,
+      inviteUserEmail,
       isLoading,
       isEditing,
       isRefreshing,
+      showInviteMoreInput,
     } = this.state;
 
     if (isLoading) {
@@ -356,6 +413,41 @@ class AccountOverview extends React.Component<Props, State> {
             isAdmin={isAdmin}
             onDisableUser={this.handleDisableUser}
           />
+          {isAdmin && (
+            <Box mt={2}>
+              {showInviteMoreInput ? (
+                <form onSubmit={this.handleSendInviteEmail}>
+                  <Flex sx={{maxWidth: 480}}>
+                    <Box mr={1} sx={{flex: 1}}>
+                      <Input
+                        onChange={this.handleChangeInviteUserEmail}
+                        placeholder="Email address"
+                        required
+                        type="email"
+                        value={inviteUserEmail}
+                      />
+                    </Box>
+                    <Button type="primary" htmlType="submit">
+                      Send invite
+                    </Button>
+                  </Flex>
+                </form>
+              ) : (
+                <a onClick={this.handleClickOnInviteMoreLink}>
+                  <span
+                    style={{
+                      marginRight: '5px',
+                      display: 'inline-block',
+                      transform: 'translate(0, -1px)',
+                    }}
+                  >
+                    +
+                  </span>
+                  <span>Invite More</span>
+                </a>
+              )}
+            </Box>
+          )}
         </Box>
 
         {isAdmin && (
