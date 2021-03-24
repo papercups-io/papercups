@@ -41,8 +41,6 @@ defmodule ChatApi.Conversations do
       Keyword.merge(
         [
           include_total_count: true,
-          # TODO: remove after testing
-          # limit: 20,
           cursor_fields: [last_activity_at: :desc, id: :desc]
         ],
         pagination_options
