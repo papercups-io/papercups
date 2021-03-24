@@ -1,7 +1,16 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Alert, Button, Input, Paragraph, Table, Tag, Text, Title} from '../common';
+import {
+  Alert,
+  Button,
+  Input,
+  Paragraph,
+  Table,
+  Tag,
+  Text,
+  Title,
+} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
@@ -77,11 +86,7 @@ const filterTagsByQuery = (
   }
 
   return tags.filter((tag) => {
-    const {
-      id,
-      name,
-      description,
-    } = tag;
+    const {id, name, description} = tag;
 
     const words = [id, name, description]
       .filter((str) => str && String(str).trim().length > 0)
@@ -126,7 +131,7 @@ class TagsOverview extends React.Component<Props, State> {
 
   handleRefreshTags = async () => {
     try {
-      const { filterQuery } = this.state;
+      const {filterQuery} = this.state;
       const tags = await API.fetchAllTags();
 
       this.setState({
