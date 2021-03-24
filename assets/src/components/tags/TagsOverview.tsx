@@ -1,7 +1,16 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Alert, Button, Paragraph, Table, Tag, Text, Title} from '../common';
+import {
+  Alert,
+  Button,
+  Input,
+  Paragraph,
+  Table,
+  Tag,
+  Text,
+  Title,
+} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
@@ -61,17 +70,45 @@ const TagsTable = ({
 
 type Props = {};
 type State = {
-  loading: boolean;
-  refreshing: boolean;
+  filterQuery: string;
+  filteredTags: Array<T.Tag>;
   isNewTagModalVisible: boolean;
-  tags: Array<any>;
+  loading: boolean;
+  tags: Array<T.Tag>;
+};
+
+const filterTagsByQuery = (
+  tags: Array<T.Tag>,
+  query?: string
+): Array<T.Tag> => {
+  if (!query || !query.length) {
+    return tags;
+  }
+
+  return tags.filter((tag) => {
+    const {id, name, description} = tag;
+
+    const words = [id, name, description]
+      .filter((str) => str && String(str).trim().length > 0)
+      .join(' ')
+      .replace('_', ' ')
+      .split(' ')
+      .map((str) => str.toLowerCase());
+
+    const queries = query.split(' ').map((str) => str.toLowerCase());
+
+    return words.some((word) => {
+      return queries.every((q) => word.indexOf(q) !== -1);
+    });
+  });
 };
 
 class TagsOverview extends React.Component<Props, State> {
   state: State = {
-    loading: true,
-    refreshing: false,
+    filteredTags: [],
+    filterQuery: '',
     isNewTagModalVisible: false,
+    loading: true,
     tags: [],
   };
 
@@ -79,11 +116,29 @@ class TagsOverview extends React.Component<Props, State> {
     await this.handleRefreshTags();
   }
 
+  handleSearchTags = (filterQuery: string) => {
+    const {tags = []} = this.state;
+
+    if (!filterQuery?.length) {
+      this.setState({filterQuery: '', filteredTags: tags});
+    }
+
+    this.setState({
+      filterQuery,
+      filteredTags: filterTagsByQuery(tags, filterQuery),
+    });
+  };
+
   handleRefreshTags = async () => {
     try {
+      const {filterQuery} = this.state;
       const tags = await API.fetchAllTags();
 
-      this.setState({tags, loading: false});
+      this.setState({
+        filteredTags: filterTagsByQuery(tags, filterQuery),
+        loading: false,
+        tags,
+      });
     } catch (err) {
       logger.error('Error loading tags!', err);
 
@@ -105,7 +160,7 @@ class TagsOverview extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, isNewTagModalVisible, tags = []} = this.state;
+    const {loading, isNewTagModalVisible, filteredTags = []} = this.state;
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
@@ -145,8 +200,17 @@ class TagsOverview extends React.Component<Props, State> {
           />
         </Box>
 
+        <Box mb={3}>
+          <Input.Search
+            placeholder="Search tags..."
+            allowClear
+            onSearch={this.handleSearchTags}
+            style={{width: 400}}
+          />
+        </Box>
+
         <Box my={4}>
-          <TagsTable loading={loading} tags={tags} />
+          <TagsTable loading={loading} tags={filteredTags} />
         </Box>
       </Box>
     );
