@@ -88,12 +88,29 @@ defmodule ChatApi.Google.Gmail do
   def get_thread_messages(thread) do
     thread
     |> Map.get("messages")
-    |> Enum.map(fn msg ->
-      snippet = Map.get(msg, "snippet")
+    |> Enum.map(fn %{
+                     "id" => id,
+                     "threadId" => thread_id,
+                     "historyId" => history_id,
+                     "labelIds" => label_ids,
+                     "internalDate" => ts,
+                     "sizeEstimate" => estimated_size,
+                     "snippet" => snippet,
+                     "payload" => payload
+                   } = _msg ->
+      message = %{
+        id: id,
+        thread_id: thread_id,
+        history_id: history_id,
+        label_ids: label_ids,
+        ts: ts,
+        estimated_size: estimated_size,
+        snippet: snippet
+      }
 
-      msg
-      |> get_in(["payload", "parts"])
-      |> Enum.reduce(%{snippet: snippet}, fn part, acc ->
+      payload
+      |> Map.get("parts")
+      |> Enum.reduce(message, fn part, acc ->
         [key, value] =
           case part do
             %{"mimeType" => "text/plain", "body" => %{"data" => encoded}} ->
@@ -112,5 +129,33 @@ defmodule ChatApi.Google.Gmail do
         end
       end)
     end)
+  end
+
+  # Simple parsing logic
+
+  # TODO: evaluate this repo as a more robust alternative:
+  # https://github.com/hellogustav/elixir_email_reply_parser/blob/master/lib/elixir_email_reply_parser/parser.ex
+
+  def remove_original_email(email) do
+    email
+    |> remove_quoted_email()
+    |> remove_trailing_newlines()
+    |> String.trim()
+  end
+
+  defp remove_quoted_email(body) do
+    Enum.reduce(reply_header_formats(), body, fn regex, email_body ->
+      regex |> Regex.split(email_body) |> List.first()
+    end)
+  end
+
+  defp reply_header_formats do
+    [
+      ~r/\n\>?[[:space:]]*On.*<?\n?.*>?.*\n?wrote:\n?/
+    ]
+  end
+
+  defp remove_trailing_newlines(body) do
+    Regex.replace(~r/\n+$/, body, "")
   end
 end
