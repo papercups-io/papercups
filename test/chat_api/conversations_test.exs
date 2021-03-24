@@ -309,7 +309,7 @@ defmodule ChatApi.ConversationsTest do
 
   describe "archive_conversations/1" do
     test "archives conversations which have been closed for more than 14 days" do
-      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336))
+      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336), :millisecond)
 
       closed_conversation = insert(:conversation, status: "closed")
 
