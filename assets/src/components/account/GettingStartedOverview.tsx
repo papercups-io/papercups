@@ -673,7 +673,7 @@ const ExamplePage = () => {
         agentAvailableText="${agentAvailableText}"
         agentUnavailableText="${agentUnavailableText}"
         requireEmailUpfront={${requireEmailUpfront}}
-        iconVariant={${iconVariant}}
+        iconVariant="${iconVariant}"
         baseUrl="${BASE_URL}"
         // Optionally include data about your customer here to identify them
         // customer={{
