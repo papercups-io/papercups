@@ -22,13 +22,20 @@ const ConversationsPreviewList = ({
   hasMoreConversations?: boolean;
   isConversationClosing: (conversationId: string) => boolean;
   onSelectConversation: (conversationId: string | null) => any;
-  onLoadMoreConversations: () => void;
+  onLoadMoreConversations: () => Promise<void>;
 }) => {
+  const [isFetchingMore, setFetchingMore] = React.useState(false);
   const {
     conversationsById,
     messagesByConversation,
     isCustomerOnline,
   } = useConversations();
+
+  const handleLoadMoreConversations = async () => {
+    setFetchingMore(true);
+    await onLoadMoreConversations();
+    setFetchingMore(false);
+  };
 
   const conversations = conversationIds
     .map((conversationId) => conversationsById[conversationId])
@@ -89,7 +96,8 @@ const ConversationsPreviewList = ({
           <Button
             type="text"
             style={{width: '100%'}}
-            onClick={onLoadMoreConversations}
+            loading={isFetchingMore}
+            onClick={handleLoadMoreConversations}
           >
             Load more...
           </Button>

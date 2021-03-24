@@ -97,11 +97,11 @@ class ConversationsDashboard extends React.Component<Props, State> {
     this.scrollToEl && this.scrollToEl.scrollIntoView();
   };
 
-  handleLoadMoreConversations = () => {
+  handleLoadMoreConversations = async (): Promise<void> => {
     const {pagination = {}} = this.state;
     const {fetcher, onRetrieveConversations} = this.props;
 
-    fetcher({after: pagination.next}).then((result) => {
+    return fetcher({after: pagination.next}).then((result) => {
       const {data: conversations = [], ...pagination} = result;
 
       this.setState({pagination, loading: false}, () =>
