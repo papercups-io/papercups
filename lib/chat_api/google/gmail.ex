@@ -43,6 +43,15 @@ defmodule ChatApi.Google.Gmail do
     result
   end
 
+  def list_history(refresh_token, query \\ []) do
+    qs = URI.encode_query(query)
+    scope = "https://gmail.googleapis.com/gmail/v1/users/me/history?#{qs}"
+    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
+    %{body: result} = OAuth2.Client.get!(client, scope)
+
+    result
+  end
+
   def get_profile(refresh_token) do
     scope = "https://gmail.googleapis.com/gmail/v1/users/me/profile"
     client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
