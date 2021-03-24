@@ -1,6 +1,7 @@
 import React from 'react';
 import ConversationsDashboard from './ConversationsDashboard';
 import {useConversations} from './ConversationsProvider';
+import * as API from '../../api';
 
 const ClosedConversations = () => {
   const {
@@ -10,15 +11,15 @@ const ClosedConversations = () => {
     closed = [],
     messagesByConversation = {},
     fetchAllConversations,
-    fetchClosedConversations,
+    onSetClosedConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
     onSendMessage,
   } = useConversations();
 
-  const fetch = async () => {
-    const results = await fetchClosedConversations();
+  const fetcher = async (query = {}) => {
+    const results = await API.fetchClosedConversations(query);
     // Need to refresh the cache for the edge case where we re-open a
     // conversation and then want to view in-app notifications for it.
     await fetchAllConversations();
@@ -37,7 +38,8 @@ const ClosedConversations = () => {
       account={account}
       conversationIds={closed}
       messagesByConversation={messagesByConversation}
-      fetch={fetch}
+      fetcher={fetcher}
+      onRetrieveConversations={onSetClosedConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}
