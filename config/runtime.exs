@@ -68,7 +68,7 @@ if config_env() === :prod do
       https: [
         port: 443,
         cipher_suite: :strong,
-        otp_app: :hello,
+        otp_app: :chat_api,
         keyfile: ssl_key_path,
         certfile: ssl_cert_path
       ],
