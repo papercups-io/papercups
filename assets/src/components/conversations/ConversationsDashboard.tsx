@@ -56,6 +56,9 @@ class ConversationsDashboard extends React.Component<Props, State> {
         ? selectedConversationId
         : first;
 
+      console.log({first, ids});
+      debugger;
+
       this.setState({pagination, loading: false});
       this.handleSelectConversation(selectedId);
       this.setupKeyboardShortcuts();

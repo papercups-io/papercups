@@ -10,7 +10,7 @@ const PriorityConversations = () => {
     account,
     priority = [],
     messagesByConversation = {},
-    onSetPriorityConversations,
+    onSetConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
@@ -29,7 +29,7 @@ const PriorityConversations = () => {
       conversationIds={priority}
       messagesByConversation={messagesByConversation}
       fetcher={API.fetchPriorityConversations}
-      onRetrieveConversations={onSetPriorityConversations}
+      onRetrieveConversations={onSetConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}
