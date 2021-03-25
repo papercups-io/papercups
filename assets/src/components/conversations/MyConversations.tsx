@@ -10,7 +10,7 @@ const MyConversations = () => {
     account,
     mine = [],
     messagesByConversation = {},
-    onSetMyConversations,
+    onSetConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
@@ -20,8 +20,8 @@ const MyConversations = () => {
   if (!currentUser) {
     return null;
   }
-  const {id: userId} = currentUser;
 
+  const {id: userId} = currentUser;
   const fetcher = (query = {}) => API.fetchMyConversations(userId, query);
 
   return (
@@ -32,7 +32,7 @@ const MyConversations = () => {
       conversationIds={mine}
       messagesByConversation={messagesByConversation}
       fetcher={fetcher}
-      onRetrieveConversations={onSetMyConversations}
+      onRetrieveConversations={onSetConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}
