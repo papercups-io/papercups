@@ -10,7 +10,7 @@ const AllConversations = () => {
     account,
     all = [],
     messagesByConversation = {},
-    onSetAllConversations,
+    onSetConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
@@ -29,7 +29,7 @@ const AllConversations = () => {
       conversationIds={all}
       messagesByConversation={messagesByConversation}
       fetcher={API.fetchAllConversations}
-      onRetrieveConversations={onSetAllConversations}
+      onRetrieveConversations={onSetConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}

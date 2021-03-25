@@ -11,7 +11,7 @@ const ClosedConversations = () => {
     closed = [],
     messagesByConversation = {},
     fetchAllConversations,
-    onSetClosedConversations,
+    onSetConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
@@ -39,7 +39,7 @@ const ClosedConversations = () => {
       conversationIds={closed}
       messagesByConversation={messagesByConversation}
       fetcher={fetcher}
-      onRetrieveConversations={onSetClosedConversations}
+      onRetrieveConversations={onSetConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}
