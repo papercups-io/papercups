@@ -2,7 +2,7 @@ version: "3.2"
 
 services:
   papercups:
-    image: elixir-update:latest
+    image: papercups/papercups:latest
     ports:
       - "3000:3000"
       - "4000:4000"
