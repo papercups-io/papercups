@@ -150,7 +150,7 @@ const CustomerCompanyDetails = ({customerId}: {customerId: string}) => {
   );
 };
 
-const CustomerDetails = ({
+export const CustomerDetails = ({
   customer,
   isOnline,
 }: {
@@ -190,11 +190,7 @@ const CustomerDetails = ({
   };
 
   return (
-    <Box px={2} py={3}>
-      <Box px={2} mb={3}>
-        <Text strong>Customer details</Text>
-      </Box>
-
+    <Box>
       <DetailsSectionCard>
         <Flex
           mb={2}
@@ -363,6 +359,24 @@ const CustomerDetails = ({
   );
 };
 
+export const CustomerDetailsSection = ({
+  customer,
+  isOnline,
+}: {
+  customer: Customer;
+  isOnline?: boolean;
+}) => {
+  return (
+    <Box px={2} py={3}>
+      <Box px={2} mb={3}>
+        <Text strong>Customer details</Text>
+      </Box>
+
+      <CustomerDetails customer={customer} isOnline={isOnline} />
+    </Box>
+  );
+};
+
 const autoSelectAndCopyInput = (el: any) => {
   const input = el.target || el.currentTarget;
 
@@ -494,7 +508,7 @@ const ConversationDetailsSidebar = ({
         flex: 1,
       }}
     >
-      <CustomerDetails customer={customer} isOnline={isOnline} />
+      <CustomerDetailsSection customer={customer} isOnline={isOnline} />
       {conversation && <ConversationDetails conversation={conversation} />}
     </Box>
   );

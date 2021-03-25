@@ -5,6 +5,7 @@ import {
   colors,
   shadows,
   Button,
+  Empty,
   Popconfirm,
   Result,
   Tag,
@@ -14,11 +15,13 @@ import {
 import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
-import {sleep} from '../../utils';
+import {sleep, sortConversationMessages} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
+import {getColorByUuid} from '../conversations/support';
 import CustomersTable from '../customers/CustomersTable';
 import UpdateTagModal from './UpdateTagModal';
+import ConversationItem from '../conversations/ConversationItem';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (
@@ -45,6 +48,7 @@ type State = {
   isUpdateModalVisible: boolean;
   tag: T.Tag | null;
   customers: Array<T.Customer>;
+  conversations: Array<T.Conversation>;
 };
 
 class TagDetailsPage extends React.Component<Props, State> {
@@ -55,15 +59,19 @@ class TagDetailsPage extends React.Component<Props, State> {
     isUpdateModalVisible: false,
     tag: null,
     customers: [],
+    conversations: [],
   };
 
   async componentDidMount() {
     try {
       const {id: tagId} = this.props.match.params;
-      const tag = await API.fetchTagById(tagId);
-      const customers = await API.fetchCustomers({tag_id: tagId});
+      const [tag, customers, {data: conversations}] = await Promise.all([
+        API.fetchTagById(tagId),
+        API.fetchCustomers({tag_id: tagId}),
+        API.fetchConversations({tag_id: tagId}),
+      ]);
 
-      this.setState({tag, customers, loading: false});
+      this.setState({tag, customers, conversations, loading: false});
     } catch (err) {
       logger.error('Error loading tag!', err);
 
@@ -129,6 +137,18 @@ class TagDetailsPage extends React.Component<Props, State> {
     this.handleRefreshTag();
   };
 
+  handleSelectConversation = (conversationId: string) => {
+    const conversation = this.state.conversations.find(
+      (conversation) => conversation.id === conversationId
+    );
+    const isClosed = conversation && conversation.status === 'closed';
+    const url = isClosed
+      ? `/conversations/closed?cid=${conversationId}`
+      : `/conversations/all?cid=${conversationId}`;
+
+    this.props.history.push(url);
+  };
+
   render() {
     const {
       loading,
@@ -137,6 +157,7 @@ class TagDetailsPage extends React.Component<Props, State> {
       isUpdateModalVisible,
       tag,
       customers = [],
+      conversations = [],
     } = this.state;
 
     if (loading) {
@@ -246,9 +267,39 @@ class TagDetailsPage extends React.Component<Props, State> {
               <CustomersTable
                 loading={loading || refreshing}
                 customers={customers}
-                currentlyOnline={{}}
+                shouldIncludeAnonymous
                 onUpdate={this.handleRefreshCustomers}
               />
+            </DetailsSectionCard>
+
+            <DetailsSectionCard>
+              <Box pb={2} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
+                <Title level={4}>Conversations</Title>
+              </Box>
+
+              {conversations.length > 0 ? (
+                conversations.map((conversation) => {
+                  const {
+                    id: conversationId,
+                    customer_id: customerId,
+                    messages = [],
+                  } = conversation;
+                  const color = getColorByUuid(customerId);
+                  const sorted = sortConversationMessages(messages);
+
+                  return (
+                    <ConversationItem
+                      key={conversationId}
+                      conversation={conversation}
+                      messages={sorted}
+                      color={color}
+                      onSelectConversation={this.handleSelectConversation}
+                    />
+                  );
+                })
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
             </DetailsSectionCard>
           </Box>
         </Flex>

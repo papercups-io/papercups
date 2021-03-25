@@ -2,6 +2,16 @@ defmodule ChatApiWeb.ConversationView do
   use ChatApiWeb, :view
   alias ChatApiWeb.{ConversationView, MessageView, CustomerView, TagView}
 
+  def render("index.json", %{conversations: conversations, pagination: pagination}) do
+    %{
+      data: render_many(conversations, ConversationView, "expanded.json"),
+      next: pagination.after,
+      previous: pagination.before,
+      limit: pagination.limit,
+      total: pagination.total_count
+    }
+  end
+
   def render("index.json", %{conversations: conversations}) do
     %{data: render_many(conversations, ConversationView, "expanded.json")}
   end
@@ -25,6 +35,7 @@ defmodule ChatApiWeb.ConversationView do
       source: conversation.source,
       created_at: conversation.inserted_at,
       closed_at: conversation.closed_at,
+      last_activity_at: conversation.last_activity_at,
       status: conversation.status,
       read: conversation.read,
       priority: conversation.priority,
@@ -41,6 +52,7 @@ defmodule ChatApiWeb.ConversationView do
       source: conversation.source,
       created_at: conversation.inserted_at,
       closed_at: conversation.closed_at,
+      last_activity_at: conversation.last_activity_at,
       status: conversation.status,
       read: conversation.read,
       priority: conversation.priority,

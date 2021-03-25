@@ -1,6 +1,7 @@
 import React from 'react';
 import ConversationsDashboard from './ConversationsDashboard';
 import {useConversations} from './ConversationsProvider';
+import * as API from '../../api';
 
 const MyConversations = () => {
   const {
@@ -9,7 +10,7 @@ const MyConversations = () => {
     account,
     mine = [],
     messagesByConversation = {},
-    fetchMyConversations,
+    onSetConversations,
     onSelectConversation,
     onUpdateConversation,
     onDeleteConversation,
@@ -20,6 +21,9 @@ const MyConversations = () => {
     return null;
   }
 
+  const {id: userId} = currentUser;
+  const fetcher = (query = {}) => API.fetchMyConversations(userId, query);
+
   return (
     <ConversationsDashboard
       loading={loading}
@@ -27,7 +31,8 @@ const MyConversations = () => {
       account={account}
       conversationIds={mine}
       messagesByConversation={messagesByConversation}
-      fetch={fetchMyConversations}
+      fetcher={fetcher}
+      onRetrieveConversations={onSetConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
       onDeleteConversation={onDeleteConversation}

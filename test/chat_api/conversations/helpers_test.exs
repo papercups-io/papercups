@@ -39,7 +39,7 @@ defmodule ChatApi.Conversations.HelpersTest do
 
     test "send_multiple_archived_updates/2 sends archived updates to multiple conversations",
          %{account: account, customer: customer} do
-      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336))
+      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336), :millisecond)
 
       insert_list(3, :conversation, %{
         account: account,

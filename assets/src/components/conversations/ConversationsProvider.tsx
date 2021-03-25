@@ -34,6 +34,9 @@ export const ConversationsContext = React.createContext<{
   onDeleteConversation: (id: string) => Promise<any>;
   onSendMessage: (message: Partial<Message>, cb?: () => void) => any;
 
+  onSetConversations: (conversations: Array<Conversation>) => Array<string>;
+  onSetSingleConversation: (conversation: Conversation) => Array<string>;
+
   fetchAllConversations: () => Promise<Array<string>>;
   fetchMyConversations: () => Promise<Array<string>>;
   fetchPriorityConversations: () => Promise<Array<string>>;
@@ -58,8 +61,13 @@ export const ConversationsContext = React.createContext<{
   isCustomerOnline: () => false,
   onSelectConversation: () => {},
   onSendMessage: () => {},
+
+  onSetConversations: () => [],
+  onSetSingleConversation: () => [],
+
   onUpdateConversation: () => Promise.resolve(),
   onDeleteConversation: () => Promise.resolve(),
+
   fetchAllConversations: () => Promise.resolve([]),
   fetchMyConversations: () => Promise.resolve([]),
   fetchPriorityConversations: () => Promise.resolve([]),
@@ -432,11 +440,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
     await this.throttledNotificationSound();
   };
 
-  // TODO: double check that there's no logic we need to add here
-  handleJoinMultipleConversations = (conversationIds: Array<string>) => {
-    logger.debug('Listening to multiple new conversations:', conversationIds);
-  };
-
   debouncedConversationUpdate = debounce(
     (id: string, updates: Partial<Conversation>) => {
       const {conversationsById} = this.state;
@@ -524,6 +527,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
     try {
       await API.deleteConversation(conversationId);
+
+      delete conversationsById[conversationId];
     } catch (err) {
       // Revert state if there's an error
       this.setState({
@@ -551,13 +556,17 @@ export class ConversationsProvider extends React.Component<Props, State> {
       {}
     );
     const sortedConversationIds = Object.keys(conversationsById).sort(
-      (a: string, b: string) => {
-        const messagesA = messagesByConversation[a];
-        const messagesB = messagesByConversation[b];
-        const x = messagesA[messagesA.length - 1];
-        const y = messagesB[messagesB.length - 1];
+      (x: string, y: string) => {
+        const a = conversationsById[x];
+        const b = conversationsById[y];
+        const left = a.last_activity_at
+          ? +new Date(a.last_activity_at)
+          : -Infinity;
+        const right = b.last_activity_at
+          ? +new Date(b.last_activity_at)
+          : -Infinity;
 
-        return +new Date(y?.created_at) - +new Date(x?.created_at);
+        return right - left;
       }
     );
 
@@ -570,7 +579,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
   updateConversationState = (
     conversations: Array<Conversation>,
-    type: ConversationBucket
+    type?: ConversationBucket
   ) => {
     const {currentUser, conversationsById, messagesByConversation} = this.state;
     const currentUserId = currentUser ? currentUser.id : null;
@@ -590,68 +599,80 @@ export class ConversationsProvider extends React.Component<Props, State> {
       messagesByConversation: updatedMessagesByConversation,
     };
 
-    switch (type) {
-      case 'all':
-        const conversations = state.conversationIds
-          .map((id) => updates.conversationsById[id])
-          .filter((c) => c.status === 'open');
-        const all = conversations.map((c) => c.id);
-        const mine = conversations
-          .filter((c) => c.assignee_id === currentUserId && c.status === 'open')
-          .map((c) => c.id);
-        const priority = conversations
-          .filter((c) => c.priority === 'priority' && c.status === 'open')
-          .map((c) => c.id);
+    // TODO: double check this logic
+    const conversationIds = Object.keys(updatedConversationsById).sort(
+      (x: string, y: string) => {
+        // TODO: DRY up this logic in other places
+        const a = updates.conversationsById[x];
+        const b = updates.conversationsById[y];
+        const left = a.last_activity_at
+          ? +new Date(a.last_activity_at)
+          : -Infinity;
+        const right = b.last_activity_at
+          ? +new Date(b.last_activity_at)
+          : -Infinity;
 
-        return this.setState({
-          ...updates,
-          all,
-          mine,
-          priority,
-        });
-      case 'mine':
-        return this.setState({
-          ...updates,
-          mine: state.conversationIds,
-        });
-      case 'priority':
-        return this.setState({
-          ...updates,
-          priority: state.conversationIds,
-        });
-      case 'closed':
-        return this.setState({
-          ...updates,
-          closed: state.conversationIds,
-        });
-    }
+        return right - left;
+      }
+    );
+
+    const allConversations = conversationIds.map(
+      (id) => updates.conversationsById[id]
+    );
+    const openConversations = allConversations.filter(
+      (c) => c.status === 'open'
+    );
+    const all = openConversations.map((c) => c.id);
+    const mine = openConversations
+      .filter((c) => c.assignee_id === currentUserId && c.status === 'open')
+      .map((c) => c.id);
+    const priority = openConversations
+      .filter((c) => c.priority === 'priority' && c.status === 'open')
+      .map((c) => c.id);
+    const closed = allConversations
+      .filter((c) => c.status !== 'open')
+      .map((c) => c.id);
+
+    return this.setState({
+      ...updates,
+      all,
+      mine,
+      priority,
+      closed,
+    });
+  };
+
+  handleSetConversations = (conversations: Array<Conversation>) => {
+    const {conversationIds} = this.formatConversationState(conversations);
+    this.updateConversationState(conversations);
+
+    return conversationIds;
   };
 
   fetchAllConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchAllConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
-
-    this.updateConversationState(conversations, 'all');
+    const {data: conversations} = await API.fetchAllConversations();
+    const conversationIds = this.handleSetAllConversations(conversations);
 
     return conversationIds;
+  };
+
+  handleSetAllConversations = (conversations: Array<Conversation>) => {
+    return this.handleSetConversations(conversations);
   };
 
   fetchConversationById = async (
     conversationId: string
   ): Promise<Array<string>> => {
     const conversation = await API.fetchConversation(conversationId);
-    const conversations = [conversation];
-    const {conversationIds} = this.formatConversationState(conversations);
-    const isClosed = conversation && conversation.status === 'closed';
-
-    if (isClosed) {
-      this.updateConversationState(conversations, 'closed');
-      this.handleJoinMultipleConversations(conversationIds);
-    } else {
-      this.updateConversationState(conversations, 'all');
-    }
+    const conversationIds = this.handleSetSingleConversation(conversation);
 
     return conversationIds;
+  };
+
+  handleSetSingleConversation = (conversation: Conversation) => {
+    const conversations = [conversation];
+
+    return this.handleSetConversations(conversations);
   };
 
   fetchMyConversations = async (): Promise<Array<string>> => {
@@ -662,31 +683,36 @@ export class ConversationsProvider extends React.Component<Props, State> {
     }
 
     const {id: currentUserId} = currentUser;
-    const conversations = await API.fetchMyConversations(currentUserId);
-    const {conversationIds} = this.formatConversationState(conversations);
-
-    this.updateConversationState(conversations, 'mine');
+    const {data: conversations} = await API.fetchMyConversations(currentUserId);
+    const conversationIds = this.handleSetMyConversations(conversations);
 
     return conversationIds;
+  };
+
+  handleSetMyConversations = (conversations: Array<Conversation>) => {
+    return this.handleSetConversations(conversations);
   };
 
   fetchPriorityConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchPriorityConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
-
-    this.updateConversationState(conversations, 'priority');
+    const {data: conversations} = await API.fetchPriorityConversations();
+    const conversationIds = this.handleSetPriorityConversations(conversations);
 
     return conversationIds;
   };
 
-  fetchClosedConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchClosedConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
+  handleSetPriorityConversations = (conversations: Array<Conversation>) => {
+    return this.handleSetConversations(conversations);
+  };
 
-    this.updateConversationState(conversations, 'closed');
-    this.handleJoinMultipleConversations(conversationIds);
+  fetchClosedConversations = async (): Promise<Array<string>> => {
+    const {data: conversations} = await API.fetchClosedConversations();
+    const conversationIds = this.handleSetClosedConversations(conversations);
 
     return conversationIds;
+  };
+
+  handleSetClosedConversations = (conversations: Array<Conversation>) => {
+    return this.handleSetConversations(conversations);
   };
 
   getUnreadByCategory = () => {
@@ -743,6 +769,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
           onUpdateConversation: this.handleUpdateConversation,
           onDeleteConversation: this.handleDeleteConversation,
           onSendMessage: this.handleSendMessage,
+
+          onSetConversations: this.handleSetConversations,
+          onSetSingleConversation: this.handleSetSingleConversation,
 
           fetchAllConversations: this.fetchAllConversations,
           fetchConversationById: this.fetchConversationById,

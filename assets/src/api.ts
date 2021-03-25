@@ -385,57 +385,75 @@ export const updateUserSettings = async (
     .then((res) => res.body.data);
 };
 
-export const fetchAllConversations = async (
+export type PaginationOptions = {
+  limit?: number;
+  next?: string | null;
+  previous?: string | null;
+  total?: number;
+};
+
+export type ConversationsListResponse = {
+  data: Array<Conversation>;
+  next: string | null;
+  previous: string | null;
+};
+
+export const fetchConversations = async (
+  query = {},
   token = getAccessToken()
-): Promise<Array<Conversation>> => {
+): Promise<ConversationsListResponse> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/conversations`)
-    .query({status: 'open'})
+    .query(query)
     .set('Authorization', token)
-    .then((res) => res.body.data);
+    .then((res) => res.body);
+};
+
+export const fetchAllConversations = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  return fetchConversations({...query, status: 'open'}, token);
 };
 
 export const fetchMyConversations = async (
   userId: number,
+  query = {},
   token = getAccessToken()
 ) => {
-  if (!token) {
-    throw new Error('Invalid token!');
-  }
-
-  return request
-    .get(`/api/conversations`)
-    .query({assignee_id: userId, status: 'open'})
-    .set('Authorization', token)
-    .then((res) => res.body.data);
+  return fetchConversations(
+    {
+      ...query,
+      assignee_id: userId,
+      status: 'open',
+    },
+    token
+  );
 };
 
-export const fetchPriorityConversations = async (token = getAccessToken()) => {
-  if (!token) {
-    throw new Error('Invalid token!');
-  }
-
-  return request
-    .get(`/api/conversations`)
-    .query({priority: 'priority', status: 'open'})
-    .set('Authorization', token)
-    .then((res) => res.body.data);
+export const fetchPriorityConversations = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  return fetchConversations(
+    {
+      ...query,
+      priority: 'priority',
+      status: 'open',
+    },
+    token
+  );
 };
 
-export const fetchClosedConversations = async (token = getAccessToken()) => {
-  if (!token) {
-    throw new Error('Invalid token!');
-  }
-
-  return request
-    .get(`/api/conversations`)
-    .query({status: 'closed'})
-    .set('Authorization', token)
-    .then((res) => res.body.data);
+export const fetchClosedConversations = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  return fetchConversations({...query, status: 'closed'}, token);
 };
 
 export const fetchConversation = async (
@@ -550,7 +568,7 @@ export const deleteConversation = async (
   return request
     .delete(`/api/conversations/${conversationId}`)
     .set('Authorization', token)
-    .then((res) => res.body.data);
+    .then((res) => res.body);
 };
 
 export const createNewMessage = async (

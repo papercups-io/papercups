@@ -38,7 +38,13 @@ defmodule ChatApi.Conversations do
     |> order_by(desc: :last_activity_at, desc: :id)
     |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
     |> Repo.paginate_with_cursor(
-      Keyword.merge([cursor_fields: [last_activity_at: :desc, id: :desc]], pagination_options)
+      Keyword.merge(
+        [
+          include_total_count: true,
+          cursor_fields: [last_activity_at: :desc, id: :desc]
+        ],
+        pagination_options
+      )
     )
   end
 
@@ -50,18 +56,20 @@ defmodule ChatApi.Conversations do
     # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
     # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
     ranking_query =
-      from m in Message,
+      from(m in Message,
         select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
         windows: [
           messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
         ]
+      )
 
     # We just want to query the most recent message
     messages_query =
-      from m in Message,
+      from(m in Message,
         join: r in subquery(ranking_query),
         on: m.id == r.id and r.row_number <= 1,
         preload: [:attachments, :customer, user: :profile]
+      )
 
     Conversation
     |> where(account_id: ^account_id)
@@ -89,18 +97,20 @@ defmodule ChatApi.Conversations do
     # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
     # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
     ranking_query =
-      from m in Message,
+      from(m in Message,
         select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
         windows: [
           messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
         ]
+      )
 
     # We just want to query the most recent message
     messages_query =
-      from m in Message,
+      from(m in Message,
         join: r in subquery(ranking_query),
         on: m.id == r.id and r.row_number <= 1,
         preload: [:customer, user: :profile]
+      )
 
     Conversation
     |> where(account_id: ^account_id)
@@ -173,10 +183,11 @@ defmodule ChatApi.Conversations do
     # NB: this is the method used to fetch conversations for a customer in the widget,
     # so we need to make sure that private messages are excluded from the query.
     messages =
-      from m in Message,
+      from(m in Message,
         where: m.private == false,
         order_by: m.inserted_at,
         preload: [:attachments, user: :profile]
+      )
 
     Conversation
     |> where(customer_id: ^customer_id)
@@ -195,18 +206,20 @@ defmodule ChatApi.Conversations do
     # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
     # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
     ranking_query =
-      from m in Message,
+      from(m in Message,
         select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
         windows: [
           messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
         ]
+      )
 
     # We just want to query the most recent message
     messages_query =
-      from m in Message,
+      from(m in Message,
         join: r in subquery(ranking_query),
         on: m.id == r.id and r.row_number <= 1,
         preload: [:customer, user: :profile]
+      )
 
     Conversation
     |> where(account_id: ^account_id)
@@ -220,6 +233,7 @@ defmodule ChatApi.Conversations do
 
   @spec order_by_most_recent_message(Ecto.Query.t()) :: Ecto.Query.t()
   def order_by_most_recent_message(query) do
+    # TODO: replace with sorting by `last_activity_at`
     query
     |> join(
       :left_lateral,
@@ -227,9 +241,10 @@ defmodule ChatApi.Conversations do
       f in fragment(
         "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
         c.id
-      )
+      ),
+      as: :last_message_created_at
     )
-    |> order_by([c, f], desc: f)
+    |> order_by([c, last_message_created_at: l], desc: l)
   end
 
   @spec get_conversation!(binary()) :: Conversation.t()
@@ -361,17 +376,18 @@ defmodule ChatApi.Conversations do
   # TODO: I wonder if this should live somewhere else...
   @spec query_free_tier_conversations_inactive_for([{:days, number}]) :: Ecto.Query.t()
   def query_free_tier_conversations_inactive_for(days: days) do
-    from c in Conversation,
+    from(c in Conversation,
       join: a in Account,
       on: a.id == c.account_id,
       join:
         last_message in subquery(
-          from m in Message,
+          from(m in Message,
             group_by: m.conversation_id,
             select: %{
               conversation_id: m.conversation_id,
               most_recently_inserted_at: max(m.inserted_at)
             }
+          )
         ),
       on: last_message.conversation_id == c.id,
       where:
@@ -379,6 +395,7 @@ defmodule ChatApi.Conversations do
           a.subscription_plan == "starter" and c.priority == "not_priority" and
           c.inserted_at < ago(^days, "day") and
           last_message.most_recently_inserted_at < ago(^days, "day")
+    )
   end
 
   @spec query_conversations_closed_for([{:days, number}]) :: Ecto.Query.t()
@@ -478,8 +495,8 @@ defmodule ChatApi.Conversations do
   @spec filter_by_tag(Ecto.Query.t(), map()) :: Ecto.Query.t()
   def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
     query
-    |> join(:left, [c], t in assoc(c, :tags))
-    |> where([_c, t], t.id == ^tag_id)
+    |> join(:left, [c], t in assoc(c, :tags), as: :tags)
+    |> where([_c, tags: t], t.id == ^tag_id)
   end
 
   def filter_by_tag(query, _filters), do: query
