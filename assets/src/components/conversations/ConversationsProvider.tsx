@@ -542,6 +542,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
     try {
       await API.deleteConversation(conversationId);
+
+      delete conversationsById[conversationId];
     } catch (err) {
       // Revert state if there's an error
       this.setState({
