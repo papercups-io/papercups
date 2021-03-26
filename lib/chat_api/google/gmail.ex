@@ -60,6 +60,8 @@ defmodule ChatApi.Google.Gmail do
     result
   end
 
+  def decode_message_body(nil), do: :error
+
   def decode_message_body(text) do
     text |> String.replace("-", "+") |> String.replace("_", "/") |> Base.decode64()
   end
@@ -135,29 +137,42 @@ defmodule ChatApi.Google.Gmail do
         from: headers["from"],
         to: headers["to"],
         in_reply_to: headers["in-reply-to"],
-        references: headers["references"]
+        references: headers["references"],
+        text: "",
+        html:
+          case get_in(payload, ["body", "data"]) do
+            data when is_binary(data) -> decode_message_body(data)
+            _ -> ""
+          end
       }
 
       payload
       |> Map.get("parts", [])
-      |> Enum.reduce(message, fn part, acc ->
-        [key, value] =
-          case part do
-            %{"mimeType" => "text/plain", "body" => %{"data" => encoded}} ->
-              [:text, encoded]
+      |> format_message_parts(message)
+    end)
+  end
 
-            %{"mimeType" => "text/html", "body" => %{"data" => encoded}} ->
-              [:html, encoded]
+  def format_message_parts(parts \\ [], message \\ %{}) do
+    Enum.reduce(parts, message, fn part, acc ->
+      case part do
+        %{"parts" => embedded_parts} ->
+          format_message_parts(embedded_parts, acc)
 
-            _ ->
-              [:invalid, nil]
+        %{"mimeType" => "text/plain", "body" => %{"data" => encoded}} ->
+          case decode_message_body(encoded) do
+            {:ok, decoded} -> Map.merge(acc, %{text: decoded})
+            :error -> acc
           end
 
-        case decode_message_body(value) do
-          {:ok, decoded} -> Map.merge(acc, %{key => decoded})
-          :error -> acc
-        end
-      end)
+        %{"mimeType" => "text/html", "body" => %{"data" => encoded}} ->
+          case decode_message_body(encoded) do
+            {:ok, decoded} -> Map.merge(acc, %{html: decoded})
+            :error -> acc
+          end
+
+        _ ->
+          acc
+      end
     end)
   end
 
@@ -177,6 +192,7 @@ defmodule ChatApi.Google.Gmail do
     email
     |> remove_quoted_email()
     |> remove_trailing_newlines()
+    |> remove_trailing_dot()
     |> String.trim()
   end
 
@@ -194,5 +210,9 @@ defmodule ChatApi.Google.Gmail do
 
   defp remove_trailing_newlines(body) do
     Regex.replace(~r/\n+$/, body, "")
+  end
+
+  defp remove_trailing_dot(body) do
+    Regex.replace(~r/\r\nᐧ$/, body, "")
   end
 end
