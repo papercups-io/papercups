@@ -98,6 +98,29 @@ defmodule ChatApi.Google.Gmail do
                      "snippet" => snippet,
                      "payload" => payload
                    } = _msg ->
+      headers =
+        payload
+        |> Map.get("headers", [])
+        |> Enum.filter(fn %{"name" => name, "value" => _} ->
+          Enum.member?(
+            [
+              "references",
+              "in-reply-to",
+              "from",
+              "date",
+              "message-id",
+              "subject",
+              "to",
+              "content-type"
+            ],
+            String.downcase(name)
+          )
+        end)
+        |> Enum.map(fn %{"name" => name, "value" => value} ->
+          {String.downcase(name), value}
+        end)
+        |> Map.new()
+
       message = %{
         id: id,
         thread_id: thread_id,
@@ -105,11 +128,18 @@ defmodule ChatApi.Google.Gmail do
         label_ids: label_ids,
         ts: ts,
         estimated_size: estimated_size,
-        snippet: snippet
+        snippet: snippet,
+        headers: headers,
+        message_id: headers["message-id"],
+        subject: headers["subject"],
+        from: headers["from"],
+        to: headers["to"],
+        in_reply_to: headers["in-reply-to"],
+        references: headers["references"]
       }
 
       payload
-      |> Map.get("parts")
+      |> Map.get("parts", [])
       |> Enum.reduce(message, fn part, acc ->
         [key, value] =
           case part do
@@ -129,6 +159,13 @@ defmodule ChatApi.Google.Gmail do
         end
       end)
     end)
+  end
+
+  def extract_email_address(str) do
+    case Regex.scan(~r/<(.*?)>/, str) do
+      [[_match, email]] -> email
+      _ -> str
+    end
   end
 
   # Simple parsing logic
