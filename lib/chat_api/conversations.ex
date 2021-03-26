@@ -189,6 +189,16 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
+  def find_latest_conversation(account_id, filters) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> where(account_id: ^account_id)
+    |> where([c], is_nil(c.archived_at))
+    |> order_by(desc: :inserted_at)
+    |> first()
+    |> Repo.one()
+  end
+
   # Used internally in dashboard
   @spec list_recent_by_customer(binary(), binary(), integer()) :: [Conversation.t()]
   def list_recent_by_customer(customer_id, account_id, limit \\ 5) do
@@ -518,6 +528,9 @@ defmodule ChatApi.Conversations do
 
       {"account_id", value}, dynamic ->
         dynamic([p], ^dynamic and p.account_id == ^value)
+
+      {"source", value}, dynamic ->
+        dynamic([p], ^dynamic and p.source == ^value)
 
       {_, _}, dynamic ->
         # Not a where parameter

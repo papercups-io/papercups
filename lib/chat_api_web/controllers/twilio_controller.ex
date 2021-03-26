@@ -1,6 +1,10 @@
 defmodule ChatApiWeb.TwilioController do
   use ChatApiWeb, :controller
 
+  alias ChatApi.Messages
+  alias ChatApi.Messages.Message
+  alias ChatApi.Conversations
+  alias ChatApi.Customers
   alias ChatApi.Twilio
   alias ChatApi.Twilio.TwilioAuthorization
 
@@ -62,6 +66,68 @@ defmodule ChatApiWeb.TwilioController do
   @spec webhook(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def webhook(conn, payload) do
     Logger.debug("Payload from Twilio webhook: #{inspect(payload)}")
+    %{"AccountSid" => account_sid, "To" => to, "From" => from, "Body" => body} = payload
+
+    case Twilio.find_twilio_authorization(%{
+           twilio_account_sid: account_sid,
+           from_phone_number: to
+         }) do
+      nil ->
+        Logger.error("Cannot find twilio auth")
+
+      twilio_auth ->
+        %{account_id: account_id} = twilio_auth
+
+        result =
+          case Customers.list_customers(account_id, %{phone: from}) do
+            [] ->
+              case Customers.create_customer(%{phone: from, account_id: account_id}) do
+                {:ok, customer} ->
+                  {customer,
+                   Conversations.create_conversation(%{
+                     account_id: account_id,
+                     customer_id: customer.id,
+                     source: "sms"
+                   })}
+
+                error ->
+                  error
+              end
+
+            [customer] ->
+              case Conversations.find_latest_conversation(account_id, %{
+                     customer_id: customer.id,
+                     source: "sms"
+                   }) do
+                nil ->
+                  {customer,
+                   Conversations.create_conversation(%{
+                     account_id: account_id,
+                     customer_id: customer.id
+                   })}
+
+                conversation ->
+                  {customer, conversation}
+              end
+          end
+
+        case result do
+          {:error, _} ->
+            Logger.error("Error")
+            send_resp(conn, 500, "")
+
+          {customer, conversation} ->
+            Messages.create_message(%{
+              body: body,
+              account_id: account_id,
+              customer_id: customer.id,
+              conversation_id: conversation.id
+            })
+
+            send_resp(conn, 200, "")
+        end
+    end
+
     # TODO: implement me!
     #
     # When new SMS message comes in...
@@ -73,7 +139,6 @@ defmodule ChatApiWeb.TwilioController do
     #   - If customer exists, fetch latest open conversation (with `source: "sms"`)
     #   - If open conversation exists, add message to conversation
     #   - Otherwise, create new conversation (with `source: "sms"`)
-    send_resp(conn, 200, "")
   end
 
   @spec verify_authorization(map()) :: :ok | {:error, atom(), any()}
