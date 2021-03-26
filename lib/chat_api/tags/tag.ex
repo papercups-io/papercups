@@ -43,6 +43,6 @@ defmodule ChatApi.Tags.Tag do
     tag
     |> cast(attrs, [:name, :account_id, :description, :color, :creator_id])
     |> validate_required([:name, :account_id])
-    |> unique_constraint(:name)
+    |> unique_constraint([:name, :account_id])
   end
 end
