@@ -61,16 +61,19 @@ defmodule ChatApiWeb.TwilioController do
   end
 
   @spec webhook(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def webhook(conn, payload) do
+  def webhook(
+        conn,
+        %{"AccountSid" => account_sid, "To" => to, "From" => from, "Body" => body} = payload
+      ) do
     Logger.debug("Payload from Twilio webhook: #{inspect(payload)}")
-    %{"AccountSid" => account_sid, "To" => to, "From" => from, "Body" => body} = payload
 
     with %TwilioAuthorization{account_id: account_id} <-
            Twilio.find_twilio_authorization(%{
              twilio_account_sid: account_sid,
              from_phone_number: to
            }),
-         {:ok, customer, conversation} <- Twilio.find_or_create_customer_and_conversation(account_id, from),
+         {:ok, customer, conversation} <-
+           Twilio.find_or_create_customer_and_conversation(account_id, from),
          {:ok, _mesage} <-
            Messages.create_message(%{
              body: body,
@@ -80,7 +83,9 @@ defmodule ChatApiWeb.TwilioController do
            }) do
       send_resp(conn, 200, "")
     else
-      nil -> send_resp(conn, 404, "Twilio account not found")
+      nil ->
+        send_resp(conn, 404, "Twilio account not found")
+
       error ->
         Logger.error(inspect(error))
         send_resp(conn, 500, "")
