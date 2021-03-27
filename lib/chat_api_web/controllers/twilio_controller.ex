@@ -2,9 +2,6 @@ defmodule ChatApiWeb.TwilioController do
   use ChatApiWeb, :controller
 
   alias ChatApi.Messages
-  alias ChatApi.Messages.Message
-  alias ChatApi.Conversations
-  alias ChatApi.Customers
   alias ChatApi.Twilio
   alias ChatApi.Twilio.TwilioAuthorization
 
@@ -68,64 +65,23 @@ defmodule ChatApiWeb.TwilioController do
     Logger.debug("Payload from Twilio webhook: #{inspect(payload)}")
     %{"AccountSid" => account_sid, "To" => to, "From" => from, "Body" => body} = payload
 
-    case Twilio.find_twilio_authorization(%{
-           twilio_account_sid: account_sid,
-           from_phone_number: to
-         }) do
-      nil ->
-        Logger.error("Cannot find twilio auth")
-
-      twilio_auth ->
-        %{account_id: account_id} = twilio_auth
-
-        result =
-          case Customers.list_customers(account_id, %{phone: from}) do
-            [] ->
-              case Customers.create_customer(%{phone: from, account_id: account_id}) do
-                {:ok, customer} ->
-                  {customer,
-                   Conversations.create_conversation(%{
-                     account_id: account_id,
-                     customer_id: customer.id,
-                     source: "sms"
-                   })}
-
-                error ->
-                  error
-              end
-
-            [customer] ->
-              case Conversations.find_latest_conversation(account_id, %{
-                     customer_id: customer.id,
-                     source: "sms"
-                   }) do
-                nil ->
-                  {customer,
-                   Conversations.create_conversation(%{
-                     account_id: account_id,
-                     customer_id: customer.id
-                   })}
-
-                conversation ->
-                  {customer, conversation}
-              end
-          end
-
-        case result do
-          {:error, _} ->
-            Logger.error("Error")
-            send_resp(conn, 500, "")
-
-          {customer, conversation} ->
-            Messages.create_message(%{
-              body: body,
-              account_id: account_id,
-              customer_id: customer.id,
-              conversation_id: conversation.id
-            })
-
-            send_resp(conn, 200, "")
-        end
+    with %TwilioAuthorization{account_id: account_id} <-
+           Twilio.find_twilio_authorization(%{
+             twilio_account_sid: account_sid,
+             from_phone_number: to
+           }),
+         {:ok, customer, conversation} <- Twilio.find_or_create_customer_and_conversation(account_id, from),
+         {:ok, _mesage} <-
+           Messages.create_message(%{
+             body: body,
+             account_id: account_id,
+             customer_id: customer.id,
+             conversation_id: conversation.id
+           }) do
+      send_resp(conn, 200, "")
+    else
+      nil -> send_resp(conn, 404, "Twilio account not found")
+      _ -> send_resp(conn, 500, "")
     end
 
     # TODO: implement me!

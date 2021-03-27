@@ -7,6 +7,8 @@ defmodule ChatApi.Twilio do
   alias ChatApi.Repo
 
   alias ChatApi.Twilio.TwilioAuthorization
+  alias ChatApi.Conversations
+  alias ChatApi.Customers
 
   @spec list_twilio_authorizations() :: [TwilioAuthorization.t()]
   def list_twilio_authorizations() do
@@ -80,6 +82,57 @@ defmodule ChatApi.Twilio do
     |> order_by(desc: :inserted_at)
     |> first()
     |> Repo.one()
+  end
+
+  @spec find_or_create_customer_and_conversation(String.t(), String.t()) ::
+          {:ok, Customers.Customer.t(), Conversations.Conversation.t()}
+          | {:error, Ecto.Changeset.t()}
+  def find_or_create_customer_and_conversation(account_id, phone) do
+    now = DateTime.utc_now()
+    sms_source = "sms"
+
+    case Customers.list_customers(account_id, %{phone: phone}) do
+      [] ->
+        with {:ok, customer} <-
+               Customers.create_customer(%{
+                 phone: phone,
+                 account_id: account_id,
+                 first_seen: now,
+                 last_seen: now
+               }),
+             {:ok, conversation} <-
+               Conversations.create_conversation(%{
+                 account_id: account_id,
+                 customer_id: customer.id,
+                 source: sms_source
+               }) do
+          {:ok, customer, conversation}
+        else
+          error ->
+            error
+        end
+
+      [customer] ->
+        with nil <-
+               Conversations.find_latest_conversation(account_id, %{
+                 customer_id: customer.id,
+                 source: sms_source
+               }),
+             {:ok, conversation} <-
+               Conversations.create_conversation(%{
+                 account_id: account_id,
+                 customer_id: customer.id,
+                 source: sms_source
+               }) do
+          {:ok, customer, conversation}
+        else
+          %Conversations.Conversation{} = conversation ->
+            {:ok, customer, conversation}
+
+          error ->
+            error
+        end
+    end
   end
 
   defp filter_authorizations_where(params) do
