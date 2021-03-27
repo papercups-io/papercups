@@ -189,6 +189,7 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
+  @spec find_latest_conversation(binary(), map()) :: Conversation.t()
   def find_latest_conversation(account_id, filters) do
     Conversation
     |> where(^filter_where(filters))
