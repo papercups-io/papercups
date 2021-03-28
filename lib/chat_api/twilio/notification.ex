@@ -31,7 +31,9 @@ defmodule ChatApi.Twilio.Notification do
       }
       |> Twilio.Client.send_message(twilio_authorization)
     else
-      error -> error
+      error ->
+        Logger.error("Skipped sending Twilio message: #{inspect(error)}")
+        error
     end
   end
 
