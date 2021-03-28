@@ -3,6 +3,8 @@ defmodule ChatApi.Twilio.Client do
   A module for interacting with the Twilio API.
   """
 
+  alias ChatApi.Twilio.TwilioAuthorization
+
   require Logger
 
   @spec client(map() | map()) :: Tesla.Client.t()
@@ -37,5 +39,32 @@ defmodule ChatApi.Twilio.Client do
     authorization
     |> client()
     |> Tesla.get("/Accounts/#{twilio_account_sid}/Messages.json", query: query)
+  end
+
+  @spec validate_phone(binary, TwilioAuthorization.t()) :: {:ok, binary()} | {:error, :bad_number}
+  def validate_phone(phone, %TwilioAuthorization{
+        twilio_account_sid: twilio_account_sid,
+        twilio_auth_token: twilio_auth_token
+      }) do
+    # We're going to hit this endpoint:
+    # https://www.twilio.com/docs/lookup/tutorials/validation-and-formatting
+    # If we get back a 200, then the number is valid. Otherwise, it's invalid.
+
+    middleware = [
+      {Tesla.Middleware.BaseUrl, "https://lookups.twilio.com"},
+      {Tesla.Middleware.Headers,
+       [
+         {"Authorization",
+          Plug.BasicAuth.encode_basic_auth(twilio_account_sid, twilio_auth_token)}
+       ]}
+    ]
+
+    middleware
+    |> Tesla.client()
+    |> Tesla.get("/v1/PhoneNumbers/" <> phone)
+    |> case do
+      {:ok, %{:status => 200}} -> {:ok, phone}
+      _ -> {:error, :invalid_phone}
+    end
   end
 end
