@@ -83,23 +83,23 @@ defmodule Mix.Tasks.SyncGmailInbox do
       |> ChatApi.Conversations.Notification.notify(:webhooks, event: "conversation:created")
 
       Enum.map(messages, fn message ->
+        sender_email = Gmail.extract_email_address(message.from)
+        admin_user = ChatApi.Users.find_user_by_email(sender_email, account_id)
+        is_sent = message |> Map.get(:label_ids, []) |> Enum.member?("SENT")
+
         sender_params =
-          message
-          |> Map.get(:label_ids, [])
-          |> Enum.member?("SENT")
-          |> case do
-            true ->
-              user =
-                case ChatApi.Users.find_user_by_email(message.from, account_id) do
-                  nil -> ChatApi.Users.find_by_id(user_id, account_id)
-                  result -> result
-                end
+          case {admin_user, is_sent} do
+            {%ChatApi.Users.User{id: user_id}, _} ->
+              %{user_id: user_id}
 
-              %{user_id: user.id}
+            {_, true} ->
+              default_user = ChatApi.Users.find_by_id(user_id, account_id)
 
-            false ->
+              %{user_id: default_user.id}
+
+            {_, false} ->
               {:ok, customer} =
-                ChatApi.Customers.find_or_create_by_email(customer_email, account_id)
+                ChatApi.Customers.find_or_create_by_email(sender_email, account_id)
 
               %{customer_id: customer.id}
           end
