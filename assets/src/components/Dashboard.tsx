@@ -37,6 +37,7 @@ import {
   useConversations,
 } from './conversations/ConversationsProvider';
 import AllConversations from './conversations/AllConversations';
+import CannedConversations from './conversations/CannedConversations';
 import MyConversations from './conversations/MyConversations';
 import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
@@ -291,6 +292,22 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="closed">
                   <Link to="/conversations/closed">Closed</Link>
                 </Menu.Item>
+                <Menu.Item key="canned">
+                  <Link to="/conversations/canned">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Canned</Box>
+                      <Badge
+                        count={unread.priority}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
               </Menu.SubMenu>
               <Menu.SubMenu
                 key="sessions"
@@ -396,6 +413,7 @@ const Dashboard = (props: RouteComponentProps) => {
             component={PriorityConversations}
           />
           <Route path="/conversations/closed" component={ClosedConversations} />
+          <Route path="/conversations/canned" component={CannedConversations} />
           <Route
             path="/conversations/:id"
             render={(props: RouteComponentProps<{id: string}>) => {
