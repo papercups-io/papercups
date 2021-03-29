@@ -12,6 +12,7 @@ defmodule ChatApi.Google.GoogleAuthorization do
           token_type: String.t() | nil,
           expires_at: integer(),
           scope: String.t() | nil,
+          metadata: any(),
           # Foreign keys
           account_id: Ecto.UUID.t(),
           user_id: integer(),
@@ -29,6 +30,7 @@ defmodule ChatApi.Google.GoogleAuthorization do
     field(:token_type, :string)
     field(:expires_at, :integer)
     field(:scope, :string)
+    field(:metadata, :map)
 
     belongs_to(:account, Account)
     belongs_to(:user, User, type: :integer)
@@ -46,6 +48,7 @@ defmodule ChatApi.Google.GoogleAuthorization do
       :token_type,
       :expires_at,
       :scope,
+      :metadata,
       :user_id,
       :account_id
     ])

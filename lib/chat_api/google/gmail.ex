@@ -213,6 +213,6 @@ defmodule ChatApi.Google.Gmail do
   end
 
   defp remove_trailing_dot(body) do
-    Regex.replace(~r/\r\nᐧ$/, body, "")
+    String.replace(body, ~r/[\x{1427}]/u, "")
   end
 end
