@@ -58,6 +58,8 @@ config :chat_api, Oban,
     # Hourly example worker
     {"0 * * * *", ChatApi.Workers.Example},
     {"0 * * * *", ChatApi.Workers.ArchiveStaleClosedConversations},
+    # Syncs every minute
+    {"*/5 * * * *", ChatApi.Workers.SyncGmailInboxes},
     # Sends everyday at 2pm UTC/9am EST
     {"0 14 * * *", ChatApi.Workers.SendPgNewsletter}
     # TODO: uncomment this after testing manually

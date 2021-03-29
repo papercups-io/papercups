@@ -13,8 +13,10 @@ defmodule ChatApi.Google do
   #############################################################################
 
   @spec list_google_authorizations() :: [GoogleAuthorization.t()]
-  def list_google_authorizations do
-    Repo.all(GoogleAuthorization)
+  def list_google_authorizations(filters \\ %{}) do
+    GoogleAuthorization
+    |> where(^filter_authorizations_where(filters))
+    |> Repo.all()
   end
 
   @spec get_google_authorization!(binary()) :: GoogleAuthorization.t()
