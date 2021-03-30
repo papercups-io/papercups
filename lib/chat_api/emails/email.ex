@@ -18,6 +18,27 @@ defmodule ChatApi.Emails.Email do
     |> html_body(html)
   end
 
+  def gmail(
+        %{
+          to: to,
+          from: from,
+          subject: subject,
+          text: text,
+          in_reply_to: in_reply_to,
+          references: references
+        } = params
+      ) do
+    new()
+    |> to(to)
+    |> from(from)
+    |> subject(subject)
+    |> bcc(Map.get(params, :bcc, []))
+    |> header("In-Reply-To", in_reply_to)
+    |> header("References", references)
+    |> text_body(text)
+    |> html_body(Map.get(params, :html))
+  end
+
   def gmail(%{to: to, from: from, subject: subject, text: text} = params) do
     new()
     |> to(to)

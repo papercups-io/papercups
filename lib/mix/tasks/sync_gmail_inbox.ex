@@ -17,13 +17,13 @@ defmodule Mix.Tasks.SyncGmailInbox do
 
     # Note that the "next_history_id" needs to be set on the GoogleAuthorization metadata
     with [account_id] <- args,
-         %{refresh_token: refresh_token, metadata: %{"next_history_id" => next_history_id}} =
+         %{refresh_token: refresh_token, metadata: %{"next_history_id" => start_history_id}} =
            authorization <-
            ChatApi.Google.get_authorization_by_account(account_id, %{client: "gmail"}),
          %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
          %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
            Gmail.list_history(refresh_token,
-             start_history_id: next_history_id,
+             start_history_id: start_history_id,
              history_types: "messageAdded"
            ) do
       IO.inspect(email, label: "Authenticated email")

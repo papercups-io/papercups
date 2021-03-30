@@ -5,8 +5,36 @@ defmodule ChatApi.Google.Gmail do
       ) do
     with %{token: %{access_token: access_token}} <-
            ChatApi.Google.Auth.get_token!(refresh_token: refresh_token) do
-      ChatApi.Emails.send_via_gmail(access_token, params)
+      scope = "https://www.googleapis.com/gmail/v1/users/me/messages/send"
+      client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
+
+      body =
+        params
+        |> ChatApi.Emails.Email.gmail()
+        |> ChatApi.Mailers.GmailAdapter.parse(
+          access_token: access_token,
+          thread_id: params[:thread_id]
+        )
+
+      %{body: result} = OAuth2.Client.post!(client, scope, body)
+
+      result
     end
+  end
+
+  def reply_to_thread(
+        refresh_token,
+        %{
+          to: _to,
+          from: _from,
+          subject: _subject,
+          text: _text,
+          in_reply_to: _in_reply_to,
+          references: _references,
+          thread_id: _gmail_thread_id
+        } = params
+      ) do
+    send_message(refresh_token, params)
   end
 
   def list_messages(refresh_token, query \\ []) do
@@ -63,7 +91,10 @@ defmodule ChatApi.Google.Gmail do
   def decode_message_body(nil), do: :error
 
   def decode_message_body(text) do
-    text |> String.replace("-", "+") |> String.replace("_", "/") |> Base.decode64()
+    text
+    |> String.replace("-", "+")
+    |> String.replace("_", "/")
+    |> Base.decode64()
   end
 
   # Example use case:

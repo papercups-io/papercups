@@ -18,12 +18,12 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
 
   def sync_gmail_authorization(%GoogleAuthorization{} = authorization) do
     # Note that the "next_history_id" needs to be set on the GoogleAuthorization metadata
-    with %{refresh_token: refresh_token, metadata: %{"next_history_id" => next_history_id}} <-
+    with %{refresh_token: refresh_token, metadata: %{"next_history_id" => start_history_id}} <-
            authorization,
          %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
          %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
            Gmail.list_history(refresh_token,
-             start_history_id: next_history_id,
+             start_history_id: start_history_id,
              history_types: "messageAdded"
            ) do
       IO.inspect(email, label: "Authenticated email")
