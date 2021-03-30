@@ -509,7 +509,7 @@ defmodule ChatApi.Conversations do
   end
 
   @spec find_or_create_customer_and_conversation(String.t(), String.t()) ::
-          {:ok, Customers.Customer.t(), Conversation.t()}
+          {:ok, Customer.t(), Conversation.t()}
           | {:error, Ecto.Changeset.t()}
   def find_or_create_customer_and_conversation(account_id, phone) do
     now = DateTime.utc_now()
