@@ -124,6 +124,7 @@ defmodule ChatApiWeb.MattermostController do
       |> Messages.Notification.notify(:webhooks)
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:conversation_reply_email)
+      |> Messages.Notification.notify(:gmail)
       |> Messages.Helpers.handle_post_creation_conversation_updates()
     end
   end

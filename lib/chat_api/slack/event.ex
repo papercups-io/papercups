@@ -81,6 +81,7 @@ defmodule ChatApi.Slack.Event do
         |> Messages.Notification.notify(:slack_support_channel)
         |> Messages.Notification.notify(:slack_company_channel)
         |> Messages.Notification.notify(:conversation_reply_email)
+        |> Messages.Notification.notify(:gmail)
         |> Messages.Notification.notify(:mattermost)
         |> Messages.Helpers.handle_post_creation_conversation_updates()
       else
