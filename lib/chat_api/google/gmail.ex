@@ -253,6 +253,8 @@ defmodule ChatApi.Google.Gmail do
     }
   end
 
+  def extract_email_address(nil), do: nil
+
   def extract_email_address(str) do
     case Regex.scan(~r/<(.*?)>/, str) do
       [[_match, email]] -> email
