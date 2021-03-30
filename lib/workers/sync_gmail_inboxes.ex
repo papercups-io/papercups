@@ -114,18 +114,7 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
         conversation_id: conversation_id,
         account_id: account_id,
         source: "email",
-        metadata: %{
-          gmail_to: message.to,
-          gmail_from: message.from,
-          gmail_label_ids: message.label_ids,
-          gmail_in_reply_to: message.in_reply_to,
-          gmail_references: message.references,
-          gmail_ts: message.ts,
-          gmail_thread_id: message.thread_id,
-          gmail_id: message.id,
-          gmail_message_id: message.message_id,
-          gmail_history_id: message.history_id
-        },
+        metadata: Gmail.format_message_metadata(message),
         sent_at:
           with {unix, _} <- Integer.parse(message.ts),
                {:ok, datetime} <- DateTime.from_unix(unix, :millisecond) do
@@ -215,18 +204,7 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
         conversation_id: conversation.id,
         account_id: account_id,
         source: "email",
-        metadata: %{
-          gmail_to: message.to,
-          gmail_from: message.from,
-          gmail_label_ids: message.label_ids,
-          gmail_in_reply_to: message.in_reply_to,
-          gmail_references: message.references,
-          gmail_ts: message.ts,
-          gmail_thread_id: message.thread_id,
-          gmail_id: message.id,
-          gmail_message_id: message.message_id,
-          gmail_history_id: message.history_id
-        },
+        metadata: Gmail.format_message_metadata(message),
         sent_at:
           with {unix, _} <- Integer.parse(message.ts),
                {:ok, datetime} <- DateTime.from_unix(unix, :millisecond) do
@@ -255,7 +233,7 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
         |> Gmail.get_thread_messages()
         |> Enum.reject(fn r ->
           Enum.any?(r.label_ids, fn label ->
-            Enum.member?(["SPAM", "CATEGORY_PROMOTIONS", "CATEGORY_UPDATES"], label)
+            Enum.member?(["SPAM", "DRAFT", "CATEGORY_PROMOTIONS", "CATEGORY_UPDATES"], label)
           end)
         end)
         |> Enum.map(fn r ->
@@ -264,6 +242,8 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
           |> Map.take([
             :to,
             :from,
+            :cc,
+            :bcc,
             :subject,
             :formatted_text,
             :label_ids,

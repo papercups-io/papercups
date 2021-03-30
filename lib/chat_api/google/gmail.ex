@@ -130,66 +130,79 @@ defmodule ChatApi.Google.Gmail do
   def get_thread_messages(thread) do
     thread
     |> Map.get("messages")
-    |> Enum.map(fn %{
-                     "id" => id,
-                     "threadId" => thread_id,
-                     "historyId" => history_id,
-                     "labelIds" => label_ids,
-                     "internalDate" => ts,
-                     "sizeEstimate" => estimated_size,
-                     "snippet" => snippet,
-                     "payload" => payload
-                   } = _msg ->
-      headers =
-        payload
-        |> Map.get("headers", [])
-        |> Enum.filter(fn %{"name" => name, "value" => _} ->
-          Enum.member?(
-            [
-              "references",
-              "in-reply-to",
-              "from",
-              "date",
-              "message-id",
-              "subject",
-              "to",
-              "content-type"
-            ],
-            String.downcase(name)
-          )
-        end)
-        |> Enum.map(fn %{"name" => name, "value" => value} ->
-          {String.downcase(name), value}
-        end)
-        |> Map.new()
+    |> Enum.map(&format_thread_message/1)
+  end
 
-      message = %{
-        id: id,
-        thread_id: thread_id,
-        history_id: history_id,
-        label_ids: label_ids,
-        ts: ts,
-        estimated_size: estimated_size,
-        snippet: snippet,
-        headers: headers,
-        message_id: headers["message-id"],
-        subject: headers["subject"],
-        from: headers["from"],
-        to: headers["to"],
-        in_reply_to: headers["in-reply-to"],
-        references: headers["references"],
-        text: "",
-        html:
-          case get_in(payload, ["body", "data"]) do
-            data when is_binary(data) -> decode_message_body(data)
-            _ -> ""
-          end
-      }
-
+  def format_thread_message(
+        %{
+          "id" => id,
+          "threadId" => thread_id,
+          "historyId" => history_id,
+          "labelIds" => label_ids,
+          "internalDate" => ts,
+          "sizeEstimate" => estimated_size,
+          "snippet" => snippet,
+          "payload" => payload
+        } = _msg
+      ) do
+    headers =
       payload
-      |> Map.get("parts", [])
-      |> format_message_parts(message)
+      |> Map.get("headers", [])
+      |> format_message_headers()
+
+    message = %{
+      id: id,
+      thread_id: thread_id,
+      history_id: history_id,
+      label_ids: label_ids,
+      ts: ts,
+      estimated_size: estimated_size,
+      snippet: snippet,
+      headers: headers,
+      message_id: headers["message-id"],
+      subject: headers["subject"],
+      from: headers["from"],
+      to: headers["to"],
+      cc: headers["cc"],
+      bcc: headers["bcc"],
+      in_reply_to: headers["in-reply-to"],
+      references: headers["references"],
+      text: "",
+      html:
+        case get_in(payload, ["body", "data"]) do
+          data when is_binary(data) -> decode_message_body(data)
+          _ -> ""
+        end
+    }
+
+    payload
+    |> Map.get("parts", [])
+    |> format_message_parts(message)
+  end
+
+  def format_message_headers(headers \\ []) do
+    headers
+    |> Enum.filter(fn %{"name" => name, "value" => _} ->
+      Enum.member?(
+        [
+          "references",
+          "in-reply-to",
+          "from",
+          "date",
+          "message-id",
+          "subject",
+          "to",
+          "cc",
+          "bcc",
+          "content-type"
+        ],
+        String.downcase(name)
+      )
     end)
+    |> Enum.map(fn %{"name" => name, "value" => value} ->
+      {String.downcase(name), value}
+    end)
+    |> Map.new()
   end
 
   def format_message_parts(parts \\ [], message \\ %{}) do
@@ -200,8 +213,14 @@ defmodule ChatApi.Google.Gmail do
 
         %{"mimeType" => "text/plain", "body" => %{"data" => encoded}} ->
           case decode_message_body(encoded) do
-            {:ok, decoded} -> Map.merge(acc, %{text: decoded})
-            :error -> acc
+            {:ok, decoded} ->
+              Map.merge(acc, %{
+                text: decoded,
+                formatted_text: remove_original_email(decoded)
+              })
+
+            :error ->
+              acc
           end
 
         %{"mimeType" => "text/html", "body" => %{"data" => encoded}} ->
@@ -214,6 +233,24 @@ defmodule ChatApi.Google.Gmail do
           acc
       end
     end)
+  end
+
+  def format_message_metadata(message) do
+    %{
+      gmail_to: message.to,
+      gmail_from: message.from,
+      gmail_cc: Map.get(message, :cc),
+      gmail_bcc: Map.get(message, :bcc),
+      gmail_subject: message.subject,
+      gmail_label_ids: message.label_ids,
+      gmail_in_reply_to: message.in_reply_to,
+      gmail_references: message.references,
+      gmail_ts: message.ts,
+      gmail_thread_id: message.thread_id,
+      gmail_id: message.id,
+      gmail_message_id: message.message_id,
+      gmail_history_id: message.history_id
+    }
   end
 
   def extract_email_address(str) do

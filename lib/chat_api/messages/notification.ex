@@ -118,6 +118,16 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  def notify(%Message{private: false} = message, :gmail, _opts) do
+    Logger.info("Sending message notification: :gmail (message #{inspect(message.id)})")
+
+    %{message: Helpers.format(message)}
+    |> ChatApi.Workers.SendGmailNotification.new()
+    |> Oban.insert()
+
+    message
+  end
+
   def notify(%Message{private: false} = message, :slack_company_channel, _opts) do
     Logger.info(
       "Sending message notification: :slack_company_channel (message #{inspect(message.id)})"
