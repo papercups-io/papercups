@@ -8,6 +8,7 @@ defmodule ChatApiWeb.TwilioControllerTest do
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages
   alias ChatApi.Messages.Message
+  alias ChatApi.Conversations
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Twilio.TwilioAuthorization
 
@@ -37,7 +38,13 @@ defmodule ChatApiWeb.TwilioControllerTest do
           [
             find_twilio_authorization: fn _ ->
               %TwilioAuthorization{account_id: 1}
-            end,
+            end
+          ]
+        },
+        {
+          Conversations,
+          [],
+          [
             find_or_create_customer_and_conversation: fn _, __ ->
               {:ok, %Customer{id: 1}, %Conversation{id: 1}}
             end
@@ -81,7 +88,13 @@ defmodule ChatApiWeb.TwilioControllerTest do
           [
             find_twilio_authorization: fn _ ->
               %TwilioAuthorization{account_id: 1}
-            end,
+            end
+          ]
+        },
+        {
+          Conversations,
+          [],
+          [
             find_or_create_customer_and_conversation: fn _, __ ->
               {:error, %Ecto.Changeset{}}
             end

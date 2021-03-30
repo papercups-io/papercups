@@ -3,6 +3,7 @@ defmodule ChatApiWeb.TwilioController do
 
   alias ChatApi.Messages
   alias ChatApi.Twilio
+  alias ChatApi.Conversations
   alias ChatApi.Twilio.TwilioAuthorization
 
   require Logger
@@ -73,7 +74,7 @@ defmodule ChatApiWeb.TwilioController do
              from_phone_number: to
            }),
          {:ok, customer, conversation} <-
-           Twilio.find_or_create_customer_and_conversation(account_id, from),
+           Conversations.find_or_create_customer_and_conversation(account_id, from),
          {:ok, _mesage} <-
            Messages.create_message(%{
              body: body,
