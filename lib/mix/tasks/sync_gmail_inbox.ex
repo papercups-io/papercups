@@ -7,6 +7,8 @@ defmodule Mix.Tasks.SyncGmailInbox do
   Example:
   ```
   $ mix sync_gmail_inbox [ACCOUNT_ID]
+  $ mix sync_gmail_inbox [ACCOUNT_ID] [HISTORY_ID]
+  $ mix sync_gmail_inbox [ACCOUNT_ID] [HISTORY_ID] [LABEL_ID]
   ```
   """
 
@@ -15,9 +17,20 @@ defmodule Mix.Tasks.SyncGmailInbox do
   def run(args) do
     Application.ensure_all_started(:chat_api)
 
-    # Note that the "next_history_id" needs to be set on the GoogleAuthorization metadata
-    with [account_id] <- args,
-         %{refresh_token: refresh_token, metadata: %{"next_history_id" => start_history_id}} =
+    case args do
+      [account_id] ->
+        sync_messages(account_id)
+
+      [account_id, history_id] ->
+        sync_messages(account_id, history_id)
+
+      [account_id, history_id, label_id] ->
+        sync_messages_by_label(account_id, history_id, label_id)
+    end
+  end
+
+  def sync_messages(account_id) do
+    with %{refresh_token: refresh_token, metadata: %{"next_history_id" => start_history_id}} =
            authorization <-
            ChatApi.Google.get_authorization_by_account(account_id, %{client: "gmail"}),
          %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
@@ -27,22 +40,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
              history_types: "messageAdded"
            ) do
       IO.inspect(email, label: "Authenticated email")
-
-      # TODO: handle case where history results exist on next page token
-      history
-      |> Enum.flat_map(fn h ->
-        Enum.map(h["messagesAdded"], fn m -> m["message"] end)
-      end)
-      |> Enum.uniq_by(fn %{"threadId" => thread_id} -> thread_id end)
-      |> Enum.map(fn %{"threadId" => thread_id} ->
-        format_thread(thread_id, refresh_token)
-      end)
-      |> Enum.reject(fn t -> t |> Map.get(:messages, []) |> Enum.empty?() end)
-      |> Enum.each(fn thread ->
-        process_thread(thread, authorization)
-        # Sleep 1s between each thread
-        Process.sleep(1000)
-      end)
+      sync(history, authorization)
 
       {:ok, _auth} =
         ChatApi.Google.update_google_authorization(authorization, %{
@@ -51,6 +49,66 @@ defmodule Mix.Tasks.SyncGmailInbox do
     else
       error -> IO.inspect("Unable to sync Gmail messages: #{inspect(error)}")
     end
+  end
+
+  def sync_messages(account_id, start_history_id) do
+    with %{refresh_token: refresh_token} = authorization <-
+           ChatApi.Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+         %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
+         %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
+           Gmail.list_history(refresh_token,
+             start_history_id: start_history_id,
+             history_types: "messageAdded"
+           ) do
+      IO.inspect(email, label: "Authenticated email")
+      sync(history, authorization)
+
+      {:ok, _auth} =
+        ChatApi.Google.update_google_authorization(authorization, %{
+          metadata: %{next_history_id: next_history_id}
+        })
+    else
+      error -> IO.inspect("Unable to sync Gmail messages: #{inspect(error)}")
+    end
+  end
+
+  def sync_messages_by_label(account_id, start_history_id, label_id) do
+    with %{refresh_token: refresh_token} = authorization <-
+           ChatApi.Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+         %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
+         %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
+           Gmail.list_history(refresh_token,
+             start_history_id: start_history_id,
+             label_id: label_id
+           ) do
+      IO.inspect(email, label: "Authenticated email")
+      sync(history, authorization, "labelsAdded")
+
+      {:ok, _auth} =
+        ChatApi.Google.update_google_authorization(authorization, %{
+          metadata: %{next_history_id: next_history_id}
+        })
+    else
+      error -> IO.inspect("Unable to sync Gmail messages: #{inspect(error)}")
+    end
+  end
+
+  def sync(history, %{refresh_token: refresh_token} = authorization, event \\ "messagesAdded") do
+    # TODO: handle case where history results exist on next page token
+    history
+    |> Enum.flat_map(fn h ->
+      Enum.map(h[event], fn m -> m["message"] end)
+    end)
+    |> Enum.uniq_by(fn %{"threadId" => thread_id} -> thread_id end)
+    |> Enum.map(fn %{"threadId" => thread_id} ->
+      format_thread(thread_id, refresh_token)
+    end)
+    |> Enum.reject(fn t -> t |> Map.get(:messages, []) |> Enum.empty?() end)
+    |> Enum.each(fn thread ->
+      process_thread(thread, authorization)
+      # Sleep 1s between each thread
+      Process.sleep(1000)
+    end)
   end
 
   def process_thread(%{thread_id: gmail_thread_id} = thread, authorization) do
@@ -138,7 +196,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
       |> ChatApi.Messages.Notification.broadcast_to_admin!()
       |> ChatApi.Messages.Notification.notify(:webhooks)
       # NB: we need to make sure the messages are created in the correct order, so we set async: false
-      |> ChatApi.Messages.Notification.notify(:slack, async: false)
+      # |> ChatApi.Messages.Notification.notify(:slack, async: false)
       # |> ChatApi.Messages.Notification.notify(:mattermost, async: false)
       # TODO: not sure we need to do this on every message
       |> ChatApi.Messages.Helpers.handle_post_creation_conversation_updates()
@@ -239,7 +297,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
       |> ChatApi.Messages.Notification.broadcast_to_admin!()
       |> ChatApi.Messages.Notification.notify(:webhooks)
       # NB: we need to make sure the messages are created in the correct order, so we set async: false
-      |> ChatApi.Messages.Notification.notify(:slack, async: false)
+      # |> ChatApi.Messages.Notification.notify(:slack, async: false)
       # |> ChatApi.Messages.Notification.notify(:mattermost, async: false)
       # TODO: not sure we need to do this on every message
       |> ChatApi.Messages.Helpers.handle_post_creation_conversation_updates()
