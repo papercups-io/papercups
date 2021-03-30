@@ -29,7 +29,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
            "gmail_cc" => gmail_cc,
            "gmail_references" => gmail_references
          } = last_gmail_message <- extract_last_gmail_message!(conversation_id) do
-      Logger.debug("Last Gmail message: #{inspect(last_gmail_message)}")
+      Logger.info("Last Gmail message: #{inspect(last_gmail_message)}")
 
       # TODO: double check logic for determining from/to/cc/etc
       from =
@@ -58,10 +58,12 @@ defmodule ChatApi.Workers.SendGmailNotification do
         thread_id: gmail_thread_id
       }
 
+      Logger.info("Sending payload to Gmail: #{inspect(payload)}")
+
       %{"id" => gmail_message_id, "threadId" => ^gmail_thread_id} =
         Google.Gmail.send_message(refresh_token, payload)
 
-      Logger.debug("Gmail message sent: #{inspect(gmail_message_id)}")
+      Logger.info("Gmail message sent: #{inspect(gmail_message_id)}")
 
       metadata =
         gmail_message_id
