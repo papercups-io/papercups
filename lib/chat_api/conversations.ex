@@ -559,8 +559,6 @@ defmodule ChatApi.Conversations do
     end
   end
 
-
-
   #####################
   # Private methods
   #####################
