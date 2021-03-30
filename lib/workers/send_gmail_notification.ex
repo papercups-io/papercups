@@ -52,11 +52,16 @@ defmodule ChatApi.Workers.SendGmailNotification do
         subject: "Re: " <> gmail_initial_subject,
         text: body,
         to: to,
-        cc: Google.Gmail.extract_email_address(gmail_cc),
         in_reply_to: gmail_message_id,
         references: gmail_references <> " " <> gmail_message_id,
         thread_id: gmail_thread_id
       }
+
+      payload =
+        case Google.Gmail.extract_email_address(gmail_cc) do
+          cc when is_binary(cc) -> Map.merge(payload, %{cc: cc})
+          _ -> payload
+        end
 
       Logger.info("Sending payload to Gmail: #{inspect(payload)}")
 
