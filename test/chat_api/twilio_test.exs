@@ -12,7 +12,6 @@ defmodule ChatApi.TwilioTest do
   describe "Slack.Notification" do
     setup do
       account = insert(:account)
-      auth = insert(:slack_authorization, account: account, type: "support")
       customer = insert(:customer, account: account)
       user = insert(:user, account: account, email: "user@user.com")
 
