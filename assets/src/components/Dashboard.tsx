@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   useLocation,
   Switch,
@@ -82,6 +82,26 @@ const getSectionKey = (pathname: string) => {
   }
 };
 
+const useWindowVisibility = (d?: Document) => {
+  const doc = d || document || window.document;
+  const [isWindowVisible, setWindowVisible] = useState(!isWindowHidden(doc));
+
+  useEffect(() => {
+    const {event} = getBrowserVisibilityInfo(doc);
+    const handler = () => setWindowVisible(!isWindowHidden(doc));
+
+    if (!event) {
+      return;
+    }
+
+    doc.addEventListener(event, handler, false);
+
+    return () => doc.removeEventListener(event, handler);
+  }, [doc]);
+
+  return isWindowVisible;
+};
+
 const ChatWithUs = ({
   currentUser,
   account,
@@ -139,10 +159,13 @@ const ChatWithUs = ({
 const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
   const doc = document || window.document;
   const [htmlTitle, setHtmlTitle] = useState('Papercups');
-  const [isHidden, setHidden] = useState(isWindowHidden(doc));
+  const isWindowVisible = useWindowVisibility(doc);
+  const timer = useRef<any>();
+
+  const hasDefaultTitle = (title: string) => title.startsWith('Papercups');
 
   const toggleNotificationMessage = () => {
-    if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups') && isHidden) {
+    if (totalNumUnread > 0 && hasDefaultTitle(htmlTitle) && !isWindowVisible) {
       setHtmlTitle(
         `(${totalNumUnread}) New message${totalNumUnread === 1 ? '' : 's'}!`
       );
@@ -152,26 +175,19 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
   };
 
   useEffect(() => {
-    const {event} = getBrowserVisibilityInfo(doc);
-    const handler = () => setHidden(isWindowHidden(doc));
+    const shouldToggle =
+      totalNumUnread > 0 && (!isWindowVisible || !hasDefaultTitle(htmlTitle));
 
-    if (!event) {
-      return;
-    }
-
-    doc.addEventListener(event, handler, false);
-
-    return () => doc.removeEventListener(event, handler);
-  }, [doc]);
-
-  useEffect(() => {
-    let timeout;
-
-    if (totalNumUnread > 0) {
-      timeout = setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
+    if (shouldToggle) {
+      timer.current = setTimeout(
+        toggleNotificationMessage,
+        TITLE_FLASH_INTERVAL
+      );
     } else {
-      clearTimeout(timeout);
+      clearTimeout(timer.current);
     }
+
+    return () => clearTimeout(timer.current);
   });
 
   return (
