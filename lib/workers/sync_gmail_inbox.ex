@@ -1,40 +1,21 @@
-defmodule Mix.Tasks.SyncGmailInbox do
-  use Mix.Task
-
-  @shortdoc "Script to test the upcoming Gmail inbox sync feature"
-
-  @moduledoc """
-  Example:
-  ```
-  $ mix sync_gmail_inbox [ACCOUNT_ID]
-  $ mix sync_gmail_inbox [ACCOUNT_ID] [HISTORY_ID]
-  $ mix sync_gmail_inbox [ACCOUNT_ID] [HISTORY_ID] [LABEL_ID]
-  ```
-  """
+defmodule ChatApi.Workers.SyncGmailInbox do
+  use Oban.Worker, queue: :default
 
   require Logger
 
   alias ChatApi.{Conversations, Customers, Google, Messages, Users}
   alias ChatApi.Google.{Gmail, GmailConversationThread, GoogleAuthorization}
 
-  @spec run([binary()]) :: :ok
-  def run(args) do
-    Application.ensure_all_started(:chat_api)
+  @impl Oban.Worker
+  @spec perform(Oban.Job.t()) :: :ok
+  def perform(%Oban.Job{args: %{"account_id" => account_id}}) do
+    Logger.info("Syncing Gmail inbox for account: #{inspect(account_id)}")
 
-    case args do
-      [account_id] ->
-        sync_messages(account_id)
-
-      [account_id, history_id] ->
-        sync_messages(account_id, history_id)
-
-      [account_id, history_id, label_id] ->
-        sync_messages_by_label(account_id, history_id, label_id)
-    end
+    sync(account_id)
   end
 
-  @spec sync_messages(binary()) :: :ok
-  def sync_messages(account_id) do
+  @spec sync(binary()) :: :ok
+  def sync(account_id) do
     with %GoogleAuthorization{
            refresh_token: refresh_token,
            metadata: %{"next_history_id" => start_history_id}
@@ -47,7 +28,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
              history_types: "messageAdded"
            ) do
       Logger.info("Authenticated email: #{inspect(email)}")
-      sync(history, authorization)
+      process_history(history, authorization)
 
       {:ok, _auth} =
         Google.update_google_authorization(authorization, %{
@@ -60,58 +41,8 @@ defmodule Mix.Tasks.SyncGmailInbox do
     end
   end
 
-  @spec sync_messages(binary(), binary()) :: :ok
-  def sync_messages(account_id, start_history_id) do
-    with %GoogleAuthorization{refresh_token: refresh_token} = authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
-         %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
-         %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
-           Gmail.list_history(refresh_token,
-             start_history_id: start_history_id,
-             history_types: "messageAdded"
-           ) do
-      Logger.info("Authenticated email: #{inspect(email)}")
-      sync(history, authorization)
-
-      {:ok, _auth} =
-        Google.update_google_authorization(authorization, %{
-          metadata: %{next_history_id: next_history_id}
-        })
-
-      :ok
-    else
-      error ->
-        Logger.info("Unable to sync Gmail messages: #{inspect(error)}")
-    end
-  end
-
-  @spec sync_messages_by_label(binary(), binary(), binary()) :: :ok | :error
-  def sync_messages_by_label(account_id, start_history_id, label_id) do
-    with %GoogleAuthorization{refresh_token: refresh_token} = authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
-         %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
-         %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
-           Gmail.list_history(refresh_token,
-             start_history_id: start_history_id,
-             label_id: label_id
-           ) do
-      Logger.info("Authenticated email: #{inspect(email)}")
-      sync(history, authorization, "labelsAdded")
-
-      {:ok, _auth} =
-        Google.update_google_authorization(authorization, %{
-          metadata: %{next_history_id: next_history_id}
-        })
-
-      :ok
-    else
-      error ->
-        Logger.info("Unable to sync Gmail messages: #{inspect(error)}")
-    end
-  end
-
-  @spec sync(list(), GoogleAuthorization.t(), binary()) :: :ok
-  def sync(
+  @spec process_history(list(), GoogleAuthorization.t(), binary()) :: :ok
+  def process_history(
         history,
         %GoogleAuthorization{refresh_token: refresh_token} = authorization,
         event \\ "messagesAdded"
@@ -219,6 +150,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
         [initial_message.to, initial_message.from] |> Enum.map(&Gmail.extract_email_address/1)
       end
 
+    # TODO: handle db logic below in a transaction
     {:ok, customer} = Customers.find_or_create_by_email(customer_email, account_id)
 
     assignee_id =
@@ -298,8 +230,13 @@ defmodule Mix.Tasks.SyncGmailInbox do
           _ -> DateTime.utc_now()
         end
     })
-    |> Messages.create_and_fetch!()
-    |> Messages.Notification.notify(:webhooks)
-    |> Messages.Helpers.handle_post_creation_conversation_updates()
+    |> ChatApi.Messages.create_and_fetch!()
+    |> ChatApi.Messages.Notification.broadcast_to_admin!()
+    |> ChatApi.Messages.Notification.notify(:webhooks)
+    # NB: we need to make sure the messages are created in the correct order, so we set async: false
+    |> ChatApi.Messages.Notification.notify(:slack, async: false)
+    |> ChatApi.Messages.Notification.notify(:mattermost, async: false)
+    # TODO: not sure we need to do this on every message
+    |> ChatApi.Messages.Helpers.handle_post_creation_conversation_updates()
   end
 end

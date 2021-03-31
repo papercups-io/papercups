@@ -88,12 +88,18 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(%Message{} = message, :mattermost, _opts) do
+  def notify(%Message{} = message, :mattermost, opts) do
     Logger.info("Sending message notification: :mattermost (message #{inspect(message.id)})")
 
-    Task.start(fn ->
-      ChatApi.Mattermost.Notification.notify_primary_channel(message)
-    end)
+    case opts do
+      [async: false] ->
+        ChatApi.Mattermost.Notification.notify_primary_channel(message)
+
+      _ ->
+        Task.start(fn ->
+          ChatApi.Mattermost.Notification.notify_primary_channel(message)
+        end)
+    end
 
     message
   end
