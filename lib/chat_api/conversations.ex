@@ -35,6 +35,7 @@ defmodule ChatApi.Conversations do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
+    |> filter_by_tag(filters)
     |> order_by(desc: :last_activity_at, desc: :id)
     |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
     |> Repo.paginate_with_cursor(
