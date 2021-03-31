@@ -85,7 +85,8 @@ defmodule ChatApiWeb.TwilioController do
       send_resp(conn, 200, "")
     else
       nil ->
-        send_resp(conn, 404, "Twilio account not found")
+        Logger.info("Twilio account not found")
+        send_resp(conn, 200, "")
 
       error ->
         Logger.error(inspect(error))
