@@ -38,19 +38,22 @@ defmodule ChatApi.Workers.SendGmailNotification do
         |> Map.get("emailAddress")
 
       last_from = Google.Gmail.extract_email_address(gmail_from)
-      last_to = Google.Gmail.extract_email_address(gmail_to)
+      last_to = gmail_to |> String.split(",") |> Enum.map(&Google.Gmail.extract_email_address/1)
 
       to =
         if from == last_from do
           last_to
         else
-          last_from
+          [last_from | last_to] |> Enum.uniq() |> Enum.reject(&(&1 == from))
         end
 
       cc =
-        case Google.Gmail.extract_email_address(gmail_cc) do
-          cc when is_binary(cc) -> cc
-          _ -> []
+        case gmail_cc do
+          cc when is_binary(cc) ->
+            cc |> String.split(",") |> Enum.map(&Google.Gmail.extract_email_address/1)
+
+          _ ->
+            []
         end
 
       references =

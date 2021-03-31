@@ -43,9 +43,10 @@ defmodule ChatApi.Workers.SyncGmailInbox do
             "Google authorization is either missing :refresh_token or :metadata.next_history_id"
         )
 
-      %{"historyId" => _} ->
+      %{"historyId" => history_id} ->
         Logger.info(
-          "Skipped syncing Gmail messages for account #{inspect(account_id)}. No new message history found."
+          "Skipped syncing Gmail messages for account #{inspect(account_id)}. " <>
+            "No new message history found since ID #{inspect(history_id)}."
         )
 
       error ->
