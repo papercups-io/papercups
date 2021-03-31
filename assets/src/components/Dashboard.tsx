@@ -26,7 +26,11 @@ import {
 } from './icons';
 import {BASE_URL, env, isDev, isEuEdition, isHostedProd} from '../config';
 import analytics from '../analytics';
-import {hasValidStripeKey} from '../utils';
+import {
+  getBrowserVisibilityInfo,
+  hasValidStripeKey,
+  isWindowHidden,
+} from '../utils';
 import {Account, User} from '../types';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
@@ -133,10 +137,14 @@ const ChatWithUs = ({
 // of this component is to flash the number of unread messages in the
 // tab (i.e. HTML title) so users can see when new messages arrive
 const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
+  const doc = document || window.document;
   const [htmlTitle, setHtmlTitle] = useState('Papercups');
+  const [isHidden, setHidden] = useState(isWindowHidden(doc));
+
+  const onVisibilityChange = () => setHidden(isWindowHidden(doc));
 
   const toggleNotificationMessage = () => {
-    if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups')) {
+    if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups') && isHidden) {
       setHtmlTitle(
         `(${totalNumUnread}) New message${totalNumUnread === 1 ? '' : 's'}!`
       );
@@ -144,6 +152,18 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
       setHtmlTitle('Papercups');
     }
   };
+
+  useEffect(() => {
+    const {event} = getBrowserVisibilityInfo(document);
+
+    if (!event) {
+      return;
+    }
+
+    doc.addEventListener(event, onVisibilityChange, false);
+
+    return () => doc.removeEventListener(event, onVisibilityChange);
+  }, [doc]);
 
   useEffect(() => {
     let timeout;
