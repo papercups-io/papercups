@@ -89,7 +89,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
 
       %{messages: [_ | _] = messages} ->
         Enum.all?(messages, fn msg ->
-          Enum.all?(msg.label_ids, fn label ->
+          Enum.any?(msg.label_ids, fn label ->
             Enum.member?(["CATEGORY_FORUM", "CATEGORY_UPDATES", "CATEGORY_SOCIAL"], label)
           end)
         end)

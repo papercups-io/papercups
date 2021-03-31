@@ -1482,8 +1482,7 @@ defmodule ChatApi.ReportingTest do
       from_date = ~N[2020-10-01 12:00:00]
       to_date = ~N[2020-10-04 13:00:00]
 
-      assert [{~D[2020-09-27] = start, ~D[2020-10-03] = finish}] =
-               Reporting.get_weekly_chunks(from_date, to_date)
+      assert [{~D[2020-09-27], ~D[2020-10-03]}] = Reporting.get_weekly_chunks(from_date, to_date)
 
       from_date = ~N[2020-10-01 12:00:00]
       to_date = ~N[2020-11-01 12:00:00]

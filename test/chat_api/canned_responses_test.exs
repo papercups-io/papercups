@@ -30,7 +30,7 @@ defmodule ChatApi.CannedResponsesTest do
     test "get_canned_response!/1 returns the canned_response with given id", %{
       canned_response: canned_response
     } do
-      assert canned_response =
+      assert canned_response ==
                CannedResponses.get_canned_response!(canned_response.id)
                |> Repo.preload([:account])
     end

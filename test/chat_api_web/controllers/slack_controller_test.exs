@@ -66,8 +66,8 @@ defmodule ChatApiWeb.SlackControllerTest do
 
       # First verify that it exists
       assert %{
-               "channel" => channel,
-               "team_name" => team_name
+               "channel" => _channel,
+               "team_name" => _team_name
              } = json_response(resp, 200)["data"]
 
       # Then, delete and verify it no longer exists
