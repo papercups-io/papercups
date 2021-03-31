@@ -37,7 +37,21 @@ defmodule ChatApi.Workers.SyncGmailInbox do
 
       :ok
     else
-      error -> Logger.info("Unable to sync Gmail messages: #{inspect(error)}")
+      %GoogleAuthorization{} ->
+        Logger.info(
+          "Unable to sync Gmail messages for account #{inspect(account_id)}. " <>
+            "Google authorization is either missing :refresh_token or :metadata.next_history_id"
+        )
+
+      %{"historyId" => _} ->
+        Logger.info(
+          "Skipped syncing Gmail messages for account #{inspect(account_id)}. No new message history found."
+        )
+
+      error ->
+        Logger.info(
+          "Unable to sync Gmail messages for account #{inspect(account_id)}: #{inspect(error)}"
+        )
     end
   end
 
