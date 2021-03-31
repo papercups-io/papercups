@@ -291,7 +291,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
         |> Gmail.get_thread_messages()
         |> Enum.reject(fn r ->
           Enum.any?(r.label_ids, fn label ->
-            Enum.member?(["SPAM", "DRAFT", "CATEGORY_PROMOTIONS", "CATEGORY_UPDATES"], label)
+            Enum.member?(["SPAM", "DRAFT", "CATEGORY_PROMOTIONS"], label)
           end)
         end)
         |> Enum.map(fn r ->
