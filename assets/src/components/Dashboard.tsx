@@ -141,8 +141,6 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
   const [htmlTitle, setHtmlTitle] = useState('Papercups');
   const [isHidden, setHidden] = useState(isWindowHidden(doc));
 
-  const onVisibilityChange = () => setHidden(isWindowHidden(doc));
-
   const toggleNotificationMessage = () => {
     if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups') && isHidden) {
       setHtmlTitle(
@@ -154,15 +152,16 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
   };
 
   useEffect(() => {
-    const {event} = getBrowserVisibilityInfo(document);
+    const {event} = getBrowserVisibilityInfo(doc);
+    const handler = () => setHidden(isWindowHidden(doc));
 
     if (!event) {
       return;
     }
 
-    doc.addEventListener(event, onVisibilityChange, false);
+    doc.addEventListener(event, handler, false);
 
-    return () => doc.removeEventListener(event, onVisibilityChange);
+    return () => doc.removeEventListener(event, handler);
   }, [doc]);
 
   useEffect(() => {
