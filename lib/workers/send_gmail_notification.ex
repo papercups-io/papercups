@@ -32,6 +32,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
       Logger.info("Last Gmail message: #{inspect(last_gmail_message)}")
 
       # TODO: double check logic for determining from/to/cc/etc
+      # TODO: write tests for this logic!
       from =
         refresh_token
         |> Google.Gmail.get_profile()
