@@ -62,7 +62,7 @@ defmodule ChatApiWeb.TwilioControllerTest do
       end
     end
 
-    test "returns 404 when twilio account is not found",
+    test "returns 200 when twilio account is not found",
          %{authed_conn: authed_conn} do
       with_mocks([
         {
@@ -75,7 +75,7 @@ defmodule ChatApiWeb.TwilioControllerTest do
       ]) do
         conn = post(authed_conn, Routes.twilio_path(authed_conn, :webhook), @request_body)
 
-        assert response(conn, 404)
+        assert response(conn, 200)
       end
     end
 
