@@ -9,6 +9,12 @@ defmodule Mix.Tasks.EnableGmailInboxSync do
   $ mix enable_gmail_inbox_sync [ACCOUNT_ID]
   $ mix enable_gmail_inbox_sync [ACCOUNT_ID] [HISTORY_ID]
   ```
+
+  On Heroku:
+  ```
+  $ heroku run "POOL_SIZE=2 mix enable_gmail_inbox_sync"
+  $ heroku run "POOL_SIZE=2 mix enable_gmail_inbox_sync [ACCOUNT_TOKEN]"
+  ```
   """
 
   require Logger
