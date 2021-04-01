@@ -8,7 +8,7 @@ defmodule ChatApiWeb.CustomerController do
 
   action_fallback(ChatApiWeb.FallbackController)
 
-  plug :authorize when action in [:show, :update, :delete]
+  plug(:authorize when action in [:show, :update, :delete])
 
   defp authorize(conn, _) do
     id = conn.path_params["id"]

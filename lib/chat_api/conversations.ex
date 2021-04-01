@@ -193,6 +193,7 @@ defmodule ChatApi.Conversations do
     Conversation
     |> where(customer_id: ^customer_id)
     |> where(account_id: ^account_id)
+    |> where(source: "chat")
     |> where(status: "open")
     |> where([c], is_nil(c.archived_at))
     |> order_by(desc: :inserted_at)
