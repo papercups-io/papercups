@@ -1,7 +1,9 @@
 defmodule ChatApiWeb.TwilioController do
   use ChatApiWeb, :controller
 
+  alias ChatApi.Messages
   alias ChatApi.Twilio
+  alias ChatApi.Conversations
   alias ChatApi.Twilio.TwilioAuthorization
 
   require Logger
@@ -60,20 +62,36 @@ defmodule ChatApiWeb.TwilioController do
   end
 
   @spec webhook(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def webhook(conn, payload) do
+  def webhook(
+        conn,
+        %{"AccountSid" => account_sid, "To" => to, "From" => from, "Body" => body} = payload
+      ) do
     Logger.debug("Payload from Twilio webhook: #{inspect(payload)}")
-    # TODO: implement me!
-    #
-    # When new SMS message comes in...
-    #   - Check if the receiving number matches one of our `twilio_authorizations`
-    #   - If it does, use that to determine the `account_id` (from the `twilio_authorizations` table)
-    # Next, find or create a conversation for the account (with `source: "sms"`)
-    #   - First, find customer by phone number (implement `Customers.find_by_phone/2`)
-    #   - If no customer exists, create new customer record and new conversation (with `source: "sms"`)
-    #   - If customer exists, fetch latest open conversation (with `source: "sms"`)
-    #   - If open conversation exists, add message to conversation
-    #   - Otherwise, create new conversation (with `source: "sms"`)
-    send_resp(conn, 200, "")
+
+    with %TwilioAuthorization{account_id: account_id} <-
+           Twilio.find_twilio_authorization(%{
+             twilio_account_sid: account_sid,
+             from_phone_number: to
+           }),
+         {:ok, customer, conversation} <-
+           Conversations.find_or_create_customer_and_conversation(account_id, from),
+         {:ok, _mesage} <-
+           Messages.create_message(%{
+             body: body,
+             account_id: account_id,
+             customer_id: customer.id,
+             conversation_id: conversation.id
+           }) do
+      send_resp(conn, 200, "")
+    else
+      nil ->
+        Logger.warn("Twilio account not found")
+        send_resp(conn, 200, "")
+
+      error ->
+        Logger.error(inspect(error))
+        send_resp(conn, 500, "")
+    end
   end
 
   @spec verify_authorization(map()) :: :ok | {:error, atom(), any()}
