@@ -30,7 +30,7 @@ Stay tuned! We'll be posting a more detailed roadmap soon 🤓
 - **React Native support (alpha)** - embed the chat widget in your [React Native](https://github.com/papercups-io/chat-widget-native#papercups-iochat-widget-native) app
 - **Flutter support (alpha)** - embed the chat widget in your [Flutter](https://github.com/papercups-io/papercups_flutter) app (courtesy of @aguilaair :heart:)
 - **Slack integration** - connect with Slack, so you can view and reply to messages directly from a Slack channel
-- **Mattermost integration** - connect with [Mattermost](https://docs.papercups.io/reply-from-mattermost), so you can view and reply to messages directly from a Mattermost
+- **Mattermost integration** - connect with [Mattermost](https://docs.papercups.io/reply-from-mattermost), so you can view and reply to messages directly from Mattermost
 - **Markdown and emoji support** - use markdown and emoji to add character to your messages!
 - **Invite your team** - send invite links to your teammates to join your account
 - **Conversation management** - close, assign, and prioritize conversations
