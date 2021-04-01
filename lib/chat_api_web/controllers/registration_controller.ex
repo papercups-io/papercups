@@ -100,7 +100,15 @@ defmodule ChatApiWeb.RegistrationController do
   def user_with_account_transaction(conn, params) do
     Ecto.Multi.new()
     |> Ecto.Multi.run(:account, fn _repo, %{} ->
-      ChatApi.Accounts.create_account(%{company_name: params["company_name"]})
+      case ChatApi.Accounts.create_account(%{company_name: params["company_name"]}) do
+        {:ok, account} ->
+          ChatApi.Accounts.update_billing_info(account, %{
+            subscription_plan: default_subscription_plan()
+          })
+
+        error ->
+          error
+      end
     end)
     |> Ecto.Multi.run(:conn, fn _repo, %{account: account} ->
       # Users of new accounts should have the admin role by default
@@ -114,6 +122,14 @@ defmodule ChatApiWeb.RegistrationController do
           {:error, reason}
       end
     end)
+  end
+
+  @spec default_subscription_plan() :: String.t()
+  defp default_subscription_plan() do
+    case System.get_env("BACKEND_URL", "") do
+      "app.papercups.io" -> "starter"
+      _ -> "team"
+    end
   end
 
   @spec enqueue_welcome_email(Conn.t()) :: Conn.t()
