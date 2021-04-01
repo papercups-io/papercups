@@ -119,7 +119,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
     # TODO: handle case where history results exist on next page token
     history
     |> Enum.flat_map(fn h ->
-      Enum.map(h[event], fn m -> m["message"] end)
+      h |> Map.get(event, []) |> Enum.map(fn m -> m["message"] end)
     end)
     |> Enum.uniq_by(fn %{"threadId" => thread_id} -> thread_id end)
     |> Enum.map(fn %{"threadId" => thread_id} ->
