@@ -62,6 +62,16 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  def notify(%Message{private: false} = message, :sms, _opts) do
+    Logger.info("Sending message notification: :sms")
+
+    Task.start(fn ->
+      ChatApi.Twilio.Notification.notify_sms(message)
+    end)
+
+    message
+  end
+
   def notify(%Message{account_id: account_id} = message, :webhooks, _opts) do
     Logger.info("Sending message notification: :webhooks (message #{inspect(message.id)})")
     # TODO: how should we handle errors/retry logic?

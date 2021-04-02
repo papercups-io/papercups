@@ -95,6 +95,33 @@ defmodule ChatApi.Customers do
     end
   end
 
+  def find_by_phone(phone, account_id, filters \\ %{}) do
+    Customer
+    |> where(account_id: ^account_id, phone: ^phone)
+    |> where(^filter_where(filters))
+    |> order_by(desc: :updated_at)
+    |> first()
+    |> Repo.one()
+  end
+
+  @spec find_or_create_by_phone(binary() | nil, binary(), map()) ::
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()} | {:error, atom()}
+  def find_or_create_by_phone(phone, account_id, attrs \\ %{})
+  def find_or_create_by_phone(nil, _account_id, _attrs), do: {:error, :phone_required}
+
+  def find_or_create_by_phone(phone, account_id, attrs) do
+    case find_by_phone(phone, account_id) do
+      nil ->
+        get_default_params()
+        |> Map.merge(attrs)
+        |> Map.merge(%{phone: phone, account_id: account_id})
+        |> create_customer()
+
+      customer ->
+        {:ok, customer}
+    end
+  end
+
   @spec create_or_update_by_external_id(binary() | nil, binary(), map()) ::
           {:ok, Customer.t()} | {:error, Ecto.Changeset.t()} | {:error, atom()}
   def create_or_update_by_external_id(external_id, account_id, attrs \\ %{})
