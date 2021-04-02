@@ -64,7 +64,7 @@ defmodule ChatApiWeb.TwilioController do
         conn,
         %{"AccountSid" => account_sid, "To" => to, "From" => from, "Body" => body} = payload
       ) do
-    Logger.debug("Payload from Twilio webhook: #{inspect(payload)}")
+    Logger.info("Payload from Twilio webhook: #{inspect(payload)}")
 
     with %TwilioAuthorization{account_id: account_id} <-
            Twilio.find_twilio_authorization(%{

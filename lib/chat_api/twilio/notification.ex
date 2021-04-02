@@ -34,6 +34,10 @@ defmodule ChatApi.Twilio.Notification do
       }
       |> Twilio.Client.send_message(twilio_authorization)
     else
+      {:error, :not_sms_conversation} = error ->
+        Logger.debug("Skipped sending Twilio messags: not an SMS conversation")
+        error
+
       error ->
         Logger.info("Skipped sending Twilio message: #{inspect(error)}")
         error
