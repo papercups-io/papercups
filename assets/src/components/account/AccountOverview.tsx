@@ -433,18 +433,12 @@ class AccountOverview extends React.Component<Props, State> {
                   </Flex>
                 </form>
               ) : (
-                <a onClick={this.handleClickOnInviteMoreLink}>
-                  <span
-                    style={{
-                      marginRight: '5px',
-                      display: 'inline-block',
-                      transform: 'translate(0, -1px)',
-                    }}
-                  >
-                    +
-                  </span>
-                  <span>Invite More</span>
-                </a>
+                <Button
+                  type="primary"
+                  onClick={this.handleClickOnInviteMoreLink}
+                >
+                  Invite teammate
+                </Button>
               )}
             </Box>
           )}
