@@ -46,7 +46,7 @@ const ConversationsPreviewList = ({
         el?.scrollIntoView(false);
       }
     }
-  }, [conversationIds, selectedConversationId]);
+  }, [selectedConversationId]);
 
   const handleLoadMoreConversations = async () => {
     setFetchingMore(true);
