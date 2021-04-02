@@ -1,9 +1,7 @@
 defmodule ChatApiWeb.TwilioController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.Messages
-  alias ChatApi.Twilio
-  alias ChatApi.Conversations
+  alias ChatApi.{Conversations, Customers, Messages, Twilio}
   alias ChatApi.Twilio.TwilioAuthorization
 
   require Logger
@@ -73,15 +71,23 @@ defmodule ChatApiWeb.TwilioController do
              twilio_account_sid: account_sid,
              from_phone_number: to
            }),
-         {:ok, customer, conversation} <-
-           Conversations.find_or_create_customer_and_conversation(account_id, from),
-         {:ok, _mesage} <-
-           Messages.create_message(%{
-             body: body,
-             account_id: account_id,
-             customer_id: customer.id,
-             conversation_id: conversation.id
-           }) do
+         {:ok, customer} <- Customers.find_or_create_by_phone(from, account_id),
+         {:ok, conversation} <-
+           Conversations.find_or_create_by_customer(account_id, customer.id, %{"source" => "sms"}) do
+      %{
+        body: body,
+        account_id: account_id,
+        customer_id: customer.id,
+        conversation_id: conversation.id,
+        source: "sms"
+      }
+      |> Messages.create_and_fetch!()
+      |> Messages.Notification.broadcast_to_admin!()
+      |> Messages.Notification.notify(:webhooks)
+      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.notify(:mattermost)
+      |> Messages.Helpers.handle_post_creation_conversation_updates()
+
       send_resp(conn, 200, "")
     else
       nil ->

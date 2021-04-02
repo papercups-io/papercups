@@ -3,14 +3,13 @@ defmodule ChatApiWeb.TwilioControllerTest do
 
   import Mock
   import ChatApi.Factory
+  import ExUnit.CaptureLog
 
-  alias ChatApi.Twilio
-  alias ChatApi.Customers.Customer
-  alias ChatApi.Messages
-  alias ChatApi.Messages.Message
-  alias ChatApi.Conversations
-  alias ChatApi.Conversations.Conversation
-  alias ChatApi.Twilio.TwilioAuthorization
+  @customer_phone_number "+1231231234"
+  @twilio_phone_number "+1235556666"
+
+  @valid_account_sid "VALID_123"
+  @invalid_account_sid "INVALID_456"
 
   setup %{conn: conn} do
     account = insert(:account)
@@ -22,88 +21,83 @@ defmodule ChatApiWeb.TwilioControllerTest do
   end
 
   describe "webhook" do
-    @request_body %{
-      "AccountSid" => "1234",
-      "To" => "1234",
-      "From" => "1234",
-      "Body" => "body"
-    }
+    test "returns 200 when message is successfully created", %{
+      authed_conn: authed_conn,
+      account: account
+    } do
+      _authorization =
+        insert(:twilio_authorization,
+          account: account,
+          twilio_account_sid: @valid_account_sid,
+          from_phone_number: @twilio_phone_number
+        )
 
-    test "returns 200 when message is successfuly created",
-         %{authed_conn: authed_conn} do
-      with_mocks([
-        {
-          Twilio,
-          [],
-          [
-            find_twilio_authorization: fn _ ->
-              %TwilioAuthorization{account_id: 1}
-            end
-          ]
-        },
-        {
-          Conversations,
-          [],
-          [
-            find_or_create_customer_and_conversation: fn _, __ ->
-              {:ok, %Customer{id: 1}, %Conversation{id: 1}}
-            end
-          ]
-        },
-        {
-          Messages,
-          [],
-          create_message: fn _ -> {:ok, %Message{id: 1}} end
-        }
-      ]) do
-        conn = post(authed_conn, Routes.twilio_path(authed_conn, :webhook), @request_body)
+      _customer = insert(:customer, account: account, phone: @customer_phone_number)
+
+      with_mock ChatApi.Messages.Notification,
+        notify: fn msg, _ -> msg end,
+        broadcast_to_customer!: fn msg -> msg end,
+        broadcast_to_admin!: fn msg -> msg end do
+        conn =
+          post(authed_conn, Routes.twilio_path(authed_conn, :webhook), %{
+            "AccountSid" => @valid_account_sid,
+            "To" => @twilio_phone_number,
+            "From" => @customer_phone_number,
+            "Body" => "Test message"
+          })
 
         assert response(conn, 200)
       end
     end
 
-    test "returns 200 when twilio account is not found",
-         %{authed_conn: authed_conn} do
-      with_mocks([
-        {
-          Twilio,
-          [],
-          [
-            find_twilio_authorization: fn _ -> nil end
-          ]
-        }
-      ]) do
-        conn = post(authed_conn, Routes.twilio_path(authed_conn, :webhook), @request_body)
+    test "returns 200 when Twilio account is not found",
+         %{authed_conn: authed_conn, account: account} do
+      _authorization =
+        insert(:twilio_authorization,
+          account: account,
+          twilio_account_sid: @invalid_account_sid,
+          from_phone_number: @twilio_phone_number
+        )
 
-        assert response(conn, 200)
-      end
+      _customer = insert(:customer, account: account, phone: @customer_phone_number)
+
+      assert capture_log(fn ->
+               conn =
+                 post(authed_conn, Routes.twilio_path(authed_conn, :webhook), %{
+                   "AccountSid" => @valid_account_sid,
+                   "To" => @twilio_phone_number,
+                   "From" => @customer_phone_number,
+                   "Body" => "Test message"
+                 })
+
+               assert response(conn, 200)
+             end) =~ "Twilio account not found"
     end
 
-    test "returns 500 when unexpected error occurs",
-         %{authed_conn: authed_conn} do
-      with_mocks([
-        {
-          Twilio,
-          [],
-          [
-            find_twilio_authorization: fn _ ->
-              %TwilioAuthorization{account_id: 1}
-            end
-          ]
-        },
-        {
-          Conversations,
-          [],
-          [
-            find_or_create_customer_and_conversation: fn _, __ ->
-              {:error, %Ecto.Changeset{}}
-            end
-          ]
-        }
-      ]) do
-        conn = post(authed_conn, Routes.twilio_path(authed_conn, :webhook), @request_body)
+    test "returns 500 when an unexpected error occurs",
+         %{authed_conn: authed_conn, account: account} do
+      _authorization =
+        insert(:twilio_authorization,
+          account: account,
+          twilio_account_sid: @valid_account_sid,
+          from_phone_number: @twilio_phone_number
+        )
 
-        assert response(conn, 500)
+      with_mock ChatApi.Conversations,
+        find_or_create_by_customer: fn _, _, _ ->
+          {:error, %Ecto.Changeset{}}
+        end do
+        assert capture_log(fn ->
+                 conn =
+                   post(authed_conn, Routes.twilio_path(authed_conn, :webhook), %{
+                     "AccountSid" => @valid_account_sid,
+                     "To" => @twilio_phone_number,
+                     "From" => @customer_phone_number,
+                     "Body" => "Test message"
+                   })
+
+                 assert response(conn, 500)
+               end)
       end
     end
   end

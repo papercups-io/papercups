@@ -13,9 +13,10 @@ defmodule ChatApi.TwilioTest do
     setup do
       account = insert(:account)
       customer = insert(:customer, account: account)
+      authorization = insert(:twilio_authorization, account: account)
       user = insert(:user, account: account, email: "user@user.com")
 
-      {:ok, account: account, customer: customer, user: user}
+      {:ok, account: account, customer: customer, user: user, authorization: authorization}
     end
 
     test "Notification.notify_sms/2 errors when not an sms conversation", %{
@@ -39,7 +40,7 @@ defmodule ChatApi.TwilioTest do
     } do
       customer = insert(:customer, account: account, phone: @invalid_phone)
       conversation = insert(:conversation, account: account, customer: customer, source: "sms")
-      message = insert(:message, conversation: conversation, customer: customer)
+      message = insert(:message, conversation: conversation, customer: customer, account: account)
 
       with_mock Twilio.Client,
         send_message: fn _, _ ->

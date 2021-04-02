@@ -8,7 +8,6 @@ defmodule ChatApi.Conversations do
 
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
-  alias ChatApi.Customers
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.{Tag, ConversationTag}
@@ -525,54 +524,14 @@ defmodule ChatApi.Conversations do
     |> Repo.update()
   end
 
-  @spec find_or_create_customer_and_conversation(String.t(), String.t()) ::
-          {:ok, Customer.t(), Conversation.t()}
-          | {:error, Ecto.Changeset.t()}
-  def find_or_create_customer_and_conversation(account_id, phone) do
-    now = DateTime.utc_now()
-    sms_source = "sms"
+  @spec find_or_create_by_customer(String.t(), String.t(), map()) ::
+          {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
+  def find_or_create_by_customer(account_id, customer_id, attrs \\ %{}) do
+    params = Map.merge(attrs, %{"customer_id" => customer_id, "account_id" => account_id})
 
-    case Customers.list_customers(account_id, %{phone: phone}) do
-      [] ->
-        with {:ok, customer} <-
-               Customers.create_customer(%{
-                 phone: phone,
-                 account_id: account_id,
-                 first_seen: now,
-                 last_seen: now
-               }),
-             {:ok, conversation} <-
-               create_conversation(%{
-                 account_id: account_id,
-                 customer_id: customer.id,
-                 source: sms_source
-               }) do
-          {:ok, customer, conversation}
-        else
-          error ->
-            error
-        end
-
-      [customer] ->
-        with nil <-
-               find_latest_conversation(account_id, %{
-                 customer_id: customer.id,
-                 source: sms_source
-               }),
-             {:ok, conversation} <-
-               create_conversation(%{
-                 account_id: account_id,
-                 customer_id: customer.id,
-                 source: sms_source
-               }) do
-          {:ok, customer, conversation}
-        else
-          %Conversation{} = conversation ->
-            {:ok, customer, conversation}
-
-          error ->
-            error
-        end
+    case find_latest_conversation(account_id, params) do
+      nil -> create_conversation(params)
+      conversation -> {:ok, conversation}
     end
   end
 

@@ -10,6 +10,7 @@ defmodule ChatApi.Twilio.Notification do
     Conversations.Conversation,
     Customers.Customer,
     Twilio,
+    Twilio.TwilioAuthorization,
     Messages.Message
   }
 
@@ -17,16 +18,18 @@ defmodule ChatApi.Twilio.Notification do
   def notify_sms(%Message{
         conversation_id: conversation_id,
         body: body,
-        account_id: account_id,
-        customer: %Customer{phone: customer_phone}
+        account_id: account_id
       }) do
-    with conversation <- Conversations.get_conversation!(conversation_id),
+    with %Conversation{customer: customer} = conversation <-
+           Conversations.get_conversation!(conversation_id),
          {:ok, _} <- validate_source(conversation),
-         twilio_authorization <- Twilio.get_authorization_by_account(account_id),
+         %Customer{phone: customer_phone} <- customer,
+         %TwilioAuthorization{from_phone_number: from_phone_number} = twilio_authorization <-
+           Twilio.get_authorization_by_account(account_id),
          {:ok, _} <- Twilio.Client.validate_phone(customer_phone, twilio_authorization) do
       %{
         To: customer_phone,
-        From: twilio_authorization.from_phone_number,
+        From: from_phone_number,
         Body: body
       }
       |> Twilio.Client.send_message(twilio_authorization)
