@@ -4,8 +4,9 @@ import {Button, Text} from '../common';
 import ConversationItem from './ConversationItem';
 import ConversationClosing from './ConversationClosing';
 import {getColorByUuid} from './support';
-import {useConversations} from './ConversationsProvider';
 import {Conversation} from '../../types';
+import {isScrolledIntoView} from '../../utils';
+import {useConversations} from './ConversationsProvider';
 
 const ConversationsPreviewList = ({
   loading,
@@ -30,6 +31,22 @@ const ConversationsPreviewList = ({
     messagesByConversation,
     isCustomerOnline,
   } = useConversations();
+
+  React.useEffect(() => {
+    if (
+      selectedConversationId &&
+      conversationIds.indexOf(selectedConversationId) !== -1
+    ) {
+      // Scrolls to highlighted ConversationItem component if not visible
+      const el = document.getElementById(
+        `ConversationItem--${selectedConversationId}`
+      );
+
+      if (!isScrolledIntoView(el)) {
+        el?.scrollIntoView(false);
+      }
+    }
+  }, [conversationIds, selectedConversationId]);
 
   const handleLoadMoreConversations = async () => {
     setFetchingMore(true);

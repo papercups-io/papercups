@@ -49,6 +49,7 @@ const ConversationItem = ({
 
   return (
     <Box
+      id={`ConversationItem--${id}`}
       p={3}
       sx={{
         opacity: isClosed ? 0.8 : 1,
