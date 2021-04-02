@@ -1,3 +1,29 @@
+### Friday, 2 April
+
+- [[#697](https://github.com/papercups-io/papercups/pull/697)] The **Gmail integration** is now ready for beta users :rocket: [0]
+- [[#680](https://github.com/papercups-io/papercups/pull/680)] Set up v1 of our **Twilio integration** 📱 [1]
+- [[#682](https://github.com/papercups-io/papercups/pull/682)] Added **search functionality** for tags and customers
+- [[#686](https://github.com/papercups-io/papercups/pull/686)] The dashboard is now **cookie free** 🙅 🍪
+- [[#670](https://github.com/papercups-io/papercups/pull/670)] Set up a **customer details page** [2]
+- [[#669](https://github.com/papercups-io/papercups/pull/669)] You can now **view conversations by tag** [3]
+- [[#687](https://github.com/papercups-io/papercups/pull/687)] Upgraded Elixir to **v1.11** 
+
+_[0] Sync with Gmail_
+| Gmail  | Dashboard | Slack |
+| ------------- | ------------- | ------------- |
+| <img width="800" alt="Screen Shot 2021-04-02 at 10 19 25 AM" src="https://user-images.githubusercontent.com/5264279/113204349-367fc100-923b-11eb-9079-6232ee2ef6aa.png"> | <img width="800" alt="Screen Shot 2021-04-02 at 10 19 24 AM" src="https://user-images.githubusercontent.com/5264279/113204347-35e72a80-923b-11eb-876c-5c50e93cd61a.png"> | <img width="400" alt="Screen Shot 2021-04-02 at 10 19 33 AM" src="https://user-images.githubusercontent.com/5264279/113352452-461a0b00-930a-11eb-83d4-796fa5d47984.png"> |
+
+_[1] Twilio integration v1_
+| Phone  | Dashboard | Slack |
+| ------------- | ------------- | ------------- |
+| <img width="400" alt="Screen Shot 2021-04-02 at 10 19 25 AM" src="https://user-images.githubusercontent.com/5264279/113424025-78287d00-939d-11eb-8139-38f3552a5163.jpg"> | <img width="800" alt="Screen Shot 2021-04-02 at 10 19 24 AM" src="https://user-images.githubusercontent.com/5264279/113424008-72cb3280-939d-11eb-8b9f-fa23b0ce808b.png"> | <img width="400" alt="Screen Shot 2021-04-02 at 10 19 33 AM" src="https://user-images.githubusercontent.com/5264279/113424005-72cb3280-939d-11eb-864b-4a361c6dcc0c.png"> |
+
+_[2] Customer details page_
+> <img width="800" alt="Customer details page" src="https://user-images.githubusercontent.com/5264279/112028851-020b5700-8b0f-11eb-967f-3b2b9b10089b.png">
+
+_[3] Conversations by tag_
+> <img width="800" alt="Conversations by tag" src="https://user-images.githubusercontent.com/5264279/112002685-8ac9c900-8af6-11eb-9715-c3a7f45c39c0.png">
+
 ### Monday, 22 February
 
 - [[#575](https://github.com/papercups-io/papercups/pull/575)] Added a page to manage your tags and **group customers by tag**
