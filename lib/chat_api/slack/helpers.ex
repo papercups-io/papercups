@@ -746,7 +746,13 @@ defmodule ChatApi.Slack.Helpers do
   def format_message_body(%Message{body: nil}), do: ""
   def format_message_body(%Message{private: true, type: "note", body: nil}), do: "\\\\ _Note_"
   def format_message_body(%Message{private: true, type: "note", body: body}), do: "\\\\ _#{body}_"
-  def format_message_body(%Message{body: body}), do: body
+  # TODO: handle messages that are too long better (rather than just slicing them)
+  def format_message_body(%Message{body: body}) do
+    case String.length(body) do
+      n when n > 2500 -> String.slice(body, 0..2500) <> "..."
+      _ -> body
+    end
+  end
 
   @spec prepend_sender_prefix(binary(), Message.t()) :: binary()
   def prepend_sender_prefix(text, %Message{} = message) do

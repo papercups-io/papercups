@@ -35,6 +35,7 @@ defmodule ChatApi.Conversations do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
+    |> filter_by_tag(filters)
     |> order_by(desc: :last_activity_at, desc: :id)
     |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
     |> Repo.paginate_with_cursor(
@@ -192,12 +193,24 @@ defmodule ChatApi.Conversations do
     Conversation
     |> where(customer_id: ^customer_id)
     |> where(account_id: ^account_id)
+    |> where(source: "chat")
     |> where(status: "open")
     |> where([c], is_nil(c.archived_at))
     |> order_by(desc: :inserted_at)
     |> limit(@customer_conversations_limit)
     |> preload([:customer, messages: ^messages])
     |> Repo.all()
+  end
+
+  @spec find_latest_conversation(binary(), map()) :: Conversation.t() | nil
+  def find_latest_conversation(account_id, filters) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> where(account_id: ^account_id)
+    |> where([c], is_nil(c.archived_at))
+    |> order_by(desc: :inserted_at)
+    |> first()
+    |> Repo.one()
   end
 
   # Used internally in dashboard
@@ -511,6 +524,17 @@ defmodule ChatApi.Conversations do
     |> Repo.update()
   end
 
+  @spec find_or_create_by_customer(String.t(), String.t(), map()) ::
+          {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
+  def find_or_create_by_customer(account_id, customer_id, attrs \\ %{}) do
+    params = Map.merge(attrs, %{"customer_id" => customer_id, "account_id" => account_id})
+
+    case find_latest_conversation(account_id, params) do
+      nil -> create_conversation(params)
+      conversation -> {:ok, conversation}
+    end
+  end
+
   #####################
   # Private methods
   #####################
@@ -533,6 +557,9 @@ defmodule ChatApi.Conversations do
 
       {"account_id", value}, dynamic ->
         dynamic([p], ^dynamic and p.account_id == ^value)
+
+      {"source", value}, dynamic ->
+        dynamic([p], ^dynamic and p.source == ^value)
 
       {_, _}, dynamic ->
         # Not a where parameter

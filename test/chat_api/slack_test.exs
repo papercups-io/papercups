@@ -465,7 +465,7 @@ defmodule ChatApi.SlackTest do
       email = "test@test.com"
       response = %{body: %{"ok" => true, "user" => %{"profile" => %{"email" => email}}}}
 
-      assert email = Slack.Extractor.extract_slack_user_email!(response)
+      assert email == Slack.Extractor.extract_slack_user_email!(response)
     end
 
     test "Extractor.extract_slack_user_email!/1 raises if the slack response has ok=false" do

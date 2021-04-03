@@ -57,7 +57,7 @@ defmodule ChatApi.MixProject do
       {:telemetry_poller, "~> 0.4"},
       {:gettext, "~> 0.11"},
       {:tesla, "~> 1.3"},
-      {:hackney, "~> 1.16"},
+      {:hackney, "~> 1.17"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:corsica, "~> 1.0"},

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   useLocation,
   Switch,
@@ -26,7 +26,11 @@ import {
 } from './icons';
 import {BASE_URL, env, isDev, isEuEdition, isHostedProd} from '../config';
 import analytics from '../analytics';
-import {hasValidStripeKey} from '../utils';
+import {
+  getBrowserVisibilityInfo,
+  hasValidStripeKey,
+  isWindowHidden,
+} from '../utils';
 import {Account, User} from '../types';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
@@ -77,6 +81,26 @@ const getSectionKey = (pathname: string) => {
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
+};
+
+const useWindowVisibility = (d?: Document) => {
+  const doc = d || document || window.document;
+  const [isWindowVisible, setWindowVisible] = useState(!isWindowHidden(doc));
+
+  useEffect(() => {
+    const {event} = getBrowserVisibilityInfo(doc);
+    const handler = () => setWindowVisible(!isWindowHidden(doc));
+
+    if (!event) {
+      return;
+    }
+
+    doc.addEventListener(event, handler, false);
+
+    return () => doc.removeEventListener(event, handler);
+  }, [doc]);
+
+  return isWindowVisible;
 };
 
 const ChatWithUs = ({
@@ -134,10 +158,15 @@ const ChatWithUs = ({
 // of this component is to flash the number of unread messages in the
 // tab (i.e. HTML title) so users can see when new messages arrive
 const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
+  const doc = document || window.document;
   const [htmlTitle, setHtmlTitle] = useState('Papercups');
+  const isWindowVisible = useWindowVisibility(doc);
+  const timer = useRef<any>();
+
+  const hasDefaultTitle = (title: string) => title.startsWith('Papercups');
 
   const toggleNotificationMessage = () => {
-    if (totalNumUnread > 0 && htmlTitle.startsWith('Papercups')) {
+    if (totalNumUnread > 0 && hasDefaultTitle(htmlTitle) && !isWindowVisible) {
       setHtmlTitle(
         `(${totalNumUnread}) New message${totalNumUnread === 1 ? '' : 's'}!`
       );
@@ -147,13 +176,19 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
   };
 
   useEffect(() => {
-    let timeout;
+    const shouldToggle =
+      totalNumUnread > 0 && (!isWindowVisible || !hasDefaultTitle(htmlTitle));
 
-    if (totalNumUnread > 0) {
-      timeout = setTimeout(toggleNotificationMessage, TITLE_FLASH_INTERVAL);
+    if (shouldToggle) {
+      timer.current = setTimeout(
+        toggleNotificationMessage,
+        TITLE_FLASH_INTERVAL
+      );
     } else {
-      clearTimeout(timeout);
+      clearTimeout(timer.current);
     }
+
+    return () => clearTimeout(timer.current);
   });
 
   return (

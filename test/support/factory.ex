@@ -138,6 +138,16 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def twilio_authorization_factory do
+    %ChatApi.Twilio.TwilioAuthorization{
+      twilio_auth_token: "some auth token",
+      twilio_account_sid: "some account id",
+      from_phone_number: "some phone number",
+      account: build(:account),
+      user: build(:user)
+    }
+  end
+
   def slack_conversation_thread_factory do
     %ChatApi.SlackConversationThreads.SlackConversationThread{
       account: build(:account),
