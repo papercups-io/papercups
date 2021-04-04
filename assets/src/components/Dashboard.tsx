@@ -327,22 +327,6 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="closed">
                   <Link to="/conversations/closed">Closed</Link>
                 </Menu.Item>
-                <Menu.Item key="canned">
-                  <Link to="/conversations/canned">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Canned</Box>
-                      <Badge
-                        count={unread.priority}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
               </Menu.SubMenu>
               <Menu.SubMenu
                 key="sessions"
@@ -370,6 +354,9 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
                 <Menu.Item key="tags">
                   <Link to="/tags">Tags</Link>
+                </Menu.Item>
+                <Menu.Item key="canned">
+                  <Link to="/canned">Canned Conversations</Link>
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
@@ -448,7 +435,6 @@ const Dashboard = (props: RouteComponentProps) => {
             component={PriorityConversations}
           />
           <Route path="/conversations/closed" component={ClosedConversations} />
-          <Route path="/conversations/canned" component={CannedConversations} />
           <Route
             path="/conversations/:id"
             render={(props: RouteComponentProps<{id: string}>) => {
@@ -469,6 +455,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/sessions*" component={SessionsOverview} />
           <Route path="/tags/:id" component={TagDetailsPage} />
           <Route path="/tags" component={TagsOverview} />
+          <Route path="/canned" component={CannedConversations} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
