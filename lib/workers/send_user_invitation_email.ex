@@ -23,12 +23,24 @@ defmodule ChatApi.Workers.SendUserInvitationEmail do
       account = Accounts.get_account!(account_id)
       Logger.info("Sending user invitation email to #{to_address}")
 
-      ChatApi.Emails.send_user_invitation_email(
-        user,
-        account,
-        to_address,
-        invitation_token
-      )
+      deliver_result =
+        ChatApi.Emails.send_user_invitation_email(
+          user,
+          account,
+          to_address,
+          invitation_token
+        )
+
+      case deliver_result do
+        {:ok, result} ->
+          Logger.info("Successfully sent user invitation email: #{result}")
+
+        {:warning, reason} ->
+          Logger.warn("Warning when sending user invitation email: #{inspect(reason)}")
+
+        {:error, reason} ->
+          Logger.error("Error when sending user invitation email: #{inspect(reason)}")
+      end
     else
       Logger.info("Skipping user invitation email to #{to_address}")
     end
