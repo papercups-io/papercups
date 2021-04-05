@@ -116,6 +116,7 @@ defmodule ChatApiWeb.Router do
     get("/browser_sessions/count", BrowserSessionController, :count)
 
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
+    resources("/user_invitation_emails", UserInvitationEmailController, only: [:create])
     resources("/accounts", AccountController, only: [:update, :delete])
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])

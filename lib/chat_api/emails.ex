@@ -58,6 +58,18 @@ defmodule ChatApi.Emails do
     |> deliver()
   end
 
+  @spec send_user_invitation_email(User.t(), Account.t(), binary(), binary()) :: deliver_result()
+  def send_user_invitation_email(user, account, to_address, invitation_token) do
+    Email.user_invitation(%{
+      company: account.company_name,
+      from_address: user.email,
+      from_name: format_sender_name(user, account),
+      invitation_token: invitation_token,
+      to_address: to_address
+    })
+    |> deliver()
+  end
+
   @spec send_via_gmail(binary(), map()) :: deliver_result()
   def send_via_gmail(
         access_token,
