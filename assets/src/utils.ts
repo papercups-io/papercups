@@ -185,6 +185,18 @@ export const addVisibilityEventListener = (
   return () => document.removeEventListener(event, handler);
 };
 
+export const isScrolledIntoView = (el: any) => {
+  if (!el) {
+    return false;
+  }
+
+  const rect = el.getBoundingClientRect();
+  const {top, bottom} = rect;
+  const isVisible = top >= 0 && bottom <= window.innerHeight;
+
+  return isVisible;
+};
+
 export const download = (data = {}, name = 'data') => {
   // Taken from https://stackoverflow.com/a/55613750
   const json = JSON.stringify(data, null, 2);
