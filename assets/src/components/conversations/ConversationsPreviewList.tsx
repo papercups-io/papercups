@@ -46,6 +46,7 @@ const ConversationsPreviewList = ({
         el?.scrollIntoView(false);
       }
     }
+    // eslint-disable-next-line
   }, [selectedConversationId]);
 
   const handleLoadMoreConversations = async () => {
