@@ -272,6 +272,14 @@ class IntegrationsOverview extends React.Component<Props, State> {
       );
   };
 
+  handleDisconnectGmail = async (authorizationId: string) => {
+    return API.deleteGoogleAuthorization(authorizationId)
+      .then(() => this.refreshAllIntegrations())
+      .catch((err) =>
+        logger.error('Failed to remove Gmail authorization:', err)
+      );
+  };
+
   handleAddWebhook = () => {
     this.setState({isWebhookModalOpen: true});
   };
@@ -394,6 +402,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
               loading={refreshing}
               integrations={integrations}
               onDisconnectSlack={this.handleDisconnectSlack}
+              onDisconnectGmail={this.handleDisconnectGmail}
               onUpdateIntegration={this.refreshAllIntegrations}
             />
           </Box>
