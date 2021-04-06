@@ -48,8 +48,11 @@ const CustomersTable = ({
         return 1;
       }
 
+      const bLastSeen = b.last_seen_at || b.last_seen;
+      const aLastSeen = a.last_seen_at || a.last_seen;
+
       // TODO: fix how we set `last_seen`!
-      return +new Date(b.last_seen) - +new Date(a.last_seen);
+      return +new Date(bLastSeen) - +new Date(aLastSeen);
     });
 
   const columns = [
@@ -101,19 +104,11 @@ const CustomersTable = ({
       },
     },
     {
-      title: 'Device info',
-      dataIndex: 'info',
-      key: 'info',
-      render: (value: string, record: Customer) => {
-        const {browser, os} = record;
-
-        return (
-          <Text>
-            <Text type="secondary">{browser}</Text>
-            {browser && os ? ' · ' : ''}
-            {os && <Text type="secondary">{os}</Text>}
-          </Text>
-        );
+      title: 'Timezone',
+      dataIndex: 'time_zone',
+      key: 'time_zone',
+      render: (value: string) => {
+        return value ? <Text>{value}</Text> : <Text type="secondary">--</Text>;
       },
     },
     {

@@ -2,12 +2,14 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {Alert, Button, Input, Paragraph, Text, Title} from '../common';
+import {PlusOutlined} from '../icons';
 import {useConversations} from '../conversations/ConversationsProvider';
 import * as API from '../../api';
-import Spinner from '../Spinner';
-import CustomersTable from './CustomersTable';
 import logger from '../../logger';
 import {Customer} from '../../types';
+import Spinner from '../Spinner';
+import CustomersTable from './CustomersTable';
+import NewCustomerModal from './NewCustomerModal';
 
 const filterCustomersByQuery = (
   customers: Array<Customer>,
@@ -49,6 +51,7 @@ type Props = {
 type State = {
   loading: boolean;
   refreshing: boolean;
+  isModalOpen: boolean;
   selectedCustomerId: string | null;
   query: string;
   customers: Array<Customer>;
@@ -59,6 +62,7 @@ class CustomersPage extends React.Component<Props, State> {
   state: State = {
     loading: true,
     refreshing: false,
+    isModalOpen: false,
     selectedCustomerId: null,
     query: '',
     customers: [],
@@ -101,6 +105,20 @@ class CustomersPage extends React.Component<Props, State> {
     }
   };
 
+  handleCreateNewCustomer = () => {
+    this.setState({isModalOpen: true});
+  };
+
+  handleCreateCustomerCancelled = () => {
+    this.setState({isModalOpen: false});
+  };
+
+  handleCreateCustomerSuccess = async () => {
+    return this.handleRefreshCustomers().then(() =>
+      this.setState({isModalOpen: false})
+    );
+  };
+
   handleSearchCustomers = (query: string) => {
     const {customers = []} = this.state;
 
@@ -116,7 +134,12 @@ class CustomersPage extends React.Component<Props, State> {
 
   render() {
     const {currentlyOnline} = this.props;
-    const {loading, refreshing, filteredCustomers = []} = this.state;
+    const {
+      loading,
+      refreshing,
+      isModalOpen,
+      filteredCustomers = [],
+    } = this.state;
 
     if (loading) {
       return (
@@ -156,14 +179,28 @@ class CustomersPage extends React.Component<Props, State> {
             />
           </Box>
 
-          <Box mb={3}>
+          <Flex mb={3} sx={{justifyContent: 'space-between'}}>
             <Input.Search
               placeholder="Search customers..."
               allowClear
               onSearch={this.handleSearchCustomers}
               style={{width: 400}}
             />
-          </Box>
+
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={this.handleCreateNewCustomer}
+            >
+              New customer
+            </Button>
+          </Flex>
+
+          <NewCustomerModal
+            visible={isModalOpen}
+            onCancel={this.handleCreateCustomerCancelled}
+            onSuccess={this.handleCreateCustomerSuccess}
+          />
 
           <CustomersTable
             loading={refreshing}

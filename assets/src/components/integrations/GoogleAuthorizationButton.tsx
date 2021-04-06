@@ -1,8 +1,7 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Button, Popconfirm} from '../common';
+import {Button, Popconfirm, Tooltip} from '../common';
 import {getGoogleAuthUrl} from './support';
-import Tooltip from 'antd/lib/tooltip';
 
 export const GoogleAuthorizationButton = ({
   isConnected,

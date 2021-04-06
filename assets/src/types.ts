@@ -32,11 +32,14 @@ export type Customer = {
   first_seen?: any;
   host?: string;
   ip?: string;
+  // Date
   last_seen: string;
+  // Datetime
+  last_seen_at?: string;
   metadata?: any;
   os?: string;
   pathname?: string;
-  phone?: number;
+  phone?: string | number;
   tags?: Array<Tag>;
   time_zone?: string;
   updated_at?: string;
