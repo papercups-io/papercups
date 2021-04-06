@@ -51,6 +51,9 @@ defmodule Mix.Tasks.EnableGmailInboxSync do
     end
   end
 
+  @spec enable_gmail_sync(binary(), binary()) ::
+          {:error, binary() | Ecto.Changeset.t()}
+          | {:ok, ChatApi.Google.GoogleAuthorization.t()}
   def enable_gmail_sync(account_id, history_id) do
     case Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
       %GoogleAuthorization{} = authorization ->
@@ -63,6 +66,9 @@ defmodule Mix.Tasks.EnableGmailInboxSync do
     end
   end
 
+  @spec enable_gmail_sync(binary()) ::
+          {:error, binary() | Ecto.Changeset.t()}
+          | {:ok, ChatApi.Google.GoogleAuthorization.t()}
   def enable_gmail_sync(account_id) do
     case Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
       %GoogleAuthorization{refresh_token: _, metadata: %{"next_history_id" => next_history_id}}

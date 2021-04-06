@@ -36,6 +36,8 @@ defmodule ChatApiWeb.GoogleController do
              client: type
            }) do
         {:ok, _result} ->
+          enqueue_enabling_gmail_sync(account_id)
+
           json(conn, %{data: %{ok: true}})
 
         error ->
@@ -93,5 +95,11 @@ defmodule ChatApiWeb.GoogleController do
     url = Google.Auth.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
 
     json(conn, %{data: %{url: url}})
+  end
+
+  defp enqueue_enabling_gmail_sync(account_id) do
+    %{account_id: account_id}
+    |> ChatApi.Workers.EnableGmailInboxSync.new()
+    |> Oban.insert()
   end
 end
