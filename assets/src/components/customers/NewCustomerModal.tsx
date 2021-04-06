@@ -3,6 +3,7 @@ import {Box} from 'theme-ui';
 import {Button, Input, Modal, Text} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
+import {formatServerError} from '../../utils';
 
 const NewCustomerModal = ({
   visible,
@@ -55,8 +56,7 @@ const NewCustomerModal = ({
       })
       .catch((err) => {
         logger.error('Error creating customer:', err);
-        // TODO
-        const errorMessage = 'Invalid customer details!';
+        const errorMessage = formatServerError(err);
         setErrorMessage(errorMessage);
       })
       .finally(() => setIsSaving(false));

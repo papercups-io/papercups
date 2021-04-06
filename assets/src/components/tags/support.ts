@@ -14,38 +14,3 @@ export const defaultTagColor = (index: number) => {
 
   return options[index % options.length];
 };
-
-export const formatTagErrors = (err: any) => {
-  try {
-    const error = err?.response?.body?.error ?? {};
-    const {errors = {}, message, status} = error;
-
-    if (status === 422 && Object.keys(errors).length > 0) {
-      const messages = Object.keys(errors)
-        .map((field) => {
-          const description = errors[field];
-
-          if (description) {
-            return `${field} ${description}`;
-          } else {
-            return `invalid ${field}`;
-          }
-        })
-        .join(', ');
-
-      return `Error: ${messages}.`;
-    } else {
-      return (
-        message ||
-        err?.message ||
-        'Something went wrong. Please contact us or try again in a few minutes.'
-      );
-    }
-  } catch {
-    return (
-      err?.response?.body?.error?.message ||
-      err?.message ||
-      'Something went wrong. Please contact us or try again in a few minutes.'
-    );
-  }
-};
