@@ -103,6 +103,10 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     return this.handleRefreshCustomer().then(() => this.handleCloseModal());
   };
 
+  handleCustomerDeleted = () => {
+    this.props.history.push('/customers');
+  };
+
   render() {
     const {loading, isModalOpen, customer, conversations = []} = this.state;
 
@@ -155,6 +159,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
           isVisible={isModalOpen}
           onClose={this.handleCloseModal}
           onUpdate={this.handleCustomerUpdated}
+          onDelete={this.handleCustomerDeleted}
         />
 
         <Flex>

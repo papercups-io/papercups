@@ -4,10 +4,11 @@ import {Box, Flex} from 'theme-ui';
 import {Alert, Button, Input, Paragraph, Text, Title} from '../common';
 import {useConversations} from '../conversations/ConversationsProvider';
 import * as API from '../../api';
-import Spinner from '../Spinner';
-import CustomersTable from './CustomersTable';
 import logger from '../../logger';
 import {Customer} from '../../types';
+import Spinner from '../Spinner';
+import CustomersTable from './CustomersTable';
+import {NewCustomerButton} from './NewCustomerModal';
 
 const filterCustomersByQuery = (
   customers: Array<Customer>,
@@ -156,14 +157,16 @@ class CustomersPage extends React.Component<Props, State> {
             />
           </Box>
 
-          <Box mb={3}>
+          <Flex mb={3} sx={{justifyContent: 'space-between'}}>
             <Input.Search
               placeholder="Search customers..."
               allowClear
               onSearch={this.handleSearchCustomers}
               style={{width: 400}}
             />
-          </Box>
+
+            <NewCustomerButton onSuccess={this.handleRefreshCustomers} />
+          </Flex>
 
           <CustomersTable
             loading={refreshing}

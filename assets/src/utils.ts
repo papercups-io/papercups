@@ -134,6 +134,41 @@ export const updateQueryParams = (query: Record<any, any>) => {
   }
 };
 
+export const formatServerError = (err: any) => {
+  try {
+    const error = err?.response?.body?.error ?? {};
+    const {errors = {}, message, status} = error;
+
+    if (status === 422 && Object.keys(errors).length > 0) {
+      const messages = Object.keys(errors)
+        .map((field) => {
+          const description = errors[field];
+
+          if (description) {
+            return `${field} ${description}`;
+          } else {
+            return `invalid ${field}`;
+          }
+        })
+        .join(', ');
+
+      return `Error: ${messages}.`;
+    } else {
+      return (
+        message ||
+        err?.message ||
+        'Something went wrong. Please contact us or try again in a few minutes.'
+      );
+    }
+  } catch {
+    return (
+      err?.response?.body?.error?.message ||
+      err?.message ||
+      'Something went wrong. Please contact us or try again in a few minutes.'
+    );
+  }
+};
+
 export const getBrowserVisibilityInfo = (document: any) => {
   if (typeof document.hidden !== 'undefined') {
     return {

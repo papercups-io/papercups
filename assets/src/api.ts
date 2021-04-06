@@ -1,7 +1,14 @@
 import request from 'superagent';
 import qs from 'query-string';
 import {getAuthTokens} from './storage';
-import {Account, Conversation, Tag, User, WidgetSettings} from './types';
+import {
+  Account,
+  Conversation,
+  Customer,
+  Tag,
+  User,
+  WidgetSettings,
+} from './types';
 
 // TODO: handle this on the server instead
 function now() {
@@ -131,16 +138,20 @@ export const attemptPasswordReset = async (
     .then((res) => res.body.data);
 };
 
-export const createNewCustomer = async (accountId: string) => {
+export const createNewCustomer = async (
+  accountId: string,
+  params: Partial<Customer>
+) => {
   return request
     .post(`/api/customers`)
     .send({
       customer: {
-        account_id: accountId,
         first_seen: now(),
         last_seen: now(),
+        ...params,
+        account_id: accountId,
       },
-    }) // TODO: send over some metadata?
+    })
     .then((res) => res.body.data);
 };
 
