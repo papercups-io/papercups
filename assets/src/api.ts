@@ -805,6 +805,19 @@ export const fetchGoogleAuthorization = async (
     .then((res) => res.body.data);
 };
 
+export const deleteGoogleAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/google/authorization/${authorizationId}`)
+    .set('Authorization', token);
+};
+
 export type EmailParams = {
   recipient: string;
   subject: string;
