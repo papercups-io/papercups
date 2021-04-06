@@ -245,13 +245,13 @@ defmodule ChatApi.Workers.SyncGmailInbox do
           _ -> DateTime.utc_now()
         end
     })
-    |> ChatApi.Messages.create_and_fetch!()
-    |> ChatApi.Messages.Notification.broadcast_to_admin!()
-    |> ChatApi.Messages.Notification.notify(:webhooks)
+    |> Messages.create_and_fetch!()
+    |> Messages.Notification.broadcast_to_admin!()
+    |> Messages.Notification.notify(:webhooks)
     # NB: we need to make sure the messages are created in the correct order, so we set async: false
-    |> ChatApi.Messages.Notification.notify(:slack, async: false)
-    |> ChatApi.Messages.Notification.notify(:mattermost, async: false)
-    # TODO: not sure we need to do this on every message
-    |> ChatApi.Messages.Helpers.handle_post_creation_conversation_updates()
+    |> Messages.Notification.notify(:slack, async: false)
+    |> Messages.Notification.notify(:mattermost, async: false)
+    # NB: for email threads, for now we want to reopen the conversation if it was closed
+    |> Messages.Helpers.handle_post_creation_conversation_updates(%{status: "open"})
   end
 end
