@@ -74,11 +74,11 @@ const CustomersTable = ({
     },
     {
       title: 'Last seen',
-      dataIndex: 'last_seen',
-      key: 'last_seen',
+      dataIndex: 'last_seen_at',
+      key: 'last_seen_at',
       render: (value: string, record: Customer) => {
-        const {id, pathname, current_url} = record;
-        const formatted = dayjs.utc(value).format('MMMM DD, YYYY');
+        const {id, pathname, current_url, last_seen} = record;
+        const formatted = dayjs.utc(value || last_seen).format('MMMM DD, YYYY');
         const isOnline = currentlyOnline[id];
 
         if (isOnline) {
@@ -132,6 +132,7 @@ const CustomersTable = ({
               isVisible={selectedCustomerId === record.id}
               onClose={() => setSelectedCustomerId(null)}
               onUpdate={onUpdate}
+              onDelete={onUpdate}
             />
           </>
         );
