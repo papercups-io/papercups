@@ -11,6 +11,7 @@ import {getColorByUuid} from '../conversations/support';
 import ConversationItem from '../conversations/ConversationItem';
 import {CustomerDetails} from '../conversations/ConversationDetailsSidebar';
 import {sortConversationMessages} from '../../utils';
+import CustomerDetailsModal from './CustomerDetailsModal';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (
@@ -34,6 +35,7 @@ type State = {
   loading?: boolean;
   customer: Customer | null;
   conversations: Array<Conversation>;
+  isModalOpen?: boolean;
 };
 
 class CustomerDetailsPage extends React.Component<Props, State> {
@@ -41,6 +43,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     loading: true,
     customer: null,
     conversations: [],
+    isModalOpen: false,
   };
 
   async componentDidMount() {
@@ -61,6 +64,21 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     }
   }
 
+  handleRefreshCustomer = async () => {
+    try {
+      const {id: customerId} = this.props.match.params;
+      const customer = await API.fetchCustomer(customerId, {
+        expand: ['company', 'tags'],
+      });
+
+      this.setState({customer, loading: false});
+    } catch (err) {
+      logger.error('Error loading customer!', err);
+
+      this.setState({loading: false});
+    }
+  };
+
   handleSelectConversation = (conversationId: string) => {
     const conversation = this.state.conversations.find(
       (conversation) => conversation.id === conversationId
@@ -73,8 +91,20 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     this.props.history.push(url);
   };
 
+  handleOpenModal = () => {
+    this.setState({isModalOpen: true});
+  };
+
+  handleCloseModal = () => {
+    this.setState({isModalOpen: false});
+  };
+
+  handleCustomerUpdated = async () => {
+    return this.handleRefreshCustomer().then(() => this.handleCloseModal());
+  };
+
   render() {
-    const {loading, customer, conversations = []} = this.state;
+    const {loading, isModalOpen, customer, conversations = []} = this.state;
 
     if (loading || !customer) {
       return (
@@ -114,7 +144,18 @@ class CustomerDetailsPage extends React.Component<Props, State> {
 
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={2}>{title}</Title>
+
+          <Button type="primary" onClick={this.handleOpenModal}>
+            Edit
+          </Button>
         </Flex>
+
+        <CustomerDetailsModal
+          customer={customer}
+          isVisible={isModalOpen}
+          onClose={this.handleCloseModal}
+          onUpdate={this.handleCustomerUpdated}
+        />
 
         <Flex>
           <Box sx={{flex: 1, pr: 4, mt: -2}}>

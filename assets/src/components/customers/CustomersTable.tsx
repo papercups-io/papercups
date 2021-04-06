@@ -2,6 +2,7 @@ import React from 'react';
 import {Box} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import {Customer} from '../../types';
 import {Badge, Button, Table, Text, Tooltip} from '../common';
 import CustomerDetailsModal from './CustomerDetailsModal';
 
@@ -13,17 +14,21 @@ const CustomersTable = ({
   customers,
   currentlyOnline = {},
   shouldIncludeAnonymous,
+  action,
   onUpdate,
 }: {
   loading?: boolean;
-  customers: Array<any>;
-  currentlyOnline?: any;
+  customers: Array<Customer>;
+  currentlyOnline?: Record<string, any>;
   shouldIncludeAnonymous?: boolean;
+  action?: (customer: Customer) => React.ReactElement;
   onUpdate: () => Promise<void>;
 }) => {
-  const [selectedCustomerId, setSelectedCustomerId] = React.useState(null);
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState<
+    string | null
+  >(null);
 
-  const isCustomerOnline = (customer: any) => {
+  const isCustomerOnline = (customer: Customer) => {
     const {id: customerId} = customer;
 
     return currentlyOnline[customerId];
@@ -35,6 +40,7 @@ const CustomersTable = ({
     .map((customer) => {
       return {key: customer.id, ...customer};
     })
+    // TODO: make sorting configurable from the UI
     .sort((a, b) => {
       if (isCustomerOnline(a)) {
         return -1;
@@ -67,7 +73,7 @@ const CustomersTable = ({
       title: 'Last seen',
       dataIndex: 'last_seen',
       key: 'last_seen',
-      render: (value: string, record: any) => {
+      render: (value: string, record: Customer) => {
         const {id, pathname, current_url} = record;
         const formatted = dayjs.utc(value).format('MMMM DD, YYYY');
         const isOnline = currentlyOnline[id];
@@ -98,7 +104,7 @@ const CustomersTable = ({
       title: 'Device info',
       dataIndex: 'info',
       key: 'info',
-      render: (value: string, record: any) => {
+      render: (value: string, record: Customer) => {
         const {browser, os} = record;
 
         return (
@@ -114,7 +120,11 @@ const CustomersTable = ({
       title: '',
       dataIndex: 'action',
       key: 'action',
-      render: (value: string, record: any) => {
+      render: (value: string, record: Customer) => {
+        if (action && typeof action === 'function') {
+          return action(record);
+        }
+
         const {id: customerId} = record;
 
         return (
