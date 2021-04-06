@@ -9,6 +9,7 @@ import Spinner from '../Spinner';
 import logger from '../../logger';
 import {getColorByUuid} from '../conversations/support';
 import ConversationItem from '../conversations/ConversationItem';
+import StartConversationButton from '../conversations/StartConversationButton';
 import {CustomerDetails} from '../conversations/ConversationDetailsSidebar';
 import {sortConversationMessages} from '../../utils';
 import CustomerDetailsModal from './CustomerDetailsModal';
@@ -46,9 +47,12 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     isModalOpen: false,
   };
 
+  getCustomerId = () => this.props.match.params.id;
+
   async componentDidMount() {
+    const customerId = this.getCustomerId();
+
     try {
-      const {id: customerId} = this.props.match.params;
       const customer = await API.fetchCustomer(customerId, {
         expand: ['company', 'tags'],
       });
@@ -66,8 +70,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
 
   handleRefreshCustomer = async () => {
     try {
-      const {id: customerId} = this.props.match.params;
-      const customer = await API.fetchCustomer(customerId, {
+      const customer = await API.fetchCustomer(this.getCustomerId(), {
         expand: ['company', 'tags'],
       });
 
@@ -77,6 +80,26 @@ class CustomerDetailsPage extends React.Component<Props, State> {
 
       this.setState({loading: false});
     }
+  };
+
+  fetchConversations = async () => {
+    try {
+      const {data: conversations} = await API.fetchConversations({
+        customer_id: this.getCustomerId(),
+      });
+
+      this.setState({conversations});
+    } catch (err) {
+      logger.error('Error loading conversations!', err);
+    }
+  };
+
+  hasOpenConversation = () => {
+    const openConversation = this.state.conversations.find(
+      (conversation) => conversation.status === 'open'
+    );
+
+    return !!openConversation;
   };
 
   handleSelectConversation = (conversationId: string) => {
@@ -169,9 +192,20 @@ class CustomerDetailsPage extends React.Component<Props, State> {
 
           <Box sx={{flex: 3}}>
             <DetailsSectionCard>
-              <Box pb={2} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
+              <Flex
+                pb={2}
+                sx={{
+                  borderBottom: '1px solid rgba(0,0,0,.06)',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Title level={4}>Conversations</Title>
-              </Box>
+                <StartConversationButton
+                  customerId={this.getCustomerId()}
+                  disabled={this.hasOpenConversation()}
+                  onInitializeNewConversation={this.fetchConversations}
+                />
+              </Flex>
 
               {conversations.length > 0 ? (
                 conversations.map((conversation) => {
