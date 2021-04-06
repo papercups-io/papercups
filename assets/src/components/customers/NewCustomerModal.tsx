@@ -1,6 +1,7 @@
 import React from 'react';
 import {Box} from 'theme-ui';
 import {Button, Input, Modal, Text} from '../common';
+import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';
 import {formatServerError} from '../../utils';
@@ -120,6 +121,34 @@ const NewCustomerModal = ({
         )}
       </Box>
     </Modal>
+  );
+};
+
+export const NewCustomerButton = ({
+  onSuccess,
+}: {
+  onSuccess: (data?: any) => void;
+}) => {
+  const [isModalOpen, setModalOpen] = React.useState(false);
+
+  const handleOpenModal = () => setModalOpen(true);
+  const handleCloseModal = () => setModalOpen(false);
+  const handleSuccess = () => {
+    onSuccess();
+    handleCloseModal();
+  };
+
+  return (
+    <>
+      <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenModal}>
+        New customer
+      </Button>
+      <NewCustomerModal
+        visible={isModalOpen}
+        onSuccess={handleSuccess}
+        onCancel={handleCloseModal}
+      />
+    </>
   );
 };
 
