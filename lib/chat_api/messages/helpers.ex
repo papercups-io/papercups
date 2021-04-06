@@ -25,9 +25,9 @@ defmodule ChatApi.Messages.Helpers do
   def get_message_type(_message), do: :unknown
 
   @spec handle_post_creation_conversation_updates(Message.t()) :: Message.t()
-  def handle_post_creation_conversation_updates(%Message{} = message) do
+  def handle_post_creation_conversation_updates(%Message{} = message, updates \\ %{}) do
     message
-    |> build_conversation_updates()
+    |> build_conversation_updates(updates)
     |> update_message_conversation(message)
     |> Conversations.Notification.broadcast_conversation_update_to_admin!()
     |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
@@ -37,8 +37,8 @@ defmodule ChatApi.Messages.Helpers do
   end
 
   @spec build_conversation_updates(Message.t()) :: map()
-  def build_conversation_updates(%Message{} = message) do
-    %{}
+  def build_conversation_updates(%Message{} = message, updates \\ %{}) do
+    updates
     |> build_first_reply_updates(message)
     |> build_message_type_updates(message)
   end
