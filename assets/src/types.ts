@@ -32,7 +32,7 @@ export type Customer = {
   first_seen?: any;
   host?: string;
   ip?: string;
-  last_seen?: string;
+  last_seen: string;
   metadata?: any;
   os?: string;
   pathname?: string;

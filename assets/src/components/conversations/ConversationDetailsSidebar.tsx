@@ -369,7 +369,9 @@ export const CustomerDetailsSection = ({
   return (
     <Box px={2} py={3}>
       <Box px={2} mb={3}>
-        <Text strong>Customer details</Text>
+        <Link to={`/customers/${customer.id}`}>
+          <Text strong>Customer details</Text>
+        </Link>
       </Box>
 
       <CustomerDetails customer={customer} isOnline={isOnline} />

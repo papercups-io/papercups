@@ -1,6 +1,7 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Alert, Input, Paragraph, Text, Title} from '../common';
+import {Alert, Button, Input, Paragraph, Text, Title} from '../common';
 import {useConversations} from '../conversations/ConversationsProvider';
 import * as API from '../../api';
 import Spinner from '../Spinner';
@@ -169,6 +170,11 @@ class CustomersPage extends React.Component<Props, State> {
             customers={filteredCustomers}
             currentlyOnline={currentlyOnline}
             onUpdate={this.handleRefreshCustomers}
+            action={(customer: Customer) => (
+              <Link to={`/customers/${customer.id}`}>
+                <Button>View profile</Button>
+              </Link>
+            )}
           />
         </Box>
       </Box>
