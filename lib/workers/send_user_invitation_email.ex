@@ -33,7 +33,7 @@ defmodule ChatApi.Workers.SendUserInvitationEmail do
 
       case deliver_result do
         {:ok, result} ->
-          Logger.info("Successfully sent user invitation email: #{result}")
+          Logger.info("Successfully sent user invitation email: #{inspect(result)}")
 
         {:warning, reason} ->
           Logger.warn("Warning when sending user invitation email: #{inspect(reason)}")
