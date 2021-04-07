@@ -45,7 +45,7 @@ defmodule ChatApi.Customers do
     |> Repo.paginate(pagination_params)
   end
 
-  @spec get_customer!(binary(), atom() | list(atom()) | keyword()) :: Customer.t() | nil
+  @spec get_customer!(binary(), atom() | list(atom()) | keyword()) :: Customer.t()
   def get_customer!(id, preloads \\ [:company, :tags]) do
     Customer
     |> Repo.get!(id)
