@@ -202,7 +202,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
                 <Title level={4}>Conversations</Title>
                 <StartConversationButton
                   customerId={this.getCustomerId()}
-                  disabled={this.hasOpenConversation()}
+                  isDisabled={this.hasOpenConversation()}
                   onInitializeNewConversation={this.fetchConversations}
                 />
               </Flex>

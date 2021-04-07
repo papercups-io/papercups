@@ -300,10 +300,10 @@ class LiveSessionViewer extends React.Component<Props, State> {
                   {!loading && customer && (
                     <StartConversationButton
                       customerId={customer.id}
+                      isDisabled={!!conversation}
                       onInitializeNewConversation={(conversation) =>
                         this.setState({conversation})
                       }
-                      disabled={!!conversation}
                     />
                   )}
                 </Flex>

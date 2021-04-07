@@ -7,11 +7,42 @@ import logger from '../../logger';
 import {Conversation} from '../../types';
 import {TooltipPlacement} from 'antd/lib/tooltip';
 
+const ButtonWrapper = ({
+  isDisabled = false,
+  disabledTooltipPlacement = 'left',
+  disabledTooltipTitle = 'This customer already has an open conversation',
+  onClick,
+}: {
+  isDisabled: boolean;
+  disabledTooltipPlacement?: TooltipPlacement;
+  disabledTooltipTitle?: string;
+  onClick: () => void;
+}) => {
+  const button = (
+    <Button type="primary" onClick={onClick} disabled={isDisabled}>
+      Start conversation
+    </Button>
+  );
+
+  if (isDisabled) {
+    return (
+      <Tooltip
+        title={disabledTooltipTitle}
+        placement={disabledTooltipPlacement}
+      >
+        {button}
+      </Tooltip>
+    );
+  } else {
+    return button;
+  }
+};
+
 export type Props = {
   customerId: string;
-  disabled: boolean;
-  disabledTooltipPlacement: TooltipPlacement;
-  disabledTooltipTitle: string;
+  isDisabled: boolean;
+  disabledTooltipPlacement?: TooltipPlacement;
+  disabledTooltipTitle?: string;
   onInitializeNewConversation?: (conservation: Conversation) => void;
 };
 
@@ -22,12 +53,6 @@ export type State = {
 };
 
 export class StartConversationButton extends React.Component<Props, State> {
-  static defaultProps = {
-    disabled: false,
-    disabledTooltipPlacement: 'right',
-    disabledTooltipTitle: 'This customer already has an open conversation',
-  };
-
   state: State = {
     isConversationModalOpen: false,
     isSendingMessage: false,
@@ -66,43 +91,23 @@ export class StartConversationButton extends React.Component<Props, State> {
     this.setState({isConversationModalOpen: false, isSendingMessage: false});
   };
 
-  getButton = () => {
+  render() {
     const {
-      disabled,
+      isDisabled,
       disabledTooltipPlacement,
       disabledTooltipTitle,
     } = this.props;
-
-    const button = (
-      <Button
-        type="primary"
-        onClick={this.handleOpenNewConversationModal}
-        disabled={disabled}
-      >
-        Start conversation
-      </Button>
-    );
-
-    if (disabled) {
-      return (
-        <Tooltip
-          title={disabledTooltipTitle}
-          placement={disabledTooltipPlacement}
-        >
-          {button}
-        </Tooltip>
-      );
-    } else {
-      return button;
-    }
-  };
-
-  render() {
     const {isConversationModalOpen, isSendingMessage, message} = this.state;
 
     return (
       <React.Fragment>
-        {this.getButton()}
+        <ButtonWrapper
+          isDisabled={isDisabled}
+          disabledTooltipPlacement={disabledTooltipPlacement}
+          disabledTooltipTitle={disabledTooltipTitle}
+          onClick={this.handleOpenNewConversationModal}
+        />
+
         <Modal
           title="Initialize a conversation"
           visible={isConversationModalOpen}
