@@ -24,7 +24,8 @@ defmodule ChatApiWeb.MessageControllerTest do
      authed_conn: authed_conn,
      account: account,
      message: message,
-     conversation: conversation}
+     conversation: conversation,
+     user: user}
   end
 
   describe "index" do
@@ -59,12 +60,112 @@ defmodule ChatApiWeb.MessageControllerTest do
       assert %{"id" => id} = json_response(conn, 201)["data"]
 
       conn = get(authed_conn, Routes.message_path(authed_conn, :show, id))
+      user_id = authed_conn.assigns.current_user.id
+      account_id = authed_conn.assigns.current_user.account_id
 
       assert %{
                "id" => _id,
                "object" => "message",
-               "body" => "some body"
+               "body" => "some body",
+               "user_id" => ^user_id,
+               "account_id" => ^account_id
              } = json_response(conn, 200)["data"]
+    end
+
+    test "defaults to the authed user's id and account_id when none are specified",
+         %{
+           authed_conn: authed_conn,
+           conversation: conversation
+         } do
+      message = %{
+        body: "some body",
+        conversation_id: conversation.id
+      }
+
+      conn = post(authed_conn, Routes.message_path(authed_conn, :create), message: message)
+      assert %{"id" => id} = json_response(conn, 201)["data"]
+
+      conn = get(authed_conn, Routes.message_path(authed_conn, :show, id))
+      user_id = authed_conn.assigns.current_user.id
+      account_id = authed_conn.assigns.current_user.account_id
+
+      assert %{
+               "id" => _id,
+               "object" => "message",
+               "body" => "some body",
+               "user_id" => ^user_id,
+               "account_id" => ^account_id
+             } = json_response(conn, 200)["data"]
+    end
+
+    test "renders message when customer ID is valid",
+         %{
+           authed_conn: authed_conn,
+           account: account,
+           conversation: conversation
+         } do
+      customer = insert(:customer, account: account)
+
+      message = %{
+        body: "some body",
+        account_id: account.id,
+        customer_id: customer.id,
+        conversation_id: conversation.id
+      }
+
+      conn = post(authed_conn, Routes.message_path(authed_conn, :create), message: message)
+      assert %{"id" => id} = json_response(conn, 201)["data"]
+
+      conn = get(authed_conn, Routes.message_path(authed_conn, :show, id))
+      customer_id = customer.id
+      account_id = authed_conn.assigns.current_user.account_id
+
+      assert %{
+               "id" => _id,
+               "object" => "message",
+               "body" => "some body",
+               "customer_id" => ^customer_id,
+               "account_id" => ^account_id
+             } = json_response(conn, 200)["data"]
+    end
+
+    test "returns error when both a user ID and customer ID are specified",
+         %{
+           authed_conn: authed_conn,
+           account: account,
+           conversation: conversation
+         } do
+      customer = insert(:customer, account: account)
+
+      message = %{
+        body: "some body",
+        account_id: account.id,
+        customer_id: customer.id,
+        user_id: authed_conn.assigns.current_user.id,
+        conversation_id: conversation.id
+      }
+
+      conn = post(authed_conn, Routes.message_path(authed_conn, :create), message: message)
+      assert json_response(conn, 422)["error"]["message"]
+    end
+
+    test "returns error when connection is not authorized",
+         %{
+           conn: conn,
+           account: account,
+           conversation: conversation
+         } do
+      customer = insert(:customer, account: account)
+
+      message = %{
+        body: "some body",
+        account_id: account.id,
+        customer_id: customer.id,
+        conversation_id: conversation.id
+      }
+
+      conn = post(conn, Routes.message_path(conn, :create), message: message)
+      assert json_response(conn, 401)["error"]["message"]
     end
   end
 

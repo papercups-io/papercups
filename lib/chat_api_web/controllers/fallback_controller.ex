@@ -35,4 +35,15 @@ defmodule ChatApiWeb.FallbackController do
       }
     })
   end
+
+  def call(conn, {:error, :unprocessable_entity, message}) do
+    conn
+    |> put_status(422)
+    |> json(%{
+      error: %{
+        status: 422,
+        message: message
+      }
+    })
+  end
 end
