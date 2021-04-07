@@ -164,11 +164,7 @@ defmodule ChatApiWeb.MessageController do
         {:ok, Map.merge(params, %{"account_id" => account_id})}
 
       _ ->
-        {:ok,
-         Map.merge(params, %{
-           "account_id" => account_id,
-           "user_id" => conn.assigns.current_user.id
-         })}
+        {:error, :forbidden, "Forbidden: invalid `customer_id`"}
     end
   end
 

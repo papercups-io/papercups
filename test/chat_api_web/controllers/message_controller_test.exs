@@ -129,6 +129,24 @@ defmodule ChatApiWeb.MessageControllerTest do
              } = json_response(conn, 200)["data"]
     end
 
+    test "returns error when customer ID is not associated with the authenticated account",
+         %{
+           authed_conn: authed_conn,
+           conversation: conversation
+         } do
+      some_other_account = insert(:account)
+      customer = insert(:customer, account: some_other_account)
+
+      message = %{
+        body: "some body",
+        customer_id: customer.id,
+        conversation_id: conversation.id
+      }
+
+      conn = post(authed_conn, Routes.message_path(authed_conn, :create), message: message)
+      assert json_response(conn, 403)["error"]["message"]
+    end
+
     test "returns error when both a user ID and customer ID are specified",
          %{
            authed_conn: authed_conn,

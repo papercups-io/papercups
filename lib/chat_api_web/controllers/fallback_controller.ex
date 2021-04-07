@@ -46,4 +46,15 @@ defmodule ChatApiWeb.FallbackController do
       }
     })
   end
+
+  def call(conn, {:error, :forbidden, message}) do
+    conn
+    |> put_status(403)
+    |> json(%{
+      error: %{
+        status: 403,
+        message: message
+      }
+    })
+  end
 end
