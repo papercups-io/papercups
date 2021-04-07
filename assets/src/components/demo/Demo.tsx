@@ -13,7 +13,7 @@ import {
   Title,
 } from '../common';
 import {RightCircleOutlined} from '../icons';
-import {BASE_URL, env, isDev} from '../../config';
+import {BASE_URL, env, isDev, isStorytimeEnabled} from '../../config';
 import * as API from '../../api';
 import logger from '../../logger';
 // Testing widget in separate package
@@ -22,7 +22,6 @@ import {Storytime} from '@papercups-io/storytime';
 import ChatWidget from '@papercups-io/chat-widget';
 
 const {
-  REACT_APP_STORYTIME_ENABLED,
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
 } = env;
 
@@ -62,7 +61,7 @@ class Demo extends React.Component<Props, State> {
         // Not logged in, no big deal
       })
       .then(() => {
-        if (REACT_APP_STORYTIME_ENABLED) {
+        if (isStorytimeEnabled) {
           this.storytime = Storytime.init({
             accountId: this.state.accountId,
             baseUrl: BASE_URL,

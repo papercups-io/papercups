@@ -24,7 +24,14 @@ import {
   TeamOutlined,
   VideoCameraOutlined,
 } from './icons';
-import {BASE_URL, env, isDev, isEuEdition, isHostedProd} from '../config';
+import {
+  BASE_URL,
+  env,
+  isDev,
+  isEuEdition,
+  isHostedProd,
+  isStorytimeEnabled,
+} from '../config';
 import analytics from '../analytics';
 import {
   getBrowserVisibilityInfo,
@@ -60,7 +67,6 @@ import TagsOverview from './tags/TagsOverview';
 import TagDetailsPage from './tags/TagDetailsPage';
 
 const {
-  REACT_APP_STORYTIME_ENABLED,
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
 } = env;
 
@@ -215,7 +221,7 @@ const Dashboard = (props: RouteComponentProps) => {
       analytics.identify(id, email);
     }
 
-    if (REACT_APP_STORYTIME_ENABLED && currentUser) {
+    if (isStorytimeEnabled && currentUser) {
       const {id, email} = currentUser;
       // TODO: figure out a better way to initialize this?
       const storytime = Storytime.init({

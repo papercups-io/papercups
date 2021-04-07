@@ -16,7 +16,7 @@ import WorkingHoursSelector from './WorkingHoursSelector';
 import {WorkingHours} from './support';
 import * as API from '../../api';
 import {Account, User} from '../../types';
-import {FRONTEND_BASE_URL} from '../../config';
+import {FRONTEND_BASE_URL, isUserInvitationEmailEnabled} from '../../config';
 import {sleep, hasValidStripeKey} from '../../utils';
 import logger from '../../logger';
 
@@ -385,18 +385,19 @@ class AccountOverview extends React.Component<Props, State> {
               </Paragraph>
 
               <Flex sx={{maxWidth: 640}}>
-                <Box sx={{flex: 1}} mr={1}>
+                <Box mr={1}>
+                  <Button type="primary" onClick={this.handleGenerateInviteUrl}>
+                    Generate invite URL
+                  </Button>
+                </Box>
+                <Box sx={{flex: 1}}>
                   <Input
                     ref={(el) => (this.input = el)}
                     type="text"
                     placeholder="Click the button to generate an invite URL"
+                    disabled={!inviteUrl}
                     value={inviteUrl}
                   ></Input>
-                </Box>
-                <Box>
-                  <Button type="primary" onClick={this.handleGenerateInviteUrl}>
-                    Generate invite URL
-                  </Button>
                 </Box>
               </Flex>
             </Box>
@@ -413,7 +414,7 @@ class AccountOverview extends React.Component<Props, State> {
             isAdmin={isAdmin}
             onDisableUser={this.handleDisableUser}
           />
-          {isAdmin && (
+          {isAdmin && isUserInvitationEmailEnabled && (
             <Box mt={2}>
               {showInviteMoreInput ? (
                 <form onSubmit={this.handleSendInviteEmail}>
