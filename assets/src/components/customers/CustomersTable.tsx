@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Customer} from '../../types';
 import {Badge, Button, Table, Text, Tooltip} from '../common';
-import CustomerDetailsModal from './CustomerDetailsModal';
+import CustomerDetailsModal from '../customers/CustomerDetailsModal';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);

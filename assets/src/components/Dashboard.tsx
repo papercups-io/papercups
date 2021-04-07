@@ -27,6 +27,7 @@ import {
 import {
   BASE_URL,
   env,
+  isCustomerDetailsV2Enabled,
   isDev,
   isEuEdition,
   isHostedProd,
@@ -55,6 +56,7 @@ import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import CustomerDetailsPage from './customers/CustomerDetailsPage';
+import CustomerDetailsPageV2 from './customers/CustomerDetailsPageV2';
 import SessionsOverview from './sessions/SessionsOverview';
 import InstallingStorytime from './sessions/InstallingStorytime';
 import LiveSessionViewer from './sessions/LiveSessionViewer';
@@ -421,7 +423,14 @@ const Dashboard = (props: RouteComponentProps) => {
             component={GettingStartedOverview}
           />
           <Route path="/account*" component={AccountOverview} />
-          <Route path="/customers/:id" component={CustomerDetailsPage} />
+          <Route
+            path="/customers/:id"
+            component={
+              isCustomerDetailsV2Enabled
+                ? CustomerDetailsPageV2
+                : CustomerDetailsPage
+            }
+          />
           <Route path="/customers" component={CustomersPage} />
           <Route path="/companies/new" component={CreateCompanyPage} />
           <Route path="/companies/:id/edit" component={UpdateCompanyPage} />
