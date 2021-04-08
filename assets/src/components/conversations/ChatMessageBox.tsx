@@ -11,6 +11,17 @@ const renderers = {
   text: (props: any) => {
     return <Twemoji text={props.children} />;
   },
+  image: (props: any) => {
+    // TODO: fix scroll behavior after image loads
+    return (
+      <img
+        alt={props.alt || ''}
+        src={props.src}
+        {...props}
+        style={{maxWidth: '100%', maxHeight: 400}}
+      />
+    );
+  },
 };
 
 const ChatMessageAttachment = ({
