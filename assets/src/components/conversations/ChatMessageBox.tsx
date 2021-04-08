@@ -12,6 +12,7 @@ const renderers = {
     return <Twemoji text={props.children} />;
   },
   image: (props: any) => {
+    // TODO: fix scroll behavior after image loads
     return (
       <img
         alt={props.alt || ''}
