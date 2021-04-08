@@ -12,7 +12,14 @@ const renderers = {
     return <Twemoji text={props.children} />;
   },
   image: (props: any) => {
-    return <img {...props} style={{maxWidth: '100%', maxHeight: 400}} />;
+    return (
+      <img
+        alt={props.alt || ''}
+        src={props.src}
+        {...props}
+        style={{maxWidth: '100%', maxHeight: 400}}
+      />
+    );
   },
 };
 
