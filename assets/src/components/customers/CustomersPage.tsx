@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Alert, Button, Input, Paragraph, Text, Title} from '../common';
+import {Alert, Button, Paragraph, Text, Title} from '../common';
 import {useConversations} from '../conversations/ConversationsProvider';
 import * as API from '../../api';
 import logger from '../../logger';
@@ -9,40 +9,6 @@ import {Customer, Pagination} from '../../types';
 import Spinner from '../Spinner';
 import CustomersTable from './CustomersTable';
 import {NewCustomerButton} from './NewCustomerModal';
-
-const filterCustomersByQuery = (
-  customers: Array<Customer>,
-  query?: string
-): Array<Customer> => {
-  if (!query || !query.length) {
-    return customers;
-  }
-
-  return customers.filter((customer) => {
-    const {
-      name,
-      email,
-      phone,
-      browser,
-      os,
-      time_zone: timeZone,
-      current_url: url,
-    } = customer;
-
-    const words = [name, email, phone, browser, os, timeZone, url]
-      .filter((str) => str && String(str).trim().length > 0)
-      .join(' ')
-      .replace('_', ' ')
-      .split(' ')
-      .map((str) => str.toLowerCase());
-
-    const queries = query.split(' ').map((str) => str.toLowerCase());
-
-    return words.some((word) => {
-      return queries.every((q) => word.indexOf(q) !== -1);
-    });
-  });
-};
 
 type Props = {
   currentlyOnline?: any;
@@ -185,13 +151,6 @@ class CustomersPage extends React.Component<Props, State> {
 
           <Flex mb={3} sx={{justifyContent: 'space-between'}}>
             <div />
-            {/* <Input.Search
-              placeholder="Search customers..."
-              allowClear
-              onSearch={this.handleSearchCustomers}
-              style={{width: 400}}
-            /> */}
-
             <NewCustomerButton onSuccess={this.handleRefreshCustomers} />
           </Flex>
 
