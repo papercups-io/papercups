@@ -54,6 +54,12 @@ type State = {
   query: string;
   customers: Array<Customer>;
   filteredCustomers: Array<Customer>;
+  pagination: {
+    page_size: number;
+    total_pages: number;
+    total_entries: number;
+    page_number: number;
+  } | null;
 };
 
 class CustomersPage extends React.Component<Props, State> {
@@ -61,6 +67,7 @@ class CustomersPage extends React.Component<Props, State> {
     loading: true,
     refreshing: false,
     selectedCustomerId: null,
+    pagination: null,
     query: '',
     customers: [],
     filteredCustomers: [],
@@ -68,13 +75,12 @@ class CustomersPage extends React.Component<Props, State> {
 
   async componentDidMount() {
     try {
-      const {query} = this.state;
-      const customers = await API.fetchCustomers();
+      const {data: customers, pagination} = await API.fetchCustomers({ page: 1, page_size: 5});
 
       this.setState({
         customers,
-        filteredCustomers: filterCustomersByQuery(customers, query),
         loading: false,
+        pagination,
       });
     } catch (err) {
       logger.error('Error loading customers!', err);
@@ -85,14 +91,13 @@ class CustomersPage extends React.Component<Props, State> {
 
   handleRefreshCustomers = async () => {
     this.setState({refreshing: true});
+    const { pagination } = this.state;
 
     try {
-      const {query} = this.state;
-      const customers = await API.fetchCustomers();
+      const {data: customers} = await API.fetchCustomers({ page: pagination?.page_number, page_size: pagination?.page_size });
 
       this.setState({
         customers,
-        filteredCustomers: filterCustomersByQuery(customers, query),
         refreshing: false,
       });
     } catch (err) {
@@ -101,6 +106,24 @@ class CustomersPage extends React.Component<Props, State> {
       this.setState({refreshing: false});
     }
   };
+
+  handleNextPage = async (page: number, pageSize?: number) => {
+    this.setState({refreshing: true});
+
+    try {
+      const {data: customers, pagination} = await API.fetchCustomers({ page, pageSize });
+
+      this.setState({
+        customers,
+        refreshing: false,
+        pagination: pagination,
+      });
+    } catch (err) {
+      logger.error('Error refreshing customers!', err);
+
+      this.setState({refreshing: false});
+    }
+  }
 
   handleSearchCustomers = (query: string) => {
     const {customers = []} = this.state;
@@ -111,13 +134,12 @@ class CustomersPage extends React.Component<Props, State> {
 
     this.setState({
       query,
-      filteredCustomers: filterCustomersByQuery(customers, query),
     });
   };
 
   render() {
     const {currentlyOnline} = this.props;
-    const {loading, refreshing, filteredCustomers = []} = this.state;
+    const {loading, refreshing, customers, pagination} = this.state;
 
     if (loading) {
       return (
@@ -158,21 +180,26 @@ class CustomersPage extends React.Component<Props, State> {
           </Box>
 
           <Flex mb={3} sx={{justifyContent: 'space-between'}}>
-            <Input.Search
+            <div />
+            {/* <Input.Search
               placeholder="Search customers..."
               allowClear
               onSearch={this.handleSearchCustomers}
               style={{width: 400}}
-            />
+            /> */}
 
             <NewCustomerButton onSuccess={this.handleRefreshCustomers} />
           </Flex>
 
           <CustomersTable
             loading={refreshing}
-            customers={filteredCustomers}
+            customers={customers}
             currentlyOnline={currentlyOnline}
             onUpdate={this.handleRefreshCustomers}
+            pagination={{
+              total: pagination?.total_entries,
+              onChange: this.handleNextPage,
+            }}
             action={(customer: Customer) => (
               <Link to={`/customers/${customer.id}`}>
                 <Button>View profile</Button>
