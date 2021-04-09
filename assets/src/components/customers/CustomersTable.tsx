@@ -3,7 +3,7 @@ import {Box} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Customer} from '../../types';
-import {Badge, Button, Table, Text, Tooltip, Pagination} from '../common';
+import {Badge, Button, Table, Text, Tooltip} from '../common';
 import CustomerDetailsModal from './CustomerDetailsModal';
 import {TablePaginationConfig} from 'antd/lib/table';
 

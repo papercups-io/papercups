@@ -20,7 +20,6 @@ import Spin from 'antd/lib/spin';
 import Statistic from 'antd/lib/statistic';
 import Switch from 'antd/lib/switch';
 import Table from 'antd/lib/table';
-import Pagination from 'antd/lib/pagination';
 import Tabs from 'antd/lib/tabs';
 import Tag from 'antd/lib/tag';
 import Tooltip from 'antd/lib/tooltip';
@@ -126,7 +125,6 @@ export {
   Menu,
   Modal,
   notification,
-  Pagination,
   Popconfirm,
   Popover,
   Radio,
