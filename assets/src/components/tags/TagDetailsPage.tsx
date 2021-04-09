@@ -73,7 +73,7 @@ class TagDetailsPage extends React.Component<Props, State> {
         {data: conversations},
       ] = await Promise.all([
         API.fetchTagById(tagId),
-        API.fetchCustomers({tag_id: tagId}),
+        API.fetchCustomers({tag_id: tagId, page: 1, page_size: 10}),
         API.fetchConversations({tag_id: tagId}),
       ]);
 
