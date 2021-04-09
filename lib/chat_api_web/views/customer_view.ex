@@ -64,6 +64,7 @@ defmodule ChatApiWeb.CustomerView do
       updated_at: customer.updated_at,
       first_seen: customer.first_seen,
       last_seen: customer.last_seen,
+      last_seen_at: customer.last_seen_at,
       phone: customer.phone,
       external_id: customer.external_id,
       profile_photo_url: customer.profile_photo_url,

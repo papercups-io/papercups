@@ -1,7 +1,14 @@
 import request from 'superagent';
 import qs from 'query-string';
 import {getAuthTokens} from './storage';
-import {Account, Conversation, Tag, User, WidgetSettings} from './types';
+import {
+  Account,
+  Conversation,
+  Customer,
+  Tag,
+  User,
+  WidgetSettings,
+} from './types';
 
 // TODO: handle this on the server instead
 function now() {
@@ -131,16 +138,20 @@ export const attemptPasswordReset = async (
     .then((res) => res.body.data);
 };
 
-export const createNewCustomer = async (accountId: string) => {
+export const createNewCustomer = async (
+  accountId: string,
+  params: Partial<Customer>
+) => {
   return request
     .post(`/api/customers`)
     .send({
       customer: {
-        account_id: accountId,
         first_seen: now(),
         last_seen: now(),
+        ...params,
+        account_id: accountId,
       },
-    }) // TODO: send over some metadata?
+    })
     .then((res) => res.body.data);
 };
 
@@ -626,6 +637,21 @@ export const generateUserInvitation = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const sendUserInvitationEmail = async (
+  to_address: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/user_invitation_emails`)
+    .send({to_address})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchSlackAuthorization = async (
   type = 'reply',
   token = getAccessToken()
@@ -788,6 +814,19 @@ export const fetchGoogleAuthorization = async (
     .query({client})
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export const deleteGoogleAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/google/authorization/${authorizationId}`)
+    .set('Authorization', token);
 };
 
 export type EmailParams = {

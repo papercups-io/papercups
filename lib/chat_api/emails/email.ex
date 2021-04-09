@@ -220,6 +220,89 @@ defmodule ChatApi.Emails.Email do
     """
   end
 
+  def user_invitation(
+        %{
+          company: company,
+          from_address: from_address,
+          from_name: from_name,
+          invitation_token: invitation_token,
+          to_address: to_address
+        } = _params
+      ) do
+    subject =
+      if from_name == company,
+        do: "You've been invited to join #{company} on Papercups!",
+        else: "#{from_name} has invited you to join #{company} on Papercups!"
+
+    intro_line =
+      if from_name == company,
+        do: "#{from_address} has invited you to join #{company} on Papercups!",
+        else: "#{from_name} (#{from_address}) has invited you to join #{company} on Papercups!"
+
+    invitation_url = "#{get_app_domain()}/registration/#{invitation_token}"
+
+    new()
+    |> to(to_address)
+    |> from({"Alex", @from_address})
+    |> reply_to("alex@papercups.io")
+    |> subject(subject)
+    |> html_body(
+      user_invitation_email_html(%{
+        intro_line: intro_line,
+        invitation_url: invitation_url
+      })
+    )
+    |> text_body(
+      user_invitation_email_text(%{
+        intro_line: intro_line,
+        invitation_url: invitation_url
+      })
+    )
+  end
+
+  defp user_invitation_email_text(
+         %{
+           invitation_url: invitation_url,
+           intro_line: intro_line
+         } = _params
+       ) do
+    """
+    Hi there!
+
+    #{intro_line}
+
+    Click the link below to sign up:
+
+    #{invitation_url}
+
+    Best,
+    Alex & Kam @ Papercups
+    """
+  end
+
+  # TODO: figure out a better way to create templates for these
+  defp user_invitation_email_html(
+         %{
+           invitation_url: invitation_url,
+           intro_line: intro_line
+         } = _params
+       ) do
+    """
+    <p>Hi there!</p>
+
+    <p>#{intro_line}</p>
+
+    <p>Click the link below to sign up:</p>
+
+    <a href="#{invitation_url}">#{invitation_url}</a>
+
+    <p>
+    Best,<br />
+    Alex & Kam @ Papercups
+    </p>
+    """
+  end
+
   def password_reset(%ChatApi.Users.User{email: email, password_reset_token: token} = _user) do
     new()
     |> to(email)

@@ -3,7 +3,8 @@ import {Box, Flex} from 'theme-ui';
 import {colors, Button, Input, Modal, Select, Text, TextArea} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
-import {TAG_COLORS, formatTagErrors} from './support';
+import {formatServerError} from '../../utils';
+import {TAG_COLORS} from './support';
 
 const NewTagModal = ({
   visible,
@@ -45,7 +46,7 @@ const NewTagModal = ({
       })
       .catch((err) => {
         logger.error('Error creating tag:', err);
-        const errorMessage = formatTagErrors(err);
+        const errorMessage = formatServerError(err);
         setErrorMessage(errorMessage);
       })
       .finally(() => setIsSaving(false));

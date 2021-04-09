@@ -2,6 +2,7 @@ import React from 'react';
 import {Box} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import {Customer} from '../../types';
 import {Badge, Button, Table, Text, Tooltip} from '../common';
 import CustomerDetailsModal from './CustomerDetailsModal';
 
@@ -13,17 +14,21 @@ const CustomersTable = ({
   customers,
   currentlyOnline = {},
   shouldIncludeAnonymous,
+  action,
   onUpdate,
 }: {
   loading?: boolean;
-  customers: Array<any>;
-  currentlyOnline?: any;
+  customers: Array<Customer>;
+  currentlyOnline?: Record<string, any>;
   shouldIncludeAnonymous?: boolean;
+  action?: (customer: Customer) => React.ReactElement;
   onUpdate: () => Promise<void>;
 }) => {
-  const [selectedCustomerId, setSelectedCustomerId] = React.useState(null);
+  const [selectedCustomerId, setSelectedCustomerId] = React.useState<
+    string | null
+  >(null);
 
-  const isCustomerOnline = (customer: any) => {
+  const isCustomerOnline = (customer: Customer) => {
     const {id: customerId} = customer;
 
     return currentlyOnline[customerId];
@@ -35,6 +40,7 @@ const CustomersTable = ({
     .map((customer) => {
       return {key: customer.id, ...customer};
     })
+    // TODO: make sorting configurable from the UI
     .sort((a, b) => {
       if (isCustomerOnline(a)) {
         return -1;
@@ -42,8 +48,11 @@ const CustomersTable = ({
         return 1;
       }
 
+      const bLastSeen = b.last_seen_at || b.last_seen;
+      const aLastSeen = a.last_seen_at || a.last_seen;
+
       // TODO: fix how we set `last_seen`!
-      return +new Date(b.last_seen) - +new Date(a.last_seen);
+      return +new Date(bLastSeen) - +new Date(aLastSeen);
     });
 
   const columns = [
@@ -65,11 +74,11 @@ const CustomersTable = ({
     },
     {
       title: 'Last seen',
-      dataIndex: 'last_seen',
-      key: 'last_seen',
-      render: (value: string, record: any) => {
-        const {id, pathname, current_url} = record;
-        const formatted = dayjs.utc(value).format('MMMM DD, YYYY');
+      dataIndex: 'last_seen_at',
+      key: 'last_seen_at',
+      render: (value: string, record: Customer) => {
+        const {id, pathname, current_url, last_seen} = record;
+        const formatted = dayjs.utc(value || last_seen).format('MMMM DD, YYYY');
         const isOnline = currentlyOnline[id];
 
         if (isOnline) {
@@ -95,26 +104,22 @@ const CustomersTable = ({
       },
     },
     {
-      title: 'Device info',
-      dataIndex: 'info',
-      key: 'info',
-      render: (value: string, record: any) => {
-        const {browser, os} = record;
-
-        return (
-          <Text>
-            <Text type="secondary">{browser}</Text>
-            {browser && os ? ' · ' : ''}
-            {os && <Text type="secondary">{os}</Text>}
-          </Text>
-        );
+      title: 'Timezone',
+      dataIndex: 'time_zone',
+      key: 'time_zone',
+      render: (value: string) => {
+        return value ? <Text>{value}</Text> : <Text type="secondary">--</Text>;
       },
     },
     {
       title: '',
       dataIndex: 'action',
       key: 'action',
-      render: (value: string, record: any) => {
+      render: (value: string, record: Customer) => {
+        if (action && typeof action === 'function') {
+          return action(record);
+        }
+
         const {id: customerId} = record;
 
         return (
@@ -127,6 +132,7 @@ const CustomersTable = ({
               isVisible={selectedCustomerId === record.id}
               onClose={() => setSelectedCustomerId(null)}
               onUpdate={onUpdate}
+              onDelete={onUpdate}
             />
           </>
         );

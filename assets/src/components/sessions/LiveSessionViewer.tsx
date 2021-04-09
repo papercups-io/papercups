@@ -4,13 +4,14 @@ import {throttle} from 'lodash';
 import {Channel, Presence, Socket} from 'phoenix';
 import {Box, Flex} from 'theme-ui';
 import {Replayer, ReplayerEvents} from 'rrweb';
-import {Alert, Button, Modal, Paragraph, Text, TextArea} from '../common';
-import {ArrowLeftOutlined, SendOutlined} from '../icons';
+import {Alert, Button, Paragraph, Text} from '../common';
+import {ArrowLeftOutlined} from '../icons';
 import {SOCKET_URL} from '../../socket';
 import * as API from '../../api';
 import logger from '../../logger';
 import Spinner from '../Spinner';
 import ConversationDetailsSidebar from '../conversations/ConversationDetailsSidebar';
+import StartConversationButton from '../conversations/StartConversationButton';
 import ConversationSidebar from './ConversationSidebar';
 import {Conversation, Customer} from '../../types';
 import 'rrweb/dist/replay/rrweb-replay.min.css';
@@ -22,11 +23,8 @@ type State = {
   customer: Customer | null;
   conversation: Conversation | null;
   scale: number;
-  isConversationModalOpen: boolean;
-  isSendingMessage: boolean;
   isCustomerActive: boolean;
   isCustomerConnected: boolean;
-  message: string;
 };
 
 class LiveSessionViewer extends React.Component<Props, State> {
@@ -41,11 +39,8 @@ class LiveSessionViewer extends React.Component<Props, State> {
     customer: null,
     conversation: null,
     scale: 1,
-    isConversationModalOpen: false,
-    isSendingMessage: false,
     isCustomerActive: true,
     isCustomerConnected: true,
-    message: '',
   };
 
   // TODO: move a bunch of logic from here into separate functions
@@ -178,38 +173,6 @@ class LiveSessionViewer extends React.Component<Props, State> {
     this.channels.push(channel);
   };
 
-  initializeNewConversation = async () => {
-    const {customer, message} = this.state;
-
-    if (!customer) {
-      return null;
-    }
-
-    this.setState({isSendingMessage: true});
-
-    try {
-      const {id: customerId} = customer;
-      const conversation = await API.createNewConversation(customerId, {
-        message: {
-          body: message,
-          sent_at: new Date().toISOString(),
-        },
-      });
-
-      this.setState({conversation});
-    } catch (err) {
-      logger.error('Failed to initialize conversation!', err);
-    }
-
-    this.setState({isConversationModalOpen: false, isSendingMessage: false});
-  };
-
-  handleOpenNewConversationModal = () =>
-    this.setState({isConversationModalOpen: true});
-
-  handleCloseNewConversationModal = () =>
-    this.setState({isConversationModalOpen: false});
-
   findExistingConversation = async (
     accountId: string,
     customerId?: string | null
@@ -312,11 +275,8 @@ class LiveSessionViewer extends React.Component<Props, State> {
       scale = 1,
       conversation,
       customer,
-      isConversationModalOpen,
-      isSendingMessage,
       isCustomerActive,
       isCustomerConnected,
-      message,
     } = this.state;
     const hasAdditionalDetails = !!(conversation || customer);
 
@@ -337,45 +297,15 @@ class LiveSessionViewer extends React.Component<Props, State> {
                     </Button>
                   </Link>
 
-                  {!loading && !conversation && (
-                    <Button
-                      type="primary"
-                      onClick={this.handleOpenNewConversationModal}
-                    >
-                      Start conversation
-                    </Button>
-                  )}
-                  <Modal
-                    title="Initialize a conversation"
-                    visible={isConversationModalOpen}
-                    onCancel={this.handleCloseNewConversationModal}
-                    footer={[
-                      <Button
-                        key="cancel"
-                        onClick={this.handleCloseNewConversationModal}
-                      >
-                        Cancel
-                      </Button>,
-                      <Button
-                        key="submit"
-                        type="primary"
-                        icon={<SendOutlined />}
-                        loading={isSendingMessage}
-                        onClick={this.initializeNewConversation}
-                      >
-                        Send
-                      </Button>,
-                    ]}
-                  >
-                    <TextArea
-                      className="TextArea--transparent"
-                      placeholder="Enter a message..."
-                      autoSize={{maxRows: 4}}
-                      autoFocus
-                      value={message}
-                      onChange={(e) => this.setState({message: e.target.value})}
+                  {!loading && customer && (
+                    <StartConversationButton
+                      customerId={customer.id}
+                      isDisabled={!!conversation}
+                      onInitializeNewConversation={(conversation) =>
+                        this.setState({conversation})
+                      }
                     />
-                  </Modal>
+                  )}
                 </Flex>
               </Paragraph>
 

@@ -4,6 +4,7 @@ defmodule ChatApiWeb.GoogleController do
   require Logger
 
   alias ChatApi.Google
+  alias ChatApi.Google.GoogleAuthorization
 
   @spec callback(Plug.Conn.t(), map()) :: Plug.Conn.t()
   @doc """
@@ -36,6 +37,8 @@ defmodule ChatApiWeb.GoogleController do
              client: type
            }) do
         {:ok, _result} ->
+          enqueue_enabling_gmail_sync(account_id)
+
           json(conn, %{data: %{ok: true}})
 
         error ->
@@ -56,6 +59,7 @@ defmodule ChatApiWeb.GoogleController do
         auth ->
           json(conn, %{
             data: %{
+              id: auth.id,
               created_at: auth.inserted_at,
               account_id: auth.account_id,
               user_id: auth.user_id,
@@ -93,5 +97,23 @@ defmodule ChatApiWeb.GoogleController do
     url = Google.Auth.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
 
     json(conn, %{data: %{url: url}})
+  end
+
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def delete(conn, %{"id" => id}) do
+    with %{account_id: _account_id} <- conn.assigns.current_user,
+         %GoogleAuthorization{} = auth <-
+           Google.get_google_authorization!(id),
+         {:ok, %GoogleAuthorization{}} <- Google.delete_google_authorization(auth) do
+      send_resp(conn, :no_content, "")
+    end
+  end
+
+  @spec enqueue_enabling_gmail_sync(binary()) ::
+          {:ok, Oban.Job.t()} | {:error, Ecto.Changeset.t()}
+  defp enqueue_enabling_gmail_sync(account_id) do
+    %{account_id: account_id}
+    |> ChatApi.Workers.EnableGmailInboxSync.new()
+    |> Oban.insert()
   end
 end

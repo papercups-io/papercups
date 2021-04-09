@@ -9,8 +9,10 @@ import Spinner from '../Spinner';
 import logger from '../../logger';
 import {getColorByUuid} from '../conversations/support';
 import ConversationItem from '../conversations/ConversationItem';
+import StartConversationButton from '../conversations/StartConversationButton';
 import {CustomerDetails} from '../conversations/ConversationDetailsSidebar';
 import {sortConversationMessages} from '../../utils';
+import CustomerDetailsModal from './CustomerDetailsModal';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (
@@ -34,6 +36,7 @@ type State = {
   loading?: boolean;
   customer: Customer | null;
   conversations: Array<Conversation>;
+  isModalOpen?: boolean;
 };
 
 class CustomerDetailsPage extends React.Component<Props, State> {
@@ -41,11 +44,15 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     loading: true,
     customer: null,
     conversations: [],
+    isModalOpen: false,
   };
 
+  getCustomerId = () => this.props.match.params.id;
+
   async componentDidMount() {
+    const customerId = this.getCustomerId();
+
     try {
-      const {id: customerId} = this.props.match.params;
       const customer = await API.fetchCustomer(customerId, {
         expand: ['company', 'tags'],
       });
@@ -61,6 +68,40 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     }
   }
 
+  handleRefreshCustomer = async () => {
+    try {
+      const customer = await API.fetchCustomer(this.getCustomerId(), {
+        expand: ['company', 'tags'],
+      });
+
+      this.setState({customer, loading: false});
+    } catch (err) {
+      logger.error('Error loading customer!', err);
+
+      this.setState({loading: false});
+    }
+  };
+
+  fetchConversations = async () => {
+    try {
+      const {data: conversations} = await API.fetchConversations({
+        customer_id: this.getCustomerId(),
+      });
+
+      this.setState({conversations});
+    } catch (err) {
+      logger.error('Error loading conversations!', err);
+    }
+  };
+
+  hasOpenConversation = () => {
+    const openConversation = this.state.conversations.find(
+      (conversation) => conversation.status === 'open'
+    );
+
+    return !!openConversation;
+  };
+
   handleSelectConversation = (conversationId: string) => {
     const conversation = this.state.conversations.find(
       (conversation) => conversation.id === conversationId
@@ -73,8 +114,24 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     this.props.history.push(url);
   };
 
+  handleOpenModal = () => {
+    this.setState({isModalOpen: true});
+  };
+
+  handleCloseModal = () => {
+    this.setState({isModalOpen: false});
+  };
+
+  handleCustomerUpdated = async () => {
+    return this.handleRefreshCustomer().then(() => this.handleCloseModal());
+  };
+
+  handleCustomerDeleted = () => {
+    this.props.history.push('/customers');
+  };
+
   render() {
-    const {loading, customer, conversations = []} = this.state;
+    const {loading, isModalOpen, customer, conversations = []} = this.state;
 
     if (loading || !customer) {
       return (
@@ -114,7 +171,19 @@ class CustomerDetailsPage extends React.Component<Props, State> {
 
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={2}>{title}</Title>
+
+          <Button type="primary" onClick={this.handleOpenModal}>
+            Edit
+          </Button>
         </Flex>
+
+        <CustomerDetailsModal
+          customer={customer}
+          isVisible={isModalOpen}
+          onClose={this.handleCloseModal}
+          onUpdate={this.handleCustomerUpdated}
+          onDelete={this.handleCustomerDeleted}
+        />
 
         <Flex>
           <Box sx={{flex: 1, pr: 4, mt: -2}}>
@@ -123,9 +192,20 @@ class CustomerDetailsPage extends React.Component<Props, State> {
 
           <Box sx={{flex: 3}}>
             <DetailsSectionCard>
-              <Box pb={2} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
+              <Flex
+                pb={2}
+                sx={{
+                  borderBottom: '1px solid rgba(0,0,0,.06)',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Title level={4}>Conversations</Title>
-              </Box>
+                <StartConversationButton
+                  customerId={this.getCustomerId()}
+                  isDisabled={this.hasOpenConversation()}
+                  onInitializeNewConversation={this.fetchConversations}
+                />
+              </Flex>
 
               {conversations.length > 0 ? (
                 conversations.map((conversation) => {

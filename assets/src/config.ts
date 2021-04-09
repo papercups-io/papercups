@@ -23,6 +23,14 @@ export const isHostedProd =
 export const isEuEdition =
   env.REACT_APP_EU_EDITION === 'true' || env.REACT_APP_EU_EDITION === '1';
 
+export const isStorytimeEnabled =
+  env.REACT_APP_STORYTIME_ENABLED === 'true' ||
+  env.REACT_APP_STORYTIME_ENABLED === '1';
+
+export const isUserInvitationEmailEnabled =
+  env.REACT_APP_USER_INVITATION_EMAIL_ENABLED === 'true' ||
+  env.REACT_APP_USER_INVITATION_EMAIL_ENABLED === '1';
+
 export const REACT_URL = env.REACT_APP_URL || 'app.papercups.io';
 
 export const BASE_URL = isDev

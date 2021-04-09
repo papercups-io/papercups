@@ -269,6 +269,11 @@ class TagDetailsPage extends React.Component<Props, State> {
                 customers={customers}
                 shouldIncludeAnonymous
                 onUpdate={this.handleRefreshCustomers}
+                action={(customer: T.Customer) => (
+                  <Link to={`/customers/${customer.id}`}>
+                    <Button>View profile</Button>
+                  </Link>
+                )}
               />
             </DetailsSectionCard>
 

@@ -5,16 +5,19 @@ import {colors, Button, Popconfirm, Table, Tag, Text, Tooltip} from '../common';
 import {IntegrationType, getSlackAuthUrl, getGoogleAuthUrl} from './support';
 import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
 import {TwilioAuthorizationButton} from './TwilioAuthorizationModal';
+import {GoogleAuthorizationButton} from './GoogleAuthorizationButton';
 
 const IntegrationsTable = ({
   loading,
   integrations,
   onDisconnectSlack,
+  onDisconnectGmail,
   onUpdateIntegration,
 }: {
   loading?: boolean;
   integrations: Array<IntegrationType>;
   onDisconnectSlack: (id: string) => void;
+  onDisconnectGmail: (id: string) => void;
   onUpdateIntegration: (data?: any) => void;
 }) => {
   const columns = [
@@ -113,18 +116,11 @@ const IntegrationsTable = ({
             );
           case 'gmail':
             return (
-              <Tooltip
-                title={
-                  <Box>
-                    Our verification with the Google API is pending, but you can
-                    still link your Gmail account to opt into new features.
-                  </Box>
-                }
-              >
-                <a href={getGoogleAuthUrl('gmail')}>
-                  <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-                </a>
-              </Tooltip>
+              <GoogleAuthorizationButton
+                isConnected={isConnected}
+                authorizationId={authorizationId}
+                onDisconnectGmail={onDisconnectGmail}
+              />
             );
           case 'sheets':
             return (

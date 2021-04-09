@@ -5,6 +5,7 @@ import {colors, Layout, notification, Sider, Title} from '../common';
 import {sleep} from '../../utils';
 import {ConversationsListResponse, PaginationOptions} from '../../api';
 import {Account, Conversation, Message} from '../../types';
+import * as API from '../../api';
 import ConversationsPreviewList from './ConversationsPreviewList';
 import ConversationContainer from './ConversationContainer';
 
@@ -47,19 +48,29 @@ class ConversationsDashboard extends React.Component<Props, State> {
     const q = qs.parse(window.location.search);
     const selectedConversationId = q.cid ? String(q.cid) : null;
     const {fetcher, onRetrieveConversations} = this.props;
+    // Since the selected conversation might not exist in the paginated results,
+    // we fetch it separately to guarantee that it will be displayed
+    const selectedConversationPromise = selectedConversationId
+      ? API.fetchConversation(selectedConversationId)
+      : Promise.resolve(null);
 
-    fetcher().then((result) => {
-      const {data: conversations = [], ...pagination} = result;
-      const ids = onRetrieveConversations(conversations);
-      const [first] = ids;
-      const selectedId = ids.find((id) => id === selectedConversationId)
-        ? selectedConversationId
-        : first;
+    Promise.all([fetcher(), selectedConversationPromise]).then(
+      ([result, selectedConversation]) => {
+        const {data = [], ...pagination} = result;
+        const conversations = selectedConversation
+          ? [selectedConversation, ...data]
+          : data;
+        const ids = onRetrieveConversations(conversations);
+        const [first] = ids;
+        const selectedId = ids.find((id) => id === selectedConversationId)
+          ? selectedConversationId
+          : first;
 
-      this.setState({pagination, loading: false});
-      this.handleSelectConversation(selectedId);
-      this.setupKeyboardShortcuts();
-    });
+        this.setState({pagination, loading: false});
+        this.handleSelectConversation(selectedId);
+        this.setupKeyboardShortcuts();
+      }
+    );
   }
 
   componentWillUnmount() {

@@ -151,7 +151,9 @@ defmodule ChatApi.EventSubscriptions do
 
   def should_handle_event?(_event_subscription, _event), do: false
 
-  @spec is_valid_uri?(binary() | URI.t()) :: boolean()
+  @spec is_valid_uri?(binary() | URI.t() | nil) :: boolean()
+  def is_valid_uri?(nil), do: false
+
   def is_valid_uri?(str) do
     case URI.parse(str) do
       %URI{scheme: nil} -> false

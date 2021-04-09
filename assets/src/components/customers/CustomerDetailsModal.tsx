@@ -62,6 +62,7 @@ type Props = {
   isVisible?: boolean;
   onClose: () => void;
   onUpdate: (data: any) => Promise<void>;
+  onDelete: (data: any) => void;
 };
 
 type State = {
@@ -146,14 +147,14 @@ class CustomerDetailsModal extends React.Component<Props, State> {
   handleDeleteCustomer = async () => {
     this.setState({isDeleting: true});
 
-    const {customer, onUpdate} = this.props;
+    const {customer, onDelete} = this.props;
     const {id: customerId} = customer;
 
     try {
       const result = await API.deleteCustomer(customerId);
 
       await sleep(1000);
-      await onUpdate(result);
+      onDelete(result);
     } catch (err) {
       logger.error('Failed to update customer', err);
     }
