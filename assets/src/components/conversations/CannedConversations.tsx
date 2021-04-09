@@ -10,6 +10,7 @@ import {
   Tag,
   Text,
   Title,
+  Tooltip,
 } from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
@@ -165,7 +166,10 @@ class CannedConversationsOverview extends React.Component<Props, State> {
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={3}>Canned Conversations (beta)</Title>
+          <Title level={3}>Saved Replies for Taro (beta)</Title>
+          <Tooltip title="How Saved Replies Work">
+            <span>This is how they work</span>
+          </Tooltip>
 
           {/* TODO: implement me! */}
           <Button
@@ -173,7 +177,7 @@ class CannedConversationsOverview extends React.Component<Props, State> {
             icon={<PlusOutlined />}
             onClick={this.handleOpenNewTagModal}
           >
-            New Conversation
+            New Reply
           </Button>
         </Flex>
 
@@ -183,29 +187,12 @@ class CannedConversationsOverview extends React.Component<Props, State> {
           onCancel={this.handleNewTagModalClosed}
         />
 
-        <Box mb={4}>
-          <Paragraph>
-            Use tags to organize and manage your customers and conversations.
-          </Paragraph>
-
-          <Alert
-            message={
-              <Text>
-                This page is still a work in progress &mdash; more features
-                coming soon!
-              </Text>
-            }
-            type="info"
-            showIcon
-          />
-        </Box>
-
         <Box mb={3}>
           <Input.Search
             placeholder="Search Conversations..."
             allowClear
             onSearch={this.handleSearchTags}
-            style={{width: 400}}
+            style={{width: 1000}}
           />
         </Box>
 
