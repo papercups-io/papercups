@@ -5,7 +5,7 @@ import {Alert, Button, Input, Paragraph, Text, Title} from '../common';
 import {useConversations} from '../conversations/ConversationsProvider';
 import * as API from '../../api';
 import logger from '../../logger';
-import {Customer} from '../../types';
+import {Customer, Pagination} from '../../types';
 import Spinner from '../Spinner';
 import CustomersTable from './CustomersTable';
 import {NewCustomerButton} from './NewCustomerModal';
@@ -54,12 +54,7 @@ type State = {
   query: string;
   customers: Array<Customer>;
   filteredCustomers: Array<Customer>;
-  pagination: {
-    page_size: number;
-    total_pages: number;
-    total_entries: number;
-    page_number: number;
-  } | null;
+  pagination: Pagination | null;
 };
 
 class CustomersPage extends React.Component<Props, State> {
@@ -75,7 +70,10 @@ class CustomersPage extends React.Component<Props, State> {
 
   async componentDidMount() {
     try {
-      const {data: customers, pagination} = await API.fetchCustomers({ page: 1, page_size: 5});
+      const {data: customers, pagination} = await API.fetchCustomers({
+        page: 1,
+        page_size: 10,
+      });
 
       this.setState({
         customers,
@@ -91,10 +89,13 @@ class CustomersPage extends React.Component<Props, State> {
 
   handleRefreshCustomers = async () => {
     this.setState({refreshing: true});
-    const { pagination } = this.state;
+    const {pagination} = this.state;
 
     try {
-      const {data: customers} = await API.fetchCustomers({ page: pagination?.page_number, page_size: pagination?.page_size });
+      const {data: customers} = await API.fetchCustomers({
+        page: pagination?.page_number,
+        page_size: pagination?.page_size,
+      });
 
       this.setState({
         customers,
@@ -107,11 +108,14 @@ class CustomersPage extends React.Component<Props, State> {
     }
   };
 
-  handleNextPage = async (page: number, pageSize?: number) => {
+  handlePageChange = async (page: number, page_size?: number) => {
     this.setState({refreshing: true});
 
     try {
-      const {data: customers, pagination} = await API.fetchCustomers({ page, pageSize });
+      const {data: customers, pagination} = await API.fetchCustomers({
+        page,
+        page_size,
+      });
 
       this.setState({
         customers,
@@ -119,11 +123,11 @@ class CustomersPage extends React.Component<Props, State> {
         pagination: pagination,
       });
     } catch (err) {
-      logger.error('Error refreshing customers!', err);
+      logger.error('Error paginating customers!', err);
 
       this.setState({refreshing: false});
     }
-  }
+  };
 
   handleSearchCustomers = (query: string) => {
     const {customers = []} = this.state;
@@ -198,7 +202,7 @@ class CustomersPage extends React.Component<Props, State> {
             onUpdate={this.handleRefreshCustomers}
             pagination={{
               total: pagination?.total_entries,
-              onChange: this.handleNextPage,
+              onChange: this.handlePageChange,
             }}
             action={(customer: Customer) => (
               <Link to={`/customers/${customer.id}`}>

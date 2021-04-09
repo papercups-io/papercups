@@ -49,6 +49,7 @@ type State = {
   tag: T.Tag | null;
   customers: Array<T.Customer>;
   conversations: Array<T.Conversation>;
+  customerPagination: T.Pagination | null;
 };
 
 class TagDetailsPage extends React.Component<Props, State> {
@@ -59,19 +60,30 @@ class TagDetailsPage extends React.Component<Props, State> {
     isUpdateModalVisible: false,
     tag: null,
     customers: [],
+    customerPagination: null,
     conversations: [],
   };
 
   async componentDidMount() {
     try {
       const {id: tagId} = this.props.match.params;
-      const [tag, customers, {data: conversations}] = await Promise.all([
+      const [
+        tag,
+        {data: customers, pagination: customerPagination},
+        {data: conversations},
+      ] = await Promise.all([
         API.fetchTagById(tagId),
         API.fetchCustomers({tag_id: tagId}),
         API.fetchConversations({tag_id: tagId}),
       ]);
 
-      this.setState({tag, customers, conversations, loading: false});
+      this.setState({
+        tag,
+        customers,
+        conversations,
+        customerPagination,
+        loading: false,
+      });
     } catch (err) {
       logger.error('Error loading tag!', err);
 
@@ -81,14 +93,40 @@ class TagDetailsPage extends React.Component<Props, State> {
 
   handleRefreshCustomers = async () => {
     this.setState({refreshing: true});
+    const {customerPagination} = this.state;
 
     try {
       const {id: tagId} = this.props.match.params;
-      const customers = await API.fetchCustomers({tag_id: tagId});
+      const customers = await API.fetchCustomers({
+        tag_id: tagId,
+        page: customerPagination?.page_number,
+        page_size: customerPagination?.page_size,
+      });
 
       this.setState({customers, refreshing: false});
     } catch (err) {
       logger.error('Error refreshing customers!', err);
+
+      this.setState({refreshing: false});
+    }
+  };
+
+  handleCustomerPageChange = async (page: number, page_size?: number) => {
+    this.setState({refreshing: true});
+
+    try {
+      const {
+        data: customers,
+        pagination: customerPagination,
+      } = await API.fetchCustomers({page, page_size});
+
+      this.setState({
+        customers,
+        customerPagination,
+        refreshing: false,
+      });
+    } catch (err) {
+      logger.error('Error paginating customers!', err);
 
       this.setState({refreshing: false});
     }
@@ -156,6 +194,7 @@ class TagDetailsPage extends React.Component<Props, State> {
       refreshing,
       isUpdateModalVisible,
       tag,
+      customerPagination,
       customers = [],
       conversations = [],
     } = this.state;
@@ -269,6 +308,10 @@ class TagDetailsPage extends React.Component<Props, State> {
                 customers={customers}
                 shouldIncludeAnonymous
                 onUpdate={this.handleRefreshCustomers}
+                pagination={{
+                  total: customerPagination?.total_entries,
+                  onChange: this.handleCustomerPageChange,
+                }}
                 action={(customer: T.Customer) => (
                   <Link to={`/customers/${customer.id}`}>
                     <Button>View profile</Button>

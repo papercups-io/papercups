@@ -12,7 +12,7 @@ import {
 } from '../common';
 import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
-import {Company, Customer} from '../../types';
+import {Company, Customer, Pagination} from '../../types';
 import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
@@ -46,6 +46,7 @@ type State = {
   refreshing: boolean;
   company: Company | null;
   customers: Array<Customer>;
+  pagination: Pagination | null;
 };
 
 class CompanyDetailsPage extends React.Component<Props, State> {
@@ -54,6 +55,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     deleting: false,
     refreshing: false,
     company: null,
+    pagination: null,
     customers: [],
   };
 
@@ -61,9 +63,13 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     try {
       const {id: companyId} = this.props.match.params;
       const company = await API.fetchCompany(companyId);
-      const customers = await API.fetchCustomers({company_id: companyId});
+      const {data: customers, pagination} = await API.fetchCustomers({
+        company_id: companyId,
+        page: 1,
+        page_size: 10,
+      });
 
-      this.setState({company, customers, loading: false});
+      this.setState({company, customers, pagination, loading: false});
     } catch (err) {
       logger.error('Error loading company!', err);
 
@@ -73,14 +79,40 @@ class CompanyDetailsPage extends React.Component<Props, State> {
 
   handleRefreshCustomers = async () => {
     this.setState({refreshing: true});
+    const {pagination} = this.state;
 
     try {
       const {id: companyId} = this.props.match.params;
-      const customers = await API.fetchCustomers({company_id: companyId});
+      const customers = await API.fetchCustomers({
+        company_id: companyId,
+        page: pagination?.page_number,
+        page_size: pagination?.page_size,
+      });
 
       this.setState({customers, refreshing: false});
     } catch (err) {
       logger.error('Error refreshing customers!', err);
+
+      this.setState({refreshing: false});
+    }
+  };
+
+  handleCustomerPageChange = async (page: number, page_size?: number) => {
+    this.setState({refreshing: true});
+
+    try {
+      const {data: customers, pagination} = await API.fetchCustomers({
+        page,
+        page_size,
+      });
+
+      this.setState({
+        customers,
+        refreshing: false,
+        pagination: pagination,
+      });
+    } catch (err) {
+      logger.error('Error paginating customers!', err);
 
       this.setState({refreshing: false});
     }
@@ -102,7 +134,14 @@ class CompanyDetailsPage extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, deleting, refreshing, company, customers = []} = this.state;
+    const {
+      loading,
+      deleting,
+      refreshing,
+      company,
+      pagination,
+      customers = [],
+    } = this.state;
 
     if (loading) {
       return (
@@ -249,6 +288,10 @@ class CompanyDetailsPage extends React.Component<Props, State> {
                 loading={loading || refreshing}
                 customers={customers}
                 currentlyOnline={{}}
+                pagination={{
+                  total: pagination?.total_entries,
+                  onChange: this.handleCustomerPageChange,
+                }}
                 onUpdate={this.handleRefreshCustomers}
               />
             </DetailsSectionCard>

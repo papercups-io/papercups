@@ -5,7 +5,7 @@ import utc from 'dayjs/plugin/utc';
 import {Customer} from '../../types';
 import {Badge, Button, Table, Text, Tooltip, Pagination} from '../common';
 import CustomerDetailsModal from './CustomerDetailsModal';
-import { TablePaginationConfig } from 'antd/lib/table';
+import {TablePaginationConfig} from 'antd/lib/table';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -25,7 +25,6 @@ const CustomersTable = ({
   shouldIncludeAnonymous?: boolean;
   action?: (customer: Customer) => React.ReactElement;
   pagination?: false | TablePaginationConfig;
-  // onChangePage?: (page: number, pageSize?: number) => void;
   onUpdate: () => Promise<void>;
 }) => {
   const [selectedCustomerId, setSelectedCustomerId] = React.useState<
@@ -144,7 +143,14 @@ const CustomersTable = ({
     },
   ];
 
-  return <Table loading={loading} dataSource={data} columns={columns} pagination={pagination}/>;
+  return (
+    <Table
+      loading={loading}
+      dataSource={data}
+      columns={columns}
+      pagination={pagination}
+    />
+  );
 };
 
 export default CustomersTable;
