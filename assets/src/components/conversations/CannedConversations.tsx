@@ -2,13 +2,12 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {
-  Alert,
   Button,
   Input,
-  Paragraph,
+  Layout,
+  Menu,
   Table,
   Tag,
-  Text,
   Title,
   Tooltip,
 } from '../common';
@@ -18,56 +17,7 @@ import * as T from '../../types';
 import logger from '../../logger';
 import NewTagModal from '../tags/NewTagModal';
 
-const CannedConversationsTable = ({
-  loading,
-  tags,
-}: {
-  loading?: boolean;
-  tags: Array<T.Tag>;
-}) => {
-  const data = tags
-    .map((tag) => {
-      return {key: tag.id, ...tag};
-    })
-    .sort((a, b) => {
-      return +new Date(b.updated_at) - +new Date(a.updated_at);
-    });
-
-  const columns = [
-    {
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: (value: string, {color}: T.Tag) => {
-        return <Tag color={color}>{value}</Tag>;
-      },
-    },
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-      render: (value: string) => {
-        return value || '--';
-      },
-    },
-    {
-      title: '',
-      dataIndex: 'action',
-      key: 'action',
-      render: (value: string, record: any) => {
-        const {id: companyId} = record;
-
-        return (
-          <Link to={`/conversations/${companyId}`}>
-            <Button>View</Button>
-          </Link>
-        );
-      },
-    },
-  ];
-
-  return <Table loading={loading} dataSource={data} columns={columns} />;
-};
+const {Header, Sider, Content} = Layout;
 
 type Props = {};
 type State = {
@@ -195,10 +145,25 @@ class CannedConversationsOverview extends React.Component<Props, State> {
             style={{width: 1000}}
           />
         </Box>
-
-        <Box my={4}>
-          <CannedConversationsTable loading={loading} tags={filteredTags} />
-        </Box>
+        <Layout>
+          <Sider trigger={null} collapsible collapsed={true}>
+            <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
+              <Menu.Item key="1">nav 1</Menu.Item>
+              <Menu.Item key="2">nav 2</Menu.Item>
+              <Menu.Item key="3">nav 3</Menu.Item>
+            </Menu>
+            <Content
+              style={{
+                margin: '24px 16px',
+                padding: 24,
+                minHeight: 280,
+              }}
+            >
+              Content
+            </Content>
+          </Sider>
+        </Layout>
+        <Box my={4}></Box>
       </Box>
     );
   }
