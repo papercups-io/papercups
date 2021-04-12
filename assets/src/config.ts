@@ -31,10 +31,6 @@ export const isUserInvitationEmailEnabled =
   env.REACT_APP_USER_INVITATION_EMAIL_ENABLED === 'true' ||
   env.REACT_APP_USER_INVITATION_EMAIL_ENABLED === '1';
 
-export const isCustomerDetailsV2Enabled =
-  env.REACT_APP_CUSTOMER_DETAILS_V2_ENABLED === 'true' ||
-  env.REACT_APP_CUSTOMER_DETAILS_V2_ENABLED === '1';
-
 export const REACT_URL = env.REACT_APP_URL || 'app.papercups.io';
 
 export const BASE_URL = isDev

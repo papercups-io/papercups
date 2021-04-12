@@ -27,7 +27,6 @@ import {
 import {
   BASE_URL,
   env,
-  isCustomerDetailsV2Enabled,
   isDev,
   isEuEdition,
   isHostedProd,
@@ -423,14 +422,8 @@ const Dashboard = (props: RouteComponentProps) => {
             component={GettingStartedOverview}
           />
           <Route path="/account*" component={AccountOverview} />
-          <Route
-            path="/customers/:id"
-            component={
-              isCustomerDetailsV2Enabled
-                ? CustomerDetailsPageV2
-                : CustomerDetailsPage
-            }
-          />
+          <Route path="/customers/:id" component={CustomerDetailsPage} />
+          <Route path="/v2/customers/:id" component={CustomerDetailsPageV2} />
           <Route path="/customers" component={CustomersPage} />
           <Route path="/companies/new" component={CreateCompanyPage} />
           <Route path="/companies/:id/edit" component={UpdateCompanyPage} />
