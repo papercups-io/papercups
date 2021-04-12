@@ -73,6 +73,11 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     return session;
   };
 
+  refetchConversations = async () => {
+    const conversations = await this.fetchConversations();
+    this.setState({conversations});
+  };
+
   hasOpenConversation = () => {
     const openConversation = this.state.conversations.find(
       (conversation) => conversation.status === 'open'
@@ -151,7 +156,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
                 <StartConversationButton
                   customerId={this.getCustomerId()}
                   isDisabled={this.hasOpenConversation()}
-                  onInitializeNewConversation={this.fetchConversations}
+                  onInitializeNewConversation={this.refetchConversations}
                 />
               </Flex>
 
