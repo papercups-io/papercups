@@ -9,6 +9,7 @@ import {
   getColorByUuid,
   getSenderIdentifier,
   getSenderProfilePhoto,
+  isAgentMessage,
 } from './support';
 import * as API from '../../api';
 import {Account, Conversation} from '../../types';
@@ -35,12 +36,11 @@ const RelatedConversationItem = ({
   const ts = recent ? recent.created_at : created_at;
   const created = dayjs.utc(ts);
   const date = formatShortRelativeTime(created);
-  const {user, customer} = recent;
+  const {customer_id: customerId} = recent;
   const name = getSenderIdentifier(recent, account);
   const profilePhotoUrl = getSenderProfilePhoto(recent, account);
-  const isAgent = !!user;
+  const isAgent = isAgentMessage(recent);
   const preview = recent.body ? recent.body : '...';
-  const customerId = customer && customer.id;
   const color = customerId ? getColorByUuid(customerId) : colors.gray[0];
   const isOpen = status === 'open';
   const url = isOpen
