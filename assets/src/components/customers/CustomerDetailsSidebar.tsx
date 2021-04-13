@@ -23,6 +23,43 @@ import CustomerDetailsCard from './CustomerDetailsCard';
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
+const BasicDetailsSection = ({customer}: {customer: Customer}) => {
+  const {
+    email,
+    name,
+    phone,
+    id: customerId,
+    external_id: externalId,
+  } = customer;
+
+  return (
+    <CustomerDetailsSection title="Basic">
+      <CustomerDetailsProperty
+        icon={<UserOutlined style={{color: colors.primary}} />}
+        name="ID"
+        value={
+          <CustomerDetailsPropertyValue value={externalId || customerId} />
+        }
+      />
+      <CustomerDetailsProperty
+        icon={<UserOutlined style={{color: colors.primary}} />}
+        name="Name"
+        value={<CustomerDetailsPropertyValue value={name} />}
+      />
+      <CustomerDetailsProperty
+        icon={<MailOutlined style={{color: colors.primary}} />}
+        name="Email"
+        value={<CustomerDetailsPropertyValue value={email} />}
+      />
+      <CustomerDetailsProperty
+        icon={<PhoneOutlined style={{color: colors.primary}} />}
+        name="Phone"
+        value={<CustomerDetailsPropertyValue value={phone} />}
+      />
+    </CustomerDetailsSection>
+  );
+};
+
 export const CustomerDetailsSidebar = ({
   customer,
   session,
@@ -31,16 +68,12 @@ export const CustomerDetailsSidebar = ({
   session: BrowserSession | null;
 }) => {
   const {
-    email,
-    name,
     browser,
     os,
-    phone,
     pathname,
     title,
     company,
     id: customerId,
-    external_id: externalId,
     created_at: createdAt,
     last_seen_at: lastSeenAt,
     current_url: currentUrl,
@@ -55,30 +88,9 @@ export const CustomerDetailsSidebar = ({
       <Box p={3}>
         <Title level={4}>{title}</Title>
         <Divider dashed />
-        <CustomerDetailsSection title="Basic">
-          <CustomerDetailsProperty
-            icon={<UserOutlined style={{color: colors.primary}} />}
-            name="ID"
-            value={
-              <CustomerDetailsPropertyValue value={externalId || customerId} />
-            }
-          />
-          <CustomerDetailsProperty
-            icon={<UserOutlined style={{color: colors.primary}} />}
-            name="Name"
-            value={<CustomerDetailsPropertyValue value={name} />}
-          />
-          <CustomerDetailsProperty
-            icon={<MailOutlined style={{color: colors.primary}} />}
-            name="Email"
-            value={<CustomerDetailsPropertyValue value={email} />}
-          />
-          <CustomerDetailsProperty
-            icon={<PhoneOutlined style={{color: colors.primary}} />}
-            name="Phone"
-            value={<CustomerDetailsPropertyValue value={phone} />}
-          />
-        </CustomerDetailsSection>
+
+        <BasicDetailsSection customer={customer} />
+
         <Divider dashed />
         <CustomerDetailsSection title="Activity">
           <CustomerDetailsProperty
