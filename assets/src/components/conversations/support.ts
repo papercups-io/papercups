@@ -1,5 +1,5 @@
 import {colors} from '../common';
-import {Account, Customer, Message, User} from '../../types';
+import {Account, Message} from '../../types';
 
 const {primary, gold, red, green, purple, magenta} = colors;
 
