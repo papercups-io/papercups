@@ -54,47 +54,53 @@ export const CustomerDetailsSidebar = ({
     <CustomerDetailsCard sx={{minWidth: '320px'}}>
       <Box p={3}>
         <Title level={4}>{title}</Title>
-
         <Divider dashed />
-
         <CustomerDetailsSection title="Basic">
           <CustomerDetailsProperty
-            Icon={UserOutlined}
+            icon={<UserOutlined style={{color: colors.primary}} />}
             name="ID"
-            value={externalId || customerId}
+            value={
+              <CustomerDetailsPropertyValue value={externalId || customerId} />
+            }
           />
           <CustomerDetailsProperty
-            Icon={UserOutlined}
+            icon={<UserOutlined style={{color: colors.primary}} />}
             name="Name"
-            value={name}
+            value={<CustomerDetailsPropertyValue value={name} />}
           />
           <CustomerDetailsProperty
-            Icon={MailOutlined}
+            icon={<MailOutlined style={{color: colors.primary}} />}
             name="Email"
-            value={email}
+            value={<CustomerDetailsPropertyValue value={email} />}
           />
           <CustomerDetailsProperty
-            Icon={PhoneOutlined}
+            icon={<PhoneOutlined style={{color: colors.primary}} />}
             name="Phone"
-            value={phone}
+            value={<CustomerDetailsPropertyValue value={phone} />}
           />
         </CustomerDetailsSection>
-
         <Divider dashed />
-
         <CustomerDetailsSection title="Activity">
           <CustomerDetailsProperty
-            Icon={CalendarOutlined}
+            icon={<CalendarOutlined style={{color: colors.primary}} />}
             name="First Seen"
-            value={createdAt && dayjs.utc(createdAt).format('MMMM DD, YYYY')}
+            value={
+              <CustomerDetailsPropertyValue
+                value={
+                  createdAt
+                    ? dayjs.utc(createdAt).format('MMMM DD, YYYY')
+                    : null
+                }
+              />
+            }
           />
           <CustomerDetailsProperty
-            Icon={CalendarOutlined}
+            icon={<CalendarOutlined style={{color: colors.primary}} />}
             name="Last Seen"
             value={getLastSeenValue({isOnline: !!session, lastSeenAt})}
           />
           <CustomerDetailsProperty
-            Icon={LinkOutlined}
+            icon={<LinkOutlined style={{color: colors.primary}} />}
             name="Last Seen URL"
             value={getLastSeenURLValue({currentUrl, pathname})}
           />
@@ -113,29 +119,28 @@ export const CustomerDetailsSidebar = ({
             </Box>
           )}
         </CustomerDetailsSection>
-
         <Divider dashed />
-
         <CustomerDetailsSection title="Device">
           <CustomerDetailsProperty
-            Icon={GlobalOutlined}
+            icon={<GlobalOutlined style={{color: colors.primary}} />}
             name="Timezone"
             value={getTimezoneValue(timezone)}
           />
           <CustomerDetailsProperty
-            Icon={DesktopOutlined}
+            icon={<DesktopOutlined style={{color: colors.primary}} />}
             name="Browser"
-            value={browser}
+            value={<CustomerDetailsPropertyValue value={browser} />}
           />
+
           <CustomerDetailsProperty
-            Icon={DesktopOutlined}
+            icon={<DesktopOutlined style={{color: colors.primary}} />}
             name="OS"
-            value={os}
+            value={<CustomerDetailsPropertyValue value={os} />}
           />
           <CustomerDetailsProperty
-            Icon={DesktopOutlined}
+            icon={<DesktopOutlined style={{color: colors.primary}} />}
             name="IP"
-            value={lastIpAddress}
+            value={<CustomerDetailsPropertyValue value={lastIpAddress} />}
           />
         </CustomerDetailsSection>
 
@@ -150,17 +155,16 @@ export const CustomerDetailsSidebar = ({
             <CustomerDetailsSection title="Metadata">
               {Object.entries(metadata).map(([key, value]) => (
                 <CustomerDetailsProperty
-                  Icon={InfoCircleOutlined}
+                  icon={<InfoCircleOutlined style={{color: colors.primary}} />}
                   key={key}
                   name={key}
-                  value={value}
+                  value={<CustomerDetailsPropertyValue value={value} />}
                 />
               ))}
             </CustomerDetailsSection>
             <Divider dashed />
           </>
         )}
-
         <CustomerDetailsSection title="Tags">
           <SidebarCustomerTags customerId={customerId} />
         </CustomerDetailsSection>
@@ -169,55 +173,79 @@ export const CustomerDetailsSidebar = ({
   );
 };
 
-const CompanyDetailsSection = ({company}: {company: Company | undefined}) => {
-  let body;
+const CustomerDetailsDefaultPropertyValue = ({
+  defaultValue = 'Unknown',
+}: {
+  defaultValue?: string;
+}) => <Text>{defaultValue}</Text>;
 
-  if (company) {
-    const {
-      id: companyId,
-      name,
-      website_url: websiteUrl,
-      slack_channel_id: slackChannelId,
-      slack_channel_name: slackChannelName,
-    } = company;
+const CustomerDetailsPropertyValue = ({
+  value,
+  defaultValue,
+}: {
+  value?: any;
+  defaultValue?: string;
+}) => {
+  if (value != null) {
+    return <Text>{String(value)}</Text>;
+  } else {
+    return <CustomerDetailsDefaultPropertyValue defaultValue={defaultValue} />;
+  }
+};
 
-    body = (
-      <>
-        <CustomerDetailsProperty
-          Icon={TeamOutlined}
-          name="Name"
-          value={<Link to={`/companies/${companyId}`}>{name}</Link>}
-        />
-        <CustomerDetailsProperty
-          Icon={LinkOutlined}
-          name="Website"
-          value={websiteUrl}
-        />
-        <CustomerDetailsProperty
-          Icon={LinkOutlined}
-          name="Slack Channel"
-          value={
-            slackChannelId &&
-            slackChannelName && (
-              <a
-                href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {slackChannelName}
-              </a>
-            )
-          }
-        />
-      </>
+const CompanyDetailsSection = ({company}: {company?: Company}) => {
+  const title = 'Company';
+
+  if (!company) {
+    return (
+      <CustomerDetailsSection title={title}>
+        <Text>Customer is not linked to a company.</Text>
+      </CustomerDetailsSection>
+    );
+  }
+
+  const {
+    id: companyId,
+    name,
+    website_url: websiteUrl,
+    slack_channel_id: slackChannelId,
+    slack_channel_name: slackChannelName,
+  } = company;
+
+  let slackPropertyValue;
+
+  if (slackChannelName && slackChannelId) {
+    slackPropertyValue = (
+      <a
+        href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {slackChannelName}
+      </a>
     );
   } else {
-    // TODO: add ability to link customer to company
-    body = <Text>Customer is not linked to a company.</Text>;
+    slackPropertyValue = <CustomerDetailsDefaultPropertyValue />;
   }
 
   return (
-    <CustomerDetailsSection title="Company">{body}</CustomerDetailsSection>
+    <CustomerDetailsSection title={title}>
+      <CustomerDetailsProperty
+        icon={<TeamOutlined style={{color: colors.primary}} />}
+        name="Name"
+        value={<Link to={`/companies/${companyId}`}>{name}</Link>}
+      />
+      <CustomerDetailsProperty
+        icon={<LinkOutlined style={{color: colors.primary}} />}
+        name="Website"
+        value={<Text>{websiteUrl}</Text>}
+      />
+      <CustomerDetailsProperty
+        icon={<LinkOutlined style={{color: colors.primary}} />}
+        name="Slack Channel"
+        value={slackPropertyValue}
+      />
+    </CustomerDetailsSection>
   );
 };
 
@@ -239,25 +267,17 @@ export const CustomerDetailsSection = ({
 };
 
 const CustomerDetailsProperty = ({
-  Icon,
+  icon,
   name,
   value,
 }: {
-  Icon: React.ComponentType<any>;
+  icon: JSX.Element;
   name: string;
-  value: any;
+  value: JSX.Element;
 }) => {
-  let valueComponent;
-
-  if (React.isValidElement(value)) {
-    valueComponent = value;
-  } else {
-    valueComponent = <Text>{value || 'Unknown'}</Text>;
-  }
-
   return (
     <Flex mb={1} sx={{alignItems: 'center'}}>
-      <Icon style={{color: colors.primary}} />
+      {icon}
       <Box
         ml={2}
         mr={2}
@@ -270,7 +290,7 @@ const CustomerDetailsProperty = ({
       >
         <Text type="secondary">{name}</Text>
       </Box>
-      {valueComponent}
+      {value}
     </Flex>
   );
 };
@@ -279,13 +299,15 @@ const getLastSeenValue = ({
   isOnline,
   lastSeenAt,
 }: {
-  isOnline: boolean | undefined;
-  lastSeenAt: string | undefined;
-}): string | JSX.Element | undefined => {
+  isOnline?: boolean;
+  lastSeenAt?: string;
+}): JSX.Element => {
   if (isOnline) {
     return <Badge status="processing" text="Online now" />;
   } else if (lastSeenAt) {
-    return dayjs.utc(lastSeenAt).format('MMMM DD, YYYY');
+    return <Text>{dayjs.utc(lastSeenAt).format('MMMM DD, YYYY')}</Text>;
+  } else {
+    return <CustomerDetailsDefaultPropertyValue />;
   }
 };
 
@@ -293,9 +315,9 @@ const getLastSeenURLValue = ({
   currentUrl,
   pathname,
 }: {
-  currentUrl: string | undefined;
-  pathname: string | undefined;
-}): JSX.Element | undefined => {
+  currentUrl?: string;
+  pathname?: string;
+}): JSX.Element => {
   if (currentUrl) {
     return (
       <Tooltip title={currentUrl}>
@@ -304,12 +326,16 @@ const getLastSeenURLValue = ({
         </a>
       </Tooltip>
     );
+  } else {
+    return <CustomerDetailsDefaultPropertyValue />;
   }
 };
 
-const getTimezoneValue = (timezone: string | undefined): string | undefined => {
+const getTimezoneValue = (timezone?: string): JSX.Element => {
   if (timezone) {
-    return timezone.split('_').join(' ');
+    return <Text>{timezone.split('_').join(' ')}</Text>;
+  } else {
+    return <CustomerDetailsDefaultPropertyValue />;
   }
 };
 

@@ -1,6 +1,5 @@
 import React from 'react';
-import {Box} from 'theme-ui';
-import {SxStyleProp} from 'theme-ui';
+import {Box, SxStyleProp} from 'theme-ui';
 
 import {colors} from '../common';
 
