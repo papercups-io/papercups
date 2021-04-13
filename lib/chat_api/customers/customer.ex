@@ -14,7 +14,7 @@ defmodule ChatApi.Customers.Customer do
 
   @type t :: %__MODULE__{
           first_seen: any(),
-          last_seen: any(),
+          last_seen_at: any(),
           email: String.t() | nil,
           name: String.t() | nil,
           phone: String.t() | nil,
@@ -49,7 +49,6 @@ defmodule ChatApi.Customers.Customer do
   @foreign_key_type :binary_id
   schema "customers" do
     field(:first_seen, :date)
-    field(:last_seen, :date)
     field(:email, :string)
     field(:name, :string)
     field(:phone, :string)
@@ -94,7 +93,6 @@ defmodule ChatApi.Customers.Customer do
     customer
     |> cast(attrs, [
       :first_seen,
-      :last_seen,
       :account_id,
       :company_id,
       :email,
@@ -116,7 +114,7 @@ defmodule ChatApi.Customers.Customer do
       :lib,
       :time_zone
     ])
-    |> validate_required([:first_seen, :last_seen, :account_id])
+    |> validate_required([:first_seen, :last_seen_at, :account_id])
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:company_id)
   end

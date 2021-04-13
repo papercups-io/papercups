@@ -130,8 +130,8 @@ const CustomersTable = ({
         return 1;
       }
 
-      const bLastSeen = b.last_seen_at || b.last_seen;
-      const aLastSeen = a.last_seen_at || a.last_seen;
+      const bLastSeen = b.last_seen_at;
+      const aLastSeen = a.last_seen_at;
 
       // TODO: fix how we set `last_seen`!
       return +new Date(bLastSeen) - +new Date(aLastSeen);
@@ -184,9 +184,9 @@ const CustomersTable = ({
       dataIndex: 'last_seen_at',
       key: 'last_seen_at',
       render: (value: string, record: Customer) => {
-        const {id, pathname, current_url, last_seen} = record;
+        const {id, pathname, current_url, last_seen_at} = record;
         const formatted = dayjs
-          .utc(value || last_seen)
+          .utc(value || last_seen_at)
           .format('ddd, MMM D h:mm A');
         const isOnline = currentlyOnline[id];
 
