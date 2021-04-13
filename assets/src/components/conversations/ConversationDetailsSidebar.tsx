@@ -491,12 +491,14 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
 type Props = {
   customer: Customer;
   conversation?: Conversation;
+  account?: Account | null;
   isOnline?: boolean;
 };
 
 const ConversationDetailsSidebar = ({
   customer,
   conversation,
+  account,
   isOnline,
 }: Props) => {
   return (

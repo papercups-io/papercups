@@ -5,7 +5,8 @@ import {colors, Button, Divider, Result} from '../common';
 import {SmileOutlined, UpOutlined} from '../icons';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
-import {Conversation, Message, User} from '../../types';
+import {Account, Conversation, Message, User} from '../../types';
+import {sortConversationMessages} from '../../utils';
 
 const noop = () => {};
 
@@ -41,6 +42,7 @@ const GettingStartedRedirect = () => {
 const ConversationMessages = ({
   conversationId,
   messages,
+  account,
   currentUser,
   loading,
   isClosing,
@@ -55,6 +57,7 @@ const ConversationMessages = ({
 }: {
   conversationId?: string | null;
   messages: Array<Message>;
+  account?: Account | null;
   currentUser?: User | null;
   loading?: boolean;
   isClosing?: boolean;
@@ -72,8 +75,17 @@ const ConversationMessages = ({
   // any message with a `user_id` (as opposed to `customer_id`) as an agent
   // (Note that this will require an update to the <ChatMessage /> UI component
   // in order to distinguish between different agents by e.g. profile photo)
-  const isAgentMessageDefaultFn = (msg: Message) =>
-    !!msg.user_id && !!currentUser && msg.user_id === currentUser.id;
+  const isAgentMessageDefaultFn = ({
+    user_id: userId,
+    type: messageType,
+  }: Message) => {
+    if (!userId || !currentUser || messageType === 'bot') {
+      return false;
+    }
+
+    return userId === currentUser.id;
+  };
+
   const isAgentMsg =
     typeof isAgentMessage === 'function'
       ? isAgentMessage
@@ -165,29 +177,32 @@ const ConversationMessages = ({
                 return (
                   <React.Fragment key={conversationId}>
                     <Box sx={{opacity: 0.6}}>
-                      {messages.map((message: Message, key: number) => {
-                        // Slight hack
-                        const next = messages[key + 1];
-                        const {
-                          id: messageId,
-                          customer_id: customerId,
-                        } = message;
-                        const isMe = isAgentMsg(message);
-                        const isLastInGroup = next
-                          ? customerId !== next.customer_id
-                          : true;
+                      {sortConversationMessages(messages).map(
+                        (message: Message, key: number) => {
+                          // Slight hack
+                          const next = messages[key + 1];
+                          const {
+                            id: messageId,
+                            customer_id: customerId,
+                          } = message;
+                          const isMe = isAgentMsg(message);
+                          const isLastInGroup = next
+                            ? customerId !== next.customer_id
+                            : true;
 
-                        // TODO: fix `isMe` logic for multiple agents
-                        return (
-                          <ChatMessage
-                            key={messageId}
-                            message={message}
-                            isMe={isMe}
-                            isLastInGroup={isLastInGroup}
-                            shouldDisplayTimestamp={isLastInGroup}
-                          />
-                        );
-                      })}
+                          // TODO: fix `isMe` logic for multiple agents
+                          return (
+                            <ChatMessage
+                              key={messageId}
+                              account={account}
+                              message={message}
+                              isMe={isMe}
+                              isLastInGroup={isLastInGroup}
+                              shouldDisplayTimestamp={isLastInGroup}
+                            />
+                          );
+                        }
+                      )}
                     </Box>
                     <div
                       id={`ConversationMessages-history--${conversationId}`}
@@ -213,6 +228,7 @@ const ConversationMessages = ({
               return (
                 <ChatMessage
                   key={messageId}
+                  account={account}
                   message={message}
                   isMe={isMe}
                   isLastInGroup={isLastInGroup}

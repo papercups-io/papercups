@@ -4,14 +4,14 @@ import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
 import {colors, Text} from '../common';
 import Spinner from '../Spinner';
+import {SenderAvatar} from './ChatMessage';
 import {
+  getColorByUuid,
   getSenderIdentifier,
   getSenderProfilePhoto,
-  SenderAvatar,
-} from './ChatMessage';
-import {getColorByUuid} from './support';
+} from './support';
 import * as API from '../../api';
-import {Conversation} from '../../types';
+import {Account, Conversation} from '../../types';
 import {formatShortRelativeTime} from '../../utils';
 import logger from '../../logger';
 
@@ -20,8 +20,10 @@ dayjs.extend(utc);
 
 const RelatedConversationItem = ({
   conversation,
+  account,
 }: {
   conversation: Conversation;
+  account: Account;
 }) => {
   const {id, status, created_at, messages = []} = conversation;
 
@@ -34,8 +36,8 @@ const RelatedConversationItem = ({
   const created = dayjs.utc(ts);
   const date = formatShortRelativeTime(created);
   const {user, customer} = recent;
-  const name = getSenderIdentifier(customer, user);
-  const profilePhotoUrl = getSenderProfilePhoto(customer, user);
+  const name = getSenderIdentifier(recent, account);
+  const profilePhotoUrl = getSenderProfilePhoto(recent, account);
   const isAgent = !!user;
   const preview = recent.body ? recent.body : '...';
   const customerId = customer && customer.id;
@@ -62,7 +64,7 @@ const RelatedConversationItem = ({
             color={color}
             size={20}
             name={name}
-            profilePhotoUrl={profilePhotoUrl}
+            avatarPhotoUrl={profilePhotoUrl}
           />
           <Text type="secondary" style={{fontSize: 12}}>
             {date}
@@ -89,6 +91,7 @@ const RelatedCustomerConversations = ({
   conversationId: string;
 }) => {
   const [loading, setLoading] = React.useState(false);
+  const [account, setAccount] = React.useState<Account | null>(null);
   const [conversations, setRelatedConversations] = React.useState<
     Array<Conversation>
   >([]);
@@ -96,8 +99,14 @@ const RelatedCustomerConversations = ({
   React.useEffect(() => {
     setLoading(true);
 
-    API.fetchRelatedConversations(conversationId)
-      .then((results) => setRelatedConversations(results))
+    Promise.all([
+      API.fetchAccountInfo(),
+      API.fetchRelatedConversations(conversationId),
+    ])
+      .then(([account, conversations]) => {
+        setAccount(account);
+        setRelatedConversations(conversations);
+      })
       .catch((err) =>
         logger.error('Error retrieving related conversations:', err)
       )
@@ -110,7 +119,7 @@ const RelatedCustomerConversations = ({
     return messages && messages.length > 0;
   });
 
-  if (loading) {
+  if (loading || !account) {
     return <Spinner size={16} />;
   } else if (conversationsWithMessages.length === 0) {
     return (
@@ -126,6 +135,7 @@ const RelatedCustomerConversations = ({
         return (
           <RelatedConversationItem
             key={conversation.id}
+            account={account}
             conversation={conversation}
           />
         );
