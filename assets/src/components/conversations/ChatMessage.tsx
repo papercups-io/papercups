@@ -8,9 +8,9 @@ import {formatRelativeTime} from '../../utils';
 import {Account, Message} from '../../types';
 import {
   getColorByUuid,
-  isBotMessage,
   getSenderIdentifier,
   getSenderProfilePhoto,
+  isAgentMessage,
 } from './support';
 import ChatMessageBox from './ChatMessageBox';
 
@@ -96,14 +96,12 @@ const ChatMessage = ({
     body,
     sent_at,
     created_at,
-    user,
     seen_at,
     customer_id: customerId,
     private: isPrivate,
     attachments = [],
   } = message;
-  const isBot = isBotMessage(message);
-  const isAgent = !isBot && !!user;
+  const isAgent = isAgentMessage(message);
   const sentAt = dayjs.utc(sent_at || created_at);
   const formattedSentAt = formatRelativeTime(sentAt);
   const seenAt = seen_at ? dayjs.utc(seen_at) : null;

@@ -18,6 +18,10 @@ export const isBotMessage = (message: Message) => {
   return message.type === 'bot';
 };
 
+export const isAgentMessage = (message: Message) => {
+  return !isBotMessage(message) && !!message.user_id;
+};
+
 export const getSenderIdentifier = (
   message: Message,
   account?: Account | null

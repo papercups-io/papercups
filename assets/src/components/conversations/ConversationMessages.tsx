@@ -7,6 +7,7 @@ import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
 import {Account, Conversation, Message, User} from '../../types';
 import {sortConversationMessages} from '../../utils';
+import {isBotMessage} from './support';
 
 const noop = () => {};
 
@@ -52,7 +53,7 @@ const ConversationMessages = ({
   history = [],
   sx = {},
   setScrollRef,
-  isAgentMessage,
+  isCurrentUserMessage,
   onLoadPreviousConversation = noop,
 }: {
   conversationId?: string | null;
@@ -67,7 +68,7 @@ const ConversationMessages = ({
   history?: Array<Conversation>;
   sx?: any;
   setScrollRef: (el: any) => void;
-  isAgentMessage?: (message: Message) => boolean;
+  isCurrentUserMessage?: (message: Message) => boolean;
   onLoadPreviousConversation?: (conversationId: string) => void;
 }) => {
   const [historyRefs, setHistoryRefs] = React.useState<Array<any>>([]);
@@ -75,21 +76,20 @@ const ConversationMessages = ({
   // any message with a `user_id` (as opposed to `customer_id`) as an agent
   // (Note that this will require an update to the <ChatMessage /> UI component
   // in order to distinguish between different agents by e.g. profile photo)
-  const isAgentMessageDefaultFn = ({
-    user_id: userId,
-    type: messageType,
-  }: Message) => {
-    if (!userId || !currentUser || messageType === 'bot') {
+  const isCurrentUserMessageDefaultFn = (message: Message) => {
+    const {user_id: userId} = message;
+
+    if (!userId || !currentUser || isBotMessage(message)) {
       return false;
     }
 
     return userId === currentUser.id;
   };
 
-  const isAgentMsg =
-    typeof isAgentMessage === 'function'
-      ? isAgentMessage
-      : isAgentMessageDefaultFn;
+  const isCurrentUserMsg =
+    typeof isCurrentUserMessage === 'function'
+      ? isCurrentUserMessage
+      : isCurrentUserMessageDefaultFn;
 
   const addToHistoryRefs = (el: any) => {
     if (el && el.id) {
@@ -185,7 +185,7 @@ const ConversationMessages = ({
                             id: messageId,
                             customer_id: customerId,
                           } = message;
-                          const isMe = isAgentMsg(message);
+                          const isMe = isCurrentUserMsg(message);
                           const isLastInGroup = next
                             ? customerId !== next.customer_id
                             : true;
@@ -219,7 +219,7 @@ const ConversationMessages = ({
               // Slight hack
               const next = messages[key + 1];
               const {id: messageId, customer_id: customerId} = message;
-              const isMe = isAgentMsg(message);
+              const isMe = isCurrentUserMsg(message);
               const isLastInGroup = next
                 ? customerId !== next.customer_id
                 : true;
