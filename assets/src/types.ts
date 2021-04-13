@@ -1,6 +1,7 @@
 export type Account = {
   id: string;
   company_name: string;
+  company_logo_url?: string;
   time_zone?: string;
   subscription_plan?: string;
   users?: Array<User>;

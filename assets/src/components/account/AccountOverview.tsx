@@ -24,6 +24,7 @@ type Props = {};
 type State = {
   account: Account | null;
   companyName: string;
+  companyLogoUrl?: string;
   currentUser: User | null;
   inviteUrl: string;
   inviteUserEmail: string;
@@ -39,6 +40,7 @@ class AccountOverview extends React.Component<Props, State> {
   state: State = {
     account: null,
     companyName: '',
+    companyLogoUrl: '',
     currentUser: null,
     inviteUrl: '',
     inviteUserEmail: '',
@@ -59,10 +61,13 @@ class AccountOverview extends React.Component<Props, State> {
 
   fetchLatestAccountInfo = async () => {
     const account = await API.fetchAccountInfo();
-    const {company_name: companyName} = account;
+    const {
+      company_name: companyName,
+      company_logo_url: companyLogoUrl,
+    } = account;
     logger.debug('Account info:', account);
 
-    this.setState({account, companyName});
+    this.setState({account, companyName, companyLogoUrl});
   };
 
   hasAdminRole = () => {
@@ -176,6 +181,10 @@ class AccountOverview extends React.Component<Props, State> {
     this.setState({companyName: e.target.value});
   };
 
+  handleChangeCompanyLogoUrl = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({companyLogoUrl: e.target.value});
+  };
+
   handleChangeInviteUserEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({inviteUserEmail: e.target.value});
   };
@@ -192,6 +201,7 @@ class AccountOverview extends React.Component<Props, State> {
 
   handleUpdate = async (updates: {
     company_name?: string;
+    company_logo_url?: string;
     time_zone?: string;
     working_hours?: Array<WorkingHours>;
   }) => {
@@ -209,10 +219,13 @@ class AccountOverview extends React.Component<Props, State> {
       .then(() => this.setState({isEditing: false}));
   };
 
-  handleUpdateCompanyName = () => {
-    const {companyName} = this.state;
+  handleUpdateCompany = () => {
+    const {companyName, companyLogoUrl} = this.state;
 
-    return this.handleUpdate({company_name: companyName});
+    return this.handleUpdate({
+      company_name: companyName,
+      company_logo_url: companyLogoUrl,
+    });
   };
 
   handleDisableUser = async (user: User) => {
@@ -276,6 +289,7 @@ class AccountOverview extends React.Component<Props, State> {
       account,
       currentUser,
       companyName,
+      companyLogoUrl,
       inviteUrl,
       inviteUserEmail,
       isLoading,
@@ -332,6 +346,30 @@ class AccountOverview extends React.Component<Props, State> {
             />
           </Box>
 
+          <Flex sx={{alignItems: 'center'}}>
+            <Box mb={3} mr={3} sx={{maxWidth: 480, flex: 1}}>
+              <label htmlFor="company_logo_url">Company logo URL:</label>
+              <Input
+                id="company_logo_url"
+                type="text"
+                value={companyLogoUrl}
+                onChange={this.handleChangeCompanyLogoUrl}
+                disabled={!isEditing}
+              />
+            </Box>
+
+            <Box
+              style={{
+                height: 40,
+                width: 40,
+                borderRadius: '50%',
+                backgroundPosition: 'center',
+                backgroundSize: 'cover',
+                backgroundImage: `url(${companyLogoUrl})`,
+              }}
+            />
+          </Flex>
+
           {isEditing ? (
             <Flex>
               <Box mr={1}>
@@ -340,7 +378,7 @@ class AccountOverview extends React.Component<Props, State> {
                 </Button>
               </Box>
               <Box>
-                <Button type="primary" onClick={this.handleUpdateCompanyName}>
+                <Button type="primary" onClick={this.handleUpdateCompany}>
                   Save
                 </Button>
               </Box>

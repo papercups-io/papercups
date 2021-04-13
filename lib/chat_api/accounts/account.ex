@@ -12,6 +12,7 @@ defmodule ChatApi.Accounts.Account do
 
   @type t :: %__MODULE__{
           company_name: String.t(),
+          company_logo_url: String.t() | nil,
           time_zone: String.t() | nil,
           subscription_plan: String.t() | nil,
           # Stripe fields
@@ -37,6 +38,7 @@ defmodule ChatApi.Accounts.Account do
   @foreign_key_type :binary_id
   schema "accounts" do
     field(:company_name, :string)
+    field(:company_logo_url, :string)
     field(:time_zone, :string)
     field(:subscription_plan, :string, default: "starter")
 
@@ -64,6 +66,7 @@ defmodule ChatApi.Accounts.Account do
     account
     |> cast(attrs, [
       :company_name,
+      :company_logo_url,
       :time_zone
     ])
     |> cast_embed(:working_hours, with: &working_hours_changeset/2)
