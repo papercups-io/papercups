@@ -50,7 +50,8 @@ defmodule ChatApiWeb.CustomerView do
       current_url: customer.current_url,
       browser: customer.browser,
       os: customer.os,
-      metadata: customer.metadata
+      metadata: customer.metadata,
+      title: customer.name || customer.email || "Anonymous User"
     }
   end
 
@@ -76,7 +77,8 @@ defmodule ChatApiWeb.CustomerView do
       os: customer.os,
       ip: customer.ip,
       metadata: customer.metadata,
-      time_zone: customer.time_zone
+      time_zone: customer.time_zone,
+      title: customer.name || customer.email || "Anonymous User"
     }
     |> maybe_render_tags(customer)
     |> maybe_render_notes(customer)

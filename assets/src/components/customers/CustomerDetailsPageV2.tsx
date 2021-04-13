@@ -1,97 +1,81 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {colors, shadows, Button, Empty, Title} from '../common';
+import {Button, Empty, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
-import {Conversation, Customer} from '../../types';
+import {BrowserSession, Conversation, Customer} from '../../types';
 import Spinner from '../Spinner';
 import logger from '../../logger';
 import {getColorByUuid} from '../conversations/support';
 import ConversationItem from '../conversations/ConversationItem';
 import StartConversationButton from '../conversations/StartConversationButton';
-import {CustomerDetails} from '../conversations/ConversationDetailsSidebar';
+import CustomerDetailsSidebar from './CustomerDetailsSidebar';
 import {sortConversationMessages} from '../../utils';
-import CustomerDetailsModal from '../customers/CustomerDetailsModal';
-
-const DetailsSectionCard = ({children}: {children: any}) => {
-  return (
-    <Box
-      p={3}
-      mb={3}
-      sx={{
-        bg: colors.white,
-        border: '1px solid rgba(0,0,0,.06)',
-        borderRadius: 4,
-        boxShadow: shadows.medium,
-      }}
-    >
-      {children}
-    </Box>
-  );
-};
+import CustomerDetailsCard from './CustomerDetailsCard';
 
 type Props = RouteComponentProps<{id: string}>;
 type State = {
-  loading?: boolean;
-  customer: Customer | null;
   conversations: Array<Conversation>;
-  isModalOpen?: boolean;
+  customer: Customer | null;
+  session: BrowserSession | null;
+  loading?: boolean;
 };
 
 class CustomerDetailsPage extends React.Component<Props, State> {
   state: State = {
-    loading: true,
-    customer: null,
     conversations: [],
-    isModalOpen: false,
+    customer: null,
+    session: null,
+    loading: true,
   };
 
-  getCustomerId = () => this.props.match.params.id;
-
   async componentDidMount() {
-    const customerId = this.getCustomerId();
-
     try {
-      const customer = await API.fetchCustomer(customerId, {
-        expand: ['company', 'tags'],
-      });
-      const {data: conversations} = await API.fetchConversations({
-        customer_id: customerId,
-      });
+      const [customer, conversations, session] = await Promise.all([
+        this.fetchCustomer(),
+        this.fetchConversations(),
+        this.fetchSession(),
+      ]);
 
-      this.setState({customer, conversations, loading: false});
+      this.setState({customer, conversations, session, loading: false});
     } catch (err) {
-      logger.error('Error loading customer!', err);
+      logger.error('Error loading customer or conversations!', err);
 
       this.setState({loading: false});
     }
   }
 
-  handleRefreshCustomer = async () => {
-    try {
-      const customer = await API.fetchCustomer(this.getCustomerId(), {
-        expand: ['company', 'tags'],
-      });
+  getCustomerId = () => this.props.match.params.id;
 
-      this.setState({customer, loading: false});
-    } catch (err) {
-      logger.error('Error loading customer!', err);
-
-      this.setState({loading: false});
-    }
+  fetchCustomer = async () => {
+    return await API.fetchCustomer(this.getCustomerId(), {
+      expand: ['company', 'tags'],
+    });
   };
 
   fetchConversations = async () => {
-    try {
-      const {data: conversations} = await API.fetchConversations({
-        customer_id: this.getCustomerId(),
-      });
+    const {data: conversations} = await API.fetchConversations({
+      customer_id: this.getCustomerId(),
+    });
 
-      this.setState({conversations});
-    } catch (err) {
-      logger.error('Error loading conversations!', err);
-    }
+    return conversations;
+  };
+
+  fetchSession = async () => {
+    const sessions = await API.fetchBrowserSessions({
+      customerId: this.getCustomerId(),
+      isActive: true,
+      limit: 1,
+    });
+    const session = sessions[0];
+
+    return session;
+  };
+
+  refetchConversations = async () => {
+    const conversations = await this.fetchConversations();
+    this.setState({conversations});
   };
 
   hasOpenConversation = () => {
@@ -114,25 +98,14 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     this.props.history.push(url);
   };
 
-  handleOpenModal = () => {
-    this.setState({isModalOpen: true});
-  };
-
-  handleCloseModal = () => {
-    this.setState({isModalOpen: false});
-  };
-
-  handleCustomerUpdated = async () => {
-    return this.handleRefreshCustomer().then(() => this.handleCloseModal());
-  };
-
   handleCustomerDeleted = () => {
     this.props.history.push('/customers');
   };
 
   render() {
-    const {loading, isModalOpen, customer, conversations = []} = this.state;
+    const {loading, customer, conversations = [], session} = this.state;
 
+    // TODO: add error handling when customer can't be loaded
     if (loading || !customer) {
       return (
         <Flex
@@ -141,6 +114,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
             justifyContent: 'center',
             alignItems: 'center',
             height: '100%',
+            bg: 'rgb(245, 245, 245)',
           }}
         >
           <Spinner size={40} />
@@ -148,52 +122,31 @@ class CustomerDetailsPage extends React.Component<Props, State> {
       );
     }
 
-    const {name, email} = customer;
-    const title = name || email || 'Anonymous User';
-
     return (
       <Flex
         p={4}
         sx={{
           flexDirection: 'column',
           flex: 1,
+          height: '100v',
           bg: 'rgb(245, 245, 245)',
         }}
       >
-        <Flex
-          mb={4}
-          sx={{justifyContent: 'space-between', alignItems: 'center'}}
-        >
+        <Flex mb={4}>
           <Link to="/customers">
-            <Button icon={<ArrowLeftOutlined />}>Back to all customers</Button>
+            <Button icon={<ArrowLeftOutlined />}>Back to customers</Button>
           </Link>
         </Flex>
 
-        <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={2}>{title}</Title>
-
-          <Button type="primary" onClick={this.handleOpenModal}>
-            Edit
-          </Button>
-        </Flex>
-
-        <CustomerDetailsModal
-          customer={customer}
-          isVisible={isModalOpen}
-          onClose={this.handleCloseModal}
-          onUpdate={this.handleCustomerUpdated}
-          onDelete={this.handleCustomerDeleted}
-        />
-
-        <Flex>
-          <Box sx={{flex: 1, pr: 4, mt: -2}}>
-            <CustomerDetails customer={customer} />
+        <Flex sx={{height: '100%'}}>
+          <Box mr={3}>
+            <CustomerDetailsSidebar customer={customer} session={session} />
           </Box>
 
           <Box sx={{flex: 3}}>
-            <DetailsSectionCard>
+            <CustomerDetailsCard>
               <Flex
-                pb={2}
+                p={3}
                 sx={{
                   borderBottom: '1px solid rgba(0,0,0,.06)',
                   justifyContent: 'space-between',
@@ -203,7 +156,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
                 <StartConversationButton
                   customerId={this.getCustomerId()}
                   isDisabled={this.hasOpenConversation()}
-                  onInitializeNewConversation={this.fetchConversations}
+                  onInitializeNewConversation={this.refetchConversations}
                 />
               </Flex>
 
@@ -230,7 +183,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
               ) : (
                 <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
               )}
-            </DetailsSectionCard>
+            </CustomerDetailsCard>
           </Box>
         </Flex>
       </Flex>

@@ -44,6 +44,8 @@ export type Customer = {
   tags?: Array<Tag>;
   time_zone?: string;
   updated_at?: string;
+  title: string;
+  company?: Company;
 };
 
 export type Company = {

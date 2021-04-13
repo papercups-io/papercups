@@ -3,6 +3,7 @@ import qs from 'query-string';
 import {getAuthTokens} from './storage';
 import {
   Account,
+  BrowserSession,
   Conversation,
   Customer,
   Tag,
@@ -1269,7 +1270,7 @@ type BrowserSessionFilters = {
 export const fetchBrowserSessions = async (
   {customerId, isActive, limit = 100, sessionIds = []}: BrowserSessionFilters,
   token = getAccessToken()
-) => {
+): Promise<Array<BrowserSession>> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
