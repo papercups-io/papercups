@@ -106,9 +106,13 @@ class CustomerDetailsPage extends React.Component<Props, State> {
     this.setState({customer});
     this.toggleIsEditModalVisible(false);
     notification.success({
-      message: `Customer successfully updated!`,
+      message: `Customer successfully updated`,
       duration: 10,
     });
+  };
+
+  handleCustomerDeleted = () => {
+    this.props.history.push('/customers');
   };
 
   toggleIsEditModalVisible = (isEditModalVisible: boolean) => {
@@ -169,6 +173,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
               customer={customer}
               isVisible={isEditModalVisible}
               onClose={() => this.toggleIsEditModalVisible(false)}
+              onDelete={this.handleCustomerDeleted}
               onUpdate={this.handleCustomerUpdated}
             />
           </Flex>

@@ -2,10 +2,20 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {Button, Modal, Text, Input} from '../common';
+import {
+  Button,
+  colors,
+  Input,
+  Modal,
+  notification,
+  Paragraph,
+  Popconfirm,
+  Text,
+} from '../common';
 import * as API from '../../api';
 import {Customer} from '../../types';
 import logger from '../../logger';
+import {WarningTwoTone} from '../icons';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -14,12 +24,14 @@ type Props = {
   customer: Customer;
   isVisible: boolean;
   onClose: () => void;
-  onUpdate: () => Promise<void>;
+  onDelete: () => void;
+  onUpdate: () => void;
 };
 
 type State = {
   email?: string;
   error?: string;
+  isDeleting: boolean;
   isSaving: boolean;
   name?: string;
   phone?: string | number;
@@ -28,6 +40,7 @@ type State = {
 class EditCustomerDetailsModal extends React.Component<Props, State> {
   state: State = {
     email: this.props.customer.email,
+    isDeleting: false,
     isSaving: false,
     name: this.props.customer.name,
     phone: this.props.customer.phone,
@@ -57,7 +70,7 @@ class EditCustomerDetailsModal extends React.Component<Props, State> {
         email,
         phone,
       });
-      await onUpdate();
+      onUpdate();
     } catch (err) {
       logger.error('Failed to update customer', err);
       const error =
@@ -70,9 +83,34 @@ class EditCustomerDetailsModal extends React.Component<Props, State> {
     this.setState({isSaving: false});
   };
 
+  handleDelete = async () => {
+    this.setState({isDeleting: true});
+
+    const {customer, onDelete} = this.props;
+    const {id: customerId} = customer;
+    const title = customer?.title ?? 'Customer';
+
+    try {
+      await API.deleteCustomer(customerId);
+      notification.success({
+        message: `${title} successfully deleted.`,
+        duration: 10,
+      });
+      onDelete();
+    } catch (err) {
+      logger.error('Failed to delete customer', err);
+      notification.error({
+        message: `Failed to delete ${title}. Please try again later.`,
+        duration: 10,
+      });
+    }
+
+    this.setState({isDeleting: false});
+  };
+
   render() {
     const {isVisible, onClose} = this.props;
-    const {isSaving, name, email, phone, error} = this.state;
+    const {isSaving, isDeleting, name, email, phone, error} = this.state;
 
     return (
       <Modal
@@ -82,14 +120,36 @@ class EditCustomerDetailsModal extends React.Component<Props, State> {
         onOk={onClose}
         footer={
           <Flex sx={{justifyContent: 'space-between'}}>
-            <Button onClick={onClose} type="link">
-              Cancel
-            </Button>
-            <Button
-              onClick={this.handleSave}
-              disabled={isSaving}
-              type="primary"
-            >
+            <Box>
+              <Button onClick={onClose} type="text">
+                Cancel
+              </Button>
+              <Popconfirm
+                title={
+                  <Box sx={{maxWidth: 320}}>
+                    <Paragraph>
+                      Are you sure you want to delete this customer and all of
+                      their data?
+                    </Paragraph>
+                    <Paragraph>
+                      <Text strong>Warning:</Text> this cannot be undone.
+                    </Paragraph>
+                  </Box>
+                }
+                icon={<WarningTwoTone twoToneColor={colors.red} />}
+                okText="Delete"
+                okType="danger"
+                cancelText="Cancel"
+                cancelButtonProps={{type: 'text'}}
+                placement="bottomLeft"
+                onConfirm={this.handleDelete}
+              >
+                <Button danger loading={isDeleting}>
+                  Delete
+                </Button>
+              </Popconfirm>
+            </Box>
+            <Button onClick={this.handleSave} loading={isSaving} type="primary">
               Save
             </Button>
           </Flex>
