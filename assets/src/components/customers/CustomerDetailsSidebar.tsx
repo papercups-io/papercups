@@ -23,43 +23,6 @@ import CustomerDetailsCard from './CustomerDetailsCard';
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
-const BasicDetailsSection = ({customer}: {customer: Customer}) => {
-  const {
-    email,
-    name,
-    phone,
-    id: customerId,
-    external_id: externalId,
-  } = customer;
-
-  return (
-    <CustomerDetailsSection title="Basic">
-      <CustomerDetailsProperty
-        icon={<UserOutlined style={{color: colors.primary}} />}
-        name="ID"
-        value={
-          <CustomerDetailsPropertyValue value={externalId || customerId} />
-        }
-      />
-      <CustomerDetailsProperty
-        icon={<UserOutlined style={{color: colors.primary}} />}
-        name="Name"
-        value={<CustomerDetailsPropertyValue value={name} />}
-      />
-      <CustomerDetailsProperty
-        icon={<MailOutlined style={{color: colors.primary}} />}
-        name="Email"
-        value={<CustomerDetailsPropertyValue value={email} />}
-      />
-      <CustomerDetailsProperty
-        icon={<PhoneOutlined style={{color: colors.primary}} />}
-        name="Phone"
-        value={<CustomerDetailsPropertyValue value={phone} />}
-      />
-    </CustomerDetailsSection>
-  );
-};
-
 export const CustomerDetailsSidebar = ({
   customer,
   session,
@@ -69,17 +32,21 @@ export const CustomerDetailsSidebar = ({
 }) => {
   const {
     browser,
+    company,
+    created_at: createdAt,
+    current_url: currentUrl,
+    email,
+    external_id: externalId,
+    id: customerId,
+    ip: lastIpAddress,
+    last_seen_at: lastSeenAt,
+    metadata = {},
+    name,
     os,
     pathname,
-    title,
-    company,
-    id: customerId,
-    created_at: createdAt,
-    last_seen_at: lastSeenAt,
-    current_url: currentUrl,
+    phone,
     time_zone: timezone,
-    ip: lastIpAddress,
-    metadata = {},
+    title,
   } = customer;
   const hasMetadata = !!metadata && Object.keys(metadata).length > 0;
 
@@ -89,9 +56,33 @@ export const CustomerDetailsSidebar = ({
         <Title level={4}>{title}</Title>
         <Divider dashed />
 
-        <BasicDetailsSection customer={customer} />
+        <CustomerDetailsSection title="Basic">
+          <CustomerDetailsProperty
+            icon={<UserOutlined style={{color: colors.primary}} />}
+            name="ID"
+            value={
+              <CustomerDetailsPropertyValue value={externalId || customerId} />
+            }
+          />
+          <CustomerDetailsProperty
+            icon={<UserOutlined style={{color: colors.primary}} />}
+            name="Name"
+            value={<CustomerDetailsPropertyValue value={name} />}
+          />
+          <CustomerDetailsProperty
+            icon={<MailOutlined style={{color: colors.primary}} />}
+            name="Email"
+            value={<CustomerDetailsPropertyValue value={email} />}
+          />
+          <CustomerDetailsProperty
+            icon={<PhoneOutlined style={{color: colors.primary}} />}
+            name="Phone"
+            value={<CustomerDetailsPropertyValue value={phone} />}
+          />
+        </CustomerDetailsSection>
 
         <Divider dashed />
+
         <CustomerDetailsSection title="Activity">
           <CustomerDetailsProperty
             icon={<CalendarOutlined style={{color: colors.primary}} />}
@@ -131,7 +122,9 @@ export const CustomerDetailsSidebar = ({
             </Box>
           )}
         </CustomerDetailsSection>
+
         <Divider dashed />
+
         <CustomerDetailsSection title="Device">
           <CustomerDetailsProperty
             icon={<GlobalOutlined style={{color: colors.primary}} />}
@@ -177,6 +170,7 @@ export const CustomerDetailsSidebar = ({
             <Divider dashed />
           </>
         )}
+
         <CustomerDetailsSection title="Tags">
           <SidebarCustomerTags customerId={customerId} />
         </CustomerDetailsSection>
