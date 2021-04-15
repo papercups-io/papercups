@@ -6,6 +6,7 @@ defmodule ChatApi.Slack.Helpers do
   require Logger
 
   alias ChatApi.{
+    Accounts,
     Companies,
     Conversations,
     Customers,
@@ -316,18 +317,28 @@ defmodule ChatApi.Slack.Helpers do
 
   def find_matching_user(_authorization, _slack_user_id), do: nil
 
-  @spec find_matching_bot_customer(any(), binary()) :: Customer.t() | nil
+  @spec find_matching_bot_customer(SlackAuthorization.t(), binary()) :: Customer.t() | nil
   def find_matching_bot_customer(%SlackAuthorization{account_id: account_id}, slack_bot_id) do
     Customers.find_by_external_id(slack_bot_id, account_id)
   end
 
   def find_matching_bot_customer(_authorization, _slack_bot_id), do: nil
 
-  @spec get_admin_sender_id(any(), binary(), binary()) :: binary()
-  def get_admin_sender_id(authorization, slack_user_id, fallback) do
+  @spec get_admin_sender_id(SlackAuthorization.t(), binary(), binary() | nil) :: binary()
+  def get_admin_sender_id(
+        %SlackAuthorization{account_id: account_id} = authorization,
+        slack_user_id,
+        fallback
+      ) do
     case find_matching_user(authorization, slack_user_id) do
-      %{id: id} -> id
-      _ -> fallback
+      %User{id: id} ->
+        id
+
+      _ ->
+        case fallback do
+          nil -> account_id |> Accounts.get_primary_user() |> Map.get(:id)
+          fallback_user_id -> fallback_user_id
+        end
     end
   end
 
@@ -497,53 +508,15 @@ defmodule ChatApi.Slack.Helpers do
   @spec create_new_slack_conversation_thread(binary(), map()) ::
           {:ok, SlackConversationThread.t()} | {:error, Ecto.Changeset.t()}
   def create_new_slack_conversation_thread(conversation_id, response) do
-    with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
-         primary_user_id <- get_conversation_primary_user_id(conversation) do
-      # TODO: This is just a temporary workaround to handle having a user_id
-      # in the message when an agent responds on Slack. At the moment, if anyone
-      # responds to a thread on Slack, we just assume it's the assignee.
-      assign_and_broadcast_conversation_updated(conversation, primary_user_id)
+    conversation = Conversations.get_conversation_with!(conversation_id, [])
 
-      response
-      |> Slack.Extractor.extract_slack_conversation_thread_info!()
-      |> Map.merge(%{
-        conversation_id: conversation_id,
-        account_id: conversation.account_id
-      })
-      |> SlackConversationThreads.create_slack_conversation_thread()
-    end
-  end
-
-  @spec assign_and_broadcast_conversation_updated(Conversation.t(), binary()) :: Conversation.t()
-  def assign_and_broadcast_conversation_updated(conversation, primary_user_id) do
-    # TODO: how should we handle errors here?
-    {:ok, conversation} =
-      Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
-
-    conversation
-    |> Conversations.Notification.broadcast_conversation_update_to_admin!()
-    |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
-  end
-
-  @spec get_conversation_primary_user_id(Conversation.t()) :: binary()
-  def get_conversation_primary_user_id(conversation) do
-    # TODO: do a round robin here instead of just getting the first user every time?
-    conversation
-    |> Map.get(:account)
-    |> Map.get(:users)
-    |> fetch_valid_user()
-  end
-
-  @spec fetch_valid_user(list()) :: binary()
-  def fetch_valid_user([]),
-    do: raise("No users associated with the conversation's account")
-
-  def fetch_valid_user(users) do
-    users
-    |> Enum.reject(& &1.disabled_at)
-    |> Enum.sort_by(& &1.inserted_at)
-    |> List.first()
-    |> Map.get(:id)
+    response
+    |> Slack.Extractor.extract_slack_conversation_thread_info!()
+    |> Map.merge(%{
+      conversation_id: conversation_id,
+      account_id: conversation.account_id
+    })
+    |> SlackConversationThreads.create_slack_conversation_thread()
   end
 
   @spec get_message_type(Message.t()) :: atom()

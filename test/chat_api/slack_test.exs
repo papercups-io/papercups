@@ -6,11 +6,9 @@ defmodule ChatApi.SlackTest do
   import Mock
 
   alias ChatApi.{
-    Conversations,
     Messages,
     Slack,
-    SlackConversationThreads,
-    Users
+    SlackConversationThreads
   }
 
   describe "Slack.Token" do
@@ -478,63 +476,21 @@ defmodule ChatApi.SlackTest do
              end) =~ "Error retrieving user info"
     end
 
-    test "Helpers.create_new_slack_conversation_thread/2 creates a new thread and assigns the primary user",
-         %{conversation: conversation, account: account} do
+    test "Helpers.create_new_slack_conversation_thread/2 creates a new thread", %{
+      conversation: conversation
+    } do
       %{account_id: account_id, id: id} = conversation
-      primary_user = insert(:user, account: account)
       channel = "bots"
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
 
-      {:ok, thread} = Slack.Helpers.create_new_slack_conversation_thread(id, response)
-
-      assert %SlackConversationThreads.SlackConversationThread{
-               slack_channel: ^channel,
-               slack_thread_ts: ^ts,
-               account_id: ^account_id,
-               conversation_id: ^id
-             } = thread
-
-      conversation = Conversations.get_conversation!(id)
-
-      assert conversation.assignee_id == primary_user.id
-    end
-
-    test "Helpers.create_new_slack_conversation_thread/2 raises if no primary user exists",
-         %{conversation: conversation} do
-      channel = "bots"
-      ts = "1234.56789"
-      response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
-
-      assert_raise RuntimeError, fn ->
-        Slack.Helpers.create_new_slack_conversation_thread(conversation.id, response)
-      end
-    end
-
-    test "Helpers.get_conversation_primary_user_id/2 gets the primary user of the associated account" do
-      account = insert(:account)
-      user = insert(:user, account: account)
-      customer = insert(:customer, account: account)
-      conversation = insert(:conversation, account: account, customer: customer)
-      conversation = Conversations.get_conversation_with!(conversation.id, account: :users)
-
-      assert Slack.Helpers.get_conversation_primary_user_id(conversation) == user.id
-    end
-
-    test "Helpers.fetch_valid_user/1 reject disabled users and fetch the oldest user.",
-         %{account: account} do
-      {:ok, disabled_user} =
-        insert(:user, account: account)
-        |> Users.disable_user()
-
-      primary_user = insert(:user, account: account)
-
-      # Make sure that secondary_user is inserted later.
-      :timer.sleep(1000)
-      secondary_user = insert(:user, account: account)
-
-      users = [disabled_user, secondary_user, primary_user]
-      assert primary_user.id === Slack.Helpers.fetch_valid_user(users)
+      {:ok,
+       %SlackConversationThreads.SlackConversationThread{
+         slack_channel: ^channel,
+         slack_thread_ts: ^ts,
+         account_id: ^account_id,
+         conversation_id: ^id
+       }} = Slack.Helpers.create_new_slack_conversation_thread(id, response)
     end
 
     test "Helpers.identify_customer/1 returns the message sender type", %{account: account} do

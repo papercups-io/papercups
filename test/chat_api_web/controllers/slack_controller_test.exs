@@ -12,7 +12,7 @@ defmodule ChatApiWeb.SlackControllerTest do
 
   setup %{conn: conn} do
     account = insert(:account)
-    user = insert(:user, account: account)
+    user = insert(:user, account: account, role: "admin")
     customer = insert(:customer, account: account, email: @email)
     conversation = insert(:conversation, account: account, customer: customer)
     auth = insert(:slack_authorization, account: account, channel: @slack_channel)
