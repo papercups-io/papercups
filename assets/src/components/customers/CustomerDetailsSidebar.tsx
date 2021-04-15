@@ -31,22 +31,22 @@ export const CustomerDetailsSidebar = ({
   session: BrowserSession | null;
 }) => {
   const {
-    email,
-    name,
     browser,
-    os,
-    phone,
-    pathname,
-    title,
     company,
-    id: customerId,
-    external_id: externalId,
     created_at: createdAt,
-    last_seen_at: lastSeenAt,
     current_url: currentUrl,
-    time_zone: timezone,
+    email,
+    external_id: externalId,
+    id: customerId,
     ip: lastIpAddress,
+    last_seen_at: lastSeenAt,
     metadata = {},
+    name,
+    os,
+    pathname,
+    phone,
+    time_zone: timezone,
+    title,
   } = customer;
   const hasMetadata = !!metadata && Object.keys(metadata).length > 0;
 
@@ -55,6 +55,7 @@ export const CustomerDetailsSidebar = ({
       <Box p={3}>
         <Title level={4}>{title}</Title>
         <Divider dashed />
+
         <CustomerDetailsSection title="Basic">
           <CustomerDetailsProperty
             icon={<UserOutlined style={{color: colors.primary}} />}
@@ -79,7 +80,9 @@ export const CustomerDetailsSidebar = ({
             value={<CustomerDetailsPropertyValue value={phone} />}
           />
         </CustomerDetailsSection>
+
         <Divider dashed />
+
         <CustomerDetailsSection title="Activity">
           <CustomerDetailsProperty
             icon={<CalendarOutlined style={{color: colors.primary}} />}
@@ -119,7 +122,9 @@ export const CustomerDetailsSidebar = ({
             </Box>
           )}
         </CustomerDetailsSection>
+
         <Divider dashed />
+
         <CustomerDetailsSection title="Device">
           <CustomerDetailsProperty
             icon={<GlobalOutlined style={{color: colors.primary}} />}
@@ -165,6 +170,7 @@ export const CustomerDetailsSidebar = ({
             <Divider dashed />
           </>
         )}
+
         <CustomerDetailsSection title="Tags">
           <SidebarCustomerTags customerId={customerId} />
         </CustomerDetailsSection>
