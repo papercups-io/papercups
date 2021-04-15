@@ -6,7 +6,7 @@ database_url = System.get_env("DATABASE_URL") || "ecto://postgres:postgres@local
 config :chat_api, ChatApi.Repo,
   url: database_url,
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  pool_size: 10,
   socket_options: [:inet6]
 
 # For development, we disable any cache and enable
