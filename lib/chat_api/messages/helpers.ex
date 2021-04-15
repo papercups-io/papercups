@@ -24,7 +24,7 @@ defmodule ChatApi.Messages.Helpers do
   def get_message_type(%Message{user_id: nil}), do: :customer
   def get_message_type(_message), do: :unknown
 
-  @spec handle_post_creation_conversation_updates(Message.t()) :: Message.t()
+  @spec handle_post_creation_conversation_updates(Message.t(), map()) :: Message.t()
   def handle_post_creation_conversation_updates(%Message{} = message, updates \\ %{}) do
     message
     |> build_conversation_updates(updates)
@@ -36,7 +36,7 @@ defmodule ChatApi.Messages.Helpers do
     message
   end
 
-  @spec build_conversation_updates(Message.t()) :: map()
+  @spec build_conversation_updates(Message.t(), map()) :: map()
   def build_conversation_updates(%Message{} = message, updates \\ %{}) do
     updates
     |> build_first_reply_updates(message)
@@ -65,18 +65,18 @@ defmodule ChatApi.Messages.Helpers do
     case get_message_type(message) do
       # If agent responded, conversation should be marked as "read"
       :agent -> Map.merge(updates, %{read: true})
-      :customer -> Map.merge(updates, %{read: false})
+      # If customer responded, make sure conversation is "open"
+      :customer -> Map.merge(updates, %{read: false, status: "open"})
       _ -> updates
     end
   end
 
   @spec update_message_conversation(map(), Message.t()) :: Conversation.t()
   defp update_message_conversation(updates, %Message{conversation_id: conversation_id}) do
+    # TODO: don't perform update if conversation state already matches updates?
+    conversation = Conversations.get_conversation!(conversation_id)
     # TODO: DRY up this logic with other places we do conversation updates w/ broadcasting?
-    {:ok, conversation} =
-      conversation_id
-      |> Conversations.get_conversation!()
-      |> Conversations.update_conversation(updates)
+    {:ok, conversation} = Conversations.update_conversation(conversation, updates)
 
     conversation
   end
