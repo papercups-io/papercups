@@ -1,12 +1,12 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+import {debounce} from 'lodash';
 import {Button, Checkbox, Input} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
 import {Customer, Pagination} from '../../types';
 import CustomersTable from './CustomersTable';
-import {debounce} from 'lodash';
 
 type Props = {
   currentlyOnline?: any;
