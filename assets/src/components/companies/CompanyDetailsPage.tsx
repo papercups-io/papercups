@@ -65,11 +65,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
         company_id: companyId,
       });
 
-      this.setState({
-        company,
-        customers,
-        loading: false,
-      });
+      this.setState({company, customers, loading: false});
     } catch (err) {
       logger.error('Error loading company!', err);
 
