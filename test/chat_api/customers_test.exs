@@ -69,6 +69,25 @@ defmodule ChatApi.CustomersTest do
       assert kam_ids == [kam.id]
     end
 
+    test "list_customers/2 can search by name/email with the `q` query param", %{account: account} do
+      alex = insert(:customer, account: account, name: "Alex Reichert")
+      alexis = insert(:customer, account: account, name: "Alexis O'Hare")
+      kam = insert(:customer, account: account, email: "kam@kam.com")
+
+      alex_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "alex"})
+        |> Enum.map(& &1.id)
+
+      kam_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "kam"})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(alex_ids) == Enum.sort([alex.id, alexis.id])
+      assert kam_ids == [kam.id]
+    end
+
     test "list_customers/3 returns paginated customers" do
       account = insert(:account)
       insert_list(10, :customer, account: account)

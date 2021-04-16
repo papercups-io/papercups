@@ -1,7 +1,8 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button} from '../common';
+import {debounce} from 'lodash';
+import {Button, Checkbox, Input} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
 import {Customer, Pagination} from '../../types';
@@ -9,6 +10,7 @@ import CustomersTable from './CustomersTable';
 
 type Props = {
   currentlyOnline?: any;
+  shouldIncludeAnonymous?: boolean;
   defaultFilters?: Record<string, any>;
   actions?: (
     refreshCustomerData: (filters?: any) => void
@@ -18,23 +20,30 @@ type State = {
   loading: boolean;
   query: string;
   customers: Array<Customer>;
-  filteredCustomers: Array<Customer>;
+  shouldIncludeAnonymous: boolean;
   pagination: Pagination;
 };
 
 const DEFAULT_PAGE_SIZE = 10;
 
 class CustomersTableContainer extends React.Component<Props, State> {
-  state: State = {
-    loading: true,
-    query: '',
-    customers: [],
-    filteredCustomers: [],
-    pagination: {
-      page_number: 1,
-      page_size: DEFAULT_PAGE_SIZE,
-    },
-  };
+  constructor(props: Props) {
+    super(props);
+
+    // If undefined, default to `true`
+    const {shouldIncludeAnonymous = true} = props;
+
+    this.state = {
+      loading: true,
+      query: '',
+      customers: [],
+      shouldIncludeAnonymous,
+      pagination: {
+        page_number: 1,
+        page_size: DEFAULT_PAGE_SIZE,
+      },
+    };
+  }
 
   async componentDidMount() {
     await this.handleRefreshCustomers();
@@ -48,9 +57,11 @@ class CustomersTableContainer extends React.Component<Props, State> {
 
     try {
       const {defaultFilters = {}} = this.props;
+      const {shouldIncludeAnonymous} = this.state;
       const {data: customers, ...pagination} = await API.fetchCustomers({
         page,
         page_size: pageSize,
+        include_anonymous: shouldIncludeAnonymous,
         ...customFilters,
         ...defaultFilters,
       });
@@ -76,26 +87,50 @@ class CustomersTableContainer extends React.Component<Props, State> {
     });
   };
 
-  handleSearchCustomers = (query: string) => {
-    const {customers = []} = this.state;
-
-    if (!query || !query.length) {
-      this.setState({query: '', filteredCustomers: customers});
-    }
-
-    this.setState({query});
+  handleToggleIncludeAnonymous = (e: any) => {
+    this.setState({shouldIncludeAnonymous: e.target.checked}, () =>
+      this.handleRefreshCustomers()
+    );
   };
+
+  handleSearchCustomers = (query: string) => {
+    this.setState({query}, () => this.debouncedFilterCustomersByQuery());
+  };
+
+  debouncedFilterCustomersByQuery = debounce(() => {
+    const {query = ''} = this.state;
+
+    this.handleRefreshCustomers({q: query});
+  }, 200);
 
   render() {
     const {currentlyOnline, actions} = this.props;
-    const {loading, customers, pagination} = this.state;
+    const {loading, customers, pagination, shouldIncludeAnonymous} = this.state;
 
     return (
       <Box>
         {actions && typeof actions === 'function' && (
           <Flex mb={3} sx={{justifyContent: 'space-between'}}>
             {/* TODO: this will be where we put our search box and other filters */}
-            <Box />
+            <Flex mx={-2} sx={{alignItems: 'center'}}>
+              <Box mx={2}>
+                <Input.Search
+                  placeholder="Search customers..."
+                  allowClear
+                  onSearch={this.handleSearchCustomers}
+                  style={{width: 320}}
+                />
+              </Box>
+
+              <Box mx={2}>
+                <Checkbox
+                  checked={shouldIncludeAnonymous}
+                  onChange={this.handleToggleIncludeAnonymous}
+                >
+                  Include anonymous
+                </Checkbox>
+              </Box>
+            </Flex>
 
             {/* 
               NB: this is where we allow passing in custom action components, 

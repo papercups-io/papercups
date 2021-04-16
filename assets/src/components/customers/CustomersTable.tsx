@@ -64,15 +64,29 @@ const CustomersTable = ({
       dataIndex: 'email',
       key: 'email',
       render: (value: string) => {
-        return value || '--';
+        return value ? (
+          <Text>{value}</Text>
+        ) : (
+          <Text style={{opacity: 0.8}} type="secondary">
+            --
+          </Text>
+        );
       },
     },
     {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (value: string) => {
-        return value || 'Anonymous User';
+      render: (value: string, record: Customer) => {
+        const hasEmail = record.email && record.email.length > 0;
+
+        return value ? (
+          <Text>{value}</Text>
+        ) : (
+          <Text style={{opacity: 0.8}} type="secondary">
+            {hasEmail ? '--' : 'Anonymous User'}
+          </Text>
+        );
       },
     },
     {
