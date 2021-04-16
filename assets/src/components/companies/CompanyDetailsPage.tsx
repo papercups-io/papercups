@@ -12,7 +12,7 @@ import {
 } from '../common';
 import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
-import {Company, Customer, Pagination} from '../../types';
+import {Company, Customer} from '../../types';
 import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import CustomersTableContainer from '../customers/CustomersTableContainer';
