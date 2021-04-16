@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {notification, Button, Empty, Title} from '../common';
+import {Button, Empty, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import {BrowserSession, Conversation, Customer} from '../../types';
@@ -104,20 +104,11 @@ class CustomerDetailsPage extends React.Component<Props, State> {
   handleCustomerUpdated = async () => {
     const customer = await this.fetchCustomer();
     this.setState({customer});
-    this.toggleIsEditModalVisible(false);
-    notification.success({
-      message: `Customer successfully updated`,
-      duration: 10,
-    });
+    this.handleCloseEditModal();
   };
 
-  handleCustomerDeleted = () => {
-    this.props.history.push('/customers');
-  };
-
-  toggleIsEditModalVisible = (isEditModalVisible: boolean) => {
-    this.setState({isEditModalVisible});
-  };
+  handleOpenEditModal = () => this.setState({isEditModalVisible: true});
+  handleCloseEditModal = () => this.setState({isEditModalVisible: false});
 
   render() {
     const {
@@ -163,17 +154,13 @@ class CustomerDetailsPage extends React.Component<Props, State> {
 
         <Box sx={{height: '100%'}}>
           <Flex sx={{flexDirection: 'row-reverse'}} mb={3}>
-            <Button
-              type="primary"
-              onClick={() => this.toggleIsEditModalVisible(true)}
-            >
+            <Button type="primary" onClick={this.handleOpenEditModal}>
               Edit
             </Button>
             <EditCustomerDetailsModal
               customer={customer}
               isVisible={isEditModalVisible}
-              onClose={() => this.toggleIsEditModalVisible(false)}
-              onDelete={this.handleCustomerDeleted}
+              onClose={this.handleCloseEditModal}
               onUpdate={this.handleCustomerUpdated}
             />
           </Flex>
