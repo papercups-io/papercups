@@ -14,7 +14,6 @@ defmodule ChatApi.Customers.Customer do
 
   @type t :: %__MODULE__{
           first_seen: any(),
-          last_seen_at: any(),
           email: String.t() | nil,
           name: String.t() | nil,
           phone: String.t() | nil,

@@ -184,10 +184,8 @@ const CustomersTable = ({
       dataIndex: 'last_seen_at',
       key: 'last_seen_at',
       render: (value: string, record: Customer) => {
-        const {id, pathname, current_url, last_seen_at} = record;
-        const formatted = dayjs
-          .utc(value || last_seen_at)
-          .format('ddd, MMM D h:mm A');
+        const {id, pathname, current_url} = record;
+        const formatted = dayjs.utc(value).format('ddd, MMM D h:mm A');
         const isOnline = currentlyOnline[id];
 
         if (isOnline) {
