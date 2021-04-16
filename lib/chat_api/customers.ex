@@ -386,6 +386,16 @@ defmodule ChatApi.Customers do
       {"time_zone", value}, dynamic ->
         dynamic([r], ^dynamic and ilike(r.time_zone, ^value))
 
+      {"include_anonymous", "false"}, dynamic ->
+        dynamic([r], ^dynamic and not is_nil(r.email))
+
+      {"q", ""}, dynamic ->
+        dynamic
+
+      {"q", query}, dynamic ->
+        value = "%" <> query <> "%"
+        dynamic([r], ^dynamic and (ilike(r.email, ^value) or ilike(r.name, ^value)))
+
       {_, _}, dynamic ->
         # Not a where parameter
         dynamic
