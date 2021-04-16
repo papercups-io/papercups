@@ -19,9 +19,9 @@ import {sleep, sortConversationMessages} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
 import {getColorByUuid} from '../conversations/support';
-import CustomersTable from '../customers/CustomersTable';
 import UpdateTagModal from './UpdateTagModal';
 import ConversationItem from '../conversations/ConversationItem';
+import CustomersTableContainer from '../customers/CustomersTableContainer';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (
@@ -47,9 +47,7 @@ type State = {
   refreshing: boolean;
   isUpdateModalVisible: boolean;
   tag: T.Tag | null;
-  customers: Array<T.Customer>;
   conversations: Array<T.Conversation>;
-  customerPagination: T.Pagination | null;
 };
 
 class TagDetailsPage extends React.Component<Props, State> {
@@ -59,29 +57,20 @@ class TagDetailsPage extends React.Component<Props, State> {
     refreshing: false,
     isUpdateModalVisible: false,
     tag: null,
-    customers: [],
-    customerPagination: null,
     conversations: [],
   };
 
   async componentDidMount() {
     try {
-      const {id: tagId} = this.props.match.params;
-      const [
-        tag,
-        {data: customers, pagination: customerPagination},
-        {data: conversations},
-      ] = await Promise.all([
+      const tagId = this.getTagId();
+      const [tag, {data: conversations}] = await Promise.all([
         API.fetchTagById(tagId),
-        API.fetchCustomers({tag_id: tagId, page: 1, page_size: 10}),
         API.fetchConversations({tag_id: tagId}),
       ]);
 
       this.setState({
         tag,
-        customers,
         conversations,
-        customerPagination,
         loading: false,
       });
     } catch (err) {
@@ -91,57 +80,20 @@ class TagDetailsPage extends React.Component<Props, State> {
     }
   }
 
-  handleRefreshCustomers = async () => {
-    this.setState({refreshing: true});
-    const {customerPagination} = this.state;
-
-    try {
-      const {id: tagId} = this.props.match.params;
-      const customers = await API.fetchCustomers({
-        tag_id: tagId,
-        page: customerPagination?.page_number,
-        page_size: customerPagination?.page_size,
-      });
-
-      this.setState({customers, refreshing: false});
-    } catch (err) {
-      logger.error('Error refreshing customers!', err);
-
-      this.setState({refreshing: false});
-    }
-  };
-
-  handleCustomerPageChange = async (page: number, page_size?: number) => {
-    this.setState({refreshing: true});
-
-    try {
-      const {
-        data: customers,
-        pagination: customerPagination,
-      } = await API.fetchCustomers({page, page_size});
-
-      this.setState({
-        customers,
-        customerPagination,
-        refreshing: false,
-      });
-    } catch (err) {
-      logger.error('Error paginating customers!', err);
-
-      this.setState({refreshing: false});
-    }
+  getTagId = () => {
+    return this.props.match.params.id;
   };
 
   handleRefreshTag = async () => {
     this.setState({refreshing: true});
 
     try {
-      const {id: tagId} = this.props.match.params;
+      const tagId = this.getTagId();
       const tag = await API.fetchTagById(tagId);
 
       this.setState({tag, refreshing: false});
     } catch (err) {
-      logger.error('Error refreshing customers!', err);
+      logger.error('Error refreshing tags!', err);
 
       this.setState({refreshing: false});
     }
@@ -150,7 +102,8 @@ class TagDetailsPage extends React.Component<Props, State> {
   handleDeleteTag = async () => {
     try {
       this.setState({deleting: true});
-      const {id: tagId} = this.props.match.params;
+      const tagId = this.getTagId();
+
       await API.deleteTag(tagId);
       await sleep(1000);
 
@@ -191,11 +144,8 @@ class TagDetailsPage extends React.Component<Props, State> {
     const {
       loading,
       deleting,
-      refreshing,
       isUpdateModalVisible,
       tag,
-      customerPagination,
-      customers = [],
       conversations = [],
     } = this.state;
 
@@ -303,20 +253,8 @@ class TagDetailsPage extends React.Component<Props, State> {
                 <Title level={4}>People</Title>
               </Box>
 
-              <CustomersTable
-                loading={loading || refreshing}
-                customers={customers}
-                shouldIncludeAnonymous
-                onUpdate={this.handleRefreshCustomers}
-                pagination={{
-                  total: customerPagination?.total_entries,
-                  onChange: this.handleCustomerPageChange,
-                }}
-                action={(customer: T.Customer) => (
-                  <Link to={`/customers/${customer.id}`}>
-                    <Button>View profile</Button>
-                  </Link>
-                )}
+              <CustomersTableContainer
+                defaultFilters={{tag_id: this.getTagId()}}
               />
             </DetailsSectionCard>
 

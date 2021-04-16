@@ -22,7 +22,10 @@ defmodule ChatApiWeb.CustomerView do
   def render("index.json", %{page: page}) do
     %{
       data: render_many(page.entries, CustomerView, "customer.json"),
-      pagination: pagination(page)
+      page_number: page.page_number,
+      page_size: page.page_size,
+      total_pages: page.total_pages,
+      total_entries: page.total_entries
     }
   end
 
@@ -124,13 +127,4 @@ defmodule ChatApiWeb.CustomerView do
   end
 
   defp maybe_render_company(json, _), do: json
-
-  def pagination(page) do
-    %{
-      page_number: page.page_number,
-      page_size: page.page_size,
-      total_pages: page.total_pages,
-      total_entries: page.total_entries
-    }
-  end
 end

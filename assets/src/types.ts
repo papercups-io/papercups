@@ -209,7 +209,7 @@ export enum Alignment {
 
 export type Pagination = {
   page_size: number;
-  total_pages: number;
-  total_entries: number;
   page_number: number;
+  total_pages?: number;
+  total_entries?: number;
 };
