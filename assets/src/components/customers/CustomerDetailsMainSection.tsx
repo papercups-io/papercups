@@ -5,6 +5,7 @@ import {Box} from 'theme-ui';
 import {Tabs} from '../common';
 import CustomerDetailsCard from './CustomerDetailsCard';
 import CustomerDetailsConversations from './CustomerDetailsConversations';
+import CustomerDetailsNotes from './CustomerDetailsNotes';
 
 const {TabPane} = Tabs;
 
@@ -31,7 +32,7 @@ const CustomerDetailsMainSection = ({customerId, history}: Props) => {
             />
           </TabPane>
           <TabPane tab={TAB_KEYS.Notes} key={TAB_KEYS.Notes}>
-            Notes
+            <CustomerDetailsNotes customerId={customerId} />
           </TabPane>
         </Tabs>
       </Box>

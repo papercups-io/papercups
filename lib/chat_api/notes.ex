@@ -24,10 +24,13 @@ defmodule ChatApi.Notes do
     |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
     |> Repo.all()
+    |> Repo.preload(author: :profile)
   end
 
   @spec get_note!(binary()) :: Note.t()
-  def get_note!(id), do: Repo.get!(Note, id)
+  def get_note!(id) do
+    Repo.get!(Note, id)
+  end
 
   @spec create_note(map()) :: {:ok, Note.t()} | {:error, Ecto.Changeset.t()}
   def create_note(attrs \\ %{}) do

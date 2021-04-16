@@ -113,6 +113,7 @@ export type CustomerNote = {
   author_id: number;
   created_at: string;
   updated_at: string;
+  author?: User;
 };
 
 export type Tag = {
