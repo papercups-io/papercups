@@ -177,12 +177,14 @@ const EditCustomerDetailsModal = ({
             onChange={(event) => setPhone(event.currentTarget.value)}
           />
         </Box>
-        {error && (
-          <Box mt={2}>
-            <Text type="danger">{error}</Text>
-          </Box>
-        )}
       </Box>
+      {error && (
+        <Box mt={3}>
+          <Text type="danger" strong>
+            {error}
+          </Text>
+        </Box>
+      )}
     </Modal>
   );
 };
