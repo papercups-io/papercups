@@ -15,7 +15,7 @@ enum TAB_KEYS {
 type Props = {customerId: string};
 type State = {};
 
-class CustomerDetailsPrimarySection extends React.Component<Props, State> {
+class CustomerDetailsMainSection extends React.Component<Props, State> {
   render() {
     return (
       <CustomerDetailsCard>
@@ -40,4 +40,4 @@ class CustomerDetailsPrimarySection extends React.Component<Props, State> {
   }
 }
 
-export default CustomerDetailsPrimarySection;
+export default CustomerDetailsMainSection;

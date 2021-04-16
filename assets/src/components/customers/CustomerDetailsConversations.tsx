@@ -25,17 +25,15 @@ const CustomerDetailsConversations = ({customerId}: Props) => {
     return !!openConversation;
   }, [conversations]);
 
-  const fetchConversations = () => {
-    (async () => {
-      setIsLoading(true);
+  const fetchConversations = async () => {
+    setIsLoading(true);
 
-      const {data: conversations} = await API.fetchConversations({
-        customer_id: customerId,
-      });
+    const {data: conversations} = await API.fetchConversations({
+      customer_id: customerId,
+    });
 
-      setConversations(conversations);
-      setIsLoading(false);
-    })();
+    setConversations(conversations);
+    setIsLoading(false);
   };
 
   const handleSelectConversation = (conversationId: string) => {
@@ -50,7 +48,9 @@ const CustomerDetailsConversations = ({customerId}: Props) => {
     history.push(url);
   };
 
-  useEffect(fetchConversations, [customerId]);
+  useEffect(() => {
+    fetchConversations();
+  }, [customerId]);
 
   if (isLoading) {
     return (
@@ -73,7 +73,7 @@ const CustomerDetailsConversations = ({customerId}: Props) => {
       <Flex
         p={3}
         sx={{
-          flexDirection: 'row-reverse',
+          justifyContent: 'flex-end',
         }}
       >
         <StartConversationButton

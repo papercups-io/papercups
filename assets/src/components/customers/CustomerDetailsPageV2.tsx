@@ -9,7 +9,7 @@ import Spinner from '../Spinner';
 import logger from '../../logger';
 import CustomerDetailsSidebar from './CustomerDetailsSidebar';
 import EditCustomerDetailsModal from './EditCustomerDetailsModal';
-import CustomerDetailsPrimarySection from './CustomerDetailsPrimarySection';
+import CustomerDetailsMainSection from './CustomerDetailsMainSection';
 
 type Props = RouteComponentProps<{id: string}>;
 type State = {
@@ -96,7 +96,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
         sx={{
           flexDirection: 'column',
           flex: 1,
-          height: '100v',
+          height: '100vh',
           bg: 'rgb(245, 245, 245)',
         }}
       >
@@ -124,9 +124,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
             </Box>
 
             <Box sx={{flex: 3}}>
-              <CustomerDetailsPrimarySection
-                customerId={this.getCustomerId()}
-              />
+              <CustomerDetailsMainSection customerId={this.getCustomerId()} />
             </Box>
           </Flex>
         </Box>
