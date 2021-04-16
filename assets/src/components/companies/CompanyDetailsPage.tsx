@@ -46,7 +46,6 @@ type State = {
   refreshing: boolean;
   company: Company | null;
   customers: Array<Customer>;
-  pagination: Pagination | null;
 };
 
 class CompanyDetailsPage extends React.Component<Props, State> {
@@ -55,7 +54,6 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     deleting: false,
     refreshing: false,
     company: null,
-    pagination: null,
     customers: [],
   };
 
