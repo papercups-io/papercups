@@ -19,12 +19,18 @@ defmodule ChatApiWeb.CustomerView do
                                  ~w(host pathname current_url browser)a ++
                                  ~w(os ip time_zone)a
 
-  def render("index.json", %{customers: customers}) do
-    %{data: render_many(customers, CustomerView, "customer.json")}
+  def render("index.json", %{page: page}) do
+    %{
+      data: render_many(page.entries, CustomerView, "customer.json"),
+      page_number: page.page_number,
+      page_size: page.page_size,
+      total_pages: page.total_pages,
+      total_entries: page.total_entries
+    }
   end
 
-  def render("index.csv", %{customers: customers}) do
-    customers
+  def render("index.csv", %{page: page}) do
+    page.entries
     |> render_many(CustomerView, "customer.json")
     |> CSVHelpers.dump_csv_rfc4180(@customer_csv_ordered_fields)
   end

@@ -30,8 +30,8 @@ defmodule ChatApiWeb.CustomerController do
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
   def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      customers = Customers.list_customers(account_id, params)
-      render(conn, "index.#{resp_format(params)}", customers: customers)
+      page = Customers.list_customers(account_id, params, format_pagination_options(params))
+      render(conn, "index.#{resp_format(params)}", page: page)
     end
   end
 
@@ -213,5 +213,17 @@ defmodule ChatApiWeb.CustomerController do
       x when x == "1" or x == "true" -> true
       _ -> false
     end
+  end
+
+  defp format_pagination_options(params) do
+    Enum.reduce(
+      params,
+      %{},
+      fn
+        {"page", value}, acc -> Map.put(acc, :page, value)
+        {"page_size", value}, acc -> Map.put(acc, :page_size, value)
+        _, acc -> acc
+      end
+    )
   end
 end

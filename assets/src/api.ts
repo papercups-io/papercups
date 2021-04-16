@@ -168,7 +168,7 @@ export const fetchCustomers = async (
     .get(`/api/customers`)
     .query(filters)
     .set('Authorization', token)
-    .then((res) => res.body.data);
+    .then((res) => res.body);
 };
 
 export const fetchCustomer = async (
