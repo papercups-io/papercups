@@ -71,6 +71,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
   handleCloseEditModal = () => this.setState({isEditModalVisible: false});
 
   render() {
+    const {history} = this.props;
     const {customer, isEditModalVisible, loading, session} = this.state;
 
     // TODO: add error handling when customer can't be loaded
@@ -124,7 +125,10 @@ class CustomerDetailsPage extends React.Component<Props, State> {
             </Box>
 
             <Box sx={{flex: 3}}>
-              <CustomerDetailsMainSection customerId={this.getCustomerId()} />
+              <CustomerDetailsMainSection
+                customerId={this.getCustomerId()}
+                history={history}
+              />
             </Box>
           </Flex>
         </Box>
