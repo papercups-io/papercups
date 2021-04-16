@@ -1,4 +1,5 @@
-import React from 'react';
+import React, {useState} from 'react';
+import {useHistory} from 'react-router';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -24,45 +25,26 @@ type Props = {
   customer: Customer;
   isVisible: boolean;
   onClose: () => void;
-  onDelete: () => void;
   onUpdate: () => void;
 };
 
-type State = {
-  email?: string;
-  error?: string;
-  isDeleting: boolean;
-  isSaving: boolean;
-  name?: string;
-  phone?: string | number;
-};
+const EditCustomerDetailsModal = ({
+  customer,
+  isVisible,
+  onClose,
+  onUpdate,
+}: Props) => {
+  const history = useHistory();
+  const [email, setEmail] = useState(customer.email ?? '');
+  const [name, setName] = useState(customer.name ?? '');
+  const [phone, setPhone] = useState(customer.phone ?? '');
+  const [error, setError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-class EditCustomerDetailsModal extends React.Component<Props, State> {
-  state: State = {
-    email: this.props.customer.email,
-    isDeleting: false,
-    isSaving: false,
-    name: this.props.customer.name,
-    phone: this.props.customer.phone,
-  };
-
-  handleChangeName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({name: e.target.value});
-  };
-
-  handleChangeEmail = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({email: e.target.value});
-  };
-
-  handleChangePhone = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({phone: e.target.value});
-  };
-
-  handleSave = async () => {
-    this.setState({error: '', isSaving: true});
-
-    const {customer, onUpdate} = this.props;
-    const {name, email, phone} = this.state;
+  const handleSave = async () => {
+    setError('');
+    setIsSaving(true);
 
     try {
       await API.updateCustomer(customer.id, {
@@ -70,23 +52,27 @@ class EditCustomerDetailsModal extends React.Component<Props, State> {
         email,
         phone,
       });
+      notification.success({
+        message: `Customer successfully updated`,
+        duration: 10,
+      });
       onUpdate();
     } catch (err) {
       logger.error('Failed to update customer', err);
       const error =
         err.response?.body?.error?.message ||
-        'Something went wrong. Please try again later.';
+        'Failed to update customer. Please try again later.';
 
-      this.setState({error, isSaving: false});
+      setError(error);
     }
 
-    this.setState({isSaving: false});
+    setIsSaving(false);
   };
 
-  handleDelete = async () => {
-    this.setState({isDeleting: true});
+  const handleDelete = async () => {
+    setError('');
+    setIsDeleting(true);
 
-    const {customer, onDelete} = this.props;
     const {id: customerId} = customer;
     const title = customer?.title ?? 'Customer';
 
@@ -96,116 +82,111 @@ class EditCustomerDetailsModal extends React.Component<Props, State> {
         message: `${title} successfully deleted.`,
         duration: 10,
       });
-      onDelete();
+      history.push('/customers');
     } catch (err) {
       logger.error('Failed to delete customer', err);
-      notification.error({
-        message: `Failed to delete ${title}. Please try again later.`,
-        duration: 10,
-      });
+      const error =
+        err.response?.body?.error?.message ||
+        'Failed to delete customer. Please try again later.';
+
+      setError(error);
     }
 
-    this.setState({isDeleting: false});
+    setIsDeleting(false);
   };
 
-  render() {
-    const {isVisible, onClose} = this.props;
-    const {isSaving, isDeleting, name, email, phone, error} = this.state;
-
-    return (
-      <Modal
-        title="Edit customer"
-        visible={isVisible}
-        onCancel={onClose}
-        onOk={onClose}
-        footer={
-          <Flex sx={{justifyContent: 'space-between'}}>
-            <Box>
-              <Button onClick={onClose} type="text">
-                Cancel
-              </Button>
-              <Popconfirm
-                title={
-                  <Box sx={{maxWidth: 320}}>
-                    <Paragraph>
-                      Are you sure you want to delete this customer and all of
-                      their data?
-                    </Paragraph>
-                    <Paragraph>
-                      <Text strong>Warning:</Text> this cannot be undone.
-                    </Paragraph>
-                  </Box>
-                }
-                icon={<WarningTwoTone twoToneColor={colors.red} />}
-                okText="Delete"
-                okType="danger"
-                cancelText="Cancel"
-                cancelButtonProps={{type: 'text'}}
-                placement="bottomLeft"
-                onConfirm={this.handleDelete}
-              >
-                <Button danger loading={isDeleting}>
-                  Delete
-                </Button>
-              </Popconfirm>
-            </Box>
-            <Button onClick={this.handleSave} loading={isSaving} type="primary">
-              Save
+  return (
+    <Modal
+      title="Edit customer"
+      visible={isVisible}
+      onCancel={onClose}
+      onOk={onClose}
+      footer={
+        <Flex sx={{justifyContent: 'space-between'}}>
+          <Box>
+            <Button onClick={onClose} type="text">
+              Cancel
             </Button>
-          </Flex>
-        }
-      >
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>Name</Text>
+            <Popconfirm
+              title={
+                <Box sx={{maxWidth: 320}}>
+                  <Paragraph>
+                    Are you sure you want to delete this customer and all of
+                    their data?
+                  </Paragraph>
+                  <Paragraph>
+                    <Text strong>Warning:</Text> this cannot be undone.
+                  </Paragraph>
+                </Box>
+              }
+              icon={<WarningTwoTone twoToneColor={colors.red} />}
+              okText="Delete"
+              okType="danger"
+              cancelText="Cancel"
+              cancelButtonProps={{type: 'text'}}
+              placement="bottomLeft"
+              onConfirm={handleDelete}
+            >
+              <Button danger loading={isDeleting}>
+                Delete
+              </Button>
+            </Popconfirm>
           </Box>
-          <Box pr={2} mb={12}>
-            <Input
-              style={{marginBottom: -8}}
-              id="name"
-              type="text"
-              value={name}
-              onChange={this.handleChangeName}
-            />
-          </Box>
+          <Button onClick={handleSave} loading={isSaving} type="primary">
+            Save
+          </Button>
+        </Flex>
+      }
+    >
+      <Box mb={2} sx={{flex: 1}}>
+        <Box>
+          <Text strong>Name</Text>
         </Box>
-
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>Email</Text>
-          </Box>
-          <Box pr={2} mb={12}>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={this.handleChangeEmail}
-            />
-          </Box>
+        <Box pr={2} mb={12}>
+          <Input
+            style={{marginBottom: -8}}
+            id="name"
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.currentTarget.value)}
+          />
         </Box>
-
-        <Box mb={2} sx={{flex: 1}}>
-          <Box>
-            <Text strong>Phone</Text>
-          </Box>
-          <Box pr={2} mb={12}>
-            <Input
-              id="phone"
-              type="text"
-              value={phone}
-              onChange={this.handleChangePhone}
-            />
-          </Box>
-
-          {error && (
-            <Box mt={2}>
-              <Text type="danger">{error}</Text>
-            </Box>
-          )}
+      </Box>
+      <Box mb={2} sx={{flex: 1}}>
+        <Box>
+          <Text strong>Email</Text>
         </Box>
-      </Modal>
-    );
-  }
-}
+        <Box pr={2} mb={12}>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.currentTarget.value)}
+          />
+        </Box>
+      </Box>
+      <Box mb={2} sx={{flex: 1}}>
+        <Box>
+          <Text strong>Phone</Text>
+        </Box>
+        <Box pr={2} mb={12}>
+          <Input
+            id="phone"
+            type="text"
+            value={phone}
+            onChange={(event) => setPhone(event.currentTarget.value)}
+          />
+        </Box>
+      </Box>
+      {error && (
+        <Box mt={3}>
+          <Text type="danger" strong>
+            {error}
+          </Text>
+        </Box>
+      )}
+    </Modal>
+  );
+};
 
 export default EditCustomerDetailsModal;
