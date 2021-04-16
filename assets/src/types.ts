@@ -64,7 +64,7 @@ export type MessageType = 'reply' | 'note';
 export type Message = {
   id: string;
   body: string;
-  type?: 'reply' | 'note';
+  type?: 'reply' | 'note' | 'bot';
   private?: boolean;
   created_at: string;
   sent_at?: string;
