@@ -28,9 +28,7 @@ defmodule ChatApi.Notes do
   end
 
   @spec get_note!(binary()) :: Note.t()
-  def get_note!(id) do
-    Repo.get!(Note, id)
-  end
+  def get_note!(id), do: Repo.get!(Note, id)
 
   @spec create_note(map()) :: {:ok, Note.t()} | {:error, Ecto.Changeset.t()}
   def create_note(attrs \\ %{}) do
