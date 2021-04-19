@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import * as API from '../../api';
-import {Box, Flex} from 'theme-ui';
+import {Box} from 'theme-ui';
 import logger from '../../logger';
 import {CustomerNote} from '../../types';
 import {TextArea, Text, Button} from '../common';

@@ -7,6 +7,7 @@ import * as API from '../../api';
 import dayjs from 'dayjs';
 import Spinner from '../Spinner';
 import CustomerDetailsNewNoteInput from './CustomerDetailsNewNoteInput';
+import logger from '../../logger';
 
 type Props = {customerId: string};
 type State = {
@@ -36,10 +37,24 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
   };
 
   handleDeleteNote = async (note: CustomerNote) => {
-    this.setState({isLoading: true});
+    const {customerNotes} = this.state;
 
-    await API.deleteCustomerNote(note.id);
-    await this.fetchCustomerNotes();
+    try {
+      await API.deleteCustomerNote(note.id);
+    } catch (error) {
+      logger.error('Failed to delete customer note', error);
+    }
+
+    const noteIndex = customerNotes.findIndex((otherNote: CustomerNote) => {
+      return note.id === otherNote.id;
+    });
+
+    this.setState({
+      customerNotes: [
+        ...customerNotes.slice(0, noteIndex),
+        ...customerNotes.slice(noteIndex + 1),
+      ],
+    });
   };
 
   render() {
@@ -62,10 +77,6 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
       );
     }
 
-    if (customerNotes.length === 0) {
-      return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />;
-    }
-
     return (
       <>
         <Box p={3}>
@@ -76,23 +87,27 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
 
           <Divider dashed />
 
-          <Flex
-            sx={{
-              flexDirection: 'column',
-            }}
-          >
-            {customerNotes
-              .sort((a: CustomerNote, b: CustomerNote) => {
-                return +new Date(b.created_at) - +new Date(a.created_at);
-              })
-              .map((note) => (
-                <CustomerDetailNote
-                  key={note.id}
-                  note={note}
-                  onDeleteNote={this.handleDeleteNote}
-                />
-              ))}
-          </Flex>
+          {customerNotes.length === 0 ? (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          ) : (
+            <Flex
+              sx={{
+                flexDirection: 'column',
+              }}
+            >
+              {customerNotes
+                .sort((a: CustomerNote, b: CustomerNote) => {
+                  return +new Date(b.created_at) - +new Date(a.created_at);
+                })
+                .map((note) => (
+                  <CustomerDetailNote
+                    key={note.id}
+                    note={note}
+                    onDeleteNote={this.handleDeleteNote}
+                  />
+                ))}
+            </Flex>
+          )}
         </Box>
       </>
     );
