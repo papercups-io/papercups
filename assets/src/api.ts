@@ -977,6 +977,21 @@ export const authorizeGoogleIntegration = async (
     .then((res) => res.body.data);
 };
 
+export const authorizeGithubIntegration = async (
+  code: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/oauth`)
+    .query({code})
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const updateWidgetSettings = async (
   widgetSettingsParams: Partial<WidgetSettings>,
   token = getAccessToken()

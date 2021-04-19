@@ -259,6 +259,13 @@ class IntegrationsOverview extends React.Component<Props, State> {
             logger.debug('Successfully authorized Google:', result)
           )
           .catch((err) => logger.error('Failed to authorize Google:', err));
+
+      case 'github':
+        return API.authorizeGithubIntegration(code)
+          .then((result) =>
+            logger.debug('Successfully authorized Github:', result)
+          )
+          .catch((err) => logger.error('Failed to authorize Github:', err));
       default:
         return null;
     }
