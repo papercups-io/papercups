@@ -1,28 +1,8 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import breaks from 'remark-breaks';
-import {Twemoji} from 'react-emoji-render';
 import {Box} from 'theme-ui';
-import {allowedNodeTypes} from '../common';
+import {MarkdownRenderer} from '../common';
 import {Attachment} from '../../types';
 import {PaperClipOutlined} from '../icons';
-
-const renderers = {
-  text: (props: any) => {
-    return <Twemoji text={props.children} />;
-  },
-  image: (props: any) => {
-    // TODO: fix scroll behavior after image loads
-    return (
-      <img
-        alt={props.alt || ''}
-        src={props.src}
-        {...props}
-        style={{maxWidth: '100%', maxHeight: 400}}
-      />
-    );
-  },
-};
 
 const ChatMessageAttachment = ({
   attachment,
@@ -78,13 +58,7 @@ const ChatMessageBox = ({
 
   return (
     <Box sx={parsedSx}>
-      <ReactMarkdown
-        className={`Text--markdown ${className}`}
-        source={content}
-        allowedTypes={allowedNodeTypes}
-        renderers={renderers}
-        plugins={[breaks]}
-      />
+      <MarkdownRenderer className={className} source={content} />
 
       {attachments && attachments.length > 0 && (
         <Box mt={2} className={className}>
