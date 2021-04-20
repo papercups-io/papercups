@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Button} from '../common';
+import {Button, Popconfirm} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
 import {IntegrationType} from './support';
@@ -41,9 +41,15 @@ export const GithubAuthorizationButton = ({
             </a>
           </Box>
           <Box mx={1}>
-            <Button danger onClick={handleDisconnect}>
-              Disconnect
-            </Button>
+            <Popconfirm
+              title="Are you sure you want to disconnect from Github?"
+              okText="Yes"
+              cancelText="No"
+              placement="topLeft"
+              onConfirm={handleDisconnect}
+            >
+              <Button danger>Disconnect</Button>
+            </Popconfirm>
           </Box>
         </Flex>
       ) : (
