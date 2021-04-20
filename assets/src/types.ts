@@ -123,6 +123,16 @@ export type Tag = {
   updated_at: string;
 };
 
+export type Issue = {
+  id: string;
+  title: string;
+  body?: string;
+  state: string;
+  github_issue_url?: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type BrowserSession = {
   id: string;
   started_at: string;
