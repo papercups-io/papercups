@@ -6,6 +6,7 @@ import {
   BrowserSession,
   Conversation,
   Customer,
+  CustomerNote,
   Tag,
   User,
   WidgetSettings,
@@ -1087,16 +1088,20 @@ export const enableAccountUser = async (
     .then((res) => res.body.data);
 };
 
+export type CustomerNotesListResponse = {
+  data: Array<CustomerNote>;
+};
+
 export const fetchCustomerNotes = async (
   customerId: string,
   token = getAccessToken()
-) => {
+): Promise<CustomerNote[]> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
-    .get(`/api/notes`)
+    .get('/api/notes')
     .query({customer_id: customerId})
     .set('Authorization', token)
     .then((res) => res.body.data);

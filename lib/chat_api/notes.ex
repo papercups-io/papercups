@@ -24,6 +24,7 @@ defmodule ChatApi.Notes do
     |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
     |> Repo.all()
+    |> Repo.preload(author: :profile)
   end
 
   @spec get_note!(binary()) :: Note.t()
