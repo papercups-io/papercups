@@ -1,13 +1,14 @@
 import React from 'react';
+import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
+
 import {colors, Divider, Empty, Popconfirm, Text} from '../common';
 import {CustomerNote} from '../../types';
 import {formatRelativeTime} from '../../utils';
 import * as API from '../../api';
-import dayjs from 'dayjs';
-import Spinner from '../Spinner';
 import CustomerDetailsNewNoteInput from './CustomerDetailsNewNoteInput';
 import logger from '../../logger';
+import Spinner from '../Spinner';
 
 type Props = {customerId: string};
 type State = {
@@ -27,34 +28,26 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
 
   fetchCustomerNotes = async () => {
     this.setState({isLoading: true});
-    const customerNotes = await API.fetchCustomerNotes(this.props.customerId);
-    this.setState({customerNotes, isLoading: false});
+
+    try {
+      const customerNotes = await API.fetchCustomerNotes(this.props.customerId);
+      this.setState({customerNotes, isLoading: false});
+    } catch (error) {
+      logger.error('Failed to fetch cutsomer notes', error);
+    }
   };
 
-  handleCreateNote = async (note: CustomerNote) => {
-    const {customerNotes} = this.state;
-    this.setState({customerNotes: [note, ...customerNotes]});
+  handleCreateNote = () => {
+    this.fetchCustomerNotes();
   };
 
   handleDeleteNote = async (note: CustomerNote) => {
-    const {customerNotes} = this.state;
-
     try {
       await API.deleteCustomerNote(note.id);
+      await this.fetchCustomerNotes();
     } catch (error) {
       logger.error('Failed to delete customer note', error);
     }
-
-    const noteIndex = customerNotes.findIndex((otherNote: CustomerNote) => {
-      return note.id === otherNote.id;
-    });
-
-    this.setState({
-      customerNotes: [
-        ...customerNotes.slice(0, noteIndex),
-        ...customerNotes.slice(noteIndex + 1),
-      ],
-    });
   };
 
   render() {
@@ -78,38 +71,32 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
     }
 
     return (
-      <>
-        <Box p={3}>
-          <CustomerDetailsNewNoteInput
-            customerId={customerId}
-            onCreateNote={this.handleCreateNote}
-          />
+      <Box p={3}>
+        <CustomerDetailsNewNoteInput
+          customerId={customerId}
+          onCreateNote={this.handleCreateNote}
+        />
 
-          <Divider dashed />
+        <Divider dashed />
 
-          {customerNotes.length === 0 ? (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          ) : (
-            <Flex
-              sx={{
-                flexDirection: 'column',
-              }}
-            >
-              {customerNotes
-                .sort((a: CustomerNote, b: CustomerNote) => {
-                  return +new Date(b.created_at) - +new Date(a.created_at);
-                })
-                .map((note) => (
-                  <CustomerDetailNote
-                    key={note.id}
-                    note={note}
-                    onDeleteNote={this.handleDeleteNote}
-                  />
-                ))}
-            </Flex>
-          )}
-        </Box>
-      </>
+        {customerNotes.length === 0 ? (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        ) : (
+          <Box>
+            {customerNotes
+              .sort((a: CustomerNote, b: CustomerNote) => {
+                return +new Date(b.created_at) - +new Date(a.created_at);
+              })
+              .map((note) => (
+                <CustomerDetailNote
+                  key={note.id}
+                  note={note}
+                  onDeleteNote={this.handleDeleteNote}
+                />
+              ))}
+          </Box>
+        )}
+      </Box>
     );
   }
 }

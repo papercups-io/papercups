@@ -3,7 +3,6 @@ defmodule ChatApiWeb.NoteController do
 
   alias ChatApi.Notes
   alias ChatApi.Notes.Note
-  alias ChatApi.Repo
 
   action_fallback ChatApiWeb.FallbackController
 
@@ -40,8 +39,6 @@ defmodule ChatApiWeb.NoteController do
              account_id: account_id,
              author_id: author_id
            }) do
-      note = note |> Repo.preload(author: :profile)
-
       conn
       |> put_status(:created)
       |> put_resp_header(
