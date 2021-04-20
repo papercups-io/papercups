@@ -59,6 +59,7 @@ defmodule ChatApi.MixProject do
       {:tesla, "~> 1.3"},
       {:hackney, "~> 1.17"},
       {:jason, "~> 1.0"},
+      {:joken, "~> 2.0"},
       {:plug_cowboy, "~> 2.0"},
       {:corsica, "~> 1.0"},
       {:pow, "~> 1.0.18"},
