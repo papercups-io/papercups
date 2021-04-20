@@ -3,6 +3,7 @@ import {Box} from 'theme-ui';
 import {capitalize} from 'lodash';
 import {Button, Input, Modal, Select, Text, TextArea} from '../common';
 import * as API from '../../api';
+import {IssueState} from '../../types';
 import logger from '../../logger';
 import {formatServerError} from '../../utils';
 
@@ -15,10 +16,11 @@ const NewIssueModal = ({
   onSuccess: (params: any) => void;
   onCancel: () => void;
 }) => {
+  const DEFAULT_ISSUE_STATE: IssueState = 'unstarted';
   const [title, setTitle] = React.useState('');
   const [body, setBody] = React.useState('');
   const [githubIssueUrl, setGithubIssueUrl] = React.useState('');
-  const [status, setStatus] = React.useState('unstarted');
+  const [status, setStatus] = React.useState<IssueState>(DEFAULT_ISSUE_STATE);
   const [error, setErrorMessage] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
 
@@ -31,7 +33,7 @@ const NewIssueModal = ({
     setTitle('');
     setBody('');
     setGithubIssueUrl('');
-    setStatus('');
+    setStatus(DEFAULT_ISSUE_STATE);
     setErrorMessage(null);
   };
 
@@ -118,13 +120,17 @@ const NewIssueModal = ({
               style={{width: '100%'}}
               value={status}
               onChange={setStatus}
-              options={['unstarted', 'in_progress', 'done', 'closed'].map(
-                (value: string) => {
-                  const formatted = value.split('_').join(' ');
+              options={[
+                'unstarted',
+                'in_progress',
+                'in_review',
+                'done',
+                'closed',
+              ].map((value: string) => {
+                const formatted = value.split('_').join(' ');
 
-                  return {value, label: capitalize(formatted)};
-                }
-              )}
+                return {value, label: capitalize(formatted)};
+              })}
             />
           </Box>
         </Box>

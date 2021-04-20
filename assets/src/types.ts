@@ -123,11 +123,18 @@ export type Tag = {
   updated_at: string;
 };
 
+export type IssueState =
+  | 'unstarted'
+  | 'in_progress'
+  | 'in_review'
+  | 'done'
+  | 'closed';
+
 export type Issue = {
   id: string;
   title: string;
   body?: string;
-  state: string;
+  state: IssueState;
   github_issue_url?: string;
   created_at: string;
   updated_at: string;

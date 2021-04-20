@@ -1,5 +1,4 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {
   Alert,
@@ -43,6 +42,8 @@ const IssuesTable = ({
             return <Tag>unstarted</Tag>;
           case 'in_progress':
             return <Tag color="orange">in progress</Tag>;
+          case 'in_review':
+            return <Tag color="blue">in review</Tag>;
           case 'done':
             return <Tag color="green">done</Tag>;
           case 'closed':

@@ -61,5 +61,12 @@ defmodule ChatApi.Issues.Issue do
       :assignee_id
     ])
     |> validate_required([:title, :state, :account_id])
+    |> validate_inclusion(:state, [
+      "unstarted",
+      "in_progress",
+      "in_review",
+      "done",
+      "closed"
+    ])
   end
 end
