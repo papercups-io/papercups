@@ -2,7 +2,14 @@ import React from 'react';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 
-import {colors, Divider, Empty, Popconfirm, Text} from '../common';
+import {
+  colors,
+  Divider,
+  Empty,
+  MarkdownRenderer,
+  Popconfirm,
+  Text,
+} from '../common';
 import {CustomerNote} from '../../types';
 import {formatRelativeTime} from '../../utils';
 import * as API from '../../api';
@@ -114,36 +121,45 @@ const CustomerDetailNote = ({
   if (note.author) {
     const {display_name: displayName, full_name: fullName, email} = note.author;
     const authorName = displayName || fullName;
-    authorIdentifier = !!authorName ? `${authorName} · ${email}` : email;
+    authorIdentifier = !!authorName ? `${authorName} (${email})` : email;
   }
 
   return (
-    <Popconfirm
-      title="Delete this note?"
-      okText="Delete"
-      cancelText="Cancel"
-      placement="left"
-      onConfirm={() => onDeleteNote(note)}
+    <Box
+      py={3}
+      px={3}
+      mb={2}
+      sx={{
+        bg: colors.note,
+        borderRadius: 2,
+      }}
     >
-      <Box
-        py={2}
-        px={3}
-        mb={2}
-        sx={{
-          bg: colors.note,
-          borderRadius: 2,
-          cursor: 'pointer',
-        }}
-      >
-        <Box mb={3} sx={{whiteSpace: 'break-spaces'}}>
-          {note.body}
+      <Flex>
+        <Box mb={3} pr={3} sx={{flexGrow: 1}}>
+          <MarkdownRenderer source={note.body} />
         </Box>
-        <Flex sx={{justifyContent: 'space-between'}}>
-          <Text type="secondary">{authorIdentifier}</Text>
-          <Text type="secondary">{formatRelativeTime(dayjs(createdAt))}</Text>
-        </Flex>
-      </Box>
-    </Popconfirm>
+        <Popconfirm
+          title="Delete this note?"
+          okText="Delete"
+          cancelText="Cancel"
+          placement="left"
+          onConfirm={() => onDeleteNote(note)}
+        >
+          <Text
+            type="danger"
+            style={{cursor: 'pointer', alignSelf: 'flex-start'}}
+          >
+            Delete
+          </Text>
+        </Popconfirm>
+      </Flex>
+
+      <Text type="secondary">
+        <span>
+          {authorIdentifier} — {formatRelativeTime(dayjs(createdAt))}
+        </span>
+      </Text>
+    </Box>
   );
 };
 
