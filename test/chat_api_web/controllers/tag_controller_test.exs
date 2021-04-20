@@ -136,9 +136,9 @@ defmodule ChatApiWeb.TagControllerTest do
       conn = delete(authed_conn, Routes.tag_path(authed_conn, :delete, tag))
       assert response(conn, 204)
 
-      assert_error_sent 404, fn ->
+      assert_error_sent(404, fn ->
         get(authed_conn, Routes.tag_path(authed_conn, :show, tag))
-      end
+      end)
     end
 
     test "renders 404 when deleting another account's tag",

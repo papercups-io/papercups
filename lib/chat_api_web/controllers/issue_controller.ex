@@ -1,8 +1,8 @@
-defmodule ChatApiWeb.TagController do
+defmodule ChatApiWeb.IssueController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.Tags
-  alias ChatApi.Tags.Tag
+  alias ChatApi.Issues
+  alias ChatApi.Issues.Issue
 
   action_fallback(ChatApiWeb.FallbackController)
 
@@ -12,8 +12,8 @@ defmodule ChatApiWeb.TagController do
     id = conn.path_params["id"]
 
     with %{account_id: account_id} <- conn.assigns.current_user,
-         tag = %{account_id: ^account_id} <- Tags.get_tag!(id) do
-      assign(conn, :current_tag, tag)
+         issue = %{account_id: ^account_id} <- Issues.get_issue!(id) do
+      assign(conn, :current_issue, issue)
     else
       _ -> ChatApiWeb.FallbackController.call(conn, {:error, :not_found}) |> halt()
     end
@@ -21,38 +21,38 @@ defmodule ChatApiWeb.TagController do
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(%{assigns: %{current_user: %{account_id: account_id}}} = conn, _params) do
-    tags = Tags.list_tags(account_id)
+    issues = Issues.list_issues(account_id)
 
-    render(conn, "index.json", tags: tags)
+    render(conn, "index.json", issues: issues)
   end
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(%{assigns: %{current_user: %{account_id: account_id, id: creator_id}}} = conn, %{
-        "tag" => tag_params
+        "issue" => issue_params
       }) do
-    with {:ok, %Tag{} = tag} <-
-           tag_params
+    with {:ok, %Issue{} = issue} <-
+           issue_params
            |> Map.merge(%{"creator_id" => creator_id, "account_id" => account_id})
-           |> Tags.create_tag() do
+           |> Issues.create_issue() do
       conn
       |> put_status(:created)
-      |> put_resp_header("location", Routes.tag_path(conn, :show, tag))
-      |> render("show.json", tag: tag)
+      |> put_resp_header("location", Routes.issue_path(conn, :show, issue))
+      |> render("show.json", issue: issue)
     end
   end
 
   def show(conn, _params) do
-    render(conn, "show.json", tag: conn.assigns.current_tag)
+    render(conn, "show.json", issue: conn.assigns.current_issue)
   end
 
-  def update(conn, %{"tag" => tag_params}) do
-    with {:ok, %Tag{} = tag} <- Tags.update_tag(conn.assigns.current_tag, tag_params) do
-      render(conn, "show.json", tag: tag)
+  def update(conn, %{"issue" => issue_params}) do
+    with {:ok, %Issue{} = issue} <- Issues.update_issue(conn.assigns.current_issue, issue_params) do
+      render(conn, "show.json", issue: issue)
     end
   end
 
   def delete(conn, _params) do
-    with {:ok, %Tag{}} <- Tags.delete_tag(conn.assigns.current_tag) do
+    with {:ok, %Issue{}} <- Issues.delete_issue(conn.assigns.current_issue) do
       send_resp(conn, :no_content, "")
     end
   end
