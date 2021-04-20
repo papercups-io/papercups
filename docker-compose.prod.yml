@@ -18,7 +18,7 @@ services:
       REQUIRE_DB_SSL: "false"
       REACT_APP_FILE_UPLOADS_ENABLED: 1
       # Replace with your domain name
-      REACT_APP_URL: "https://app.papercups.io"
+      REACT_APP_URL: "app.papercups.io"
   db:
     image: postgres:alpine
     container_name: papercups
