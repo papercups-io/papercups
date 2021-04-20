@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 
 import {
-  Button,
   colors,
   Divider,
   Empty,
