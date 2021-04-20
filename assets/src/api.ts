@@ -791,17 +791,6 @@ export const deleteTwilioAuthorization = async (
     .set('Authorization', token);
 };
 
-export const fetchGmailAuthorization = async (token = getAccessToken()) => {
-  if (!token) {
-    throw new Error('Invalid token!');
-  }
-
-  return request
-    .get(`/api/gmail/authorization`)
-    .set('Authorization', token)
-    .then((res) => res.body.data);
-};
-
 export const fetchGoogleAuthorization = async (
   client: 'gmail' | 'sheets',
   token = getAccessToken()
@@ -826,7 +815,31 @@ export const deleteGoogleAuthorization = async (
   }
 
   return request
-    .delete(`/api/google/authorization/${authorizationId}`)
+    .delete(`/api/google/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
+export const fetchGithubAuthorization = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/authorization`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteGithubAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/github/authorizations/${authorizationId}`)
     .set('Authorization', token);
 };
 
@@ -975,6 +988,21 @@ export const authorizeGoogleIntegration = async (
     .query({code, scope})
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export const authorizeGithubIntegration = async (
+  query: Record<string, any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/oauth`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body);
 };
 
 export const updateWidgetSettings = async (
