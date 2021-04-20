@@ -58,6 +58,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchGmailIntegration(),
         this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
+        this.fetchGithubIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
         this.fetchWhatsAppIntegration(),
         // TODO: deprecate
@@ -91,6 +92,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchGmailIntegration(),
         this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
+        this.fetchGithubIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
         this.fetchWhatsAppIntegration(),
         // TODO: deprecate
@@ -159,11 +161,12 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
     return {
       key: 'gmail',
-      integration: 'Gmail (alpha)',
+      integration: 'Gmail (beta)',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/gmail.svg',
+      description: 'Sync messages from your Gmail inbox with Papercups.',
     };
   };
 
@@ -177,6 +180,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/sheets.svg',
+      description: 'Sync customer data to a Google spreadsheet.',
     };
   };
 
@@ -201,6 +205,21 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/twilio.svg',
+      description: 'Receive and reply to messages over SMS.',
+    };
+  };
+
+  fetchGithubIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchGithubAuthorization();
+
+    return {
+      key: 'github',
+      integration: 'GitHub',
+      status: auth ? 'connected' : 'not_connected',
+      created_at: auth ? auth.created_at : null,
+      authorization_id: auth ? auth.id : null,
+      icon: '/github.png',
+      description: 'Sync and track feature requests and bugs with GitHub.',
     };
   };
 
@@ -216,6 +235,19 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   handleIntegrationType = async (type: string, query: string = '') => {
+    switch (type) {
+      case 'slack':
+        return this.authorizeSlackIntegration(query);
+      case 'google':
+        return this.authorizeGoogleIntegration(query);
+      case 'github':
+        return this.authorizeGithubIntegration(query);
+      default:
+        return null;
+    }
+  };
+
+  authorizeSlackIntegration = async (query = '') => {
     const q = qs.parse(query);
     const code = q.code ? String(q.code) : null;
     const state = q.state ? String(q.state) : null;
@@ -224,51 +256,79 @@ class IntegrationsOverview extends React.Component<Props, State> {
       return null;
     }
 
-    switch (type) {
-      case 'slack':
-        const authorizationType = state || 'reply';
+    const authorizationType = state || 'reply';
 
-        return API.authorizeSlackIntegration({
-          code,
-          type: authorizationType,
-          redirect_url: getSlackRedirectUrl(),
-        })
-          .then((result) =>
-            logger.debug('Successfully authorized Slack:', result)
-          )
-          .catch((err) => {
-            logger.error('Failed to authorize Slack:', err);
+    return API.authorizeSlackIntegration({
+      code,
+      type: authorizationType,
+      redirect_url: getSlackRedirectUrl(),
+    })
+      .then((result) => logger.debug('Successfully authorized Slack:', result))
+      .catch((err) => {
+        logger.error('Failed to authorize Slack:', err);
 
-            const description =
-              err?.response?.body?.error?.message ||
-              err?.message ||
-              String(err);
+        const description =
+          err?.response?.body?.error?.message || err?.message || String(err);
 
-            notification.error({
-              message: 'Failed to authorize Slack',
-              duration: null,
-              description,
-            });
-          });
+        notification.error({
+          message: 'Failed to authorize Slack',
+          duration: null,
+          description,
+        });
+      });
+  };
 
-      case 'google':
-        const scope = q.scope ? String(q.scope) : null;
+  authorizeGoogleIntegration = async (query = '') => {
+    const q = qs.parse(query);
+    const code = q.code ? String(q.code) : null;
 
-        return API.authorizeGoogleIntegration(code, scope)
-          .then((result) =>
-            logger.debug('Successfully authorized Google:', result)
-          )
-          .catch((err) => logger.error('Failed to authorize Google:', err));
-
-      case 'github':
-        return API.authorizeGithubIntegration(code)
-          .then((result) =>
-            logger.debug('Successfully authorized Github:', result)
-          )
-          .catch((err) => logger.error('Failed to authorize Github:', err));
-      default:
-        return null;
+    if (!code) {
+      return null;
     }
+
+    const scope = q.scope ? String(q.scope) : null;
+
+    return API.authorizeGoogleIntegration(code, scope)
+      .then((result) => logger.debug('Successfully authorized Google:', result))
+      .catch((err) => {
+        logger.error('Failed to authorize Google:', err);
+
+        const description =
+          err?.response?.body?.error?.message || err?.message || String(err);
+
+        notification.error({
+          message: 'Failed to authorize Google',
+          duration: null,
+          description,
+        });
+      });
+  };
+
+  authorizeGithubIntegration = async (query = '') => {
+    const q = qs.parse(query);
+    const {code, installation_id, setup_action} = q;
+
+    if (!code && !installation_id) {
+      return null;
+    }
+
+    // `code` is used for OAuth flow, while `installation_id` is used for app install flow
+    const params = code ? {code} : {installation_id, setup_action};
+
+    return API.authorizeGithubIntegration(params)
+      .then((result) => logger.debug('Successfully authorized Github:', result))
+      .catch((err) => {
+        logger.error('Failed to authorize Github:', err);
+
+        const description =
+          err?.response?.body?.error?.message || err?.message || String(err);
+
+        notification.error({
+          message: 'Failed to authorize Github',
+          duration: null,
+          description,
+        });
+      });
   };
 
   handleDisconnectSlack = async (authorizationId: string) => {

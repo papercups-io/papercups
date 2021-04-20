@@ -6,6 +6,7 @@ import {IntegrationType, getSlackAuthUrl, getGoogleAuthUrl} from './support';
 import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
 import {TwilioAuthorizationButton} from './TwilioAuthorizationModal';
 import {GoogleAuthorizationButton} from './GoogleAuthorizationButton';
+import {GithubAuthorizationButton} from './GithubAuthorizationButton';
 
 const IntegrationsTable = ({
   loading,
@@ -141,6 +142,13 @@ const IntegrationsTable = ({
           case 'twilio':
             return (
               <TwilioAuthorizationButton
+                integration={record}
+                onUpdate={onUpdateIntegration}
+              />
+            );
+          case 'github':
+            return (
+              <GithubAuthorizationButton
                 integration={record}
                 onUpdate={onUpdateIntegration}
               />

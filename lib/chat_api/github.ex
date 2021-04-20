@@ -35,18 +35,15 @@ defmodule ChatApi.Github do
     |> Repo.update()
   end
 
-  @spec create_or_update_authorization!(map()) ::
+  @spec create_or_update_authorization(map()) ::
           {:ok, GithubAuthorization.t()} | {:error, Ecto.Changeset.t()}
-  def create_or_update_authorization!(attrs \\ %{}) do
-    # TODO: should we take the "account_id" into account as well?
-    case attrs do
-      %{"id" => id} when is_binary(id) ->
-        id
-        |> get_github_authorization!()
-        |> update_github_authorization(attrs)
+  def create_or_update_authorization(%{account_id: account_id} = attrs) do
+    case get_authorization_by_account(account_id) do
+      %GithubAuthorization{} = authorization ->
+        update_github_authorization(authorization, attrs)
 
-      params ->
-        create_github_authorization(params)
+      nil ->
+        create_github_authorization(attrs)
     end
   end
 

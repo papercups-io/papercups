@@ -20,6 +20,7 @@ defmodule ChatApiWeb.GithubAuthorizationView do
       id: github_authorization.id,
       token_type: github_authorization.token_type,
       scope: github_authorization.scope,
+      github_installation_id: github_authorization.github_installation_id,
       user_id: github_authorization.user_id,
       account_id: github_authorization.account_id
     }

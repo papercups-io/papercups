@@ -7,9 +7,9 @@ defmodule ChatApi.Github.GithubAuthorization do
 
   @type t :: %__MODULE__{
           access_token: String.t() | nil,
-          access_token_expires_in: String.t() | nil,
+          access_token_expires_at: DateTime.t() | nil,
           refresh_token: String.t() | nil,
-          refresh_token_expires_in: String.t() | nil,
+          refresh_token_expires_at: DateTime.t() | nil,
           token_type: String.t() | nil,
           scope: String.t() | nil,
           github_installation_id: String.t() | nil,
@@ -26,9 +26,9 @@ defmodule ChatApi.Github.GithubAuthorization do
   @foreign_key_type :binary_id
   schema "github_authorizations" do
     field(:access_token, :string)
-    field(:access_token_expires_in, :string)
+    field(:access_token_expires_at, :utc_datetime)
     field(:refresh_token, :string)
-    field(:refresh_token_expires_in, :string)
+    field(:refresh_token_expires_at, :utc_datetime)
     field(:token_type, :string)
     field(:scope, :string)
     field(:github_installation_id, :string)
@@ -40,14 +40,14 @@ defmodule ChatApi.Github.GithubAuthorization do
     timestamps()
   end
 
-  @doc false
+  @spec changeset(map(), map()) :: Ecto.Changeset.t()
   def changeset(github_authorization, attrs) do
     github_authorization
     |> cast(attrs, [
       :access_token,
-      :access_token_expires_in,
+      :access_token_expires_at,
       :refresh_token,
-      :refresh_token_expires_in,
+      :refresh_token_expires_at,
       :token_type,
       :scope,
       :github_installation_id,

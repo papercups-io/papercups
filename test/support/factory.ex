@@ -91,9 +91,7 @@ defmodule ChatApi.Factory do
   def github_authorization_factory do
     %ChatApi.Github.GithubAuthorization{
       access_token: "some access_token",
-      access_token_expires_in: "some access_token_expires_in",
       refresh_token: "some refresh_token",
-      refresh_token_expires_in: "some refresh_token_expires_in",
       token_type: "some token_type",
       scope: "some scope",
       github_installation_id: "some github_installation_id",
