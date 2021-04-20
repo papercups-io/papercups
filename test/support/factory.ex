@@ -109,6 +109,16 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def issue_factory do
+    %ChatApi.Issues.Issue{
+      title: sequence("some title"),
+      body: "some body",
+      state: "unstarted",
+      account: build(:account),
+      creator: build(:user)
+    }
+  end
+
   def message_factory do
     %ChatApi.Messages.Message{
       account: build(:account),

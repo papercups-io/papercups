@@ -54,10 +54,10 @@ const TagsTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (value: string, record: any) => {
-        const {id: companyId} = record;
+        const {id: tagId} = record;
 
         return (
-          <Link to={`/tags/${companyId}`}>
+          <Link to={`/tags/${tagId}`}>
             <Button>View</Button>
           </Link>
         );
@@ -167,7 +167,6 @@ class TagsOverview extends React.Component<Props, State> {
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Tags (beta)</Title>
 
-          {/* TODO: implement me! */}
           <Button
             type="primary"
             icon={<PlusOutlined />}

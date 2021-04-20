@@ -17,7 +17,7 @@ defmodule ChatApi.TagsTest do
       {:ok, account: account, tag: tag}
     end
 
-    test "list_tags/0 returns all tags", %{account: account, tag: tag} do
+    test "list_tags/1 returns all tags for the given account", %{account: account, tag: tag} do
       tag_ids = Tags.list_tags(account.id) |> Enum.map(& &1.id)
 
       assert tag_ids == [tag.id]

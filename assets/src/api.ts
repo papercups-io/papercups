@@ -7,6 +7,7 @@ import {
   Conversation,
   Customer,
   CustomerNote,
+  Issue,
   Tag,
   User,
   WidgetSettings,
@@ -1291,6 +1292,70 @@ export const removeCustomerTag = async (
     .delete(`/api/customers/${customerId}/tags/${tagId}`)
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export const fetchAllIssues = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/issues`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchIssueById = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/issues/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createIssue = async (
+  issue: Partial<Issue>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/issues`)
+    .send({issue})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateIssue = async (
+  id: string,
+  issue: Partial<Issue>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/issues/${id}`)
+    .send({issue})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteIssue = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/issues/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
 };
 
 type BrowserSessionFilters = {

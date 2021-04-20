@@ -10,11 +10,6 @@ defmodule ChatApi.Tags do
   alias ChatApi.Customers.Customer
   alias ChatApi.Tags.Tag
 
-  @spec list_tags() :: [Tag.t()]
-  def list_tags do
-    Repo.all(Tag)
-  end
-
   @spec list_tags(binary()) :: [Tag.t()]
   def list_tags(account_id) do
     Tag |> where(account_id: ^account_id) |> Repo.all()

@@ -18,6 +18,8 @@ defmodule ChatApiWeb.GithubAuthorizationView do
   def render("github_authorization.json", %{github_authorization: github_authorization}) do
     %{
       id: github_authorization.id,
+      created_at: github_authorization.inserted_at,
+      updated_at: github_authorization.updated_at,
       token_type: github_authorization.token_type,
       scope: github_authorization.scope,
       github_installation_id: github_authorization.github_installation_id,
