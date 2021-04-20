@@ -97,7 +97,6 @@ class CustomerDetailsPage extends React.Component<Props, State> {
         sx={{
           flexDirection: 'column',
           flex: 1,
-          height: '100vh',
           bg: 'rgb(245, 245, 245)',
         }}
       >
@@ -107,8 +106,8 @@ class CustomerDetailsPage extends React.Component<Props, State> {
           </Link>
         </Flex>
 
-        <Box sx={{height: '100%'}}>
-          <Flex sx={{flexDirection: 'row-reverse'}} mb={3}>
+        <Box>
+          <Flex sx={{justifyContent: 'flex-end'}} mb={3}>
             <Button type="primary" onClick={this.handleOpenEditModal}>
               Edit
             </Button>
@@ -119,7 +118,8 @@ class CustomerDetailsPage extends React.Component<Props, State> {
               onUpdate={this.handleCustomerUpdated}
             />
           </Flex>
-          <Flex sx={{height: '100%'}}>
+
+          <Flex>
             <Box mr={3}>
               <CustomerDetailsSidebar customer={customer} session={session} />
             </Box>

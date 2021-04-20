@@ -45,8 +45,8 @@ const CustomerDetailNewNoteInput = ({
     <Box mb={2}>
       <TextArea
         style={{background: 'transparent'}}
-        placeholder="Add a note"
-        autoSize={{minRows: 2}}
+        placeholder="Start typing..."
+        autoSize={{minRows: 4}}
         disabled={isSaving}
         value={note}
         onChange={handleNoteChange}
@@ -60,7 +60,7 @@ const CustomerDetailNewNoteInput = ({
       )}
       <Box mt={3}>
         <Button onClick={handleSaveNote} disabled={isSaving || note.length < 1}>
-          Add Note
+          Add note
         </Button>
       </Box>
     </Box>

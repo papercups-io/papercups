@@ -1,6 +1,5 @@
 import React from 'react';
 import {History} from 'history';
-
 import {Box} from 'theme-ui';
 import {Tabs} from '../common';
 import CustomerDetailsCard from './CustomerDetailsCard';
@@ -22,7 +21,6 @@ const CustomerDetailsMainSection = ({customerId, history}: Props) => {
       <Box>
         <Tabs
           defaultActiveKey={TAB_KEYS.Conversations}
-          size="large"
           tabBarStyle={{paddingLeft: '16px', marginBottom: '0'}}
         >
           <TabPane tab={TAB_KEYS.Conversations} key={TAB_KEYS.Conversations}>

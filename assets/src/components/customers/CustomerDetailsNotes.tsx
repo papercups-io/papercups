@@ -4,13 +4,15 @@ import {Box, Flex} from 'theme-ui';
 
 import {
   colors,
+  Button,
   Divider,
   Empty,
   MarkdownRenderer,
   Popconfirm,
   Text,
 } from '../common';
-import {CustomerNote} from '../../types';
+import {DeleteOutlined} from '../icons';
+import {CustomerNote, User} from '../../types';
 import {formatRelativeTime} from '../../utils';
 import * as API from '../../api';
 import CustomerDetailsNewNoteInput from './CustomerDetailsNewNoteInput';
@@ -34,8 +36,6 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
   }
 
   fetchCustomerNotes = async () => {
-    this.setState({isLoading: true});
-
     try {
       const customerNotes = await API.fetchCustomerNotes(this.props.customerId);
       this.setState({customerNotes, isLoading: false});
@@ -108,6 +108,17 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
   }
 }
 
+const formatNoteAuthor = (author?: User): string => {
+  if (!author) {
+    return '';
+  }
+
+  const {display_name: displayName, full_name: fullName, email} = author;
+  const authorName = displayName || fullName;
+
+  return !!authorName ? `${authorName} (${email})` : email;
+};
+
 const CustomerDetailNote = ({
   note,
   onDeleteNote,
@@ -115,19 +126,12 @@ const CustomerDetailNote = ({
   note: CustomerNote;
   onDeleteNote: (note: CustomerNote) => void;
 }) => {
-  const {created_at: createdAt} = note;
-  let authorIdentifier;
-
-  if (note.author) {
-    const {display_name: displayName, full_name: fullName, email} = note.author;
-    const authorName = displayName || fullName;
-    authorIdentifier = !!authorName ? `${authorName} (${email})` : email;
-  }
+  const {created_at: createdAt, author} = note;
+  const formattedAuthor = formatNoteAuthor(author);
+  const formattedTimestamp = formatRelativeTime(dayjs(createdAt));
 
   return (
     <Box
-      py={3}
-      px={3}
       mb={2}
       sx={{
         bg: colors.note,
@@ -135,9 +139,10 @@ const CustomerDetailNote = ({
       }}
     >
       <Flex>
-        <Box mb={3} pr={3} sx={{flexGrow: 1}}>
+        <Box px={3} pt={3} sx={{flex: 1}}>
           <MarkdownRenderer source={note.body} />
         </Box>
+
         <Popconfirm
           title="Delete this note?"
           okText="Delete"
@@ -145,20 +150,15 @@ const CustomerDetailNote = ({
           placement="left"
           onConfirm={() => onDeleteNote(note)}
         >
-          <Text
-            type="danger"
-            style={{cursor: 'pointer', alignSelf: 'flex-start'}}
-          >
-            Delete
-          </Text>
+          <Button type="link" danger ghost icon={<DeleteOutlined />}></Button>
         </Popconfirm>
       </Flex>
 
-      <Text type="secondary">
-        <span>
-          {authorIdentifier} — {formatRelativeTime(dayjs(createdAt))}
-        </span>
-      </Text>
+      <Box px={3} pb={2}>
+        <Text type="secondary">
+          {formattedAuthor} — {formattedTimestamp}
+        </Text>
+      </Box>
     </Box>
   );
 };
