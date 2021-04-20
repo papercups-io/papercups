@@ -39,6 +39,7 @@ import {
 } from '@ant-design/colors';
 
 import DatePicker from './DatePicker';
+import MarkdownRenderer from './MarkdownRenderer';
 
 export type {UploadChangeParam} from 'antd/lib/upload';
 export type {UploadFile} from 'antd/lib/upload/interface';
@@ -122,6 +123,7 @@ export {
   Dropdown,
   Empty,
   Input,
+  MarkdownRenderer,
   Menu,
   Modal,
   notification,
