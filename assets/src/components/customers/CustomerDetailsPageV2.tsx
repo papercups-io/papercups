@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button} from '../common';
+import {Button, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import {BrowserSession, Customer} from '../../types';
@@ -91,6 +91,8 @@ class CustomerDetailsPage extends React.Component<Props, State> {
       );
     }
 
+    const {title} = customer;
+
     return (
       <Flex
         p={4}
@@ -107,17 +109,21 @@ class CustomerDetailsPage extends React.Component<Props, State> {
         </Flex>
 
         <Box>
-          <Flex sx={{justifyContent: 'flex-end'}} mb={3}>
+          <Flex sx={{justifyContent: 'space-between'}}>
+            <Box mx={3}>
+              <Title level={3}>{title}</Title>
+            </Box>
             <Button type="primary" onClick={this.handleOpenEditModal}>
               Edit
             </Button>
-            <EditCustomerDetailsModal
-              customer={customer}
-              isVisible={isEditModalVisible}
-              onClose={this.handleCloseEditModal}
-              onUpdate={this.handleCustomerUpdated}
-            />
           </Flex>
+
+          <EditCustomerDetailsModal
+            customer={customer}
+            isVisible={isEditModalVisible}
+            onClose={this.handleCloseEditModal}
+            onUpdate={this.handleCustomerUpdated}
+          />
 
           <Flex>
             <Box mr={3}>

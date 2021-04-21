@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
-import {Badge, Button, Divider, colors, Text, Title, Tooltip} from '../common';
+import {Badge, Button, Divider, colors, Text, Tooltip} from '../common';
 import {
   CalendarOutlined,
   DesktopOutlined,
@@ -46,16 +46,12 @@ export const CustomerDetailsSidebar = ({
     pathname,
     phone,
     time_zone: timezone,
-    title,
   } = customer;
   const hasMetadata = !!metadata && Object.keys(metadata).length > 0;
 
   return (
     <CustomerDetailsCard sx={{minWidth: 320, maxWidth: 360}}>
       <Box p={3}>
-        <Title level={4}>{title}</Title>
-        <Divider />
-
         <CustomerDetailsSection title="Basic">
           <CustomerDetailsProperty
             icon={<UserOutlined style={{color: colors.primary}} />}
