@@ -468,68 +468,18 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
   fetchAllConversations = async (): Promise<Array<string>> => {
     const {data: conversations} = await API.fetchAllConversations();
-    const conversationIds = this.handleSetAllConversations(conversations);
+    const conversationIds = this.handleSetConversations(conversations);
 
     return conversationIds;
-  };
-
-  handleSetAllConversations = (conversations: Array<Conversation>) => {
-    return this.handleSetConversations(conversations);
   };
 
   fetchConversationById = async (
     conversationId: string
   ): Promise<Array<string>> => {
     const conversation = await API.fetchConversation(conversationId);
-    const conversationIds = this.handleSetSingleConversation(conversation);
+    const conversationIds = this.handleSetConversations([conversation]);
 
     return conversationIds;
-  };
-
-  handleSetSingleConversation = (conversation: Conversation) => {
-    const conversations = [conversation];
-
-    return this.handleSetConversations(conversations);
-  };
-
-  fetchMyConversations = async (): Promise<Array<string>> => {
-    const {currentUser} = this.state;
-
-    if (!currentUser) {
-      return [];
-    }
-
-    const {id: currentUserId} = currentUser;
-    const {data: conversations} = await API.fetchMyConversations(currentUserId);
-    const conversationIds = this.handleSetMyConversations(conversations);
-
-    return conversationIds;
-  };
-
-  handleSetMyConversations = (conversations: Array<Conversation>) => {
-    return this.handleSetConversations(conversations);
-  };
-
-  fetchPriorityConversations = async (): Promise<Array<string>> => {
-    const {data: conversations} = await API.fetchPriorityConversations();
-    const conversationIds = this.handleSetPriorityConversations(conversations);
-
-    return conversationIds;
-  };
-
-  handleSetPriorityConversations = (conversations: Array<Conversation>) => {
-    return this.handleSetConversations(conversations);
-  };
-
-  fetchClosedConversations = async (): Promise<Array<string>> => {
-    const {data: conversations} = await API.fetchClosedConversations();
-    const conversationIds = this.handleSetClosedConversations(conversations);
-
-    return conversationIds;
-  };
-
-  handleSetClosedConversations = (conversations: Array<Conversation>) => {
-    return this.handleSetConversations(conversations);
   };
 
   getUnreadByCategory = () => {
