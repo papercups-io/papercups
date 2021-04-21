@@ -77,7 +77,7 @@ defmodule ChatApi.Conversations.Conversation do
     ])
     |> validate_required([:status, :account_id, :customer_id])
     |> validate_inclusion(:source, ["chat", "slack", "email", "sms"])
-    |> put_closed_at()
+    |> put_closed_and_last_activity_at()
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:customer_id)
   end
@@ -87,15 +87,23 @@ defmodule ChatApi.Conversations.Conversation do
     |> cast(attrs, [:last_activity_at])
   end
 
-  defp put_closed_at(%Ecto.Changeset{valid?: true, changes: %{status: status}} = changeset) do
+  defp put_closed_and_last_activity_at(
+         %Ecto.Changeset{valid?: true, changes: %{status: status}} = changeset
+       ) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
     case status do
       "closed" ->
-        put_change(changeset, :closed_at, DateTime.utc_now() |> DateTime.truncate(:second))
+        changeset
+        |> put_change(:last_activity_at, now)
+        |> put_change(:closed_at, now)
 
       "open" ->
-        put_change(changeset, :closed_at, nil)
+        changeset
+        |> put_change(:last_activity_at, now)
+        |> put_change(:closed_at, nil)
     end
   end
 
-  defp put_closed_at(changeset), do: changeset
+  defp put_closed_and_last_activity_at(changeset), do: changeset
 end
