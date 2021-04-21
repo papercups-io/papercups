@@ -19,6 +19,14 @@ defmodule ChatApi.Issues do
     Issue |> Repo.get!(id)
   end
 
+  @spec find_issue(map()) :: Issue.t() | nil
+  def find_issue(filters \\ %{}) do
+    Issue
+    |> where(^filter_where(filters))
+    |> first()
+    |> Repo.one()
+  end
+
   @spec create_issue(map()) :: {:ok, Issue.t()} | {:error, Ecto.Changeset.t()}
   def create_issue(attrs \\ %{}) do
     %Issue{}
@@ -57,5 +65,26 @@ defmodule ChatApi.Issues do
     |> preload(:conversations)
     |> Repo.get!(issue_id)
     |> Map.get(:conversations)
+  end
+
+  @spec filter_where(map()) :: %Ecto.Query.DynamicExpr{}
+  def filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {:account_id, value}, dynamic ->
+        dynamic([p], ^dynamic and p.account_id == ^value)
+
+      {:state, value}, dynamic ->
+        dynamic([p], ^dynamic and p.state == ^value)
+
+      {:title, value}, dynamic ->
+        dynamic([p], ^dynamic and p.title == ^value)
+
+      {:github_issue_url, value}, dynamic ->
+        dynamic([p], ^dynamic and p.github_issue_url == ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end

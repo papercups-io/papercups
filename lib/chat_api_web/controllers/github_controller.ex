@@ -1,8 +1,9 @@
 defmodule ChatApiWeb.GithubController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.Github
+  alias ChatApi.{Github, Issues}
   alias ChatApi.Github.GithubAuthorization
+  alias ChatApi.Issues.Issue
 
   require Logger
 
@@ -127,7 +128,7 @@ defmodule ChatApiWeb.GithubController do
         Logger.debug("No authorization found with installation ID #{inspect(installation_id)}")
 
       result ->
-        Github.delete_github_authorization(result) |> IO.inspect()
+        Github.delete_github_authorization(result)
     end
   end
 
@@ -144,6 +145,47 @@ defmodule ChatApiWeb.GithubController do
         inspect(installation)
       })"
     )
+
+    with %{"id" => installation_id} <- installation,
+         %{"html_url" => github_issue_url} <- issue,
+         %GithubAuthorization{account_id: account_id} <-
+           Github.find_github_authorization(%{
+             github_installation_id: Integer.to_string(installation_id)
+           }),
+         %Issue{} = issue <-
+           Issues.find_issue(%{account_id: account_id, github_issue_url: github_issue_url}) do
+      {:ok, issue} = Issues.update_issue(issue, %{state: "done"})
+
+      Logger.debug("Successfully updated issue state: #{inspect(issue)}")
+    end
+  end
+
+  defp handle_event(
+         "issues",
+         %{
+           "action" => "reopened",
+           "installation" => installation,
+           "issue" => issue
+         } = _payload
+       ) do
+    Logger.debug(
+      "Handling `reopened` event for Github issue #{inspect(issue)} (installation #{
+        inspect(installation)
+      })"
+    )
+
+    with %{"id" => installation_id} <- installation,
+         %{"html_url" => github_issue_url} <- issue,
+         %GithubAuthorization{account_id: account_id} <-
+           Github.find_github_authorization(%{
+             github_installation_id: Integer.to_string(installation_id)
+           }),
+         %Issue{} = issue <-
+           Issues.find_issue(%{account_id: account_id, github_issue_url: github_issue_url}) do
+      {:ok, issue} = Issues.update_issue(issue, %{state: "unstarted"})
+
+      Logger.debug("Successfully updated issue state: #{inspect(issue)}")
+    end
   end
 
   defp handle_event(
