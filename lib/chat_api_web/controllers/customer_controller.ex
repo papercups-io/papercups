@@ -14,7 +14,7 @@ defmodule ChatApiWeb.CustomerController do
     id = conn.path_params["id"]
 
     preloads =
-      (conn.path_params["expand"] || ["company", "tags"])
+      (conn.params["expand"] || ["company", "tags"])
       |> Enum.map(&String.to_existing_atom/1)
       |> Enum.filter(&Customers.is_valid_association?/1)
 

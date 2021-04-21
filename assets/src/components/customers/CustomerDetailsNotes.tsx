@@ -150,7 +150,7 @@ const CustomerDetailNote = ({
           placement="left"
           onConfirm={() => onDeleteNote(note)}
         >
-          <Button type="link" danger ghost icon={<DeleteOutlined />}></Button>
+          <Button type="link" danger icon={<DeleteOutlined />}></Button>
         </Popconfirm>
       </Flex>
 

@@ -71,7 +71,14 @@ defmodule ChatApi.Customers do
   @spec is_valid_association?(atom()) :: boolean()
   def is_valid_association?(field) do
     Enum.any?(
-      [:messages, :conversations, :notes, :tags, :company],
+      [
+        :messages,
+        :conversations,
+        :notes,
+        :tags,
+        :company,
+        :issues
+      ],
       fn association -> association == field end
     )
   end

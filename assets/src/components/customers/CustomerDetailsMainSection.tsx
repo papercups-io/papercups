@@ -5,12 +5,14 @@ import {Tabs} from '../common';
 import CustomerDetailsCard from './CustomerDetailsCard';
 import CustomerDetailsConversations from './CustomerDetailsConversations';
 import CustomerDetailsNotes from './CustomerDetailsNotes';
+import CustomerDetailsIssues from './CustomerDetailsIssues';
 
 const {TabPane} = Tabs;
 
-enum TAB_KEYS {
+enum TabKeys {
   Conversations = 'Conversations',
   Notes = 'Notes',
+  Issues = 'Issues',
 }
 
 type Props = {customerId: string; history: History};
@@ -20,17 +22,20 @@ const CustomerDetailsMainSection = ({customerId, history}: Props) => {
     <CustomerDetailsCard>
       <Box>
         <Tabs
-          defaultActiveKey={TAB_KEYS.Conversations}
+          defaultActiveKey={TabKeys.Conversations}
           tabBarStyle={{paddingLeft: '16px', marginBottom: '0'}}
         >
-          <TabPane tab={TAB_KEYS.Conversations} key={TAB_KEYS.Conversations}>
+          <TabPane tab={TabKeys.Conversations} key={TabKeys.Conversations}>
             <CustomerDetailsConversations
               customerId={customerId}
               history={history}
             />
           </TabPane>
-          <TabPane tab={TAB_KEYS.Notes} key={TAB_KEYS.Notes}>
+          <TabPane tab={TabKeys.Notes} key={TabKeys.Notes}>
             <CustomerDetailsNotes customerId={customerId} />
+          </TabPane>
+          <TabPane tab={TabKeys.Issues} key={TabKeys.Issues}>
+            <CustomerDetailsIssues customerId={customerId} />
           </TabPane>
         </Tabs>
       </Box>

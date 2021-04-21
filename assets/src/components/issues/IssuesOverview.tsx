@@ -35,7 +35,7 @@ export const IssueStateTag = ({state}: {state: T.IssueState}) => {
   }
 };
 
-const IssuesTable = ({
+export const IssuesTable = ({
   loading,
   issues,
 }: {
