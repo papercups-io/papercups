@@ -38,9 +38,6 @@ export const ConversationsContext = React.createContext<{
   onSetSingleConversation: (conversation: Conversation) => Array<string>;
 
   fetchAllConversations: () => Promise<Array<string>>;
-  fetchMyConversations: () => Promise<Array<string>>;
-  fetchPriorityConversations: () => Promise<Array<string>>;
-  fetchClosedConversations: () => Promise<Array<string>>;
   // TODO: should this be different?
   fetchConversationById: (conversationId: string) => Promise<Array<string>>;
 }>({
@@ -69,9 +66,6 @@ export const ConversationsContext = React.createContext<{
   onDeleteConversation: () => Promise.resolve(),
 
   fetchAllConversations: () => Promise.resolve([]),
-  fetchMyConversations: () => Promise.resolve([]),
-  fetchPriorityConversations: () => Promise.resolve([]),
-  fetchClosedConversations: () => Promise.resolve([]),
   fetchConversationById: () => Promise.resolve([]),
 });
 
@@ -775,9 +769,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
           fetchAllConversations: this.fetchAllConversations,
           fetchConversationById: this.fetchConversationById,
-          fetchMyConversations: this.fetchMyConversations,
-          fetchPriorityConversations: this.fetchPriorityConversations,
-          fetchClosedConversations: this.fetchClosedConversations,
         }}
       >
         {this.props.children}
