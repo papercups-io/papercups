@@ -181,6 +181,24 @@ defmodule ChatApiWeb.CustomerController do
     end
   end
 
+  @spec link_issue(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def link_issue(conn, %{"customer_id" => id, "issue_id" => issue_id}) do
+    customer = Customers.get_customer!(id)
+
+    with {:ok, _result} <- Customers.link_issue(customer, issue_id) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
+
+  @spec unlink_issue(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def unlink_issue(conn, %{"customer_id" => id, "issue_id" => issue_id}) do
+    customer = Customers.get_customer!(id)
+
+    with {:ok, _result} <- Customers.unlink_issue(customer, issue_id) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
+
   ###
   # Helpers
   ###

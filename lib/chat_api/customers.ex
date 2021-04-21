@@ -7,6 +7,7 @@ defmodule ChatApi.Customers do
   alias ChatApi.Repo
 
   alias ChatApi.Customers.Customer
+  alias ChatApi.Issues.CustomerIssue
   alias ChatApi.Tags.{CustomerTag, Tag}
 
   @spec list_customers(binary(), map()) :: [Customer.t()]
@@ -15,6 +16,7 @@ defmodule ChatApi.Customers do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> filter_by_tag(filters)
+    |> filter_by_issue(filters)
     |> order_by(desc: :last_seen_at)
     |> Repo.all()
   end
@@ -36,6 +38,7 @@ defmodule ChatApi.Customers do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> filter_by_tag(filters)
+    |> filter_by_issue(filters)
     |> order_by(desc: :last_seen_at)
     |> Repo.paginate(pagination_params)
   end
@@ -48,6 +51,15 @@ defmodule ChatApi.Customers do
   end
 
   def filter_by_tag(query, _filters), do: query
+
+  @spec filter_by_issue(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_issue(query, %{"issue_id" => issue_id}) when not is_nil(issue_id) do
+    query
+    |> join(:left, [c], t in assoc(c, :issues))
+    |> where([_c, t], t.id == ^issue_id)
+  end
+
+  def filter_by_issue(query, _filters), do: query
 
   @spec get_customer!(binary(), atom() | list(atom()) | keyword()) :: Customer.t()
   def get_customer!(id, preloads \\ [:company, :tags]) do
@@ -337,6 +349,39 @@ defmodule ChatApi.Customers do
   def remove_tag(%Customer{} = customer, tag_id) do
     customer
     |> get_tag(tag_id)
+    |> Repo.delete()
+  end
+
+  @spec get_issue(Customer.t(), binary()) :: nil | CustomerIssue.t()
+  def get_issue(%Customer{id: id, account_id: account_id} = _customer, issue_id) do
+    CustomerIssue
+    |> where(account_id: ^account_id, customer_id: ^id, issue_id: ^issue_id)
+    |> Repo.one()
+  end
+
+  @spec link_issue(Customer.t(), binary()) ::
+          {:ok, CustomerIssue.t()} | {:error, Ecto.Changeset.t()}
+  def link_issue(%Customer{id: id, account_id: account_id} = customer, issue_id) do
+    case get_issue(customer, issue_id) do
+      nil ->
+        %CustomerIssue{}
+        |> CustomerIssue.changeset(%{
+          customer_id: id,
+          issue_id: issue_id,
+          account_id: account_id
+        })
+        |> Repo.insert()
+
+      issue ->
+        {:ok, issue}
+    end
+  end
+
+  @spec unlink_issue(Customer.t(), binary()) ::
+          {:ok, CustomerIssue.t()} | {:error, Ecto.Changeset.t()}
+  def unlink_issue(%Customer{} = customer, issue_id) do
+    customer
+    |> get_issue(issue_id)
     |> Repo.delete()
   end
 

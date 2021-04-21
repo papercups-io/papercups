@@ -1,4 +1,5 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {
   Alert,
@@ -16,6 +17,23 @@ import * as API from '../../api';
 import * as T from '../../types';
 import logger from '../../logger';
 import NewIssueModal from './NewIssueModal';
+
+export const IssueStateTag = ({state}: {state: T.IssueState}) => {
+  switch (state) {
+    case 'unstarted':
+      return <Tag>unstarted</Tag>;
+    case 'in_progress':
+      return <Tag color="orange">in progress</Tag>;
+    case 'in_review':
+      return <Tag color="blue">in review</Tag>;
+    case 'done':
+      return <Tag color="green">done</Tag>;
+    case 'closed':
+      return <Tag color="red">closed</Tag>;
+    default:
+      return <Tag>{state}</Tag>;
+  }
+};
 
 const IssuesTable = ({
   loading,
@@ -37,21 +55,8 @@ const IssuesTable = ({
       title: 'Status',
       dataIndex: 'state',
       key: 'state',
-      render: (value: string) => {
-        switch (value) {
-          case 'unstarted':
-            return <Tag>unstarted</Tag>;
-          case 'in_progress':
-            return <Tag color="orange">in progress</Tag>;
-          case 'in_review':
-            return <Tag color="blue">in review</Tag>;
-          case 'done':
-            return <Tag color="green">done</Tag>;
-          case 'closed':
-            return <Tag color="red">closed</Tag>;
-          default:
-            return <Tag>{value.split('_').join(' ')}</Tag>;
-        }
+      render: (value: T.IssueState) => {
+        return <IssueStateTag state={value} />;
       },
     },
     {
@@ -85,8 +90,13 @@ const IssuesTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (value: string, record: any) => {
-        // TODO: add after implementing IssueDetailsPage
-        return null;
+        const {id: issueId} = record;
+
+        return (
+          <Link to={`/issues/${issueId}`}>
+            <Button>View</Button>
+          </Link>
+        );
       },
     },
   ];

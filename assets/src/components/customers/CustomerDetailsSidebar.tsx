@@ -51,10 +51,10 @@ export const CustomerDetailsSidebar = ({
   const hasMetadata = !!metadata && Object.keys(metadata).length > 0;
 
   return (
-    <CustomerDetailsCard sx={{minWidth: '320px'}}>
+    <CustomerDetailsCard sx={{minWidth: 320, maxWidth: 360}}>
       <Box p={3}>
         <Title level={4}>{title}</Title>
-        <Divider dashed />
+        <Divider />
 
         <CustomerDetailsSection title="Basic">
           <CustomerDetailsProperty
@@ -81,7 +81,7 @@ export const CustomerDetailsSidebar = ({
           />
         </CustomerDetailsSection>
 
-        <Divider dashed />
+        <Divider />
 
         <CustomerDetailsSection title="Activity">
           <CustomerDetailsProperty
@@ -123,7 +123,7 @@ export const CustomerDetailsSidebar = ({
           )}
         </CustomerDetailsSection>
 
-        <Divider dashed />
+        <Divider />
 
         <CustomerDetailsSection title="Device">
           <CustomerDetailsProperty
@@ -149,11 +149,11 @@ export const CustomerDetailsSidebar = ({
           />
         </CustomerDetailsSection>
 
-        <Divider dashed />
+        <Divider />
 
         <CompanyDetailsSection company={company} />
 
-        <Divider dashed />
+        <Divider />
 
         {hasMetadata && (
           <>
@@ -167,7 +167,7 @@ export const CustomerDetailsSidebar = ({
                 />
               ))}
             </CustomerDetailsSection>
-            <Divider dashed />
+            <Divider />
           </>
         )}
 
@@ -244,7 +244,15 @@ const CompanyDetailsSection = ({company}: {company?: Company}) => {
       <CustomerDetailsProperty
         icon={<LinkOutlined style={{color: colors.primary}} />}
         name="Website"
-        value={<Text>{websiteUrl}</Text>}
+        value={
+          websiteUrl ? (
+            <a href={websiteUrl} target="_blank" rel="noopener noreferrer">
+              {websiteUrl}
+            </a>
+          ) : (
+            <Text>N/A</Text>
+          )
+        }
       />
       <CustomerDetailsProperty
         icon={<LinkOutlined style={{color: colors.primary}} />}
@@ -327,7 +335,17 @@ const getLastSeenURLValue = ({
   if (currentUrl) {
     return (
       <Tooltip title={currentUrl}>
-        <a href={currentUrl} target="_blank" rel="noopener noreferrer">
+        <a
+          style={{
+            maxWidth: '100%',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+          href={currentUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           {pathname && pathname.length > 1 ? pathname : currentUrl}
         </a>
       </Tooltip>

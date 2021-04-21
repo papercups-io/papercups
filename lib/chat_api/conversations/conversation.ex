@@ -5,6 +5,7 @@ defmodule ChatApi.Conversations.Conversation do
   alias ChatApi.{
     Accounts.Account,
     Customers.Customer,
+    Issues.ConversationIssue,
     Messages.Message,
     Tags.ConversationTag,
     Users.User
@@ -55,6 +56,8 @@ defmodule ChatApi.Conversations.Conversation do
 
     has_many(:conversation_tags, ConversationTag)
     has_many(:tags, through: [:conversation_tags, :tag])
+    has_many(:conversation_issues, ConversationIssue)
+    has_many(:issues, through: [:conversation_issues, :issue])
 
     timestamps()
   end

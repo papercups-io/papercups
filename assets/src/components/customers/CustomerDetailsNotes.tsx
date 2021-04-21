@@ -84,7 +84,7 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
           onCreateNote={this.handleCreateNote}
         />
 
-        <Divider dashed />
+        <Divider />
 
         {customerNotes.length === 0 ? (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
