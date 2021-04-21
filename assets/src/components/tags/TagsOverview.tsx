@@ -97,8 +97,8 @@ const filterTagsByQuery = (
 
     const queries = query.split(' ').map((str) => str.toLowerCase());
 
-    return words.some((word) => {
-      return queries.every((q) => word.indexOf(q) !== -1);
+    return queries.every((q) => {
+      return words.some((word) => word.indexOf(q) !== -1);
     });
   });
 };

@@ -3,6 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {
   Alert,
   Button,
+  Divider,
   Input,
   Paragraph,
   Table,
@@ -90,7 +91,14 @@ const IssuesTable = ({
     },
   ];
 
-  return <Table loading={loading} dataSource={data} columns={columns} />;
+  return (
+    <Table
+      loading={loading}
+      dataSource={data}
+      columns={columns}
+      pagination={false}
+    />
+  );
 };
 
 type Props = {};
@@ -122,8 +130,8 @@ const filterIssuesByQuery = (
 
     const queries = query.split(' ').map((str) => str.toLowerCase());
 
-    return words.some((word) => {
-      return queries.every((q) => word.indexOf(q) !== -1);
+    return queries.every((q) => {
+      return words.some((word) => word.indexOf(q) !== -1);
     });
   });
 };
@@ -233,8 +241,47 @@ class IssuesOverview extends React.Component<Props, State> {
           />
         </Box>
 
-        <Box my={4}>
-          <IssuesTable loading={loading} issues={filteredIssues} />
+        <Divider />
+
+        <Box mb={5}>
+          <Title level={4}>Recently done</Title>
+          <Paragraph>
+            <Text type="secondary">
+              These issues are done, but customers have not yet been notified.
+            </Text>
+          </Paragraph>
+          <IssuesTable
+            loading={loading}
+            issues={filteredIssues.filter(({state}) => state === 'done')}
+          />
+        </Box>
+
+        <Box mb={5}>
+          <Title level={4}>Unfinished</Title>
+          <Paragraph>
+            <Text type="secondary">
+              These issues are still in progress or yet to be started.
+            </Text>
+          </Paragraph>
+          <IssuesTable
+            loading={loading}
+            issues={filteredIssues.filter(
+              ({state}) => state !== 'done' && state !== 'closed'
+            )}
+          />
+        </Box>
+
+        <Box mb={5}>
+          <Title level={4}>Closed</Title>
+          <Paragraph>
+            <Text type="secondary">
+              These issues have been finished and customers have been notified.
+            </Text>
+          </Paragraph>
+          <IssuesTable
+            loading={loading}
+            issues={filteredIssues.filter(({state}) => state === 'closed')}
+          />
         </Box>
       </Box>
     );
