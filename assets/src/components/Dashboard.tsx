@@ -424,8 +424,8 @@ const Dashboard = (props: RouteComponentProps) => {
             component={GettingStartedOverview}
           />
           <Route path="/account*" component={AccountOverview} />
-          <Route path="/customers/:id" component={CustomerDetailsPage} />
-          <Route path="/v2/customers/:id" component={CustomerDetailsPageV2} />
+          <Route path="/v1/customers/:id" component={CustomerDetailsPage} />
+          <Route path="/customers/:id" component={CustomerDetailsPageV2} />
           <Route path="/customers" component={CustomersPage} />
           <Route path="/companies/new" component={CreateCompanyPage} />
           <Route path="/companies/:id/edit" component={UpdateCompanyPage} />
