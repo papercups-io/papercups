@@ -40,7 +40,6 @@ export const ConversationsContext = React.createContext<{
   onSendMessage: (message: Partial<Message>, cb?: () => void) => any;
 
   onSetConversations: (conversations: Array<Conversation>) => Array<string>;
-  onSetSingleConversation: (conversation: Conversation) => Array<string>;
 
   fetchAllConversations: () => Promise<Array<string>>;
   // TODO: should this be different?
@@ -65,7 +64,6 @@ export const ConversationsContext = React.createContext<{
   onSendMessage: () => {},
 
   onSetConversations: () => [],
-  onSetSingleConversation: () => [],
 
   onUpdateConversation: () => Promise.resolve(),
   onDeleteConversation: () => Promise.resolve(),
@@ -682,7 +680,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
           onSendMessage: this.handleSendMessage,
 
           onSetConversations: this.handleSetConversations,
-          onSetSingleConversation: this.handleSetSingleConversation,
 
           fetchAllConversations: this.fetchAllConversations,
           fetchConversationById: this.fetchConversationById,
