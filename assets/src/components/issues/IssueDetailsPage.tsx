@@ -18,6 +18,7 @@ import Spinner from '../Spinner';
 import logger from '../../logger';
 import CustomersTableContainer from '../customers/CustomersTableContainer';
 import {IssueStateTag} from './IssuesOverview';
+import {SearchCustomersModalButton} from '../customers/SearchCustomers';
 
 const isValidGithubUrl = (url: string): boolean => {
   return url.indexOf('github.com/') !== -1;
@@ -126,6 +127,21 @@ class IssueDetailsPage extends React.Component<Props, State> {
   handleIssueUpdated = () => {
     this.handleUpdateIssueModalClosed();
     this.handleRefreshIssue();
+  };
+
+  handleLinkNewCustomer = (onSuccess: (filters?: any) => any) => (
+    customer: T.Customer
+  ) => {
+    const {id: customerId} = customer;
+    const issueId = this.getIssueId();
+
+    if (!customerId) {
+      return null;
+    }
+
+    return API.addCustomerIssue(customerId, issueId)
+      .then(() => onSuccess())
+      .catch((err) => logger.error('Error linking issue to customer:', err));
   };
 
   render() {
@@ -245,12 +261,28 @@ class IssueDetailsPage extends React.Component<Props, State> {
 
           <Box sx={{flex: 3}}>
             <DetailsSectionCard>
-              <Box pb={2} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
+              <Flex
+                mb={3}
+                sx={{
+                  justifyContent: 'space-between',
+                  borderBottom: '1px solid rgba(0,0,0,.06)',
+                }}
+              >
                 <Title level={4}>People</Title>
-              </Box>
+              </Flex>
 
               <CustomersTableContainer
                 defaultFilters={{issue_id: this.getIssueId()}}
+                actions={(handleRefreshCustomers) => (
+                  <SearchCustomersModalButton
+                    modal={{title: 'Link customer to issue'}}
+                    onSuccess={this.handleLinkNewCustomer(
+                      handleRefreshCustomers
+                    )}
+                  >
+                    Link new customer to issue
+                  </SearchCustomersModalButton>
+                )}
               />
             </DetailsSectionCard>
           </Box>

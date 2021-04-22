@@ -4,7 +4,7 @@ import {debounce} from 'lodash';
 import * as API from '../../api';
 import {Issue} from '../../types';
 import {AutoComplete} from '../common';
-import {IssueStateTag} from '../issues/IssuesOverview';
+import {IssueStateTag} from './IssuesOverview';
 import logger from '../../logger';
 
 type Props = {
@@ -16,24 +16,20 @@ type Props = {
   onSelectIssue?: (issue: Issue) => void;
 };
 type State = {
-  issueSearchResults: Issue[];
-  selectedIssueId: string | undefined;
-  selectedIssueTitle: string | undefined;
+  options: Issue[];
 };
 
 class SearchIssuesInput extends React.Component<Props, State> {
   state: State = {
-    issueSearchResults: [],
-    selectedIssueId: undefined,
-    selectedIssueTitle: undefined,
+    options: [],
   };
 
   handleSelectIssue = (title: string, record: any) => {
     const {onSelectIssue} = this.props;
-    const {issueSearchResults = []} = this.state;
+    const {options = []} = this.state;
     const {key: selectedIssueId} = record;
     const selectedIssue = selectedIssueId
-      ? issueSearchResults.find((result) => result.id === selectedIssueId)
+      ? options.find((result) => result.id === selectedIssueId)
       : null;
 
     if (selectedIssue && typeof onSelectIssue === 'function') {
@@ -47,7 +43,7 @@ class SearchIssuesInput extends React.Component<Props, State> {
     API.fetchAllIssues({q: query})
       .then((issues) => {
         this.setState({
-          issueSearchResults: issues.filter((issue) => {
+          options: issues.filter((issue) => {
             return !ignored.some((i) => i.id === issue.id);
           }),
         });
@@ -62,7 +58,7 @@ class SearchIssuesInput extends React.Component<Props, State> {
 
   render() {
     const {style = {}} = this.props;
-    const {issueSearchResults} = this.state;
+    const {options} = this.state;
 
     return (
       <AutoComplete
@@ -73,7 +69,7 @@ class SearchIssuesInput extends React.Component<Props, State> {
         onSelect={this.handleSelectIssue}
         onSearch={this.debouncedSearchIssues}
       >
-        {issueSearchResults.map(({id, title, state}) => {
+        {options.map(({id, title, state}) => {
           return (
             <AutoComplete.Option key={id} value={title}>
               <Flex sx={{alignItems: 'center'}}>
