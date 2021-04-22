@@ -48,7 +48,7 @@ import {
   useConversations,
 } from './conversations/ConversationsProvider';
 import AllConversations from './conversations/AllConversations';
-import CannedConversations from './conversations/CannedConversations';
+import CannedResponses from './conversations/CannedResponses';
 import MyConversations from './conversations/MyConversations';
 import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
@@ -461,7 +461,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/sessions*" component={SessionsOverview} />
           <Route path="/tags/:id" component={TagDetailsPage} />
           <Route path="/tags" component={TagsOverview} />
-          <Route path="/canned" component={CannedConversations} />
+          <Route path="/canned" component={CannedResponses} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>

@@ -54,7 +54,7 @@ const filterConversationsByQuery = (
   });
 };
 
-class CannedConversationsOverview extends React.Component<Props, State> {
+class CannedResponsesOverview extends React.Component<Props, State> {
   state: State = {
     filteredTags: [],
     filterQuery: '',
@@ -169,4 +169,4 @@ class CannedConversationsOverview extends React.Component<Props, State> {
   }
 }
 
-export default CannedConversationsOverview;
+export default CannedResponsesOverview;
