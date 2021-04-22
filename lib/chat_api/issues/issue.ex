@@ -11,6 +11,7 @@ defmodule ChatApi.Issues.Issue do
           body: String.t() | nil,
           state: String.t(),
           github_issue_url: String.t() | nil,
+          finished_at: DateTime.t() | nil,
           closed_at: DateTime.t() | nil,
           metadata: map() | nil,
           # Relations
@@ -31,6 +32,7 @@ defmodule ChatApi.Issues.Issue do
     field(:title, :string)
     field(:body, :string)
     field(:state, :string, default: "unstarted")
+    field(:finished_at, :utc_datetime)
     field(:closed_at, :utc_datetime)
     field(:github_issue_url, :string)
     field(:metadata, :map)
@@ -55,6 +57,7 @@ defmodule ChatApi.Issues.Issue do
       :body,
       :state,
       :github_issue_url,
+      :finished_at,
       :closed_at,
       :account_id,
       :creator_id,

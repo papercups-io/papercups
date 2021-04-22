@@ -8,6 +8,7 @@ defmodule ChatApi.Repo.Migrations.CreateIssues do
       add(:body, :text)
       add(:state, :string, null: false, default: "unstarted")
       add(:github_issue_url, :string)
+      add(:finished_at, :utc_datetime)
       add(:closed_at, :utc_datetime)
       add(:metadata, :map)
 
