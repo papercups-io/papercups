@@ -1,17 +1,7 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {
-  Button,
-  Input,
-  Layout,
-  Menu,
-  Table,
-  Tag,
-  Title,
-  Tooltip,
-} from '../common';
-import {PlusOutlined} from '../icons';
+import {Button, Input, Layout, Menu, Title, Tooltip, colors} from '../common';
+import {PlusOutlined, ReadOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
 import logger from '../../logger';
@@ -117,9 +107,12 @@ class CannedResponsesOverview extends React.Component<Props, State> {
       <Box p={4} sx={{maxWidth: 1080}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Saved Replies for Taro (beta)</Title>
-          <Tooltip title="How Saved Replies Work">
-            <span>This is how they work</span>
-          </Tooltip>
+          <Box style={{color: colors.blue[5]}}>
+            <ReadOutlined style={{margin: 5, padding: 5}}></ReadOutlined>
+            <Tooltip title="How Saved Replies Work">
+              <span>How saved replies work</span>
+            </Tooltip>
+          </Box>
 
           {/* TODO: implement me! */}
           <Button
