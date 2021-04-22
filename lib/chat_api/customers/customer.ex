@@ -6,6 +6,7 @@ defmodule ChatApi.Customers.Customer do
     Accounts.Account,
     Companies.Company,
     Conversations.Conversation,
+    Issues.CustomerIssue,
     Messages.Message,
     Notes.Note,
     Tags.CustomerTag
@@ -81,6 +82,8 @@ defmodule ChatApi.Customers.Customer do
 
     has_many(:customer_tags, CustomerTag)
     has_many(:tags, through: [:customer_tags, :tag])
+    has_many(:customer_issues, CustomerIssue)
+    has_many(:issues, through: [:customer_issues, :issue])
 
     timestamps()
   end

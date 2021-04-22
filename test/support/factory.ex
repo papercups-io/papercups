@@ -88,12 +88,34 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def github_authorization_factory do
+    %ChatApi.Github.GithubAuthorization{
+      access_token: "some access_token",
+      refresh_token: "some refresh_token",
+      token_type: "some token_type",
+      scope: "some scope",
+      github_installation_id: "some github_installation_id",
+      account: build(:account),
+      user: build(:user)
+    }
+  end
+
   def google_authorization_factory do
     %ChatApi.Google.GoogleAuthorization{
       client: "some client",
       refresh_token: "some long refresh token",
       account: build(:account),
       user: build(:user)
+    }
+  end
+
+  def issue_factory do
+    %ChatApi.Issues.Issue{
+      title: sequence("some title"),
+      body: "some body",
+      state: "unstarted",
+      account: build(:account),
+      creator: build(:user)
     }
   end
 

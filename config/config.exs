@@ -45,6 +45,12 @@ config :pow, Pow.Postgres.Store,
   repo: ChatApi.Repo,
   schema: ChatApi.Auth.PowSession
 
+config :joken,
+  rs256: [
+    signer_alg: "RS256",
+    key_pem: System.get_env("PAPERCUPS_GITHUB_PEM")
+  ]
+
 config :chat_api, :pow,
   user: ChatApi.Users.User,
   repo: ChatApi.Repo,

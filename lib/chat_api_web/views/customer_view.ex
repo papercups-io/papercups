@@ -5,6 +5,7 @@ defmodule ChatApiWeb.CustomerView do
     CompanyView,
     ConversationView,
     CustomerView,
+    IssueView,
     MessageView,
     NoteView,
     TagView,
@@ -87,6 +88,7 @@ defmodule ChatApiWeb.CustomerView do
       title: customer.name || customer.email || "Anonymous User"
     }
     |> maybe_render_tags(customer)
+    |> maybe_render_issues(customer)
     |> maybe_render_notes(customer)
     |> maybe_render_conversations(customer)
     |> maybe_render_messages(customer)
@@ -97,6 +99,11 @@ defmodule ChatApiWeb.CustomerView do
     do: Map.merge(json, %{tags: render_many(tags, TagView, "tag.json")})
 
   defp maybe_render_tags(json, _), do: json
+
+  defp maybe_render_issues(json, %Customer{issues: issues}) when is_list(issues),
+    do: Map.merge(json, %{issues: render_many(issues, IssueView, "issue.json")})
+
+  defp maybe_render_issues(json, _), do: json
 
   defp maybe_render_notes(json, %Customer{notes: notes}) when is_list(notes),
     do: Map.merge(json, %{notes: render_many(notes, NoteView, "note.json")})

@@ -84,7 +84,7 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
           onCreateNote={this.handleCreateNote}
         />
 
-        <Divider dashed />
+        <Divider />
 
         {customerNotes.length === 0 ? (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -150,7 +150,7 @@ const CustomerDetailNote = ({
           placement="left"
           onConfirm={() => onDeleteNote(note)}
         >
-          <Button type="link" danger ghost icon={<DeleteOutlined />}></Button>
+          <Button type="link" danger icon={<DeleteOutlined />}></Button>
         </Popconfirm>
       </Flex>
 

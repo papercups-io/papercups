@@ -14,7 +14,7 @@ defmodule ChatApiWeb.CustomerController do
     id = conn.path_params["id"]
 
     preloads =
-      (conn.path_params["expand"] || ["company", "tags"])
+      (conn.params["expand"] || ["company", "tags"])
       |> Enum.map(&String.to_existing_atom/1)
       |> Enum.filter(&Customers.is_valid_association?/1)
 
@@ -177,6 +177,24 @@ defmodule ChatApiWeb.CustomerController do
     customer = Customers.get_customer!(id)
 
     with {:ok, _result} <- Customers.remove_tag(customer, tag_id) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
+
+  @spec link_issue(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def link_issue(conn, %{"customer_id" => id, "issue_id" => issue_id}) do
+    customer = Customers.get_customer!(id)
+
+    with {:ok, _result} <- Customers.link_issue(customer, issue_id) do
+      json(conn, %{data: %{ok: true}})
+    end
+  end
+
+  @spec unlink_issue(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def unlink_issue(conn, %{"customer_id" => id, "issue_id" => issue_id}) do
+    customer = Customers.get_customer!(id)
+
+    with {:ok, _result} <- Customers.unlink_issue(customer, issue_id) do
       json(conn, %{data: %{ok: true}})
     end
   end
