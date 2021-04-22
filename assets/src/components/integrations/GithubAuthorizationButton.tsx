@@ -3,6 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {Button, Popconfirm} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
+import {GITHUB_APP_NAME} from '../../config';
 import {IntegrationType} from './support';
 
 export const GithubAuthorizationButton = ({
@@ -33,7 +34,7 @@ export const GithubAuthorizationButton = ({
         <Flex mx={-1}>
           <Box mx={1}>
             <a
-              href="https://github.com/apps/papercups-dev/installations/new"
+              href={`https://github.com/apps/${GITHUB_APP_NAME}/installations/new`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -54,7 +55,7 @@ export const GithubAuthorizationButton = ({
         </Flex>
       ) : (
         <a
-          href="https://github.com/apps/papercups-dev/installations/new"
+          href={`https://github.com/apps/${GITHUB_APP_NAME}/installations/new`}
           target="_blank"
           rel="noopener noreferrer"
         >
