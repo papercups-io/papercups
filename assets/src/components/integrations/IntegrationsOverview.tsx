@@ -218,7 +218,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
-      icon: '/github.png',
+      icon: '/github.svg',
       description: 'Sync and track feature requests and bugs with GitHub.',
     };
   };
