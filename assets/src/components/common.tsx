@@ -1,4 +1,5 @@
 import Alert from 'antd/lib/alert';
+import AutoComplete from 'antd/lib/auto-complete';
 import Badge from 'antd/lib/badge';
 import Button from 'antd/lib/button';
 import Checkbox from 'antd/lib/checkbox';
@@ -114,6 +115,7 @@ export {
   Sider,
   // Components
   Alert,
+  AutoComplete,
   Badge,
   Button,
   Checkbox,

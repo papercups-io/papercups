@@ -113,9 +113,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
             <Box mx={3}>
               <Title level={3}>{title}</Title>
             </Box>
-            <Button type="primary" onClick={this.handleOpenEditModal}>
-              Edit
-            </Button>
+            <Button onClick={this.handleOpenEditModal}>Edit</Button>
           </Flex>
 
           <EditCustomerDetailsModal

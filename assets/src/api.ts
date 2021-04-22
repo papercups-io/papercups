@@ -1294,7 +1294,10 @@ export const removeCustomerTag = async (
     .then((res) => res.body.data);
 };
 
-export const fetchAllIssues = async (token = getAccessToken()) => {
+export const fetchAllIssues = async (
+  query = {},
+  token = getAccessToken()
+): Promise<Array<Issue>> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -1302,6 +1305,7 @@ export const fetchAllIssues = async (token = getAccessToken()) => {
   return request
     .get(`/api/issues`)
     .set('Authorization', token)
+    .query(query)
     .then((res) => res.body.data);
 };
 
@@ -1356,6 +1360,37 @@ export const deleteIssue = async (id: string, token = getAccessToken()) => {
     .delete(`/api/issues/${id}`)
     .set('Authorization', token)
     .then((res) => res.body);
+};
+
+export const addCustomerIssue = async (
+  customerId: string,
+  issueId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/customers/${customerId}/issues`)
+    .send({issue_id: issueId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const removeCustomerIssue = async (
+  customerId: string,
+  issueId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/customers/${customerId}/issues/${issueId}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
 };
 
 type BrowserSessionFilters = {

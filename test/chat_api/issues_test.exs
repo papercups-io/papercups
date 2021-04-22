@@ -35,6 +35,23 @@ defmodule ChatApi.IssuesTest do
       assert issue.state == result.state
     end
 
+    test "find_issue/1 returns the issue by filters", %{account: account} do
+      issue = insert(:issue, account: account, title: "Hello world")
+      result = Issues.find_issue(%{title: "Hello world"})
+
+      assert issue.id == result.id
+
+      issue = insert(:issue, account: account, state: "in_progress")
+      result = Issues.find_issue(%{state: "in_progress"})
+
+      assert issue.id == result.id
+
+      issue = insert(:issue, account: account, github_issue_url: "https://github.com/issues/1")
+      result = Issues.find_issue(%{github_issue_url: "https://github.com/issues/1"})
+
+      assert issue.id == result.id
+    end
+
     test "create_issue/1 with valid data creates a issue" do
       assert {:ok, %Issue{} = issue} =
                Issues.create_issue(params_with_assocs(:issue, title: "new issue"))

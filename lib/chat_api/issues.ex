@@ -9,9 +9,12 @@ defmodule ChatApi.Issues do
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
 
-  @spec list_issues(binary()) :: [Issue.t()]
-  def list_issues(account_id) do
-    Issue |> where(account_id: ^account_id) |> Repo.all()
+  @spec list_issues(binary(), map()) :: [Issue.t()]
+  def list_issues(account_id, filters \\ %{}) do
+    Issue
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> Repo.all()
   end
 
   @spec get_issue!(binary()) :: Issue.t()
@@ -69,18 +72,35 @@ defmodule ChatApi.Issues do
 
   @spec filter_where(map()) :: %Ecto.Query.DynamicExpr{}
   def filter_where(params) do
-    Enum.reduce(params, dynamic(true), fn
+    params
+    |> Map.new(fn
+      {k, v} when is_binary(k) -> {String.to_existing_atom(k), v}
+      {k, v} when is_atom(k) -> {k, v}
+    end)
+    |> Enum.reduce(dynamic(true), fn
       {:account_id, value}, dynamic ->
-        dynamic([p], ^dynamic and p.account_id == ^value)
+        dynamic([r], ^dynamic and r.account_id == ^value)
 
       {:state, value}, dynamic ->
-        dynamic([p], ^dynamic and p.state == ^value)
+        dynamic([r], ^dynamic and r.state == ^value)
 
       {:title, value}, dynamic ->
-        dynamic([p], ^dynamic and p.title == ^value)
+        dynamic([r], ^dynamic and r.title == ^value)
 
       {:github_issue_url, value}, dynamic ->
-        dynamic([p], ^dynamic and p.github_issue_url == ^value)
+        dynamic([r], ^dynamic and r.github_issue_url == ^value)
+
+      {:q, ""}, dynamic ->
+        dynamic
+
+      {:q, query}, dynamic ->
+        value = "%" <> query <> "%"
+
+        dynamic(
+          [r],
+          ^dynamic and
+            (ilike(r.title, ^value) or ilike(r.body, ^value) or ilike(r.github_issue_url, ^value))
+        )
 
       {_, _}, dynamic ->
         # Not a where parameter

@@ -1,18 +1,21 @@
 import React from 'react';
 import {Box} from 'theme-ui';
 import {capitalize} from 'lodash';
+import {ButtonProps} from 'antd/lib/button';
 import {Button, Input, Modal, Select, Text, TextArea} from '../common';
 import * as API from '../../api';
-import {IssueState} from '../../types';
+import {Issue, IssueState} from '../../types';
 import logger from '../../logger';
 import {formatServerError} from '../../utils';
 
 const NewIssueModal = ({
   visible,
+  customerId,
   onSuccess,
   onCancel,
 }: {
   visible: boolean;
+  customerId?: string;
   onSuccess: (params: any) => void;
   onCancel: () => void;
 }) => {
@@ -45,22 +48,29 @@ const NewIssueModal = ({
   const handleCreateIssue = async () => {
     setIsSaving(true);
 
-    return API.createIssue({
-      title,
-      body,
-      github_issue_url: githubIssueUrl,
-      state: status,
-    })
-      .then((result) => {
-        onSuccess(result);
-        resetInputFields();
-      })
-      .catch((err) => {
-        logger.error('Error creating issue:', err);
-        const errorMessage = formatServerError(err);
-        setErrorMessage(errorMessage);
-      })
-      .finally(() => setIsSaving(false));
+    try {
+      const issue = await API.createIssue({
+        title,
+        body,
+        github_issue_url: githubIssueUrl,
+        state: status,
+      });
+
+      if (customerId) {
+        const {id: issueId} = issue;
+
+        await API.addCustomerIssue(customerId, issueId);
+      }
+
+      onSuccess(issue);
+      resetInputFields();
+    } catch (err) {
+      logger.error('Error creating issue:', err);
+      const errorMessage = formatServerError(err);
+      setErrorMessage(errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -142,6 +152,38 @@ const NewIssueModal = ({
         )}
       </Box>
     </Modal>
+  );
+};
+
+type CommonProps = {
+  customerId?: string;
+  onSuccess: (data: any) => void;
+};
+
+export const NewIssueModalButton = ({
+  customerId,
+  onSuccess,
+  ...props
+}: CommonProps & ButtonProps) => {
+  const [isModalOpen, setModalOpen] = React.useState(false);
+
+  const handleOpenModal = () => setModalOpen(true);
+  const handleCloseModal = () => setModalOpen(false);
+  const handleSuccess = (issue: Issue) => {
+    handleCloseModal();
+    onSuccess(issue);
+  };
+
+  return (
+    <>
+      <Button type="primary" {...props} onClick={handleOpenModal} />
+      <NewIssueModal
+        visible={isModalOpen}
+        customerId={customerId}
+        onCancel={handleCloseModal}
+        onSuccess={handleSuccess}
+      />
+    </>
   );
 };
 

@@ -20,8 +20,8 @@ defmodule ChatApiWeb.IssueController do
   end
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def index(%{assigns: %{current_user: %{account_id: account_id}}} = conn, _params) do
-    issues = Issues.list_issues(account_id)
+  def index(%{assigns: %{current_user: %{account_id: account_id}}} = conn, params) do
+    issues = Issues.list_issues(account_id, params)
 
     render(conn, "index.json", issues: issues)
   end
