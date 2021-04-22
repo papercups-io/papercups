@@ -585,6 +585,20 @@ export const deleteConversation = async (
     .then((res) => res.body);
 };
 
+export const archiveConversation = async (
+  conversationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/conversations/${conversationId}/archive`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const createNewMessage = async (
   conversationId: string,
   message: any,

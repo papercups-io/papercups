@@ -526,7 +526,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     const {conversationsById} = this.state;
 
     try {
-      await API.deleteConversation(conversationId);
+      await API.archiveConversation(conversationId);
 
       delete conversationsById[conversationId];
     } catch (err) {

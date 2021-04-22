@@ -136,6 +136,7 @@ defmodule ChatApiWeb.Router do
     resources("/canned_responses", CannedResponseController, except: [:new, :edit])
 
     get("/slack_conversation_threads", SlackConversationThreadController, :index)
+    post("/conversations/:conversation_id/archive", ConversationController, :archive)
     get("/conversations/:conversation_id/previous", ConversationController, :previous)
     get("/conversations/:conversation_id/related", ConversationController, :related)
     post("/conversations/:conversation_id/share", ConversationController, :share)
