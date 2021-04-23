@@ -5,6 +5,8 @@ defmodule ChatApi.Github.Client do
 
   require Logger
 
+  alias ChatApi.Github.GithubAuthorization
+
   @spec get_access_token(binary()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def get_access_token(code) do
     client_id = System.get_env("PAPERCUPS_GITHUB_CLIENT_ID")
@@ -56,10 +58,50 @@ defmodule ChatApi.Github.Client do
     |> Tesla.post("/app/installations/#{installation_id}/access_tokens", %{})
   end
 
+  def retrieve_app() do
+    jwt()
+    |> app_client()
+    |> Tesla.get("/app")
+  end
+
+  def retrieve_installation(%GithubAuthorization{github_installation_id: installation_id}),
+    do: retrieve_installation(installation_id)
+
+  def retrieve_installation(installation_id) do
+    jwt()
+    |> app_client()
+    |> Tesla.get("/app/installations/#{installation_id}")
+  end
+
+  def delete_installation(%GithubAuthorization{github_installation_id: installation_id}),
+    do: delete_installation(installation_id)
+
   def delete_installation(installation_id) do
     jwt()
     |> app_client()
     |> Tesla.delete("/app/installations/#{installation_id}")
+  end
+
+  def list_installation_repos(%GithubAuthorization{github_installation_id: installation_id}),
+    do: list_installation_repos(installation_id)
+
+  def list_installation_repos(installation_id) do
+    {:ok, %{body: %{"token" => token}}} = generate_installation_access_token(installation_id)
+
+    token
+    |> oauth_client()
+    |> Tesla.get("/installation/repositories")
+  end
+
+  def list_issues(%GithubAuthorization{github_installation_id: installation_id}, owner, repo),
+    do: list_issues(installation_id, owner, repo)
+
+  def list_issues(installation_id, owner, repo) do
+    {:ok, %{body: %{"token" => token}}} = generate_installation_access_token(installation_id)
+
+    token
+    |> oauth_client()
+    |> Tesla.get("/repos/#{owner}/#{repo}/issues")
   end
 
   defp jwt() do

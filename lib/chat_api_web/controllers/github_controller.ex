@@ -73,6 +73,20 @@ defmodule ChatApiWeb.GithubController do
     end
   end
 
+  @spec repos(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def repos(conn, _payload) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %GithubAuthorization{} = auth <- Github.get_authorization_by_account(account_id),
+         {:ok, %{body: %{"repositories" => repos}}} <- Github.Client.list_installation_repos(auth) do
+      json(conn, %{data: repos})
+    else
+      error ->
+        Logger.error("Could not retrieve GitHub repos: #{inspect(error)}")
+
+        json(conn, %{data: []})
+    end
+  end
+
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
     with %{account_id: _account_id} <- conn.assigns.current_user,
