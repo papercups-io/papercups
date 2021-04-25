@@ -28,9 +28,13 @@ defmodule ChatApi.Emails.Helpers do
     |> take_lowest_mx_record()
   end
 
+  def valid_format?(nil), do: false
+
   def valid_format?(email) do
     email =~ @email_regex
   end
+
+  def valid_mx?(nil), do: false
 
   def valid_mx?(email) do
     email

@@ -13,7 +13,7 @@ const ButtonWrapper = ({
   disabledTooltipTitle = 'This customer already has an open conversation',
   onClick,
 }: {
-  isDisabled: boolean;
+  isDisabled?: boolean;
   disabledTooltipPlacement?: TooltipPlacement;
   disabledTooltipTitle?: string;
   onClick: () => void;
@@ -40,7 +40,7 @@ const ButtonWrapper = ({
 
 export type Props = {
   customerId: string;
-  isDisabled: boolean;
+  isDisabled?: boolean;
   disabledTooltipPlacement?: TooltipPlacement;
   disabledTooltipTitle?: string;
   onInitializeNewConversation?: (conservation: Conversation) => void;

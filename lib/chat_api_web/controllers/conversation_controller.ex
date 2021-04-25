@@ -281,8 +281,18 @@ defmodule ChatApiWeb.ConversationController do
 
   @spec maybe_create_message(Plug.Conn.t(), Conversation.t(), map()) :: any()
   defp maybe_create_message(
+         _conn,
+         %Conversation{source: "email"} = conversation,
+         %{"message" => %{"body" => body} = _message_params}
+       ) do
+    ChatApi.Google.InitializeGmailThread.send!(body, conversation)
+
+    :ok
+  end
+
+  defp maybe_create_message(
          conn,
-         conversation,
+         %Conversation{id: conversation_id},
          %{"message" => %{"body" => _body} = message_params}
        ) do
     with %{id: user_id, account_id: account_id} <- conn.assigns.current_user,
@@ -291,7 +301,7 @@ defmodule ChatApiWeb.ConversationController do
            |> Map.merge(%{
              "user_id" => user_id,
              "account_id" => account_id,
-             "conversation_id" => conversation.id
+             "conversation_id" => conversation_id
            })
            |> Messages.create_message() do
       Messages.get_message!(msg.id)
