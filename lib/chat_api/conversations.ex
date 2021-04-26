@@ -315,6 +315,14 @@ defmodule ChatApi.Conversations do
     |> Repo.update()
   end
 
+  @spec skip_update?(Conversation.t(), map()) :: boolean()
+  def skip_update?(%Conversation{} = conversation, updates),
+    do: Enum.all?(updates, fn {k, v} -> Map.get(conversation, k) == v end)
+
+  @spec should_update?(Conversation.t(), map()) :: boolean()
+  def should_update?(%Conversation{} = conversation, updates),
+    do: !skip_update?(conversation, updates)
+
   @spec mark_conversation_read(Conversation.t() | binary()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
   def mark_conversation_read(%Conversation{} = conversation) do

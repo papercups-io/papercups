@@ -280,6 +280,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
   debouncedConversationUpdate = debounce(
     (id: string, updates: Partial<Conversation>) => {
+      logger.debug('Handling conversation update:', id, updates);
+
       const {conversationsById} = this.state;
       const conversation = conversationsById[id];
 

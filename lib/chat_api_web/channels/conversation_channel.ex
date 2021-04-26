@@ -111,14 +111,17 @@ defmodule ChatApiWeb.ConversationChannel do
   defp broadcast_conversation_update!(%Message{conversation_id: conversation_id} = message) do
     # Mark as unread and ensure the conversation is open, since we want to
     # reopen a conversation if it received a new message after being closed.
-    {:ok, conversation} =
-      conversation_id
-      |> Conversations.get_conversation!()
-      |> Conversations.update_conversation(%{status: "open", read: false})
+    conversation = Conversations.get_conversation!(conversation_id)
+    updates = %{status: "open", read: false}
 
-    conversation
-    |> Conversations.Notification.broadcast_conversation_update_to_admin!()
-    |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
+    if Conversations.should_update?(conversation, updates) do
+      {:ok, conversation} =
+        Conversations.update_conversation(conversation, %{status: "open", read: false})
+
+      conversation
+      |> Conversations.Notification.broadcast_conversation_update_to_admin!()
+      |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
+    end
 
     message
   end
