@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import {range} from 'lodash';
 import qs from 'query-string';
 import {env} from './config';
 import {Message} from './types';
@@ -97,6 +98,17 @@ export const isValidUuid = (id: any) => {
   const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
   return regex.test(id);
+};
+
+export const generateDateRange = (
+  start: dayjs.Dayjs,
+  finish: dayjs.Dayjs
+): Array<dayjs.Dayjs> => {
+  const diff = finish.endOf('day').diff(start.startOf('day'), 'day');
+
+  return range(diff + 1).map((n) => {
+    return start.add(n, 'day');
+  });
 };
 
 export const sortConversationMessages = (messages: Array<Message>) => {

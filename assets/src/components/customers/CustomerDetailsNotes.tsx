@@ -1,5 +1,6 @@
 import React from 'react';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
 
 import {
@@ -18,6 +19,8 @@ import * as API from '../../api';
 import CustomerDetailsNewNoteInput from './CustomerDetailsNewNoteInput';
 import logger from '../../logger';
 import Spinner from '../Spinner';
+
+dayjs.extend(utc);
 
 type Props = {customerId: string};
 type State = {
@@ -128,13 +131,13 @@ const CustomerDetailNote = ({
 }) => {
   const {created_at: createdAt, author} = note;
   const formattedAuthor = formatNoteAuthor(author);
-  const formattedTimestamp = formatRelativeTime(dayjs(createdAt));
+  const formattedTimestamp = formatRelativeTime(dayjs.utc(createdAt));
 
   return (
     <Box
       mb={2}
       sx={{
-        bg: colors.note,
+        bg: colors.noteSecondary,
         borderRadius: 2,
       }}
     >

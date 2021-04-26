@@ -1142,12 +1142,8 @@ export const enableAccountUser = async (
     .then((res) => res.body.data);
 };
 
-export type CustomerNotesListResponse = {
-  data: Array<CustomerNote>;
-};
-
-export const fetchCustomerNotes = async (
-  customerId: string,
+export const fetchNotes = async (
+  query = {},
   token = getAccessToken()
 ): Promise<CustomerNote[]> => {
   if (!token) {
@@ -1156,9 +1152,21 @@ export const fetchCustomerNotes = async (
 
   return request
     .get('/api/notes')
-    .query({customer_id: customerId})
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export type CustomerNotesListResponse = {
+  data: Array<CustomerNote>;
+};
+
+export const fetchCustomerNotes = async (
+  customerId: string,
+  query = {},
+  token = getAccessToken()
+): Promise<CustomerNote[]> => {
+  return fetchNotes({...query, customer_id: customerId}, token);
 };
 
 export const createCustomerNote = async (
