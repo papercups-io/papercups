@@ -151,13 +151,15 @@ export type Props = {
   onInitializeNewConversation?: (conservation: Conversation) => void;
 };
 
-export const StartConversationButton = ({
+export const StartConversationWrapper = ({
+  children,
   customerId,
-  isDisabled,
-  disabledTooltipPlacement,
-  disabledTooltipTitle,
   onInitializeNewConversation,
-}: Props) => {
+}: {
+  children: (handleOpenModal: () => void) => React.ReactElement;
+  customerId: string;
+  onInitializeNewConversation?: (conservation: Conversation) => void;
+}) => {
   const [isModalOpen, setModalOpen] = React.useState(false);
 
   const handleOpenNewConversationModal = () => setModalOpen(true);
@@ -179,12 +181,7 @@ export const StartConversationButton = ({
 
   return (
     <React.Fragment>
-      <ButtonWrapper
-        isDisabled={isDisabled}
-        disabledTooltipPlacement={disabledTooltipPlacement}
-        disabledTooltipTitle={disabledTooltipTitle}
-        onClick={handleOpenNewConversationModal}
-      />
+      {children(handleOpenNewConversationModal)}
 
       <NewConversationModal
         visible={isModalOpen}
@@ -192,6 +189,30 @@ export const StartConversationButton = ({
         onSuccess={initializeNewConversation}
       />
     </React.Fragment>
+  );
+};
+
+export const StartConversationButton = ({
+  customerId,
+  isDisabled,
+  disabledTooltipPlacement,
+  disabledTooltipTitle,
+  onInitializeNewConversation,
+}: Props) => {
+  return (
+    <StartConversationWrapper
+      customerId={customerId}
+      onInitializeNewConversation={onInitializeNewConversation}
+    >
+      {(onClick) => (
+        <ButtonWrapper
+          isDisabled={isDisabled}
+          disabledTooltipPlacement={disabledTooltipPlacement}
+          disabledTooltipTitle={disabledTooltipTitle}
+          onClick={onClick}
+        />
+      )}
+    </StartConversationWrapper>
   );
 };
 

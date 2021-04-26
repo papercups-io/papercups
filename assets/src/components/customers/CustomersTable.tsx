@@ -1,11 +1,13 @@
 import React from 'react';
-import {Box} from 'theme-ui';
+import {Link} from 'react-router-dom';
+import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {Customer} from '../../types';
-import {Badge, Button, Table, Text, Tooltip} from '../common';
-import CustomerDetailsModal from './CustomerDetailsModal';
 import {TablePaginationConfig} from 'antd/lib/table';
+import {Customer} from '../../types';
+import {Badge, Button, Dropdown, Menu, Table, Text, Tooltip} from '../common';
+import {SettingOutlined} from '../icons';
+import {StartConversationWrapper} from '../conversations/StartConversationButton';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -133,25 +135,42 @@ const CustomersTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (value: string, record: Customer) => {
-        if (action && typeof action === 'function') {
-          return action(record);
-        }
-
         const {id: customerId} = record;
 
         return (
-          <>
-            <Button onClick={() => setSelectedCustomerId(customerId)}>
-              View more
-            </Button>
-            <CustomerDetailsModal
-              customer={record}
-              isVisible={selectedCustomerId === record.id}
-              onClose={() => setSelectedCustomerId(null)}
-              onUpdate={onUpdate}
-              onDelete={onUpdate}
-            />
-          </>
+          <Flex sx={{justifyContent: 'flex-end'}}>
+            <StartConversationWrapper customerId={customerId}>
+              {(handleOpenNewConversationModal) => {
+                const handleMenuClick = (data: any) => {
+                  switch (data.key) {
+                    case 'message':
+                      return handleOpenNewConversationModal();
+                    default:
+                      return null;
+                  }
+                };
+
+                return (
+                  <Dropdown
+                    overlay={
+                      <Menu onClick={handleMenuClick}>
+                        <Menu.Item key="profile">
+                          <Link to={`/customers/${customerId}`}>
+                            View profile
+                          </Link>
+                        </Menu.Item>
+                        <Menu.Item key="message">
+                          Start new conversation
+                        </Menu.Item>
+                      </Menu>
+                    }
+                  >
+                    <Button icon={<SettingOutlined />} />
+                  </Dropdown>
+                );
+              }}
+            </StartConversationWrapper>
+          </Flex>
         );
       },
     },

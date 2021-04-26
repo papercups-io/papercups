@@ -149,11 +149,6 @@ class CustomersTableContainer extends React.Component<Props, State> {
             total: pagination.total_entries,
             onChange: this.handlePageChange,
           }}
-          action={(customer: Customer) => (
-            <Link to={`/customers/${customer.id}`}>
-              <Button>View profile</Button>
-            </Link>
-          )}
           onUpdate={this.handleRefreshCustomers}
         />
       </Box>
