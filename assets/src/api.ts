@@ -859,6 +859,17 @@ export const deleteGithubAuthorization = async (
     .set('Authorization', token);
 };
 
+export const fetchGithubRepos = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/repos`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export type EmailParams = {
   recipient: string;
   subject: string;
