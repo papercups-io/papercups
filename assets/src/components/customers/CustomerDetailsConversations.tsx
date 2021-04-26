@@ -85,7 +85,6 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
         >
           <StartConversationButton
             customerId={customerId}
-            isDisabled={this.hasOpenConversation()}
             onInitializeNewConversation={this.fetchConversations}
           />
         </Flex>
