@@ -27,12 +27,8 @@ const CustomersTable = ({
   shouldIncludeAnonymous?: boolean;
   action?: (customer: Customer) => React.ReactElement;
   pagination?: false | TablePaginationConfig;
-  onUpdate: () => Promise<void>;
+  onUpdate?: () => Promise<void>;
 }) => {
-  const [selectedCustomerId, setSelectedCustomerId] = React.useState<
-    string | null
-  >(null);
-
   const isCustomerOnline = (customer: Customer) => {
     const {id: customerId} = customer;
 
