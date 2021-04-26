@@ -114,6 +114,7 @@ export type CustomerNote = {
   created_at: string;
   updated_at: string;
   author?: User;
+  customer?: Customer;
 };
 
 export type Tag = {
@@ -121,6 +122,23 @@ export type Tag = {
   name: string;
   description?: string;
   color?: string;
+  updated_at: string;
+};
+
+export type IssueState =
+  | 'unstarted'
+  | 'in_progress'
+  | 'in_review'
+  | 'done'
+  | 'closed';
+
+export type Issue = {
+  id: string;
+  title: string;
+  body?: string;
+  state: IssueState;
+  github_issue_url?: string;
+  created_at: string;
   updated_at: string;
 };
 

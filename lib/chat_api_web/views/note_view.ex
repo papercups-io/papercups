@@ -3,9 +3,11 @@ defmodule ChatApiWeb.NoteView do
 
   alias ChatApiWeb.{
     NoteView,
+    CustomerView,
     UserView
   }
 
+  alias ChatApi.Customers.Customer
   alias ChatApi.Users.User
 
   def render("index.json", %{notes: notes}) do
@@ -27,7 +29,13 @@ defmodule ChatApiWeb.NoteView do
       updated_at: note.updated_at
     }
     |> maybe_render_author(note)
+    |> maybe_render_customer(note)
   end
+
+  defp maybe_render_customer(json, %{customer: %Customer{} = customer}),
+    do: Map.merge(json, %{customer: render_one(customer, CustomerView, "customer.json")})
+
+  defp maybe_render_customer(json, _), do: json
 
   defp maybe_render_author(json, %{author: author}) do
     case author do

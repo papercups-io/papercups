@@ -2,6 +2,9 @@ defmodule ChatApi.Emails.Email do
   import Swoosh.Email
   import Ecto.Changeset
 
+  alias ChatApi.Customers.Customer
+  alias ChatApi.Messages.Message
+
   @type t :: Swoosh.Email.t()
 
   @from_address System.get_env("FROM_ADDRESS") || ""
@@ -53,38 +56,46 @@ defmodule ChatApi.Emails.Email do
 
   # TODO: Add some recent messages for context, rather than just a single message
   # (See the `conversation_reply` method for an example of this)
-  def new_message_alert(to_address, message) do
-    conversation_id = Map.get(message, :conversation_id)
+  def new_message_alert(
+        to_address,
+        %Message{
+          body: body,
+          conversation_id: conversation_id,
+          customer_id: customer_id
+        } = _message
+      ) do
+    customer =
+      case customer_id do
+        id when is_binary(id) -> ChatApi.Customers.get_customer!(id)
+        _ -> nil
+      end
+
+    {subject, intro} =
+      case customer do
+        %Customer{email: email, name: name} when is_binary(email) and is_binary(name) ->
+          {"#{name} (#{email}) has sent you a message", "New message from #{name} (#{email}):"}
+
+        %Customer{email: email} when is_binary(email) ->
+          {"#{email} has sent you a message", "New message from #{email}:"}
+
+        %Customer{name: name} when is_binary(name) ->
+          {"#{name} has sent you a message", "New message from #{name}:"}
+
+        _ ->
+          {"A customer has sent you a message (conversation #{conversation_id})",
+           "New message from an anonymous user:"}
+      end
 
     link =
       "<a href=\"https://#{@backend_url}/conversations/#{conversation_id}\">View in dashboard</a>"
 
-    msg = Map.get(message, :body)
-    customer_id = Map.get(message, :customer_id, nil)
-
-    customer_email_string =
-      if customer_id do
-        customer_id
-        |> ChatApi.Customers.get_customer!()
-        |> Map.get(:email)
-        |> case do
-          nil -> ""
-          email -> " from #{email}"
-        end
-      else
-        ""
-      end
-
-    html =
-      "A new message has arrived" <>
-        customer_email_string <> ":<br />" <> "<b>#{msg}</b>" <> "<br /><br />" <> link
-
-    text = "A new message has arrived" <> customer_email_string <> ": #{msg}"
+    html = intro <> "<br />" <> "<b>#{body}</b>" <> "<br /><br />" <> link
+    text = intro <> " " <> body
 
     new()
     |> to(to_address)
     |> from({"Papercups", @from_address})
-    |> subject("A customer has sent you a message")
+    |> subject(subject)
     |> html_body(html)
     |> text_body(text)
   end

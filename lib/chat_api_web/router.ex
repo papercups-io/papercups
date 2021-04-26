@@ -70,6 +70,7 @@ defmodule ChatApiWeb.Router do
     post("/slack/actions", SlackController, :actions)
     post("/mattermost/webhook", MattermostController, :webhook)
     post("/twilio/webhook", TwilioController, :webhook)
+    post("/github/webhook", GithubController, :webhook)
     # TODO: move to protected route after testing?
     get("/hubspot/oauth", HubspotController, :oauth)
 
@@ -99,10 +100,14 @@ defmodule ChatApiWeb.Router do
     post("/twilio/auth", TwilioController, :auth)
     get("/twilio/authorization", TwilioController, :authorization)
     delete("/twilio/authorizations/:id", TwilioController, :delete)
+    get("/github/oauth", GithubController, :oauth)
+    get("/github/authorization", GithubController, :authorization)
+    delete("/github/authorizations/:id", GithubController, :delete)
+    get("/github/repos", GithubController, :repos)
     get("/google/auth", GoogleController, :auth)
     get("/google/oauth", GoogleController, :callback)
     get("/google/authorization", GoogleController, :authorization)
-    delete("/google/authorization/:id", GoogleController, :delete)
+    delete("/google/authorizations/:id", GoogleController, :delete)
     post("/gmail/send", GmailController, :send)
     put("/widget_settings", WidgetSettingsController, :update)
     get("/profile", UserProfileController, :show)
@@ -126,11 +131,13 @@ defmodule ChatApiWeb.Router do
     resources("/notes", NoteController, except: [:new, :edit])
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
+    resources("/issues", IssueController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
     resources("/canned_responses", CannedResponseController, except: [:new, :edit])
 
     get("/slack_conversation_threads", SlackConversationThreadController, :index)
+    post("/conversations/:conversation_id/archive", ConversationController, :archive)
     get("/conversations/:conversation_id/previous", ConversationController, :previous)
     get("/conversations/:conversation_id/related", ConversationController, :related)
     post("/conversations/:conversation_id/share", ConversationController, :share)
@@ -138,6 +145,8 @@ defmodule ChatApiWeb.Router do
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
     post("/customers/:customer_id/tags", CustomerController, :add_tag)
     delete("/customers/:customer_id/tags/:tag_id", CustomerController, :remove_tag)
+    post("/customers/:customer_id/issues", CustomerController, :link_issue)
+    delete("/customers/:customer_id/issues/:issue_id", CustomerController, :unlink_issue)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
   end
 

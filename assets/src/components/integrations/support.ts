@@ -8,6 +8,7 @@ export type IntegrationType = {
     | 'mattermost'
     | 'gmail'
     | 'sheets'
+    | 'github'
     | 'microsoft-teams'
     | 'whatsapp'
     | 'twilio';

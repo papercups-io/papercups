@@ -7,10 +7,10 @@ defmodule ChatApiWeb.ConversationController do
 
   action_fallback(ChatApiWeb.FallbackController)
 
-  plug(:authorize when action in [:show, :update, :delete])
+  plug(:authorize when action in [:show, :update, :delete, :archive])
 
   defp authorize(conn, _) do
-    id = conn.path_params["id"]
+    id = conn.path_params["id"] || conn.params["conversation_id"]
 
     with %{account_id: account_id} <- conn.assigns.current_user,
          conversation = %{account_id: ^account_id} <- Conversations.get_conversation!(id) do
@@ -249,6 +249,15 @@ defmodule ChatApiWeb.ConversationController do
            Helpers.send_conversation_state_update(conversation, %{"state" => "deleted"}),
          {:ok, %Conversation{}} <- Conversations.delete_conversation(conversation) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  @spec archive(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def archive(conn, _params) do
+    conversation = conn.assigns.current_conversation
+
+    with {:ok, %Conversation{} = conversation} <- Conversations.archive_conversation(conversation) do
+      render(conn, "update.json", conversation: conversation)
     end
   end
 

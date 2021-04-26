@@ -1,5 +1,6 @@
 import React from 'react';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
 
 import {
@@ -18,6 +19,8 @@ import * as API from '../../api';
 import CustomerDetailsNewNoteInput from './CustomerDetailsNewNoteInput';
 import logger from '../../logger';
 import Spinner from '../Spinner';
+
+dayjs.extend(utc);
 
 type Props = {customerId: string};
 type State = {
@@ -84,7 +87,7 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
           onCreateNote={this.handleCreateNote}
         />
 
-        <Divider dashed />
+        <Divider />
 
         {customerNotes.length === 0 ? (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -128,13 +131,13 @@ const CustomerDetailNote = ({
 }) => {
   const {created_at: createdAt, author} = note;
   const formattedAuthor = formatNoteAuthor(author);
-  const formattedTimestamp = formatRelativeTime(dayjs(createdAt));
+  const formattedTimestamp = formatRelativeTime(dayjs.utc(createdAt));
 
   return (
     <Box
       mb={2}
       sx={{
-        bg: colors.note,
+        bg: colors.noteSecondary,
         borderRadius: 2,
       }}
     >
@@ -150,7 +153,7 @@ const CustomerDetailNote = ({
           placement="left"
           onConfirm={() => onDeleteNote(note)}
         >
-          <Button type="link" danger ghost icon={<DeleteOutlined />}></Button>
+          <Button type="link" danger icon={<DeleteOutlined />}></Button>
         </Popconfirm>
       </Flex>
 
