@@ -61,6 +61,71 @@ const notesByCustomer = (
   });
 };
 
+const NotesByCustomer = ({notes}: {notes: Array<T.CustomerNote>}) => {
+  return (
+    <Box>
+      {notesByCustomer(notes).map(({customer, notes: customerNotes = []}) => {
+        const identifier = formatCustomerDisplayName(customer);
+
+        return (
+          <Box mb={4} ml={2}>
+            <Box mb={1}>
+              <Link to={`/customers/${customer.id}?tab=notes`}>
+                <Text strong>{identifier}</Text>
+              </Link>
+            </Box>
+
+            {customerNotes.map((note) => {
+              const date = dayjs.utc(note.created_at).toDate();
+              const ts = dayjs(date).format('ddd, MMM D h:mm A');
+
+              return (
+                <Box
+                  key={note.id}
+                  px={3}
+                  pt={1}
+                  pb={2}
+                  mb={2}
+                  sx={{
+                    bg: colors.noteSecondary,
+                    borderRadius: 2,
+                  }}
+                >
+                  <Flex mb={1} sx={{justifyContent: 'flex-end'}}>
+                    <Text type="secondary" style={{fontSize: 12}}>
+                      {ts}
+                    </Text>
+                  </Flex>
+
+                  <MarkdownRenderer source={note.body} />
+                </Box>
+              );
+            })}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};
+
+const NotesByDate = ({notes}: {notes: Array<T.CustomerNote>}) => {
+  return (
+    <Box>
+      {notesByDate(notes).map(({date, notes = []}) => {
+        const formatted = dayjs(date).format('MMMM DD, YYYY');
+
+        return (
+          <Box mb={5}>
+            <Title level={3}>{formatted}</Title>
+
+            <NotesByCustomer notes={notes} />
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};
+
 type Props = {};
 type State = {
   loading: boolean;
@@ -90,81 +155,35 @@ class NotesOverview extends React.Component<Props, State> {
 
     if (loading) {
       return (
-        <Flex
-          sx={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-          }}
-        >
-          <Spinner size={40} />
-        </Flex>
+        <Box p={4} sx={{maxWidth: 1080}}>
+          <Flex
+            sx={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
+            <Spinner size={40} />
+          </Flex>
+        </Box>
       );
     } else if (notes.length === 0) {
       return (
-        <Result
-          status="success"
-          title="No notes"
-          subTitle="You haven't written any customer notes yet!"
-        />
+        <Box p={4} sx={{maxWidth: 1080}}>
+          <Result
+            status="success"
+            title="No notes"
+            subTitle="You haven't written any customer notes yet!"
+          />
+        </Box>
       );
     }
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
         <Box my={4}>
-          {notesByDate(notes).map(({date, notes = []}) => {
-            const formatted = dayjs(date).format('MMMM DD, YYYY');
-
-            return (
-              <Box mb={5}>
-                <Title level={3}>{formatted}</Title>
-                {notesByCustomer(notes).map(
-                  ({customer, notes: customerNotes = []}) => {
-                    const identifier = formatCustomerDisplayName(customer);
-
-                    return (
-                      <Box mb={4} ml={2}>
-                        <Box mb={1}>
-                          <Link to={`/customers/${customer.id}?tab=notes`}>
-                            <Text strong>{identifier}</Text>
-                          </Link>
-                        </Box>
-
-                        {customerNotes.map((note) => {
-                          const date = dayjs.utc(note.created_at).toDate();
-                          const ts = dayjs(date).format('ddd, MMM D h:mm A');
-
-                          return (
-                            <Box
-                              key={note.id}
-                              px={3}
-                              pt={1}
-                              pb={2}
-                              mb={2}
-                              sx={{
-                                bg: colors.noteSecondary,
-                                borderRadius: 2,
-                              }}
-                            >
-                              <Flex mb={1} sx={{justifyContent: 'flex-end'}}>
-                                <Text type="secondary" style={{fontSize: 12}}>
-                                  {ts}
-                                </Text>
-                              </Flex>
-
-                              <MarkdownRenderer source={note.body} />
-                            </Box>
-                          );
-                        })}
-                      </Box>
-                    );
-                  }
-                )}
-              </Box>
-            );
-          })}
+          <NotesByDate notes={notes} />
         </Box>
       </Box>
     );
