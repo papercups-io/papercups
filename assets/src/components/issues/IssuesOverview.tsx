@@ -103,37 +103,39 @@ export const IssuesTable = ({
         };
 
         return (
-          <Dropdown
-            overlay={
-              <Menu onClick={handleMenuClick}>
-                <Menu.Item key="info">
-                  <Link to={`/issues/${issueId}`}>View details</Link>
-                </Menu.Item>
-                {!!githubIssueUrl && (
-                  <Menu.Item key="github">
-                    <a
-                      href={githubIssueUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View on GitHub
-                    </a>
+          <Flex sx={{justifyContent: 'flex-end'}}>
+            <Dropdown
+              overlay={
+                <Menu onClick={handleMenuClick}>
+                  <Menu.Item key="info">
+                    <Link to={`/issues/${issueId}`}>View details</Link>
                   </Menu.Item>
-                )}
-                {state !== 'done' && (
-                  <Menu.Item key="done">Move to done</Menu.Item>
-                )}
-                {state !== 'closed' && (
-                  <Menu.Item key="closed">Move to closed</Menu.Item>
-                )}
-                {state !== 'unstarted' && state !== 'in_progress' && (
-                  <Menu.Item key="unstarted">Move to unstarted</Menu.Item>
-                )}
-              </Menu>
-            }
-          >
-            <Button icon={<SettingOutlined />} />
-          </Dropdown>
+                  {!!githubIssueUrl && (
+                    <Menu.Item key="github">
+                      <a
+                        href={githubIssueUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View on GitHub
+                      </a>
+                    </Menu.Item>
+                  )}
+                  {state !== 'done' && (
+                    <Menu.Item key="done">Move to done</Menu.Item>
+                  )}
+                  {state !== 'closed' && (
+                    <Menu.Item key="closed">Move to closed</Menu.Item>
+                  )}
+                  {state !== 'unstarted' && state !== 'in_progress' && (
+                    <Menu.Item key="unstarted">Move to unstarted</Menu.Item>
+                  )}
+                </Menu>
+              }
+            >
+              <Button icon={<SettingOutlined />} />
+            </Dropdown>
+          </Flex>
         );
       },
     },
