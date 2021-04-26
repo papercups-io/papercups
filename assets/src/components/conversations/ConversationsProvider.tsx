@@ -16,20 +16,23 @@ import {
 } from '../../presence';
 import ConversationNotificationManager from './ConversationNotificationManager';
 
+type InboxKey = 'open' | 'assigned' | 'priority' | 'closed';
+
+type Inbox = {
+  conversationIds: string[];
+  unreadCount: number;
+};
+
 export const ConversationsContext = React.createContext<{
   loading: boolean;
   account: Account | null;
   currentUser: User | null;
   isNewUser: boolean;
 
-  all: Array<string>;
-  mine: Array<string>;
-  priority: Array<string>;
-  closed: Array<string>;
-  unreadByCategory: any;
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
   currentlyOnline: {[key: string]: any};
+  inboxes: {[key in InboxKey]?: Inbox};
 
   isCustomerOnline: (customerId: string) => boolean;
 
@@ -48,15 +51,10 @@ export const ConversationsContext = React.createContext<{
   account: null,
   currentUser: null,
   isNewUser: false,
-
-  all: [],
-  mine: [],
-  priority: [],
-  closed: [],
-  unreadByCategory: {},
   conversationsById: {},
   messagesByConversation: {},
   currentlyOnline: {},
+  inboxes: {},
 
   isCustomerOnline: () => false,
   onSelectConversation: () => {},
@@ -73,24 +71,18 @@ export const ConversationsContext = React.createContext<{
 
 export const useConversations = () => useContext(ConversationsContext);
 
-type ConversationBucket = 'all' | 'mine' | 'priority' | 'closed';
-
 type Props = React.PropsWithChildren<{}>;
 type State = {
   loading: boolean;
   account: Account | null;
   currentUser: User | null;
   isNewUser: boolean;
+  inboxes: {[key: string]: Inbox};
 
   selectedConversationId: string | null;
-  conversationsById: {[key: string]: any};
+  conversationsById: {[key: string]: Conversation};
   messagesByConversation: {[key: string]: any};
   presence: PhoenixPresence;
-
-  all: Array<string>;
-  mine: Array<string>;
-  priority: Array<string>;
-  closed: Array<string>;
 };
 
 export class ConversationsProvider extends React.Component<Props, State> {
@@ -99,16 +91,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
     account: null,
     currentUser: null,
     isNewUser: false,
+    inboxes: {},
 
     selectedConversationId: null,
     conversationsById: {},
     messagesByConversation: {},
     presence: {},
-
-    all: [],
-    mine: [],
-    priority: [],
-    closed: [],
   };
 
   notificationManager: ConversationNotificationManager | null = null;
@@ -374,19 +362,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
       },
       {}
     );
-    const sortedConversationIds = Object.keys(conversationsById).sort(
-      (x: string, y: string) => {
-        const a = conversationsById[x];
-        const b = conversationsById[y];
-        const left = a.last_activity_at
-          ? +new Date(a.last_activity_at)
-          : -Infinity;
-        const right = b.last_activity_at
-          ? +new Date(b.last_activity_at)
-          : -Infinity;
-
-        return right - left;
-      }
+    const sortedConversationIds = this.getSortedConversationIds(
+      conversationsById
     );
 
     return {
@@ -396,12 +373,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
     };
   };
 
-  updateConversationState = (
-    conversations: Array<Conversation>,
-    type?: ConversationBucket
-  ) => {
-    const {currentUser, conversationsById, messagesByConversation} = this.state;
-    const currentUserId = currentUser ? currentUser.id : null;
+  updateConversationState = (conversations: Array<Conversation>) => {
+    const {conversationsById, messagesByConversation} = this.state;
     const state = this.formatConversationState(conversations);
     const updatedConversationsById = {
       ...conversationsById,
@@ -417,47 +390,11 @@ export class ConversationsProvider extends React.Component<Props, State> {
       conversationsById: updatedConversationsById,
       messagesByConversation: updatedMessagesByConversation,
     };
-
-    // TODO: double check this logic
-    const conversationIds = Object.keys(updatedConversationsById).sort(
-      (x: string, y: string) => {
-        // TODO: DRY up this logic in other places
-        const a = updates.conversationsById[x];
-        const b = updates.conversationsById[y];
-        const left = a.last_activity_at
-          ? +new Date(a.last_activity_at)
-          : -Infinity;
-        const right = b.last_activity_at
-          ? +new Date(b.last_activity_at)
-          : -Infinity;
-
-        return right - left;
-      }
-    );
-
-    const allConversations = conversationIds.map(
-      (id) => updates.conversationsById[id]
-    );
-    const openConversations = allConversations.filter(
-      (c) => c.status === 'open'
-    );
-    const all = openConversations.map((c) => c.id);
-    const mine = openConversations
-      .filter((c) => c.assignee_id === currentUserId && c.status === 'open')
-      .map((c) => c.id);
-    const priority = openConversations
-      .filter((c) => c.priority === 'priority' && c.status === 'open')
-      .map((c) => c.id);
-    const closed = allConversations
-      .filter((c) => c.status !== 'open')
-      .map((c) => c.id);
+    const inboxes = this.getInboxes(updatedConversationsById);
 
     return this.setState({
       ...updates,
-      all,
-      mine,
-      priority,
-      closed,
+      inboxes,
     });
   };
 
@@ -484,20 +421,85 @@ export class ConversationsProvider extends React.Component<Props, State> {
     return conversationIds;
   };
 
-  getUnreadByCategory = () => {
-    const {all, mine, priority, conversationsById} = this.state;
+  getSortedConversationIds = (conversationsById: {
+    [key: string]: Conversation;
+  }) => {
+    return Object.keys(conversationsById).sort((x: string, y: string) => {
+      const a = conversationsById[x];
+      const b = conversationsById[y];
+      const left = a.last_activity_at
+        ? +new Date(a.last_activity_at)
+        : -Infinity;
+      const right = b.last_activity_at
+        ? +new Date(b.last_activity_at)
+        : -Infinity;
+
+      return right - left;
+    });
+  };
+
+  getSortedConversations = (conversationsById: {
+    [key: string]: Conversation;
+  }) => {
+    const conversationsIds = this.getSortedConversationIds(conversationsById);
+    return conversationsIds.map((id) => conversationsById[id]);
+  };
+
+  getInboxes = (conversationsById: {
+    [key: string]: Conversation;
+  }): {[key: string]: Inbox} => {
+    const conversations = this.getSortedConversations(conversationsById);
+    const openConversations = this.getOpenConversations(conversations);
+    const assignedConversations = this.getAssignedConversations(
+      openConversations
+    );
+    const priorityConversations = this.getPriorityConversations(
+      openConversations
+    );
+    const closedConservations = this.getClosedConservations(conversations);
 
     return {
-      all: all
-        .map((id) => conversationsById[id])
-        .filter((conv) => conv && !conv.read).length,
-      mine: mine
-        .map((id) => conversationsById[id])
-        .filter((conv) => conv && !conv.read).length,
-      priority: priority
-        .map((id) => conversationsById[id])
-        .filter((conv) => conv && !conv.read).length,
+      open: this.getInbox(openConversations),
+      assigned: this.getInbox(assignedConversations),
+      priority: this.getInbox(priorityConversations),
+      closed: this.getInbox(closedConservations),
     };
+  };
+
+  getInbox = (conversations: Conversation[]): Inbox => {
+    return {
+      conversationIds: conversations.map((c) => c.id),
+      unreadCount: this.getUnreadCount(conversations),
+    };
+  };
+
+  getOpenConversations = (conversations: Conversation[]) => {
+    return conversations.filter(
+      (conversation) => conversation.status === 'open'
+    );
+  };
+
+  getClosedConservations = (conversations: Conversation[]) => {
+    return conversations.filter(
+      (conversation) => conversation.status === 'closed'
+    );
+  };
+
+  getAssignedConversations = (conversations: Conversation[]) => {
+    const {currentUser} = this.state;
+    return conversations.filter(
+      (conversation) => conversation.assignee_id === currentUser?.id
+    );
+  };
+
+  getPriorityConversations = (conversations: Conversation[]) => {
+    return conversations.filter(
+      (conversation) => conversation.priority === 'priority'
+    );
+  };
+
+  getUnreadCount = (conversations: Conversation[]) => {
+    return conversations.filter((conversation) => !conversation.read).length;
   };
 
   render() {
@@ -505,16 +507,12 @@ export class ConversationsProvider extends React.Component<Props, State> {
       loading,
       account,
       currentUser,
+      inboxes,
       isNewUser,
-      all,
-      mine,
-      priority,
-      closed,
       conversationsById,
       messagesByConversation,
       presence,
     } = this.state;
-    const unreadByCategory = this.getUnreadByCategory();
 
     return (
       <ConversationsContext.Provider
@@ -523,13 +521,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
           account,
           currentUser,
           isNewUser,
-          all,
-          mine,
-          priority,
-          closed,
-          unreadByCategory,
           conversationsById,
           messagesByConversation,
+          inboxes,
           currentlyOnline: presence,
 
           isCustomerOnline: this.isCustomerOnline,

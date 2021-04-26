@@ -210,10 +210,10 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
-  const {account, currentUser, unreadByCategory: unread} = useConversations();
+  const {account, currentUser, inboxes} = useConversations();
 
   const [section, key] = getSectionKey(pathname);
-  const totalNumUnread = (unread && unread.all) || 0;
+  const totalNumUnread = inboxes.open?.unreadCount || 0;
   const shouldDisplayBilling = hasValidStripeKey();
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
@@ -295,7 +295,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>All conversations</Box>
                       <Badge
-                        count={unread.all}
+                        count={inboxes.open?.unreadCount}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -311,7 +311,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Assigned to me</Box>
                       <Badge
-                        count={unread.mine}
+                        count={inboxes.assigned?.unreadCount}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -327,7 +327,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Prioritized</Box>
                       <Badge
-                        count={unread.priority}
+                        count={inboxes.priority?.unreadCount}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
