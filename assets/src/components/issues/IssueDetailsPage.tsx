@@ -17,7 +17,7 @@ import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
 import CustomersTableContainer from '../customers/CustomersTableContainer';
-import {IssueStateTag} from './IssuesOverview';
+import {IssueStateTag} from './IssuesTable';
 import {SearchCustomersModalButton} from '../customers/SearchCustomers';
 
 const isValidGithubUrl = (url: string): boolean => {
