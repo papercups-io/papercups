@@ -65,6 +65,7 @@ export const colors = {
   text: 'rgba(0, 0, 0, 0.65)',
   secondary: 'rgba(0, 0, 0, 0.45)',
   note: '#fff1b8',
+  noteSecondary: 'rgba(254,237,175,.4)',
 };
 
 export const shadows = {

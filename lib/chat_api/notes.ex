@@ -8,15 +8,6 @@ defmodule ChatApi.Notes do
 
   alias ChatApi.Notes.Note
 
-  # TODO: remove and replace with `list_notes_by_account/2`
-  @spec list_notes_for_customer(account_id: binary, customer_id: binary) :: [Note.t()]
-  def list_notes_for_customer(account_id: account_id, customer_id: customer_id) do
-    Note
-    |> where(account_id: ^account_id, customer_id: ^customer_id)
-    |> order_by(desc: :inserted_at)
-    |> Repo.all()
-  end
-
   @spec list_notes_by_account(binary(), map()) :: [Note.t()]
   def list_notes_by_account(account_id, filters) do
     Note
@@ -24,7 +15,7 @@ defmodule ChatApi.Notes do
     |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
     |> Repo.all()
-    |> Repo.preload(author: :profile)
+    |> Repo.preload([:customer, author: :profile])
   end
 
   @spec get_note!(binary()) :: Note.t()

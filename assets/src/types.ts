@@ -114,6 +114,7 @@ export type CustomerNote = {
   created_at: string;
   updated_at: string;
   author?: User;
+  customer?: Customer;
 };
 
 export type Tag = {

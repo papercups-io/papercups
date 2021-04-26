@@ -133,7 +133,7 @@ const ConversationFooter = ({
           pb={2}
           pt={1}
           sx={{
-            background: isPrivateNote ? 'rgba(254,237,175,.4)' : colors.white,
+            background: isPrivateNote ? colors.noteSecondary : colors.white,
             border: '1px solid #f5f5f5',
             borderRadius: 4,
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',

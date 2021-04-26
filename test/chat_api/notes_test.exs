@@ -42,28 +42,6 @@ defmodule ChatApi.NotesTest do
       assert note_ids == []
     end
 
-    test "list_notes_for_customer/1 returns all notes for the given account and customer", %{
-      note: note,
-      account: account,
-      customer: customer
-    } do
-      note_ids =
-        Notes.list_notes_for_customer(account_id: account.id, customer_id: customer.id)
-        |> Enum.map(& &1.id)
-
-      assert note_ids == [note.id]
-    end
-
-    test "list_notes_for_customer/1 returns empty [] when customer cannot be matched", %{
-      account: account
-    } do
-      note_ids =
-        Notes.list_notes_for_customer(account_id: account.id, customer_id: UUID.generate())
-        |> Enum.map(& &1.id)
-
-      assert note_ids == []
-    end
-
     test "get_note!/1 returns the note with given id", %{note: note} do
       found = Notes.get_note!(note.id)
       assert found.id == note.id

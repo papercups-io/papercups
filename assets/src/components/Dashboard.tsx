@@ -68,6 +68,7 @@ import TagsOverview from './tags/TagsOverview';
 import TagDetailsPage from './tags/TagDetailsPage';
 import IssuesOverview from './issues/IssuesOverview';
 import IssueDetailsPage from './issues/IssueDetailsPage';
+import NotesOverview from './notes/NotesOverview';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -463,6 +464,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/tags" component={TagsOverview} />
           <Route path="/issues/:id" component={IssueDetailsPage} />
           <Route path="/issues" component={IssuesOverview} />
+          <Route path="/notes" component={NotesOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>

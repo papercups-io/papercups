@@ -5,17 +5,8 @@ import {ButtonProps} from 'antd/lib/button';
 import * as API from '../../api';
 import {Customer} from '../../types';
 import {AutoComplete, Button, Modal} from '../common';
+import {formatCustomerDisplayName} from './support';
 import logger from '../../logger';
-
-const formatCustomerDisplayName = (customer: Customer) => {
-  const {name, email} = customer;
-
-  if (name && email) {
-    return `${name} (${email})`;
-  }
-
-  return name || email || 'Anonymous User';
-};
 
 type Props = {
   placeholder?: string;
