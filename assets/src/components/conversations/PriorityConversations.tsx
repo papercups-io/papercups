@@ -26,7 +26,7 @@ const PriorityConversations = () => {
       loading={loading}
       title="Prioritized"
       account={account}
-      conversationIds={inboxes.priority?.conversationIds}
+      conversationIds={inboxes.priority.conversationIds}
       messagesByConversation={messagesByConversation}
       fetcher={API.fetchPriorityConversations}
       onRetrieveConversations={onSetConversations}

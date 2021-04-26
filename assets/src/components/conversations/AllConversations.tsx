@@ -26,7 +26,7 @@ const AllConversations = () => {
       loading={loading}
       title="All conversations"
       account={account}
-      conversationIds={inboxes.open?.conversationIds}
+      conversationIds={inboxes.open.conversationIds}
       messagesByConversation={messagesByConversation}
       fetcher={API.fetchAllConversations}
       onRetrieveConversations={onSetConversations}

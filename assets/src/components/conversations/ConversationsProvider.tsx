@@ -23,6 +23,25 @@ type Inbox = {
   unreadCount: number;
 };
 
+const getInboxesInitialState = () => ({
+  open: {
+    conversationIds: [],
+    unreadCount: 0,
+  },
+  assigned: {
+    conversationIds: [],
+    unreadCount: 0,
+  },
+  priority: {
+    conversationIds: [],
+    unreadCount: 0,
+  },
+  closed: {
+    conversationIds: [],
+    unreadCount: 0,
+  },
+});
+
 export const ConversationsContext = React.createContext<{
   loading: boolean;
   account: Account | null;
@@ -32,7 +51,7 @@ export const ConversationsContext = React.createContext<{
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
   currentlyOnline: {[key: string]: any};
-  inboxes: {[key in InboxKey]?: Inbox};
+  inboxes: {[key in InboxKey]: Inbox};
 
   isCustomerOnline: (customerId: string) => boolean;
 
@@ -54,7 +73,7 @@ export const ConversationsContext = React.createContext<{
   conversationsById: {},
   messagesByConversation: {},
   currentlyOnline: {},
-  inboxes: {},
+  inboxes: getInboxesInitialState(),
 
   isCustomerOnline: () => false,
   onSelectConversation: () => {},
@@ -77,7 +96,7 @@ type State = {
   account: Account | null;
   currentUser: User | null;
   isNewUser: boolean;
-  inboxes: {[key: string]: Inbox};
+  inboxes: {[key in InboxKey]: Inbox};
 
   selectedConversationId: string | null;
   conversationsById: {[key: string]: Conversation};
@@ -91,8 +110,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     account: null,
     currentUser: null,
     isNewUser: false,
-    inboxes: {},
-
+    inboxes: getInboxesInitialState(),
     selectedConversationId: null,
     conversationsById: {},
     messagesByConversation: {},
@@ -447,7 +465,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
   getInboxes = (conversationsById: {
     [key: string]: Conversation;
-  }): {[key: string]: Inbox} => {
+  }): {[key in InboxKey]: Inbox} => {
     const conversations = this.getSortedConversations(conversationsById);
     const openConversations = this.getOpenConversations(conversations);
     const assignedConversations = this.getAssignedConversations(
