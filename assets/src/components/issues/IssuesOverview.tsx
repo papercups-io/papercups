@@ -1,115 +1,12 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {
-  Alert,
-  Button,
-  Divider,
-  Input,
-  Paragraph,
-  Table,
-  Tag,
-  Text,
-  Title,
-} from '../common';
+import {Alert, Button, Divider, Input, Paragraph, Text, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
 import logger from '../../logger';
+import IssuesTable from './IssuesTable';
 import NewIssueModal from './NewIssueModal';
-
-export const IssueStateTag = ({state}: {state: T.IssueState}) => {
-  switch (state) {
-    case 'unstarted':
-      return <Tag>unstarted</Tag>;
-    case 'in_progress':
-      return <Tag color="orange">in progress</Tag>;
-    case 'in_review':
-      return <Tag color="blue">in review</Tag>;
-    case 'done':
-      return <Tag color="green">done</Tag>;
-    case 'closed':
-      return <Tag color="red">closed</Tag>;
-    default:
-      return <Tag>{state}</Tag>;
-  }
-};
-
-export const IssuesTable = ({
-  loading,
-  issues,
-}: {
-  loading?: boolean;
-  issues: Array<T.Issue>;
-}) => {
-  const data = issues
-    .map((issue) => {
-      return {key: issue.id, ...issue};
-    })
-    .sort((a, b) => {
-      return +new Date(b.updated_at) - +new Date(a.updated_at);
-    });
-
-  const columns = [
-    {
-      title: 'Status',
-      dataIndex: 'state',
-      key: 'state',
-      render: (value: T.IssueState) => {
-        return <IssueStateTag state={value} />;
-      },
-    },
-    {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
-      render: (value: string, record: T.Issue) => {
-        const {github_issue_url: githubIssueUrl} = record;
-
-        if (githubIssueUrl) {
-          return (
-            <a href={githubIssueUrl} target="_blank" rel="noopener noreferrer">
-              {value}
-            </a>
-          );
-        }
-
-        return <Text>{value}</Text>;
-      },
-    },
-    {
-      title: 'Description',
-      dataIndex: 'body',
-      key: 'body',
-      render: (value: string) => {
-        return value || '--';
-      },
-    },
-    {
-      title: '',
-      dataIndex: 'action',
-      key: 'action',
-      render: (value: string, record: any) => {
-        const {id: issueId} = record;
-
-        return (
-          <Link to={`/issues/${issueId}`}>
-            <Button>View</Button>
-          </Link>
-        );
-      },
-    },
-  ];
-
-  return (
-    <Table
-      loading={loading}
-      dataSource={data}
-      columns={columns}
-      pagination={false}
-    />
-  );
-};
 
 type Props = {};
 type State = {
@@ -263,6 +160,7 @@ class IssuesOverview extends React.Component<Props, State> {
           <IssuesTable
             loading={loading}
             issues={filteredIssues.filter(({state}) => state === 'done')}
+            onUpdate={this.handleRefreshIssues}
           />
         </Box>
 
@@ -278,6 +176,7 @@ class IssuesOverview extends React.Component<Props, State> {
             issues={filteredIssues.filter(
               ({state}) => state !== 'done' && state !== 'closed'
             )}
+            onUpdate={this.handleRefreshIssues}
           />
         </Box>
 
@@ -291,6 +190,7 @@ class IssuesOverview extends React.Component<Props, State> {
           <IssuesTable
             loading={loading}
             issues={filteredIssues.filter(({state}) => state === 'closed')}
+            onUpdate={this.handleRefreshIssues}
           />
         </Box>
       </Box>
