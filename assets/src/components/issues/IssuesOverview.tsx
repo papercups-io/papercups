@@ -5,14 +5,16 @@ import {
   Alert,
   Button,
   Divider,
+  Dropdown,
   Input,
+  Menu,
   Paragraph,
   Table,
   Tag,
   Text,
   Title,
 } from '../common';
-import {PlusOutlined} from '../icons';
+import {PlusOutlined, SettingOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
 import logger from '../../logger';
@@ -38,10 +40,16 @@ export const IssueStateTag = ({state}: {state: T.IssueState}) => {
 export const IssuesTable = ({
   loading,
   issues,
+  onUpdate,
 }: {
   loading?: boolean;
   issues: Array<T.Issue>;
+  onUpdate: () => void;
 }) => {
+  const handleUpdateState = async (id: string, state: T.IssueState) => {
+    return API.updateIssue(id, {state}).then(() => onUpdate());
+  };
+
   const data = issues
     .map((issue) => {
       return {key: issue.id, ...issue};
@@ -63,17 +71,7 @@ export const IssuesTable = ({
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
-      render: (value: string, record: T.Issue) => {
-        const {github_issue_url: githubIssueUrl} = record;
-
-        if (githubIssueUrl) {
-          return (
-            <a href={githubIssueUrl} target="_blank" rel="noopener noreferrer">
-              {value}
-            </a>
-          );
-        }
-
+      render: (value: string) => {
         return <Text>{value}</Text>;
       },
     },
@@ -89,13 +87,53 @@ export const IssuesTable = ({
       title: '',
       dataIndex: 'action',
       key: 'action',
-      render: (value: string, record: any) => {
-        const {id: issueId} = record;
+      render: (value: string, record: T.Issue) => {
+        const {id: issueId, github_issue_url: githubIssueUrl, state} = record;
+        const handleMenuClick = (data: any) => {
+          switch (data.key) {
+            case 'done':
+              return handleUpdateState(issueId, 'done');
+            case 'closed':
+              return handleUpdateState(issueId, 'closed');
+            case 'unstarted':
+              return handleUpdateState(issueId, 'unstarted');
+            default:
+              return null;
+          }
+        };
 
         return (
-          <Link to={`/issues/${issueId}`}>
-            <Button>View</Button>
-          </Link>
+          <Dropdown
+            overlay={
+              <Menu onClick={handleMenuClick}>
+                <Menu.Item key="info">
+                  <Link to={`/issues/${issueId}`}>View details</Link>
+                </Menu.Item>
+                {!!githubIssueUrl && (
+                  <Menu.Item key="github">
+                    <a
+                      href={githubIssueUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View on GitHub
+                    </a>
+                  </Menu.Item>
+                )}
+                {state !== 'done' && (
+                  <Menu.Item key="done">Move to done</Menu.Item>
+                )}
+                {state !== 'closed' && (
+                  <Menu.Item key="closed">Move to closed</Menu.Item>
+                )}
+                {state !== 'unstarted' && state !== 'in_progress' && (
+                  <Menu.Item key="unstarted">Move to unstarted</Menu.Item>
+                )}
+              </Menu>
+            }
+          >
+            <Button icon={<SettingOutlined />} />
+          </Dropdown>
         );
       },
     },
@@ -263,6 +301,7 @@ class IssuesOverview extends React.Component<Props, State> {
           <IssuesTable
             loading={loading}
             issues={filteredIssues.filter(({state}) => state === 'done')}
+            onUpdate={this.handleRefreshIssues}
           />
         </Box>
 
@@ -278,6 +317,7 @@ class IssuesOverview extends React.Component<Props, State> {
             issues={filteredIssues.filter(
               ({state}) => state !== 'done' && state !== 'closed'
             )}
+            onUpdate={this.handleRefreshIssues}
           />
         </Box>
 
@@ -291,6 +331,7 @@ class IssuesOverview extends React.Component<Props, State> {
           <IssuesTable
             loading={loading}
             issues={filteredIssues.filter(({state}) => state === 'closed')}
+            onUpdate={this.handleRefreshIssues}
           />
         </Box>
       </Box>

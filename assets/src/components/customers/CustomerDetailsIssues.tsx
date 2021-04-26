@@ -117,7 +117,11 @@ class CustomerDetailsIssues extends React.Component<Props, State> {
           </Box>
         </Flex>
 
-        <IssuesTable loading={loading} issues={issues} />
+        <IssuesTable
+          loading={loading}
+          issues={issues}
+          onUpdate={this.fetchCustomerIssues}
+        />
       </Box>
     );
   }
