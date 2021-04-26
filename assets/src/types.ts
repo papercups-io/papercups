@@ -88,9 +88,12 @@ export type FileUpload = {
 // Alias
 export type Attachment = FileUpload;
 
+export type ConversationSource = 'chat' | 'email' | 'slack' | 'sms';
+
 export type Conversation = {
   id: string;
-  source?: string;
+  source?: ConversationSource;
+  subject?: string;
   account_id: string;
   customer_id: string;
   customer: Customer;
