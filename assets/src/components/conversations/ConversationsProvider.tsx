@@ -16,8 +16,6 @@ import {
 } from '../../presence';
 import ConversationNotificationManager from './ConversationNotificationManager';
 
-type InboxKey = 'open' | 'assigned' | 'priority' | 'closed';
-
 type Inbox = {
   conversationIds: string[];
   unreadCount: number;
