@@ -23,23 +23,38 @@ type Inbox = {
   unreadCount: number;
 };
 
+type Inboxes = {
+  all: {
+    open: Inbox;
+    assigned: Inbox;
+    priority: Inbox;
+    closed: Inbox;
+  };
+  bySource: {
+    [key: string]: Inbox | undefined;
+  };
+};
+
 const getInboxesInitialState = () => ({
-  open: {
-    conversationIds: [],
-    unreadCount: 0,
+  all: {
+    open: {
+      conversationIds: [],
+      unreadCount: 0,
+    },
+    assigned: {
+      conversationIds: [],
+      unreadCount: 0,
+    },
+    priority: {
+      conversationIds: [],
+      unreadCount: 0,
+    },
+    closed: {
+      conversationIds: [],
+      unreadCount: 0,
+    },
   },
-  assigned: {
-    conversationIds: [],
-    unreadCount: 0,
-  },
-  priority: {
-    conversationIds: [],
-    unreadCount: 0,
-  },
-  closed: {
-    conversationIds: [],
-    unreadCount: 0,
-  },
+  bySource: {},
 });
 
 export const ConversationsContext = React.createContext<{
@@ -51,7 +66,7 @@ export const ConversationsContext = React.createContext<{
   conversationsById: {[key: string]: any};
   messagesByConversation: {[key: string]: any};
   currentlyOnline: {[key: string]: any};
-  inboxes: {[key in InboxKey]: Inbox};
+  inboxes: Inboxes;
 
   isCustomerOnline: (customerId: string) => boolean;
 
@@ -96,7 +111,7 @@ type State = {
   account: Account | null;
   currentUser: User | null;
   isNewUser: boolean;
-  inboxes: {[key in InboxKey]: Inbox};
+  inboxes: Inboxes;
 
   selectedConversationId: string | null;
   conversationsById: {[key: string]: Conversation};
@@ -463,9 +478,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     return conversationsIds.map((id) => conversationsById[id]);
   };
 
-  getInboxes = (conversationsById: {
-    [key: string]: Conversation;
-  }): {[key in InboxKey]: Inbox} => {
+  getInboxes = (conversationsById: {[key: string]: Conversation}): Inboxes => {
     const conversations = this.getSortedConversations(conversationsById);
     const openConversations = this.getOpenConversations(conversations);
     const assignedConversations = this.getAssignedConversations(
@@ -475,13 +488,45 @@ export class ConversationsProvider extends React.Component<Props, State> {
       openConversations
     );
     const closedConservations = this.getClosedConservations(conversations);
+    const inboxesBySource = this.getInboxesBySource(openConversations);
 
     return {
-      open: this.getInbox(openConversations),
-      assigned: this.getInbox(assignedConversations),
-      priority: this.getInbox(priorityConversations),
-      closed: this.getInbox(closedConservations),
+      all: {
+        open: this.getInbox(openConversations),
+        assigned: this.getInbox(assignedConversations),
+        priority: this.getInbox(priorityConversations),
+        closed: this.getInbox(closedConservations),
+      },
+      bySource: {
+        ...inboxesBySource,
+      },
     };
+  };
+
+  getInboxesBySource = (conversations: Conversation[]) => {
+    const conversationsBySource: {[key: string]: Conversation[]} = {};
+
+    conversations.forEach((conversation) => {
+      const {source} = conversation;
+
+      if (!source) {
+        return;
+      }
+
+      if (!conversationsBySource[source]) {
+        conversationsBySource[source] = [];
+      }
+
+      conversationsBySource[source].push(conversation);
+    });
+
+    return Object.keys(conversationsBySource).reduce((acc, source) => {
+      const conversations = conversationsBySource[source];
+      return {
+        ...acc,
+        [source]: this.getInbox(conversations),
+      };
+    }, {});
   };
 
   getInbox = (conversations: Conversation[]): Inbox => {

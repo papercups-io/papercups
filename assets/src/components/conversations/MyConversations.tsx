@@ -29,7 +29,7 @@ const MyConversations = () => {
       loading={loading}
       title="Assigned to me"
       account={account}
-      conversationIds={inboxes.assigned.conversationIds}
+      conversationIds={inboxes.all.assigned.conversationIds}
       messagesByConversation={messagesByConversation}
       fetcher={fetcher}
       onRetrieveConversations={onSetConversations}

@@ -213,7 +213,7 @@ const Dashboard = (props: RouteComponentProps) => {
   const {account, currentUser, inboxes} = useConversations();
 
   const [section, key] = getSectionKey(pathname);
-  const totalNumUnread = inboxes.open.unreadCount;
+  const totalNumUnread = inboxes.all.open.unreadCount;
   const shouldDisplayBilling = hasValidStripeKey();
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
@@ -295,7 +295,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>All conversations</Box>
                       <Badge
-                        count={inboxes.open.unreadCount}
+                        count={inboxes.all.open.unreadCount}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -311,7 +311,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Assigned to me</Box>
                       <Badge
-                        count={inboxes.assigned.unreadCount}
+                        count={inboxes.all.assigned.unreadCount}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -327,7 +327,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Prioritized</Box>
                       <Badge
-                        count={inboxes.priority.unreadCount}
+                        count={inboxes.all.priority.unreadCount}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
