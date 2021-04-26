@@ -4,7 +4,7 @@ import * as API from '../../api';
 import {Issue} from '../../types';
 import {Button} from '../common';
 import {PlusOutlined} from '../icons';
-import {IssuesTable} from '../issues/IssuesOverview';
+import IssuesTable from '../issues/IssuesTable';
 import {NewIssueModalButton} from '../issues/NewIssueModal';
 import SearchIssuesInput from '../issues/SearchIssuesInput';
 import logger from '../../logger';
