@@ -285,9 +285,11 @@ defmodule ChatApiWeb.ConversationController do
          %Conversation{source: "email"} = conversation,
          %{"message" => %{"body" => body} = _message_params}
        ) do
-    ChatApi.Google.InitializeGmailThread.send!(body, conversation)
-
-    :ok
+    case ChatApi.Google.InitializeGmailThread.send(body, conversation) do
+      %Messages.Message{} -> :ok
+      {:error, message} -> {:error, :unprocessable_entity, message}
+      _ -> {:error, :unprocessable_entity, "Failed to send message"}
+    end
   end
 
   defp maybe_create_message(

@@ -8,8 +8,8 @@ defmodule ChatApi.Google.InitializeGmailThread do
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
 
-  @spec send!(binary(), Conversation.t()) :: Message.t()
-  def send!(
+  @spec send(binary(), Conversation.t()) :: Message.t()
+  def send(
         text,
         %Conversation{
           id: conversation_id,
@@ -17,12 +17,10 @@ defmodule ChatApi.Google.InitializeGmailThread do
           subject: subject
         }
       ) do
-    with %{refresh_token: refresh_token, user_id: user_id} = _authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
-         %{"emailAddress" => from} <- Google.Gmail.get_profile(refresh_token),
-         %Conversation{customer: %Customer{email: to} = _customer} <-
-           Conversations.get_conversation!(conversation_id),
-         true <- ChatApi.Emails.Helpers.valid_format?(to) do
+    with {:ok, %{refresh_token: refresh_token, user_id: user_id}} <-
+           get_gmail_authorization(account_id),
+         {:ok, from} <- get_authorized_gmail_address(refresh_token),
+         {:ok, to} <- validate_conversation_customer_email(conversation_id) do
       subject =
         case subject do
           nil -> get_default_subject(account_id)
@@ -73,6 +71,30 @@ defmodule ChatApi.Google.InitializeGmailThread do
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:mattermost)
       |> Messages.Notification.notify(:webhooks)
+    end
+  end
+
+  defp get_gmail_authorization(account_id) do
+    case Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
+      %Google.GoogleAuthorization{} = auth -> {:ok, auth}
+      _ -> {:error, "Missing Gmail integration"}
+    end
+  end
+
+  defp get_authorized_gmail_address(refresh_token) do
+    case Google.Gmail.get_profile(refresh_token) do
+      %{"emailAddress" => from} -> {:ok, from}
+      _ -> {:error, "Invalid Gmail authorization"}
+    end
+  end
+
+  defp validate_conversation_customer_email(conversation_id) do
+    with %Conversation{customer: %Customer{email: email}} <-
+           Conversations.get_conversation!(conversation_id),
+         true <- ChatApi.Emails.Helpers.valid_format?(email) do
+      {:ok, email}
+    else
+      _ -> {:error, "Invalid customer email address"}
     end
   end
 

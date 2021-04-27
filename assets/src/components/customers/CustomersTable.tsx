@@ -5,7 +5,16 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {TablePaginationConfig} from 'antd/lib/table';
 import {Customer} from '../../types';
-import {Badge, Button, Dropdown, Menu, Table, Text, Tooltip} from '../common';
+import {
+  notification,
+  Badge,
+  Button,
+  Dropdown,
+  Menu,
+  Table,
+  Text,
+  Tooltip,
+} from '../common';
 import {SettingOutlined} from '../icons';
 import {StartConversationWrapper} from '../conversations/StartConversationButton';
 
@@ -135,7 +144,24 @@ const CustomersTable = ({
 
         return (
           <Flex sx={{justifyContent: 'flex-end'}}>
-            <StartConversationWrapper customerId={customerId}>
+            <StartConversationWrapper
+              customerId={customerId}
+              onInitializeNewConversation={(conversation) =>
+                notification.success({
+                  message: `Message successfully sent.`,
+                  description: (
+                    <Text>
+                      Click{' '}
+                      <a href={`/conversations/all?cid=${conversation.id}`}>
+                        here
+                      </a>{' '}
+                      to view the conversation.
+                    </Text>
+                  ),
+                  duration: 10,
+                })
+              }
+            >
               {(handleOpenNewConversationModal) => {
                 const handleMenuClick = (data: any) => {
                   switch (data.key) {
