@@ -16,41 +16,24 @@ import {
 } from '../../presence';
 import ConversationNotificationManager from './ConversationNotificationManager';
 
-type Inbox = {
-  conversationIds: string[];
-  unreadCount: number;
-};
-
 type Inboxes = {
   all: {
-    open: Inbox;
-    assigned: Inbox;
-    priority: Inbox;
-    closed: Inbox;
+    open: string[];
+    assigned: string[];
+    priority: string[];
+    closed: string[];
   };
   bySource: {
-    [key: string]: Inbox | undefined;
+    [key: string]: string[] | undefined;
   };
 };
 
 const getInboxesInitialState = () => ({
   all: {
-    open: {
-      conversationIds: [],
-      unreadCount: 0,
-    },
-    assigned: {
-      conversationIds: [],
-      unreadCount: 0,
-    },
-    priority: {
-      conversationIds: [],
-      unreadCount: 0,
-    },
-    closed: {
-      conversationIds: [],
-      unreadCount: 0,
-    },
+    open: [],
+    assigned: [],
+    priority: [],
+    closed: [],
   },
   bySource: {},
 });
@@ -66,8 +49,8 @@ export const ConversationsContext = React.createContext<{
   currentlyOnline: {[key: string]: any};
   inboxes: Inboxes;
 
+  getUnreadCount: (conversationIds: string[]) => number;
   isCustomerOnline: (customerId: string) => boolean;
-
   onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
   onDeleteConversation: (id: string) => Promise<any>;
@@ -87,6 +70,8 @@ export const ConversationsContext = React.createContext<{
   messagesByConversation: {},
   currentlyOnline: {},
   inboxes: getInboxesInitialState(),
+
+  getUnreadCount: () => 0,
 
   isCustomerOnline: () => false,
   onSelectConversation: () => {},
@@ -490,10 +475,10 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
     return {
       all: {
-        open: this.getInbox(openConversations),
-        assigned: this.getInbox(assignedConversations),
-        priority: this.getInbox(priorityConversations),
-        closed: this.getInbox(closedConservations),
+        open: this.getConversationIds(openConversations),
+        assigned: this.getConversationIds(assignedConversations),
+        priority: this.getConversationIds(priorityConversations),
+        closed: this.getConversationIds(closedConservations),
       },
       bySource: {
         ...inboxesBySource,
@@ -522,16 +507,13 @@ export class ConversationsProvider extends React.Component<Props, State> {
       const conversations = conversationsBySource[source];
       return {
         ...acc,
-        [source]: this.getInbox(conversations),
+        [source]: this.getConversationIds(conversations),
       };
     }, {});
   };
 
-  getInbox = (conversations: Conversation[]): Inbox => {
-    return {
-      conversationIds: conversations.map((c) => c.id),
-      unreadCount: this.getUnreadCount(conversations),
-    };
+  getConversationIds = (conversations: Conversation[]): string[] => {
+    return conversations.map((c) => c.id);
   };
 
   getOpenConversations = (conversations: Conversation[]) => {
@@ -559,7 +541,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
     );
   };
 
-  getUnreadCount = (conversations: Conversation[]) => {
+  getUnreadCount = (conversationIds: string[]) => {
+    const {conversationsById} = this.state;
+    const conversations = conversationIds.map((id) => conversationsById[id]);
     return conversations.filter((conversation) => !conversation.read).length;
   };
 
@@ -586,6 +570,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
           messagesByConversation,
           inboxes,
           currentlyOnline: presence,
+
+          getUnreadCount: this.getUnreadCount,
 
           isCustomerOnline: this.isCustomerOnline,
 

@@ -36,7 +36,7 @@ const ClosedConversations = () => {
       loading={loading}
       title="Closed"
       account={account}
-      conversationIds={inboxes.all.closed.conversationIds}
+      conversationIds={inboxes.all.closed}
       messagesByConversation={messagesByConversation}
       fetcher={fetcher}
       onRetrieveConversations={onSetConversations}
