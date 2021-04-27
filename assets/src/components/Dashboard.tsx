@@ -51,6 +51,7 @@ import AllConversations from './conversations/AllConversations';
 import MyConversations from './conversations/MyConversations';
 import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
+import ConversationsBySource from './conversations/ConversationsBySource';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
@@ -338,6 +339,60 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.SubMenu
+                key="inbox-channels"
+                icon={<MailOutlined />}
+                title="Channels"
+              >
+                <Menu.Item key="live-chat">
+                  <Link to="/conversations/live-chat">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Live chat</Box>
+                      <Badge
+                        count={getUnreadCount(inboxes.bySource['chat'] ?? [])}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="email">
+                  <Link to="/conversations/email">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Email</Box>
+                      <Badge
+                        count={getUnreadCount(inboxes.bySource['email'] ?? [])}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="slack">
+                  <Link to="/conversations/slack">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Slack</Box>
+                      <Badge
+                        count={getUnreadCount(inboxes.bySource['slack'] ?? [])}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+              </Menu.SubMenu>
+              <Menu.SubMenu
                 key="sessions"
                 icon={<VideoCameraOutlined />}
                 title="Sessions"
@@ -441,6 +496,15 @@ const Dashboard = (props: RouteComponentProps) => {
             path="/conversations/priority"
             component={PriorityConversations}
           />
+          <Route path="/conversations/live-chat">
+            <ConversationsBySource title="Live chat" source="chat" />
+          </Route>
+          <Route path="/conversations/email">
+            <ConversationsBySource title="Email" source="email" />
+          </Route>
+          <Route path="/conversations/slack">
+            <ConversationsBySource title="Slack" source="slack" />
+          </Route>
           <Route path="/conversations/closed" component={ClosedConversations} />
           <Route
             path="/conversations/:id"
