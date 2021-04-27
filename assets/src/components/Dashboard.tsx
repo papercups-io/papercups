@@ -351,7 +351,7 @@ const Dashboard = (props: RouteComponentProps) => {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Box mr={2}>Live Chat</Box>
+                      <Box mr={2}>Live chat</Box>
                       <Badge
                         count={getUnreadCount(inboxes.bySource['chat'] ?? [])}
                         style={{borderColor: '#FF4D4F'}}
@@ -497,7 +497,7 @@ const Dashboard = (props: RouteComponentProps) => {
             component={PriorityConversations}
           />
           <Route path="/conversations/live-chat">
-            <ConversationsBySource title="Live Chat" source="chat" />
+            <ConversationsBySource title="Live chat" source="chat" />
           </Route>
           <Route path="/conversations/email">
             <ConversationsBySource title="Email" source="email" />
