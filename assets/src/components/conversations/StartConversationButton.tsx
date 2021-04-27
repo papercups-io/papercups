@@ -8,43 +8,82 @@ import {
   Input,
   Modal,
   Select,
+  Text,
   TextArea,
   Tooltip,
 } from '../common';
 import {SendOutlined} from '../icons';
 import * as API from '../../api';
-import logger from '../../logger';
+import {isValidEmail, formatServerError} from '../../utils';
 import {Conversation, ConversationSource} from '../../types';
+import logger from '../../logger';
 
-const DEFAULT_CONVERSATION_SOURCE: ConversationSource = 'chat';
+const CONVERSATION_SOURCE_OPTIONS: Array<ConversationSource> = [
+  'chat',
+  'email',
+];
+const DEFAULT_CONVERSATION_SOURCE = CONVERSATION_SOURCE_OPTIONS[0];
 
 const NewConversationModal = ({
+  customerId,
   visible,
   onCancel,
   onSuccess,
 }: {
+  customerId: string;
   visible: boolean;
   onCancel: () => void;
-  onSuccess: (params: Record<any, any>) => Promise<any>;
+  onSuccess: (conversation: Conversation) => void;
 }) => {
+  const [availableSources, setAvailableSources] = React.useState<
+    Array<ConversationSource>
+  >(['chat']);
   const [source, setConversationSource] = React.useState<ConversationSource>(
     DEFAULT_CONVERSATION_SOURCE
   );
   const [subject, setSubject] = React.useState('');
   const [message, setMessage] = React.useState('');
   const [isSending, setSending] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (visible) {
+      Promise.all([
+        API.fetchGoogleAuthorization('gmail'),
+        API.fetchCustomer(customerId, {expand: []}),
+      ]).then(([authorization, customer]) => {
+        const hasValidAuth = !!(authorization && authorization.id);
+        const hasValidCustomerEmail = !!isValidEmail(customer?.email);
+        const canSendEmail = hasValidAuth && hasValidCustomerEmail;
+
+        if (canSendEmail) {
+          setAvailableSources(['chat', 'email']);
+        } else {
+          setAvailableSources(['chat']);
+        }
+      });
+    }
+  }, [customerId, visible]);
 
   const handleSendMessage = async () => {
     setSending(true);
 
-    await onSuccess({
-      source,
-      subject,
-      message: {
-        body: message,
-        sent_at: new Date().toISOString(),
-      },
-    });
+    try {
+      const conversation = await API.createNewConversation(customerId, {
+        source,
+        subject,
+        message: {
+          body: message,
+          sent_at: new Date().toISOString(),
+        },
+      });
+
+      onSuccess(conversation);
+    } catch (err) {
+      logger.error('Failed to create new conversation:', err);
+      const errorMessage = formatServerError(err);
+      setErrorMessage(errorMessage);
+    }
 
     setSending(false);
   };
@@ -73,12 +112,16 @@ const NewConversationModal = ({
         <Box>
           {/* TODO: not sure if a select input is the best UX here... */}
           <Select
-            id="icon_variant"
+            id="source"
             style={{width: 240}}
             value={source}
             onChange={setConversationSource}
-            options={['chat', 'email'].map((variant) => {
-              return {value: variant, label: `Send as ${variant}`};
+            options={CONVERSATION_SOURCE_OPTIONS.map((source) => {
+              return {
+                value: source,
+                label: `Send as ${source}`,
+                disabled: availableSources.indexOf(source) === -1,
+              };
             })}
           />
         </Box>
@@ -107,6 +150,12 @@ const NewConversationModal = ({
             onChange={(e) => setMessage(e.target.value)}
           />
         </Box>
+
+        {errorMessage && (
+          <Box mb={-3}>
+            <Text type="danger">{errorMessage}</Text>
+          </Box>
+        )}
       </Box>
     </Modal>
   );
@@ -151,27 +200,23 @@ export type Props = {
   onInitializeNewConversation?: (conservation: Conversation) => void;
 };
 
-export const StartConversationButton = ({
+export const StartConversationWrapper = ({
+  children,
   customerId,
-  isDisabled,
-  disabledTooltipPlacement,
-  disabledTooltipTitle,
   onInitializeNewConversation,
-}: Props) => {
+}: {
+  children: (handleOpenModal: () => void) => React.ReactElement;
+  customerId: string;
+  onInitializeNewConversation?: (conservation: Conversation) => void;
+}) => {
   const [isModalOpen, setModalOpen] = React.useState(false);
 
   const handleOpenNewConversationModal = () => setModalOpen(true);
   const handleCloseNewConversationModal = () => setModalOpen(false);
 
-  const initializeNewConversation = async (params: Record<any, any>) => {
-    try {
-      const conversation = await API.createNewConversation(customerId, params);
-
-      if (onInitializeNewConversation) {
-        onInitializeNewConversation(conversation);
-      }
-    } catch (err) {
-      logger.error('Failed to initialize conversation!', err);
+  const onSuccess = (conversation: Conversation) => {
+    if (typeof onInitializeNewConversation === 'function') {
+      onInitializeNewConversation(conversation);
     }
 
     handleCloseNewConversationModal();
@@ -179,19 +224,39 @@ export const StartConversationButton = ({
 
   return (
     <React.Fragment>
-      <ButtonWrapper
-        isDisabled={isDisabled}
-        disabledTooltipPlacement={disabledTooltipPlacement}
-        disabledTooltipTitle={disabledTooltipTitle}
-        onClick={handleOpenNewConversationModal}
-      />
+      {children(handleOpenNewConversationModal)}
 
       <NewConversationModal
+        customerId={customerId}
         visible={isModalOpen}
         onCancel={handleCloseNewConversationModal}
-        onSuccess={initializeNewConversation}
+        onSuccess={onSuccess}
       />
     </React.Fragment>
+  );
+};
+
+export const StartConversationButton = ({
+  customerId,
+  isDisabled,
+  disabledTooltipPlacement,
+  disabledTooltipTitle,
+  onInitializeNewConversation,
+}: Props) => {
+  return (
+    <StartConversationWrapper
+      customerId={customerId}
+      onInitializeNewConversation={onInitializeNewConversation}
+    >
+      {(onClick) => (
+        <ButtonWrapper
+          isDisabled={isDisabled}
+          disabledTooltipPlacement={disabledTooltipPlacement}
+          disabledTooltipTitle={disabledTooltipTitle}
+          onClick={onClick}
+        />
+      )}
+    </StartConversationWrapper>
   );
 };
 
