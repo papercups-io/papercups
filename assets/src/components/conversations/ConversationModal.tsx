@@ -5,7 +5,6 @@ import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
-import {formatCustomerDisplayName} from '../customers/support';
 
 type Props = {
   visible?: boolean;
@@ -67,8 +66,7 @@ class ConversationModal extends React.Component<Props> {
         <Flex
           sx={{
             width: '100%',
-            height: '100%',
-            maxHeight: '64vh',
+            height: '64vh',
             flexDirection: 'column',
             bg: colors.white,
             flex: 1,
