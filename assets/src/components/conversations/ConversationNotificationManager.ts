@@ -37,7 +37,6 @@ class ConversationNotificationManager {
 
     socket.onOpen(() => logger.debug('Successfully connected to socket!'));
 
-    // TODO: attempt refreshing access token?
     socket.onError(
       throttle(
         (error) => {
