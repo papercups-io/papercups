@@ -41,6 +41,12 @@ const CustomerDetailNewNoteInput = ({
     setIsSaving(false);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.keyCode === 13 && e.metaKey) {
+      handleSaveNote();
+    }
+  };
+
   return (
     <Box mb={2}>
       <TextArea
@@ -50,6 +56,7 @@ const CustomerDetailNewNoteInput = ({
         disabled={isSaving}
         value={note}
         onChange={handleNoteChange}
+        onKeyDown={handleKeyDown}
       />
       {errorMessage && (
         <Box mt={3}>
