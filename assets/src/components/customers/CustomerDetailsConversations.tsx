@@ -57,6 +57,9 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
   };
 
   handleCloseConversationModal = () => {
+    // TODO: figure out a better way to ensure that conversations are up to date
+    // (we probably want to use the ConversationsProvider to listen for updates)
+    this.fetchConversations();
     this.setState({selectedConversationId: null, isModalVisible: false});
   };
 
@@ -125,7 +128,7 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
           <ConversationModal
             visible={isModalVisible}
             conversationId={selectedConversationId}
-            onClose={() => this.setState({selectedConversationId: null})}
+            onClose={this.handleCloseConversationModal}
           />
         )}
       </>
