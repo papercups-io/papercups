@@ -8,17 +8,22 @@ import {Conversation} from '../../types';
 import {getColorByUuid} from '../conversations/support';
 import ConversationItem from '../conversations/ConversationItem';
 import StartConversationButton from '../conversations/StartConversationButton';
+import ConversationModal from '../conversations/ConversationModal';
 import {sortConversationMessages} from '../../utils';
 
 type Props = {customerId: string; history: History};
 type State = {
   conversations: Conversation[];
+  selectedConversationId: string | null;
+  isModalVisible: boolean;
   isLoading: boolean;
 };
 
 class CustomerDetailsConversations extends React.Component<Props, State> {
   state: State = {
     conversations: [],
+    selectedConversationId: null,
+    isModalVisible: false,
     isLoading: true,
   };
 
@@ -45,19 +50,24 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
   };
 
   handleSelectConversation = (conversationId: string) => {
-    const conversation = this.state.conversations.find(
-      (conversation) => conversation.id === conversationId
-    );
-    const isClosed = conversation && conversation.status === 'closed';
-    const url = isClosed
-      ? `/conversations/closed?cid=${conversationId}`
-      : `/conversations/all?cid=${conversationId}`;
-    this.props.history.push(url);
+    this.setState({
+      selectedConversationId: conversationId,
+      isModalVisible: true,
+    });
+  };
+
+  handleCloseConversationModal = () => {
+    this.setState({selectedConversationId: null, isModalVisible: false});
   };
 
   render() {
     const {customerId} = this.props;
-    const {isLoading, conversations} = this.state;
+    const {
+      isLoading,
+      isModalVisible,
+      conversations,
+      selectedConversationId,
+    } = this.state;
 
     if (isLoading) {
       return (
@@ -109,6 +119,14 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
           })
         ) : (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
+
+        {selectedConversationId && (
+          <ConversationModal
+            visible={isModalVisible}
+            conversationId={selectedConversationId}
+            onClose={() => this.setState({selectedConversationId: null})}
+          />
         )}
       </>
     );

@@ -70,13 +70,19 @@ const CustomersTable = ({
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      render: (value: string) => {
-        return value ? (
-          <Text>{value}</Text>
-        ) : (
-          <Text style={{opacity: 0.8}} type="secondary">
-            --
-          </Text>
+      render: (value: string, record: Customer) => {
+        const {id: customerId} = record;
+
+        return (
+          <Link to={`/customers/${customerId}`}>
+            {value ? (
+              <Text>{value}</Text>
+            ) : (
+              <Text style={{opacity: 0.8}} type="secondary">
+                --
+              </Text>
+            )}
+          </Link>
         );
       },
     },
@@ -85,14 +91,19 @@ const CustomersTable = ({
       dataIndex: 'name',
       key: 'name',
       render: (value: string, record: Customer) => {
-        const hasEmail = record.email && record.email.length > 0;
+        const {id: customerId, email} = record;
+        const hasEmail = email && email.length > 0;
 
-        return value ? (
-          <Text>{value}</Text>
-        ) : (
-          <Text style={{opacity: 0.8}} type="secondary">
-            {hasEmail ? '--' : 'Anonymous User'}
-          </Text>
+        return (
+          <Link to={`/customers/${customerId}`}>
+            {value ? (
+              <Text>{value}</Text>
+            ) : (
+              <Text style={{opacity: 0.8}} type="secondary">
+                {hasEmail ? '--' : 'Anonymous User'}
+              </Text>
+            )}
+          </Link>
         );
       },
     },

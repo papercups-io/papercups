@@ -1,30 +1,26 @@
 import React from 'react';
 import {Flex} from 'theme-ui';
-import {colors} from '../common';
+import {colors, Modal} from '../common';
 import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
+import {formatCustomerDisplayName} from '../customers/support';
 
 type Props = {
+  visible?: boolean;
   conversation: Conversation;
   currentUser: User | null;
   messages: Array<Message>;
   onSendMessage: (message: Partial<Message>, cb: () => void) => void;
+  onClose: () => void;
 };
 
-class ConversationSidebar extends React.Component<Props, any> {
+class ConversationModal extends React.Component<Props> {
   scrollToEl: any;
 
-  componentDidMount() {
-    this.scrollIntoView();
-  }
-
-  componentDidUpdate(prev: Props) {
-    const {messages: previousMessages} = prev;
-    const {messages} = this.props;
-
-    if (messages.length > previousMessages.length) {
+  componentDidUpdate() {
+    if (this.props.visible) {
       this.scrollIntoView();
     }
   }
@@ -49,41 +45,59 @@ class ConversationSidebar extends React.Component<Props, any> {
   };
 
   render() {
-    const {currentUser, messages = []} = this.props;
+    const {
+      visible,
+      conversation,
+      currentUser,
+      messages = [],
+      onClose,
+    } = this.props;
+    const {customer} = conversation;
+    const identifer = customer.name || customer.email || 'Anonymous User';
+    const title = `Conversation with ${identifer}`;
 
     return (
-      <Flex
-        className="rr-block"
-        sx={{
-          width: '100%',
-          height: '100%',
-          flexDirection: 'column',
-          bg: colors.white,
-          border: `1px solid rgba(0,0,0,.06)`,
-          boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 4px',
-          flex: 1,
-        }}
+      <Modal
+        title={title}
+        visible={visible}
+        bodyStyle={{padding: 0}}
+        onCancel={onClose}
+        footer={null}
       >
-        <ConversationMessages
-          sx={{p: 3}}
-          messages={messages}
-          currentUser={currentUser}
-          setScrollRef={(el) => (this.scrollToEl = el)}
-        />
+        <Flex
+          sx={{
+            width: '100%',
+            height: '100%',
+            maxHeight: '64vh',
+            flexDirection: 'column',
+            bg: colors.white,
+            flex: 1,
+          }}
+        >
+          <ConversationMessages
+            messages={messages}
+            currentUser={currentUser}
+            setScrollRef={(el) => (this.scrollToEl = el)}
+          />
 
-        <ConversationFooter
-          sx={{px: 3, pb: 3}}
-          onSendMessage={this.handleSendMessage}
-        />
-      </Flex>
+          <ConversationFooter
+            sx={{px: 3, pb: 3}}
+            onSendMessage={this.handleSendMessage}
+          />
+        </Flex>
+      </Modal>
     );
   }
 }
 
-const ConversationSidebarWrapper = ({
+const ConversationModalWrapper = ({
+  visible,
   conversationId,
+  onClose,
 }: {
+  visible?: boolean;
   conversationId: string;
+  onClose: () => void;
 }) => {
   const {
     loading,
@@ -115,13 +129,15 @@ const ConversationSidebarWrapper = ({
   }
 
   return (
-    <ConversationSidebar
+    <ConversationModal
+      visible={visible}
       conversation={conversation}
       messages={messages}
       currentUser={currentUser}
       onSendMessage={onSendMessage}
+      onClose={onClose}
     />
   );
 };
 
-export default ConversationSidebarWrapper;
+export default ConversationModalWrapper;
