@@ -31,13 +31,31 @@ class ConversationNotificationManager {
   }
 
   createNewSocket() {
-    return new Socket(SOCKET_URL, {
+    const socket = new Socket(SOCKET_URL, {
       params: {token: API.getAccessToken()},
     });
+
+    socket.onOpen(() => logger.debug('Successfully connected to socket!'));
+
+    // TODO: attempt refreshing access token?
+    socket.onError(
+      throttle(
+        (error) => {
+          logger.error(
+            'Error connecting to socket. Try refreshing the page.',
+            error
+          );
+          this.reconnect();
+        },
+        30 * 1000 // throttle every 30 secs
+      )
+    );
+
+    return socket;
   }
 
   connect() {
-    this.connectToSocket();
+    this.socket.connect();
     this.joinChannel();
   }
 
@@ -51,19 +69,9 @@ class ConversationNotificationManager {
     this.channel?.leave();
   }
 
-  connectToSocket() {
-    this.socket.onOpen(() => logger.debug('Successfully connected to socket!'));
-
-    // TODO: attempt refreshing access token?
-    this.socket.onError(
-      throttle(
-        () =>
-          logger.error('Error connecting to socket. Try refreshing the page.'),
-        30 * 1000 // throttle every 30 secs
-      )
-    );
-
-    this.socket.connect();
+  reconnect() {
+    this.disconnect();
+    this.connect();
   }
 
   joinChannel() {
