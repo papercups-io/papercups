@@ -53,7 +53,7 @@ const NewConversationModal = ({
         API.fetchCustomer(customerId, {expand: []}),
       ]).then(([authorization, customer]) => {
         const hasValidAuth = !!(authorization && authorization.id);
-        const hasValidCustomerEmail = !!isValidEmail(customer?.email);
+        const hasValidCustomerEmail = isValidEmail(customer?.email);
         const canSendEmail = hasValidAuth && hasValidCustomerEmail;
 
         if (canSendEmail) {
