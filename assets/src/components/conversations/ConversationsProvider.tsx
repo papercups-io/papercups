@@ -487,29 +487,18 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   getInboxesBySource = (conversations: Conversation[]) => {
-    const conversationsBySource: {[key: string]: Conversation[]} = {};
-
-    conversations.forEach((conversation) => {
-      const {source} = conversation;
+    return conversations.reduce((acc, conversation) => {
+      const {id, source} = conversation;
 
       if (!source) {
-        return;
+        return acc;
       }
 
-      if (!conversationsBySource[source]) {
-        conversationsBySource[source] = [];
-      }
-
-      conversationsBySource[source].push(conversation);
-    });
-
-    return Object.keys(conversationsBySource).reduce((acc, source) => {
-      const conversations = conversationsBySource[source];
       return {
         ...acc,
-        [source]: this.getConversationIds(conversations),
+        [source]: (acc[source] ?? []).concat(id),
       };
-    }, {});
+    }, {} as {[source: string]: string[]});
   };
 
   getConversationIds = (conversations: Conversation[]): string[] => {

@@ -262,7 +262,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Box py={3} sx={{flex: 1}}>
             <Menu
               selectedKeys={[section, key]}
-              defaultOpenKeys={[section, 'conversations']}
+              defaultOpenKeys={[section, 'conversations', 'inbox-channels']}
               mode="inline"
               theme="dark"
             >
@@ -496,13 +496,13 @@ const Dashboard = (props: RouteComponentProps) => {
             path="/conversations/priority"
             component={PriorityConversations}
           />
-          <Route path="/conversations/live-chat">
+          <Route path="/conversations/live-chat" key="chat">
             <ConversationsBySource title="Live chat" source="chat" />
           </Route>
-          <Route path="/conversations/email">
+          <Route path="/conversations/email" key="email">
             <ConversationsBySource title="Email" source="email" />
           </Route>
-          <Route path="/conversations/slack">
+          <Route path="/conversations/slack" key="slack">
             <ConversationsBySource title="Slack" source="slack" />
           </Route>
           <Route path="/conversations/closed" component={ClosedConversations} />
