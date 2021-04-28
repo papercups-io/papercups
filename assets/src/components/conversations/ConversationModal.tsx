@@ -11,21 +11,32 @@ type Props = {
   conversation: Conversation;
   currentUser: User | null;
   messages: Array<Message>;
-  onSendMessage: (message: Partial<Message>, cb: () => void) => void;
+  onSendMessage: (message: Partial<Message>, cb?: () => void) => void;
   onClose: () => void;
 };
 
 class ConversationModal extends React.Component<Props> {
   scrollToEl: any;
 
-  componentDidUpdate() {
-    if (this.props.visible) {
+  componentDidUpdate(prev: Props) {
+    if (
+      this.props.messages.length > prev.messages.length ||
+      (this.props.visible && !prev.visible)
+    ) {
       this.scrollIntoView();
     }
   }
 
   scrollIntoView = () => {
     this.scrollToEl && this.scrollToEl.scrollIntoView();
+  };
+
+  handleSetScrollRef = (el: HTMLDivElement | null) => {
+    this.scrollToEl = el;
+
+    if (el) {
+      this.scrollIntoView();
+    }
   };
 
   handleSendMessage = (message: Partial<Message>) => {
@@ -35,12 +46,7 @@ class ConversationModal extends React.Component<Props> {
       return null;
     }
 
-    this.props.onSendMessage(
-      {...message, conversation_id: conversationId},
-      () => {
-        this.scrollIntoView();
-      }
-    );
+    this.props.onSendMessage({...message, conversation_id: conversationId});
   };
 
   render() {
@@ -75,7 +81,7 @@ class ConversationModal extends React.Component<Props> {
           <ConversationMessages
             messages={messages}
             currentUser={currentUser}
-            setScrollRef={(el) => (this.scrollToEl = el)}
+            setScrollRef={this.handleSetScrollRef}
           />
 
           <ConversationFooter
@@ -118,7 +124,6 @@ const ConversationModalWrapper = ({
     return null;
   }
 
-  // TODO: fix case where conversation is closed!
   const conversation = conversationsById[conversationId] || null;
   const messages = messagesByConversation[conversationId] || null;
 

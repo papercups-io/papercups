@@ -72,22 +72,6 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
       selectedConversationId,
     } = this.state;
 
-    if (isLoading) {
-      return (
-        <Flex
-          p={4}
-          sx={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-          }}
-        >
-          <Spinner size={40} />
-        </Flex>
-      );
-    }
-
     return (
       <>
         <Flex
@@ -101,6 +85,19 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
             onInitializeNewConversation={this.fetchConversations}
           />
         </Flex>
+        {isLoading && conversations.length === 0 && (
+          <Flex
+            p={4}
+            sx={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
+            <Spinner size={40} />
+          </Flex>
+        )}
         {conversations.length > 0 ? (
           conversations.map((conversation) => {
             const {
