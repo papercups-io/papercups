@@ -17,8 +17,9 @@ import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
 import CustomersTableContainer from '../customers/CustomersTableContainer';
-import {IssueStateTag} from './IssuesTable';
 import {SearchCustomersModalButton} from '../customers/SearchCustomers';
+import {IssueStateTag} from './IssuesTable';
+import {UpdateIssueModalButton} from './UpdateIssueModal';
 
 const isValidGithubUrl = (url: string): boolean => {
   return url.indexOf('github.com/') !== -1;
@@ -207,17 +208,18 @@ class IssueDetailsPage extends React.Component<Props, State> {
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={2}>{title || 'Issue details'}</Title>
 
-          {/* 
-          TODO: implement me!
-
-          <Button onClick={this.handleOpenUpdateIssueModal}>
-            Edit issue details
-          </Button> 
-          */}
+          <UpdateIssueModalButton
+            type="default"
+            issue={issue}
+            onSuccess={this.handleRefreshIssue}
+          >
+            Edit
+          </UpdateIssueModalButton>
         </Flex>
 
         <Flex>
           <Box sx={{flex: 1, pr: 4}}>
+            {/* TODO: style the issue details similar to GitHub? */}
             <DetailsSectionCard>
               <Box mb={3}>
                 <Box>
@@ -259,7 +261,7 @@ class IssueDetailsPage extends React.Component<Props, State> {
             </DetailsSectionCard>
           </Box>
 
-          <Box sx={{flex: 3}}>
+          <Box sx={{flex: 2}}>
             <DetailsSectionCard>
               <Flex
                 mb={3}
