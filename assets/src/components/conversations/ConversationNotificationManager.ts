@@ -24,6 +24,7 @@ class ConversationNotificationManager {
   config: Config;
   socket: Socket;
   channel: Channel | null = null;
+  reconnectIntervalId?: number;
 
   constructor(config: Config) {
     this.socket = this.createNewSocket();
@@ -35,22 +36,47 @@ class ConversationNotificationManager {
       params: {token: API.getAccessToken()},
     });
 
-    socket.onOpen(() => logger.debug('Successfully connected to socket!'));
+    socket.onOpen(() => {
+      if (this.isTryingToReconnect()) {
+        this.stopTryingToReconnect();
+        logger.debug('Successfully reopened socket!');
+      } else {
+        logger.debug('Successfully opened socket!');
+      }
+    });
 
     socket.onError(
       throttle(
         (error) => {
           logger.error(
-            'Error connecting to socket. Try refreshing the page.',
+            "There's been an error with the socket connection. Try refreshing the page.",
             error
           );
-          this.reconnect();
+
+          if (!this.isTryingToReconnect()) {
+            this.tryToContinuouslyReconnect();
+          }
         },
         30 * 1000 // throttle every 30 secs
       )
     );
 
     return socket;
+  }
+
+  isTryingToReconnect() {
+    return !!this.reconnectIntervalId;
+  }
+
+  tryToContinuouslyReconnect() {
+    this.reconnectIntervalId = window.setInterval(() => {
+      this.reconnect();
+    }, 5000);
+  }
+
+  stopTryingToReconnect() {
+    clearInterval(this.reconnectIntervalId);
+    this.reconnectIntervalId = undefined;
   }
 
   connect() {
@@ -69,6 +95,7 @@ class ConversationNotificationManager {
   }
 
   reconnect() {
+    logger.debug('Attempting to reconnect...');
     this.disconnect();
     this.connect();
   }
