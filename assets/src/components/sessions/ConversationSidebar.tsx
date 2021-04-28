@@ -80,7 +80,7 @@ class ConversationSidebar extends React.Component<Props, any> {
   }
 }
 
-const ConversationsSidebarWrapper = ({
+const ConversationSidebarWrapper = ({
   conversationId,
 }: {
   conversationId: string;
@@ -124,4 +124,4 @@ const ConversationsSidebarWrapper = ({
   );
 };
 
-export default ConversationsSidebarWrapper;
+export default ConversationSidebarWrapper;

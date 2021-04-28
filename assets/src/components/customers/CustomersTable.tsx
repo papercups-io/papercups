@@ -1,11 +1,22 @@
 import React from 'react';
-import {Box} from 'theme-ui';
+import {Link} from 'react-router-dom';
+import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {Customer} from '../../types';
-import {Badge, Button, Table, Text, Tooltip} from '../common';
-import CustomerDetailsModal from './CustomerDetailsModal';
 import {TablePaginationConfig} from 'antd/lib/table';
+import {Customer} from '../../types';
+import {
+  notification,
+  Badge,
+  Button,
+  Dropdown,
+  Menu,
+  Table,
+  Text,
+  Tooltip,
+} from '../common';
+import {SettingOutlined} from '../icons';
+import {StartConversationWrapper} from '../conversations/StartConversationButton';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -25,12 +36,8 @@ const CustomersTable = ({
   shouldIncludeAnonymous?: boolean;
   action?: (customer: Customer) => React.ReactElement;
   pagination?: false | TablePaginationConfig;
-  onUpdate: () => Promise<void>;
+  onUpdate?: () => Promise<void>;
 }) => {
-  const [selectedCustomerId, setSelectedCustomerId] = React.useState<
-    string | null
-  >(null);
-
   const isCustomerOnline = (customer: Customer) => {
     const {id: customerId} = customer;
 
@@ -63,13 +70,19 @@ const CustomersTable = ({
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      render: (value: string) => {
-        return value ? (
-          <Text>{value}</Text>
-        ) : (
-          <Text style={{opacity: 0.8}} type="secondary">
-            --
-          </Text>
+      render: (value: string, record: Customer) => {
+        const {id: customerId} = record;
+
+        return (
+          <Link to={`/customers/${customerId}`}>
+            {value ? (
+              <Text>{value}</Text>
+            ) : (
+              <Text style={{opacity: 0.8}} type="secondary">
+                --
+              </Text>
+            )}
+          </Link>
         );
       },
     },
@@ -78,14 +91,19 @@ const CustomersTable = ({
       dataIndex: 'name',
       key: 'name',
       render: (value: string, record: Customer) => {
-        const hasEmail = record.email && record.email.length > 0;
+        const {id: customerId, email} = record;
+        const hasEmail = email && email.length > 0;
 
-        return value ? (
-          <Text>{value}</Text>
-        ) : (
-          <Text style={{opacity: 0.8}} type="secondary">
-            {hasEmail ? '--' : 'Anonymous User'}
-          </Text>
+        return (
+          <Link to={`/customers/${customerId}`}>
+            {value ? (
+              <Text>{value}</Text>
+            ) : (
+              <Text style={{opacity: 0.8}} type="secondary">
+                {hasEmail ? '--' : 'Anonymous User'}
+              </Text>
+            )}
+          </Link>
         );
       },
     },
@@ -133,25 +151,59 @@ const CustomersTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (value: string, record: Customer) => {
-        if (action && typeof action === 'function') {
-          return action(record);
-        }
-
         const {id: customerId} = record;
 
         return (
-          <>
-            <Button onClick={() => setSelectedCustomerId(customerId)}>
-              View more
-            </Button>
-            <CustomerDetailsModal
-              customer={record}
-              isVisible={selectedCustomerId === record.id}
-              onClose={() => setSelectedCustomerId(null)}
-              onUpdate={onUpdate}
-              onDelete={onUpdate}
-            />
-          </>
+          <Flex sx={{justifyContent: 'flex-end'}}>
+            <StartConversationWrapper
+              customerId={customerId}
+              onInitializeNewConversation={(conversation) =>
+                notification.success({
+                  message: `Message successfully sent.`,
+                  description: (
+                    <Text>
+                      Click{' '}
+                      <a href={`/conversations/all?cid=${conversation.id}`}>
+                        here
+                      </a>{' '}
+                      to view the conversation.
+                    </Text>
+                  ),
+                  duration: 10,
+                })
+              }
+            >
+              {(handleOpenNewConversationModal) => {
+                const handleMenuClick = (data: any) => {
+                  switch (data.key) {
+                    case 'message':
+                      return handleOpenNewConversationModal();
+                    default:
+                      return null;
+                  }
+                };
+
+                return (
+                  <Dropdown
+                    overlay={
+                      <Menu onClick={handleMenuClick}>
+                        <Menu.Item key="profile">
+                          <Link to={`/customers/${customerId}`}>
+                            View profile
+                          </Link>
+                        </Menu.Item>
+                        <Menu.Item key="message">
+                          Start new conversation
+                        </Menu.Item>
+                      </Menu>
+                    }
+                  >
+                    <Button icon={<SettingOutlined />} />
+                  </Dropdown>
+                );
+              }}
+            </StartConversationWrapper>
+          </Flex>
         );
       },
     },

@@ -8,17 +8,22 @@ import {Conversation} from '../../types';
 import {getColorByUuid} from '../conversations/support';
 import ConversationItem from '../conversations/ConversationItem';
 import StartConversationButton from '../conversations/StartConversationButton';
+import ConversationModal from '../conversations/ConversationModal';
 import {sortConversationMessages} from '../../utils';
 
 type Props = {customerId: string; history: History};
 type State = {
   conversations: Conversation[];
+  selectedConversationId: string | null;
+  isModalVisible: boolean;
   isLoading: boolean;
 };
 
 class CustomerDetailsConversations extends React.Component<Props, State> {
   state: State = {
     conversations: [],
+    selectedConversationId: null,
+    isModalVisible: false,
     isLoading: true,
   };
 
@@ -45,35 +50,27 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
   };
 
   handleSelectConversation = (conversationId: string) => {
-    const conversation = this.state.conversations.find(
-      (conversation) => conversation.id === conversationId
-    );
-    const isClosed = conversation && conversation.status === 'closed';
-    const url = isClosed
-      ? `/conversations/closed?cid=${conversationId}`
-      : `/conversations/all?cid=${conversationId}`;
-    this.props.history.push(url);
+    this.setState({
+      selectedConversationId: conversationId,
+      isModalVisible: true,
+    });
+  };
+
+  handleCloseConversationModal = () => {
+    // TODO: figure out a better way to ensure that conversations are up to date
+    // (we probably want to use the ConversationsProvider to listen for updates)
+    this.fetchConversations();
+    this.setState({selectedConversationId: null, isModalVisible: false});
   };
 
   render() {
     const {customerId} = this.props;
-    const {isLoading, conversations} = this.state;
-
-    if (isLoading) {
-      return (
-        <Flex
-          p={4}
-          sx={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-          }}
-        >
-          <Spinner size={40} />
-        </Flex>
-      );
-    }
+    const {
+      isLoading,
+      isModalVisible,
+      conversations,
+      selectedConversationId,
+    } = this.state;
 
     return (
       <>
@@ -88,6 +85,19 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
             onInitializeNewConversation={this.fetchConversations}
           />
         </Flex>
+        {isLoading && conversations.length === 0 && (
+          <Flex
+            p={4}
+            sx={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
+            <Spinner size={40} />
+          </Flex>
+        )}
         {conversations.length > 0 ? (
           conversations.map((conversation) => {
             const {
@@ -109,6 +119,14 @@ class CustomerDetailsConversations extends React.Component<Props, State> {
           })
         ) : (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
+
+        {selectedConversationId && (
+          <ConversationModal
+            visible={isModalVisible}
+            conversationId={selectedConversationId}
+            onClose={this.handleCloseConversationModal}
+          />
         )}
       </>
     );

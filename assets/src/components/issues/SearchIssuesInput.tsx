@@ -4,7 +4,7 @@ import {debounce} from 'lodash';
 import * as API from '../../api';
 import {Issue} from '../../types';
 import {AutoComplete} from '../common';
-import {IssueStateTag} from './IssuesOverview';
+import {IssueStateTag} from './IssuesTable';
 import logger from '../../logger';
 
 type Props = {

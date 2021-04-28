@@ -17,6 +17,14 @@ export const hasValidStripeKey = () => {
   return key && key.startsWith('pk_');
 };
 
+export const isValidEmail = (email?: string | null) => {
+  if (!email) {
+    return false;
+  }
+  // Super basic validation: https://stackoverflow.com/a/4964763
+  return /(.+)@(.+){2,}\.(.+){2,}/.test(email);
+};
+
 export const formatRelativeTime = (date: dayjs.Dayjs) => {
   const seconds = dayjs().diff(date, 'second');
   const mins = Math.floor(seconds / 60);
