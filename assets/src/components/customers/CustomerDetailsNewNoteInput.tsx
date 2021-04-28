@@ -42,7 +42,7 @@ const CustomerDetailNewNoteInput = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.keyCode === 13 && e.metaKey) {
+    if (e.key === 'Enter' && e.metaKey) {
       handleSaveNote();
     }
   };
