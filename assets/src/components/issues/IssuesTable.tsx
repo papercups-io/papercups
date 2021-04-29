@@ -1,10 +1,15 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 import {Flex} from 'theme-ui';
 import {Button, Dropdown, Menu, Table, Tag, Text} from '../common';
 import {SettingOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
+import {formatRelativeTime} from '../../utils';
+
+dayjs.extend(utc);
 
 export const IssueStateTag = ({state}: {state: T.IssueState}) => {
   switch (state) {
@@ -68,15 +73,16 @@ export const IssuesTable = ({
       },
     },
     {
-      title: 'Description',
-      dataIndex: 'body',
-      key: 'body',
+      title: 'Last updated',
+      dataIndex: 'updated_at',
+      key: 'updated_at',
       render: (value: string, record: T.Issue) => {
         const {id: issueId} = record;
+        const formatted = formatRelativeTime(dayjs.utc(value));
 
         return (
           <Link to={`/issues/${issueId}`}>
-            <Text>{value || '--'}</Text>
+            <Text>{formatted || '--'}</Text>
           </Link>
         );
       },

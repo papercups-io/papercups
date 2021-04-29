@@ -5,6 +5,8 @@ import {
   colors,
   shadows,
   Button,
+  Divider,
+  MarkdownRenderer,
   Popconfirm,
   Result,
   Text,
@@ -189,20 +191,17 @@ class IssueDetailsPage extends React.Component<Props, State> {
             <Button icon={<ArrowLeftOutlined />}>Back to all issues</Button>
           </Link>
 
-          {/* TODO: implement me! */}
-          {false && (
-            <Popconfirm
-              title="Are you sure you want to delete this issue?"
-              okText="Yes"
-              cancelText="No"
-              placement="bottomLeft"
-              onConfirm={this.handleDeleteIssue}
-            >
-              <Button danger loading={deleting} icon={<DeleteOutlined />}>
-                Delete issue
-              </Button>
-            </Popconfirm>
-          )}
+          <Popconfirm
+            title="Are you sure you want to delete this issue?"
+            okText="Yes"
+            cancelText="No"
+            placement="bottomLeft"
+            onConfirm={this.handleDeleteIssue}
+          >
+            <Button danger loading={deleting} icon={<DeleteOutlined />}>
+              Delete issue
+            </Button>
+          </Popconfirm>
         </Flex>
 
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
@@ -221,19 +220,9 @@ class IssueDetailsPage extends React.Component<Props, State> {
           <Box sx={{flex: 1, pr: 4}}>
             {/* TODO: style the issue details similar to GitHub? */}
             <DetailsSectionCard>
-              <Box mb={3}>
-                <Box>
-                  <Text strong>Title</Text>
-                </Box>
-                <Text>{title}</Text>
-              </Box>
+              <MarkdownRenderer source={description || '_No description_'} />
 
-              <Box mb={3}>
-                <Box>
-                  <Text strong>Description</Text>
-                </Box>
-                <Text>{description || 'N/A'}</Text>
-              </Box>
+              <Divider />
 
               <Box mb={3}>
                 <Box>

@@ -7,6 +7,18 @@ import * as API from '../../api';
 import {Issue, IssueState} from '../../types';
 import logger from '../../logger';
 import {formatServerError} from '../../utils';
+import Paragraph from 'antd/lib/typography/Paragraph';
+
+const parseGithubState = (state: string): IssueState => {
+  switch (state) {
+    case 'open':
+      return 'unstarted';
+    case 'closed':
+      return 'done';
+    default:
+      return 'unstarted';
+  }
+};
 
 const NewIssueModal = ({
   visible,
@@ -26,11 +38,33 @@ const NewIssueModal = ({
   const [status, setStatus] = React.useState<IssueState>(DEFAULT_ISSUE_STATE);
   const [error, setErrorMessage] = React.useState<string | null>(null);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   const handleChangeTitle = (e: any) => setTitle(e.target.value);
   const handleChangeBody = (e: any) => setBody(e.target.value);
   const handleChangeGithubIssueUrl = (e: any) =>
     setGithubIssueUrl(e.target.value);
+
+  const syncWithGithub = async () => {
+    setIsSyncing(true);
+
+    try {
+      const [issue] = await API.findGithubIssues({url: githubIssueUrl});
+      const {
+        title: githubIssueTitle,
+        body: githubIssueBody,
+        state: githubIssueState,
+      } = issue;
+
+      setTitle(githubIssueTitle);
+      setBody(githubIssueBody);
+      setStatus(parseGithubState(githubIssueState));
+    } catch (err) {
+      logger.error('Error syncing GitHub issue:', err);
+    }
+
+    setIsSyncing(false);
+  };
 
   const resetInputFields = () => {
     setTitle('');
@@ -95,6 +129,31 @@ const NewIssueModal = ({
       ]}
     >
       <Box>
+        <Box pb={3} mb={3} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
+          <Box mb={2}>
+            <label htmlFor="github_issue_url">GitHub Issue URL</label>
+            <Input
+              id="github_issue_url"
+              type="text"
+              placeholder="https://github.com/my/repo/issues/123"
+              value={githubIssueUrl}
+              onChange={handleChangeGithubIssueUrl}
+            />
+          </Box>
+          <Button
+            type="primary"
+            loading={isSyncing}
+            block
+            onClick={syncWithGithub}
+          >
+            Sync from GitHub
+          </Button>
+        </Box>
+
+        <Paragraph>
+          <Text type="secondary">Or, create manually...</Text>
+        </Paragraph>
+
         <Box mb={3}>
           <label htmlFor="title">Title</label>
           <Input
@@ -110,19 +169,11 @@ const NewIssueModal = ({
             id="body"
             placeholder="Optional"
             value={body}
+            autoSize={{minRows: 4, maxRows: 8}}
             onChange={handleChangeBody}
           />
         </Box>
-        <Box mb={3}>
-          <label htmlFor="github_issue_url">GitHub Issue URL</label>
-          <Input
-            id="github_issue_url"
-            type="text"
-            placeholder="https://github.com/my/repo/issues/123"
-            value={githubIssueUrl}
-            onChange={handleChangeGithubIssueUrl}
-          />
-        </Box>
+
         <Box mb={3}>
           <label htmlFor="state">Status</label>
           <Box>
