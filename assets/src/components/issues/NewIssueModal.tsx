@@ -28,7 +28,7 @@ const NewIssueModal = ({
 }: {
   visible: boolean;
   customerId?: string;
-  onSuccess: (params: any) => void;
+  onSuccess: (issue: Issue) => void;
   onCancel: () => void;
 }) => {
   const DEFAULT_ISSUE_STATE: IssueState = 'unstarted';
