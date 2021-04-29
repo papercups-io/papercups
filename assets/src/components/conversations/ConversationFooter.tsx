@@ -1,5 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
+import {QuestionOutlined} from '@ant-design/icons';
 import {
   colors,
   Button,
@@ -8,7 +9,9 @@ import {
   Upload,
   UploadChangeParam,
   UploadFile,
+  Modal,
 } from '../common';
+import ShortCutModal from './ShortCutModal';
 import {Message, MessageType, User} from '../../types';
 import {PaperClipOutlined} from '../icons';
 import {env} from '../../config';
@@ -70,6 +73,7 @@ const ConversationFooter = ({
   const [fileList, setFileList] = React.useState<Array<UploadFile>>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
   const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
+  const [shortCutModal, setShortCutModal] = React.useState<boolean>(false);
 
   const isPrivateNote = messageType === 'note';
   const accountId = currentUser?.account_id;
@@ -78,7 +82,12 @@ const ConversationFooter = ({
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
     setMessage(e.target.value);
 
-  const handleSetMessageType = ({key}: any) => setMessageType(key);
+  const handleSetMessageType = ({key}: any) => {
+    if (key === 'questionIcon') {
+      return setShortCutModal(true);
+    }
+    setMessageType(key);
+  };
 
   const handleKeyDown = (e: any) => {
     const {key, metaKey} = e;
@@ -118,111 +127,142 @@ const ConversationFooter = ({
   };
 
   return (
-    <Box style={{flex: '0 0 auto'}}>
-      <Box
-        sx={{
-          bg: colors.white,
-          px: 4,
-          pt: 0,
-          pb: 4,
-          ...sx,
-        }}
+    <>
+      <Modal
+        title="ShortCuts"
+        visible={shortCutModal}
+        width={400}
+        onCancel={() => setShortCutModal(false)}
+        footer={[
+          <Button onClick={() => setShortCutModal(false)} key="Ok">
+            Ok
+          </Button>,
+        ]}
       >
+        <ShortCutModal />
+      </Modal>
+      <Box style={{flex: '0 0 auto'}}>
         <Box
-          px={2}
-          pb={2}
-          pt={1}
           sx={{
-            background: isPrivateNote ? colors.noteSecondary : colors.white,
-            border: '1px solid #f5f5f5',
-            borderRadius: 4,
-            boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
+            bg: colors.white,
+            px: 4,
+            pt: 0,
+            pb: 4,
+            ...sx,
           }}
         >
-          <form onSubmit={handleSendMessage}>
-            <Box px={2} mb={2}>
-              <Menu
-                mode="horizontal"
-                style={{
-                  border: 'none',
-                  lineHeight: '36px',
-                  fontWeight: 500,
-                  background: 'transparent',
-                  color: colors.secondary,
-                }}
-                defaultSelectedKeys={['reply']}
-                selectedKeys={[messageType]}
-                onClick={handleSetMessageType}
-              >
-                <Menu.Item
-                  key="reply"
-                  style={{padding: '0 4px', marginRight: 20}}
+          <Box
+            px={2}
+            pb={2}
+            pt={1}
+            sx={{
+              background: isPrivateNote ? colors.noteSecondary : colors.white,
+              border: '1px solid #f5f5f5',
+              borderRadius: 4,
+              boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
+            }}
+          >
+            <form onSubmit={handleSendMessage}>
+              <Box px={2} mb={2}>
+                <Menu
+                  mode="horizontal"
+                  style={{
+                    border: 'none',
+                    lineHeight: '36px',
+                    fontWeight: 500,
+                    background: 'transparent',
+                    color: colors.secondary,
+                  }}
+                  defaultSelectedKeys={['reply']}
+                  selectedKeys={[messageType]}
+                  onClick={handleSetMessageType}
                 >
-                  Reply
-                </Menu.Item>
-                <Menu.Item
-                  key="note"
-                  style={{padding: '0 4px', marginRight: 20}}
-                >
-                  Note
-                </Menu.Item>
-              </Menu>
-            </Box>
+                  <Menu.Item
+                    key="reply"
+                    style={{padding: '0 4px', marginRight: 20}}
+                  >
+                    Reply
+                  </Menu.Item>
+                  <Menu.Item
+                    key="note"
+                    style={{
+                      padding: '0 4px',
+                      marginRight: 20,
+                    }}
+                  >
+                    Notes
+                  </Menu.Item>
+                  <Menu.Item
+                    key="questionIcon"
+                    style={{
+                      padding: '0 4px',
+                      float: 'right',
+                    }}
+                  >
+                    <QuestionOutlined
+                      style={{
+                        fontSize: '14px',
+                      }}
+                    />
+                  </Menu.Item>
+                </Menu>
+              </Box>
 
-            <Box mb={2}>
-              {/* NB: we use the `key` prop to auto-focus the textarea when toggling `messageType` */}
-              <TextArea
-                key={messageType}
-                className="TextArea--transparent"
-                placeholder={
-                  isPrivateNote
-                    ? 'Type a private note here'
-                    : 'Type your reply here'
-                }
-                autoSize={{minRows: 2, maxRows: 4}}
-                autoFocus
-                value={message}
-                onKeyDown={handleKeyDown}
-                onChange={handleMessageChange}
-              />
-            </Box>
-            {shouldDisplayUploadButton ? (
-              <Flex
-                sx={{
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                }}
-              >
-                {currentUser && (
-                  <AttachFileButton
-                    fileList={fileList}
-                    currentUser={currentUser}
-                    onUpdateFileList={onUpdateFileList}
-                  />
-                )}
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  disabled={isSendDisabled}
+              <Box mb={2}>
+                {/* NB: we use the `key` prop to auto-focus the textarea when toggling `messageType` */}
+                <TextArea
+                  key={messageType}
+                  className="TextArea--transparent"
+                  placeholder={
+                    isPrivateNote
+                      ? 'Type a private note here'
+                      : 'Type your reply here'
+                  }
+                  autoSize={{minRows: 2, maxRows: 4}}
+                  autoFocus
+                  value={message}
+                  onKeyDown={handleKeyDown}
+                  onChange={handleMessageChange}
+                />
+              </Box>
+              {shouldDisplayUploadButton ? (
+                <Flex
+                  sx={{
+                    alignItems: 'flex-end',
+                    justifyContent: 'space-between',
+                  }}
                 >
-                  Send
-                </Button>
-              </Flex>
-            ) : (
-              <Flex sx={{justifyContent: 'flex-end'}}>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  disabled={isSendDisabled}
-                >
-                  Send
-                </Button>
-              </Flex>
-            )}
-          </form>
+                  {currentUser && (
+                    <AttachFileButton
+                      fileList={fileList}
+                      currentUser={currentUser}
+                      onUpdateFileList={onUpdateFileList}
+                    />
+                  )}
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    disabled={isSendDisabled}
+                  >
+                    Send
+                  </Button>
+                </Flex>
+              ) : (
+                <Flex sx={{justifyContent: 'flex-end'}}>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    disabled={isSendDisabled}
+                  >
+                    Send
+                  </Button>
+                </Flex>
+              )}
+            </form>
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </>
   );
 };
 
