@@ -1,6 +1,7 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Flex} from 'theme-ui';
-import {colors, Modal} from '../common';
+import {colors, Button, Modal} from '../common';
 import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
@@ -57,9 +58,13 @@ class ConversationModal extends React.Component<Props> {
       messages = [],
       onClose,
     } = this.props;
-    const {customer} = conversation;
+    const {id, status, customer} = conversation;
     const identifer = customer.name || customer.email || 'Anonymous User';
     const title = `Conversation with ${identifer}`;
+    const href =
+      status === 'closed'
+        ? `/conversations/closed?cid=${id}`
+        : `/conversations/all?cid=${id}`;
 
     return (
       <Modal
@@ -67,7 +72,13 @@ class ConversationModal extends React.Component<Props> {
         visible={visible}
         bodyStyle={{padding: 0}}
         onCancel={onClose}
-        footer={null}
+        footer={
+          <Flex>
+            <Link to={href}>
+              <Button key="submit">View in dashboard</Button>
+            </Link>
+          </Flex>
+        }
       >
         <Flex
           sx={{

@@ -139,6 +139,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
       onPresenceDiff: this.handlePresenceDiff,
     });
     this.notificationManager.connect();
+
+    await this.fetchAllConversations();
   }
 
   componentWillUnmount() {
