@@ -52,6 +52,17 @@ defmodule ChatApi.Github.Client do
     Tesla.client(middleware)
   end
 
+  @spec public_client() :: Tesla.Client.t()
+  def public_client() do
+    middleware = [
+      {Tesla.Middleware.BaseUrl, "https://api.github.com"},
+      Tesla.Middleware.JSON,
+      Tesla.Middleware.Logger
+    ]
+
+    Tesla.client(middleware)
+  end
+
   def generate_installation_access_token(installation_id) do
     jwt()
     |> app_client()
@@ -93,8 +104,14 @@ defmodule ChatApi.Github.Client do
     |> Tesla.get("/installation/repositories")
   end
 
+  def list_issues(owner, repo),
+    do: Tesla.get(public_client(), "/repos/#{owner}/#{repo}/issues")
+
   def list_issues(%GithubAuthorization{github_installation_id: installation_id}, owner, repo),
     do: list_issues(installation_id, owner, repo)
+
+  def list_issues(nil, owner, repo),
+    do: list_issues(owner, repo)
 
   def list_issues(installation_id, owner, repo) do
     {:ok, %{body: %{"token" => token}}} = generate_installation_access_token(installation_id)
@@ -102,6 +119,28 @@ defmodule ChatApi.Github.Client do
     token
     |> oauth_client()
     |> Tesla.get("/repos/#{owner}/#{repo}/issues")
+  end
+
+  def retrieve_issue(owner, repo, issue_id),
+    do: Tesla.get(public_client(), "/repos/#{owner}/#{repo}/issues/#{issue_id}")
+
+  def retrieve_issue(
+        %GithubAuthorization{github_installation_id: installation_id},
+        owner,
+        repo,
+        issue_id
+      ),
+      do: retrieve_issue(installation_id, owner, repo, issue_id)
+
+  def retrieve_issue(nil, owner, repo, issue_id),
+    do: retrieve_issue(owner, repo, issue_id)
+
+  def retrieve_issue(installation_id, owner, repo, issue_id) do
+    {:ok, %{body: %{"token" => token}}} = generate_installation_access_token(installation_id)
+
+    token
+    |> oauth_client()
+    |> Tesla.get("/repos/#{owner}/#{repo}/issues/#{issue_id}")
   end
 
   defp jwt() do

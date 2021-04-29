@@ -104,6 +104,7 @@ defmodule ChatApiWeb.Router do
     get("/github/authorization", GithubController, :authorization)
     delete("/github/authorizations/:id", GithubController, :delete)
     get("/github/repos", GithubController, :repos)
+    get("/github/issues", GithubController, :issues)
     get("/google/auth", GoogleController, :auth)
     get("/google/oauth", GoogleController, :callback)
     get("/google/authorization", GoogleController, :authorization)
