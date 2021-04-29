@@ -5,7 +5,7 @@
 - [[#736](https://github.com/papercups-io/papercups/pull/736)] Adds ability to edit customer details page [3]
 - [[#726](https://github.com/papercups-io/papercups/pull/726)] Support markdown images in chat messages :rocket: [4]
 - [[#733](https://github.com/papercups-io/papercups/pull/733)] Add default company logo image for chat bubble [5]
-- [[#723] (https://github.com/papercups-io/papercups/pull/723)] Support specifying customer in `POST /api/v1/messages` endpoint
+- [[#723](https://github.com/papercups-io/papercups/pull/723)] Support specifying customer in `POST /api/v1/messages` endpoint
 - [[#716](https://github.com/papercups-io/papercups/pull/716)] Reopen conversation when new reply comes in via Gmail integration
 - [[#715](https://github.com/papercups-io/papercups/pull/715)] Improve customer details page UX by reducing number of clicks
 - [[#703](https://github.com/papercups-io/papercups/pull/703)] Adds ability to send user invitation emails from Account Overview
