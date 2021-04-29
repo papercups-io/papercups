@@ -57,16 +57,28 @@ export const IssuesTable = ({
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
-      render: (value: string) => {
-        return <Text>{value}</Text>;
+      render: (value: string, record: T.Issue) => {
+        const {id: issueId} = record;
+
+        return (
+          <Link to={`/issues/${issueId}`}>
+            <Text>{value}</Text>
+          </Link>
+        );
       },
     },
     {
       title: 'Description',
       dataIndex: 'body',
       key: 'body',
-      render: (value: string) => {
-        return value || '--';
+      render: (value: string, record: T.Issue) => {
+        const {id: issueId} = record;
+
+        return (
+          <Link to={`/issues/${issueId}`}>
+            <Text>{value || '--'}</Text>
+          </Link>
+        );
       },
     },
     {

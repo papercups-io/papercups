@@ -62,23 +62,7 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
 
   render() {
     const {customerId} = this.props;
-    const {isLoading, customerNotes} = this.state;
-
-    if (isLoading) {
-      return (
-        <Flex
-          p={4}
-          sx={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-          }}
-        >
-          <Spinner size={40} />
-        </Flex>
-      );
-    }
+    const {isLoading, customerNotes = []} = this.state;
 
     return (
       <Box p={3}>
@@ -89,6 +73,19 @@ class CustomerDetailsNotes extends React.Component<Props, State> {
 
         <Divider />
 
+        {isLoading && customerNotes.length === 0 && (
+          <Flex
+            p={4}
+            sx={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
+            <Spinner size={40} />
+          </Flex>
+        )}
         {customerNotes.length === 0 ? (
           <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (
