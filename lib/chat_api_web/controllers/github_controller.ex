@@ -87,6 +87,47 @@ defmodule ChatApiWeb.GithubController do
     end
   end
 
+  @spec issues(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def issues(conn, %{"url" => url}) do
+    authorization =
+      conn
+      |> Pow.Plug.current_user()
+      |> Map.get(:account_id)
+      |> Github.get_authorization_by_account()
+
+    with {:ok, %{owner: owner, repo: repo, id: issue_id}} <- parse_github_issue_url(url),
+         {:ok, %{body: %{"title" => _title, "body" => _body} = result}} <-
+           Github.Client.retrieve_issue(authorization, owner, repo, issue_id) do
+      json(conn, %{data: [result]})
+    else
+      {:error, :unrecognized_github_issue_url} ->
+        {:error, :unprocessable_entity, "Invalid GitHub issue URL"}
+
+      error ->
+        Logger.error("Error retrieving GitHub issue(s) for #{url}: #{inspect(error)}")
+
+        json(conn, %{data: []})
+    end
+  end
+
+  def issues(conn, %{"owner" => owner, "repo" => repo}) do
+    authorization =
+      conn
+      |> Pow.Plug.current_user()
+      |> Map.get(:account_id)
+      |> Github.get_authorization_by_account()
+
+    with {:ok, %{body: body}} <-
+           Github.Client.list_issues(authorization, owner, repo) do
+      json(conn, %{data: body})
+    else
+      error ->
+        Logger.error("Error retrieving GitHub issues for #{owner}/#{repo}: #{inspect(error)}")
+
+        json(conn, %{data: []})
+    end
+  end
+
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
     with %{account_id: _account_id} <- conn.assigns.current_user,
@@ -112,6 +153,19 @@ defmodule ChatApiWeb.GithubController do
 
     # Just respond with a 200 no matter what for now
     send_resp(conn, 200, "")
+  end
+
+  defp parse_github_issue_url(url) do
+    path =
+      case String.split(url, "github.com/") do
+        [_protocol, path] -> path
+        _ -> ""
+      end
+
+    case String.split(path, "/") do
+      [owner, repo, "issues", id] -> {:ok, %{owner: owner, repo: repo, id: id}}
+      _ -> {:error, :unrecognized_github_issue_url}
+    end
   end
 
   defp handle_event(

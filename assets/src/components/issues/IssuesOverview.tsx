@@ -7,8 +7,9 @@ import * as T from '../../types';
 import logger from '../../logger';
 import IssuesTable from './IssuesTable';
 import NewIssueModal from './NewIssueModal';
+import {RouteComponentProps} from 'react-router';
 
-type Props = {};
+type Props = RouteComponentProps & {};
 type State = {
   filterQuery: string;
   filteredIssues: Array<T.Issue>;
@@ -94,9 +95,11 @@ class IssuesOverview extends React.Component<Props, State> {
     this.setState({isNewIssueModalVisible: false});
   };
 
-  handleNewIssueCreated = () => {
+  handleNewIssueCreated = (issue: T.Issue) => {
     this.handleNewIssueModalClosed();
     this.handleRefreshIssues();
+
+    this.props.history.push(`/issues/${issue.id}`);
   };
 
   render() {

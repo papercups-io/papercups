@@ -870,6 +870,25 @@ export const fetchGithubRepos = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const findGithubIssues = async (
+  query: {
+    url?: string;
+    owner?: string;
+    repo?: string;
+  },
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/issues`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export type EmailParams = {
   recipient: string;
   subject: string;

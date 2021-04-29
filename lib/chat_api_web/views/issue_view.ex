@@ -14,6 +14,8 @@ defmodule ChatApiWeb.IssueView do
     %{
       id: issue.id,
       object: "issue",
+      created_at: issue.inserted_at,
+      updated_at: issue.updated_at,
       title: issue.title,
       body: issue.body,
       state: issue.state,
