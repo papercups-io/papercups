@@ -1,15 +1,20 @@
 import React from 'react';
-import {useConversations} from './ConversationsProvider';
 import ConversationsDashboard from './ConversationsDashboard';
+import {useConversations} from './ConversationsProvider';
 import * as API from '../../api';
 
-const AllConversations = () => {
+type Props = {
+  source: string;
+  title: string;
+};
+
+const ConversationsBySource = ({source, title}: Props) => {
   const {
     loading,
     currentUser,
     account,
-    inboxes,
     messagesByConversation = {},
+    inboxes,
     onSetConversations,
     onSelectConversation,
     onUpdateConversation,
@@ -21,14 +26,20 @@ const AllConversations = () => {
     return null;
   }
 
+  const fetcher = (query = {}) => {
+    return API.fetchAllConversations({...query, source});
+  };
+
+  const inbox = inboxes.bySource[source];
+
   return (
     <ConversationsDashboard
       loading={loading}
-      title="All conversations"
+      title={title}
       account={account}
-      conversationIds={inboxes.all.open}
+      conversationIds={inbox ?? []}
       messagesByConversation={messagesByConversation}
-      fetcher={API.fetchAllConversations}
+      fetcher={fetcher}
       onRetrieveConversations={onSetConversations}
       onSelectConversation={onSelectConversation}
       onUpdateConversation={onUpdateConversation}
@@ -38,4 +49,4 @@ const AllConversations = () => {
   );
 };
 
-export default AllConversations;
+export default ConversationsBySource;
