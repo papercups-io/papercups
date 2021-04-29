@@ -85,36 +85,16 @@ class CustomerDetailsIssues extends React.Component<Props, State> {
 
     return (
       <Box>
-        <Flex p={3}>
-          <Box sx={{flex: 1}}>
-            <SearchIssuesInput
-              value={selectedIssueTitle}
-              ignored={issues}
-              onChange={this.handleChangeQuery}
-              onSelectIssue={this.handleSelectIssue}
-            />
-          </Box>
-          <Box ml={1}>
-            <Button
-              type="primary"
-              onClick={this.handleLinkIssue}
-              disabled={!selectedIssueId}
-            >
-              Link issue
-            </Button>
-          </Box>
-
-          <Box ml={3} pl={3} style={{borderLeft: '1px solid rgba(0,0,0,.06)'}}>
-            <NewIssueModalButton
-              type="primary"
-              icon={<PlusOutlined />}
-              disabled={!!selectedIssueId}
-              customerId={customerId}
-              onSuccess={this.handleNewIssueCreated}
-            >
-              Create new issue
-            </NewIssueModalButton>
-          </Box>
+        <Flex p={3} sx={{justifyContent: 'flex-end'}}>
+          <NewIssueModalButton
+            type="primary"
+            icon={<PlusOutlined />}
+            disabled={!!selectedIssueId}
+            customerId={customerId}
+            onSuccess={this.handleNewIssueCreated}
+          >
+            Link new issue to customer
+          </NewIssueModalButton>
         </Flex>
 
         <IssuesTable

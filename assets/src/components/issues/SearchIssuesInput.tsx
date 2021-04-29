@@ -71,7 +71,7 @@ class SearchIssuesInput extends React.Component<Props, State> {
       >
         {options.map(({id, title, state}) => {
           return (
-            <AutoComplete.Option key={id} value={title}>
+            <AutoComplete.Option key={id} value={`${title} (${state})`}>
               <Flex sx={{alignItems: 'center'}}>
                 <Box mr={2}>{title}</Box>
                 <IssueStateTag state={state} />

@@ -110,6 +110,8 @@ const NewIssueModal = ({
     setBody('');
     setGithubIssueUrl('');
     setStatus(DEFAULT_ISSUE_STATE);
+    setQuery('');
+    setSelectedExistingIssue(null);
     setErrorMessage(null);
   };
 
@@ -120,6 +122,10 @@ const NewIssueModal = ({
 
   const handleCreateIssue = async () => {
     setIsSaving(true);
+
+    if (!title && selectedExistingIssue) {
+      return handleLinkExistingIssue();
+    }
 
     try {
       const issue = await API.createIssue({

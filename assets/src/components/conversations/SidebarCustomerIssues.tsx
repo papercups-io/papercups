@@ -49,9 +49,9 @@ const SidebarCustomerIssues = ({customerId}: {customerId: string}) => {
               const {id, title, state} = issue;
 
               return (
-                <Link to={`/issues/${id}`}>
+                <Link key={id} to={`/issues/${id}`}>
                   <Tooltip title={title} placement="left">
-                    <Flex key={id} mb={2}>
+                    <Flex mb={2}>
                       <IssueStateTag state={state} />
 
                       <Text
