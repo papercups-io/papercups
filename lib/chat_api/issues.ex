@@ -14,6 +14,7 @@ defmodule ChatApi.Issues do
     Issue
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
+    |> filter_by_customer(filters)
     |> Repo.all()
   end
 
@@ -69,6 +70,15 @@ defmodule ChatApi.Issues do
     |> Repo.get!(issue_id)
     |> Map.get(:conversations)
   end
+
+  @spec filter_by_customer(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_customer(query, %{"customer_id" => customer_id}) when not is_nil(customer_id) do
+    query
+    |> join(:left, [i], c in assoc(i, :customers))
+    |> where([_i, c], c.id == ^customer_id)
+  end
+
+  def filter_by_customer(query, _filters), do: query
 
   @spec filter_where(map()) :: %Ecto.Query.DynamicExpr{}
   def filter_where(params) do

@@ -393,19 +393,6 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.SubMenu
-                key="sessions"
-                icon={<VideoCameraOutlined />}
-                title="Sessions"
-              >
-                <Menu.Item key="list">
-                  <Link to="/sessions/list">Live sessions</Link>
-                </Menu.Item>
-                <Menu.Item key="setup">
-                  <Link to="/sessions/setup">Set up Storytime</Link>
-                </Menu.Item>
-              </Menu.SubMenu>
-
-              <Menu.SubMenu
                 key="customers"
                 icon={<TeamOutlined />}
                 title="Customers"
@@ -418,6 +405,24 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
                 <Menu.Item key="tags">
                   <Link to="/tags">Tags</Link>
+                </Menu.Item>
+                <Menu.Item key="issues">
+                  <Link to="/issues">Issues</Link>
+                </Menu.Item>
+                <Menu.Item key="notes">
+                  <Link to="/notes">Notes</Link>
+                </Menu.Item>
+              </Menu.SubMenu>
+              <Menu.SubMenu
+                key="sessions"
+                icon={<VideoCameraOutlined />}
+                title="Sessions"
+              >
+                <Menu.Item key="list">
+                  <Link to="/sessions/list">Live sessions</Link>
+                </Menu.Item>
+                <Menu.Item key="setup">
+                  <Link to="/sessions/setup">Set up Storytime</Link>
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item

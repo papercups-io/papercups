@@ -22,10 +22,7 @@ import CustomersTableContainer from '../customers/CustomersTableContainer';
 import {SearchCustomersModalButton} from '../customers/SearchCustomers';
 import {IssueStateTag} from './IssuesTable';
 import {UpdateIssueModalButton} from './UpdateIssueModal';
-
-const isValidGithubUrl = (url: string): boolean => {
-  return url.indexOf('github.com/') !== -1;
-};
+import {isValidGithubUrl} from './support';
 
 const formatGithubUrl = (url: string) => {
   const [, githubIssuePath] = url.split('github.com/');

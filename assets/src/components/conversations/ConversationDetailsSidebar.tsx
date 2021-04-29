@@ -33,6 +33,7 @@ import {
   SidebarConversationTags,
 } from './SidebarTagSection';
 import SidebarCustomerNotes from './SidebarCustomerNotes';
+import SidebarCustomerIssues from './SidebarCustomerIssues';
 import RelatedCustomerConversations from './RelatedCustomerConversations';
 import SlackConversationThreads from './SlackConversationThreads';
 import * as API from '../../api';
@@ -196,7 +197,9 @@ export const CustomerDetails = ({
           mb={2}
           sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
         >
-          <Text strong>{name || 'Anonymous User'}</Text>
+          <Link to={`/customers/${customer.id}`}>
+            <Text strong>{name || 'Anonymous User'}</Text>
+          </Link>
 
           <Popover
             placement="left"
@@ -343,7 +346,18 @@ export const CustomerDetails = ({
 
       <DetailsSectionCard>
         <Box mb={2}>
-          <Text strong>Customer Notes</Text>
+          <Link to={`/customers/${customer.id}?tab=issues`}>
+            <Text strong>Linked issues</Text>
+          </Link>
+        </Box>
+        <SidebarCustomerIssues customerId={customerId} />
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Link to={`/customers/${customer.id}?tab=notes`}>
+            <Text strong>Customer notes</Text>
+          </Link>
         </Box>
 
         <SidebarCustomerNotes customerId={customerId} />
@@ -351,7 +365,7 @@ export const CustomerDetails = ({
 
       <DetailsSectionCard>
         <Box mb={2}>
-          <Text strong>Customer Tags</Text>
+          <Text strong>Customer tags</Text>
         </Box>
         <SidebarCustomerTags customerId={customerId} />
       </DetailsSectionCard>
@@ -458,7 +472,7 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
 
       <DetailsSectionCard>
         <Box mb={2}>
-          <Text strong>Conversation Tags</Text>
+          <Text strong>Conversation tags</Text>
         </Box>
         <SidebarConversationTags conversationId={conversationId} />
       </DetailsSectionCard>
