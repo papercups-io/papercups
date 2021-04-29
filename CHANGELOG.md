@@ -1,3 +1,30 @@
+### Friday, 23 April
+- [[#759](https://github.com/papercups-io/papercups/pull/759)] Github integration v1 (Associate customers github issues) [0]
+- [[#755](https://github.com/papercups-io/papercups/pull/755)] Adds ability to view and create notes from the customer details page [1]
+- [[#743](https://github.com/papercups-io/papercups/pull/743)] Add basic search to customers page [2]
+- [[#736](https://github.com/papercups-io/papercups/pull/736)] Adds ability to edit customer details page [3]
+- [[#726](https://github.com/papercups-io/papercups/pull/726)] Support markdown images in chat messages :rocket: [4]
+- [[#733](https://github.com/papercups-io/papercups/pull/733)] Add default company logo image for chat bubble [5]
+- [[#723] (https://github.com/papercups-io/papercups/pull/723)] Support specifying customer in `POST /api/v1/messages` endpoint
+- [[#716](https://github.com/papercups-io/papercups/pull/716)] Reopen conversation when new reply comes in via Gmail integration
+- [[#715](https://github.com/papercups-io/papercups/pull/715)] Improve customer details page UX by reducing number of clicks
+- [[#703](https://github.com/papercups-io/papercups/pull/703)] Adds ability to send user invitation emails from Account Overview
+
+
+_[0] Github Integration V1_
+> <img height= 300 src="https://user-images.githubusercontent.com/5264279/115761917-e0e99080-a370-11eb-9db9-823e605a673e.gif" />
+_[1] View and create notes from customer details page_
+> <img height= 300 src="https://user-images.githubusercontent.com/1361509/115447331-61c85100-a1e6-11eb-8a6b-b862a4f2be5a.mp4" />
+_[2] Customer search_
+> <img height=300 src="https://user-images.githubusercontent.com/5264279/115046460-78e50700-9ea5-11eb-8ef0-930f6a4cd82e.gif" />
+_[3] Edit customer details in customer details page_
+> <img height=300 src="https://user-images.githubusercontent.com/1361509/114769464-3f42bd80-9d38-11eb-99a3-4e1f8917907f.mp4" />
+_[4] support markdown images_
+> <img height="300" src="https://user-images.githubusercontent.com/4218509/116597368-8bbef900-a8f3-11eb-98be-330f69e2529d.png" />
+_[5] Add default company logo image for chat bubble image_
+> <img height="300" src="https://user-images.githubusercontent.com/5264279/114596878-236ae900-9c5e-11eb-91d6-1c5355a4667d.png" />
+
+
 ### Friday, 2 April
 
 - [[#697](https://github.com/papercups-io/papercups/pull/697)] The **Gmail integration** is now ready for beta users :rocket: [0]
