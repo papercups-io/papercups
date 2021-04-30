@@ -288,7 +288,6 @@ defmodule ChatApiWeb.ConversationController do
     case ChatApi.Google.InitializeGmailThread.send(body, conversation) do
       %Messages.Message{} -> :ok
       {:error, message} -> {:error, :unprocessable_entity, message}
-      _ -> {:error, :unprocessable_entity, "Failed to send message"}
     end
   end
 

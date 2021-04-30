@@ -6,6 +6,7 @@ defmodule ChatApi.Customers do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
+  alias ChatApi.Conversations
   alias ChatApi.Customers.Customer
   alias ChatApi.Issues.CustomerIssue
   alias ChatApi.Tags.{CustomerTag, Tag}
@@ -34,12 +35,15 @@ defmodule ChatApi.Customers do
 
   """
   def list_customers(account_id, filters, pagination_params) do
+    conversations_query = Conversations.query_most_recent_conversation(partition_by: :customer_id)
+
     Customer
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> filter_by_tag(filters)
     |> filter_by_issue(filters)
     |> order_by(desc: :last_seen_at)
+    |> preload(conversations: ^conversations_query)
     |> Repo.paginate(pagination_params)
   end
 
