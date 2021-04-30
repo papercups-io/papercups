@@ -284,14 +284,6 @@ class GettingStartedOverview extends React.Component<Props, State> {
 
         <Box mb={4}>
           <Title level={3}>Customize your widget</Title>
-          <Paragraph>
-            <Text>
-              Customize your widget with the form and color picker. It will
-              update the preview to the right as well as the code below so you
-              can easily copy and paste it into your website looking just the
-              way you like!
-            </Text>
-          </Paragraph>
 
           <Box mb={3}>
             <label htmlFor="title">Update the title:</label>

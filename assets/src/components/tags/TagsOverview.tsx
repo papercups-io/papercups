@@ -165,7 +165,7 @@ class TagsOverview extends React.Component<Props, State> {
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={3}>Tags (beta)</Title>
+          <Title level={3}>Tags</Title>
 
           <Button
             type="primary"
@@ -186,17 +186,6 @@ class TagsOverview extends React.Component<Props, State> {
           <Paragraph>
             Use tags to organize and manage your customers and conversations.
           </Paragraph>
-
-          <Alert
-            message={
-              <Text>
-                This page is still a work in progress &mdash; more features
-                coming soon!
-              </Text>
-            }
-            type="info"
-            showIcon
-          />
         </Box>
 
         <Box mb={3}>
