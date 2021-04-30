@@ -113,7 +113,9 @@ const CustomersTable = ({
       key: 'last_seen_at',
       render: (value: string, record: Customer) => {
         const {id, pathname, current_url, last_seen} = record;
-        const formatted = dayjs.utc(value || last_seen).format('MMMM DD, YYYY');
+        const formatted = dayjs
+          .utc(value || last_seen)
+          .format('ddd, MMM D h:mm A');
         const isOnline = currentlyOnline[id];
 
         if (isOnline) {
@@ -138,12 +140,33 @@ const CustomersTable = ({
         );
       },
     },
+    // {
+    //   title: 'Timezone',
+    //   dataIndex: 'time_zone',
+    //   key: 'time_zone',
+    //   render: (value: string) => {
+    //     return value ? <Text>{value}</Text> : <Text type="secondary">--</Text>;
+    //   },
+    // },
     {
-      title: 'Timezone',
-      dataIndex: 'time_zone',
-      key: 'time_zone',
-      render: (value: string) => {
-        return value ? <Text>{value}</Text> : <Text type="secondary">--</Text>;
+      title: 'Last message received',
+      dataIndex: 'most_recent_message',
+      key: 'most_recent_message',
+      render: (message: any) => {
+        console.log('!!!', message);
+        const isValidMessage = message && message.conversation_id;
+
+        if (!isValidMessage) {
+          return '--';
+        }
+
+        const {
+          created_at: createdAt,
+          conversation_id: conversationId,
+        } = message;
+        const formatted = dayjs.utc(createdAt).format('ddd, MMM D h:mm A');
+
+        return <Text>{formatted}</Text>;
       },
     },
     {

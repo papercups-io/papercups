@@ -92,6 +92,7 @@ defmodule ChatApiWeb.CustomerView do
     |> maybe_render_notes(customer)
     |> maybe_render_conversations(customer)
     |> maybe_render_messages(customer)
+    |> maybe_render_most_recent_message(customer)
     |> maybe_render_company(customer)
   end
 
@@ -121,6 +122,13 @@ defmodule ChatApiWeb.CustomerView do
     do: Map.merge(json, %{messages: render_many(messages, MessageView, "message.json")})
 
   defp maybe_render_messages(json, _), do: json
+
+  defp maybe_render_most_recent_message(json, %Customer{messages: [message] = messages})
+       when is_list(messages) and length(messages) == 1,
+       do:
+         Map.merge(json, %{most_recent_message: render_one(message, MessageView, "message.json")})
+
+  defp maybe_render_most_recent_message(json, _), do: json
 
   defp maybe_render_company(json, %Customer{company: company}) do
     case company do

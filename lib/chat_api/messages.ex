@@ -82,6 +82,24 @@ defmodule ChatApi.Messages do
     Message.changeset(message, attrs)
   end
 
+  def query_most_recent_message(partition_by: partition_by) do
+    order_by = [desc: :inserted_at]
+
+    ranking_query =
+      from(m in Message,
+        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
+        windows: [
+          messages_partition: [partition_by: ^partition_by, order_by: ^order_by]
+        ]
+      )
+
+    # We just want to query the most recent message
+    from(m in Message,
+      join: r in subquery(ranking_query),
+      on: m.id == r.id and r.row_number <= 1
+    )
+  end
+
   @spec create_attachments(Message.t(), [binary()]) :: any()
   def create_attachments(%Message{id: message_id, account_id: account_id}, file_ids) do
     now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)

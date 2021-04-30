@@ -31,6 +31,7 @@ defmodule ChatApiWeb.CustomerController do
   def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
       page = Customers.list_customers(account_id, params, format_pagination_options(params))
+      IO.inspect(page.entries, label: "!!!")
       render(conn, "index.#{resp_format(params)}", page: page)
     end
   end

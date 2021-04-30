@@ -8,6 +8,7 @@ defmodule ChatApi.Customers do
 
   alias ChatApi.Customers.Customer
   alias ChatApi.Issues.CustomerIssue
+  alias ChatApi.Messages
   alias ChatApi.Tags.{CustomerTag, Tag}
 
   @spec list_customers(binary(), map()) :: [Customer.t()]
@@ -34,11 +35,14 @@ defmodule ChatApi.Customers do
 
   """
   def list_customers(account_id, filters, pagination_params) do
+    messages_query = Messages.query_most_recent_message(partition_by: :customer_id)
+
     Customer
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> filter_by_tag(filters)
     |> filter_by_issue(filters)
+    |> preload(messages: ^messages_query)
     |> order_by(desc: :last_seen_at)
     |> Repo.paginate(pagination_params)
   end
