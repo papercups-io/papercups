@@ -1,16 +1,7 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {
-  Alert,
-  Button,
-  Input,
-  Paragraph,
-  Table,
-  Tag,
-  Text,
-  Title,
-} from '../common';
+import {Button, Input, Paragraph, Table, Tag, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';

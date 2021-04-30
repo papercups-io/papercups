@@ -238,6 +238,7 @@ const CustomersTable = ({
                 {(handleOpenLatestConversationModal) => {
                   return (
                     <Text type="secondary">
+                      {/* eslint-disable-next-line */}
                       <a onClick={handleOpenLatestConversationModal}>
                         View conversation
                       </a>

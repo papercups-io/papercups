@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box} from 'theme-ui';
-import {Alert, Paragraph, Text, Title} from '../common';
+import {Paragraph, Title} from '../common';
 import {useConversations} from '../conversations/ConversationsProvider';
 import {NewCustomerButton} from './NewCustomerModal';
 import CustomersTableContainer from './CustomersTableContainer';
