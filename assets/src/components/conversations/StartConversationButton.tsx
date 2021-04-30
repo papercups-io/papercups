@@ -58,6 +58,7 @@ const NewConversationModal = ({
 
         if (canSendEmail) {
           setAvailableSources(['chat', 'email']);
+          setConversationSource('email');
         } else {
           setAvailableSources(['chat']);
         }

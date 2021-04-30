@@ -100,7 +100,31 @@ defmodule ChatApi.Messages do
     Repo.insert_all(MessageFile, changesets)
   end
 
-  @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}
+  @spec query_most_recent_message(keyword()) :: Ecto.Query.t()
+  def query_most_recent_message(opts \\ []) do
+    partition_by = Keyword.get(opts, :partition_by, :account_id)
+    order_by = Keyword.get(opts, :order_by, desc: :inserted_at)
+    preload = Keyword.get(opts, :preload, [])
+
+    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
+    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
+    ranking_query =
+      from(m in Message,
+        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
+        windows: [
+          messages_partition: [partition_by: ^partition_by, order_by: ^order_by]
+        ]
+      )
+
+    # We just want to query the most recent message
+    from(m in Message,
+      join: r in subquery(ranking_query),
+      on: m.id == r.id and r.row_number <= 1,
+      preload: ^preload
+    )
+  end
+
+  @spec filter_where(map()) :: %Ecto.Query.DynamicExpr{}
   def filter_where(params) do
     Enum.reduce(params, dynamic(true), fn
       {"customer_id", value}, dynamic ->

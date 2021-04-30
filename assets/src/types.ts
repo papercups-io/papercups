@@ -45,7 +45,9 @@ export type Customer = {
   time_zone?: string;
   updated_at?: string;
   title: string;
+  // Associations
   company?: Company;
+  conversations?: Array<Conversation>;
 };
 
 export type Company = {

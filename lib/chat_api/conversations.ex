@@ -49,39 +49,6 @@ defmodule ChatApi.Conversations do
     )
   end
 
-  @spec list_conversations_by_account_v2(binary(), map()) :: [Conversation.t()]
-  def list_conversations_by_account_v2(account_id, filters \\ %{}) do
-    # TODO: eventually DRY this up with `list_recent_by_customer/3` below... but for now
-    # we're cool with some code duplication while we're still figuring out the shape of our APIs
-
-    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
-    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
-    ranking_query =
-      from(m in Message,
-        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
-        windows: [
-          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
-        ]
-      )
-
-    # We just want to query the most recent message
-    messages_query =
-      from(m in Message,
-        join: r in subquery(ranking_query),
-        on: m.id == r.id and r.row_number <= 1,
-        preload: [:attachments, :customer, user: :profile]
-      )
-
-    Conversation
-    |> where(account_id: ^account_id)
-    |> where(^filter_where(filters))
-    |> where([c], is_nil(c.archived_at))
-    |> filter_by_tag(filters)
-    |> order_by_most_recent_message()
-    |> preload([:customer, messages: ^messages_query])
-    |> Repo.all()
-  end
-
   @spec list_other_recent_conversations(Conversation.t(), integer(), map()) :: [Conversation.t()]
   def list_other_recent_conversations(
         %Conversation{
@@ -92,24 +59,10 @@ defmodule ChatApi.Conversations do
         limit \\ 5,
         filters \\ %{}
       ) do
-    # TODO: eventually DRY this up with `list_recent_by_customer/3` below... but for now
-    # we're cool with some code duplication while we're still figuring out the shape of our APIs
-
-    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
-    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
-    ranking_query =
-      from(m in Message,
-        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
-        windows: [
-          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
-        ]
-      )
-
-    # We just want to query the most recent message
     messages_query =
-      from(m in Message,
-        join: r in subquery(ranking_query),
-        on: m.id == r.id and r.row_number <= 1,
+      ChatApi.Messages.query_most_recent_message(
+        partition_by: :conversation_id,
+        order_by: [desc: :inserted_at],
         preload: [:customer, user: :profile]
       )
 
@@ -216,21 +169,10 @@ defmodule ChatApi.Conversations do
   # Used internally in dashboard
   @spec list_recent_by_customer(binary(), binary(), integer()) :: [Conversation.t()]
   def list_recent_by_customer(customer_id, account_id, limit \\ 5) do
-    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
-    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
-    ranking_query =
-      from(m in Message,
-        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
-        windows: [
-          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
-        ]
-      )
-
-    # We just want to query the most recent message
     messages_query =
-      from(m in Message,
-        join: r in subquery(ranking_query),
-        on: m.id == r.id and r.row_number <= 1,
+      ChatApi.Messages.query_most_recent_message(
+        partition_by: :conversation_id,
+        order_by: [desc: :inserted_at],
         preload: [:customer, user: :profile]
       )
 
@@ -425,6 +367,28 @@ defmodule ChatApi.Conversations do
     |> where([c], is_nil(c.archived_at))
     |> where(status: "closed")
     |> where([c], c.updated_at < ago(^days, "day"))
+  end
+
+  @spec query_most_recent_conversation(keyword()) :: Ecto.Query.t()
+  def query_most_recent_conversation(opts \\ []) do
+    partition_by = Keyword.get(opts, :partition_by, :account_id)
+    order_by = Keyword.get(opts, :order_by, desc: :last_activity_at)
+    preload = Keyword.get(opts, :preload, [])
+
+    ranking_query =
+      from(m in Conversation,
+        select: %{id: m.id, row_number: row_number() |> over(:conversations_partition)},
+        windows: [
+          conversations_partition: [partition_by: ^partition_by, order_by: ^order_by]
+        ]
+      )
+
+    # We just want to query the most recent conversation
+    from(c in Conversation,
+      join: r in subquery(ranking_query),
+      on: c.id == r.id and r.row_number <= 1,
+      preload: ^preload
+    )
   end
 
   @spec delete_conversation(Conversation.t()) ::

@@ -125,11 +125,13 @@ const ConversationModalWrapper = ({
   } = useConversations();
 
   React.useEffect(() => {
-    fetchConversationById(conversationId).then(() =>
-      onSelectConversation(conversationId)
-    );
+    if (visible) {
+      fetchConversationById(conversationId).then(() =>
+        onSelectConversation(conversationId)
+      );
+    }
     // eslint-disable-next-line
-  }, [conversationId]);
+  }, [visible, conversationId]);
 
   if (loading) {
     return null;
@@ -151,6 +153,45 @@ const ConversationModalWrapper = ({
       onSendMessage={onSendMessage}
       onClose={onClose}
     />
+  );
+};
+
+export const ConversationModalRenderer = ({
+  children,
+  conversationId,
+  onClose,
+}: {
+  children: (handleOpenModal: () => void) => React.ReactElement;
+  conversationId: string | null;
+  onClose?: () => void;
+}) => {
+  const [isModalOpen, setModalOpen] = React.useState(false);
+
+  const handleOpenConversationModal = () => setModalOpen(true);
+  const handleCloseConversationModal = () => setModalOpen(false);
+
+  const handleClose = () => {
+    if (typeof onClose === 'function') {
+      onClose();
+    }
+
+    handleCloseConversationModal();
+  };
+
+  if (!conversationId) {
+    return children(handleOpenConversationModal);
+  }
+
+  return (
+    <React.Fragment>
+      {children(handleOpenConversationModal)}
+
+      <ConversationModalWrapper
+        conversationId={conversationId}
+        visible={isModalOpen}
+        onClose={handleClose}
+      />
+    </React.Fragment>
   );
 };
 

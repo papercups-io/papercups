@@ -8,7 +8,7 @@ defmodule ChatApi.Google.InitializeGmailThread do
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
 
-  @spec send(binary(), Conversation.t()) :: Message.t()
+  @spec send(binary(), Conversation.t()) :: Message.t() | {:error, String.t()}
   def send(
         text,
         %Conversation{
