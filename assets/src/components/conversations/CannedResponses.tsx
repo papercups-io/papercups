@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {Button, Input, Layout, Menu, Title, Tooltip, colors} from '../common';
-import {PlusOutlined, UserOutlined, ReadOutlined} from '../icons';
+import {PlusOutlined, ReadOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
 import logger from '../../logger';
@@ -154,20 +154,16 @@ class CannedResponsesOverview extends React.Component<Props, State> {
               minHeight: 280,
             }}
           >
-            <Box>
-              <Row gutter={16} justify={'space-between'}>
-                <Col span={4}>Name of Person</Col>
-                <Col span={2} push={4}>
-                  <Button>A button</Button>
-                </Col>
-                <Col span={2} pull={2}>
-                  <Button>A Button</Button>
-                </Col>
-              </Row>
-              <Row>
-                Created by <UserOutlined></UserOutlined>Alex Reichart 8 days ago
-              </Row>
-            </Box>
+            <Flex>
+              <Box sx={{flex: '1 1 auto'}}>
+                <Title level={3}>foo</Title>
+              </Box>
+              <Box>
+                <Button danger>Delete</Button>
+                <Button type="primary">Edit</Button>
+              </Box>
+            </Flex>
+            <Box>Created by insert Image Alex Reichart 8 days ago</Box>
             <Space align="center"></Space>
             <Box>This is content</Box>
           </Content>
