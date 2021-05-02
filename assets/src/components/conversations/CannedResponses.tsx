@@ -1,11 +1,12 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {Button, Input, Layout, Menu, Title, Tooltip, colors} from '../common';
-import {PlusOutlined, ReadOutlined} from '../icons';
+import {PlusOutlined, UserOutlined, ReadOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
 import logger from '../../logger';
 import NewTagModal from '../tags/NewTagModal';
+import {Row, Col, Space} from 'antd';
 
 const {Header, Sider, Content} = Layout;
 
@@ -106,7 +107,7 @@ class CannedResponsesOverview extends React.Component<Props, State> {
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={3}>Saved Replies for Taro (beta)</Title>
+          <Title level={3}>Saved Replies for Taro</Title>
           <Box style={{color: colors.blue[5]}}>
             <ReadOutlined style={{margin: 5, padding: 5}}></ReadOutlined>
             <Tooltip title="How Saved Replies Work">
@@ -139,24 +140,38 @@ class CannedResponsesOverview extends React.Component<Props, State> {
           />
         </Box>
         <Layout>
-          <Sider trigger={null} collapsible collapsed={true}>
-            <Menu theme="dark" mode="inline" defaultSelectedKeys={['1']}>
-              <Menu.Item key="1">nav 1</Menu.Item>
-              <Menu.Item key="2">nav 2</Menu.Item>
-              <Menu.Item key="3">nav 3</Menu.Item>
+          <Sider trigger={null} collapsible>
+            <Menu mode="inline" defaultSelectedKeys={['1']}>
+              <Menu.Item key="1">Person A</Menu.Item>
+              <Menu.Item key="2">Person B</Menu.Item>
+              <Menu.Item key="3">Person C</Menu.Item>
             </Menu>
-            <Content
-              style={{
-                margin: '24px 16px',
-                padding: 24,
-                minHeight: 280,
-              }}
-            >
-              Content
-            </Content>
           </Sider>
+          <Content
+            style={{
+              margin: '24px 16px',
+              padding: 24,
+              minHeight: 280,
+            }}
+          >
+            <Box>
+              <Row gutter={16} justify={'space-between'}>
+                <Col span={4}>Name of Person</Col>
+                <Col span={2} push={4}>
+                  <Button>A button</Button>
+                </Col>
+                <Col span={2} pull={2}>
+                  <Button>A Button</Button>
+                </Col>
+              </Row>
+              <Row>
+                Created by <UserOutlined></UserOutlined>Alex Reichart 8 days ago
+              </Row>
+            </Box>
+            <Space align="center"></Space>
+            <Box>This is content</Box>
+          </Content>
         </Layout>
-        <Box my={4}></Box>
       </Box>
     );
   }
