@@ -9,7 +9,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
   def perform(%Oban.Job{args: %{"account_id" => account_id}}) do
-    Logger.info("Syncing Gmail inbox for account: #{inspect(account_id)}")
+    Logger.debug("Syncing Gmail inbox for account: #{inspect(account_id)}")
 
     sync(account_id)
   end
@@ -44,7 +44,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
         )
 
       %{"historyId" => history_id} ->
-        Logger.info(
+        Logger.debug(
           "Skipped syncing Gmail messages for account #{inspect(account_id)}. " <>
             "No new message history found since ID #{inspect(history_id)}."
         )
@@ -252,6 +252,6 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     |> Messages.Notification.notify(:slack, async: false)
     |> Messages.Notification.notify(:mattermost, async: false)
     # NB: for email threads, for now we want to reopen the conversation if it was closed
-    |> Messages.Helpers.handle_post_creation_conversation_updates(%{status: "open"})
+    |> Messages.Helpers.handle_post_creation_conversation_updates()
   end
 end

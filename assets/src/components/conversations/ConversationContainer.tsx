@@ -132,6 +132,7 @@ const ConversationContainer = ({
       >
         <ConversationMessages
           conversationId={selectedConversationId}
+          account={account}
           messages={messages}
           history={history}
           currentUser={currentUser}
@@ -167,8 +168,8 @@ const ConversationContainer = ({
           >
             <ConversationDetailsSidebar
               customer={customer}
-              isOnline={isOnline}
               conversation={conversation}
+              isOnline={isOnline}
             />
           </Box>
         )}

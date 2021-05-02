@@ -1,16 +1,7 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {
-  Alert,
-  Button,
-  Input,
-  Paragraph,
-  Table,
-  Tag,
-  Text,
-  Title,
-} from '../common';
+import {Button, Input, Paragraph, Table, Tag, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
@@ -54,10 +45,10 @@ const TagsTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (value: string, record: any) => {
-        const {id: companyId} = record;
+        const {id: tagId} = record;
 
         return (
-          <Link to={`/tags/${companyId}`}>
+          <Link to={`/tags/${tagId}`}>
             <Button>View</Button>
           </Link>
         );
@@ -97,8 +88,8 @@ const filterTagsByQuery = (
 
     const queries = query.split(' ').map((str) => str.toLowerCase());
 
-    return words.some((word) => {
-      return queries.every((q) => word.indexOf(q) !== -1);
+    return queries.every((q) => {
+      return words.some((word) => word.indexOf(q) !== -1);
     });
   });
 };
@@ -165,9 +156,8 @@ class TagsOverview extends React.Component<Props, State> {
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={3}>Tags (beta)</Title>
+          <Title level={3}>Tags</Title>
 
-          {/* TODO: implement me! */}
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -187,17 +177,6 @@ class TagsOverview extends React.Component<Props, State> {
           <Paragraph>
             Use tags to organize and manage your customers and conversations.
           </Paragraph>
-
-          <Alert
-            message={
-              <Text>
-                This page is still a work in progress &mdash; more features
-                coming soon!
-              </Text>
-            }
-            type="info"
-            showIcon
-          />
         </Box>
 
         <Box mb={3}>

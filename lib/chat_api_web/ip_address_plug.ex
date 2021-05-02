@@ -15,7 +15,7 @@ defmodule ChatApiWeb.IPAddressPlug do
     end
   end
 
-  @spec parse_ip([{String.t(), String.t()}]) :: String.t() | nil
+  @spec get_ip([{String.t(), String.t()}], String.t() | nil) :: String.t() | nil
   defp get_ip([], result), do: result |> truncate_header_value |> clean_ip |> parse_ip
 
   defp get_ip([{"x-forwarded-for", value} | tail], _result),

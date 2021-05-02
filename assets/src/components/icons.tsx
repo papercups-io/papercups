@@ -7,6 +7,7 @@ import CreditCardOutlined from '@ant-design/icons/CreditCardOutlined';
 import CreditCardTwoTone from '@ant-design/icons/CreditCardTwoTone';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import DeleteTwoTone from '@ant-design/icons/DeleteTwoTone';
+import DesktopOutlined from '@ant-design/icons/DesktopOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
 import GlobalOutlined from '@ant-design/icons/GlobalOutlined';
 import InfoCircleOutlined from '@ant-design/icons/InfoCircleOutlined';
@@ -44,6 +45,7 @@ export {
   CreditCardTwoTone,
   DeleteOutlined,
   DeleteTwoTone,
+  DesktopOutlined,
   DownOutlined,
   GlobalOutlined,
   InfoCircleOutlined,

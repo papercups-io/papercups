@@ -3,8 +3,11 @@ import qs from 'query-string';
 import {getAuthTokens} from './storage';
 import {
   Account,
+  BrowserSession,
   Conversation,
   Customer,
+  CustomerNote,
+  Issue,
   Tag,
   User,
   WidgetSettings,
@@ -167,7 +170,7 @@ export const fetchCustomers = async (
     .get(`/api/customers`)
     .query(filters)
     .set('Authorization', token)
-    .then((res) => res.body.data);
+    .then((res) => res.body);
 };
 
 export const fetchCustomer = async (
@@ -582,6 +585,20 @@ export const deleteConversation = async (
     .then((res) => res.body);
 };
 
+export const archiveConversation = async (
+  conversationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/conversations/${conversationId}/archive`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const createNewMessage = async (
   conversationId: string,
   message: any,
@@ -790,17 +807,6 @@ export const deleteTwilioAuthorization = async (
     .set('Authorization', token);
 };
 
-export const fetchGmailAuthorization = async (token = getAccessToken()) => {
-  if (!token) {
-    throw new Error('Invalid token!');
-  }
-
-  return request
-    .get(`/api/gmail/authorization`)
-    .set('Authorization', token)
-    .then((res) => res.body.data);
-};
-
 export const fetchGoogleAuthorization = async (
   client: 'gmail' | 'sheets',
   token = getAccessToken()
@@ -825,8 +831,62 @@ export const deleteGoogleAuthorization = async (
   }
 
   return request
-    .delete(`/api/google/authorization/${authorizationId}`)
+    .delete(`/api/google/authorizations/${authorizationId}`)
     .set('Authorization', token);
+};
+
+export const fetchGithubAuthorization = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/authorization`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteGithubAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/github/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
+export const fetchGithubRepos = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/repos`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const findGithubIssues = async (
+  query: {
+    url?: string;
+    owner?: string;
+    repo?: string;
+  },
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/issues`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
 };
 
 export type EmailParams = {
@@ -976,6 +1036,21 @@ export const authorizeGoogleIntegration = async (
     .then((res) => res.body.data);
 };
 
+export const authorizeGithubIntegration = async (
+  query: Record<string, any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/github/oauth`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const updateWidgetSettings = async (
   widgetSettingsParams: Partial<WidgetSettings>,
   token = getAccessToken()
@@ -1086,19 +1161,31 @@ export const enableAccountUser = async (
     .then((res) => res.body.data);
 };
 
-export const fetchCustomerNotes = async (
-  customerId: string,
+export const fetchNotes = async (
+  query = {},
   token = getAccessToken()
-) => {
+): Promise<CustomerNote[]> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
-    .get(`/api/notes`)
-    .query({customer_id: customerId})
+    .get('/api/notes')
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export type CustomerNotesListResponse = {
+  data: Array<CustomerNote>;
+};
+
+export const fetchCustomerNotes = async (
+  customerId: string,
+  query = {},
+  token = getAccessToken()
+): Promise<CustomerNote[]> => {
+  return fetchNotes({...query, customer_id: customerId}, token);
 };
 
 export const createCustomerNote = async (
@@ -1259,6 +1346,105 @@ export const removeCustomerTag = async (
     .then((res) => res.body.data);
 };
 
+export const fetchAllIssues = async (
+  query = {},
+  token = getAccessToken()
+): Promise<Array<Issue>> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/issues`)
+    .set('Authorization', token)
+    .query(query)
+    .then((res) => res.body.data);
+};
+
+export const fetchIssueById = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/issues/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createIssue = async (
+  issue: Partial<Issue>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/issues`)
+    .send({issue})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateIssue = async (
+  id: string,
+  issue: Partial<Issue>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/issues/${id}`)
+    .send({issue})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteIssue = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/issues/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
+export const addCustomerIssue = async (
+  customerId: string,
+  issueId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/customers/${customerId}/issues`)
+    .send({issue_id: issueId})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const removeCustomerIssue = async (
+  customerId: string,
+  issueId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/customers/${customerId}/issues/${issueId}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 type BrowserSessionFilters = {
   sessionIds?: Array<string>;
   customerId?: string;
@@ -1269,7 +1455,7 @@ type BrowserSessionFilters = {
 export const fetchBrowserSessions = async (
   {customerId, isActive, limit = 100, sessionIds = []}: BrowserSessionFilters,
   token = getAccessToken()
-) => {
+): Promise<Array<BrowserSession>> => {
   if (!token) {
     throw new Error('Invalid token!');
   }

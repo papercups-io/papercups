@@ -1,6 +1,14 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Button, Divider, Input, Modal, Paragraph, Text} from '../common';
+import {
+  Button,
+  Divider,
+  Input,
+  Modal,
+  Paragraph,
+  Popconfirm,
+  Text,
+} from '../common';
 import * as API from '../../api';
 import {TwilioAuthorization} from '../../types';
 import logger from '../../logger';
@@ -188,9 +196,15 @@ export const TwilioAuthorizationButton = ({
             <Button onClick={handleOpenModal}>Update</Button>
           </Box>
           <Box mx={1}>
-            <Button danger onClick={handleDisconnect}>
-              Disconnect
-            </Button>
+            <Popconfirm
+              title="Are you sure you want to disconnect from Twilio?"
+              okText="Yes"
+              cancelText="No"
+              placement="topLeft"
+              onConfirm={handleDisconnect}
+            >
+              <Button danger>Disconnect</Button>
+            </Popconfirm>
           </Box>
         </Flex>
       ) : (

@@ -181,6 +181,16 @@ defmodule ChatApi.Accounts do
     |> Repo.one()
   end
 
+  @spec get_primary_user(binary()) :: User.t()
+  def get_primary_user(account_id) do
+    User
+    |> where(account_id: ^account_id, role: "admin")
+    |> where([u], is_nil(u.disabled_at) and is_nil(u.archived_at))
+    |> order_by(asc: :inserted_at)
+    |> first()
+    |> Repo.one()
+  end
+
   @spec is_outside_working_hours?(Account.t(), DateTime.t()) :: boolean()
   def is_outside_working_hours?(%Account{working_hours: working_hours}, datetime)
       when is_list(working_hours) do

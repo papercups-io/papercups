@@ -75,7 +75,6 @@ class SharedConversationContainer extends React.Component<Props, State> {
             sx={{p: 3}}
             loading={loading}
             messages={messages}
-            isAgentMessage={(message: Message) => message && !!message.user_id}
             setScrollRef={(el) => (this.scrollToEl = el)}
           />
         </Box>

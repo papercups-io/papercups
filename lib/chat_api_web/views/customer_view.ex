@@ -5,6 +5,7 @@ defmodule ChatApiWeb.CustomerView do
     CompanyView,
     ConversationView,
     CustomerView,
+    IssueView,
     MessageView,
     NoteView,
     TagView,
@@ -19,12 +20,18 @@ defmodule ChatApiWeb.CustomerView do
                                  ~w(host pathname current_url browser)a ++
                                  ~w(os ip time_zone)a
 
-  def render("index.json", %{customers: customers}) do
-    %{data: render_many(customers, CustomerView, "customer.json")}
+  def render("index.json", %{page: page}) do
+    %{
+      data: render_many(page.entries, CustomerView, "customer.json"),
+      page_number: page.page_number,
+      page_size: page.page_size,
+      total_pages: page.total_pages,
+      total_entries: page.total_entries
+    }
   end
 
-  def render("index.csv", %{customers: customers}) do
-    customers
+  def render("index.csv", %{page: page}) do
+    page.entries
     |> render_many(CustomerView, "customer.json")
     |> CSVHelpers.dump_csv_rfc4180(@customer_csv_ordered_fields)
   end
@@ -50,7 +57,8 @@ defmodule ChatApiWeb.CustomerView do
       current_url: customer.current_url,
       browser: customer.browser,
       os: customer.os,
-      metadata: customer.metadata
+      metadata: customer.metadata,
+      title: customer.name || customer.email || "Anonymous User"
     }
   end
 
@@ -76,9 +84,11 @@ defmodule ChatApiWeb.CustomerView do
       os: customer.os,
       ip: customer.ip,
       metadata: customer.metadata,
-      time_zone: customer.time_zone
+      time_zone: customer.time_zone,
+      title: customer.name || customer.email || "Anonymous User"
     }
     |> maybe_render_tags(customer)
+    |> maybe_render_issues(customer)
     |> maybe_render_notes(customer)
     |> maybe_render_conversations(customer)
     |> maybe_render_messages(customer)
@@ -89,6 +99,11 @@ defmodule ChatApiWeb.CustomerView do
     do: Map.merge(json, %{tags: render_many(tags, TagView, "tag.json")})
 
   defp maybe_render_tags(json, _), do: json
+
+  defp maybe_render_issues(json, %Customer{issues: issues}) when is_list(issues),
+    do: Map.merge(json, %{issues: render_many(issues, IssueView, "issue.json")})
+
+  defp maybe_render_issues(json, _), do: json
 
   defp maybe_render_notes(json, %Customer{notes: notes}) when is_list(notes),
     do: Map.merge(json, %{notes: render_many(notes, NoteView, "note.json")})

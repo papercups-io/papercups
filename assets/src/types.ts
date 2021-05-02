@@ -1,6 +1,7 @@
 export type Account = {
   id: string;
   company_name: string;
+  company_logo_url?: string;
   time_zone?: string;
   subscription_plan?: string;
   users?: Array<User>;
@@ -43,6 +44,10 @@ export type Customer = {
   tags?: Array<Tag>;
   time_zone?: string;
   updated_at?: string;
+  title: string;
+  // Associations
+  company?: Company;
+  conversations?: Array<Conversation>;
 };
 
 export type Company = {
@@ -61,7 +66,7 @@ export type MessageType = 'reply' | 'note';
 export type Message = {
   id: string;
   body: string;
-  type?: 'reply' | 'note';
+  type?: 'reply' | 'note' | 'bot';
   private?: boolean;
   created_at: string;
   sent_at?: string;
@@ -85,9 +90,12 @@ export type FileUpload = {
 // Alias
 export type Attachment = FileUpload;
 
+export type ConversationSource = 'chat' | 'email' | 'slack' | 'sms';
+
 export type Conversation = {
   id: string;
-  source?: string;
+  source?: ConversationSource;
+  subject?: string;
   account_id: string;
   customer_id: string;
   customer: Customer;
@@ -110,6 +118,8 @@ export type CustomerNote = {
   author_id: number;
   created_at: string;
   updated_at: string;
+  author?: User;
+  customer?: Customer;
 };
 
 export type Tag = {
@@ -117,6 +127,23 @@ export type Tag = {
   name: string;
   description?: string;
   color?: string;
+  updated_at: string;
+};
+
+export type IssueState =
+  | 'unstarted'
+  | 'in_progress'
+  | 'in_review'
+  | 'done'
+  | 'closed';
+
+export type Issue = {
+  id: string;
+  title: string;
+  body?: string;
+  state: IssueState;
+  github_issue_url?: string;
+  created_at: string;
   updated_at: string;
 };
 
@@ -206,3 +233,10 @@ export enum Alignment {
   Left = 'left',
   Center = 'center',
 }
+
+export type Pagination = {
+  page_size: number;
+  page_number: number;
+  total_pages?: number;
+  total_entries?: number;
+};

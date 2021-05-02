@@ -74,6 +74,23 @@ defmodule ChatApi.Slack.Client do
     end
   end
 
+  @spec list_messages(binary(), binary()) :: {:ok, nil} | Tesla.Env.result()
+  def list_messages(channel, access_token) do
+    if should_execute?(access_token) do
+      get("/conversations.history",
+        query: [channel: channel],
+        headers: [
+          {"Authorization", "Bearer " <> access_token}
+        ]
+      )
+    else
+      # Inspect what would've been sent for debugging
+      Logger.info("Would have retrieved messages from channel #{inspect(channel)}")
+
+      {:ok, nil}
+    end
+  end
+
   @spec retrieve_message(binary(), binary(), binary()) :: {:ok, nil} | Tesla.Env.result()
   def retrieve_message(channel, ts, access_token) do
     if should_execute?(access_token) do

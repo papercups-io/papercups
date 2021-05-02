@@ -5,6 +5,7 @@ defmodule ChatApi.Conversations.Conversation do
   alias ChatApi.{
     Accounts.Account,
     Customers.Customer,
+    Issues.ConversationIssue,
     Messages.Message,
     Tags.ConversationTag,
     Users.User
@@ -14,6 +15,7 @@ defmodule ChatApi.Conversations.Conversation do
           status: String.t(),
           priority: String.t(),
           source: String.t() | nil,
+          subject: String.t() | nil,
           read: boolean(),
           archived_at: any(),
           closed_at: any(),
@@ -41,6 +43,7 @@ defmodule ChatApi.Conversations.Conversation do
     field(:status, :string, default: "open")
     field(:priority, :string, default: "not_priority")
     field(:source, :string, default: "chat")
+    field(:subject, :string)
     field(:read, :boolean, default: false)
     field(:archived_at, :utc_datetime)
     field(:first_replied_at, :utc_datetime)
@@ -55,6 +58,8 @@ defmodule ChatApi.Conversations.Conversation do
 
     has_many(:conversation_tags, ConversationTag)
     has_many(:tags, through: [:conversation_tags, :tag])
+    has_many(:conversation_issues, ConversationIssue)
+    has_many(:issues, through: [:conversation_issues, :issue])
 
     timestamps()
   end
@@ -73,11 +78,12 @@ defmodule ChatApi.Conversations.Conversation do
       :first_replied_at,
       :closed_at,
       :source,
+      :subject,
       :metadata
     ])
     |> validate_required([:status, :account_id, :customer_id])
     |> validate_inclusion(:source, ["chat", "slack", "email", "sms"])
-    |> put_closed_at()
+    |> put_closed_and_last_activity_at()
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:customer_id)
   end
@@ -87,15 +93,23 @@ defmodule ChatApi.Conversations.Conversation do
     |> cast(attrs, [:last_activity_at])
   end
 
-  defp put_closed_at(%Ecto.Changeset{valid?: true, changes: %{status: status}} = changeset) do
+  defp put_closed_and_last_activity_at(
+         %Ecto.Changeset{valid?: true, changes: %{status: status}} = changeset
+       ) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
     case status do
       "closed" ->
-        put_change(changeset, :closed_at, DateTime.utc_now() |> DateTime.truncate(:second))
+        changeset
+        |> put_change(:last_activity_at, now)
+        |> put_change(:closed_at, now)
 
       "open" ->
-        put_change(changeset, :closed_at, nil)
+        changeset
+        |> put_change(:last_activity_at, now)
+        |> put_change(:closed_at, nil)
     end
   end
 
-  defp put_closed_at(changeset), do: changeset
+  defp put_closed_and_last_activity_at(changeset), do: changeset
 end

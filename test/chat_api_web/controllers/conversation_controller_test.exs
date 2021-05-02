@@ -155,6 +155,21 @@ defmodule ChatApiWeb.ConversationControllerTest do
     end
   end
 
+  describe "archive conversation" do
+    test "archives chosen conversation", %{
+      authed_conn: authed_conn,
+      conversation: %Conversation{id: id} = conversation
+    } do
+      conn = post(authed_conn, Routes.conversation_path(authed_conn, :archive, conversation))
+      assert %{"id" => ^id} = json_response(conn, 200)["data"]
+
+      conn = get(authed_conn, Routes.conversation_path(authed_conn, :index))
+      ids = json_response(conn, 200)["data"] |> Enum.map(& &1["id"])
+
+      refute Enum.member?(ids, id)
+    end
+  end
+
   # TODO: add some more tests!
   describe "adding/removing tags" do
     test "adds a tag",

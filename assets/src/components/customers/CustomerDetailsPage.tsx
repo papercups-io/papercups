@@ -12,7 +12,7 @@ import ConversationItem from '../conversations/ConversationItem';
 import StartConversationButton from '../conversations/StartConversationButton';
 import {CustomerDetails} from '../conversations/ConversationDetailsSidebar';
 import {sortConversationMessages} from '../../utils';
-import CustomerDetailsModal from './CustomerDetailsModal';
+import CustomerDetailsModal from '../customers/CustomerDetailsModal';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
   return (

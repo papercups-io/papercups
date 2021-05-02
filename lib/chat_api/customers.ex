@@ -6,7 +6,9 @@ defmodule ChatApi.Customers do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
+  alias ChatApi.Conversations
   alias ChatApi.Customers.Customer
+  alias ChatApi.Issues.CustomerIssue
   alias ChatApi.Tags.{CustomerTag, Tag}
 
   @spec list_customers(binary(), map()) :: [Customer.t()]
@@ -15,16 +17,10 @@ defmodule ChatApi.Customers do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> filter_by_tag(filters)
+    |> filter_by_issue(filters)
+    |> order_by(desc: :last_seen_at)
     |> Repo.all()
   end
-
-  def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
-    query
-    |> join(:left, [c], t in assoc(c, :tags))
-    |> where([_c, t], t.id == ^tag_id)
-  end
-
-  def filter_by_tag(query, _filters), do: query
 
   @spec list_customers(binary(), map(), map()) :: Scrivener.Page.t()
   @doc """
@@ -39,11 +35,35 @@ defmodule ChatApi.Customers do
 
   """
   def list_customers(account_id, filters, pagination_params) do
+    conversations_query = Conversations.query_most_recent_conversation(partition_by: :customer_id)
+
     Customer
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
+    |> filter_by_tag(filters)
+    |> filter_by_issue(filters)
+    |> order_by(desc: :last_seen_at)
+    |> preload(conversations: ^conversations_query)
     |> Repo.paginate(pagination_params)
   end
+
+  @spec filter_by_tag(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
+    query
+    |> join(:left, [c], t in assoc(c, :tags))
+    |> where([_c, t], t.id == ^tag_id)
+  end
+
+  def filter_by_tag(query, _filters), do: query
+
+  @spec filter_by_issue(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_issue(query, %{"issue_id" => issue_id}) when not is_nil(issue_id) do
+    query
+    |> join(:left, [c], t in assoc(c, :issues))
+    |> where([_c, t], t.id == ^issue_id)
+  end
+
+  def filter_by_issue(query, _filters), do: query
 
   @spec get_customer!(binary(), atom() | list(atom()) | keyword()) :: Customer.t()
   def get_customer!(id, preloads \\ [:company, :tags]) do
@@ -55,7 +75,14 @@ defmodule ChatApi.Customers do
   @spec is_valid_association?(atom()) :: boolean()
   def is_valid_association?(field) do
     Enum.any?(
-      [:messages, :conversations, :notes, :tags, :company],
+      [
+        :messages,
+        :conversations,
+        :notes,
+        :tags,
+        :company,
+        :issues
+      ],
       fn association -> association == field end
     )
   end
@@ -336,6 +363,39 @@ defmodule ChatApi.Customers do
     |> Repo.delete()
   end
 
+  @spec get_issue(Customer.t(), binary()) :: nil | CustomerIssue.t()
+  def get_issue(%Customer{id: id, account_id: account_id} = _customer, issue_id) do
+    CustomerIssue
+    |> where(account_id: ^account_id, customer_id: ^id, issue_id: ^issue_id)
+    |> Repo.one()
+  end
+
+  @spec link_issue(Customer.t(), binary()) ::
+          {:ok, CustomerIssue.t()} | {:error, Ecto.Changeset.t()}
+  def link_issue(%Customer{id: id, account_id: account_id} = customer, issue_id) do
+    case get_issue(customer, issue_id) do
+      nil ->
+        %CustomerIssue{}
+        |> CustomerIssue.changeset(%{
+          customer_id: id,
+          issue_id: issue_id,
+          account_id: account_id
+        })
+        |> Repo.insert()
+
+      issue ->
+        {:ok, issue}
+    end
+  end
+
+  @spec unlink_issue(Customer.t(), binary()) ::
+          {:ok, CustomerIssue.t()} | {:error, Ecto.Changeset.t()}
+  def unlink_issue(%Customer{} = customer, issue_id) do
+    customer
+    |> get_issue(issue_id)
+    |> Repo.delete()
+  end
+
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}
   def filter_where(params) do
@@ -381,6 +441,16 @@ defmodule ChatApi.Customers do
 
       {"time_zone", value}, dynamic ->
         dynamic([r], ^dynamic and ilike(r.time_zone, ^value))
+
+      {"include_anonymous", "false"}, dynamic ->
+        dynamic([r], ^dynamic and not is_nil(r.email))
+
+      {"q", ""}, dynamic ->
+        dynamic
+
+      {"q", query}, dynamic ->
+        value = "%" <> query <> "%"
+        dynamic([r], ^dynamic and (ilike(r.email, ^value) or ilike(r.name, ^value)))
 
       {_, _}, dynamic ->
         # Not a where parameter

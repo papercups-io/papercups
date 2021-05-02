@@ -52,10 +52,12 @@ import CannedResponses from './conversations/CannedResponses';
 import MyConversations from './conversations/MyConversations';
 import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
+import ConversationsBySource from './conversations/ConversationsBySource';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import CustomerDetailsPage from './customers/CustomerDetailsPage';
+import CustomerDetailsPageV2 from './customers/CustomerDetailsPageV2';
 import SessionsOverview from './sessions/SessionsOverview';
 import InstallingStorytime from './sessions/InstallingStorytime';
 import LiveSessionViewer from './sessions/LiveSessionViewer';
@@ -66,6 +68,9 @@ import UpdateCompanyPage from './companies/UpdateCompanyPage';
 import CompanyDetailsPage from './companies/CompanyDetailsPage';
 import TagsOverview from './tags/TagsOverview';
 import TagDetailsPage from './tags/TagDetailsPage';
+import IssuesOverview from './issues/IssuesOverview';
+import IssueDetailsPage from './issues/IssueDetailsPage';
+import NotesOverview from './notes/NotesOverview';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -207,10 +212,10 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
-  const {account, currentUser, unreadByCategory: unread} = useConversations();
+  const {account, currentUser, inboxes, getUnreadCount} = useConversations();
 
   const [section, key] = getSectionKey(pathname);
-  const totalNumUnread = (unread && unread.all) || 0;
+  const totalNumUnread = getUnreadCount(inboxes.all.open);
   const shouldDisplayBilling = hasValidStripeKey();
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
@@ -258,7 +263,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Box py={3} sx={{flex: 1}}>
             <Menu
               selectedKeys={[section, key]}
-              defaultOpenKeys={[section, 'conversations']}
+              defaultOpenKeys={[section, 'conversations', 'inbox-channels']}
               mode="inline"
               theme="dark"
             >
@@ -292,7 +297,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>All conversations</Box>
                       <Badge
-                        count={unread.all}
+                        count={totalNumUnread}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -308,7 +313,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Assigned to me</Box>
                       <Badge
-                        count={unread.mine}
+                        count={getUnreadCount(inboxes.all.assigned)}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -324,7 +329,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Prioritized</Box>
                       <Badge
-                        count={unread.priority}
+                        count={getUnreadCount(inboxes.all.priority)}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -335,18 +340,59 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.SubMenu
-                key="sessions"
-                icon={<VideoCameraOutlined />}
-                title="Sessions"
+                key="inbox-channels"
+                icon={<MailOutlined />}
+                title="Channels"
               >
-                <Menu.Item key="list">
-                  <Link to="/sessions/list">Live sessions</Link>
+                <Menu.Item key="live-chat">
+                  <Link to="/conversations/live-chat">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Live chat</Box>
+                      <Badge
+                        count={getUnreadCount(inboxes.bySource['chat'] ?? [])}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
                 </Menu.Item>
-                <Menu.Item key="setup">
-                  <Link to="/sessions/setup">Set up Storytime</Link>
+                <Menu.Item key="email">
+                  <Link to="/conversations/email">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Email</Box>
+                      <Badge
+                        count={getUnreadCount(inboxes.bySource['email'] ?? [])}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="slack">
+                  <Link to="/conversations/slack">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Slack</Box>
+                      <Badge
+                        count={getUnreadCount(inboxes.bySource['slack'] ?? [])}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
                 </Menu.Item>
               </Menu.SubMenu>
-
               <Menu.SubMenu
                 key="customers"
                 icon={<TeamOutlined />}
@@ -363,6 +409,24 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
                 <Menu.Item key="canned">
                   <Link to="/canned">Canned Conversations</Link>
+                </Menu.Item>
+                <Menu.Item key="issues">
+                  <Link to="/issues">Issues</Link>
+                </Menu.Item>
+                <Menu.Item key="notes">
+                  <Link to="/notes">Notes</Link>
+                </Menu.Item>
+              </Menu.SubMenu>
+              <Menu.SubMenu
+                key="sessions"
+                icon={<VideoCameraOutlined />}
+                title="Sessions"
+              >
+                <Menu.Item key="list">
+                  <Link to="/sessions/list">Live sessions</Link>
+                </Menu.Item>
+                <Menu.Item key="setup">
+                  <Link to="/sessions/setup">Set up Storytime</Link>
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
@@ -425,7 +489,8 @@ const Dashboard = (props: RouteComponentProps) => {
             component={GettingStartedOverview}
           />
           <Route path="/account*" component={AccountOverview} />
-          <Route path="/customers/:id" component={CustomerDetailsPage} />
+          <Route path="/v1/customers/:id" component={CustomerDetailsPage} />
+          <Route path="/customers/:id" component={CustomerDetailsPageV2} />
           <Route path="/customers" component={CustomersPage} />
           <Route path="/companies/new" component={CreateCompanyPage} />
           <Route path="/companies/:id/edit" component={UpdateCompanyPage} />
@@ -440,6 +505,15 @@ const Dashboard = (props: RouteComponentProps) => {
             path="/conversations/priority"
             component={PriorityConversations}
           />
+          <Route path="/conversations/live-chat" key="chat">
+            <ConversationsBySource title="Live chat" source="chat" />
+          </Route>
+          <Route path="/conversations/email" key="email">
+            <ConversationsBySource title="Email" source="email" />
+          </Route>
+          <Route path="/conversations/slack" key="slack">
+            <ConversationsBySource title="Slack" source="slack" />
+          </Route>
           <Route path="/conversations/closed" component={ClosedConversations} />
           <Route
             path="/conversations/:id"
@@ -462,6 +536,9 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/tags/:id" component={TagDetailsPage} />
           <Route path="/tags" component={TagsOverview} />
           <Route path="/canned" component={CannedResponses} />
+          <Route path="/issues/:id" component={IssueDetailsPage} />
+          <Route path="/issues" component={IssuesOverview} />
+          <Route path="/notes" component={NotesOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>

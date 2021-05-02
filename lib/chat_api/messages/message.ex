@@ -10,6 +10,7 @@ defmodule ChatApi.Messages.Message do
 
   @type t :: %__MODULE__{
           body: String.t(),
+          subject: String.t() | nil,
           sent_at: DateTime.t() | nil,
           seen_at: DateTime.t() | nil,
           source: String.t(),
@@ -38,6 +39,7 @@ defmodule ChatApi.Messages.Message do
     field(:seen_at, :utc_datetime)
     field(:source, :string, default: "chat")
     field(:type, :string, default: "reply")
+    field(:subject, :string)
     field(:private, :boolean, default: false)
     field(:metadata, :map)
 
@@ -66,10 +68,11 @@ defmodule ChatApi.Messages.Message do
       :sent_at,
       :seen_at,
       :source,
+      :subject,
       :metadata
     ])
     |> validate_required([:account_id, :conversation_id])
-    |> validate_inclusion(:type, ["reply", "note"])
+    |> validate_inclusion(:type, ["reply", "note", "bot"])
     |> validate_inclusion(:source, ["chat", "slack", "mattermost", "email", "sms"])
   end
 end

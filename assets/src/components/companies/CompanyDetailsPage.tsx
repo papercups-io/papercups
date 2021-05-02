@@ -15,8 +15,8 @@ import * as API from '../../api';
 import {Company, Customer} from '../../types';
 import {sleep} from '../../utils';
 import Spinner from '../Spinner';
+import CustomersTableContainer from '../customers/CustomersTableContainer';
 import logger from '../../logger';
-import CustomersTable from '../customers/CustomersTable';
 
 const formatSlackChannel = (name: string) => {
   return name.startsWith('#') ? name : `#${name}`;
@@ -59,9 +59,11 @@ class CompanyDetailsPage extends React.Component<Props, State> {
 
   async componentDidMount() {
     try {
-      const {id: companyId} = this.props.match.params;
+      const companyId = this.getCompanyId();
       const company = await API.fetchCompany(companyId);
-      const customers = await API.fetchCustomers({company_id: companyId});
+      const {data: customers} = await API.fetchCustomers({
+        company_id: companyId,
+      });
 
       this.setState({company, customers, loading: false});
     } catch (err) {
@@ -71,25 +73,15 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     }
   }
 
-  handleRefreshCustomers = async () => {
-    this.setState({refreshing: true});
-
-    try {
-      const {id: companyId} = this.props.match.params;
-      const customers = await API.fetchCustomers({company_id: companyId});
-
-      this.setState({customers, refreshing: false});
-    } catch (err) {
-      logger.error('Error refreshing customers!', err);
-
-      this.setState({refreshing: false});
-    }
+  getCompanyId = () => {
+    return this.props.match.params.id;
   };
 
   handleDeleteCompany = async () => {
     try {
       this.setState({deleting: true});
-      const {id: companyId} = this.props.match.params;
+      const companyId = this.getCompanyId();
+
       await API.deleteCompany(companyId);
       await sleep(1000);
 
@@ -102,7 +94,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, deleting, refreshing, company, customers = []} = this.state;
+    const {loading, deleting, company, customers = []} = this.state;
 
     if (loading) {
       return (
@@ -245,11 +237,8 @@ class CompanyDetailsPage extends React.Component<Props, State> {
                 <Title level={4}>People</Title>
               </Box>
 
-              <CustomersTable
-                loading={loading || refreshing}
-                customers={customers}
-                currentlyOnline={{}}
-                onUpdate={this.handleRefreshCustomers}
+              <CustomersTableContainer
+                defaultFilters={{company_id: this.getCompanyId()}}
               />
             </DetailsSectionCard>
           </Box>

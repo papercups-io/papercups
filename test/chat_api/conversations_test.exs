@@ -197,9 +197,29 @@ defmodule ChatApi.ConversationsTest do
       assert %DateTime{} = closed_conversation.closed_at
 
       assert {:ok, %Conversation{} = open_conversation} =
-               Conversations.update_conversation(conversation, %{status: "open"})
+               Conversations.update_conversation(closed_conversation, %{status: "open"})
 
       assert open_conversation.closed_at == nil
+    end
+
+    test "sets last_activity_at field based on updated status", %{
+      conversation: conversation
+    } do
+      assert {:ok, %Conversation{} = closed_conversation} =
+               Conversations.update_conversation(conversation, @update_attrs)
+
+      first_updated_time = closed_conversation.last_activity_at
+
+      # we truncate by second, so we'll wait a minimum of 1s to
+      # operate again and then check that the timestamps
+      Process.sleep(1000)
+
+      assert {:ok, %Conversation{} = open_conversation} =
+               Conversations.update_conversation(closed_conversation, %{status: "open"})
+
+      second_updated_time = open_conversation.last_activity_at
+
+      assert first_updated_time < second_updated_time
     end
   end
 

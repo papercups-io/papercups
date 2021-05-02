@@ -1,4 +1,5 @@
 import Alert from 'antd/lib/alert';
+import AutoComplete from 'antd/lib/auto-complete';
 import Badge from 'antd/lib/badge';
 import Button from 'antd/lib/button';
 import Checkbox from 'antd/lib/checkbox';
@@ -39,6 +40,7 @@ import {
 } from '@ant-design/colors';
 
 import DatePicker from './DatePicker';
+import MarkdownRenderer from './MarkdownRenderer';
 
 export type {UploadChangeParam} from 'antd/lib/upload';
 export type {UploadFile} from 'antd/lib/upload/interface';
@@ -63,6 +65,7 @@ export const colors = {
   text: 'rgba(0, 0, 0, 0.65)',
   secondary: 'rgba(0, 0, 0, 0.45)',
   note: '#fff1b8',
+  noteSecondary: 'rgba(254,237,175,.4)',
 };
 
 export const shadows = {
@@ -113,6 +116,7 @@ export {
   Sider,
   // Components
   Alert,
+  AutoComplete,
   Badge,
   Button,
   Checkbox,
@@ -122,6 +126,7 @@ export {
   Dropdown,
   Empty,
   Input,
+  MarkdownRenderer,
   Menu,
   Modal,
   notification,

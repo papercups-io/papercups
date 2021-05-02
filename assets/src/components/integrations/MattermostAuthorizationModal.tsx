@@ -6,6 +6,7 @@ import {
   Input,
   Modal,
   Paragraph,
+  Popconfirm,
   Select,
   Text,
 } from '../common';
@@ -267,9 +268,15 @@ export const MattermostAuthorizationButton = ({
             <Button onClick={handleOpenModal}>Update</Button>
           </Box>
           <Box mx={1}>
-            <Button danger onClick={handleDisconnect}>
-              Disconnect
-            </Button>
+            <Popconfirm
+              title="Are you sure you want to disconnect from Mattermost?"
+              okText="Yes"
+              cancelText="No"
+              placement="topLeft"
+              onConfirm={handleDisconnect}
+            >
+              <Button danger>Disconnect</Button>
+            </Popconfirm>
           </Box>
         </Flex>
       ) : (
