@@ -41,6 +41,7 @@ import {
 import {Account, User} from '../types';
 import {useAuth} from './auth/AuthProvider';
 import AccountOverview from './account/AccountOverview';
+import TeamOverview from './account/TeamOverview';
 import UserProfile from './account/UserProfile';
 import GettingStartedOverview from './account/GettingStartedOverview';
 import {
@@ -274,6 +275,9 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="overview">
                   <Link to="/account/overview">Overview</Link>
                 </Menu.Item>
+                <Menu.Item key="team">
+                  <Link to="/account/team">My Team</Link>
+                </Menu.Item>
                 <Menu.Item key="profile">
                   <Link to="/account/profile">My Profile</Link>
                 </Menu.Item>
@@ -479,6 +483,7 @@ const Dashboard = (props: RouteComponentProps) => {
       <Layout style={{marginLeft: 220, background: colors.white}}>
         <Switch>
           <Route path="/account/overview" component={AccountOverview} />
+          <Route path="/account/team" component={TeamOverview} />
           <Route path="/account/profile" component={UserProfile} />
           <Route
             path="/account/getting-started"
