@@ -24,6 +24,7 @@ class ConversationNotificationManager {
   config: Config;
   socket: Socket;
   channel: Channel | null = null;
+  reconnectIntervalId?: number;
 
   constructor(config: Config) {
     this.socket = this.createNewSocket();
@@ -31,13 +32,55 @@ class ConversationNotificationManager {
   }
 
   createNewSocket() {
-    return new Socket(SOCKET_URL, {
+    const socket = new Socket(SOCKET_URL, {
       params: {token: API.getAccessToken()},
     });
+
+    socket.onOpen(() => {
+      if (this.isTryingToReconnect()) {
+        this.stopTryingToReconnect();
+        logger.debug('Successfully reopened socket!');
+      } else {
+        logger.debug('Successfully opened socket!');
+      }
+    });
+
+    socket.onError(
+      throttle(
+        (error) => {
+          logger.error(
+            "There's been an error with the socket connection. Try refreshing the page.",
+            error
+          );
+
+          if (!this.isTryingToReconnect()) {
+            this.tryToContinuouslyReconnect();
+          }
+        },
+        30 * 1000 // throttle every 30 secs
+      )
+    );
+
+    return socket;
+  }
+
+  isTryingToReconnect() {
+    return !!this.reconnectIntervalId;
+  }
+
+  tryToContinuouslyReconnect() {
+    this.reconnectIntervalId = window.setInterval(() => {
+      this.reconnect();
+    }, 5000);
+  }
+
+  stopTryingToReconnect() {
+    clearInterval(this.reconnectIntervalId);
+    this.reconnectIntervalId = undefined;
   }
 
   connect() {
-    this.connectToSocket();
+    this.socket.connect();
     this.joinChannel();
   }
 
@@ -51,19 +94,10 @@ class ConversationNotificationManager {
     this.channel?.leave();
   }
 
-  connectToSocket() {
-    this.socket.onOpen(() => logger.debug('Successfully connected to socket!'));
-
-    // TODO: attempt refreshing access token?
-    this.socket.onError(
-      throttle(
-        () =>
-          logger.error('Error connecting to socket. Try refreshing the page.'),
-        30 * 1000 // throttle every 30 secs
-      )
-    );
-
-    this.socket.connect();
+  reconnect() {
+    logger.debug('Attempting to reconnect...');
+    this.disconnect();
+    this.connect();
   }
 
   joinChannel() {
