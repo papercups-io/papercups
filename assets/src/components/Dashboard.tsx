@@ -262,7 +262,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Box py={3} sx={{flex: 1}}>
             <Menu
               selectedKeys={[section, key]}
-              defaultOpenKeys={[section, 'conversations', 'inbox-channels']}
+              defaultOpenKeys={[section, 'conversations']}
               mode="inline"
               theme="dark"
             >
@@ -339,12 +339,12 @@ const Dashboard = (props: RouteComponentProps) => {
                 </Menu.Item>
               </Menu.SubMenu>
               <Menu.SubMenu
-                key="inbox-channels"
+                key="channels"
                 icon={<MailOutlined />}
                 title="Channels"
               >
                 <Menu.Item key="live-chat">
-                  <Link to="/conversations/live-chat">
+                  <Link to="/channels/live-chat">
                     <Flex
                       sx={{
                         alignItems: 'center',
@@ -360,7 +360,7 @@ const Dashboard = (props: RouteComponentProps) => {
                   </Link>
                 </Menu.Item>
                 <Menu.Item key="email">
-                  <Link to="/conversations/email">
+                  <Link to="/channels/email">
                     <Flex
                       sx={{
                         alignItems: 'center',
@@ -376,7 +376,7 @@ const Dashboard = (props: RouteComponentProps) => {
                   </Link>
                 </Menu.Item>
                 <Menu.Item key="slack">
-                  <Link to="/conversations/slack">
+                  <Link to="/channels/slack">
                     <Flex
                       sx={{
                         alignItems: 'center',
@@ -501,15 +501,6 @@ const Dashboard = (props: RouteComponentProps) => {
             path="/conversations/priority"
             component={PriorityConversations}
           />
-          <Route path="/conversations/live-chat" key="chat">
-            <ConversationsBySource title="Live chat" source="chat" />
-          </Route>
-          <Route path="/conversations/email" key="email">
-            <ConversationsBySource title="Email" source="email" />
-          </Route>
-          <Route path="/conversations/slack" key="slack">
-            <ConversationsBySource title="Slack" source="slack" />
-          </Route>
           <Route path="/conversations/closed" component={ClosedConversations} />
           <Route
             path="/conversations/:id"
@@ -521,6 +512,15 @@ const Dashboard = (props: RouteComponentProps) => {
               );
             }}
           />
+          <Route path="/channels/live-chat" key="chat">
+            <ConversationsBySource title="Live chat" source="chat" />
+          </Route>
+          <Route path="/channels/email" key="email">
+            <ConversationsBySource title="Email" source="email" />
+          </Route>
+          <Route path="/channels/slack" key="slack">
+            <ConversationsBySource title="Slack" source="slack" />
+          </Route>
           {shouldDisplayBilling && (
             <Route path="/billing" component={BillingOverview} />
           )}

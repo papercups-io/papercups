@@ -68,7 +68,7 @@ const NotesByCustomer = ({notes}: {notes: Array<T.CustomerNote>}) => {
         const identifier = formatCustomerDisplayName(customer);
 
         return (
-          <Box mb={4} ml={2}>
+          <Box mb={4} ml={2} key={customer.id}>
             <Box mb={1}>
               <Link to={`/customers/${customer.id}?tab=notes`}>
                 <Text strong>{identifier}</Text>
@@ -115,7 +115,7 @@ const NotesByDate = ({notes}: {notes: Array<T.CustomerNote>}) => {
         const formatted = dayjs(date).format('MMMM DD, YYYY');
 
         return (
-          <Box mb={5}>
+          <Box mb={5} key={date}>
             <Title level={3}>{formatted}</Title>
 
             <NotesByCustomer notes={notes} />
