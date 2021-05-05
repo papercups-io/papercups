@@ -129,6 +129,36 @@ defmodule ChatApi.Conversations do
     end
   end
 
+  @spec list_forgotten_conversations(integer()) :: [Conversation.t()]
+  def list_forgotten_conversations(hours \\ 24) do
+    ranking_query =
+      from(m in Message,
+        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
+        windows: [
+          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
+        ]
+      )
+
+    messages_query =
+      from(m in Message,
+        join: r in subquery(ranking_query),
+        on: m.id == r.id and r.row_number <= 1
+      )
+
+    query =
+      from(c in Conversation,
+        where: c.status == "open",
+        join: most_recent_messages in subquery(messages_query),
+        on: most_recent_messages.conversation_id == c.id,
+        on: not is_nil(most_recent_messages.customer_id),
+        on: most_recent_messages.inserted_at < ago(^hours, "hour")
+      )
+
+    query
+    |> preload([:customer, messages: ^messages_query])
+    |> Repo.all()
+  end
+
   @customer_conversations_limit 3
 
   # Used externally in chat widget

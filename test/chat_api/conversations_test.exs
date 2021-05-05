@@ -16,8 +16,9 @@ defmodule ChatApi.ConversationsTest do
     account = insert(:account)
     customer = insert(:customer, account: account)
     conversation = insert(:conversation, account: account, customer: customer)
+    user = insert(:user, account: account)
 
-    {:ok, account: account, conversation: conversation, customer: customer}
+    {:ok, account: account, conversation: conversation, customer: customer, user: user}
   end
 
   describe "list_conversations_by_account/1" do
@@ -79,6 +80,98 @@ defmodule ChatApi.ConversationsTest do
       Conversations.remove_tag(conversation, tag.id)
 
       assert [] = Conversations.list_conversations_by_account(account.id, %{"tag_id" => tag.id})
+    end
+  end
+
+  describe "list_forgotten_conversations/1" do
+    test "finds no conversations if no messages", %{
+      account: account,
+      customer: customer
+    } do
+      insert(:conversation, account: account, customer: customer, source: "chat")
+
+      assert [] = Conversations.list_forgotten_conversations()
+    end
+
+    test "finds conversation only if last message was from customer sent more than 24 (default) hours ago",
+         %{
+           account: account,
+           customer: customer,
+           user: user
+         } do
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(27)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations() |> Enum.map(& &1.id)
+
+      insert(:message,
+        body: "Hello customer, I am a user",
+        account: account,
+        conversation: conversation,
+        customer: nil,
+        user: user,
+        inserted_at: hours_ago(26)
+      )
+
+      # Conversation should not appear after an agent/user has replied
+      assert [] = Conversations.list_forgotten_conversations()
+
+      insert(:message,
+        body: "Hello user, customer here.",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        seen_at: nil,
+        inserted_at: hours_ago(10)
+      )
+
+      # Conversation should not appear since customer message was sent less than 24 hours ago
+      assert [] = Conversations.list_forgotten_conversations()
+      # Conversation appears again when we explicitly pass in 9 hours as the threshold
+      Conversations.list_forgotten_conversations(9)
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(9) |> Enum.map(& &1.id)
+    end
+
+    test "finds conversation only if last message was from customer sent more than N hours ago",
+         %{
+           account: account,
+           customer: customer
+         } do
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(12)
+      )
+
+      assert [] == Conversations.list_forgotten_conversations(20)
+      assert [] == Conversations.list_forgotten_conversations(15)
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(10) |> Enum.map(& &1.id)
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(2) |> Enum.map(& &1.id)
+    end
+
+    defp hours_ago(hours) do
+      DateTime.add(DateTime.utc_now(), -:timer.hours(hours), :millisecond)
     end
   end
 
@@ -205,21 +298,21 @@ defmodule ChatApi.ConversationsTest do
     test "sets last_activity_at field based on updated status", %{
       conversation: conversation
     } do
+      initial_last_activity_at = DateTime.add(DateTime.utc_now(), -:timer.hours(1), :millisecond)
+
       assert {:ok, %Conversation{} = closed_conversation} =
-               Conversations.update_conversation(conversation, @update_attrs)
-
-      first_updated_time = closed_conversation.last_activity_at
-
-      # we truncate by second, so we'll wait a minimum of 1s to
-      # operate again and then check that the timestamps
-      Process.sleep(1000)
+               Conversations.update_conversation(conversation, %{
+                 status: "closed",
+                 updated_at: initial_last_activity_at,
+                 last_activity_at: initial_last_activity_at
+               })
 
       assert {:ok, %Conversation{} = open_conversation} =
                Conversations.update_conversation(closed_conversation, %{status: "open"})
 
-      second_updated_time = open_conversation.last_activity_at
+      updated_last_activity_at = open_conversation.last_activity_at
 
-      assert first_updated_time < second_updated_time
+      assert initial_last_activity_at < updated_last_activity_at
     end
   end
 
