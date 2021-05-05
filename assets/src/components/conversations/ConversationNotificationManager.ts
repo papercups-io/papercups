@@ -1,11 +1,12 @@
 import {Channel, Socket} from 'phoenix';
-import {throttle} from 'lodash';
+import {once, throttle} from 'lodash';
 
 import logger from '../../logger';
 import {Conversation, Message} from '../../types';
 import {SOCKET_URL} from '../../socket';
 import * as API from '../../api';
 import {PhoenixPresence, PresenceDiff} from '../../presence';
+import {notification} from '../common';
 
 type Config = {
   accountId: string;
@@ -57,14 +58,26 @@ class ConversationNotificationManager {
     // TODO: attempt refreshing access token?
     this.socket.onError(
       throttle(
-        () =>
-          logger.error('Error connecting to socket. Try refreshing the page.'),
+        () => {
+          logger.error('Error connecting to socket. Try refreshing the page.');
+
+          this.displayRefreshNotification();
+        },
         30 * 1000 // throttle every 30 secs
       )
     );
 
     this.socket.connect();
   }
+
+  // We use lodash's `once` utility to make sure this notification only gets displayed once
+  displayRefreshNotification = once(() => {
+    notification.error({
+      message: "You've been disconnected.",
+      duration: null,
+      description: 'Please refresh the page to reconnect.',
+    });
+  });
 
   joinChannel() {
     const {
