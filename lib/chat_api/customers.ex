@@ -60,7 +60,7 @@ defmodule ChatApi.Customers do
 
   @spec filter_by_tags(Ecto.Query.t(), map()) :: Ecto.Query.t()
   def filter_by_tags(query, %{"tag_ids" => tag_ids}) when not is_nil(tag_ids) do
-    # We need to return a query that includes only the customers that are tagged with the passed in tag_ids. We do this
+    # We need to return a query that includes only the customers that are tagged with the passed in tag_ids.
 
     # Here, we aggregate the number of tags each customer has, but we only count the ones included in tag_ids.
     # Essentially, we're querying the number of tag_ids each customer has.
