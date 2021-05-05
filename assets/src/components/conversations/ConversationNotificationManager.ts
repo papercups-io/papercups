@@ -70,6 +70,7 @@ class ConversationNotificationManager {
     this.socket.connect();
   }
 
+  // We use lodash's `once` utility to make sure this notification only gets displayed once
   displayRefreshNotification = once(() => {
     notification.error({
       message: "You've been disconnected.",
