@@ -168,7 +168,7 @@ export const fetchCustomers = async (
 
   return request
     .get(`/api/customers`)
-    .query(filters)
+    .query(qs.stringify(filters, {arrayFormat: 'bracket'}))
     .set('Authorization', token)
     .then((res) => res.body);
 };
