@@ -88,6 +88,48 @@ defmodule ChatApi.CustomersTest do
       assert kam_ids == [kam.id]
     end
 
+    test "list_customers/2 can search customer metadata within the `q` query param", %{
+      account: account
+    } do
+      premium_dev =
+        insert(:customer,
+          account: account,
+          metadata: %{plan: "premium", role: "dev"}
+        )
+
+      starter_dev =
+        insert(:customer,
+          account: account,
+          metadata: %{plan: "starter", role: "dev"}
+        )
+
+      premium_pm =
+        insert(:customer,
+          account: account,
+          metadata: %{plan: "premium", role: "pm"}
+        )
+
+      dev_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "role:dev"})
+        |> Enum.map(& &1.id)
+
+      premium_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "plan:premium"})
+        |> Enum.map(& &1.id)
+
+      starter_dev_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "role:dev plan:starter"})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(dev_ids) == Enum.sort([premium_dev.id, starter_dev.id])
+      assert Enum.sort(premium_ids) == Enum.sort([premium_dev.id, premium_pm.id])
+      assert starter_dev_ids == [starter_dev.id]
+      assert [] == Customers.list_customers(account.id, %{"q" => "role:ceo plan:starter"})
+    end
+
     test "list_customers/3 returns paginated customers" do
       account = insert(:account)
       insert_list(10, :customer, account: account)

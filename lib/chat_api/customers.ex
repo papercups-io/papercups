@@ -449,12 +449,28 @@ defmodule ChatApi.Customers do
         dynamic
 
       {"q", query}, dynamic ->
-        value = "%" <> query <> "%"
-        dynamic([r], ^dynamic and (ilike(r.email, ^value) or ilike(r.name, ^value)))
+        dynamic([r], ^dynamic and ^filter_by_query(query))
 
       {_, _}, dynamic ->
         # Not a where parameter
         dynamic
+    end)
+  end
+
+  defp filter_by_query(query) do
+    query
+    |> String.split(" ")
+    |> Enum.reduce(dynamic(true), fn
+      word, dynamic ->
+        case String.split(word, ":") do
+          [key, value] ->
+            dynamic([r], ^dynamic and fragment("(metadata->>? = ?)", ^key, ^value))
+
+          [word] ->
+            value = "%" <> word <> "%"
+
+            dynamic([r], ^dynamic and (ilike(r.email, ^value) or ilike(r.name, ^value)))
+        end
     end)
   end
 end
