@@ -35,12 +35,16 @@ class Register extends React.Component<Props, State> {
   };
 
   componentDidMount() {
-    const {redirect = '/account/getting-started'} = qs.parse(
+    const {redirect = '/account/getting-started', email = ''} = qs.parse(
       this.props.location.search
     );
     const {invite: inviteToken} = this.props.match.params;
 
-    this.setState({inviteToken, redirect: String(redirect)});
+    this.setState({
+      inviteToken,
+      email: String(email),
+      redirect: String(redirect),
+    });
   }
 
   handleChangeCompanyName = (e: React.ChangeEvent<HTMLInputElement>) => {

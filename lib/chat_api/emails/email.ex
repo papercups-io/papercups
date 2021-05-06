@@ -250,7 +250,8 @@ defmodule ChatApi.Emails.Email do
         do: "#{from_address} has invited you to join #{company} on Papercups!",
         else: "#{from_name} (#{from_address}) has invited you to join #{company} on Papercups!"
 
-    invitation_url = "#{get_app_domain()}/registration/#{invitation_token}"
+    invitation_url =
+      "#{get_app_domain()}/register/#{invitation_token}?#{URI.encode_query(%{email: to_address})}"
 
     new()
     |> to(to_address)
