@@ -20,6 +20,7 @@ defmodule ChatApi.Messages.Helpers do
     do: ChatApiWeb.MessageView.render("expanded.json", message: message)
 
   @spec get_message_type(Message.t()) :: atom()
+  def get_message_type(%Message{type: "bot"}), do: :bot
   def get_message_type(%Message{customer_id: nil}), do: :agent
   def get_message_type(%Message{user_id: nil}), do: :customer
   def get_message_type(_message), do: :unknown
@@ -67,6 +68,8 @@ defmodule ChatApi.Messages.Helpers do
       :agent -> Map.merge(updates, %{read: true})
       # If customer responded, make sure conversation is "open"
       :customer -> Map.merge(updates, %{read: false, status: "open"})
+      # Bot messages should be considered unread by default
+      :bot -> Map.merge(updates, %{read: false})
       _ -> updates
     end
   end

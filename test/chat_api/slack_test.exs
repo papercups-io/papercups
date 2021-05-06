@@ -505,14 +505,6 @@ defmodule ChatApi.SlackTest do
       assert Slack.Helpers.identify_customer(anon) == "Anonymous User"
     end
 
-    test "Helpers.get_message_type/1 returns the message sender type" do
-      customer_message = insert(:message, user: nil)
-      user_message = insert(:message, customer: nil)
-
-      assert :customer = Slack.Helpers.get_message_type(customer_message)
-      assert :agent = Slack.Helpers.get_message_type(user_message)
-    end
-
     test "Helpers.format_sender_id!/3 gets an existing user_id", %{account: account} do
       authorization = insert(:slack_authorization, account: account)
       _customer = insert(:customer, account: account, email: "customer@customer.com")

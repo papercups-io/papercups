@@ -139,6 +139,7 @@ defmodule ChatApi.Conversations do
         ]
       )
 
+    # TODO: filter out private/bot messages?
     messages_query =
       from(m in Message,
         join: r in subquery(ranking_query),

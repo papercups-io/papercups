@@ -56,10 +56,18 @@ defmodule ChatApi.AccountsTest do
          %{account: account} do
       assert {:ok, %Account{} = account} =
                Accounts.update_account(account, %{
-                 settings: %{disable_automated_reply_emails: true}
+                 settings: %{
+                   disable_automated_reply_emails: true,
+                   conversation_reminders_enabled: true,
+                   conversation_reminder_hours_interval: 48
+                 }
                })
 
-      assert %Accounts.Settings{disable_automated_reply_emails: true} = account.settings
+      assert %Accounts.Settings{
+               disable_automated_reply_emails: true,
+               conversation_reminders_enabled: true,
+               conversation_reminder_hours_interval: 48
+             } = account.settings
     end
 
     test "update_account/2 with invalid data returns error changeset",
