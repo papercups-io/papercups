@@ -100,12 +100,19 @@ const TwilioAuthorizationModal = ({
         <Paragraph>
           <Text type="secondary">
             Please provide your Twilio API credentials to get started.
-            <br></br>
-            See{' '}
-            <a href="https://docs.papercups.io/reply-via-sms">
-              instructions here.
+          </Text>
+        </Paragraph>
+        <Paragraph>
+          <Text type="secondary">
+            To get set up, please follow{' '}
+            <a
+              href="https://docs.papercups.io/reply-via-sms"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              these instructions
             </a>
-            {/* TODO: add link to docs once https://github.com/papercups-io/papercups/issues/677 is completed */}
+            .
           </Text>
         </Paragraph>
 
