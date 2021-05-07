@@ -6,6 +6,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
   alias ChatApi.{Accounts, Conversations, Messages}
   alias ChatApi.Accounts.{Account, Settings}
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.Messages.Message
 
   require Logger
 
@@ -22,6 +23,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
 
   # Default hours for testing
   @three_days_ago 72
+  @default_max_reminders 3
 
   def run(
         %Account{
@@ -29,14 +31,12 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
           settings: %Settings{conversation_reminders_enabled: true} = settings
         } = _account
       ) do
-    hours =
-      case Map.get(settings, :conversation_reminder_hours_interval) do
-        num when is_integer(num) -> num
-        _ -> @three_days_ago
-      end
+    hours = get_hours_interval_config(settings)
+    max = get_max_reminders_config(settings)
 
     account_id
     |> Conversations.list_forgotten_conversations(hours)
+    |> Enum.filter(fn conv -> should_send_reminder?(conv, max) end)
     # Just handle 10 at a time for now to avoid spamming reminders
     |> Enum.slice(0..9)
     |> Enum.map(&send_reminder_message/1)
@@ -44,17 +44,46 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
 
   def run(_account), do: nil
 
+  def should_send_reminder?(conversation, max \\ @default_max_reminders)
+
+  def should_send_reminder?(%Conversation{messages: messages}, max) when is_list(messages) do
+    case List.first(messages) do
+      %Message{metadata: %{"is_reminder" => true, "reminder_count" => n}} ->
+        n < max
+
+      _ ->
+        true
+    end
+  end
+
+  def should_send_reminder?(_conversation, _max), do: false
+
   def send_reminder_message(
         %Conversation{
           id: conversation_id,
           account_id: account_id,
           assignee_id: assignee_id
-        } = _conversation
+        } = conversation
       ) do
     user_id =
       case assignee_id do
         nil -> account_id |> Accounts.get_primary_user() |> Map.get(:id)
         id -> id
+      end
+
+    latest_message = conversation |> Map.get(:messages, []) |> List.first()
+
+    metadata =
+      case latest_message do
+        %Message{metadata: %{"is_reminder" => true, "reminder_count" => n}} ->
+          %{"is_reminder" => true, "reminder_count" => n + 1}
+
+        # In this case, we may have forgotten to set the count...
+        %Message{metadata: %{"is_reminder" => true}} ->
+          %{"is_reminder" => true, "reminder_count" => 2}
+
+        _ ->
+          %{"is_reminder" => true, "reminder_count" => 1}
       end
 
     %{
@@ -67,7 +96,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
       account_id: account_id,
       user_id: user_id,
       sent_at: DateTime.utc_now(),
-      metadata: %{is_reminder: true}
+      metadata: metadata
     }
     |> Messages.create_and_fetch!()
     |> Messages.Notification.broadcast_to_admin!()
@@ -75,5 +104,19 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Helpers.handle_post_creation_conversation_updates()
+  end
+
+  defp get_hours_interval_config(settings) do
+    case Map.get(settings, :conversation_reminder_hours_interval) do
+      num when is_integer(num) -> num
+      _ -> @three_days_ago
+    end
+  end
+
+  def get_max_reminders_config(settings) do
+    case Map.get(settings, :max_num_conversation_reminders) do
+      num when is_integer(num) -> num
+      _ -> @default_max_reminders
+    end
   end
 end

@@ -170,6 +170,51 @@ defmodule ChatApi.ConversationsTest do
                Conversations.list_forgotten_conversations(account.id, 2) |> Enum.map(& &1.id)
     end
 
+    test "ignores recent reminder messages",
+         %{
+           account: account,
+           customer: customer
+         } do
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(26)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      insert(:message,
+        body: "Hello customer, this is a reminder messages from a bot",
+        account: account,
+        conversation: conversation,
+        customer: nil,
+        type: "bot",
+        metadata: %{is_reminder: true},
+        inserted_at: hours_ago(25)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      insert(:message,
+        body: "Hello customer, this is a more recent reminder messages from a bot",
+        account: account,
+        conversation: conversation,
+        customer: nil,
+        type: "bot",
+        metadata: %{is_reminder: true},
+        inserted_at: hours_ago(10)
+      )
+
+      assert [] == Conversations.list_forgotten_conversations(account.id)
+    end
+
     test "only finds conversations from the specified account",
          %{
            account: account,

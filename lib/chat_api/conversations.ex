@@ -139,7 +139,6 @@ defmodule ChatApi.Conversations do
         ]
       )
 
-    # TODO: filter out private/bot messages?
     messages_query =
       from(m in Message,
         join: r in subquery(ranking_query),
@@ -151,7 +150,14 @@ defmodule ChatApi.Conversations do
         where: c.status == "open" and c.account_id == ^account_id,
         join: most_recent_messages in subquery(messages_query),
         on: most_recent_messages.conversation_id == c.id,
-        on: not is_nil(most_recent_messages.customer_id),
+        on:
+          not is_nil(most_recent_messages.customer_id) or
+            fragment(
+              """
+              (?."metadata"->>'is_reminder' = 'true')
+              """,
+              most_recent_messages
+            ),
         on: most_recent_messages.inserted_at < ago(^hours, "hour")
       )
 
