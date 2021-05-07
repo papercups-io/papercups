@@ -8,6 +8,7 @@ import Drawer from 'antd/lib/drawer';
 import Dropdown from 'antd/lib/dropdown';
 import Empty from 'antd/lib/empty';
 import Input from 'antd/lib/input';
+import InputNumber from 'antd/lib/input-number';
 import Layout from 'antd/lib/layout';
 import Menu from 'antd/lib/menu';
 import Modal from 'antd/lib/modal';
@@ -126,6 +127,7 @@ export {
   Dropdown,
   Empty,
   Input,
+  InputNumber,
   MarkdownRenderer,
   Menu,
   Modal,

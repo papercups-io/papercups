@@ -3,9 +3,10 @@ import {Box, Flex} from 'theme-ui';
 import {Button, Divider, Input, Paragraph, Text, Title} from '../common';
 import Spinner from '../Spinner';
 import WorkingHoursSelector from './WorkingHoursSelector';
+import ConversationRemindersSettings from './ConversationRemindersSettings';
 import {WorkingHours} from './support';
 import * as API from '../../api';
-import {Account, User} from '../../types';
+import {Account, AccountSettings, User} from '../../types';
 import logger from '../../logger';
 
 type Props = {};
@@ -73,15 +74,16 @@ class AccountOverview extends React.Component<Props, State> {
     company_logo_url?: string;
     time_zone?: string;
     working_hours?: Array<WorkingHours>;
+    settings?: Partial<AccountSettings>;
   }) => {
     return API.updateAccountInfo(updates)
       .then((account) => {
-        logger.debug('Successfully updated company name!', account);
+        logger.debug('Successfully updated account details!', account);
 
         this.setState({account, isEditing: false});
       })
       .catch((err) => {
-        logger.error('Failed to update company name!', err);
+        logger.error('Failed to update account details!', err);
 
         return this.fetchLatestAccountInfo();
       })
@@ -129,6 +131,7 @@ class AccountOverview extends React.Component<Props, State> {
       time_zone: timezone,
       working_hours: workingHours = [],
     } = account;
+    const settings = account.settings || {};
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
@@ -212,6 +215,17 @@ class AccountOverview extends React.Component<Props, State> {
           <WorkingHoursSelector
             timezone={timezone}
             workingHours={workingHours}
+            onSave={this.handleUpdate}
+          />
+        </Box>
+
+        <Divider />
+
+        <Box mb={4}>
+          <Title level={4}>Conversation reminders</Title>
+
+          <ConversationRemindersSettings
+            settings={settings}
             onSave={this.handleUpdate}
           />
         </Box>
