@@ -86,7 +86,7 @@ const ConversationRemindersSettings = ({
 
       <Box mb={3} sx={{maxWidth: 240}}>
         <label htmlFor="conversation_reminder_hours_interval">
-          Hours to wait:
+          Hours before notifying:
         </label>
         <Box>
           <InputNumber
