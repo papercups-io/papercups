@@ -3,7 +3,12 @@ import * as API from '../../api';
 import {Tag} from '../../types';
 import {Select} from '../common';
 
-const {Option} = Select;
+const filterSelectOption = (input: string, option: any) => {
+  const label = option && option.label ? String(option.label) : '';
+  const sanitized = label.toLowerCase().replace(/_/, ' ');
+
+  return sanitized.indexOf(input.toLowerCase()) >= 0;
+};
 
 type Props = {
   onChange: (selectedTagIds: string[]) => void;
@@ -25,20 +30,19 @@ class CustomerTagSelect extends React.Component<Props, State> {
   render() {
     const {onChange, placeholder = 'Select tags', style = {}} = this.props;
     const {tags} = this.state;
+
     return (
       <Select
         allowClear
         mode="multiple"
         onChange={onChange}
+        filterOption={filterSelectOption}
         placeholder={placeholder}
         style={style}
-      >
-        {tags.map((tag) => (
-          <Option key={tag.id} value={tag.id}>
-            {tag.name}
-          </Option>
-        ))}
-      </Select>
+        options={tags.map((tag) => {
+          return {value: tag.id, label: tag.name};
+        })}
+      />
     );
   }
 }
