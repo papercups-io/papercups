@@ -16,6 +16,7 @@ defmodule ChatApi.Customers do
     Customer
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
+    |> filter_by_tags(filters)
     |> filter_by_tag(filters)
     |> filter_by_issue(filters)
     |> order_by(desc: :last_seen_at)
@@ -41,6 +42,7 @@ defmodule ChatApi.Customers do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> filter_by_tag(filters)
+    |> filter_by_tags(filters)
     |> filter_by_issue(filters)
     |> order_by(desc: :last_seen_at)
     |> preload(conversations: ^conversations_query)
@@ -55,6 +57,31 @@ defmodule ChatApi.Customers do
   end
 
   def filter_by_tag(query, _filters), do: query
+
+  @spec filter_by_tags(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_tags(query, %{"tag_ids" => tag_ids}) when not is_nil(tag_ids) do
+    # We need to return a query that includes only the customers that are tagged with the passed in tag_ids.
+
+    # Here, we aggregate the number of tags each customer has, but we only count the ones included in tag_ids.
+    # Essentially, we're querying the number of tag_ids each customer has.
+    customer_tags_query =
+      from(ct in CustomerTag,
+        where: ct.tag_id in ^tag_ids,
+        group_by: ct.customer_id,
+        select: %{customer_id: ct.customer_id, tag_count: count(ct.tag_id)}
+      )
+
+    # Because tag_count represents the number of tag_ids each customer has,
+    # we're able to join the two query and filter only the customers that
+    # have exactly the same number of tag_ids.
+    from(c in query,
+      join: ct in subquery(customer_tags_query),
+      on: c.id == ct.customer_id,
+      where: ct.tag_count == ^length(tag_ids)
+    )
+  end
+
+  def filter_by_tags(query, _filters), do: query
 
   @spec filter_by_issue(Ecto.Query.t(), map()) :: Ecto.Query.t()
   def filter_by_issue(query, %{"issue_id" => issue_id}) when not is_nil(issue_id) do

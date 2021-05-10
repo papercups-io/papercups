@@ -195,6 +195,14 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def customer_tag_factory do
+    %ChatApi.Tags.CustomerTag{
+      account: build(:account),
+      customer: build(:customer),
+      tag: build(:tag)
+    }
+  end
+
   def user_invitation_factory do
     %ChatApi.UserInvitations.UserInvitation{
       account: build(:account),
