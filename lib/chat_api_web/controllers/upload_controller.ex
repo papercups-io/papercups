@@ -5,7 +5,7 @@ defmodule ChatApiWeb.UploadController do
   alias ChatApi.{Aws, Files}
   alias ChatApi.Files.FileUpload
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(
