@@ -69,9 +69,16 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     end)
     |> Enum.uniq_by(fn %{"threadId" => thread_id} -> thread_id end)
     |> Enum.map(fn %{"threadId" => thread_id} ->
-      thread_id
-      |> Gmail.get_thread(refresh_token)
-      |> Gmail.format_thread(exclude_labels: ["SPAM", "DRAFT", "CATEGORY_PROMOTIONS"])
+      try do
+        thread_id
+        |> Gmail.get_thread(refresh_token)
+        |> Gmail.format_thread(exclude_labels: ["SPAM", "DRAFT", "CATEGORY_PROMOTIONS"])
+      rescue
+        error ->
+          Logger.warn("Error retrieving Gmail thread (skipping for now): #{inspect(error)}")
+
+          nil
+      end
     end)
     |> Enum.reject(&skip_processing_thread?/1)
     |> Enum.each(fn thread ->
@@ -81,7 +88,9 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     end)
   end
 
-  @spec skip_processing_thread?(Gmail.GmailThread.t()) :: boolean
+  @spec skip_processing_thread?(Gmail.GmailThread.t() | nil) :: boolean
+  def skip_processing_thread?(nil), do: true
+
   def skip_processing_thread?(%Gmail.GmailThread{} = thread) do
     case thread do
       %{messages: []} ->
