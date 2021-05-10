@@ -69,18 +69,21 @@ defmodule ChatApi.CustomersTest do
       customer_ids =
         Customers.list_customers(account.id, %{"tag_ids" => [tag_1.id]})
         |> Enum.map(& &1.id)
+
       assert customer_ids == [customer_1.id, customer_2.id]
 
       # Filtering with multiple tags only returns customers who have all of them
       customer_ids =
         Customers.list_customers(account.id, %{"tag_ids" => [tag_1.id, tag_2.id]})
         |> Enum.map(& &1.id)
+
       assert customer_ids == [customer_1.id]
 
       # Filtering with a single tag that only one customer has
       customer_ids =
         Customers.list_customers(account.id, %{"tag_ids" => [tag_3.id]})
         |> Enum.map(& &1.id)
+
       assert customer_ids == [customer_2.id]
     end
 

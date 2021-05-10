@@ -199,7 +199,7 @@ defmodule ChatApi.Factory do
     %ChatApi.Tags.CustomerTag{
       account: build(:account),
       customer: build(:customer),
-      tag: build(:tag),
+      tag: build(:tag)
     }
   end
 
