@@ -66,6 +66,8 @@ config :chat_api, Oban,
     {"0 * * * *", ChatApi.Workers.ArchiveStaleClosedConversations},
     # Syncs every minute
     {"* * * * *", ChatApi.Workers.SyncGmailInboxes},
+    # Check for reminders every 30 mins
+    {"*/30 * * * *", ChatApi.Workers.SendAllConversationReminders},
     # Sends everyday at 2pm UTC/9am EST
     {"0 14 * * *", ChatApi.Workers.SendPgNewsletter}
     # TODO: uncomment this after testing manually

@@ -96,6 +96,11 @@ defmodule ChatApi.Accounts.Account do
   @spec account_settings_changeset(any(), map()) :: Ecto.Changeset.t()
   def account_settings_changeset(schema, params) do
     schema
-    |> cast(params, [:disable_automated_reply_emails])
+    |> cast(params, [
+      :disable_automated_reply_emails,
+      :conversation_reminders_enabled,
+      :conversation_reminder_hours_interval,
+      :max_num_conversation_reminders
+    ])
   end
 end

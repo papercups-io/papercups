@@ -129,8 +129,8 @@ defmodule ChatApi.Conversations do
     end
   end
 
-  @spec list_forgotten_conversations(integer()) :: [Conversation.t()]
-  def list_forgotten_conversations(hours \\ 24) do
+  @spec list_forgotten_conversations(binary(), integer()) :: [Conversation.t()]
+  def list_forgotten_conversations(account_id, hours \\ 24) do
     ranking_query =
       from(m in Message,
         select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
@@ -147,10 +147,17 @@ defmodule ChatApi.Conversations do
 
     query =
       from(c in Conversation,
-        where: c.status == "open",
+        where: c.status == "open" and c.account_id == ^account_id,
         join: most_recent_messages in subquery(messages_query),
         on: most_recent_messages.conversation_id == c.id,
-        on: not is_nil(most_recent_messages.customer_id),
+        on:
+          not is_nil(most_recent_messages.customer_id) or
+            fragment(
+              """
+              (?."metadata"->>'is_reminder' = 'true')
+              """,
+              most_recent_messages
+            ),
         on: most_recent_messages.inserted_at < ago(^hours, "hour")
       )
 

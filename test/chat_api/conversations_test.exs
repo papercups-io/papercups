@@ -83,14 +83,14 @@ defmodule ChatApi.ConversationsTest do
     end
   end
 
-  describe "list_forgotten_conversations/1" do
+  describe "list_forgotten_conversations/2" do
     test "finds no conversations if no messages", %{
       account: account,
       customer: customer
     } do
       insert(:conversation, account: account, customer: customer, source: "chat")
 
-      assert [] = Conversations.list_forgotten_conversations()
+      assert [] = Conversations.list_forgotten_conversations(account.id)
     end
 
     test "finds conversation only if last message was from customer sent more than 24 (default) hours ago",
@@ -111,7 +111,7 @@ defmodule ChatApi.ConversationsTest do
       )
 
       assert [conversation.id] ==
-               Conversations.list_forgotten_conversations() |> Enum.map(& &1.id)
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
 
       insert(:message,
         body: "Hello customer, I am a user",
@@ -123,7 +123,7 @@ defmodule ChatApi.ConversationsTest do
       )
 
       # Conversation should not appear after an agent/user has replied
-      assert [] = Conversations.list_forgotten_conversations()
+      assert [] = Conversations.list_forgotten_conversations(account.id)
 
       insert(:message,
         body: "Hello user, customer here.",
@@ -136,12 +136,12 @@ defmodule ChatApi.ConversationsTest do
       )
 
       # Conversation should not appear since customer message was sent less than 24 hours ago
-      assert [] = Conversations.list_forgotten_conversations()
+      assert [] = Conversations.list_forgotten_conversations(account.id)
       # Conversation appears again when we explicitly pass in 9 hours as the threshold
-      Conversations.list_forgotten_conversations(9)
+      Conversations.list_forgotten_conversations(account.id, 9)
 
       assert [conversation.id] ==
-               Conversations.list_forgotten_conversations(9) |> Enum.map(& &1.id)
+               Conversations.list_forgotten_conversations(account.id, 9) |> Enum.map(& &1.id)
     end
 
     test "finds conversation only if last message was from customer sent more than N hours ago",
@@ -160,14 +160,82 @@ defmodule ChatApi.ConversationsTest do
         inserted_at: hours_ago(12)
       )
 
-      assert [] == Conversations.list_forgotten_conversations(20)
-      assert [] == Conversations.list_forgotten_conversations(15)
+      assert [] == Conversations.list_forgotten_conversations(account.id, 20)
+      assert [] == Conversations.list_forgotten_conversations(account.id, 15)
 
       assert [conversation.id] ==
-               Conversations.list_forgotten_conversations(10) |> Enum.map(& &1.id)
+               Conversations.list_forgotten_conversations(account.id, 10) |> Enum.map(& &1.id)
 
       assert [conversation.id] ==
-               Conversations.list_forgotten_conversations(2) |> Enum.map(& &1.id)
+               Conversations.list_forgotten_conversations(account.id, 2) |> Enum.map(& &1.id)
+    end
+
+    test "ignores recent reminder messages",
+         %{
+           account: account,
+           customer: customer
+         } do
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(26)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      insert(:message,
+        body: "Hello customer, this is a reminder messages from a bot",
+        account: account,
+        conversation: conversation,
+        customer: nil,
+        type: "bot",
+        metadata: %{is_reminder: true},
+        inserted_at: hours_ago(25)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      insert(:message,
+        body: "Hello customer, this is a more recent reminder messages from a bot",
+        account: account,
+        conversation: conversation,
+        customer: nil,
+        type: "bot",
+        metadata: %{is_reminder: true},
+        inserted_at: hours_ago(10)
+      )
+
+      assert [] == Conversations.list_forgotten_conversations(account.id)
+    end
+
+    test "only finds conversations from the specified account",
+         %{
+           account: account,
+           customer: customer
+         } do
+      other_account = insert(:account)
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(30)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      assert [] == Conversations.list_forgotten_conversations(other_account.id)
     end
 
     defp hours_ago(hours) do

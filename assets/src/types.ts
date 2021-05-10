@@ -7,6 +7,14 @@ export type Account = {
   users?: Array<User>;
   widget_settings: WidgetSettings;
   working_hours: Array<any>;
+  settings?: AccountSettings | null;
+};
+
+export type AccountSettings = {
+  disable_automated_reply_emails?: boolean | null;
+  conversation_reminders_enabled?: boolean | null;
+  conversation_reminder_hours_interval?: number | null;
+  max_num_conversation_reminders?: number | null;
 };
 
 export type User = {
