@@ -67,7 +67,9 @@ config :chat_api, Oban,
     # Syncs every minute
     {"* * * * *", ChatApi.Workers.SyncGmailInboxes},
     # Check for reminders every 30 mins
-    {"*/30 * * * *", ChatApi.Workers.SendAllConversationReminders},
+    # {"*/30 * * * *", ChatApi.Workers.SendAllConversationReminders},
+    # TODO: revert after testing in staging!
+    {"* * * * *", ChatApi.Workers.SendAllConversationReminders},
     # Sends everyday at 2pm UTC/9am EST
     {"0 14 * * *", ChatApi.Workers.SendPgNewsletter}
     # TODO: uncomment this after testing manually
