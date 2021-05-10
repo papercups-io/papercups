@@ -119,34 +119,29 @@ class CustomersTableContainer extends React.Component<Props, State> {
         {actions && typeof actions === 'function' && (
           <Flex mb={3} sx={{justifyContent: 'space-between'}}>
             {/* TODO: this will be where we put our search box and other filters */}
-            <Box>
-              <Flex mx={-2} sx={{alignItems: 'center'}}>
-                <Box mx={2}>
-                  <Input.Search
-                    placeholder="Search customers..."
-                    allowClear
-                    onSearch={this.handleSearchCustomers}
-                    style={{width: 320}}
-                  />
-                </Box>
-
-                <Box mx={2}>
-                  <Checkbox
-                    checked={shouldIncludeAnonymous}
-                    onChange={this.handleToggleIncludeAnonymous}
-                  >
-                    Include anonymous
-                  </Checkbox>
-                </Box>
-              </Flex>
-              <Box mt={2}>
+            <Flex mx={-2} sx={{alignItems: 'center'}}>
+              <Box mx={2}>
+                <Input.Search
+                  placeholder="Search customers..."
+                  allowClear
+                  onSearch={this.handleSearchCustomers}
+                  style={{width: 280}}
+                />
+              </Box>
+              <Box ml={2} mr={3}>
                 <CustomerTagSelect
                   placeholder="Filter by tags"
                   onChange={this.handleTagsSelect}
-                  style={{width: 320}}
+                  style={{width: 280}}
                 />
               </Box>
-            </Box>
+              <Checkbox
+                checked={shouldIncludeAnonymous}
+                onChange={this.handleToggleIncludeAnonymous}
+              >
+                Include anonymous
+              </Checkbox>
+            </Flex>
 
             {/* 
               NB: this is where we allow passing in custom action components, 
