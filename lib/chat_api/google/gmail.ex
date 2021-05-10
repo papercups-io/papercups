@@ -54,6 +54,18 @@ defmodule ChatApi.Google.Gmail do
     result
   end
 
+  def get_message_attachment(message_id, attachment_id, refresh_token) do
+    scope =
+      "https://gmail.googleapis.com/gmail/v1/users/me/messages/#{message_id}/attachments/#{
+        attachment_id
+      }"
+
+    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
+    %{body: result} = OAuth2.Client.get!(client, scope)
+
+    result
+  end
+
   def list_threads(refresh_token, query \\ []) do
     q = query |> Enum.map_join(" ", fn {k, v} -> "#{k}:#{v}" end) |> URI.encode()
     scope = "https://gmail.googleapis.com/gmail/v1/users/me/threads?q=#{q}"
