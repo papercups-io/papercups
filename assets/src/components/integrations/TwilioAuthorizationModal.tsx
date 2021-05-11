@@ -182,10 +182,10 @@ export const TwilioAuthorizationButton = ({
   const isConnected = status === 'connected' && !!authorizationId;
 
   const handleOpenModal = () => setOpen(true);
-  const handlCloseModal = () => setOpen(false);
+  const handleCloseModal = () => setOpen(false);
   const handleSuccess = () => {
     onUpdate();
-    handlCloseModal();
+    handleCloseModal();
   };
 
   const handleDisconnect = async () => {
@@ -226,7 +226,7 @@ export const TwilioAuthorizationButton = ({
         visible={isOpen}
         authorizationId={authorizationId}
         onSuccess={handleSuccess}
-        onCancel={handlCloseModal}
+        onCancel={handleCloseModal}
       />
     </>
   );

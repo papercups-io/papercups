@@ -242,10 +242,10 @@ export const MattermostAuthorizationButton = ({
   const isConnected = status === 'connected' && !!authorizationId;
 
   const handleOpenModal = () => setOpen(true);
-  const handlCloseModal = () => setOpen(false);
+  const handleCloseModal = () => setOpen(false);
   const handleSuccess = () => {
     onUpdate();
-    handlCloseModal();
+    handleCloseModal();
   };
 
   const handleDisconnect = async () => {
@@ -286,7 +286,7 @@ export const MattermostAuthorizationButton = ({
         visible={isOpen}
         authorizationId={authorizationId}
         onSuccess={handleSuccess}
-        onCancel={handlCloseModal}
+        onCancel={handleCloseModal}
       />
     </>
   );
