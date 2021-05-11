@@ -173,10 +173,7 @@ const ConversationFooter = ({
               <Box sx={{position: 'absolute', right: 0, top: 0, opacity: 0.8}}>
                 <DashboardShortcutsRenderer>
                   {(handleOpenModal) => (
-                    <Tooltip
-                      placement="top"
-                      title="Click to view keyboard shortcuts"
-                    >
+                    <Tooltip placement="top" title="View keyboard shortcuts">
                       <Button
                         type="text"
                         size="small"

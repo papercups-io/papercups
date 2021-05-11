@@ -55,7 +55,7 @@ const DashboardShortcutsModal = ({
           <WindowsOutlined /> P
         </Text>
       ),
-      description: 'Mark as priority',
+      description: 'Mark conversation as priority',
     },
     {
       mac: 'Esc',
