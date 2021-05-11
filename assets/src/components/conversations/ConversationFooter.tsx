@@ -8,10 +8,12 @@ import {
   Upload,
   UploadChangeParam,
   UploadFile,
+  Tooltip,
 } from '../common';
 import {Message, MessageType, User} from '../../types';
-import {PaperClipOutlined} from '../icons';
+import {InfoCircleOutlined, PaperClipOutlined} from '../icons';
 import {env} from '../../config';
+import {DashboardShortcutsRenderer} from './DashboardShortcutsModal';
 
 const {REACT_APP_FILE_UPLOADS_ENABLED} = env;
 
@@ -140,7 +142,7 @@ const ConversationFooter = ({
           }}
         >
           <form onSubmit={handleSendMessage}>
-            <Box px={2} mb={2}>
+            <Box px={2} mb={2} sx={{position: 'relative'}}>
               <Menu
                 mode="horizontal"
                 style={{
@@ -167,6 +169,24 @@ const ConversationFooter = ({
                   Note
                 </Menu.Item>
               </Menu>
+
+              <Box sx={{position: 'absolute', right: 0, top: 0, opacity: 0.8}}>
+                <DashboardShortcutsRenderer>
+                  {(handleOpenModal) => (
+                    <Tooltip
+                      placement="top"
+                      title="Click to view keyboard shortcuts"
+                    >
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<InfoCircleOutlined />}
+                        onClick={handleOpenModal}
+                      />
+                    </Tooltip>
+                  )}
+                </DashboardShortcutsRenderer>
+              </Box>
             </Box>
 
             <Box mb={2}>

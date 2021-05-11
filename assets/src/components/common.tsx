@@ -10,6 +10,7 @@ import Empty from 'antd/lib/empty';
 import Input from 'antd/lib/input';
 import InputNumber from 'antd/lib/input-number';
 import Layout from 'antd/lib/layout';
+import List from 'antd/lib/list';
 import Menu from 'antd/lib/menu';
 import Modal from 'antd/lib/modal';
 import notification from 'antd/lib/notification';
@@ -128,6 +129,7 @@ export {
   Empty,
   Input,
   InputNumber,
+  List,
   MarkdownRenderer,
   Menu,
   Modal,
