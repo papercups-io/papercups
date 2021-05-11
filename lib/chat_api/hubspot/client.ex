@@ -18,6 +18,7 @@ defmodule ChatApi.Hubspot.Client do
 
   # TODO: determine whether v1 or v3 API is more reliable/feature-rich
 
+  @spec list_contacts_v1(binary(), keyword()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def list_contacts_v1(access_token, query \\ [count: 100]) do
     get("/contacts/v1/lists/all/contacts/all",
       query: query,
@@ -27,6 +28,7 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
+  @spec list_contacts(binary(), keyword()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def list_contacts(access_token, query \\ [limit: 100]) do
     get("/crm/v3/objects/contacts",
       query: query,
@@ -36,6 +38,7 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
+  @spec retrieve_contact(binary, any, any) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def retrieve_contact(access_token, contact_id, query \\ []) do
     get("/crm/v3/objects/contacts/#{contact_id}",
       query: query,
@@ -45,6 +48,7 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
+  @spec create_contact(binary(), map()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def create_contact(access_token, properties \\ %{}) do
     post(
       "/crm/v3/objects/contacts",
@@ -64,6 +68,7 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
+  @spec search_contacts(binary(), list()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def search_contacts(access_token, filters \\ []) do
     post("/crm/v3/objects/contacts/search", %{"filters" => filters},
       headers: [
@@ -72,19 +77,21 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
+  @spec find_contact_by_email(binary(), String.t()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def find_contact_by_email(access_token, email) do
     search_contacts(
+      access_token,
       [
         %{
           "propertyName" => "email",
           "operator" => "EQ",
           "value" => email
         }
-      ],
-      access_token
+      ]
     )
   end
 
+  @spec refresh_auth_tokens(binary()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def refresh_auth_tokens(refresh_token) do
     create_auth_tokens(%{
       "grant_type" => "refresh_token",
@@ -92,6 +99,7 @@ defmodule ChatApi.Hubspot.Client do
     })
   end
 
+  @spec generate_auth_tokens(binary()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def generate_auth_tokens(code) do
     create_auth_tokens(%{
       "grant_type" => "authorization_code",
@@ -100,6 +108,7 @@ defmodule ChatApi.Hubspot.Client do
     })
   end
 
+  @spec create_auth_tokens(map()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def create_auth_tokens(params) do
     # app_id = System.get_env("PAPERCUPS_HUBSPOT_APP_ID")
     client_id = System.get_env("PAPERCUPS_HUBSPOT_CLIENT_ID")
