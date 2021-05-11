@@ -81,7 +81,9 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     end)
   end
 
-  @spec skip_processing_thread?(Gmail.GmailThread.t()) :: boolean
+  @spec skip_processing_thread?(Gmail.GmailThread.t() | nil) :: boolean
+  def skip_processing_thread?(nil), do: true
+
   def skip_processing_thread?(%Gmail.GmailThread{} = thread) do
     case thread do
       %{messages: []} ->

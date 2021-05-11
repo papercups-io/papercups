@@ -1,4 +1,6 @@
 defmodule ChatApi.Google.Gmail do
+  require Logger
+
   def send_message(
         refresh_token,
         %{to: _to, from: _from, subject: _subject, text: _text} = params
@@ -78,9 +80,19 @@ defmodule ChatApi.Google.Gmail do
   def get_thread(thread_id, refresh_token) do
     scope = "https://gmail.googleapis.com/gmail/v1/users/me/threads/#{thread_id}?format=full"
     client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-    %{body: result} = OAuth2.Client.get!(client, scope)
 
-    result
+    case OAuth2.Client.get(client, scope) do
+      {:ok, %{body: result}} ->
+        result
+
+      {:error, %{body: %{"error" => %{"code" => 404}}}} ->
+        Logger.warn("Gmail thread #{inspect(thread_id)} not found")
+
+        nil
+
+      {:error, error} ->
+        raise error
+    end
   end
 
   def list_history(refresh_token, query \\ []) do
