@@ -69,9 +69,13 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     end)
     |> Enum.uniq_by(fn %{"threadId" => thread_id} -> thread_id end)
     |> Enum.map(fn %{"threadId" => thread_id} ->
-      thread_id
-      |> Gmail.get_thread(refresh_token)
-      |> Gmail.format_thread(exclude_labels: ["SPAM", "DRAFT", "CATEGORY_PROMOTIONS"])
+      case Gmail.get_thread(thread_id, refresh_token) do
+        nil ->
+          nil
+
+        thread ->
+          Gmail.format_thread(thread, exclude_labels: ["SPAM", "DRAFT", "CATEGORY_PROMOTIONS"])
+      end
     end)
     |> Enum.reject(&skip_processing_thread?/1)
     |> Enum.each(fn thread ->
