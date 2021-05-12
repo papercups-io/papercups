@@ -17,10 +17,9 @@ defmodule ChatApiWeb.EmailConversationController do
         } = params
       ) do
     subject = Map.get(params, "subject")
-    customer = Customers.get_customer!(customer_id)
 
-    # TODO: handle failures
-    with {:ok, %Customer{} = _customer} <-
+    with customer <- Customers.get_customer!(customer_id),
+         {:ok, %Customer{} = _customer} <-
            Customers.update_customer(customer, %{email: email_address}) do
       create_conversation_and_send_message(conn, %{
         "account_id" => account_id,
@@ -44,7 +43,9 @@ defmodule ChatApiWeb.EmailConversationController do
 
     # TODO: handle failures
     with {:ok, %Customer{} = customer} <-
-           Customers.create_customer(%{account_id: account_id, email: email_address}) do
+           Customers.create_customer(
+             Customers.get_default_params(%{account_id: account_id, email: email_address})
+           ) do
       create_conversation_and_send_message(conn, %{
         "account_id" => account_id,
         "body" => body,

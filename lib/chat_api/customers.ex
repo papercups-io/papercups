@@ -196,15 +196,18 @@ defmodule ChatApi.Customers do
     end
   end
 
-  @spec find_by_email(binary() | nil, binary()) :: Customer.t() | nil
-  def find_by_email(nil, _account_id), do: nil
+  @spec find_by_email(binary() | nil, binary(), atom() | list(atom()) | keyword()) ::
+          Customer.t() | nil
+  def find_by_email(email, account_id, preloads \\ [])
+  def find_by_email(nil, _account_id, _preloads), do: nil
 
-  def find_by_email(email, account_id) do
+  def find_by_email(email, account_id, preloads) do
     Customer
     |> where(account_id: ^account_id, email: ^email)
     |> order_by(desc: :updated_at)
     |> first()
     |> Repo.one()
+    |> Repo.preload(preloads)
   end
 
   @spec find_or_create_by_email(binary() | nil, binary(), map()) ::
@@ -246,7 +249,7 @@ defmodule ChatApi.Customers do
   @spec create_customer(map()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   def create_customer(attrs \\ %{}) do
     %Customer{}
-    |> Customer.changeset(Map.merge(get_default_params(), attrs))
+    |> Customer.changeset(attrs)
     |> Repo.insert()
   end
 
