@@ -246,7 +246,7 @@ defmodule ChatApi.Customers do
   @spec create_customer(map()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   def create_customer(attrs \\ %{}) do
     %Customer{}
-    |> Customer.changeset(attrs)
+    |> Customer.changeset(Map.merge(get_default_params(), attrs))
     |> Repo.insert()
   end
 
