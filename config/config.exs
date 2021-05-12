@@ -58,7 +58,7 @@ config :chat_api, :pow,
 
 config :chat_api, Oban,
   repo: ChatApi.Repo,
-  plugins: [Oban.Plugins.Pruner],
+  plugins: [{Oban.Plugins.Pruner, limit: 1000, max_age: 300}],
   queues: [default: 10, events: 50, mailers: 20],
   crontab: [
     # Hourly example worker
