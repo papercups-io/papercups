@@ -1,4 +1,4 @@
-defmodule ChatApiWeb.CustomerControllerTest do
+defmodule ChatApiWeb.EmailConversationControllerTest do
   use ChatApiWeb.ConnCase, async: true
 
   import ChatApi.Factory
