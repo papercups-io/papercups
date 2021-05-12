@@ -226,7 +226,19 @@ export const CustomerDetails = ({
 
         <Flex mb={1} sx={{alignItems: 'center'}}>
           <MailOutlined style={{color: colors.primary}} />
-          <Box ml={2}>{email || 'Unknown'}</Box>
+          <Box
+            ml={2}
+            sx={{
+              maxWidth: '100%',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <Tooltip title={email} placement="left">
+              <Text>{email || 'Unknown'}</Text>
+            </Tooltip>
+          </Box>
         </Flex>
         <Flex mb={1} sx={{alignItems: 'center'}}>
           <PhoneOutlined style={{color: colors.primary}} />
