@@ -33,6 +33,7 @@ import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import VideoCameraOutlined from '@ant-design/icons/VideoCameraOutlined';
 import WarningTwoTone from '@ant-design/icons/WarningTwoTone';
+import WindowsOutlined from '@ant-design/icons/WindowsOutlined';
 
 export {
   ApiOutlined,
@@ -70,4 +71,5 @@ export {
   UserOutlined,
   VideoCameraOutlined,
   WarningTwoTone,
+  WindowsOutlined,
 };
