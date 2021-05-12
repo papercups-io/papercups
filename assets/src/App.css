@@ -30,6 +30,7 @@ body {
 
 .Text--markdown {
   overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .Text--markdown a {
