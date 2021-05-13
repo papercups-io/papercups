@@ -118,8 +118,7 @@ case mailer_adapter do
   "Swoosh.Adapters.SMTP" ->
     config :chat_api, ChatApi.Mailers,
       adapter: Swoosh.Adapters.SMTP,
-      server: System.get_env("SMTP_HOST_ADDR", "mail"),
-      hostname: System.get_env("DOMAIN"),
+      relay: System.get_env("SMTP_HOST_ADDR", "mail"),
       port: System.get_env("SMTP_HOST_PORT", "25"),
       username: System.get_env("SMTP_USER_NAME"),
       password: System.get_env("SMTP_USER_PWD"),
