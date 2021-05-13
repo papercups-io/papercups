@@ -78,7 +78,8 @@ end
 
 # Optional
 sentry_dsn = System.get_env("SENTRY_DSN")
-mailgun_api_key = System.get_env("MAILGUN_API_KEY")
+mailer_adapter = System.get_env("MAILER_ADAPTER", "Swoosh.Adapters.Mailgun")
+# mailgun_api_key = System.get_env("MAILGUN_API_KEY")
 
 # Configure Sentry
 config :sentry,
@@ -100,12 +101,36 @@ config :logger, Sentry.LoggerBackend,
   capture_log_messages: true
 
 # Domain is the email address that mailgun is sent from
-domain = System.get_env("DOMAIN")
+# domain = System.get_env("DOMAIN")
 # Configure Mailgun
-config :chat_api, ChatApi.Mailers.Mailgun,
-  adapter: Swoosh.Adapters.Mailgun,
-  api_key: mailgun_api_key,
-  domain: domain
+# config :chat_api, ChatApi.Mailers.Mailgun,
+#   adapter: Swoosh.Adapters.Mailgun,
+#   api_key: mailgun_api_key,
+#   domain: domain
+
+case mailer_adapter do
+  "Swoosh.Adapters.Mailgun" ->
+    config :chat_api, ChatApi.Mailers,
+      adapter: Swoosh.Adapters.Mailgun,
+      api_key: System.get_env("MAILGUN_API_KEY"),
+      domain: System.get_env("DOMAIN")
+
+  "Swoosh.Adapters.SMTP" ->
+    config :chat_api, ChatApi.Mailers,
+      adapter: Swoosh.Adapters.SMTP,
+      server: System.get_env("SMTP_HOST_ADDR", "mail"),
+      hostname: System.get_env("DOMAIN"),
+      port: System.get_env("SMTP_HOST_PORT", "25"),
+      username: System.get_env("SMTP_USER_NAME"),
+      password: System.get_env("SMTP_USER_PWD"),
+      ssl: System.get_env("SMTP_HOST_SSL_ENABLED") || false,
+      tls: :if_available,
+      retries: System.get_env("SMTP_RETRIES") || 2,
+      no_mx_lookups: System.get_env("SMTP_MX_LOOKUPS_ENABLED") || true
+
+  _ ->
+    raise "Unknown mailer_adapter; expected Swoosh.Adapters.Mailgun or Swoosh.Adapters.SMTP"
+end
 
 site_id = System.get_env("CUSTOMER_IO_SITE_ID")
 customerio_api_key = System.get_env("CUSTOMER_IO_API_KEY")
