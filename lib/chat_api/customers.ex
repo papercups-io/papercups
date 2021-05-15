@@ -341,23 +341,6 @@ defmodule ChatApi.Customers do
     count > 0
   end
 
-  @spec list_tags(nil | binary() | Customer.t()) :: nil | [Tag.t()]
-  def list_tags(nil), do: []
-
-  def list_tags(%Customer{} = customer) do
-    customer |> Repo.preload(:tags) |> Map.get(:tags)
-  end
-
-  def list_tags(id) do
-    # TODO: optimize this query
-    Customer
-    |> Repo.get(id)
-    |> case do
-      nil -> []
-      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
-    end
-  end
-
   @spec get_tag(Customer.t(), binary()) :: nil | CustomerTag.t()
   def get_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
     CustomerTag

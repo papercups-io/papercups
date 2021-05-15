@@ -470,17 +470,6 @@ defmodule ChatApi.Conversations do
     count_agent_replies(conversation_id) > 0
   end
 
-  @spec list_tags(binary()) :: [Tag.t()]
-  def list_tags(id) do
-    # TODO: optimize this query
-    Conversation
-    |> Repo.get(id)
-    |> case do
-      nil -> []
-      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
-    end
-  end
-
   @spec get_tag(Conversation.t(), binary()) :: ConversationTag.t() | nil
   def get_tag(%Conversation{id: id, account_id: account_id} = _conversation, tag_id) do
     ConversationTag
