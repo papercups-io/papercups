@@ -10,7 +10,7 @@ defmodule ChatApi.Conversations do
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
-  alias ChatApi.Tags.{Tag, ConversationTag}
+  alias ChatApi.Tags.ConversationTag
 
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(account_id, filters \\ %{}) do

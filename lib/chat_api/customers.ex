@@ -9,7 +9,7 @@ defmodule ChatApi.Customers do
   alias ChatApi.Conversations
   alias ChatApi.Customers.Customer
   alias ChatApi.Issues.CustomerIssue
-  alias ChatApi.Tags.{CustomerTag, Tag}
+  alias ChatApi.Tags.CustomerTag
 
   @spec list_customers(binary(), map()) :: [Customer.t()]
   def list_customers(account_id, filters \\ %{}) do
