@@ -79,7 +79,6 @@ end
 # Optional
 sentry_dsn = System.get_env("SENTRY_DSN")
 mailer_adapter = System.get_env("MAILER_ADAPTER", "Swoosh.Adapters.Mailgun")
-# mailgun_api_key = System.get_env("MAILGUN_API_KEY")
 
 # Configure Sentry
 config :sentry,
@@ -100,19 +99,12 @@ config :logger, Sentry.LoggerBackend,
   # Send messages like `Logger.error("error")` to Sentry
   capture_log_messages: true
 
-# Domain is the email address that mailgun is sent from
-# domain = System.get_env("DOMAIN")
-# Configure Mailgun
-# config :chat_api, ChatApi.Mailers.Mailgun,
-#   adapter: Swoosh.Adapters.Mailgun,
-#   api_key: mailgun_api_key,
-#   domain: domain
-
 case mailer_adapter do
   "Swoosh.Adapters.Mailgun" ->
     config :chat_api, ChatApi.Mailers,
       adapter: Swoosh.Adapters.Mailgun,
       api_key: System.get_env("MAILGUN_API_KEY"),
+      # Domain is the email address that mailgun is sent from
       domain: System.get_env("DOMAIN")
 
   "Swoosh.Adapters.SMTP" ->
