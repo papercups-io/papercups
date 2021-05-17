@@ -78,7 +78,7 @@ end
 
 # Optional
 sentry_dsn = System.get_env("SENTRY_DSN")
-mailer_adapter = System.get_env("MAILER_ADAPTER", "Swoosh.Adapters.Mailgun")
+mailer_adapter = System.get_env("MAILER_ADAPTER", "Swoosh.Adapters.Local")
 
 # Configure Sentry
 config :sentry,
@@ -118,6 +118,10 @@ case mailer_adapter do
       tls: :if_available,
       retries: System.get_env("SMTP_RETRIES") || 2,
       no_mx_lookups: System.get_env("SMTP_MX_LOOKUPS_ENABLED") || true
+
+  "Swoosh.Adapters.Local" ->
+    config :swoosh, serve_mailbox: true, preview_port: 4001
+    config :chat_api, ChatApi.Mailers, adapter: Swoosh.Adapters.Local
 
   _ ->
     raise "Unknown mailer_adapter; expected Swoosh.Adapters.Mailgun or Swoosh.Adapters.SMTP"

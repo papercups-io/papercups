@@ -177,6 +177,14 @@ defmodule ChatApiWeb.Router do
     end
   end
 
+  if Mix.env() == :dev do
+    scope "/" do
+      pipe_through [:browser]
+
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+  end
+
   scope "/", ChatApiWeb do
     pipe_through(:browser)
 
