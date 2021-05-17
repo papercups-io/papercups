@@ -113,7 +113,7 @@ defmodule ChatApi.Emails do
   def deliver(email) do
     try do
       if has_valid_to_addresses?(email) do
-         ChatApi.Mailers.deliver(email)
+        ChatApi.Mailers.deliver(email)
       else
         {:warning, "Skipped sending to potentially invalid email: #{inspect(email.to)}"}
       end
