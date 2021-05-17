@@ -41,7 +41,6 @@ defmodule ChatApiWeb.EmailConversationController do
       ) do
     subject = Map.get(params, "subject")
 
-    # TODO: handle failures
     with {:ok, %Customer{} = customer} <-
            Customers.create_customer(
              Customers.get_default_params(%{account_id: account_id, email: email_address})
@@ -81,8 +80,6 @@ defmodule ChatApiWeb.EmailConversationController do
       conversation
       |> Conversations.Notification.broadcast_new_conversation_to_admin!()
       |> Conversations.Notification.notify(:webhooks, event: "conversation:created")
-
-      # add sending of email to email address
 
       conn
       |> put_status(:created)
