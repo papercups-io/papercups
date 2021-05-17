@@ -35,6 +35,7 @@ defmodule ChatApi.Github.Helpers do
     end
   end
 
+  @spec parse_github_issue_state(String.t()) :: String.t()
   def parse_github_issue_state("open"), do: "unstarted"
   def parse_github_issue_state("closed"), do: "done"
   def parse_github_issue_state(_state), do: "unstarted"

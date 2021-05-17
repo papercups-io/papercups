@@ -60,9 +60,6 @@ defmodule ChatApi.Messages.Helpers do
          %Conversation{customer: customer} = conversation <-
            Conversations.get_conversation_with(conversation_id, [:customer, :messages]),
          user_id <- get_conversation_agent_id(conversation) do
-      IO.inspect(links, label: "!!! MADE IT !!!")
-
-      # TODO: error handling???
       Enum.each(links, fn url ->
         {:ok, issue} =
           ChatApi.Issues.find_or_create_by_github_url(url, %{
@@ -70,7 +67,11 @@ defmodule ChatApi.Messages.Helpers do
             creator_id: user_id
           })
 
-        ChatApi.Customers.link_issue(customer, issue.id)
+        {:ok, _} = ChatApi.Customers.link_issue(customer, issue.id)
+        # TODO: broadcast update to client
+        # TODO: send bot message notifying admin that the issue has been linked to the customer/conversation
+        # TODO: support linking issues to conversations (as well as customers)
+        # TODO: when issue is closed, notify linked conversations with (private?) bot message
       end)
     end
 
