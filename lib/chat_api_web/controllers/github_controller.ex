@@ -95,12 +95,13 @@ defmodule ChatApiWeb.GithubController do
       |> Map.get(:account_id)
       |> Github.get_authorization_by_account()
 
-    with {:ok, %{owner: owner, repo: repo, id: issue_id}} <- parse_github_issue_url(url),
+    with {:ok, %{owner: owner, repo: repo, id: issue_id}} <-
+           Github.Helpers.parse_github_issue_url(url),
          {:ok, %{body: %{"title" => _title, "body" => _body} = result}} <-
            Github.Client.retrieve_issue(authorization, owner, repo, issue_id) do
       json(conn, %{data: [result]})
     else
-      {:error, :unrecognized_github_issue_url} ->
+      {:error, :invalid_github_issue_url} ->
         {:error, :unprocessable_entity, "Invalid GitHub issue URL"}
 
       error ->
@@ -153,19 +154,6 @@ defmodule ChatApiWeb.GithubController do
 
     # Just respond with a 200 no matter what for now
     send_resp(conn, 200, "")
-  end
-
-  defp parse_github_issue_url(url) do
-    path =
-      case String.split(url, "github.com/") do
-        [_protocol, path] -> path
-        _ -> ""
-      end
-
-    case String.split(path, "/") do
-      [owner, repo, "issues", id] -> {:ok, %{owner: owner, repo: repo, id: id}}
-      _ -> {:error, :unrecognized_github_issue_url}
-    end
   end
 
   defp handle_event(

@@ -84,7 +84,7 @@ defmodule ChatApi.Slack.Event do
         |> Messages.Notification.notify(:gmail)
         |> Messages.Notification.notify(:sms)
         |> Messages.Notification.notify(:mattermost)
-        |> Messages.Helpers.handle_post_creation_conversation_updates()
+        |> Messages.Helpers.handle_post_creation_hooks()
       else
         case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
           nil ->
@@ -105,7 +105,7 @@ defmodule ChatApi.Slack.Event do
             |> Messages.Notification.broadcast_to_admin!()
             |> Messages.Notification.notify(:webhooks)
             |> Messages.Notification.notify(:slack)
-            |> Messages.Helpers.handle_post_creation_conversation_updates()
+            |> Messages.Helpers.handle_post_creation_hooks()
         end
       end
     else

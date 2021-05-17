@@ -103,7 +103,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
-    |> Messages.Helpers.handle_post_creation_conversation_updates()
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 
   defp get_hours_interval_config(settings) do

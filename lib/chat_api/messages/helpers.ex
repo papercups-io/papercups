@@ -37,6 +37,46 @@ defmodule ChatApi.Messages.Helpers do
     message
   end
 
+  @spec handle_post_creation_hooks(Message.t(), map()) :: Message.t()
+  def handle_post_creation_hooks(%Message{} = message, updates \\ %{}) do
+    message
+    |> handle_post_creation_conversation_updates(updates)
+    |> handle_linking_github_issues()
+
+    message
+  end
+
+  @spec handle_linking_github_issues(Message.t()) :: Message.t()
+  def handle_linking_github_issues(%Message{type: "bot"} = message), do: message
+
+  def handle_linking_github_issues(
+        %Message{
+          body: body,
+          conversation_id: conversation_id,
+          account_id: account_id
+        } = message
+      ) do
+    with [_ | _] = links <- ChatApi.Github.Helpers.extract_github_issue_links(body),
+         %Conversation{customer: customer} = conversation <-
+           Conversations.get_conversation_with(conversation_id, [:customer, :messages]),
+         user_id <- get_conversation_agent_id(conversation) do
+      IO.inspect(links, label: "!!! MADE IT !!!")
+
+      # TODO: error handling???
+      Enum.each(links, fn url ->
+        {:ok, issue} =
+          ChatApi.Issues.find_or_create_by_github_url(url, %{
+            account_id: account_id,
+            creator_id: user_id
+          })
+
+        ChatApi.Customers.link_issue(customer, issue.id)
+      end)
+    end
+
+    message
+  end
+
   @spec build_conversation_updates(Message.t(), map()) :: map()
   def build_conversation_updates(%Message{} = message, updates \\ %{}) do
     updates
@@ -82,5 +122,24 @@ defmodule ChatApi.Messages.Helpers do
     {:ok, conversation} = Conversations.update_conversation(conversation, updates)
 
     conversation
+  end
+
+  defp get_conversation_agent_id(%Conversation{account_id: account_id} = conversation) do
+    agent_id =
+      case conversation do
+        %Conversation{assignee_id: assignee_id} when not is_nil(assignee_id) ->
+          assignee_id
+
+        %Conversation{messages: [_ | _] = messages} ->
+          messages |> Enum.map(& &1.user_id) |> Enum.find(&(!is_nil(&1)))
+
+        _ ->
+          nil
+      end
+
+    case agent_id do
+      nil -> account_id |> ChatApi.Accounts.get_primary_user() |> Map.get(:id)
+      id -> id
+    end
   end
 end

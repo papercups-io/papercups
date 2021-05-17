@@ -99,9 +99,19 @@ defmodule ChatApi.Google.Gmail do
     qs = URI.encode_query(query)
     scope = "https://gmail.googleapis.com/gmail/v1/users/me/history?#{qs}"
     client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-    %{body: result} = OAuth2.Client.get!(client, scope)
 
-    result
+    case OAuth2.Client.get(client, scope) do
+      {:ok, %{body: result}} ->
+        result
+
+      {:error, %{body: %{"error" => %{"code" => 404}}}} ->
+        Logger.warn("Gmail history not found for #{inspect(qs)}")
+
+        nil
+
+      {:error, error} ->
+        raise error
+    end
   end
 
   def list_labels(refresh_token, query \\ []) do

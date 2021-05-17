@@ -300,6 +300,6 @@ defmodule Mix.Tasks.SyncGmailInbox do
     })
     |> Messages.create_and_fetch!()
     |> Messages.Notification.notify(:webhooks)
-    |> Messages.Helpers.handle_post_creation_conversation_updates()
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 end
