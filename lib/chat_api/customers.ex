@@ -272,9 +272,6 @@ defmodule ChatApi.Customers do
       %{
         # Defaults
         first_seen: DateTime.utc_now(),
-        last_seen: DateTime.utc_now(),
-        # TODO: last_seen is stored as a date, while last_seen_at is stored as
-        # a datetime -- we should opt for datetime values whenever possible
         last_seen_at: DateTime.utc_now()
       },
       overrides

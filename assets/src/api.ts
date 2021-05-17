@@ -150,7 +150,7 @@ export const createNewCustomer = async (
     .send({
       customer: {
         first_seen: now(),
-        last_seen: now(),
+        last_seen_at: now(),
         ...params,
         account_id: accountId,
       },

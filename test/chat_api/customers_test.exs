@@ -9,7 +9,7 @@ defmodule ChatApi.CustomersTest do
 
     @update_attrs %{
       first_seen: ~D[2020-01-01],
-      last_seen: ~D[2020-01-02],
+      last_seen_at: ~U[2020-01-05 00:00:00Z],
       name: "Test User",
       email: "user@test.com",
       phone: "+16501235555",
@@ -199,7 +199,7 @@ defmodule ChatApi.CustomersTest do
       assert {:ok,
               %Customer{
                 first_seen: ~D[2020-01-01],
-                last_seen: ~D[2020-01-01]
+                last_seen_at: ~U[2020-01-05 00:00:00Z]
               } = _customer} = Customers.create_customer(attrs)
     end
 
