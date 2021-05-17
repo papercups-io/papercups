@@ -58,6 +58,20 @@ defmodule ChatApi.Emails do
     |> deliver()
   end
 
+  @spec send_email_conversation_receipt_email(keyword()) :: deliver_result()
+  def send_email_conversation_receipt_email(
+        customer: customer,
+        account: account,
+        message: message
+      ) do
+    Email.email_conversation_receipt(
+      company: account.company_name,
+      customer: customer,
+      message: message
+    )
+    |> deliver()
+  end
+
   @spec send_user_invitation_email(User.t(), Account.t(), binary(), binary()) :: deliver_result()
   def send_user_invitation_email(user, account, to_address, invitation_token) do
     Email.user_invitation(%{

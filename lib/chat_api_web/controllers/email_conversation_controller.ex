@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.EmailConversationController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{Conversations, Messages, Customers}
+  alias ChatApi.{Conversations, Messages, Customers, Accounts}
   alias Customers.{Customer}
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -18,14 +18,14 @@ defmodule ChatApiWeb.EmailConversationController do
       ) do
     subject = Map.get(params, "subject")
 
-    with customer <- Customers.get_customer!(customer_id),
-         {:ok, %Customer{} = _customer} <-
+    with account <- Accounts.get_account!(account_id),
+         customer <- Customers.get_customer!(customer_id),
+         {:ok, %Customer{} = updated_customer} <-
            Customers.update_customer(customer, %{email: email_address}) do
       create_conversation_and_send_message(conn, %{
-        "account_id" => account_id,
+        "account" => account,
         "body" => body,
-        "customer_id" => customer_id,
-        "email_address" => email_address,
+        "customer" => updated_customer,
         "subject" => subject
       })
     end
@@ -41,39 +41,38 @@ defmodule ChatApiWeb.EmailConversationController do
       ) do
     subject = Map.get(params, "subject")
 
-    with {:ok, %Customer{} = customer} <-
+    with account <- Accounts.get_account!(account_id),
+         {:ok, %Customer{} = customer} <-
            Customers.create_customer(
              Customers.get_default_params(%{account_id: account_id, email: email_address})
            ) do
       create_conversation_and_send_message(conn, %{
-        "account_id" => account_id,
+        "account" => account,
         "body" => body,
-        "customer_id" => customer.id,
-        "email_address" => email_address,
+        "customer" => customer,
         "subject" => subject
       })
     end
   end
 
   defp create_conversation_and_send_message(conn, %{
-         "account_id" => account_id,
+         "account" => account,
          "body" => body,
-         "customer_id" => customer_id,
-         "email_address" => _email_address,
+         "customer" => customer,
          "subject" => subject
        }) do
     with {:ok, conversation} <-
            Conversations.create_conversation(%{
-             account_id: account_id,
-             customer_id: customer_id,
+             account_id: account.id,
+             customer_id: customer.id,
              source: "email"
            }),
-         {:ok, _message} <-
+         {:ok, message} <-
            Messages.create_message(%{
-             account_id: account_id,
+             account_id: account.id,
              body: body,
              conversation_id: conversation.id,
-             customer_id: customer_id,
+             customer_id: customer.id,
              source: "email",
              subject: subject
            }) do
@@ -81,9 +80,21 @@ defmodule ChatApiWeb.EmailConversationController do
       |> Conversations.Notification.broadcast_new_conversation_to_admin!()
       |> Conversations.Notification.notify(:webhooks, event: "conversation:created")
 
+      enqueue_email_conversation_receipt_email(account.id, customer.id, message.id)
+
       conn
       |> put_status(:created)
       |> json(%{})
     end
+  end
+
+  defp enqueue_email_conversation_receipt_email(account_id, customer_id, message_id) do
+    %{
+      account_id: account_id,
+      customer_id: customer_id,
+      message_id: message_id
+    }
+    |> ChatApi.Workers.SendEmailConversationReceiptEmail.new()
+    |> Oban.insert()
   end
 end
