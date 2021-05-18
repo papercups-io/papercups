@@ -157,18 +157,28 @@ defmodule ChatApiWeb.GithubController do
     send_resp(conn, 200, "")
   end
 
+  defp notify_channel_subscriptions(customer_id, %Issue{} = issue) do
+    ChatApiWeb.Endpoint.broadcast!(
+      "issue:lobby:" <> customer_id,
+      "issue:updated",
+      ChatApiWeb.IssueView.render("issue.json", issue: issue)
+    )
+  end
+
   defp notify_linked_customers(
          %Issue{
            id: issue_id,
            account_id: account_id,
            creator_id: creator_id,
            github_issue_url: github_issue_url
-         } = _issue,
+         } = issue,
          action
        ) do
     issue_id
     |> Issues.list_customers_by_issue()
     |> Enum.each(fn customer ->
+      notify_channel_subscriptions(customer.id, issue)
+
       case Conversations.find_latest_conversation(account_id, %{"customer_id" => customer.id}) do
         nil ->
           nil

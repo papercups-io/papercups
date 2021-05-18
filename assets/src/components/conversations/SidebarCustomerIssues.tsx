@@ -1,10 +1,12 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+import {Socket} from 'phoenix';
 import {Text, Tooltip} from '../common';
 import * as API from '../../api';
 import {Issue} from '../../types';
 import logger from '../../logger';
+import {SOCKET_URL} from '../../socket';
 import {IssueStateTag} from '../issues/IssuesTable';
 import {NewIssueModalButton} from '../issues/NewIssueModal';
 import Spinner from '../Spinner';
@@ -12,6 +14,34 @@ import Spinner from '../Spinner';
 const SidebarCustomerIssues = ({customerId}: {customerId: string}) => {
   const [loading, setLoading] = React.useState(false);
   const [customerIssues, setCustomerIssues] = React.useState<Array<Issue>>([]);
+
+  React.useEffect(() => {
+    // TODO: move to a top-level SocketProvider?
+    const token = API.getAccessToken();
+    const socket = new Socket(SOCKET_URL, {params: {token}});
+
+    socket.connect();
+
+    const channel = socket.channel(`issue:lobby:${customerId}`, {});
+
+    channel.on('issue:created', () => refreshCustomerIssues());
+    channel.on('issue:updated', () => refreshCustomerIssues());
+
+    channel
+      .join()
+      .receive('ok', (res) => {
+        logger.debug('Joined issue channel successfully', res);
+      })
+      .receive('error', (err) => {
+        logger.error('Unable to join', err);
+      });
+
+    return () => {
+      socket.disconnect();
+      channel.leave();
+    };
+    // eslint-disable-next-line
+  }, [customerId]);
 
   React.useEffect(() => {
     setLoading(true);
@@ -22,11 +52,11 @@ const SidebarCustomerIssues = ({customerId}: {customerId: string}) => {
       .finally(() => setLoading(false));
   }, [customerId]);
 
-  const refreshCustomerIssues = async () => {
+  async function refreshCustomerIssues() {
     API.fetchAllIssues({customer_id: customerId})
       .then((issues: Array<Issue>) => setCustomerIssues(issues))
       .catch((err) => logger.error('Error retrieving customer issues:', err));
-  };
+  }
 
   if (loading) {
     return <Spinner size={16} />;

@@ -5,6 +5,7 @@ defmodule ChatApi.Messages.Helpers do
 
   alias ChatApi.Conversations
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.Issues.Issue
   alias ChatApi.Messages
   alias ChatApi.Messages.Message
 
@@ -80,8 +81,8 @@ defmodule ChatApi.Messages.Helpers do
 
           case ChatApi.Customers.get_issue(customer, issue.id) do
             nil ->
-              # TODO: broadcast update to client
               {:ok, _} = ChatApi.Customers.link_issue(customer, issue.id)
+              notify_customer_issues_channel(customer.id, issue)
 
               url
 
@@ -208,5 +209,13 @@ defmodule ChatApi.Messages.Helpers do
       nil -> account_id |> ChatApi.Accounts.get_primary_user() |> Map.get(:id)
       id -> id
     end
+  end
+
+  defp notify_customer_issues_channel(customer_id, %Issue{} = issue) do
+    ChatApiWeb.Endpoint.broadcast!(
+      "issue:lobby:" <> customer_id,
+      "issue:created",
+      ChatApiWeb.IssueView.render("issue.json", issue: issue)
+    )
   end
 end
