@@ -714,6 +714,10 @@ defmodule ChatApi.Slack.Helpers do
   def format_message_body(%Message{body: nil}), do: ""
   def format_message_body(%Message{private: true, type: "note", body: nil}), do: "\\\\ _Note_"
   def format_message_body(%Message{private: true, type: "note", body: body}), do: "\\\\ _#{body}_"
+
+  def format_message_body(%Message{private: true, type: "bot", body: body}),
+    do: "\\\\ _ #{body} _"
+
   # TODO: handle messages that are too long better (rather than just slicing them)
   def format_message_body(%Message{body: body}) do
     case String.length(body) do

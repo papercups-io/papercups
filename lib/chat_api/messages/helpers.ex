@@ -5,6 +5,7 @@ defmodule ChatApi.Messages.Helpers do
 
   alias ChatApi.Conversations
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.Messages
   alias ChatApi.Messages.Message
 
   @spec get_conversation_topic(Message.t()) :: binary()
@@ -47,9 +48,17 @@ defmodule ChatApi.Messages.Helpers do
   end
 
   @spec handle_linking_github_issues(Message.t()) :: Message.t()
-  def handle_linking_github_issues(%Message{type: "bot"} = message), do: message
+  def handle_linking_github_issues(%Message{} = message) do
+    # TODO: use oban instead?
+    Task.start(fn -> link_github_issues_to_customer(message) end)
 
-  def handle_linking_github_issues(
+    message
+  end
+
+  @spec link_github_issues_to_customer(Message.t()) :: Message.t()
+  def link_github_issues_to_customer(%Message{type: "bot"} = message), do: message
+
+  def link_github_issues_to_customer(
         %Message{
           body: body,
           conversation_id: conversation_id,
@@ -60,19 +69,76 @@ defmodule ChatApi.Messages.Helpers do
          %Conversation{customer: customer} = conversation <-
            Conversations.get_conversation_with(conversation_id, [:customer, :messages]),
          user_id <- get_conversation_agent_id(conversation) do
-      Enum.each(links, fn url ->
-        {:ok, issue} =
-          ChatApi.Issues.find_or_create_by_github_url(url, %{
-            account_id: account_id,
-            creator_id: user_id
-          })
+      new_github_links =
+        links
+        |> Enum.map(fn url ->
+          {:ok, issue} =
+            ChatApi.Issues.find_or_create_by_github_url(url, %{
+              account_id: account_id,
+              creator_id: user_id
+            })
 
-        {:ok, _} = ChatApi.Customers.link_issue(customer, issue.id)
-        # TODO: broadcast update to client
-        # TODO: send bot message notifying admin that the issue has been linked to the customer/conversation
-        # TODO: support linking issues to conversations (as well as customers)
-        # TODO: when issue is closed, notify linked conversations with (private?) bot message
-      end)
+          case ChatApi.Customers.get_issue(customer, issue.id) do
+            nil ->
+              # TODO: broadcast update to client
+              {:ok, _} = ChatApi.Customers.link_issue(customer, issue.id)
+
+              url
+
+            _ ->
+              nil
+          end
+        end)
+        |> Enum.reject(&is_nil/1)
+
+      automated_message =
+        case new_github_links do
+          [new_link] ->
+            "Looks like there is a GitHub link in that message: " <>
+              "\n - " <>
+              new_link <>
+              "\n\n" <>
+              "We've automatically linked that issue to this customer so you can notify them once the issue is resolved. " <>
+              "(Click [here](/integrations) to configure the GitHub integration for your account)"
+
+          [_ | _] = new_links ->
+            list = new_links |> Enum.map(fn link -> "\n - " <> link end) |> Enum.join("")
+
+            "Looks like there are some GitHub links in that message:" <>
+              list <>
+              "\n\n" <>
+              "We've automatically linked those issues to this customer so you can notify them once those issues are resolved. " <>
+              "(Click [here](/integrations) to configure the GitHub integration for your account)"
+
+          _ ->
+            nil
+        end
+
+      case automated_message do
+        body when is_binary(body) ->
+          # Wait 2s before sending automated message
+          Process.sleep(2000)
+
+          %{
+            body: body,
+            type: "bot",
+            private: true,
+            conversation_id: conversation_id,
+            account_id: account_id,
+            user_id: user_id,
+            sent_at: DateTime.utc_now()
+          }
+          |> Messages.create_and_fetch!()
+          |> Messages.Notification.broadcast_to_admin!()
+          |> Messages.Notification.notify(:slack)
+          |> Messages.Notification.notify(:mattermost)
+          |> Messages.Notification.notify(:webhooks)
+
+        _ ->
+          nil
+      end
+
+      message
     end
 
     message

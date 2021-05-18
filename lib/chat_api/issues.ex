@@ -93,7 +93,7 @@ defmodule ChatApi.Issues do
     Issue
     |> preload(:customers)
     |> Repo.get!(issue_id)
-    |> Map.get(:customers)
+    |> Map.get(:customers, [])
   end
 
   @spec list_conversations_by_issue(binary()) :: [Conversation.t()]
