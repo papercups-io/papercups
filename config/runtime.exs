@@ -114,10 +114,10 @@ case mailer_adapter do
       port: System.get_env("SMTP_HOST_PORT", "25"),
       username: System.get_env("SMTP_USER_NAME"),
       password: System.get_env("SMTP_USER_PWD"),
+      ssl: System.get_env("SMTP_HOST_SSL_ENABLED") || false,
       tls: :if_available,
-      ssl: System.get_env("SMTP_HOST_SSL_ENABLED", "false") == "true",
-      retries: System.get_env("SMTP_RETRIES", "2") |> String.to_integer(),
-      no_mx_lookups: System.get_env("SMTP_MX_LOOKUPS_ENABLED", "true") == "true"
+      retries: System.get_env("SMTP_RETRIES") || 2,
+      no_mx_lookups: System.get_env("SMTP_MX_LOOKUPS_ENABLED") || true
 
   "Swoosh.Adapters.Local" ->
     config :swoosh,
