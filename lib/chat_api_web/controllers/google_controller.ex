@@ -87,27 +87,13 @@ defmodule ChatApiWeb.GoogleController do
         _ -> raise "Unrecognized client: #{client}"
       end
 
-    default_redirect_uri = System.get_env("PAPERCUPS_GOOGLE_REDIRECT_URI")
-
-    redirect_uri =
-      case Map.get(params, "type") do
-        "support" ->
-          System.get_env("PAPERCUPS_SUPPORT_GMAIL_REDIRECT_URI", default_redirect_uri)
-
-        "personal" ->
-          System.get_env("PAPERCUPS_PERSONAL_GMAIL_REDIRECT_URI", default_redirect_uri)
-
-        _ ->
-          default_redirect_uri
-      end
-
     redirect(conn,
       external:
         Google.Auth.authorize_url!(
           scope: scope,
           prompt: "consent",
           access_type: "offline",
-          redirect_uri: redirect_uri
+          redirect_uri: get_redirect_uri(params)
         )
     )
   end
@@ -121,26 +107,12 @@ defmodule ChatApiWeb.GoogleController do
         _ -> raise "Unrecognized client: #{client}"
       end
 
-    default_redirect_uri = System.get_env("PAPERCUPS_GOOGLE_REDIRECT_URI")
-
-    redirect_uri =
-      case Map.get(params, "type") do
-        "support" ->
-          System.get_env("PAPERCUPS_SUPPORT_GMAIL_REDIRECT_URI", default_redirect_uri)
-
-        "personal" ->
-          System.get_env("PAPERCUPS_PERSONAL_GMAIL_REDIRECT_URI", default_redirect_uri)
-
-        _ ->
-          default_redirect_uri
-      end
-
     url =
       Google.Auth.authorize_url!(
         scope: scope,
         prompt: "consent",
         access_type: "offline",
-        redirect_uri: redirect_uri
+        redirect_uri: get_redirect_uri(params)
       )
 
     json(conn, %{data: %{url: url}})
@@ -153,6 +125,22 @@ defmodule ChatApiWeb.GoogleController do
            Google.get_google_authorization!(id),
          {:ok, %GoogleAuthorization{}} <- Google.delete_google_authorization(auth) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  @spec get_redirect_uri(map()) :: String.t() | nil
+  defp get_redirect_uri(params) do
+    default_redirect_uri = System.get_env("PAPERCUPS_GOOGLE_REDIRECT_URI")
+
+    case Map.get(params, "type") do
+      "support" ->
+        System.get_env("PAPERCUPS_SUPPORT_GMAIL_REDIRECT_URI", default_redirect_uri)
+
+      "personal" ->
+        System.get_env("PAPERCUPS_PERSONAL_GMAIL_REDIRECT_URI", default_redirect_uri)
+
+      _ ->
+        default_redirect_uri
     end
   end
 
