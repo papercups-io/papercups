@@ -290,8 +290,9 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
 
     const scope = q.scope ? String(q.scope) : null;
+    const state = q.state ? String(q.state) : null;
 
-    return API.authorizeGoogleIntegration(code, scope)
+    return API.authorizeGoogleIntegration({code, scope, state})
       .then((result) => logger.debug('Successfully authorized Google:', result))
       .catch((err) => {
         logger.error('Failed to authorize Google:', err);

@@ -1,5 +1,6 @@
 import qs from 'query-string';
 import {SLACK_CLIENT_ID, isDev} from '../../config';
+import {GoogleIntegrationParams} from '../../types';
 
 export type IntegrationType = {
   key:
@@ -59,10 +60,7 @@ export const getSlackAuthUrl = (type = 'reply') => {
   return `https://slack.com/oauth/v2/authorize?${query}`;
 };
 
-export const getGoogleAuthUrl = (
-  client: 'gmail' | 'sheets',
-  type: 'support' | 'personal' = 'support'
-) => {
+export const getGoogleAuthUrl = ({client, type}: GoogleIntegrationParams) => {
   const origin = isDev ? 'http://localhost:4000' : window.location.origin;
 
   return `${origin}/google/auth?client=${client}&type=${type}`;

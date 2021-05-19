@@ -38,7 +38,7 @@ defmodule ChatApi.Google.Auth do
         OAuth2.Client.get_token!(refresh_client(), params, headers, opts)
 
       _ ->
-        OAuth2.Client.get_token!(client(), params, headers, opts)
+        params |> client() |> OAuth2.Client.get_token!(params, headers, opts)
     end
   end
 
