@@ -121,8 +121,8 @@ case mailer_adapter do
 
   "Swoosh.Adapters.Local" ->
     config :swoosh,
-      serve_mailbox: true,
-      preview_port: System.get_env("MAILBOX_PREVIEW_PORT") || 4001
+      serve_mailbox: System.get_env("LOCAL_SERVE_MAILBOX", "true") == "true",
+      preview_port: String.to_integer(System.get_env("LOCAL_MAILBOX_PREVIEW_PORT", "4001"))
 
     config :chat_api, ChatApi.Mailers, adapter: Swoosh.Adapters.Local
 
