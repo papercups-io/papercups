@@ -114,15 +114,15 @@ case mailer_adapter do
       port: System.get_env("SMTP_HOST_PORT", "25"),
       username: System.get_env("SMTP_USER_NAME"),
       password: System.get_env("SMTP_USER_PWD"),
-      ssl: System.get_env("SMTP_HOST_SSL_ENABLED") || false,
       tls: :if_available,
-      retries: System.get_env("SMTP_RETRIES") || 2,
-      no_mx_lookups: System.get_env("SMTP_MX_LOOKUPS_ENABLED") || true
+      ssl: System.get_env("SMTP_HOST_SSL_ENABLED", "false") == "true",
+      retries: System.get_env("SMTP_RETRIES", "2") |> String.to_integer(),
+      no_mx_lookups: System.get_env("SMTP_MX_LOOKUPS_ENABLED", "true") == "true"
 
   "Swoosh.Adapters.Local" ->
     config :swoosh,
       serve_mailbox: System.get_env("LOCAL_SERVE_MAILBOX", "true") == "true",
-      preview_port: String.to_integer(System.get_env("LOCAL_MAILBOX_PREVIEW_PORT", "4001"))
+      preview_port: System.get_env("LOCAL_MAILBOX_PREVIEW_PORT", "4001") |> String.to_integer()
 
     config :chat_api, ChatApi.Mailers, adapter: Swoosh.Adapters.Local
 
