@@ -86,7 +86,7 @@ defmodule ChatApiWeb.TwilioController do
       |> Messages.Notification.notify(:webhooks)
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:mattermost)
-      |> Messages.Helpers.handle_post_creation_conversation_updates()
+      |> Messages.Helpers.handle_post_creation_hooks()
 
       send_resp(conn, 200, "")
     else
