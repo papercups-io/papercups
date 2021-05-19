@@ -3,10 +3,10 @@ defmodule ChatApi.Messages.Helpers do
   Helpers for Messages context
   """
 
-  alias ChatApi.Conversations
+  alias ChatApi.{Conversations, Customers, Github, Issues, Messages}
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.Github.GithubAuthorization
   alias ChatApi.Issues.Issue
-  alias ChatApi.Messages
   alias ChatApi.Messages.Message
 
   @spec get_conversation_topic(Message.t()) :: binary()
@@ -56,6 +56,7 @@ defmodule ChatApi.Messages.Helpers do
     message
   end
 
+  # TODO: maybe this belongs in another module?
   @spec link_github_issues_to_customer(Message.t()) :: Message.t()
   def link_github_issues_to_customer(%Message{type: "bot"} = message), do: message
 
@@ -66,22 +67,24 @@ defmodule ChatApi.Messages.Helpers do
           account_id: account_id
         } = message
       ) do
-    with [_ | _] = links <- ChatApi.Github.Helpers.extract_github_issue_links(body),
+    with [_ | _] = links <- Github.Helpers.extract_github_issue_links(body),
+         %GithubAuthorization{} = auth <- Github.get_authorization_by_account(account_id),
          %Conversation{customer: customer} = conversation <-
            Conversations.get_conversation_with(conversation_id, [:customer, :messages]),
          user_id <- get_conversation_agent_id(conversation) do
       new_github_links =
         links
+        |> Enum.filter(fn url -> Github.Helpers.subscribed_to_repo?(url, auth) end)
         |> Enum.map(fn url ->
           {:ok, issue} =
-            ChatApi.Issues.find_or_create_by_github_url(url, %{
+            Issues.find_or_create_by_github_url(url, %{
               account_id: account_id,
               creator_id: user_id
             })
 
-          case ChatApi.Customers.get_issue(customer, issue.id) do
+          case Customers.get_issue(customer, issue.id) do
             nil ->
-              {:ok, _} = ChatApi.Customers.link_issue(customer, issue.id)
+              {:ok, _} = Customers.link_issue(customer, issue.id)
               notify_customer_issues_channel(customer.id, issue)
 
               url
