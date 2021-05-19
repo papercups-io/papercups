@@ -1,9 +1,6 @@
 defmodule ChatApiWeb.IssueChannel do
   use ChatApiWeb, :channel
 
-  # TODO:
-  # figure out the best way to subscribe to updates for issues by customer and by id?
-
   @impl true
   @spec join(binary(), map(), Phoenix.Socket.t()) :: {:ok, Phoenix.Socket.t()}
   def join("issue:lobby:" <> customer_id, _params, socket) do
