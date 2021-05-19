@@ -120,7 +120,7 @@ case mailer_adapter do
       no_mx_lookups: System.get_env("SMTP_MX_LOOKUPS_ENABLED") || true
 
   "Swoosh.Adapters.Local" ->
-    config :swoosh, serve_mailbox: true, preview_port: 4001
+    config :swoosh, serve_mailbox: true, preview_port: System.get_env("MAILBOX_PREVIEW_PORT") || 4001
     config :chat_api, ChatApi.Mailers, adapter: Swoosh.Adapters.Local
 
   _ ->
