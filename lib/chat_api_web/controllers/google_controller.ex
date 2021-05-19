@@ -50,9 +50,17 @@ defmodule ChatApiWeb.GoogleController do
   end
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def authorization(conn, %{"client" => client}) do
+  def authorization(conn, %{"client" => client} = params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      case Google.get_authorization_by_account(account_id, %{client: client}) do
+      filters =
+        case Map.get(params, "type") do
+          "personal" -> %{client: client, type: "personal"}
+          "support" -> %{client: client, type: "support"}
+          "sheets" -> %{client: client, type: "sheets"}
+          _ -> %{client: client}
+        end
+
+      case Google.get_authorization_by_account(account_id, filters) do
         nil ->
           json(conn, %{data: nil})
 
@@ -71,22 +79,41 @@ defmodule ChatApiWeb.GoogleController do
   end
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def index(conn, %{"client" => client}) do
+  def index(conn, %{"client" => client} = params) do
     scope =
       case client do
         "sheets" -> "https://www.googleapis.com/auth/spreadsheets"
         "gmail" -> "https://www.googleapis.com/auth/gmail.modify"
         _ -> raise "Unrecognized client: #{client}"
+      end
+
+    default_redirect_uri = System.get_env("PAPERCUPS_GOOGLE_REDIRECT_URI")
+
+    redirect_uri =
+      case Map.get(params, "type") do
+        "support" ->
+          System.get_env("PAPERCUPS_SUPPORT_GMAIL_REDIRECT_URI", default_redirect_uri)
+
+        "personal" ->
+          System.get_env("PAPERCUPS_PERSONAL_GMAIL_REDIRECT_URI", default_redirect_uri)
+
+        _ ->
+          default_redirect_uri
       end
 
     redirect(conn,
       external:
-        Google.Auth.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
+        Google.Auth.authorize_url!(
+          scope: scope,
+          prompt: "consent",
+          access_type: "offline",
+          redirect_uri: redirect_uri
+        )
     )
   end
 
   @spec auth(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def auth(conn, %{"client" => client}) do
+  def auth(conn, %{"client" => client} = params) do
     scope =
       case client do
         "sheets" -> "https://www.googleapis.com/auth/spreadsheets"
@@ -94,7 +121,27 @@ defmodule ChatApiWeb.GoogleController do
         _ -> raise "Unrecognized client: #{client}"
       end
 
-    url = Google.Auth.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
+    default_redirect_uri = System.get_env("PAPERCUPS_GOOGLE_REDIRECT_URI")
+
+    redirect_uri =
+      case Map.get(params, "type") do
+        "support" ->
+          System.get_env("PAPERCUPS_SUPPORT_GMAIL_REDIRECT_URI", default_redirect_uri)
+
+        "personal" ->
+          System.get_env("PAPERCUPS_PERSONAL_GMAIL_REDIRECT_URI", default_redirect_uri)
+
+        _ ->
+          default_redirect_uri
+      end
+
+    url =
+      Google.Auth.authorize_url!(
+        scope: scope,
+        prompt: "consent",
+        access_type: "offline",
+        redirect_uri: redirect_uri
+      )
 
     json(conn, %{data: %{url: url}})
   end

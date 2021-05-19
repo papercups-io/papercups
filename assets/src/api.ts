@@ -807,8 +807,15 @@ export const deleteTwilioAuthorization = async (
     .set('Authorization', token);
 };
 
+type GoogleIntegrationClient = 'gmail' | 'sheets';
+type GoogleIntegrationType = 'personal' | 'support';
+type GoogleIntegrationParams = {
+  client: GoogleIntegrationClient;
+  type?: GoogleIntegrationType;
+};
+
 export const fetchGoogleAuthorization = async (
-  client: 'gmail' | 'sheets',
+  query: GoogleIntegrationParams,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -817,7 +824,7 @@ export const fetchGoogleAuthorization = async (
 
   return request
     .get(`/api/google/authorization`)
-    .query({client})
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

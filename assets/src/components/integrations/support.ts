@@ -59,8 +59,11 @@ export const getSlackAuthUrl = (type = 'reply') => {
   return `https://slack.com/oauth/v2/authorize?${query}`;
 };
 
-export const getGoogleAuthUrl = (client: 'gmail' | 'sheets') => {
+export const getGoogleAuthUrl = (
+  client: 'gmail' | 'sheets',
+  type: 'support' | 'personal' = 'support'
+) => {
   const origin = isDev ? 'http://localhost:4000' : window.location.origin;
 
-  return `${origin}/google/auth?client=${client}`;
+  return `${origin}/google/auth?client=${client}&type=${type}`;
 };

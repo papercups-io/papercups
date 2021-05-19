@@ -14,12 +14,13 @@ defmodule ChatApi.Workers.SendGmailNotification do
             "id" => message_id,
             "account_id" => account_id,
             "conversation_id" => conversation_id,
+            "user_id" => user_id,
             "body" => body
           }
         }
       }) do
     with %{refresh_token: refresh_token} = _authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+           Google.get_default_gmail_authorization(account_id, user_id),
          %{gmail_initial_subject: gmail_initial_subject, gmail_thread_id: gmail_thread_id} <-
            Google.get_thread_by_conversation_id(conversation_id),
          %{

@@ -157,7 +157,10 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   fetchGmailIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchGoogleAuthorization('gmail');
+    const auth = await API.fetchGoogleAuthorization({
+      client: 'gmail',
+      type: 'support',
+    });
 
     return {
       key: 'gmail',
@@ -171,7 +174,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   fetchGoogleSheetsIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchGoogleAuthorization('sheets');
+    const auth = await API.fetchGoogleAuthorization({client: 'sheets'});
 
     return {
       key: 'sheets',

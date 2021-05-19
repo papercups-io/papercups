@@ -8,6 +8,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   require Logger
 
   alias ChatApi.{Accounts, Conversations, Messages, Repo, Users}
+  alias ChatApi.Customers.Customer
 
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
@@ -92,8 +93,12 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   @spec should_send_email?(binary()) :: boolean()
   def should_send_email?(conversation_id) do
     case Conversations.get_conversation!(conversation_id) do
-      %{source: "chat"} -> Conversations.has_unseen_messages?(conversation_id)
-      _ -> false
+      %{source: "chat", customer: %Customer{email: email}} when is_binary(email) ->
+        ChatApi.Emails.Helpers.valid_format?(email) &&
+          Conversations.has_unseen_messages?(conversation_id)
+
+      _ ->
+        false
     end
   end
 

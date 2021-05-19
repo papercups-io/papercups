@@ -55,7 +55,23 @@ defmodule ChatApi.Google do
     |> where(account_id: ^account_id)
     |> where(^filter_authorizations_where(filters))
     |> order_by(desc: :inserted_at)
+    |> first()
     |> Repo.one()
+  end
+
+  @spec get_default_gmail_authorization(binary(), binary()) :: GoogleAuthorization.t() | nil
+  def get_default_gmail_authorization(account_id, user_id) do
+    personal =
+      get_authorization_by_account(account_id, %{
+        client: "gmail",
+        type: "personal",
+        user_id: user_id
+      })
+
+    case personal do
+      %GoogleAuthorization{} = auth -> auth
+      nil -> get_authorization_by_account(account_id, %{client: "gmail"})
+    end
   end
 
   @spec create_or_update_authorization(binary(), map()) ::
@@ -79,6 +95,9 @@ defmodule ChatApi.Google do
 
       {:scope, value}, dynamic ->
         dynamic([g], ^dynamic and g.scope == ^value)
+
+      {:type, value}, dynamic ->
+        dynamic([g], ^dynamic and g.type == ^value)
 
       {_, _}, dynamic ->
         # Not a where parameter

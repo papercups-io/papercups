@@ -105,7 +105,7 @@ defmodule ChatApi.Newsletters.Pg do
          %{refresh_token: sheets_token} <-
            Google.get_authorization_by_account(account_id, %{client: "sheets"}),
          %{refresh_token: gmail_token} <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
+           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}) do
       url = pick_essay_url(Date.utc_today(), start_date)
 
       recipients =

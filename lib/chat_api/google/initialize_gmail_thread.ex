@@ -75,6 +75,8 @@ defmodule ChatApi.Google.InitializeGmailThread do
   end
 
   defp get_gmail_authorization(account_id) do
+    # TODO: if a personal authorization exists, use that -- otherwise fall back to the account-level
+    # (Will need to pass in a user_id as well to get the personal account)
     case Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
       %Google.GoogleAuthorization{} = auth -> {:ok, auth}
       _ -> {:error, "Missing Gmail integration"}
