@@ -9,7 +9,7 @@ defmodule ChatApi.Customers do
   alias ChatApi.Conversations
   alias ChatApi.Customers.Customer
   alias ChatApi.Issues.CustomerIssue
-  alias ChatApi.Tags.{CustomerTag, Tag}
+  alias ChatApi.Tags.CustomerTag
 
   @spec list_customers(binary(), map()) :: [Customer.t()]
   def list_customers(account_id, filters \\ %{}) do
@@ -336,23 +336,6 @@ defmodule ChatApi.Customers do
       |> Repo.one()
 
     count > 0
-  end
-
-  @spec list_tags(nil | binary() | Customer.t()) :: nil | [Tag.t()]
-  def list_tags(nil), do: []
-
-  def list_tags(%Customer{} = customer) do
-    customer |> Repo.preload(:tags) |> Map.get(:tags)
-  end
-
-  def list_tags(id) do
-    # TODO: optimize this query
-    Customer
-    |> Repo.get(id)
-    |> case do
-      nil -> []
-      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
-    end
   end
 
   @spec get_tag(Customer.t(), binary()) :: nil | CustomerTag.t()
