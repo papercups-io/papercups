@@ -4,8 +4,7 @@ defmodule ChatApi.Google do
   """
 
   import Ecto.Query, warn: false
-  alias ChatApi.Repo
-
+  alias ChatApi.{Accounts, Emails, Repo}
   alias ChatApi.Google.{GoogleAuthorization, GmailConversationThread}
 
   #############################################################################
@@ -59,7 +58,7 @@ defmodule ChatApi.Google do
     |> Repo.one()
   end
 
-  @spec get_default_gmail_authorization(binary(), binary()) :: GoogleAuthorization.t() | nil
+  @spec get_default_gmail_authorization(binary(), integer()) :: GoogleAuthorization.t() | nil
   def get_default_gmail_authorization(account_id, user_id) do
     personal =
       get_authorization_by_account(account_id, %{
@@ -84,6 +83,16 @@ defmodule ChatApi.Google do
     else
       create_google_authorization(params)
     end
+  end
+
+  @spec format_sender_display_name(GoogleAuthorization.t(), integer(), binary()) :: binary()
+  def format_sender_display_name(%GoogleAuthorization{type: "personal"}, user_id, account_id),
+    do: Emails.format_sender_name(user_id, account_id)
+
+  def format_sender_display_name(_, _, account_id) do
+    account = Accounts.get_account!(account_id)
+
+    "#{account.company_name} Team"
   end
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries

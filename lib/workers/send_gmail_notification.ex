@@ -4,7 +4,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
   use Oban.Worker, queue: :mailers
   import Ecto.Query, warn: false
   require Logger
-  alias ChatApi.{Accounts, Conversations, Google, Messages}
+  alias ChatApi.{Conversations, Google, Messages}
 
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
@@ -19,7 +19,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
           }
         }
       }) do
-    with %{refresh_token: refresh_token} = _authorization <-
+    with %{refresh_token: refresh_token} = authorization <-
            Google.get_default_gmail_authorization(account_id, user_id),
          %{gmail_initial_subject: gmail_initial_subject, gmail_thread_id: gmail_thread_id} <-
            Google.get_thread_by_conversation_id(conversation_id),
@@ -29,8 +29,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
            "gmail_to" => gmail_to,
            "gmail_cc" => gmail_cc,
            "gmail_references" => gmail_references
-         } = last_gmail_message <- extract_last_gmail_message!(conversation_id),
-         %{company_name: company_name} <- Accounts.get_account!(account_id) do
+         } = last_gmail_message <- extract_last_gmail_message!(conversation_id) do
       Logger.info("Last Gmail message: #{inspect(last_gmail_message)}")
 
       # TODO: double check logic for determining from/to/cc/etc
@@ -40,6 +39,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
         |> Google.Gmail.get_profile()
         |> Map.get("emailAddress")
 
+      sender = Google.format_sender_display_name(authorization, user_id, account_id)
       last_from = Google.Gmail.extract_email_address(gmail_from)
       last_to = gmail_to |> String.split(",") |> Enum.map(&Google.Gmail.extract_email_address/1)
 
@@ -66,7 +66,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
         end
 
       payload = %{
-        from: {"#{company_name} Team", from},
+        from: {sender, from},
         subject: "Re: #{gmail_initial_subject}",
         text: body,
         to: to,

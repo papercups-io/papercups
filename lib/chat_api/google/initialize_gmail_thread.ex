@@ -3,12 +3,13 @@ defmodule ChatApi.Google.InitializeGmailThread do
 
   require Logger
 
-  alias ChatApi.{Accounts, Conversations, Emails, Google, Messages, Users}
+  alias ChatApi.{Accounts, Conversations, Google, Messages}
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
+  alias ChatApi.Google.GoogleAuthorization
   alias ChatApi.Messages.Message
 
-  @spec send(binary(), Conversation.t(), binary()) :: Message.t() | {:error, String.t()}
+  @spec send(binary(), Conversation.t(), integer()) :: Message.t() | {:error, String.t()}
   def send(
         text,
         %Conversation{
@@ -18,11 +19,11 @@ defmodule ChatApi.Google.InitializeGmailThread do
         },
         user_id
       ) do
-    with {:ok, %{refresh_token: refresh_token, user_id: user_id}} <-
+    with {:ok, %{refresh_token: refresh_token, user_id: _auth_user_id} = authorization} <-
            get_gmail_authorization(account_id, user_id),
          {:ok, from} <- get_authorized_gmail_address(refresh_token),
          {:ok, to} <- validate_conversation_customer_email(conversation_id) do
-      sender = Emails.format_sender_name(user_id, account_id)
+      sender = Google.format_sender_display_name(authorization, user_id, account_id)
 
       subject =
         case subject do
@@ -77,6 +78,8 @@ defmodule ChatApi.Google.InitializeGmailThread do
     end
   end
 
+  @spec get_gmail_authorization(binary(), integer()) ::
+          {:ok, GoogleAuthorization.t()} | {:error, binary()}
   defp get_gmail_authorization(account_id, user_id) do
     case Google.get_default_gmail_authorization(account_id, user_id) do
       %Google.GoogleAuthorization{} = auth -> {:ok, auth}
@@ -84,6 +87,7 @@ defmodule ChatApi.Google.InitializeGmailThread do
     end
   end
 
+  @spec get_authorized_gmail_address(binary()) :: {:ok, binary()} | {:error, binary()}
   defp get_authorized_gmail_address(refresh_token) do
     case Google.Gmail.get_profile(refresh_token) do
       %{"emailAddress" => from} -> {:ok, from}
@@ -91,6 +95,7 @@ defmodule ChatApi.Google.InitializeGmailThread do
     end
   end
 
+  @spec validate_conversation_customer_email(binary()) :: {:ok, binary()} | {:error, binary()}
   defp validate_conversation_customer_email(conversation_id) do
     with %Conversation{customer: %Customer{email: email}} <-
            Conversations.get_conversation!(conversation_id),
@@ -101,6 +106,7 @@ defmodule ChatApi.Google.InitializeGmailThread do
     end
   end
 
+  @spec get_default_subject(binary()) :: binary()
   defp get_default_subject(account_id) do
     account = Accounts.get_account!(account_id)
 
