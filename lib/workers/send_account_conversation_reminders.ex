@@ -14,9 +14,20 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
   def perform(%Oban.Job{args: %{"account_id" => account_id}}) do
     Logger.info("Triggering conversation reminders for account #{account_id}")
 
-    account_id
-    |> Accounts.get_account!()
-    |> run()
+    account = Accounts.get_account!(account_id)
+
+    # Skip sending reminders when outside working hours
+    case Accounts.is_outside_working_hours?(account) do
+      false ->
+        run(account)
+
+      true ->
+        Logger.info(
+          "Skipping conversation reminders, currently outside working hours: #{
+            inspect(account.working_hours)
+          }"
+        )
+    end
 
     :ok
   end
