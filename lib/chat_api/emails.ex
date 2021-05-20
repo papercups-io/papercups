@@ -111,11 +111,9 @@ defmodule ChatApi.Emails do
 
   @spec deliver(Email.t()) :: deliver_result()
   def deliver(email) do
-    # Using try catch here because if someone is self hosting and doesn't need the email service it would error out
-    # TODO: Find a better solution besides try catch probably in config.exs setup an empty mailer that doesn't do anything
     try do
       if has_valid_to_addresses?(email) do
-        ChatApi.Mailers.Mailgun.deliver(email)
+        ChatApi.Mailers.deliver(email)
       else
         {:warning, "Skipped sending to potentially invalid email: #{inspect(email.to)}"}
       end
