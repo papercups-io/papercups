@@ -3,24 +3,27 @@ defmodule ChatApi.Google.InitializeGmailThread do
 
   require Logger
 
-  alias ChatApi.{Accounts, Conversations, Google, Messages}
+  alias ChatApi.{Accounts, Conversations, Emails, Google, Messages, Users}
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
 
-  @spec send(binary(), Conversation.t()) :: Message.t() | {:error, String.t()}
+  @spec send(binary(), Conversation.t(), binary()) :: Message.t() | {:error, String.t()}
   def send(
         text,
         %Conversation{
           id: conversation_id,
           account_id: account_id,
           subject: subject
-        }
+        },
+        user_id
       ) do
     with {:ok, %{refresh_token: refresh_token, user_id: user_id}} <-
-           get_gmail_authorization(account_id),
+           get_gmail_authorization(account_id, user_id),
          {:ok, from} <- get_authorized_gmail_address(refresh_token),
          {:ok, to} <- validate_conversation_customer_email(conversation_id) do
+      sender = Emails.format_sender_name(user_id, account_id)
+
       subject =
         case subject do
           nil -> get_default_subject(account_id)
@@ -33,7 +36,7 @@ defmodule ChatApi.Google.InitializeGmailThread do
       } =
         Google.Gmail.send_message(refresh_token, %{
           to: to,
-          from: from,
+          from: {sender, from},
           subject: subject,
           text: text
         })
@@ -74,10 +77,8 @@ defmodule ChatApi.Google.InitializeGmailThread do
     end
   end
 
-  defp get_gmail_authorization(account_id) do
-    # TODO: if a personal authorization exists, use that -- otherwise fall back to the account-level
-    # (Will need to pass in a user_id as well to get the personal account)
-    case Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
+  defp get_gmail_authorization(account_id, user_id) do
+    case Google.get_default_gmail_authorization(account_id, user_id) do
       %Google.GoogleAuthorization{} = auth -> {:ok, auth}
       _ -> {:error, "Missing Gmail integration"}
     end

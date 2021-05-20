@@ -349,7 +349,7 @@ class UserProfile extends React.Component<Props, State> {
           </Paragraph>
         </Box>
 
-        <Box>
+        <Box mb={3}>
           <PersonalGmailAuthorizationButton
             isConnected={hasGmailConnection}
             authorizationId={gmailAuthorizationId}
