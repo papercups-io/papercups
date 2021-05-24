@@ -58,16 +58,27 @@ defmodule ChatApi.Google do
     |> Repo.one()
   end
 
-  @spec get_default_gmail_authorization(binary(), integer()) :: GoogleAuthorization.t() | nil
-  def get_default_gmail_authorization(account_id, user_id) do
-    personal =
+  def get_personal_gmail_authorization(account_id, user_id),
+    do:
       get_authorization_by_account(account_id, %{
         client: "gmail",
         type: "personal",
         user_id: user_id
       })
 
-    case personal do
+  def get_support_gmail_authorization(account_id, _user_id),
+    do: get_support_gmail_authorization(account_id)
+
+  def get_support_gmail_authorization(account_id),
+    do:
+      get_authorization_by_account(account_id, %{
+        client: "gmail",
+        type: "support"
+      })
+
+  @spec get_default_gmail_authorization(binary(), integer()) :: GoogleAuthorization.t() | nil
+  def get_default_gmail_authorization(account_id, user_id) do
+    case get_personal_gmail_authorization(account_id, user_id) do
       %GoogleAuthorization{} = auth -> auth
       nil -> get_authorization_by_account(account_id, %{client: "gmail"})
     end

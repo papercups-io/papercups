@@ -20,7 +20,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
         }
       }) do
     with %{refresh_token: refresh_token} = authorization <-
-           Google.get_default_gmail_authorization(account_id, user_id),
+           Google.get_support_gmail_authorization(account_id, user_id),
          %{gmail_initial_subject: gmail_initial_subject, gmail_thread_id: gmail_thread_id} <-
            Google.get_thread_by_conversation_id(conversation_id),
          %{

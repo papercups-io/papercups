@@ -81,7 +81,7 @@ defmodule ChatApi.Google.InitializeGmailThread do
   @spec get_gmail_authorization(binary(), integer()) ::
           {:ok, GoogleAuthorization.t()} | {:error, binary()}
   defp get_gmail_authorization(account_id, user_id) do
-    case Google.get_default_gmail_authorization(account_id, user_id) do
+    case Google.get_support_gmail_authorization(account_id, user_id) do
       %Google.GoogleAuthorization{} = auth -> {:ok, auth}
       _ -> {:error, "Missing Gmail integration"}
     end
