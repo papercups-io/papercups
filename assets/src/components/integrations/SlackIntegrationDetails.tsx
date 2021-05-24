@@ -19,7 +19,7 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
   }
 
   render() {
-    logger.debug('Slack authorizaiton:', this.state.authorization);
+    logger.debug('Slack authorization:', this.state.authorization);
 
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
