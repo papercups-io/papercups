@@ -31,6 +31,7 @@ const CustomersPage = () => {
 
         <CustomersTableContainer
           currentlyOnline={online}
+          includeTagFilterInput
           actions={(onSuccess) => <NewCustomerButton onSuccess={onSuccess} />}
         />
       </Box>
