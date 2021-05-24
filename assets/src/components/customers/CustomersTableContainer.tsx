@@ -12,6 +12,9 @@ type Props = {
   currentlyOnline?: any;
   shouldIncludeAnonymous?: boolean;
   defaultFilters?: Record<string, any>;
+  includeSearchInput?: boolean;
+  includeTagFilterInput?: boolean;
+  includeAnonymousUserFilter?: boolean;
   actions?: (
     refreshCustomerData: (filters?: any) => void
   ) => React.ReactElement;
@@ -111,7 +114,13 @@ class CustomersTableContainer extends React.Component<Props, State> {
   };
 
   render() {
-    const {currentlyOnline, actions} = this.props;
+    const {
+      currentlyOnline,
+      includeSearchInput = true,
+      includeTagFilterInput = false,
+      includeAnonymousUserFilter = true,
+      actions,
+    } = this.props;
     const {loading, customers, pagination, shouldIncludeAnonymous} = this.state;
 
     return (
@@ -120,27 +129,33 @@ class CustomersTableContainer extends React.Component<Props, State> {
           <Flex mb={3} sx={{justifyContent: 'space-between'}}>
             {/* TODO: this will be where we put our search box and other filters */}
             <Flex mx={-2} sx={{alignItems: 'center'}}>
-              <Box mx={2}>
-                <Input.Search
-                  placeholder="Search customers..."
-                  allowClear
-                  onSearch={this.handleSearchCustomers}
-                  style={{width: 280}}
-                />
-              </Box>
-              <Box ml={2} mr={3}>
-                <CustomerTagSelect
-                  placeholder="Filter by tags"
-                  onChange={this.handleTagsSelect}
-                  style={{width: 280}}
-                />
-              </Box>
-              <Checkbox
-                checked={shouldIncludeAnonymous}
-                onChange={this.handleToggleIncludeAnonymous}
-              >
-                Include anonymous
-              </Checkbox>
+              {includeSearchInput && (
+                <Box mx={2}>
+                  <Input.Search
+                    placeholder="Search customers..."
+                    allowClear
+                    onSearch={this.handleSearchCustomers}
+                    style={{width: 280}}
+                  />
+                </Box>
+              )}
+              {includeTagFilterInput && (
+                <Box ml={2} mr={3}>
+                  <CustomerTagSelect
+                    placeholder="Filter by tags"
+                    onChange={this.handleTagsSelect}
+                    style={{width: 280}}
+                  />
+                </Box>
+              )}
+              {includeAnonymousUserFilter && (
+                <Checkbox
+                  checked={shouldIncludeAnonymous}
+                  onChange={this.handleToggleIncludeAnonymous}
+                >
+                  Include anonymous
+                </Checkbox>
+              )}
             </Flex>
 
             {/* 
