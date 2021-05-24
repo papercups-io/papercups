@@ -54,6 +54,7 @@ import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
 import ConversationsBySource from './conversations/ConversationsBySource';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
+import SlackIntegrationDetails from './integrations/SlackIntegrationDetails';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import CustomerDetailsPage from './customers/CustomerDetailsPage';
@@ -497,6 +498,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/companies/:id/edit" component={UpdateCompanyPage} />
           <Route path="/companies/:id" component={CompanyDetailsPage} />
           <Route path="/companies" component={CompaniesPage} />
+          <Route
+            path="/integrations/slack"
+            component={SlackIntegrationDetails}
+          />
           <Route path="/integrations/:type" component={IntegrationsOverview} />
           <Route path="/integrations" component={IntegrationsOverview} />
           <Route path="/integrations*" component={IntegrationsOverview} />
