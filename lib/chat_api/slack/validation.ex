@@ -71,6 +71,7 @@ defmodule ChatApi.Slack.Validation do
       {%SlackAuthorization{} = _existing_with_same_channel, _} ->
         {:error, :duplicate_channel_id}
 
+      # If account_id matches, the user is just reconnecting to the same channel, which is fine
       {_, %SlackAuthorization{account_id: ^account_id}} ->
         :ok
 
