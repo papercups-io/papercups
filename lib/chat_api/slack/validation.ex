@@ -55,12 +55,31 @@ defmodule ChatApi.Slack.Validation do
 
   @spec validate_authorization_channel_id(binary(), binary(), binary()) :: :ok | :error
   def validate_authorization_channel_id(slack_channel_id, account_id, integration_type) do
-    case SlackAuthorizations.get_authorization_by_account(account_id, %{
-           channel_id: slack_channel_id,
-           type: [neq: integration_type]
-         }) do
-      nil -> :ok
-      _match -> {:error, :duplicate_channel_id}
+    other_slack_authorization_for_account =
+      SlackAuthorizations.get_authorization_by_account(account_id, %{
+        channel_id: slack_channel_id,
+        type: [neq: integration_type]
+      })
+
+    potential_duplicate_from_other_account =
+      SlackAuthorizations.find_slack_authorization(%{
+        channel_id: slack_channel_id,
+        type: integration_type
+      })
+
+    case {other_slack_authorization_for_account, potential_duplicate_from_other_account} do
+      {%SlackAuthorization{} = _existing_with_same_channel, _} ->
+        {:error, :duplicate_channel_id}
+
+      # If account_id matches, the user is just reconnecting to the same channel, which is fine
+      {_, %SlackAuthorization{account_id: ^account_id}} ->
+        :ok
+
+      {_, %SlackAuthorization{account_id: _} = _match_from_different_account} ->
+        {:error, :duplicate_channel_id}
+
+      _ ->
+        :ok
     end
   end
 end

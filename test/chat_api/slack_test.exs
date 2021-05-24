@@ -50,8 +50,8 @@ defmodule ChatApi.SlackTest do
                  "reply"
                )
 
-      # :ok if the account is different
-      assert :ok =
+      # :error if connecting to a channel that another account has already linked
+      assert {:error, :duplicate_channel_id} =
                Slack.Validation.validate_authorization_channel_id(
                  @slack_channel_id,
                  other_account_id,
