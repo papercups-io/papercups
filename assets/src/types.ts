@@ -259,3 +259,11 @@ export type GoogleAuthParams = {
   state?: string | null;
   scope?: string | null;
 };
+
+export type SlackAuthorization = {
+  id: string;
+  created_at: string;
+  channel: string;
+  configuration_url: string;
+  team_name: string;
+};

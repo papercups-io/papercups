@@ -1,16 +1,7 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {
-  colors,
-  shadows,
-  Button,
-  Card,
-  Popconfirm,
-  Result,
-  Text,
-  Title,
-} from '../common';
+import {Button, Card, Popconfirm, Result, Text, Title} from '../common';
 import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
 import {Company, Customer} from '../../types';
