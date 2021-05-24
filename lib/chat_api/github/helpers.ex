@@ -36,7 +36,7 @@ defmodule ChatApi.Github.Helpers do
   end
 
   @spec parse_github_repo_url(binary()) ::
-          {:error, :invalid_github_repo_url} | {:ok, %{id: binary, owner: binary, repo: binary}}
+          {:error, :invalid_github_repo_url} | {:ok, %{owner: binary, repo: binary}}
   def parse_github_repo_url(url) do
     url
     |> extract_github_url_path()

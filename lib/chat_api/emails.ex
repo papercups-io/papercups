@@ -3,7 +3,7 @@ defmodule ChatApi.Emails do
 
   require Logger
 
-  alias ChatApi.Repo
+  alias ChatApi.{Accounts, Repo, Users}
   alias ChatApi.Emails.Email
   alias ChatApi.Messages.Message
   alias ChatApi.Users.{User, UserSettings}
@@ -31,13 +31,22 @@ defmodule ChatApi.Emails do
     user |> Email.password_reset() |> deliver()
   end
 
-  @spec format_sender_name(User.t(), Account.t()) :: binary
-  def format_sender_name(user, account) do
+  @spec format_sender_name(User.t() | binary(), Account.t() | binary()) :: binary()
+  def format_sender_name(%User{} = user, %Account{} = account) do
     case user.profile do
       %{display_name: display_name} when not is_nil(display_name) -> display_name
       %{full_name: full_name} when not is_nil(full_name) -> full_name
-      _ -> account.company_name
+      _ -> "#{account.company_name} Team"
     end
+  end
+
+  def format_sender_name(user_id, account_id)
+      when is_integer(user_id) and is_binary(account_id) do
+    account = Accounts.get_account!(account_id)
+
+    user_id
+    |> Users.get_user_info()
+    |> format_sender_name(account)
   end
 
   @spec send_conversation_reply_email(keyword()) :: deliver_result()

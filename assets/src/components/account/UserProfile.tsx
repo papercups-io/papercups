@@ -1,7 +1,10 @@
 import React from 'react';
+import {RouteComponentProps} from 'react-router';
 import {Box, Flex} from 'theme-ui';
+import qs from 'query-string';
 import {
   colors,
+  notification,
   Button,
   Checkbox,
   Divider,
@@ -11,14 +14,16 @@ import {
 } from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
+import {PersonalGmailAuthorizationButton} from '../integrations/GoogleAuthorizationButton';
 
-type Props = {};
+type Props = RouteComponentProps<{}> & {};
 type State = {
   email: string;
   fullName: string;
   displayName: string;
   profilePhotoUrl: string;
   shouldEmailOnNewMessages: boolean;
+  personalGmailAuthorization: any | null;
   isLoading: boolean;
   isEditing: boolean;
 };
@@ -32,16 +37,57 @@ class UserProfile extends React.Component<Props, State> {
     displayName: '',
     profilePhotoUrl: '',
     shouldEmailOnNewMessages: false,
+    personalGmailAuthorization: null,
     isLoading: true,
     isEditing: false,
   };
 
   async componentDidMount() {
+    const {location, history} = this.props;
+    const {search} = location;
+    const q = qs.parse(search);
+    const code = q.code ? String(q.code) : null;
+
+    if (code) {
+      const success = await this.authorizeGoogleIntegration(code, q);
+
+      if (success) {
+        history.push('/account/profile');
+      }
+    }
+
     await this.fetchLatestProfile();
     await this.fetchLatestSettings();
+    await this.fetchGmailAuthorization();
 
     this.setState({isLoading: false});
   }
+
+  authorizeGoogleIntegration = async (code: string, query: any) => {
+    const scope = query.scope ? String(query.scope) : null;
+    const state = query.state ? String(query.state) : null;
+
+    return API.authorizeGoogleIntegration({code, scope, state})
+      .then((result) => {
+        logger.debug('Successfully authorized Google:', result);
+
+        return true;
+      })
+      .catch((err) => {
+        logger.error('Failed to authorize Google:', err);
+
+        const description =
+          err?.response?.body?.error?.message || err?.message || String(err);
+
+        notification.error({
+          message: 'Failed to authorize Google',
+          duration: null,
+          description,
+        });
+
+        return false;
+      });
+  };
 
   fetchLatestProfile = async () => {
     const profile = await API.fetchUserProfile();
@@ -85,6 +131,25 @@ class UserProfile extends React.Component<Props, State> {
         shouldEmailOnNewMessages: false,
       });
     }
+  };
+
+  fetchGmailAuthorization = async () => {
+    const authorization = await API.fetchGoogleAuthorization({
+      client: 'gmail',
+      type: 'personal',
+    });
+
+    this.setState({
+      personalGmailAuthorization: authorization,
+    });
+  };
+
+  handleDisconnectGmail = async (authorizationId: string) => {
+    return API.deleteGoogleAuthorization(authorizationId)
+      .then(() => this.fetchGmailAuthorization())
+      .catch((err) =>
+        logger.error('Failed to remove Gmail authorization:', err)
+      );
   };
 
   handleChangeFullName = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -152,6 +217,7 @@ class UserProfile extends React.Component<Props, State> {
       fullName,
       displayName,
       profilePhotoUrl,
+      personalGmailAuthorization,
       shouldEmailOnNewMessages,
       isEditing,
     } = this.state;
@@ -159,6 +225,9 @@ class UserProfile extends React.Component<Props, State> {
     if (isLoading) {
       return null; // TODO: switch to loading state
     }
+
+    const gmailAuthorizationId = personalGmailAuthorization?.id;
+    const hasGmailConnection = !!gmailAuthorizationId;
 
     return (
       <Box p={4}>
@@ -268,6 +337,25 @@ class UserProfile extends React.Component<Props, State> {
         >
           Send email alert on new messages
         </Checkbox>
+
+        <Divider />
+
+        <Title level={3}>Link Gmail Account</Title>
+
+        <Box mb={3} sx={{maxWidth: 480}}>
+          <Paragraph>
+            By linking your Gmail account, you can send emails directly from
+            Papercups.
+          </Paragraph>
+        </Box>
+
+        <Box mb={3}>
+          <PersonalGmailAuthorizationButton
+            isConnected={hasGmailConnection}
+            authorizationId={gmailAuthorizationId}
+            onDisconnectGmail={this.handleDisconnectGmail}
+          />
+        </Box>
       </Box>
     );
   }

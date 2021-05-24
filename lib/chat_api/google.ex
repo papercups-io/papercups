@@ -4,8 +4,7 @@ defmodule ChatApi.Google do
   """
 
   import Ecto.Query, warn: false
-  alias ChatApi.Repo
-
+  alias ChatApi.{Accounts, Emails, Repo}
   alias ChatApi.Google.{GoogleAuthorization, GmailConversationThread}
 
   #############################################################################
@@ -55,7 +54,34 @@ defmodule ChatApi.Google do
     |> where(account_id: ^account_id)
     |> where(^filter_authorizations_where(filters))
     |> order_by(desc: :inserted_at)
+    |> first()
     |> Repo.one()
+  end
+
+  def get_personal_gmail_authorization(account_id, user_id),
+    do:
+      get_authorization_by_account(account_id, %{
+        client: "gmail",
+        type: "personal",
+        user_id: user_id
+      })
+
+  def get_support_gmail_authorization(account_id, _user_id),
+    do: get_support_gmail_authorization(account_id)
+
+  def get_support_gmail_authorization(account_id),
+    do:
+      get_authorization_by_account(account_id, %{
+        client: "gmail",
+        type: "support"
+      })
+
+  @spec get_default_gmail_authorization(binary(), integer()) :: GoogleAuthorization.t() | nil
+  def get_default_gmail_authorization(account_id, user_id) do
+    case get_personal_gmail_authorization(account_id, user_id) do
+      %GoogleAuthorization{} = auth -> auth
+      nil -> get_authorization_by_account(account_id, %{client: "gmail"})
+    end
   end
 
   @spec create_or_update_authorization(binary(), map()) ::
@@ -70,6 +96,16 @@ defmodule ChatApi.Google do
     end
   end
 
+  @spec format_sender_display_name(GoogleAuthorization.t(), integer(), binary()) :: binary()
+  def format_sender_display_name(%GoogleAuthorization{type: "personal"}, user_id, account_id),
+    do: Emails.format_sender_name(user_id, account_id)
+
+  def format_sender_display_name(_, _, account_id) do
+    account = Accounts.get_account!(account_id)
+
+    "#{account.company_name} Team"
+  end
+
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   @spec filter_authorizations_where(map) :: %Ecto.Query.DynamicExpr{}
   defp filter_authorizations_where(params) do
@@ -79,6 +115,9 @@ defmodule ChatApi.Google do
 
       {:scope, value}, dynamic ->
         dynamic([g], ^dynamic and g.scope == ^value)
+
+      {:type, value}, dynamic ->
+        dynamic([g], ^dynamic and g.type == ^value)
 
       {_, _}, dynamic ->
         # Not a where parameter

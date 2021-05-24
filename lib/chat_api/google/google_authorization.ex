@@ -12,6 +12,7 @@ defmodule ChatApi.Google.GoogleAuthorization do
           token_type: String.t() | nil,
           expires_at: integer(),
           scope: String.t() | nil,
+          type: String.t() | nil,
           metadata: any(),
           # Foreign keys
           account_id: Ecto.UUID.t(),
@@ -30,6 +31,7 @@ defmodule ChatApi.Google.GoogleAuthorization do
     field(:token_type, :string)
     field(:expires_at, :integer)
     field(:scope, :string)
+    field(:type, :string)
     field(:metadata, :map)
 
     belongs_to(:account, Account)
@@ -48,10 +50,12 @@ defmodule ChatApi.Google.GoogleAuthorization do
       :token_type,
       :expires_at,
       :scope,
+      :type,
       :metadata,
       :user_id,
       :account_id
     ])
     |> validate_required([:client, :refresh_token, :user_id, :account_id])
+    |> validate_inclusion(:type, ["personal", "support", "sheets"])
   end
 end

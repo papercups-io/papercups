@@ -20,7 +20,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
            refresh_token: refresh_token,
            metadata: %{"next_history_id" => start_history_id}
          } = authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
          %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
          %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
            Gmail.list_history(refresh_token,

@@ -246,3 +246,16 @@ export type Pagination = {
   total_pages?: number;
   total_entries?: number;
 };
+
+export type GoogleIntegrationClient = 'gmail' | 'sheets';
+export type GoogleIntegrationType = 'personal' | 'support';
+export type GoogleIntegrationParams = {
+  client: GoogleIntegrationClient;
+  type?: GoogleIntegrationType;
+};
+
+export type GoogleAuthParams = {
+  code: string;
+  state?: string | null;
+  scope?: string | null;
+};

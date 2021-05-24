@@ -5,7 +5,7 @@ import {colors, Button, Popconfirm, Table, Tag, Text, Tooltip} from '../common';
 import {IntegrationType, getSlackAuthUrl, getGoogleAuthUrl} from './support';
 import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
 import {TwilioAuthorizationButton} from './TwilioAuthorizationModal';
-import {GoogleAuthorizationButton} from './GoogleAuthorizationButton';
+import {SupportGmailAuthorizationButton} from './GoogleAuthorizationButton';
 import {GithubAuthorizationButton} from './GithubAuthorizationButton';
 
 const IntegrationsTable = ({
@@ -117,7 +117,7 @@ const IntegrationsTable = ({
             );
           case 'gmail':
             return (
-              <GoogleAuthorizationButton
+              <SupportGmailAuthorizationButton
                 isConnected={isConnected}
                 authorizationId={authorizationId}
                 onDisconnectGmail={onDisconnectGmail}
@@ -134,7 +134,7 @@ const IntegrationsTable = ({
                   </Box>
                 }
               >
-                <a href={getGoogleAuthUrl('sheets')}>
+                <a href={getGoogleAuthUrl({client: 'sheets'})}>
                   <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
                 </a>
               </Tooltip>
