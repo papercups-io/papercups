@@ -1,3 +1,4 @@
+import React from 'react';
 import Alert from 'antd/lib/alert';
 import AutoComplete from 'antd/lib/auto-complete';
 import Badge from 'antd/lib/badge';
@@ -41,6 +42,7 @@ import {
   grey,
 } from '@ant-design/colors';
 
+import {Box, SxStyleProp} from 'theme-ui';
 import DatePicker from './DatePicker';
 import MarkdownRenderer from './MarkdownRenderer';
 
@@ -78,6 +80,33 @@ export const shadows = {
     '0 0 #0000, 0 0 #0000, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
   large:
     '0 0 #0000, 0 0 #0000, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+};
+
+export const Card = ({
+  children,
+  shadow = false,
+  sx = {},
+}: {
+  children: any;
+  shadow?: boolean | 'small' | 'medium' | 'large';
+  sx?: SxStyleProp;
+}) => {
+  const shadowKey = shadow && typeof shadow === 'boolean' ? 'primary' : shadow;
+  const boxShadow = shadowKey ? shadows[shadowKey] || shadows.primary : 'none';
+
+  return (
+    <Box
+      sx={{
+        bg: colors.white,
+        border: '1px solid rgba(0, 0, 0, .06)',
+        borderRadius: 4,
+        boxShadow,
+        ...sx,
+      }}
+    >
+      {children}
+    </Box>
+  );
 };
 
 export const TextArea = Input.TextArea;

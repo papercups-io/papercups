@@ -24,10 +24,12 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
     return (
       <Box p={4} sx={{maxWidth: 1080}}>
         <Box mb={5}>
-          <Title level={4}>Slack</Title>
+          <Title level={4}>Reply from Slack</Title>
 
           <Paragraph>
-            <Text>Slack integration details will go below!</Text>
+            <Text>
+              Reply to messages from your customers directly through Slack.
+            </Text>
           </Paragraph>
 
           <Divider />
