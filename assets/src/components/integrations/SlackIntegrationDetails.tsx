@@ -1,5 +1,5 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router';
+import {Redirect, RouteComponentProps} from 'react-router';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 import {
@@ -9,22 +9,30 @@ import {
   Divider,
   Paragraph,
   Popconfirm,
+  Tag,
   Text,
   Title,
 } from '../common';
+import {CheckCircleOutlined} from '../icons';
 import * as API from '../../api';
 import {SlackAuthorization} from '../../types';
 import {getSlackAuthUrl, getSlackRedirectUrl} from './support';
 import logger from '../../logger';
 
-type Props = RouteComponentProps<{}>;
+type Props = RouteComponentProps<{}> & {
+  type: 'reply' | 'support';
+  title: string;
+  tagline: string;
+  howItWorks: string | React.ReactElement;
+  actionText: string;
+};
 type State = {
   status: 'loading' | 'success' | 'error';
   authorization: SlackAuthorization | null;
   error: any;
 };
 
-class SlackIntegrationDetails extends React.Component<Props, State> {
+class SlackIntegrationDetailsContainer extends React.Component<Props, State> {
   state: State = {
     status: 'loading',
     authorization: null,
@@ -33,7 +41,7 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
 
   async componentDidMount() {
     try {
-      const {location, history} = this.props;
+      const {location, history, type} = this.props;
       const {search} = location;
       const q = qs.parse(search);
       const code = q.code ? String(q.code) : null;
@@ -41,21 +49,26 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
       if (code) {
         await this.authorize(code, q);
 
-        history.push('/integrations/slack');
+        history.push(`/integrations/slack/${type}`);
       }
 
       this.fetchSlackAuthorization();
     } catch (error) {
+      logger.error(error);
+
       this.setState({status: 'error', error});
     }
   }
 
   fetchSlackAuthorization = async () => {
     try {
-      const auth = await API.fetchSlackAuthorization('reply');
+      const {type} = this.props;
+      const auth = await API.fetchSlackAuthorization(type);
 
       this.setState({authorization: auth, status: 'success'});
     } catch (error) {
+      logger.error(error);
+
       this.setState({status: 'error', error});
     }
   };
@@ -106,20 +119,21 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
 
   render() {
     const {authorization, status} = this.state;
+    const {title, tagline, howItWorks, actionText, type} = this.props;
 
     if (status === 'loading') {
       return null;
     }
 
+    const hasAuthorization = !!(authorization && authorization.id);
+
     return (
       <Box p={4} sx={{maxWidth: 720}}>
         <Box mb={4}>
-          <Title level={3}>Reply from Slack</Title>
+          <Title level={3}>{title}</Title>
 
           <Paragraph>
-            <Text>
-              Reply to messages from your customers directly through Slack.
-            </Text>
+            <Text>{tagline}</Text>
           </Paragraph>
         </Box>
 
@@ -134,12 +148,7 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
               </Flex>
             </Paragraph>
 
-            <Text type="secondary">
-              When you link Papercups with Slack, all new incoming messages will
-              be forwarded to the Slack channel of your choosing. From the
-              comfort of your team's Slack workspace, you can reply to and
-              resolve conversations with your users.
-            </Text>
+            <Text type="secondary">{howItWorks}</Text>
           </Card>
         </Box>
 
@@ -150,12 +159,17 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
             <Flex sx={{justifyContent: 'space-between'}}>
               <Flex sx={{alignItems: 'center'}}>
                 <img src="/slack.svg" alt="Slack" style={{height: 20}} />
-                <Text strong style={{marginLeft: 8}}>
-                  Reply to messages from Slack
+                <Text strong style={{marginLeft: 8, marginRight: 8}}>
+                  {actionText}
                 </Text>
+                {hasAuthorization && (
+                  <Tag icon={<CheckCircleOutlined />} color="success">
+                    connected
+                  </Tag>
+                )}
               </Flex>
 
-              {authorization && authorization.id ? (
+              {hasAuthorization ? (
                 <Popconfirm
                   title="Are you sure you want to disconnect from Slack?"
                   okText="Yes"
@@ -163,10 +177,12 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
                   placement="topLeft"
                   onConfirm={() => this.disconnect()}
                 >
-                  <Button danger>Disconnect</Button>
+                  <Button type="primary" danger>
+                    Disconnect
+                  </Button>
                 </Popconfirm>
               ) : (
-                <a href={getSlackAuthUrl('reply')}>
+                <a href={getSlackAuthUrl(type)}>
                   <Button type="primary">Connect</Button>
                 </a>
               )}
@@ -181,7 +197,7 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
             sx={{
               p: 3,
               bg: 'rgb(245, 245, 245)',
-              opacity: authorization && authorization.id ? 1 : 0.6,
+              opacity: hasAuthorization ? 1 : 0.6,
             }}
           >
             <Box mb={3}>
@@ -210,7 +226,7 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
                 {authorization && authorization.configuration_url ? (
                   <Text>
                     <a
-                      href={`https://slack.com/app_redirect?channel=${authorization.configuration_url}`}
+                      href={authorization.configuration_url}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -228,5 +244,74 @@ class SlackIntegrationDetails extends React.Component<Props, State> {
     );
   }
 }
+
+export const SlackReplyIntegrationDetails = (
+  props: RouteComponentProps<{}>
+) => {
+  return (
+    <SlackIntegrationDetailsContainer
+      {...props}
+      type="reply"
+      title="Reply from Slack"
+      tagline="Reply to messages from your customers directly through Slack."
+      howItWorks={
+        <>
+          When you link Papercups with Slack, all new incoming messages will be
+          forwarded to the Slack channel of your choosing. From the comfort of
+          your team's Slack workspace, you can reply to and resolve
+          conversations with your users.
+        </>
+      }
+      actionText="Reply to messages from Slack"
+    />
+  );
+};
+
+export const SlackSyncIntegrationDetails = (props: RouteComponentProps<{}>) => {
+  return (
+    <SlackIntegrationDetailsContainer
+      {...props}
+      type="support"
+      title="Sync with Slack"
+      tagline="Sync messages from your Slack channels with Papercups."
+      howItWorks={
+        <>
+          When you link Papercups with shared Slack channels or public support
+          channels, you can sync message threads directly to Papercups so you
+          can track and manage feedback from your users more easily.
+        </>
+      }
+      actionText="Sync with Slack"
+    />
+  );
+};
+
+export const SlackIntegrationDetails = (props: RouteComponentProps<{}>) => {
+  const {type, state, ...rest} = qs.parse(props.location.search);
+  const key = type || state ? String(type || state) : null;
+
+  switch (key) {
+    case 'reply':
+      return (
+        <Redirect
+          to={`/integrations/slack/reply?${qs.stringify({
+            state,
+            ...rest,
+          })}`}
+        />
+      );
+    case 'support':
+      return (
+        <Redirect
+          to={`/integrations/slack/support?${qs.stringify({
+            state,
+            ...rest,
+          })}`}
+        />
+      );
+    default:
+      return <Redirect to={`/integrations`} />;
+  }
+};
 
 export default SlackIntegrationDetails;
