@@ -1,5 +1,7 @@
 import React from 'react';
 import {Redirect, RouteComponentProps} from 'react-router';
+import {Link} from 'react-router-dom';
+import {Twemoji} from 'react-emoji-render';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 import {
@@ -7,17 +9,77 @@ import {
   Button,
   Card,
   Divider,
+  Input,
   Paragraph,
   Popconfirm,
+  Switch,
   Tag,
   Text,
   Title,
+  Tooltip,
 } from '../common';
-import {CheckCircleOutlined} from '../icons';
+import {ArrowLeftOutlined, CheckCircleOutlined} from '../icons';
 import * as API from '../../api';
-import {SlackAuthorization} from '../../types';
+import {SlackAuthorization, SlackAuthorizationSettings} from '../../types';
 import {getSlackAuthUrl, getSlackRedirectUrl} from './support';
 import logger from '../../logger';
+
+const IntegrationSettings = ({
+  settings,
+  onUpdateSettings,
+}: {
+  settings: SlackAuthorizationSettings;
+  onUpdateSettings: (updates: Partial<SlackAuthorizationSettings>) => void;
+}) => {
+  const handleUpdateSyncAllThreads = (isEnabled: boolean) =>
+    onUpdateSettings({sync_all_incoming_threads: isEnabled});
+  const handleUpdateSyncByEmoji = (isEnabled: boolean) =>
+    onUpdateSettings({sync_by_emoji_tagging: isEnabled});
+
+  return (
+    <>
+      <Box mb={3}>
+        <label>Sync all incoming messages</label>
+        <Box>
+          <Switch
+            checked={settings.sync_all_incoming_threads}
+            size="small"
+            onChange={handleUpdateSyncAllThreads}
+          />
+        </Box>
+      </Box>
+
+      <Box mb={3}>
+        <label>
+          Sync messages tagged with <Twemoji text=":eyes:" /> emoji
+        </label>
+        <Box>
+          <Switch
+            checked={settings.sync_by_emoji_tagging}
+            size="small"
+            onChange={handleUpdateSyncByEmoji}
+          />
+        </Box>
+      </Box>
+
+      <Box mb={3}>
+        <label>Trigger emoji</label>
+        <Tooltip
+          title="The ability to configure this field is coming soon!"
+          placement="right"
+        >
+          <Flex sx={{maxWidth: 240, alignItems: 'center'}}>
+            <Input type="text" value=":eyes:" disabled />
+
+            <Box mx={2}>
+              <Twemoji text=":eyes:" />
+            </Box>
+          </Flex>
+        </Tooltip>
+      </Box>
+    </>
+  );
+};
 
 type Props = RouteComponentProps<{}> & {
   type: 'reply' | 'support';
@@ -117,6 +179,25 @@ class SlackIntegrationDetailsContainer extends React.Component<Props, State> {
       );
   };
 
+  updateAuthorizationSettings = async (
+    updates: Partial<SlackAuthorizationSettings> = {}
+  ) => {
+    const {authorization} = this.state;
+
+    if (!authorization || !authorization.id) {
+      return null;
+    }
+
+    const {id: authorizationId, settings = {}} = authorization;
+
+    const result = await API.updateSlackAuthorizationSettings(authorizationId, {
+      ...settings,
+      ...updates,
+    });
+
+    this.setState({authorization: result});
+  };
+
   render() {
     const {authorization, status} = this.state;
     const {title, tagline, howItWorks, actionText, type} = this.props;
@@ -125,10 +206,18 @@ class SlackIntegrationDetailsContainer extends React.Component<Props, State> {
       return null;
     }
 
+    const settings = authorization?.settings;
     const hasAuthorization = !!(authorization && authorization.id);
+    const shouldDisplaySettings = type === 'support';
 
     return (
       <Box p={4} sx={{maxWidth: 720}}>
+        <Box mb={4}>
+          <Link to="/integrations">
+            <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
+          </Link>
+        </Box>
+
         <Box mb={4}>
           <Title level={3}>{title}</Title>
 
@@ -238,6 +327,17 @@ class SlackIntegrationDetailsContainer extends React.Component<Props, State> {
                 )}
               </Box>
             </Box>
+
+            {settings && shouldDisplaySettings && (
+              <>
+                <Divider />
+
+                <IntegrationSettings
+                  settings={settings}
+                  onUpdateSettings={this.updateAuthorizationSettings}
+                />
+              </>
+            )}
           </Card>
         </Box>
       </Box>
