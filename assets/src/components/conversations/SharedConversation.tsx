@@ -57,7 +57,7 @@ class SharedConversationContainer extends React.Component<Props, State> {
       <Flex
         sx={{
           justifyContent: 'center',
-          bg: 'rgb(245, 245, 245)',
+          bg: 'rgb(250, 250, 250)',
           border: `1px solid rgba(0,0,0,.06)`,
           boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
           flex: 1,

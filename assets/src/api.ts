@@ -686,6 +686,22 @@ export const fetchSlackAuthorization = async (
     .then((res) => res.body.data);
 };
 
+export const updateSlackAuthorizationSettings = async (
+  authorizationId: string,
+  settings: Record<string, any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/slack/authorizations/${authorizationId}/settings`)
+    .send({settings})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const deleteSlackAuthorization = async (
   authorizationId: string,
   token = getAccessToken()

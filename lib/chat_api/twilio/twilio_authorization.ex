@@ -10,6 +10,7 @@ defmodule ChatApi.Twilio.TwilioAuthorization do
           twilio_account_sid: String.t(),
           from_phone_number: String.t(),
           metadata: any(),
+          settings: any(),
           # Foreign keys
           account_id: Ecto.UUID.t(),
           user_id: integer(),
@@ -26,6 +27,10 @@ defmodule ChatApi.Twilio.TwilioAuthorization do
     field(:from_phone_number, :string, null: false)
     field(:metadata, :map)
 
+    field(:settings, :map)
+    # TODO: update settings to embeds_one:
+    # embeds_one(:settings, Settings, on_replace: :delete)
+
     belongs_to(:account, Account)
     belongs_to(:user, User, type: :integer)
 
@@ -40,6 +45,7 @@ defmodule ChatApi.Twilio.TwilioAuthorization do
       :twilio_account_sid,
       :from_phone_number,
       :metadata,
+      :settings,
       :user_id,
       :account_id
     ])

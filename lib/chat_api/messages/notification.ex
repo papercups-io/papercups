@@ -47,7 +47,11 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending message notification: :slack (message #{inspect(message.id)})")
 
     case opts do
+      # TODO: deprecate this option
       [metadata: %{"send_to_reply_channel" => false}] ->
+        nil
+
+      [send_to_reply_channel: false] ->
         nil
 
       [async: false] ->
