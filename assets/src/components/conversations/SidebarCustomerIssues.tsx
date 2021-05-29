@@ -1,12 +1,11 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Socket} from 'phoenix';
 import {Text, Tooltip} from '../common';
 import * as API from '../../api';
 import {Issue} from '../../types';
 import logger from '../../logger';
-import {SOCKET_URL} from '../../socket';
+import {useSocket} from '../auth/SocketProvider';
 import {IssueStateTag} from '../issues/IssuesTable';
 import {NewIssueModalButton} from '../issues/NewIssueModal';
 import Spinner from '../Spinner';
@@ -14,14 +13,9 @@ import Spinner from '../Spinner';
 const SidebarCustomerIssues = ({customerId}: {customerId: string}) => {
   const [loading, setLoading] = React.useState(false);
   const [customerIssues, setCustomerIssues] = React.useState<Array<Issue>>([]);
+  const {socket} = useSocket();
 
   React.useEffect(() => {
-    // TODO: move to a top-level SocketProvider?
-    const token = API.getAccessToken();
-    const socket = new Socket(SOCKET_URL, {params: {token}});
-
-    socket.connect();
-
     const channel = socket.channel(`issue:lobby:${customerId}`, {});
 
     channel.on('issue:created', () => refreshCustomerIssues());
@@ -37,11 +31,10 @@ const SidebarCustomerIssues = ({customerId}: {customerId: string}) => {
       });
 
     return () => {
-      socket.disconnect();
       channel.leave();
     };
     // eslint-disable-next-line
-  }, [customerId]);
+  }, [customerId, socket]);
 
   React.useEffect(() => {
     setLoading(true);

@@ -1,12 +1,7 @@
 import {Channel, Socket} from 'phoenix';
-import {once, throttle} from 'lodash';
-
 import logger from '../../logger';
 import {Conversation, Message} from '../../types';
-import {SOCKET_URL} from '../../socket';
-import * as API from '../../api';
 import {PhoenixPresence, PresenceDiff} from '../../presence';
-import {notification} from '../common';
 
 type Config = {
   accountId: string;
@@ -26,58 +21,18 @@ class ConversationNotificationManager {
   socket: Socket;
   channel: Channel | null = null;
 
-  constructor(config: Config) {
-    this.socket = this.createNewSocket();
+  constructor(socket: Socket, config: Config) {
+    this.socket = socket;
     this.config = config;
   }
 
-  createNewSocket() {
-    return new Socket(SOCKET_URL, {
-      params: {token: API.getAccessToken()},
-    });
-  }
-
   connect() {
-    this.connectToSocket();
     this.joinChannel();
   }
 
   disconnect() {
-    logger.debug('Disconnecting from socket and leaving channel:', {
-      socket: this.socket,
-      channel: this.channel,
-    });
-
-    this.socket.disconnect();
     this.channel?.leave();
   }
-
-  connectToSocket() {
-    this.socket.onOpen(() => logger.debug('Successfully connected to socket!'));
-
-    // TODO: attempt refreshing access token?
-    this.socket.onError(
-      throttle(
-        () => {
-          logger.error('Error connecting to socket. Try refreshing the page.');
-
-          this.displayRefreshNotification();
-        },
-        30 * 1000 // throttle every 30 secs
-      )
-    );
-
-    this.socket.connect();
-  }
-
-  // We use lodash's `once` utility to make sure this notification only gets displayed once
-  displayRefreshNotification = once(() => {
-    notification.error({
-      message: "You've been disconnected.",
-      duration: null,
-      description: 'Please refresh the page to reconnect.',
-    });
-  });
 
   joinChannel() {
     const {
@@ -121,7 +76,7 @@ class ConversationNotificationManager {
     this.channel
       .join()
       .receive('ok', (res) => {
-        logger.debug('Joined channel successfully');
+        logger.debug('Joined channel successfully', this.channel);
       })
       .receive('error', (err) => {
         logger.error('Unable to join channel', err);
