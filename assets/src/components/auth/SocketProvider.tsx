@@ -102,10 +102,6 @@ export class SocketProvider extends React.Component<Props, State> {
     const {socket} = this.state;
 
     socket.disconnect(cb);
-    // // TODO: are these necessary?
-    // socket.onOpen(noop);
-    // socket.onClose(noop);
-    // socket.onError(noop);
   };
 
   render() {
