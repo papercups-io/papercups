@@ -1,5 +1,6 @@
 import React, {useContext} from 'react';
 import {debounce, throttle} from 'lodash';
+import {Socket} from 'phoenix';
 import * as API from '../../api';
 import {notification} from '../common';
 import {Account, Conversation, Message, User} from '../../types';
@@ -88,7 +89,7 @@ export const ConversationsContext = React.createContext<{
 
 export const useConversations = () => useContext(ConversationsContext);
 
-type Props = React.PropsWithChildren<{}>;
+type Props = {socket: Socket} & React.PropsWithChildren<{}>;
 type State = {
   loading: boolean;
   account: Account | null;
@@ -130,17 +131,42 @@ export class ConversationsProvider extends React.Component<Props, State> {
     });
     const {id: accountId} = account;
 
-    this.notificationManager = new ConversationNotificationManager({
-      accountId,
-      onNewMessage: this.handleNewMessage,
-      onNewConversation: this.handleNewConversation,
-      onConversationUpdated: this.debouncedConversationUpdate,
-      onPresenceInit: this.handlePresenceInit,
-      onPresenceDiff: this.handlePresenceDiff,
-    });
+    this.notificationManager = new ConversationNotificationManager(
+      this.props.socket,
+      {
+        accountId,
+        onNewMessage: this.handleNewMessage,
+        onNewConversation: this.handleNewConversation,
+        onConversationUpdated: this.debouncedConversationUpdate,
+        onPresenceInit: this.handlePresenceInit,
+        onPresenceDiff: this.handlePresenceDiff,
+      }
+    );
     this.notificationManager.connect();
 
     await this.fetchAllConversations();
+  }
+
+  componentDidUpdate(prev: Props) {
+    if (prev.socket !== this.props.socket && this.state.account) {
+      console.log('componentDidUpdate', {
+        prev: prev.socket,
+        current: this.props.socket,
+      });
+
+      this.notificationManager = new ConversationNotificationManager(
+        this.props.socket,
+        {
+          accountId: this.state.account.id,
+          onNewMessage: this.handleNewMessage,
+          onNewConversation: this.handleNewConversation,
+          onConversationUpdated: this.debouncedConversationUpdate,
+          onPresenceInit: this.handlePresenceInit,
+          onPresenceDiff: this.handlePresenceDiff,
+        }
+      );
+      this.notificationManager.connect();
+    }
   }
 
   componentWillUnmount() {

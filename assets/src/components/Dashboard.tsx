@@ -32,6 +32,7 @@ import {
   isHostedProd,
   isStorytimeEnabled,
 } from '../config';
+import {SOCKET_URL} from '../socket';
 import analytics from '../analytics';
 import {
   getBrowserVisibilityInfo,
@@ -40,6 +41,7 @@ import {
 } from '../utils';
 import {Account, User} from '../types';
 import {useAuth} from './auth/AuthProvider';
+import {SocketProvider, SocketContext} from './auth/SocketProvider';
 import AccountOverview from './account/AccountOverview';
 import TeamOverview from './account/TeamOverview';
 import UserProfile from './account/UserProfile';
@@ -568,10 +570,20 @@ const Dashboard = (props: RouteComponentProps) => {
 };
 
 const DashboardWrapper = (props: RouteComponentProps) => {
+  const {refresh} = useAuth();
+
   return (
-    <ConversationsProvider>
-      <Dashboard {...props} />
-    </ConversationsProvider>
+    <SocketProvider url={SOCKET_URL} refresh={refresh}>
+      <SocketContext.Consumer>
+        {({socket}) => {
+          return (
+            <ConversationsProvider socket={socket}>
+              <Dashboard {...props} />
+            </ConversationsProvider>
+          );
+        }}
+      </SocketContext.Consumer>
+    </SocketProvider>
   );
 };
 
