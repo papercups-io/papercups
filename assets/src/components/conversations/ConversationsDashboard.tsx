@@ -305,7 +305,7 @@ class ConversationsDashboard extends React.Component<Props, State> {
     await this.refreshSelectedConversation();
   };
 
-  handleAssignUser = (conversationId: string, userId: string) => {
+  handleAssignUser = (conversationId: string, userId: string | null) => {
     this.props.onUpdateConversation(conversationId, {assignee_id: userId});
   };
 

@@ -27,7 +27,7 @@ const ConversationContainer = ({
   isClosing: boolean;
   // TODO: handle scrolling within this component?
   setScrollRef: (el: any) => void;
-  onAssignUser: (conversationId: string, userId: string) => void;
+  onAssignUser: (conversationId: string, userId: string | null) => void;
   onMarkPriority: (conversationId: string) => void;
   onRemovePriority: (conversationId: string) => void;
   onCloseConversation: (conversationId: string) => void;
