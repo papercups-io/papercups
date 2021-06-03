@@ -22,14 +22,22 @@ defmodule ChatApi.Messages do
   end
 
   @spec list_by_conversation(binary(), binary(), keyword()) :: [Message.t()]
-  def list_by_conversation(conversation_id, account_id, limit: limit) do
+  def list_by_conversation(conversation_id, account_id, opts \\ []) do
     Message
     |> where(account_id: ^account_id, conversation_id: ^conversation_id)
-    |> order_by(desc: :inserted_at)
-    |> limit(^limit)
+    |> handle_order_by(opts)
+    |> maybe_limit(opts)
     |> preload([:attachments, :customer, [user: :profile]])
     |> Repo.all()
   end
+
+  @spec handle_order_by(Ecto.Query.t(), keyword()) :: Ecto.Query.t()
+  def handle_order_by(query, order_by: order_by), do: query |> order_by(^order_by)
+  def handle_order_by(query, _opts), do: query |> order_by(desc: :inserted_at)
+
+  @spec maybe_limit(Ecto.Query.t(), keyword()) :: Ecto.Query.t()
+  def maybe_limit(query, limit: limit), do: query |> limit(^limit)
+  def maybe_limit(query, _opts), do: query
 
   @spec count_messages_by_account(binary()) :: integer()
   def count_messages_by_account(account_id) do
