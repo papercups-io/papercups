@@ -7,17 +7,18 @@ defmodule ChatApi.Slack.Notification do
 
   alias ChatApi.{
     Conversations,
+    Conversations.Conversation,
     Customers.Customer,
+    Messages,
+    Messages.Message,
     Slack,
     SlackAuthorizations,
+    SlackAuthorizations.SlackAuthorization,
     SlackConversationThreads,
-    Messages.Message
+    SlackConversationThreads.SlackConversationThread
   }
 
-  alias ChatApi.Conversations.Conversation
   alias ChatApi.Users.{User, UserProfile}
-  alias ChatApi.SlackAuthorizations.SlackAuthorization
-  alias ChatApi.SlackConversationThreads.SlackConversationThread
 
   @spec log(binary()) :: :ok | Tesla.Env.result()
   def log(message) do
@@ -144,43 +145,40 @@ defmodule ChatApi.Slack.Notification do
           :conversation => Conversation.t()
         }) :: :ok
   def sync_conversation_messages_to_primary_channel(%{
-        conversation: %Conversation{} = conversation,
-        authorization: %SlackAuthorization{} = authorization
+        conversation: %Conversation{id: conversation_id} = conversation,
+        authorization:
+          %SlackAuthorization{
+            account_id: account_id,
+            channel_id: channel_id
+          } = authorization
       }) do
-    # Retrieve and sort the conversation messages
-    [initial_message | followup_messages] =
-      conversation.id
-      |> Conversations.get_conversation!()
-      |> Map.get(:messages, [])
-      |> Enum.sort_by(& &1.inserted_at, NaiveDateTime)
+    with [initial_message | followup_messages] <-
+           Messages.list_by_conversation(conversation_id, account_id,
+             order_by: [asc: :inserted_at]
+           ),
+         # Send the initial messages to Slack to create a new thread
+         {:ok, _} <-
+           send_to_primary_channel(%{
+             conversation: conversation,
+             message: initial_message,
+             authorization: authorization,
+             thread: nil
+           }),
+         %SlackConversationThread{} = thread <-
+           SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id) do
+      # Send each of the followup messages to the same thread
+      Enum.each(followup_messages, fn message ->
+        send_to_primary_channel(%{
+          conversation: conversation,
+          message: message,
+          authorization: authorization,
+          thread: thread
+        })
 
-    # Send the initial messages to Slack to create a new thread
-    {:ok, _} =
-      send_to_primary_channel(%{
-        conversation: conversation,
-        message: initial_message,
-        authorization: authorization,
-        thread: nil
-      })
-
-    thread =
-      SlackConversationThreads.get_thread_by_conversation_id(
-        conversation.id,
-        authorization.channel_id
-      )
-
-    # Send each of the followup messages to the same thread
-    Enum.each(followup_messages, fn message ->
-      send_to_primary_channel(%{
-        conversation: conversation,
-        message: message,
-        authorization: authorization,
-        thread: thread
-      })
-
-      # TODO: how should we handle this?
-      Process.sleep(200)
-    end)
+        # TODO: how should we handle potential rate limiting?
+        Process.sleep(200)
+      end)
+    end
   end
 
   @spec notify_support_channel(Message.t()) :: :ok
