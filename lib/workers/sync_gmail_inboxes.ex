@@ -6,7 +6,7 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
   def perform(%Oban.Job{} = job) do
-    Logger.info("Syncing Gmail inboxes: #{inspect(job)}")
+    Logger.debug("Syncing Gmail inboxes: #{inspect(job)}")
 
     %{client: "gmail"}
     |> ChatApi.Google.list_google_authorizations()

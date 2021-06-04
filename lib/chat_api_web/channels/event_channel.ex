@@ -33,9 +33,9 @@ defmodule ChatApiWeb.EventChannel do
   end
 
   def join("events:" <> keys, _payload, socket) do
-    case String.split(keys, ":") do
+    case {String.split(keys, ":"), storytime_enabled?()} do
       # TODO: check that these IDs are valid (i.e. exist in DB)
-      [account_id, browser_session_id] ->
+      {[account_id, browser_session_id], true} ->
         send(self(), :after_join_customer_session)
 
         {:ok,
@@ -186,9 +186,17 @@ defmodule ChatApiWeb.EventChannel do
     end
   end
 
+  defp storytime_enabled?() do
+    case System.get_env("PAPERCUPS_STORYTIME_ENABLED", "true") do
+      enabled when enabled == "1" or enabled == "true" -> true
+      _ -> false
+    end
+  end
+
   defp authorized?(socket, account_id) do
     with %{current_user: current_user} <- socket.assigns,
-         %{account_id: acct} <- current_user do
+         %{account_id: acct} <- current_user,
+         true <- storytime_enabled?() do
       acct == account_id
     else
       _ -> false
