@@ -50,7 +50,7 @@ defmodule ChatApiWeb.NotificationChannel do
       |> Map.get(:id)
       |> Messages.get_message!()
       |> broadcast_new_message(socket)
-      |> Messages.Helpers.handle_post_creation_conversation_updates()
+      |> Messages.Helpers.handle_post_creation_hooks()
     end
 
     {:reply, :ok, socket}

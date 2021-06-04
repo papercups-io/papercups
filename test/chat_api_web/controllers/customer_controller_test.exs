@@ -6,7 +6,6 @@ defmodule ChatApiWeb.CustomerControllerTest do
 
   @update_attrs %{
     first_seen: ~D[2020-01-01],
-    last_seen: ~D[2020-01-02],
     name: "Test User",
     email: "user@test.com",
     phone: "+16501235555",
@@ -14,7 +13,7 @@ defmodule ChatApiWeb.CustomerControllerTest do
   }
 
   @invalid_attrs %{
-    last_seen: 3
+    last_seen_at: 3
   }
 
   setup %{conn: conn} do
@@ -56,13 +55,13 @@ defmodule ChatApiWeb.CustomerControllerTest do
       [headers, row1] = String.split(csv, "\r\n")
 
       assert headers ==
-               "id,name,email,created_at,updated_at,first_seen,last_seen,phone," <>
+               "id,name,email,created_at,updated_at,first_seen,last_seen_at,phone," <>
                  "external_id,host,pathname,current_url,browser,os,ip,time_zone"
 
       assert row1 ==
                "\"#{customer.id}\",\"#{customer.name}\",\"#{customer.email}\"," <>
                  "\"#{customer.inserted_at}\",\"#{customer.updated_at}\",\"#{customer.first_seen}\"," <>
-                 "\"#{customer.last_seen}\",\"#{customer.phone}\",\"#{customer.external_id}\"," <>
+                 "\"#{customer.last_seen_at}\",\"#{customer.phone}\",\"#{customer.external_id}\"," <>
                  "\"#{customer.host}\",\"#{customer.pathname}\",\"#{customer.current_url}\"," <>
                  "\"#{customer.browser}\",\"#{customer.os}\",\"#{customer.ip}\"," <>
                  "\"#{customer.time_zone}\""

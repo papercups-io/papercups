@@ -32,11 +32,7 @@ defmodule ChatApi.Workers.EnableGmailInboxSync do
           {:error, binary() | Ecto.Changeset.t()}
           | {:ok, ChatApi.Google.GoogleAuthorization.t()}
   def enable_gmail_sync(account_id) do
-    case Google.get_authorization_by_account(account_id, %{client: "gmail"}) do
-      %GoogleAuthorization{refresh_token: _, metadata: %{"next_history_id" => next_history_id}}
-      when is_binary(next_history_id) ->
-        {:error, "Gmail syncing is already enabled for this account"}
-
+    case Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}) do
       %GoogleAuthorization{refresh_token: token} = authorization ->
         history_id =
           token

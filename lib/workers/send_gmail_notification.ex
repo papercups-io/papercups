@@ -14,12 +14,13 @@ defmodule ChatApi.Workers.SendGmailNotification do
             "id" => message_id,
             "account_id" => account_id,
             "conversation_id" => conversation_id,
+            "user_id" => user_id,
             "body" => body
           }
         }
       }) do
-    with %{refresh_token: refresh_token} = _authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+    with %{refresh_token: refresh_token} = authorization <-
+           Google.get_support_gmail_authorization(account_id, user_id),
          %{gmail_initial_subject: gmail_initial_subject, gmail_thread_id: gmail_thread_id} <-
            Google.get_thread_by_conversation_id(conversation_id),
          %{
@@ -38,6 +39,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
         |> Google.Gmail.get_profile()
         |> Map.get("emailAddress")
 
+      sender = Google.format_sender_display_name(authorization, user_id, account_id)
       last_from = Google.Gmail.extract_email_address(gmail_from)
       last_to = gmail_to |> String.split(",") |> Enum.map(&Google.Gmail.extract_email_address/1)
 
@@ -64,7 +66,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
         end
 
       payload = %{
-        from: from,
+        from: {sender, from},
         subject: "Re: #{gmail_initial_subject}",
         text: body,
         to: to,

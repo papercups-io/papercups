@@ -49,7 +49,7 @@ const NewConversationModal = ({
   React.useEffect(() => {
     if (visible) {
       Promise.all([
-        API.fetchGoogleAuthorization('gmail'),
+        API.fetchGoogleAuthorization({client: 'gmail'}),
         API.fetchCustomer(customerId, {expand: []}),
       ]).then(([authorization, customer]) => {
         const hasValidAuth = !!(authorization && authorization.id);

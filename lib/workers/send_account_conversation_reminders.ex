@@ -14,9 +14,20 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
   def perform(%Oban.Job{args: %{"account_id" => account_id}}) do
     Logger.info("Triggering conversation reminders for account #{account_id}")
 
-    account_id
-    |> Accounts.get_account!()
-    |> run()
+    account = Accounts.get_account!(account_id)
+
+    # Skip sending reminders when outside working hours
+    case Accounts.is_outside_working_hours?(account) do
+      false ->
+        run(account)
+
+      true ->
+        Logger.info(
+          "Skipping conversation reminders, currently outside working hours: #{
+            inspect(account.working_hours)
+          }"
+        )
+    end
 
     :ok
   end
@@ -39,7 +50,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
     |> Enum.filter(fn conv -> should_send_reminder?(conv, max) end)
     # Just handle 10 at a time for now to avoid spamming reminders
     |> Enum.slice(0..9)
-    |> Enum.map(&send_reminder_message/1)
+    |> Enum.map(fn conv -> send_reminder_message(conv, max, hours) end)
   end
 
   def run(_account), do: nil
@@ -63,7 +74,9 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
           id: conversation_id,
           account_id: account_id,
           assignee_id: assignee_id
-        } = conversation
+        } = conversation,
+        max,
+        hours
       ) do
     user_id =
       case assignee_id do
@@ -72,6 +85,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
       end
 
     latest_message = conversation |> Map.get(:messages, []) |> List.first()
+    hours_label = if hours == 1, do: "hour", else: "hours"
 
     metadata =
       case latest_message do
@@ -86,10 +100,24 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
           %{"is_reminder" => true, "reminder_count" => 1}
       end
 
+    body =
+      case metadata do
+        %{"reminder_count" => n} when n == max and max > 1 ->
+          "This is the last reminder to follow up on this conversation :bell: no more will be sent after this!" <>
+            "\n\n" <> "(Click [here](/account/overview) to configure reminders for your account)"
+
+        %{"reminder_count" => n} when n < max ->
+          "This is an automated reminder (#{n} of #{max}) to follow up on this conversation :bell: " <>
+            "the next reminder will be sent in #{hours} #{hours_label}." <>
+            "\n\n" <> "(Click [here](/account/overview) to configure reminders for your account)"
+
+        _ ->
+          "This is an automated reminder to follow up on this conversation :bell:" <>
+            "\n\n" <> "(Click [here](/account/overview) to configure reminders for your account)"
+      end
+
     %{
-      body:
-        "This is an automated reminder to follow up on this conversation :bell:" <>
-          "\n\n" <> "(Click [here](/account/overview) to configure reminders for your account)",
+      body: body,
       type: "bot",
       private: true,
       conversation_id: conversation_id,
@@ -103,7 +131,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
-    |> Messages.Helpers.handle_post_creation_conversation_updates()
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 
   defp get_hours_interval_config(settings) do

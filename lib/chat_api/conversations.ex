@@ -10,7 +10,7 @@ defmodule ChatApi.Conversations do
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
-  alias ChatApi.Tags.{Tag, ConversationTag}
+  alias ChatApi.Tags.ConversationTag
 
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(account_id, filters \\ %{}) do
@@ -468,17 +468,6 @@ defmodule ChatApi.Conversations do
   @spec has_agent_replied?(binary()) :: boolean()
   def has_agent_replied?(conversation_id) do
     count_agent_replies(conversation_id) > 0
-  end
-
-  @spec list_tags(binary()) :: [Tag.t()]
-  def list_tags(id) do
-    # TODO: optimize this query
-    Conversation
-    |> Repo.get(id)
-    |> case do
-      nil -> []
-      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
-    end
   end
 
   @spec get_tag(Conversation.t(), binary()) :: ConversationTag.t() | nil

@@ -50,8 +50,8 @@ defmodule ChatApi.SlackTest do
                  "reply"
                )
 
-      # :ok if the account is different
-      assert :ok =
+      # :error if connecting to a channel that another account has already linked
+      assert {:error, :duplicate_channel_id} =
                Slack.Validation.validate_authorization_channel_id(
                  @slack_channel_id,
                  other_account_id,
@@ -271,7 +271,7 @@ defmodule ChatApi.SlackTest do
     end
 
     test "Notification.validate_send_to_primary_channel/2 returns :error if the message when the message is not an initial message and a thread does not exist" do
-      assert :error =
+      assert {:error, :conversation_exists_without_thread} =
                Slack.Notification.validate_send_to_primary_channel(nil, is_first_message: false)
     end
   end

@@ -41,9 +41,6 @@ defmodule ChatApiWeb.CustomerController do
       %{
         # Defaults
         "first_seen" => DateTime.utc_now(),
-        "last_seen" => DateTime.utc_now(),
-        # TODO: last_seen is stored as a date, while last_seen_at is stored as
-        # a datetime -- we should opt for datetime values whenever possible
         "last_seen_at" => DateTime.utc_now(),
         # If the user is authenticated, we can use their account_id here
         "account_id" =>

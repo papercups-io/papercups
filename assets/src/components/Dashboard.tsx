@@ -32,6 +32,7 @@ import {
   isHostedProd,
   isStorytimeEnabled,
 } from '../config';
+import {SOCKET_URL} from '../socket';
 import analytics from '../analytics';
 import {
   getBrowserVisibilityInfo,
@@ -40,6 +41,7 @@ import {
 } from '../utils';
 import {Account, User} from '../types';
 import {useAuth} from './auth/AuthProvider';
+import {SocketProvider, SocketContext} from './auth/SocketProvider';
 import AccountOverview from './account/AccountOverview';
 import TeamOverview from './account/TeamOverview';
 import UserProfile from './account/UserProfile';
@@ -54,6 +56,11 @@ import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
 import ConversationsBySource from './conversations/ConversationsBySource';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
+import {
+  SlackIntegrationDetails,
+  SlackReplyIntegrationDetails,
+  SlackSyncIntegrationDetails,
+} from './integrations/SlackIntegrationDetails';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import CustomerDetailsPage from './customers/CustomerDetailsPage';
@@ -497,6 +504,18 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/companies/:id/edit" component={UpdateCompanyPage} />
           <Route path="/companies/:id" component={CompanyDetailsPage} />
           <Route path="/companies" component={CompaniesPage} />
+          <Route
+            path="/integrations/slack/reply"
+            component={SlackReplyIntegrationDetails}
+          />
+          <Route
+            path="/integrations/slack/support"
+            component={SlackSyncIntegrationDetails}
+          />
+          <Route
+            path="/integrations/slack"
+            component={SlackIntegrationDetails}
+          />
           <Route path="/integrations/:type" component={IntegrationsOverview} />
           <Route path="/integrations" component={IntegrationsOverview} />
           <Route path="/integrations*" component={IntegrationsOverview} />
@@ -551,10 +570,20 @@ const Dashboard = (props: RouteComponentProps) => {
 };
 
 const DashboardWrapper = (props: RouteComponentProps) => {
+  const {refresh} = useAuth();
+
   return (
-    <ConversationsProvider>
-      <Dashboard {...props} />
-    </ConversationsProvider>
+    <SocketProvider url={SOCKET_URL} refresh={refresh}>
+      <SocketContext.Consumer>
+        {({socket}) => {
+          return (
+            <ConversationsProvider socket={socket}>
+              <Dashboard {...props} />
+            </ConversationsProvider>
+          );
+        }}
+      </SocketContext.Consumer>
+    </SocketProvider>
   );
 };
 

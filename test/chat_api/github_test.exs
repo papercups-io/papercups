@@ -116,4 +116,152 @@ defmodule ChatApi.GithubTest do
       Map.take(github_authorization, [:access_token, :scope, :token_type, :account_id, :user_id])
     end
   end
+
+  describe "helpers" do
+    test "Github.Helpers.extract_github_issue_links/1 handles strings without GitHub issue links" do
+      assert [] = Github.Helpers.extract_github_issue_links("")
+      assert [] = Github.Helpers.extract_github_issue_links("hello world")
+
+      assert [] =
+               Github.Helpers.extract_github_issue_links(
+                 "check out my website: www.papercups.io, https://papercups.io"
+               )
+
+      assert [] =
+               Github.Helpers.extract_github_issue_links(
+                 "here's our github repo: https://github.com/papercups-io/papercups"
+               )
+
+      assert [] =
+               Github.Helpers.extract_github_issue_links(
+                 "here's our github repo: https://github.com/papercups-io/papercups/commit/a097f9xxx08885"
+               )
+    end
+
+    test "Github.Helpers.extract_github_issue_links/1 handles strings with one GitHub issue link" do
+      assert ["http://github.com/papercups-io/papercups/issues/1"] =
+               Github.Helpers.extract_github_issue_links(
+                 "http://github.com/papercups-io/papercups/issues/1"
+               )
+
+      assert ["https://github.com/papercups-io/papercups/issues/1"] =
+               Github.Helpers.extract_github_issue_links(
+                 "https://github.com/papercups-io/papercups/issues/1"
+               )
+
+      assert ["https://github.com/papercups-io/papercups/issues/1"] =
+               Github.Helpers.extract_github_issue_links(
+                 "check out this issue: https://github.com/papercups-io/papercups/issues/1"
+               )
+
+      assert ["https://github.com/papercups-io/papercups/issues/1"] =
+               Github.Helpers.extract_github_issue_links(
+                 "https://github.com/papercups-io/papercups/issues/1 is the url"
+               )
+
+      assert ["https://github.com/papercups-io/papercups/issues/1"] =
+               Github.Helpers.extract_github_issue_links(
+                 "here you go: https://github.com/papercups-io/papercups/issues/1 hope it helps!"
+               )
+    end
+
+    test "Github.Helpers.extract_github_issue_links/1 handles strings with multiple GitHub issue links" do
+      str = """
+      here are the github issues we're working on this week:
+
+      - https://github.com/papercups-io/papercups/issues/1
+      - http://github.com/papercups-io/chat/issues/2
+      - https://github.com/papercups-io/widget/issues/3
+      - https://github.com/alex/website/issues/4
+
+      let us know if you want to help out!
+      """
+
+      assert [
+               "https://github.com/papercups-io/papercups/issues/1",
+               "http://github.com/papercups-io/chat/issues/2",
+               "https://github.com/papercups-io/widget/issues/3",
+               "https://github.com/alex/website/issues/4"
+             ] = Github.Helpers.extract_github_issue_links(str)
+    end
+
+    test "Github.Helpers.contains_github_issue_link?/1 handles strings without GitHub issue links" do
+      refute Github.Helpers.contains_github_issue_link?("")
+      refute Github.Helpers.contains_github_issue_link?("hello world")
+
+      refute Github.Helpers.contains_github_issue_link?(
+               "check out my website: www.papercups.io, https://papercups.io"
+             )
+
+      refute Github.Helpers.contains_github_issue_link?(
+               "here's our github repo: https://github.com/papercups-io/papercups"
+             )
+
+      refute Github.Helpers.contains_github_issue_link?(
+               "here's our github repo: https://github.com/papercups-io/papercups/commit/a097f9xxx08885"
+             )
+    end
+
+    test "Github.Helpers.contains_github_issue_link?/1 handles strings with one GitHub issue link" do
+      assert Github.Helpers.contains_github_issue_link?(
+               "http://github.com/papercups-io/papercups/issues/1"
+             )
+
+      assert Github.Helpers.contains_github_issue_link?(
+               "https://github.com/papercups-io/papercups/issues/1"
+             )
+
+      assert Github.Helpers.contains_github_issue_link?(
+               "check out this issue: https://github.com/papercups-io/papercups/issues/1"
+             )
+
+      assert Github.Helpers.contains_github_issue_link?(
+               "https://github.com/papercups-io/papercups/issues/1 is the url"
+             )
+
+      assert Github.Helpers.contains_github_issue_link?(
+               "here you go: https://github.com/papercups-io/papercups/issues/1 hope it helps!"
+             )
+    end
+
+    test "Github.Helpers.contains_github_issue_link?/1 handles strings with multiple GitHub issue links" do
+      str = """
+      here are the github issues we're working on this week:
+
+      - https://github.com/papercups-io/papercups/issues/1
+      - http://github.com/papercups-io/chat/issues/2
+      - https://github.com/papercups-io/widget/issues/3
+      - https://github.com/alex/website/issues/4
+
+      let us know if you want to help out!
+      """
+
+      assert Github.Helpers.contains_github_issue_link?(str)
+    end
+
+    test "Github.Helpers.parse_github_issue_url/1 extracts the owner, repo, and id of the issue" do
+      assert {:ok, %{owner: "papercups-io", repo: "papercups", id: "1"}} =
+               Github.Helpers.parse_github_issue_url(
+                 "https://github.com/papercups-io/papercups/issues/1"
+               )
+
+      assert {:ok, %{owner: "papercups-io", repo: "chat", id: "2"}} =
+               Github.Helpers.parse_github_issue_url(
+                 "http://github.com/papercups-io/chat/issues/2"
+               )
+
+      assert {:ok, %{owner: "papercups-io", repo: "widget", id: "3"}} =
+               Github.Helpers.parse_github_issue_url(
+                 "https://github.com/papercups-io/widget/issues/3"
+               )
+
+      assert {:ok, %{owner: "alex", repo: "website", id: "4"}} =
+               Github.Helpers.parse_github_issue_url("https://github.com/alex/website/issues/4")
+
+      assert {:error, :invalid_github_issue_url} =
+               Github.Helpers.parse_github_issue_url(
+                 "https://github.com/papercups-io/papercups/commit/a097f9xxx08885"
+               )
+    end
+  end
 end

@@ -16,7 +16,7 @@ defmodule ChatApiWeb.CustomerView do
   alias ChatApi.Customers.Customer
 
   @customer_csv_ordered_fields ~w(id name email created_at updated_at)a ++
-                                 ~w(first_seen last_seen phone external_id)a ++
+                                 ~w(first_seen last_seen_at phone external_id)a ++
                                  ~w(host pathname current_url browser)a ++
                                  ~w(os ip time_zone)a
 
@@ -71,7 +71,6 @@ defmodule ChatApiWeb.CustomerView do
       created_at: customer.inserted_at,
       updated_at: customer.updated_at,
       first_seen: customer.first_seen,
-      last_seen: customer.last_seen,
       last_seen_at: customer.last_seen_at,
       phone: customer.phone,
       external_id: customer.external_id,

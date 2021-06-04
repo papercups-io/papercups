@@ -20,7 +20,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
            refresh_token: refresh_token,
            metadata: %{"next_history_id" => start_history_id}
          } = authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
          %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
          %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
            Gmail.list_history(refresh_token,
@@ -270,7 +270,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     |> Messages.Notification.notify(:slack, async: false)
     |> Messages.Notification.notify(:mattermost, async: false)
     # NB: for email threads, for now we want to reopen the conversation if it was closed
-    |> Messages.Helpers.handle_post_creation_conversation_updates()
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 
   def process_message_attachments(nil, _authorization), do: []

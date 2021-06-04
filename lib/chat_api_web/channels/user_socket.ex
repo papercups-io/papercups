@@ -6,6 +6,7 @@ defmodule ChatApiWeb.UserSocket do
   channel("conversation:*", ChatApiWeb.ConversationChannel)
   channel("notification:*", ChatApiWeb.NotificationChannel)
   channel("events:*", ChatApiWeb.EventChannel)
+  channel("issue:*", ChatApiWeb.IssueChannel)
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

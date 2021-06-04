@@ -10,6 +10,7 @@ export const AuthContext = React.createContext<{
   register: (params: any) => Promise<void>;
   login: (params: any) => Promise<void>;
   logout: () => Promise<void>;
+  refresh: (token: string) => Promise<void>;
 }>({
   isAuthenticated: false,
   tokens: null,
@@ -17,6 +18,7 @@ export const AuthContext = React.createContext<{
   register: () => Promise.resolve(),
   login: () => Promise.resolve(),
   logout: () => Promise.resolve(),
+  refresh: () => Promise.resolve(),
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -138,6 +140,7 @@ export class AuthProvider extends React.Component<Props, State> {
           register: this.register,
           login: this.login,
           logout: this.logout,
+          refresh: this.refresh,
         }}
       >
         {this.props.children}

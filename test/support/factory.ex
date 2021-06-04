@@ -61,7 +61,7 @@ defmodule ChatApi.Factory do
   def customer_factory do
     %ChatApi.Customers.Customer{
       first_seen: ~D[2020-01-01],
-      last_seen: ~D[2020-01-01],
+      last_seen_at: ~U[2020-01-05 00:00:00Z],
       email: sequence(:email, &"test-#{&1}@test.com"),
       account: build(:account),
       company: build(:company),

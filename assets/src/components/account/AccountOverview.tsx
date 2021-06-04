@@ -206,7 +206,7 @@ class AccountOverview extends React.Component<Props, State> {
           <Title level={4}>Working hours</Title>
 
           <Paragraph>
-            <Text>
+            <Text type="secondary">
               Set your working hours so your users know when you're available to
               chat.
             </Text>
@@ -221,8 +221,16 @@ class AccountOverview extends React.Component<Props, State> {
 
         <Divider />
 
-        <Box mb={4}>
+        <Box mb={4} sx={{maxWidth: 480}}>
           <Title level={4}>Conversation reminders</Title>
+
+          <Paragraph>
+            <Text type="secondary">
+              Configure reminder messages to nudge you when your team hasn't
+              replied to an open conversation within the number of hours
+              specified below.
+            </Text>
+          </Paragraph>
 
           <ConversationRemindersSettings
             settings={settings}

@@ -115,7 +115,8 @@ defmodule ChatApi.UsersTest do
       user = Users.get_user_info(user.id)
 
       refute user.profile
-      assert "Test Inc" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Test Inc Team" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Test Inc Team" = ChatApi.Emails.format_sender_name(user.id, account.id)
     end
 
     test "Emails.format_sender_name/1 returns the company name when no display_name or full_name are set",
@@ -125,7 +126,8 @@ defmodule ChatApi.UsersTest do
 
       user = Users.get_user_info(user.id)
 
-      assert "Test Inc" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Test Inc Team" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Test Inc Team" = ChatApi.Emails.format_sender_name(user.id, account.id)
     end
 
     test "Emails.format_sender_name/1 prioritizes the display_name if both display_name and full_name are set",
@@ -136,6 +138,7 @@ defmodule ChatApi.UsersTest do
       user = Users.get_user_info(user.id)
 
       assert "Alex" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Alex" = ChatApi.Emails.format_sender_name(user.id, account.id)
 
       assert {:ok, %UserProfile{}} =
                Users.update_user_profile(user.id, %{display_name: nil, full_name: "Alex R"})
@@ -143,6 +146,7 @@ defmodule ChatApi.UsersTest do
       user = Users.get_user_info(user.id)
 
       assert "Alex R" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Alex R" = ChatApi.Emails.format_sender_name(user.id, account.id)
 
       assert {:ok, %UserProfile{}} =
                Users.update_user_profile(user.id, %{display_name: "Alex", full_name: nil})
@@ -150,6 +154,7 @@ defmodule ChatApi.UsersTest do
       user = Users.get_user_info(user.id)
 
       assert "Alex" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Alex" = ChatApi.Emails.format_sender_name(user.id, account.id)
     end
   end
 

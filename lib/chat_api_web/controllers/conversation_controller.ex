@@ -281,13 +281,15 @@ defmodule ChatApiWeb.ConversationController do
 
   @spec maybe_create_message(Plug.Conn.t(), Conversation.t(), map()) :: any()
   defp maybe_create_message(
-         _conn,
+         conn,
          %Conversation{source: "email"} = conversation,
          %{"message" => %{"body" => body} = _message_params}
        ) do
-    case ChatApi.Google.InitializeGmailThread.send(body, conversation) do
-      %Messages.Message{} -> :ok
-      {:error, message} -> {:error, :unprocessable_entity, message}
+    with %{id: user_id} <- conn.assigns.current_user do
+      case ChatApi.Google.InitializeGmailThread.send(body, conversation, user_id) do
+        %Messages.Message{} -> :ok
+        {:error, message} -> {:error, :unprocessable_entity, message}
+      end
     end
   end
 

@@ -151,6 +151,7 @@ defmodule ChatApiWeb.ConversationChannel do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:new_message_email)
     |> Messages.Notification.notify(:webhooks)
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 
   # Add authorization logic here as required.

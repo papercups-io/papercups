@@ -163,7 +163,7 @@ defmodule ChatApi.Slack.Sync do
           # NB: we need to make sure the messages are created in the correct order, so we set async: false
           |> Messages.Notification.notify(:slack, async: false)
           # TODO: not sure we need to do this on every message
-          |> Messages.Helpers.handle_post_creation_conversation_updates()
+          |> Messages.Helpers.handle_post_creation_hooks()
 
         _ ->
           nil

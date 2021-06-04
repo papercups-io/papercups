@@ -114,6 +114,10 @@ class IntegrationsOverview extends React.Component<Props, State> {
 
   fetchSlackIntegration = async (): Promise<IntegrationType> => {
     const auth = await API.fetchSlackAuthorization('reply');
+    const description =
+      auth && auth.channel && auth.team_name
+        ? `Connected to ${auth.channel} in ${auth.team_name}.`
+        : 'Reply to messages from your customers directly through Slack.';
 
     return {
       key: 'slack',
@@ -122,13 +126,16 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
-      description:
-        'Reply to messages from your customers directly through Slack.',
+      description,
     };
   };
 
   fetchMattermostIntegration = async (): Promise<IntegrationType> => {
     const auth = await API.fetchMattermostAuthorization();
+    const description =
+      auth && auth.channel && auth.team_name
+        ? `Connected to ${auth.channel} in ${auth.team_name}.`
+        : 'Reply to messages from your customers directly from Mattermost.';
 
     return {
       key: 'mattermost',
@@ -137,13 +144,16 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/mattermost.svg',
-      description:
-        'Reply to messages from your customers directly from Mattermost.',
+      description,
     };
   };
 
   fetchSlackSupportIntegration = async (): Promise<IntegrationType> => {
     const auth = await API.fetchSlackAuthorization('support');
+    const description =
+      auth && auth.channel && auth.team_name
+        ? `Connected to ${auth.channel} in ${auth.team_name}.`
+        : 'Sync messages from your Slack channels with Papercups.';
 
     return {
       key: 'slack:sync',
@@ -152,12 +162,15 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
-      description: 'Sync messages from your Slack channels with Papercups.',
+      description,
     };
   };
 
   fetchGmailIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchGoogleAuthorization('gmail');
+    const auth = await API.fetchGoogleAuthorization({
+      client: 'gmail',
+      type: 'support',
+    });
 
     return {
       key: 'gmail',
@@ -171,7 +184,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   fetchGoogleSheetsIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchGoogleAuthorization('sheets');
+    const auth = await API.fetchGoogleAuthorization({client: 'sheets'});
 
     return {
       key: 'sheets',
@@ -287,8 +300,9 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
 
     const scope = q.scope ? String(q.scope) : null;
+    const state = q.state ? String(q.state) : null;
 
-    return API.authorizeGoogleIntegration(code, scope)
+    return API.authorizeGoogleIntegration({code, scope, state})
       .then((result) => logger.debug('Successfully authorized Google:', result))
       .catch((err) => {
         logger.error('Failed to authorize Google:', err);

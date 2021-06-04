@@ -83,7 +83,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
             justifyContent: 'center',
             alignItems: 'center',
             height: '100%',
-            bg: 'rgb(245, 245, 245)',
+            bg: 'rgb(250, 250, 250)',
           }}
         >
           <Spinner size={40} />
@@ -99,7 +99,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
         sx={{
           flexDirection: 'column',
           flex: 1,
-          bg: 'rgb(245, 245, 245)',
+          bg: 'rgb(250, 250, 250)',
         }}
       >
         <Flex mb={4}>

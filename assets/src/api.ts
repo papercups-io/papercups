@@ -7,6 +7,8 @@ import {
   Conversation,
   Customer,
   CustomerNote,
+  GoogleAuthParams,
+  GoogleIntegrationParams,
   Issue,
   Tag,
   User,
@@ -150,7 +152,7 @@ export const createNewCustomer = async (
     .send({
       customer: {
         first_seen: now(),
-        last_seen: now(),
+        last_seen_at: now(),
         ...params,
         account_id: accountId,
       },
@@ -684,6 +686,22 @@ export const fetchSlackAuthorization = async (
     .then((res) => res.body.data);
 };
 
+export const updateSlackAuthorizationSettings = async (
+  authorizationId: string,
+  settings: Record<string, any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/slack/authorizations/${authorizationId}/settings`)
+    .send({settings})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const deleteSlackAuthorization = async (
   authorizationId: string,
   token = getAccessToken()
@@ -808,7 +826,7 @@ export const deleteTwilioAuthorization = async (
 };
 
 export const fetchGoogleAuthorization = async (
-  client: 'gmail' | 'sheets',
+  query: GoogleIntegrationParams,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -817,7 +835,7 @@ export const fetchGoogleAuthorization = async (
 
   return request
     .get(`/api/google/authorization`)
-    .query({client})
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -1021,8 +1039,7 @@ export const authorizeGmailIntegration = async (
 };
 
 export const authorizeGoogleIntegration = async (
-  code: string,
-  scope?: string | null,
+  query: GoogleAuthParams,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -1031,7 +1048,7 @@ export const authorizeGoogleIntegration = async (
 
   return request
     .get(`/api/google/oauth`)
-    .query({code, scope})
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

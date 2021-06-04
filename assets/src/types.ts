@@ -41,10 +41,8 @@ export type Customer = {
   first_seen?: any;
   host?: string;
   ip?: string;
-  // Date
-  last_seen: string;
   // Datetime
-  last_seen_at?: string;
+  last_seen_at: string;
   metadata?: any;
   os?: string;
   pathname?: string;
@@ -247,4 +245,33 @@ export type Pagination = {
   page_number: number;
   total_pages?: number;
   total_entries?: number;
+};
+
+export type GoogleIntegrationClient = 'gmail' | 'sheets';
+export type GoogleIntegrationType = 'personal' | 'support';
+export type GoogleIntegrationParams = {
+  client: GoogleIntegrationClient;
+  type?: GoogleIntegrationType;
+};
+
+export type GoogleAuthParams = {
+  code: string;
+  state?: string | null;
+  scope?: string | null;
+};
+
+export type SlackAuthorizationSettings = {
+  sync_all_incoming_threads: boolean;
+  sync_by_emoji_tagging: boolean;
+  sync_trigger_emoji: string;
+  forward_synced_messages_to_reply_channel: boolean;
+};
+
+export type SlackAuthorization = {
+  id: string;
+  created_at: string;
+  channel: string;
+  configuration_url: string;
+  team_name: string;
+  settings: SlackAuthorizationSettings | null;
 };

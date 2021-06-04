@@ -39,7 +39,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
            refresh_token: refresh_token,
            metadata: %{"next_history_id" => start_history_id}
          } = authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
          %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
          %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
            Gmail.list_history(refresh_token,
@@ -63,7 +63,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
   @spec sync_messages(binary(), binary()) :: :ok
   def sync_messages(account_id, start_history_id) do
     with %GoogleAuthorization{refresh_token: refresh_token} = authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
          %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
          %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
            Gmail.list_history(refresh_token,
@@ -88,7 +88,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
   @spec sync_messages_by_label(binary(), binary(), binary()) :: :ok | :error
   def sync_messages_by_label(account_id, start_history_id, label_id) do
     with %GoogleAuthorization{refresh_token: refresh_token} = authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail"}),
+           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
          %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
          %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
            Gmail.list_history(refresh_token,
@@ -300,6 +300,6 @@ defmodule Mix.Tasks.SyncGmailInbox do
     })
     |> Messages.create_and_fetch!()
     |> Messages.Notification.notify(:webhooks)
-    |> Messages.Helpers.handle_post_creation_conversation_updates()
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 end

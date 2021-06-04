@@ -37,6 +37,10 @@ body {
   text-decoration: underline;
 }
 
+.Text--markdown p:not(:first-child) {
+  margin-top: 4px;
+}
+
 .Text--white {
   color: #fff;
 }
