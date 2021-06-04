@@ -3,7 +3,6 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
   import Ecto.Changeset
 
   alias ChatApi.Accounts.Account
-  alias ChatApi.SlackAuthorizations.Settings
 
   @type t :: %__MODULE__{
           access_token: String.t(),
@@ -20,7 +19,6 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
           token_type: String.t() | nil,
           webhook_url: String.t() | nil,
           metadata: any(),
-          settings: any(),
           # Relations
           account_id: any(),
           account: any(),
@@ -47,8 +45,6 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
     field(:webhook_url, :string)
     field(:metadata, :map)
 
-    embeds_one(:settings, Settings, on_replace: :delete)
-
     belongs_to(:account, Account)
 
     timestamps()
@@ -74,17 +70,7 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
       :token_type,
       :metadata
     ])
-    |> cast_embed(:settings, with: &settings_changeset/2)
     |> validate_required([:account_id, :access_token])
     |> validate_inclusion(:type, ["reply", "support"])
-  end
-
-  @spec settings_changeset(any(), map()) :: Ecto.Changeset.t()
-  def settings_changeset(schema, params) do
-    schema
-    |> cast(params, [
-      :sync_all_incoming_threads,
-      :sync_by_emoji_tagging
-    ])
   end
 end

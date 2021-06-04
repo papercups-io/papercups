@@ -14,7 +14,6 @@ defmodule ChatApi.Github.GithubAuthorization do
           scope: String.t() | nil,
           github_installation_id: String.t() | nil,
           metadata: any(),
-          settings: any(),
           # Foreign keys
           account_id: Ecto.UUID.t(),
           user_id: integer(),
@@ -35,10 +34,6 @@ defmodule ChatApi.Github.GithubAuthorization do
     field(:github_installation_id, :string)
     field(:metadata, :map)
 
-    field(:settings, :map)
-    # TODO: update settings to embeds_one:
-    # embeds_one(:settings, Settings, on_replace: :delete)
-
     belongs_to(:account, Account)
     belongs_to(:user, User, type: :integer)
 
@@ -58,8 +53,7 @@ defmodule ChatApi.Github.GithubAuthorization do
       :github_installation_id,
       :user_id,
       :account_id,
-      :metadata,
-      :settings
+      :metadata
     ])
     |> validate_required([:user_id, :account_id])
   end

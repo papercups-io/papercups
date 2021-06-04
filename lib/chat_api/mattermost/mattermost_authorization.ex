@@ -18,7 +18,6 @@ defmodule ChatApi.Mattermost.MattermostAuthorization do
           webhook_url: String.t() | nil,
           scope: String.t() | nil,
           metadata: any(),
-          settings: any(),
           # Foreign keys
           account_id: Ecto.UUID.t(),
           user_id: integer(),
@@ -43,10 +42,6 @@ defmodule ChatApi.Mattermost.MattermostAuthorization do
     field(:scope, :string)
     field(:metadata, :map)
 
-    field(:settings, :map)
-    # TODO: update settings to embeds_one:
-    # embeds_one(:settings, Settings, on_replace: :delete)
-
     belongs_to(:account, Account)
     belongs_to(:user, User, type: :integer)
 
@@ -69,7 +64,6 @@ defmodule ChatApi.Mattermost.MattermostAuthorization do
       :webhook_url,
       :scope,
       :metadata,
-      :settings,
       :user_id,
       :account_id
     ])

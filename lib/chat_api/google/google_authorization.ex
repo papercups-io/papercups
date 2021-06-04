@@ -14,7 +14,6 @@ defmodule ChatApi.Google.GoogleAuthorization do
           scope: String.t() | nil,
           type: String.t() | nil,
           metadata: any(),
-          settings: any(),
           # Foreign keys
           account_id: Ecto.UUID.t(),
           user_id: integer(),
@@ -35,10 +34,6 @@ defmodule ChatApi.Google.GoogleAuthorization do
     field(:type, :string)
     field(:metadata, :map)
 
-    field(:settings, :map)
-    # TODO: update settings to embeds_one:
-    # embeds_one(:settings, Settings, on_replace: :delete)
-
     belongs_to(:account, Account)
     belongs_to(:user, User, type: :integer)
 
@@ -57,7 +52,6 @@ defmodule ChatApi.Google.GoogleAuthorization do
       :scope,
       :type,
       :metadata,
-      :settings,
       :user_id,
       :account_id
     ])

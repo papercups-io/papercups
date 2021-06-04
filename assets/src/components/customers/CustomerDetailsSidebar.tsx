@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
-import {Badge, Button, Card, Divider, colors, Text, Tooltip} from '../common';
+import {Badge, Button, Divider, colors, Text, Tooltip} from '../common';
 import {
   CalendarOutlined,
   DesktopOutlined,
@@ -18,6 +18,7 @@ import {
 } from '../icons';
 import {SidebarCustomerTags} from '../conversations/SidebarTagSection';
 import {BrowserSession, Company, Customer} from '../../types';
+import CustomerDetailsCard from './CustomerDetailsCard';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -49,7 +50,7 @@ export const CustomerDetailsSidebar = ({
   const hasMetadata = !!metadata && Object.keys(metadata).length > 0;
 
   return (
-    <Card sx={{minWidth: 320, maxWidth: 360}}>
+    <CustomerDetailsCard sx={{minWidth: 320, maxWidth: 360}}>
       <Box p={3}>
         <CustomerDetailsSection title="Basic">
           <CustomerDetailsProperty
@@ -170,7 +171,7 @@ export const CustomerDetailsSidebar = ({
           <SidebarCustomerTags customerId={customerId} />
         </CustomerDetailsSection>
       </Box>
-    </Card>
+    </CustomerDetailsCard>
   );
 };
 

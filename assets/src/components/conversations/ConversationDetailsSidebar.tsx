@@ -10,7 +10,6 @@ import {
   notification,
   Badge,
   Button,
-  Card,
   Input,
   Paragraph,
   Tag,
@@ -46,7 +45,19 @@ import logger from '../../logger';
 dayjs.extend(utc);
 
 const DetailsSectionCard = ({children}: {children: any}) => {
-  return <Card sx={{p: 2, my: 2}}>{children}</Card>;
+  return (
+    <Box
+      my={2}
+      p={2}
+      sx={{
+        bg: colors.white,
+        border: '1px solid rgba(0,0,0,.06)',
+        borderRadius: 4,
+      }}
+    >
+      {children}
+    </Box>
+  );
 };
 
 const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
@@ -521,7 +532,7 @@ const ConversationDetailsSidebar = ({
       sx={{
         width: '100%',
         minHeight: '100%',
-        bg: 'rgb(250, 250, 250)',
+        bg: 'rgb(245, 245, 245)',
         border: `1px solid rgba(0,0,0,.06)`,
         boxShadow: 'inset rgba(0, 0, 0, 0.1) 0px 0px 4px',
         flex: 1,

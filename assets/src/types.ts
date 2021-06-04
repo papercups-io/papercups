@@ -259,19 +259,3 @@ export type GoogleAuthParams = {
   state?: string | null;
   scope?: string | null;
 };
-
-export type SlackAuthorizationSettings = {
-  sync_all_incoming_threads: boolean;
-  sync_by_emoji_tagging: boolean;
-  sync_trigger_emoji: string;
-  forward_synced_messages_to_reply_channel: boolean;
-};
-
-export type SlackAuthorization = {
-  id: string;
-  created_at: string;
-  channel: string;
-  configuration_url: string;
-  team_name: string;
-  settings: SlackAuthorizationSettings | null;
-};

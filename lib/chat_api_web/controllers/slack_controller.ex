@@ -2,7 +2,7 @@ defmodule ChatApiWeb.SlackController do
   use ChatApiWeb, :controller
 
   require Logger
-  alias ChatApiWeb.SlackAuthorizationView
+
   alias ChatApi.{Conversations, Slack, SlackAuthorizations}
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
@@ -121,22 +121,15 @@ defmodule ChatApiWeb.SlackController do
         json(conn, %{data: nil})
 
       auth ->
-        conn
-        |> put_view(SlackAuthorizationView)
-        |> render("show.json", slack_authorization: auth)
-    end
-  end
-
-  @spec update_settings(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def update_settings(conn, %{"id" => id, "settings" => settings}) do
-    with %{account_id: _account_id} <- conn.assigns.current_user,
-         %SlackAuthorization{} = auth <-
-           SlackAuthorizations.get_slack_authorization!(id),
-         {:ok, %SlackAuthorization{} = authorization} <-
-           SlackAuthorizations.update_slack_authorization(auth, %{settings: settings}) do
-      conn
-      |> put_view(SlackAuthorizationView)
-      |> render("show.json", slack_authorization: authorization)
+        json(conn, %{
+          data: %{
+            id: auth.id,
+            created_at: auth.inserted_at,
+            channel: auth.channel,
+            configuration_url: auth.configuration_url,
+            team_name: auth.team_name
+          }
+        })
     end
   end
 

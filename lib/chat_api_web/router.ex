@@ -91,7 +91,6 @@ defmodule ChatApiWeb.Router do
 
     get("/slack/oauth", SlackController, :oauth)
     get("/slack/authorization", SlackController, :authorization)
-    post("/slack/authorizations/:id/settings", SlackController, :update_settings)
     delete("/slack/authorizations/:id", SlackController, :delete)
     get("/slack/channels", SlackController, :channels)
     post("/mattermost/auth", MattermostController, :auth)
@@ -180,9 +179,9 @@ defmodule ChatApiWeb.Router do
 
   if Mix.env() == :dev do
     scope "/" do
-      pipe_through([:browser])
+      pipe_through [:browser]
 
-      forward("/mailbox", Plug.Swoosh.MailboxPreview)
+      forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Card, Empty, Title} from '../common';
+import {colors, shadows, Button, Empty, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import {Conversation, Customer} from '../../types';
@@ -15,7 +15,20 @@ import {sortConversationMessages} from '../../utils';
 import CustomerDetailsModal from '../customers/CustomerDetailsModal';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
-  return <Card sx={{p: 3, mb: 3}}>{children}</Card>;
+  return (
+    <Box
+      p={3}
+      mb={3}
+      sx={{
+        bg: colors.white,
+        border: '1px solid rgba(0,0,0,.06)',
+        borderRadius: 4,
+        boxShadow: shadows.medium,
+      }}
+    >
+      {children}
+    </Box>
+  );
 };
 
 type Props = RouteComponentProps<{id: string}>;
@@ -144,7 +157,7 @@ class CustomerDetailsPage extends React.Component<Props, State> {
         sx={{
           flexDirection: 'column',
           flex: 1,
-          bg: 'rgb(250, 250, 250)',
+          bg: 'rgb(245, 245, 245)',
         }}
       >
         <Flex

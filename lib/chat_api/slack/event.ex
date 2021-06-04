@@ -182,10 +182,11 @@ defmodule ChatApi.Slack.Event do
       ) do
     Logger.debug("Handling Slack new message event: #{inspect(event)}")
 
-    with %SlackAuthorization{} = authorization <-
-           SlackAuthorizations.find_slack_authorization(%{team_id: team, type: "support"}),
-         %{sync_all_incoming_threads: true} <-
-           SlackAuthorizations.get_authorization_settings(authorization),
+    with authorization <-
+           SlackAuthorizations.find_slack_authorization(%{
+             team_id: team,
+             type: "support"
+           }),
          # TODO: remove after debugging!
          :ok <- Logger.info("Handling Slack new message event: #{inspect(event)}"),
          :ok <- Slack.Validation.validate_channel_supported(authorization, slack_channel_id),
@@ -210,10 +211,8 @@ defmodule ChatApi.Slack.Event do
 
     with :ok <- Slack.Validation.validate_no_existing_thread(channel, ts),
          {:ok, account_id} <- find_account_id_by_support_channel(channel),
-         %SlackAuthorization{access_token: access_token} = authorization <-
+         %{access_token: access_token} <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
-         %{sync_by_emoji_tagging: true} <-
-           SlackAuthorizations.get_authorization_settings(authorization),
          {:ok, response} <- Slack.Client.retrieve_message(channel, ts, access_token),
          {:ok, message} <- Slack.Extractor.extract_slack_message(response) do
       Logger.info("Slack emoji reaction detected:")
