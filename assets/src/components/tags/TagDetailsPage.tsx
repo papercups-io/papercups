@@ -2,9 +2,8 @@ import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {
-  colors,
-  shadows,
   Button,
+  Card,
   Empty,
   Popconfirm,
   Result,
@@ -24,20 +23,7 @@ import ConversationItem from '../conversations/ConversationItem';
 import CustomersTableContainer from '../customers/CustomersTableContainer';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
-  return (
-    <Box
-      p={3}
-      mb={3}
-      sx={{
-        bg: colors.white,
-        border: '1px solid rgba(0,0,0,.06)',
-        borderRadius: 4,
-        boxShadow: shadows.medium,
-      }}
-    >
-      {children}
-    </Box>
-  );
+  return <Card sx={{p: 3, mb: 3}}>{children}</Card>;
 };
 
 type Props = RouteComponentProps<{id: string}>;
@@ -174,7 +160,7 @@ class TagDetailsPage extends React.Component<Props, State> {
         sx={{
           flexDirection: 'column',
           flex: 1,
-          bg: 'rgb(245, 245, 245)',
+          bg: 'rgb(250, 250, 250)',
         }}
       >
         <Flex

@@ -11,6 +11,8 @@ const {REACT_APP_STRIPE_PUBLIC_KEY} = env;
 
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
+export const noop = () => {};
+
 export const hasValidStripeKey = () => {
   const key = REACT_APP_STRIPE_PUBLIC_KEY;
 
