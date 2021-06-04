@@ -33,20 +33,18 @@ defmodule ChatApiWeb.EventChannel do
   end
 
   def join("events:" <> keys, _payload, socket) do
-    if storytime_enabled?() do
-      case String.split(keys, ":") do
-        # TODO: check that these IDs are valid (i.e. exist in DB)
-        [account_id, browser_session_id] ->
-          send(self(), :after_join_customer_session)
+    case {String.split(keys, ":"), storytime_enabled?()} do
+      # TODO: check that these IDs are valid (i.e. exist in DB)
+      {[account_id, browser_session_id], true} ->
+        send(self(), :after_join_customer_session)
 
-          {:ok,
-           socket
-           |> assign(:account_id, account_id)
-           |> assign(:browser_session_id, browser_session_id)}
+        {:ok,
+         socket
+         |> assign(:account_id, account_id)
+         |> assign(:browser_session_id, browser_session_id)}
 
-        _ ->
-          {:error, %{reason: "unauthorized"}}
-      end
+      _ ->
+        {:error, %{reason: "unauthorized"}}
     end
   end
 
