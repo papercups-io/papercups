@@ -77,6 +77,7 @@ defmodule ChatApi.MixProject do
       {:scrivener_ecto, "~> 2.0"},
       {:floki, "~> 0.30.0"},
       {:paginator, "~> 1.0.3"},
+      {:phoenix_pubsub_redis, "~> 3.0.0"},
       {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end

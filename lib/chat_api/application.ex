@@ -6,13 +6,28 @@ defmodule ChatApi.Application do
   use Application
 
   def start(_type, _args) do
+    pub_sub_opts =
+      case System.get_env("REDIS_URL") do
+        "redis://" <> _url ->
+          [
+            name: ChatApi.PubSub,
+            adapter: Phoenix.PubSub.Redis,
+            # NB: use redis://localhost:6379 for testing locally
+            url: System.get_env("REDIS_URL"),
+            node_name: System.get_env("PAPERCUPS_REDIS_PUBSUB_NODE", "Phoenix.PubSub.RedisServer")
+          ]
+
+        _ ->
+          [name: ChatApi.PubSub]
+      end
+
     children = [
       # Start the Ecto repository
       ChatApi.Repo,
       # Start the Telemetry supervisor
       ChatApiWeb.Telemetry,
       # Start the PubSub system
-      {Phoenix.PubSub, name: ChatApi.PubSub},
+      {Phoenix.PubSub, pub_sub_opts},
       ChatApiWeb.Presence,
       # Start the Endpoint (http/https)
       ChatApiWeb.Endpoint,
