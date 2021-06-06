@@ -14,7 +14,7 @@ defmodule ChatApi.Application do
             adapter: Phoenix.PubSub.Redis,
             # NB: use redis://localhost:6379 for testing locally
             url: System.get_env("REDIS_URL"),
-            node_name: System.get_env("PAPERCUPS_REDIS_PUBSUB_NODE", "Phoenix.PubSub.RedisServer")
+            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
           ]
 
         _ ->
@@ -55,5 +55,20 @@ defmodule ChatApi.Application do
   # Conditionally disable crontab, queues, or plugins here.
   defp oban_config do
     Application.get_env(:chat_api, Oban)
+  end
+
+  defp node_name do
+    # TODO: this might not be reliable (see https://devcenter.heroku.com/articles/dynos#local-environment-variables)
+    fallback =
+      System.get_env("NODE") || System.get_env("DYNO") ||
+        Base.encode16(:crypto.strong_rand_bytes(6))
+
+    IO.inspect(node(), label: "Checking node() for Redis adapter:")
+
+    case node() do
+      nil -> fallback
+      :nonode@nohost -> fallback
+      n -> n
+    end
   end
 end
