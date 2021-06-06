@@ -13,8 +13,7 @@ defmodule ChatApi.Application do
             name: ChatApi.PubSub,
             adapter: Phoenix.PubSub.Redis,
             # NB: use redis://localhost:6379 for testing locally
-            url: System.get_env("REDIS_URL"),
-            node_name: System.get_env("PAPERCUPS_REDIS_PUBSUB_NODE", "Phoenix.PubSub.RedisServer")
+            url: System.get_env("REDIS_URL")
           ]
 
         _ ->
