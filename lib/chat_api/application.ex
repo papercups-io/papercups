@@ -13,7 +13,8 @@ defmodule ChatApi.Application do
             name: ChatApi.PubSub,
             adapter: Phoenix.PubSub.Redis,
             # NB: use redis://localhost:6379 for testing locally
-            url: System.get_env("REDIS_URL")
+            url: System.get_env("REDIS_URL"),
+            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
           ]
 
         _ ->
@@ -54,5 +55,17 @@ defmodule ChatApi.Application do
   # Conditionally disable crontab, queues, or plugins here.
   defp oban_config do
     Application.get_env(:chat_api, Oban)
+  end
+
+  defp node_name do
+    fallback =
+      System.get_env("NODE") || System.get_env("DYNO") ||
+        Base.encode16(:crypto.strong_rand_bytes(6))
+
+    case node() do
+      nil -> fallback
+      :nonode@nohost -> fallback
+      n -> n
+    end
   end
 end
