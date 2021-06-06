@@ -58,9 +58,12 @@ defmodule ChatApi.Application do
   end
 
   defp node_name do
+    # TODO: this might not be reliable (see https://devcenter.heroku.com/articles/dynos#local-environment-variables)
     fallback =
       System.get_env("NODE") || System.get_env("DYNO") ||
         Base.encode16(:crypto.strong_rand_bytes(6))
+
+    IO.inspect(node(), label: "Checking node() for Redis adapter:")
 
     case node() do
       nil -> fallback
