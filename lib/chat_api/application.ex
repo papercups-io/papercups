@@ -6,13 +6,28 @@ defmodule ChatApi.Application do
   use Application
 
   def start(_type, _args) do
+    pub_sub_opts =
+      case System.get_env("REDIS_URL") do
+        "redis://" <> _url ->
+          [
+            name: ChatApi.PubSub,
+            adapter: Phoenix.PubSub.Redis,
+            # NB: use redis://localhost:6379 for testing locally
+            url: System.get_env("REDIS_URL"),
+            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
+          ]
+
+        _ ->
+          [name: ChatApi.PubSub]
+      end
+
     children = [
       # Start the Ecto repository
       ChatApi.Repo,
       # Start the Telemetry supervisor
       ChatApiWeb.Telemetry,
       # Start the PubSub system
-      {Phoenix.PubSub, name: ChatApi.PubSub},
+      {Phoenix.PubSub, pub_sub_opts},
       ChatApiWeb.Presence,
       # Start the Endpoint (http/https)
       ChatApiWeb.Endpoint,
@@ -40,5 +55,20 @@ defmodule ChatApi.Application do
   # Conditionally disable crontab, queues, or plugins here.
   defp oban_config do
     Application.get_env(:chat_api, Oban)
+  end
+
+  defp node_name do
+    # TODO: this might not be reliable (see https://devcenter.heroku.com/articles/dynos#local-environment-variables)
+    fallback =
+      System.get_env("NODE") || System.get_env("DYNO") ||
+        Base.encode16(:crypto.strong_rand_bytes(6))
+
+    IO.inspect(node(), label: "Checking node() for Redis adapter:")
+
+    case node() do
+      nil -> fallback
+      :nonode@nohost -> fallback
+      n -> n
+    end
   end
 end
