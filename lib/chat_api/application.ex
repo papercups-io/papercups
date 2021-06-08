@@ -6,19 +6,19 @@ defmodule ChatApi.Application do
   use Application
 
   def start(_type, _args) do
+    redis_adapter_opts = [
+      name: ChatApi.PubSub,
+      adapter: Phoenix.PubSub.Redis,
+      # NB: use redis://localhost:6379 for testing locally
+      url: System.get_env("REDIS_URL"),
+      node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
+    ]
+
     pub_sub_opts =
       case System.get_env("REDIS_URL") do
-        "redis://" <> _url ->
-          [
-            name: ChatApi.PubSub,
-            adapter: Phoenix.PubSub.Redis,
-            # NB: use redis://localhost:6379 for testing locally
-            url: System.get_env("REDIS_URL"),
-            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
-          ]
-
-        _ ->
-          [name: ChatApi.PubSub]
+        "rediss://" <> _url -> redis_adapter_opts
+        "redis://" <> _url -> redis_adapter_opts
+        _ -> [name: ChatApi.PubSub]
       end
 
     IO.inspect(pub_sub_opts, label: "Inspecting PubSub configuration:")
