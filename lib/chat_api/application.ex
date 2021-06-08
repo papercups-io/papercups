@@ -21,6 +21,8 @@ defmodule ChatApi.Application do
           [name: ChatApi.PubSub]
       end
 
+    IO.inspect(pub_sub_opts, label: "Inspecting PubSub configuration:")
+
     children = [
       # Start the Ecto repository
       ChatApi.Repo,
