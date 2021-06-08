@@ -3,7 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import request from 'superagent';
 
 import {Button, StandardSyntaxHighlighter} from '../common';
-import {getRunKitCode, setRunKitCode, removeRunKitCode} from '../../storage';
+import {getRunKitCode, setRunKitCode} from '../../storage';
 import {noop} from '../../utils';
 import RunKitWrapper from './RunKitWrapper';
 import {DEFAULT_RUNKIT_SOURCE} from './RunKit';
@@ -28,10 +28,6 @@ class CodeSandbox extends React.Component<Props, State> {
     output: {message: 'Click the button above to run your code.'},
     isExecuting: false,
   };
-
-  componentDidMount() {
-    removeRunKitCode();
-  }
 
   handleRunKitLoaded = (runkit: any) => {
     this.setState({runkit});
