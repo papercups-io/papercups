@@ -31,6 +31,8 @@ defmodule ChatApi.Conversations do
         filters \\ %{},
         pagination_options \\ []
       ) do
+    IO.inspect({filters, pagination_options}, label: "WTF!!!")
+
     Conversation
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
