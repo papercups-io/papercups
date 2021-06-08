@@ -1,6 +1,5 @@
 import React from 'react';
 import {Box} from 'theme-ui';
-import {isDev} from '../../config';
 import {DEFAULT_ENDPOINT_PREAMBLE, RunKit} from './RunKit';
 
 const RunKitLoading = ({height}: {height: number}) => {
