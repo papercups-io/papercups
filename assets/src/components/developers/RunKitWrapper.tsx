@@ -14,9 +14,7 @@ const RunKitLoading = ({height}: {height: number}) => {
         background: '#fff',
         minHeight: height,
       }}
-    >
-      {/* <pre style={{margin: 2, fontWeight: 400}}>Loading code...</pre> */}
-    </Box>
+    ></Box>
   );
 };
 
@@ -43,7 +41,6 @@ class RunKitWrapper extends React.Component<Props, State> {
     const {minHeight} = this.props;
     const options = {
       ...this.props,
-      // TODO: will this work?
       element: this.el,
       preamble: DEFAULT_ENDPOINT_PREAMBLE,
       minHeight: Number.isFinite(minHeight) ? `${minHeight}px` : null,

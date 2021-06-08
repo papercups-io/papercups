@@ -1,5 +1,3 @@
-// import {isDev} from '../../config';
-
 export const RunKit = (window as any).RunKit;
 
 export const DEFAULT_ENDPOINT_PREAMBLE = `
