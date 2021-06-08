@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {FunctionComponent} from 'react';
 import Alert from 'antd/lib/alert';
 import AutoComplete from 'antd/lib/auto-complete';
 import Badge from 'antd/lib/badge';
@@ -29,6 +29,9 @@ import Tag from 'antd/lib/tag';
 import Tooltip from 'antd/lib/tooltip';
 import Typography from 'antd/lib/typography';
 import Upload from 'antd/lib/upload';
+
+import {Prism as SyntaxHighlighter} from 'react-syntax-highlighter';
+import {prism as syntaxHighlightingLanguage} from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 import {
   blue,
@@ -80,6 +83,21 @@ export const shadows = {
     '0 0 #0000, 0 0 #0000, 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
   large:
     '0 0 #0000, 0 0 #0000, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+};
+
+export const StandardSyntaxHighlighter: FunctionComponent<{
+  language: string;
+  style?: any;
+}> = ({language, children, style = {}}) => {
+  return (
+    <SyntaxHighlighter
+      language={language}
+      style={syntaxHighlightingLanguage}
+      customStyle={style}
+    >
+      {children}
+    </SyntaxHighlighter>
+  );
 };
 
 export const Card = ({

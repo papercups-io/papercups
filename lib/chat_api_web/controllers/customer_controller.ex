@@ -237,6 +237,7 @@ defmodule ChatApiWeb.CustomerController do
       fn
         {"page", value}, acc -> Map.put(acc, :page, value)
         {"page_size", value}, acc -> Map.put(acc, :page_size, value)
+        {"limit", value}, acc -> Map.put(acc, :page_size, value)
         _, acc -> acc
       end
     )

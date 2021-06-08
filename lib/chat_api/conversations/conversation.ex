@@ -82,7 +82,7 @@ defmodule ChatApi.Conversations.Conversation do
       :metadata
     ])
     |> validate_required([:status, :account_id, :customer_id])
-    |> validate_inclusion(:source, ["chat", "slack", "email", "sms"])
+    |> validate_inclusion(:source, ["chat", "slack", "email", "sms", "api", "sandbox"])
     |> put_closed_and_last_activity_at()
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:customer_id)
