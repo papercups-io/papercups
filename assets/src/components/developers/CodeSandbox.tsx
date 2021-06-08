@@ -16,7 +16,6 @@ type Props = {
 };
 type State = {
   runkit: any;
-  host: string;
   output: any;
   isExecuting: boolean;
 };
@@ -24,7 +23,6 @@ type State = {
 class CodeSandbox extends React.Component<Props, State> {
   state: State = {
     runkit: null,
-    host: window.location.origin,
     output: {message: 'Click the button above to run your code.'},
     isExecuting: false,
   };
