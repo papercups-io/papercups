@@ -64,12 +64,10 @@ class RunKitWrapper extends React.Component<Props, State> {
   };
 
   handleUrlChanged = (data: any) => {
-    console.log('handleUrlChanged!!!', data);
     this.props.onURLChanged && this.props.onURLChanged(data);
   };
 
   handleEvaluate = (data: any) => {
-    console.log('handleEvaluate!!!', data);
     this.getSource().then((source) => {
       this.props.onEvaluate && this.props.onEvaluate(data, source);
     });

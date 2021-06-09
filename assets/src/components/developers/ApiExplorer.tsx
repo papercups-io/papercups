@@ -97,8 +97,6 @@ class ApiExplorer extends React.Component<Props, State> {
             minHeight={480}
             nodeVersion="14.x.x"
             onLoad={this.handleRunKitLoaded}
-            onEvaluate={console.log}
-            onURLChanged={console.log}
           />
         </Box>
 
