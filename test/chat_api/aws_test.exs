@@ -45,7 +45,7 @@ defmodule ChatApi.AwsTest do
       bucket = "papercups"
 
       assert Aws.get_file_url(filename, bucket) ==
-               "https://papercups.s3.amazonaws.com/papercups/test-file.jpg"
+               "https://papercups.s3.amazonaws.com/test-file.jpg"
     end
   end
 end
