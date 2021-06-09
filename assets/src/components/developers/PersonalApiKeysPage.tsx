@@ -9,7 +9,7 @@ import logger from '../../logger';
 import {PersonalApiKey} from '../../types';
 import PersonalApiKeysTable from '../integrations/PersonalApiKeysTable';
 import NewApiKeyModal from '../integrations/NewApiKeyModal';
-import CodeSandbox from './CodeSandbox';
+import ApiExplorer from './ApiExplorer';
 import DynamicTable from './DynamicTable';
 
 type Props = RouteComponentProps<{type?: string}> & {};
@@ -21,7 +21,7 @@ type State = {
   apiExplorerOutput: any;
 };
 
-class IntegrationsOverview extends React.Component<Props, State> {
+class PersonalApiKeysPage extends React.Component<Props, State> {
   state: State = {
     loading: true,
     runkit: null,
@@ -140,7 +140,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
           <Box mb={5}>
             <Title level={4}>API explorer</Title>
 
-            <CodeSandbox
+            <ApiExplorer
               personalApiKey={latestApiKey.value}
               onSuccess={(data) => this.setState({apiExplorerOutput: data})}
             />
@@ -157,4 +157,4 @@ class IntegrationsOverview extends React.Component<Props, State> {
   }
 }
 
-export default IntegrationsOverview;
+export default PersonalApiKeysPage;

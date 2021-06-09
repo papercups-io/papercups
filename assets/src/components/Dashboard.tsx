@@ -80,6 +80,7 @@ import IssuesOverview from './issues/IssuesOverview';
 import IssueDetailsPage from './issues/IssueDetailsPage';
 import NotesOverview from './notes/NotesOverview';
 import PersonalApiKeysPage from './developers/PersonalApiKeysPage';
+import EventSubscriptionsPage from './developers/EventSubscriptionsPage';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -446,11 +447,11 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="personal-api-keys">
                   <Link to="/developers/personal-api-keys">API keys</Link>
                 </Menu.Item>
-                {/* 
                 <Menu.Item key="event-subscriptions">
-                  <Link to="/developers/event-subscriptions">Event subscriptions</Link>
-                </Menu.Item> 
-                */}
+                  <Link to="/developers/event-subscriptions">
+                    Event subscriptions
+                  </Link>
+                </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
                 title="Reporting"
@@ -538,6 +539,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route
             path="/developers/personal-api-keys"
             component={PersonalApiKeysPage}
+          />
+          <Route
+            path="/developers/event-subscriptions"
+            component={EventSubscriptionsPage}
           />
           <Route path="/conversations/all" component={AllConversations} />
           <Route path="/conversations/me" component={MyConversations} />

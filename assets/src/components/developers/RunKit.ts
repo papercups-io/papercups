@@ -64,4 +64,26 @@ async function run(params = {}) {
 }
 `.trim();
 
+export const WEBHOOK_HANDLER_SOURCE = `
+const papercups = require('@papercups-io/papercups')(
+  process.env.PAPERCUPS_API_KEY,
+  {host: "${window.location.origin}"}
+);
+
+async function handler(event, payload) {
+  switch (event) {
+    case 'message:created':
+      return handleMessageCreated(payload);
+    default:
+      return null;
+  }
+}
+
+async function handleMessageCreated(message) {
+  // Update logic here to handle incoming messages!
+
+  return message;
+}
+`.trim();
+
 export default RunKit;

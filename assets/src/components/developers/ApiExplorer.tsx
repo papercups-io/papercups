@@ -2,20 +2,17 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import request from 'superagent';
 
+import {Button, StandardSyntaxHighlighter} from '../common';
 import {getRunKitCode, setRunKitCode} from '../../storage';
 import {noop} from '../../utils';
-import logger from '../../logger';
-import {BASE_URL} from '../../config';
-import {StandardSyntaxHighlighter} from '../common';
 import RunKitWrapper from './RunKitWrapper';
-import EmbeddableChat from './EmbeddableChat';
-import {WEBHOOK_HANDLER_SOURCE} from './RunKit';
+import {DEFAULT_RUNKIT_SOURCE} from './RunKit';
+import logger from '../../logger';
 
-const CACHE_KEY = 'CodeSandbox';
+const CACHE_KEY = 'ApiExplorer';
 
 type Props = {
   personalApiKey: string;
-  accountId: string;
   onSuccess?: (output: any) => void;
   onError?: (error: any) => void;
 };
@@ -25,10 +22,10 @@ type State = {
   isExecuting: boolean;
 };
 
-class CodeSandbox extends React.Component<Props, State> {
+class ApiExplorer extends React.Component<Props, State> {
   state: State = {
     runkit: null,
-    output: {message: 'Send a message in the chat to test.'},
+    output: {message: 'Click the button above to run your code.'},
     isExecuting: false,
   };
 
@@ -41,7 +38,7 @@ class CodeSandbox extends React.Component<Props, State> {
     const {onSuccess = noop, onError = noop} = this.props;
 
     if (ok) {
-      this.setState({output: {response: data}}, () => onSuccess(data));
+      this.setState({output: data}, () => onSuccess(data));
     } else {
       this.setState({output: {error, message}}, () =>
         onError({error, message})
@@ -54,24 +51,21 @@ class CodeSandbox extends React.Component<Props, State> {
       .then((source: string) => setRunKitCode(CACHE_KEY, source));
   };
 
-  handleRunWebhookHandler = async (payload = {}) => {
+  handleRunScript = async () => {
     this.setState({isExecuting: true});
 
     const url = await this.state.runkit.getEndpointURL();
-    logger.debug('Running webhook handler with url:', url);
+    logger.debug('Running script with url:', url);
 
     try {
       const result = await request
-        .post(url)
-        .send({
-          event: 'message:created',
-          payload,
-        })
+        .get(url)
+        .query({})
         .then((res) => res.body);
 
       this.handleRunKitOutput(result);
     } catch (error) {
-      logger.error('Failed to run webhook handler:', error);
+      logger.error('Failed to run script:', error);
 
       this.handleRunKitOutput({
         ok: false,
@@ -90,14 +84,14 @@ class CodeSandbox extends React.Component<Props, State> {
   };
 
   render() {
-    const {personalApiKey, accountId} = this.props;
+    const {personalApiKey} = this.props;
     const {output = '', isExecuting} = this.state;
 
     return (
-      <Flex sx={{width: '100%', maxHeight: 640}}>
-        <Box sx={{flex: 1.2}}>
+      <Flex sx={{width: '100%', maxHeight: 520}}>
+        <Box sx={{flex: 1}}>
           <RunKitWrapper
-            source={getRunKitCode(CACHE_KEY) || WEBHOOK_HANDLER_SOURCE}
+            source={getRunKitCode(CACHE_KEY) || DEFAULT_RUNKIT_SOURCE}
             mode="endpoint"
             environment={[{name: 'PAPERCUPS_API_KEY', value: personalApiKey}]}
             minHeight={480}
@@ -109,25 +103,25 @@ class CodeSandbox extends React.Component<Props, State> {
         </Box>
 
         <Flex pl={2} sx={{flex: 1, flexDirection: 'column'}}>
-          <EmbeddableChat
-            sx={{height: 400, width: '100%'}}
-            config={{
-              accountId,
-              primaryColor: '#1890ff',
-              greeting: 'Send a message below to test your webhook handler!',
-              baseUrl: BASE_URL,
-            }}
-            onMessageSent={this.handleRunWebhookHandler}
-          />
+          <Box>
+            <Button
+              block
+              type="primary"
+              loading={isExecuting}
+              onClick={this.handleRunScript}
+            >
+              {isExecuting
+                ? 'Running your code...'
+                : 'Execute code in `run` function'}
+            </Button>
+          </Box>
 
           <Flex sx={{flex: 1, overflow: 'scroll'}}>
             <StandardSyntaxHighlighter
               language="json"
               style={{fontSize: 12, flex: 1}}
             >
-              {isExecuting
-                ? JSON.stringify({status: 'Running...'}, null, 2)
-                : JSON.stringify(output, null, 2)}
+              {JSON.stringify(output, null, 2)}
             </StandardSyntaxHighlighter>
           </Flex>
         </Flex>
@@ -136,4 +130,4 @@ class CodeSandbox extends React.Component<Props, State> {
   }
 }
 
-export default CodeSandbox;
+export default ApiExplorer;

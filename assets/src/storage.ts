@@ -42,9 +42,11 @@ export const setBotDemoFaqs = (faqs: any) => set(':__BOT_DEMO_FAQS__', faqs);
 
 export const removeBotDemoFaqs = () => remove(':__BOT_DEMO_FAQS__');
 
-export const getRunKitCode = () => get(':__RUNKIT_SOURCE_CODE__');
+export const getRunKitCode = (prefix: string) =>
+  get(`:__RUNKIT_SOURCE_CODE__:${prefix}`);
 
-export const setRunKitCode = (code: any) =>
-  set(':__RUNKIT_SOURCE_CODE__', code);
+export const setRunKitCode = (prefix: string, code: any) =>
+  set(`:__RUNKIT_SOURCE_CODE__:${prefix}`, code);
 
-export const removeRunKitCode = () => remove(':__RUNKIT_SOURCE_CODE__');
+export const removeRunKitCode = (prefix: string) =>
+  remove(`:__RUNKIT_SOURCE_CODE__:${prefix}`);
