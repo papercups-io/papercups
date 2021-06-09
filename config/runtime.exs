@@ -147,7 +147,6 @@ config :ex_aws,
   secret_access_key: aws_secret_key,
   s3: [
     scheme: "https://",
-    host: bucket_name <> ".s3.amazonaws.com",
     region: region
   ]
 
