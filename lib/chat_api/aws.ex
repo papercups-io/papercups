@@ -48,7 +48,7 @@ defmodule ChatApi.Aws do
 
   @spec get_file_url(binary(), binary()) :: binary()
   def get_file_url(identifier, bucket) do
-    "https://#{bucket}.s3.amazonaws.com/#{bucket}/#{identifier}"
+    "https://#{bucket}.s3.amazonaws.com/#{identifier}"
   end
 
   @spec get_file_url(binary()) :: binary() | nil
