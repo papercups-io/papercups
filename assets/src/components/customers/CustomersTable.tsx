@@ -185,7 +185,7 @@ const CustomersTable = ({
       key: 'last_seen_at',
       render: (value: string, record: Customer) => {
         const {id, pathname, current_url} = record;
-        const formatted = dayjs.utc(value).format('ddd, MMM D h:mm A');
+        const formatted = dayjs(value).format('ddd, MMM D h:mm A');
         const isOnline = currentlyOnline[id];
 
         if (isOnline) {
@@ -224,9 +224,7 @@ const CustomersTable = ({
         }
 
         const {id: conversationId, last_activity_at} = mostRecentConversation;
-        const formatted = dayjs
-          .utc(last_activity_at)
-          .format('ddd, MMM D h:mm A');
+        const formatted = dayjs(last_activity_at).format('ddd, MMM D h:mm A');
 
         return (
           <Box>
