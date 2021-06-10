@@ -41,3 +41,12 @@ export const getBotDemoFaqs = () => get(':__BOT_DEMO_FAQS__');
 export const setBotDemoFaqs = (faqs: any) => set(':__BOT_DEMO_FAQS__', faqs);
 
 export const removeBotDemoFaqs = () => remove(':__BOT_DEMO_FAQS__');
+
+export const getRunKitCode = (prefix: string) =>
+  get(`:__RUNKIT_SOURCE_CODE__:${prefix}`);
+
+export const setRunKitCode = (prefix: string, code: any) =>
+  set(`:__RUNKIT_SOURCE_CODE__:${prefix}`, code);
+
+export const removeRunKitCode = (prefix: string) =>
+  remove(`:__RUNKIT_SOURCE_CODE__:${prefix}`);

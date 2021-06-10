@@ -5,6 +5,7 @@
   "license": "MIT",
   "repository": "https://github.com/papercups-io/papercups",
   "dependencies": {
+    "@papercups-io/chat-builder": "0.0.9",
     "@papercups-io/chat-widget": "^1.1.10",
     "@papercups-io/storytime": "^1.0.6",
     "@sentry/react": "^5.20.1",

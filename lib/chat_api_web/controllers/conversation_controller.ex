@@ -325,9 +325,17 @@ defmodule ChatApiWeb.ConversationController do
       params,
       [],
       fn
-        {"limit", value}, acc -> acc ++ [limit: value]
-        {"after", value}, acc -> acc ++ [after: value]
-        _, acc -> acc
+        {"limit", value}, acc ->
+          case Integer.parse(value) do
+            {limit, ""} -> acc ++ [limit: limit]
+            _ -> acc
+          end
+
+        {"after", value}, acc ->
+          acc ++ [after: value]
+
+        _, acc ->
+          acc
       end
     )
   end

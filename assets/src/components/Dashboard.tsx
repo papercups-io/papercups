@@ -15,6 +15,7 @@ import {Storytime} from '@papercups-io/storytime';
 import {colors, Badge, Layout, Menu, Sider} from './common';
 import {
   ApiOutlined,
+  CodeOutlined,
   MailOutlined,
   UserOutlined,
   LineChartOutlined,
@@ -78,6 +79,8 @@ import TagDetailsPage from './tags/TagDetailsPage';
 import IssuesOverview from './issues/IssuesOverview';
 import IssueDetailsPage from './issues/IssueDetailsPage';
 import NotesOverview from './notes/NotesOverview';
+import PersonalApiKeysPage from './developers/PersonalApiKeysPage';
+import EventSubscriptionsPage from './developers/EventSubscriptionsPage';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -436,6 +439,20 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/sessions/setup">Set up Storytime</Link>
                 </Menu.Item>
               </Menu.SubMenu>
+              <Menu.SubMenu
+                key="developers"
+                icon={<CodeOutlined />}
+                title="Developers"
+              >
+                <Menu.Item key="personal-api-keys">
+                  <Link to="/developers/personal-api-keys">API keys</Link>
+                </Menu.Item>
+                <Menu.Item key="event-subscriptions">
+                  <Link to="/developers/event-subscriptions">
+                    Event subscriptions
+                  </Link>
+                </Menu.Item>
+              </Menu.SubMenu>
               <Menu.Item
                 title="Reporting"
                 icon={<LineChartOutlined />}
@@ -519,6 +536,14 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/integrations/:type" component={IntegrationsOverview} />
           <Route path="/integrations" component={IntegrationsOverview} />
           <Route path="/integrations*" component={IntegrationsOverview} />
+          <Route
+            path="/developers/personal-api-keys"
+            component={PersonalApiKeysPage}
+          />
+          <Route
+            path="/developers/event-subscriptions"
+            component={EventSubscriptionsPage}
+          />
           <Route path="/conversations/all" component={AllConversations} />
           <Route path="/conversations/me" component={MyConversations} />
           <Route

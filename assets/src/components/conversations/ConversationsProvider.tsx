@@ -149,11 +149,6 @@ export class ConversationsProvider extends React.Component<Props, State> {
 
   componentDidUpdate(prev: Props) {
     if (prev.socket !== this.props.socket && this.state.account) {
-      console.log('componentDidUpdate', {
-        prev: prev.socket,
-        current: this.props.socket,
-      });
-
       this.notificationManager = new ConversationNotificationManager(
         this.props.socket,
         {
