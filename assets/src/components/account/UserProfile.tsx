@@ -153,14 +153,17 @@ class UserProfile extends React.Component<Props, State> {
   };
 
   handleChangeFullName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({isEditing: true});
     this.setState({fullName: e.target.value});
   };
 
   handleChangeDisplayName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({isEditing: true});
     this.setState({displayName: e.target.value});
   };
 
   handleChangeProfilePhotoUrl = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({isEditing: true});
     this.setState({profilePhotoUrl: e.target.value});
   };
 
@@ -249,7 +252,6 @@ class UserProfile extends React.Component<Props, State> {
             value={fullName}
             onChange={this.handleChangeFullName}
             placeholder="What's your name?"
-            disabled={!isEditing}
           />
         </Box>
 
@@ -261,7 +263,6 @@ class UserProfile extends React.Component<Props, State> {
             value={displayName}
             onChange={this.handleChangeDisplayName}
             placeholder="How would you like your name to be displayed?"
-            disabled={!isEditing}
           />
         </Box>
 
@@ -285,7 +286,6 @@ class UserProfile extends React.Component<Props, State> {
               value={profilePhotoUrl}
               onChange={this.handleChangeProfilePhotoUrl}
               placeholder="Enter an image URL for your profile photo"
-              disabled={!isEditing}
             />
           </Box>
 
