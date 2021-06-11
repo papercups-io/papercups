@@ -8,7 +8,7 @@ defmodule ChatApi.Lambdas do
 
   alias ChatApi.Lambdas.Lambda
 
-  @spec list_lambdas(binary(), map()) :: [Issue.t()]
+  @spec list_lambdas(binary(), map()) :: [Lambda.t()]
   def list_lambdas(account_id, filters \\ %{}) do
     Lambda
     |> where(account_id: ^account_id)
@@ -16,24 +16,29 @@ defmodule ChatApi.Lambdas do
     |> Repo.all()
   end
 
+  @spec get_lambda!(binary()) :: Lambda.t()
   def get_lambda!(id), do: Repo.get!(Lambda, id)
 
+  @spec create_lambda(map()) :: {:ok, Lambda.t()} | {:error, Ecto.Changeset.t()}
   def create_lambda(attrs \\ %{}) do
     %Lambda{}
     |> Lambda.changeset(attrs)
     |> Repo.insert()
   end
 
+  @spec update_lambda(Lambda.t(), map()) :: {:ok, Lambda.t()} | {:error, Ecto.Changeset.t()}
   def update_lambda(%Lambda{} = lambda, attrs) do
     lambda
     |> Lambda.changeset(attrs)
     |> Repo.update()
   end
 
+  @spec delete_lambda(Lambda.t()) :: {:ok, Lambda.t()} | {:error, Ecto.Changeset.t()}
   def delete_lambda(%Lambda{} = lambda) do
     Repo.delete(lambda)
   end
 
+  @spec change_lambda(Lambda.t(), map()) :: Ecto.Changeset.t()
   def change_lambda(%Lambda{} = lambda, attrs \\ %{}) do
     Lambda.changeset(lambda, attrs)
   end

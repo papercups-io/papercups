@@ -8,6 +8,7 @@ defmodule ChatApiWeb.LambdaController do
 
   plug(:authorize when action in [:show, :update, :delete])
 
+  @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   defp authorize(conn, _) do
     id = conn.path_params["id"]
 
@@ -41,10 +42,12 @@ defmodule ChatApiWeb.LambdaController do
     end
   end
 
+  @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, _params) do
     render(conn, "show.json", lambda: conn.assigns.current_lambda)
   end
 
+  @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"lambda" => lambda_params}) do
     with {:ok, %Lambda{} = lambda} <-
            Lambdas.update_lambda(conn.assigns.current_lambda, lambda_params) do
@@ -52,6 +55,7 @@ defmodule ChatApiWeb.LambdaController do
     end
   end
 
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, _params) do
     with {:ok, %Lambda{}} <- Lambdas.delete_lambda(conn.assigns.current_lambda) do
       send_resp(conn, :no_content, "")
