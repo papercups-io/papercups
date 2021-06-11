@@ -8,7 +8,7 @@ defmodule ChatApiWeb.LambdaController do
 
   plug(:authorize when action in [:show, :update, :delete])
 
-  @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  @spec authorize(Plug.Conn.t(), map()) :: Plug.Conn.t()
   defp authorize(conn, _) do
     id = conn.path_params["id"]
 

@@ -9,7 +9,7 @@ defmodule ChatApi.Repo.Migrations.CreateLambdas do
       add(:code, :text)
       add(:language, :string)
       add(:runtime, :string)
-      add(:status, :string)
+      add(:status, :string, default: "pending")
       add(:last_deployed_at, :utc_datetime)
       add(:last_executed_at, :utc_datetime)
 

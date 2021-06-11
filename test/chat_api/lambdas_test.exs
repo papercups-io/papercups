@@ -9,24 +9,24 @@ defmodule ChatApi.LambdasTest do
     @valid_attrs %{
       code: "some code",
       description: "some description",
-      language: "some language",
+      language: "javascript",
       last_deployed_at: "2010-04-17T14:00:00Z",
       last_executed_at: "2010-04-17T14:00:00Z",
       metadata: %{},
       name: "some name",
-      runtime: "some runtime",
-      status: "some status"
+      runtime: "nodejs14.x",
+      status: "pending"
     }
     @update_attrs %{
       code: "some updated code",
       description: "some updated description",
-      language: "some updated language",
+      language: "javascript",
       last_deployed_at: "2011-05-18T15:01:01Z",
       last_executed_at: "2011-05-18T15:01:01Z",
       metadata: %{},
       name: "some updated name",
-      runtime: "some updated runtime",
-      status: "some updated status"
+      runtime: "nodejs14.x",
+      status: "active"
     }
     @invalid_attrs %{
       code: nil,
@@ -73,12 +73,12 @@ defmodule ChatApi.LambdasTest do
       assert lambda.name == "some name"
       assert lambda.description == "some description"
       assert lambda.code == "some code"
-      assert lambda.language == "some language"
+      assert lambda.language == "javascript"
       assert lambda.last_deployed_at == DateTime.from_naive!(~N[2010-04-17T14:00:00Z], "Etc/UTC")
       assert lambda.last_executed_at == DateTime.from_naive!(~N[2010-04-17T14:00:00Z], "Etc/UTC")
       assert lambda.metadata == %{}
-      assert lambda.runtime == "some runtime"
-      assert lambda.status == "some status"
+      assert lambda.runtime == "nodejs14.x"
+      assert lambda.status == "pending"
     end
 
     test "create_lambda/1 with invalid data returns error changeset" do
@@ -89,13 +89,13 @@ defmodule ChatApi.LambdasTest do
       assert {:ok, %Lambda{} = lambda} = Lambdas.update_lambda(lambda, @update_attrs)
       assert lambda.code == "some updated code"
       assert lambda.description == "some updated description"
-      assert lambda.language == "some updated language"
+      assert lambda.language == "javascript"
       assert lambda.last_deployed_at == DateTime.from_naive!(~N[2011-05-18T15:01:01Z], "Etc/UTC")
       assert lambda.last_executed_at == DateTime.from_naive!(~N[2011-05-18T15:01:01Z], "Etc/UTC")
       assert lambda.metadata == %{}
       assert lambda.name == "some updated name"
-      assert lambda.runtime == "some updated runtime"
-      assert lambda.status == "some updated status"
+      assert lambda.runtime == "nodejs14.x"
+      assert lambda.status == "active"
     end
 
     test "update_lambda/2 with invalid data returns error changeset", %{lambda: lambda} do

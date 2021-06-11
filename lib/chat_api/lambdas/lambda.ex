@@ -39,7 +39,7 @@ defmodule ChatApi.Lambdas.Lambda do
     field(:metadata, :map)
     field(:name, :string)
     field(:runtime, :string)
-    field(:status, :string)
+    field(:status, :string, default: "pending")
 
     field(:lambda_function_name, :string)
     field(:lambda_function_handler, :string)
@@ -80,5 +80,8 @@ defmodule ChatApi.Lambdas.Lambda do
       :runtime,
       :status
     ])
+    |> validate_inclusion(:status, ["active", "inactive", "pending"])
+    |> validate_inclusion(:language, ["javascript"])
+    |> validate_inclusion(:runtime, ["nodejs14.x"])
   end
 end

@@ -6,24 +6,24 @@ defmodule ChatApiWeb.LambdaControllerTest do
   @create_attrs %{
     code: "some code",
     description: "some description",
-    language: "some language",
+    language: "javascript",
     last_deployed_at: "2010-04-17T14:00:00Z",
     last_executed_at: "2010-04-17T14:00:00Z",
     metadata: %{},
     name: "some name",
-    runtime: "some runtime",
-    status: "some status"
+    runtime: "nodejs14.x",
+    status: "pending"
   }
   @update_attrs %{
     code: "some updated code",
     description: "some updated description",
-    language: "some updated language",
+    language: "javascript",
     last_deployed_at: "2011-05-18T15:01:01Z",
     last_executed_at: "2011-05-18T15:01:01Z",
     metadata: %{},
     name: "some updated name",
-    runtime: "some updated runtime",
-    status: "some updated status"
+    runtime: "nodejs14.x",
+    status: "active"
   }
   @invalid_attrs %{
     code: nil,
