@@ -145,6 +145,7 @@ region = System.get_env("AWS_REGION")
 config :ex_aws,
   access_key_id: aws_key_id,
   secret_access_key: aws_secret_key,
+  region: region,
   s3: [
     scheme: "https://",
     region: region

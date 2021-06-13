@@ -38,6 +38,9 @@ defmodule ChatApi.Aws.Config do
       aws_key_id: System.get_env("AWS_ACCESS_KEY_ID", ""),
       aws_secret_key: System.get_env("AWS_SECRET_ACCESS_KEY", ""),
       bucket_name: System.get_env("BUCKET_NAME", ""),
+      function_bucket_name: System.get_env("FUNCTION_BUCKET_NAME", ""),
+      aws_account_id: System.get_env("AWS_ACCOUNT_ID", ""),
+      function_role: System.get_env("FUNCTION_ROLE", ""),
       region: System.get_env("AWS_REGION", "")
     }
   end

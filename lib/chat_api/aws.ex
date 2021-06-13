@@ -9,6 +9,7 @@ defmodule ChatApi.Aws do
           aws_key_id: binary(),
           aws_secret_key: binary(),
           bucket_name: binary(),
+          function_bucket_name: binary(),
           region: binary()
         }
 
@@ -30,11 +31,20 @@ defmodule ChatApi.Aws do
     end
   end
 
-  @spec upload(binary(), binary()) :: {:error, any} | {:ok, any()}
-  def upload_binary(file_binary, identifier) do
-    with {:ok, %{bucket_name: bucket_name}} <- Config.validate() do
+  def upload_binary(file_binary, identifier, bucket_name) do
+    bucket_name
+    |> ExAws.S3.put_object(identifier, file_binary)
+    |> ExAws.request!()
+    |> case do
+      %{status_code: 200} = result -> {:ok, result}
+      result -> {:error, result}
+    end
+  end
+
+  def upload(file_path, unique_file_name, bucket_name) do
+    with {:ok, file_binary} <- File.read(file_path) do
       bucket_name
-      |> ExAws.S3.put_object(identifier, file_binary)
+      |> ExAws.S3.put_object(unique_file_name, file_binary)
       |> ExAws.request!()
       |> case do
         %{status_code: 200} = result -> {:ok, result}
@@ -42,6 +52,7 @@ defmodule ChatApi.Aws do
       end
     else
       {:error, :invalid_aws_config, errors} -> {:error, :invalid_aws_config, errors}
+      {:error, error} -> {:error, :file_error, error}
       error -> error
     end
   end
@@ -68,5 +79,120 @@ defmodule ChatApi.Aws do
     sanitized_filename = String.replace(filename, " ", "-")
 
     "#{uuid}-#{sanitized_filename}"
+  end
+
+  def list_functions() do
+    res = ExAws.Lambda.list_functions()
+    response = ExAws.request!(res)
+  end
+
+  # the lambda repo doesn't get maintained so it doesn't return a status code
+  @spec get_function(binary) :: ExAws.Operation.JSON.t()
+  def get_function(function_name) do
+    function_name
+    |> ExAws.Lambda.get_function()
+    |> ExAws.request!()
+  end
+
+  @spec create_function(any, any, any) :: none
+  def create_function(file_path, function_name, handler) do
+    uniq_function_name = generate_unique_filename(function_name)
+
+    with {:ok,
+          %{
+            function_bucket_name: function_bucket_name,
+            function_role: function_role,
+            aws_account_id: aws_account_id
+          }} <- Config.validate(),
+         {:ok, _} <- upload(file_path, uniq_function_name, function_bucket_name) do
+      operation = %ExAws.Operation.JSON{
+        http_method: :post,
+        headers: [{"content-type", "application/json"}],
+        path: "/2015-03-31/functions",
+        data: %{
+          "FunctionName" => uniq_function_name,
+          "Handler" => handler,
+          "Runtime" => "nodejs14.x",
+          "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+          "Code" => %{
+            "S3Bucket" => "papercups-functions",
+            "S3Key" => uniq_function_name
+          }
+        },
+        service: :lambda
+      }
+
+      ExAws.request!(operation)
+    end
+  end
+
+  def code_upload(code, function_name) do
+    {:ok, {filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
+    upload = upload_binary(bytes, function_name, "papercups-functions")
+
+    with {:ok,
+    %{
+      function_bucket_name: function_bucket_name,
+      function_role: function_role,
+      aws_account_id: aws_account_id
+    }} <- Config.validate() do
+      operation = %ExAws.Operation.JSON{
+        http_method: :post,
+        path: "/2015-03-31/functions",
+        headers: [{"content-type", "application/json"}],
+        data: %{
+          "FunctionName" => function_name,
+          "Handler" => "index.handler",
+          "Runtime" => "nodejs14.x",
+          "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+          "Code" => %{
+            "S3Bucket" => "papercups-functions",
+            "S3Key" => function_name
+          }
+        },
+        service: :lambda
+      }
+
+      ExAws.request!(operation)
+    end
+  end
+
+  def update_function(code, function_name) do
+    {:ok, {filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
+    res = upload_binary(bytes, function_name, "papercups-functions")
+    IO.inspect(res)
+    with {:ok,
+    %{
+      function_bucket_name: function_bucket_name,
+      function_role: function_role,
+      aws_account_id: aws_account_id
+    }} <- Config.validate() do
+      operation = %ExAws.Operation.JSON{
+        http_method: :put,
+        headers: [{"content-type", "application/json"}],
+        path: "/2015-03-31/functions/#{function_name}/versions/HEAD/code",
+        data: %{
+          "Runtime" => "nodejs14.x",
+          "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+          "S3Bucket" => "papercups-functions",
+          "S3Key" => function_name
+        },
+        service: :lambda
+      }
+
+      ExAws.request!(operation)
+    end
+  end
+
+  def delete_function(function_name) do
+    function_name
+    |> ExAws.Lambda.delete_function()
+    |> ExAws.request!()
+  end
+
+  def invoke_function(function_name, payload) do
+    function_name
+    |> ExAws.Lambda.invoke(payload, %{})
+    |> ExAws.request!()
   end
 end
