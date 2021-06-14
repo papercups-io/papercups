@@ -141,10 +141,21 @@ aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
 aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
 bucket_name = System.get_env("BUCKET_NAME", "papercups-files")
 region = System.get_env("AWS_REGION")
+function_bucket_name = System.get_env("FUNCTION_BUCKET_NAME", "")
+function_role = System.get_env("FUNCTION_ROLE", "")
+aws_account_id = System.get_env("AWS_ACCOUNT_ID", "")
+
+config :chat_api,
+  bucket_name: bucket_name,
+  region: region,
+  function_bucket_name: function_bucket_name,
+  aws_account_id: aws_account_id,
+  function_role: function_role
 
 config :ex_aws,
   access_key_id: aws_key_id,
   secret_access_key: aws_secret_key,
+  region: region,
   s3: [
     scheme: "https://",
     region: region
