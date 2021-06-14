@@ -1,6 +1,8 @@
 defmodule ChatApi.Aws do
   @moduledoc """
   A module to handle interactions with AWS
+
+  TODO: clean this up!
   """
 
   alias ChatApi.Aws.Config
@@ -29,6 +31,12 @@ defmodule ChatApi.Aws do
       {:error, error} -> {:error, :file_error, error}
       error -> error
     end
+  end
+
+  def upload_binary(file_binary, identifier) do
+    bucket = function_bucket_name()
+
+    upload_binary(file_binary, identifier, bucket)
   end
 
   def upload_binary(file_binary, identifier, bucket_name) do
@@ -82,8 +90,7 @@ defmodule ChatApi.Aws do
   end
 
   def list_functions() do
-    res = ExAws.Lambda.list_functions()
-    response = ExAws.request!(res)
+    ExAws.Lambda.list_functions() |> ExAws.request!()
   end
 
   # the lambda repo doesn't get maintained so it doesn't return a status code
@@ -94,11 +101,12 @@ defmodule ChatApi.Aws do
     |> ExAws.request!()
   end
 
-  @spec create_function(any, any, any) :: none
+  @spec create_function(any(), any(), any(), any()) :: any()
   def create_function(file_path, function_name, handler, api_key \\ "") do
     uniq_function_name = generate_unique_filename(function_name)
+    bucket = function_bucket_name()
 
-    with {:ok, _} <- upload(file_path, uniq_function_name, function_bucket_name) do
+    with {:ok, _} <- upload(file_path, uniq_function_name, bucket) do
       operation = %ExAws.Operation.JSON{
         http_method: :post,
         headers: [{"content-type", "application/json"}],
@@ -107,9 +115,9 @@ defmodule ChatApi.Aws do
           "FunctionName" => uniq_function_name,
           "Handler" => handler,
           "Runtime" => "nodejs14.x",
-          "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+          "Role" => "arn:aws:iam::#{aws_account_id()}:role/#{function_role()}",
           "Code" => %{
-            "S3Bucket" => function_bucket_name,
+            "S3Bucket" => bucket,
             "S3Key" => uniq_function_name
           },
           "Environment" => %{
@@ -126,8 +134,9 @@ defmodule ChatApi.Aws do
   end
 
   def code_upload(code, function_name, api_key \\ "") do
-    {:ok, {filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
-    upload = upload_binary(bytes, function_name, function_bucket_name)
+    {:ok, {_filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
+    bucket = function_bucket_name()
+    _upload = upload_binary(bytes, function_name, bucket)
 
     operation = %ExAws.Operation.JSON{
       http_method: :post,
@@ -137,9 +146,9 @@ defmodule ChatApi.Aws do
         "FunctionName" => function_name,
         "Handler" => "index.handler",
         "Runtime" => "nodejs14.x",
-        "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+        "Role" => "arn:aws:iam::#{aws_account_id()}:role/#{function_role()}",
         "Code" => %{
-          "S3Bucket" => function_bucket_name,
+          "S3Bucket" => bucket,
           "S3Key" => function_name
         },
         "Environment" => %{
@@ -155,8 +164,9 @@ defmodule ChatApi.Aws do
   end
 
   def update_function(code, function_name) do
-    {:ok, {filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
-    res = upload_binary(bytes, function_name, function_bucket_name)
+    {:ok, {_filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
+    bucket = function_bucket_name()
+    _result = upload_binary(bytes, function_name, bucket)
 
     operation = %ExAws.Operation.JSON{
       http_method: :put,
@@ -164,8 +174,8 @@ defmodule ChatApi.Aws do
       path: "/2015-03-31/functions/#{function_name}/versions/HEAD/code",
       data: %{
         "Runtime" => "nodejs14.x",
-        "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
-        "S3Bucket" => function_bucket_name,
+        "Role" => "arn:aws:iam::#{aws_account_id()}:role/#{function_role()}",
+        "S3Bucket" => bucket,
         "S3Key" => function_name
       },
       service: :lambda

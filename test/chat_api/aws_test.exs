@@ -50,6 +50,8 @@ defmodule ChatApi.AwsTest do
   end
 
   describe "lambda" do
+    @moduletag :lambda_development
+
     test "get" do
       function_name = "test"
       %{"Configuration" => configuration} = Aws.get_function(function_name)
