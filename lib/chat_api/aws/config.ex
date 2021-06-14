@@ -7,6 +7,9 @@ defmodule ChatApi.Aws.Config do
           aws_key_id: binary(),
           aws_secret_key: binary(),
           bucket_name: binary(),
+          function_bucket_name: binary(),
+          aws_account_id: binary(),
+          function_role: binary(),
           region: binary()
         }
 
