@@ -95,7 +95,7 @@ defmodule ChatApi.Aws do
   end
 
   @spec create_function(any, any, any) :: none
-  def create_function(file_path, function_name, handler) do
+  def create_function(file_path, function_name, handler, api_key \\ "") do
     uniq_function_name = generate_unique_filename(function_name)
 
     with {:ok, _} <- upload(file_path, uniq_function_name, function_bucket_name) do
@@ -111,6 +111,11 @@ defmodule ChatApi.Aws do
           "Code" => %{
             "S3Bucket" => function_bucket_name,
             "S3Key" => uniq_function_name
+          },
+          "Environment" => %{
+            "Variables" => %{
+                "PAPERCUPS_API_KEY" => api_key
+            }
           }
         },
         service: :lambda
@@ -120,7 +125,7 @@ defmodule ChatApi.Aws do
     end
   end
 
-  def code_upload(code, function_name) do
+  def code_upload(code, function_name, api_key \\ "") do
     {:ok, {filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
     upload = upload_binary(bytes, function_name, function_bucket_name)
 
@@ -136,6 +141,11 @@ defmodule ChatApi.Aws do
         "Code" => %{
           "S3Bucket" => function_bucket_name,
           "S3Key" => function_name
+        },
+        "Environment" => %{
+          "Variables" => %{
+              "PAPERCUPS_API_KEY" => api_key
+          }
         }
       },
       service: :lambda
