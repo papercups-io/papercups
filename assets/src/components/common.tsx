@@ -45,7 +45,7 @@ import {
   grey,
 } from '@ant-design/colors';
 
-import {Box, SxStyleProp} from 'theme-ui';
+import {Box, Flex, SxStyleProp} from 'theme-ui';
 import DatePicker from './DatePicker';
 import MarkdownRenderer from './MarkdownRenderer';
 
@@ -124,6 +124,29 @@ export const Card = ({
     >
       {children}
     </Box>
+  );
+};
+
+export const Container = ({
+  children,
+  sx = {},
+}: {
+  children: any;
+  sx?: SxStyleProp;
+}) => {
+  return (
+    <Flex
+      sx={{
+        width: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
+      }}
+    >
+      <Box p={4} sx={{flex: 1, width: '100%', maxWidth: 1080, ...sx}}>
+        {children}
+      </Box>
+    </Flex>
   );
 };
 

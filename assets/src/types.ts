@@ -153,6 +153,23 @@ export type Issue = {
   updated_at: string;
 };
 
+export type Lambda = {
+  id: string;
+  object: 'lambda';
+  account_id: string;
+  name: string;
+  description?: string;
+  code?: string;
+  language?: string;
+  runtime?: string;
+  status: string;
+  last_deployed_at?: string;
+  last_executed_at?: string;
+  created_at: string;
+  updated_at: string;
+  metadata?: string;
+};
+
 export type BrowserSession = {
   id: string;
   started_at: string;

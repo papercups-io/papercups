@@ -1,6 +1,15 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Alert, Button, Divider, Input, Paragraph, Text, Title} from '../common';
+import {
+  Alert,
+  Button,
+  Container,
+  Divider,
+  Input,
+  Paragraph,
+  Text,
+  Title,
+} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
@@ -106,7 +115,7 @@ class IssuesOverview extends React.Component<Props, State> {
     const {loading, isNewIssueModalVisible, filteredIssues = []} = this.state;
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Issues (beta)</Title>
 
@@ -196,7 +205,7 @@ class IssuesOverview extends React.Component<Props, State> {
             onUpdate={this.handleRefreshIssues}
           />
         </Box>
-      </Box>
+      </Container>
     );
   }
 }

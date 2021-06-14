@@ -1,7 +1,15 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Alert, Button, Paragraph, Table, Text, Title} from '../common';
+import {
+  Alert,
+  Button,
+  Container,
+  Paragraph,
+  Table,
+  Text,
+  Title,
+} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import {Company} from '../../types';
@@ -103,7 +111,7 @@ class CompaniesPage extends React.Component<Props, State> {
     const {loading, companies = []} = this.state;
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Companies (beta)</Title>
           <Link to="/companies/new">
@@ -133,7 +141,7 @@ class CompaniesPage extends React.Component<Props, State> {
         <Box my={4}>
           <CompaniesTable loading={loading} companies={companies} />
         </Box>
-      </Box>
+      </Container>
     );
   }
 }

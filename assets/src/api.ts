@@ -10,6 +10,7 @@ import {
   GoogleAuthParams,
   GoogleIntegrationParams,
   Issue,
+  Lambda,
   Tag,
   User,
   WidgetSettings,
@@ -1587,6 +1588,70 @@ export const deletePersonalApiKey = async (
 
   return request
     .delete(`/api/personal_api_keys/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
+export const fetchLambdas = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/lambdas`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchLambda = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/lambdas/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createNewLambda = async (
+  params: Partial<Lambda>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/lambdas`)
+    .send({lambda: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateLambda = async (
+  id: string,
+  updates: Partial<Lambda>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/lambdas/${id}`)
+    .send({lambda: updates})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteLambda = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/lambdas/${id}`)
     .set('Authorization', token)
     .then((res) => res.body);
 };
