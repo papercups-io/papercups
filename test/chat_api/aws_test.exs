@@ -66,12 +66,13 @@ defmodule ChatApi.AwsTest do
 
       %{"Configuration" => configuration} = Aws.get_function(function_name)
       assert function_name == configuration["FunctionName"]
-      result = Aws.invoke_function(function_name, %{"test" => "test"})
+      Aws.invoke_function(function_name, %{"test" => "test"})
 
-      delete_function = Aws.delete_function(function_name)
+      Aws.delete_function(function_name)
     end
 
     test "code upload" do
+      api_key = "33652476496653383581"
       code = """
       exports.handler = async (event) => {
         // TODO implement
@@ -84,10 +85,11 @@ defmodule ChatApi.AwsTest do
 
       """
       function_name = Aws.generate_unique_filename("test_function_name")
-      result  = Aws.code_upload(code, function_name)
-      %{"body" => body, "statusCode" => statusCode} = Aws.invoke_function(function_name, %{"hello" => "world"})
+      Aws.code_upload(code, function_name, api_key)
+      %{"body" => body, "statusCode" => status_code} = Aws.invoke_function(function_name, %{"hello" => "world"})
       assert body =~ "hello"
       assert body =~ "world"
+      assert status_code == 200
 
       updated_code = """
       exports.handler = async (event) => {
@@ -100,10 +102,29 @@ defmodule ChatApi.AwsTest do
       };
       """
 
-      updated_function = Aws.update_function(updated_code, function_name)
-      %{"body" => body, "statusCode" => statusCode} = Aws.invoke_function(function_name, %{"hello" => "world"})
+      Aws.update_function(updated_code, function_name)
+      %{"body" => body, "statusCode" => status_code} = Aws.invoke_function(function_name, %{"hello" => "world"})
       assert body =~ "updated"
       assert body =~ "function"
+      assert status_code == 200
+    end
+
+    test "environment variable" do
+      api_key = "33652476496653383581"
+      code = """
+      exports.handler = async (event) => {
+        // TODO implement
+        const response = {
+            statusCode: 200,
+            body: JSON.stringify(process.env.PAPERCUPS_API_KEY),
+        };
+        return response;
+      };
+      """
+      function_name = Aws.generate_unique_filename("test_function_name")
+      Aws.code_upload(code, function_name, api_key)
+      %{"body" => body} = Aws.invoke_function(function_name, %{"hello" => "world"})
+      assert body =~ api_key
     end
 
     test "execute" do
