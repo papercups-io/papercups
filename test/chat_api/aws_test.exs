@@ -73,6 +73,7 @@ defmodule ChatApi.AwsTest do
 
     test "code upload" do
       api_key = "33652476496653383581"
+
       code = """
       exports.handler = async (event) => {
         // TODO implement
@@ -84,9 +85,13 @@ defmodule ChatApi.AwsTest do
       };
 
       """
+
       function_name = Aws.generate_unique_filename("test_function_name")
       Aws.code_upload(code, function_name, api_key)
-      %{"body" => body, "statusCode" => status_code} = Aws.invoke_function(function_name, %{"hello" => "world"})
+
+      %{"body" => body, "statusCode" => status_code} =
+        Aws.invoke_function(function_name, %{"hello" => "world"})
+
       assert body =~ "hello"
       assert body =~ "world"
       assert status_code == 200
@@ -103,7 +108,10 @@ defmodule ChatApi.AwsTest do
       """
 
       Aws.update_function(updated_code, function_name)
-      %{"body" => body, "statusCode" => status_code} = Aws.invoke_function(function_name, %{"hello" => "world"})
+
+      %{"body" => body, "statusCode" => status_code} =
+        Aws.invoke_function(function_name, %{"hello" => "world"})
+
       assert body =~ "updated"
       assert body =~ "function"
       assert status_code == 200
@@ -111,6 +119,7 @@ defmodule ChatApi.AwsTest do
 
     test "environment variable" do
       api_key = "33652476496653383581"
+
       code = """
       exports.handler = async (event) => {
         // TODO implement
@@ -121,6 +130,7 @@ defmodule ChatApi.AwsTest do
         return response;
       };
       """
+
       function_name = Aws.generate_unique_filename("test_function_name")
       Aws.code_upload(code, function_name, api_key)
       %{"body" => body} = Aws.invoke_function(function_name, %{"hello" => "world"})
