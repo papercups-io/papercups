@@ -114,7 +114,7 @@ defmodule ChatApi.Aws do
           },
           "Environment" => %{
             "Variables" => %{
-                "PAPERCUPS_API_KEY" => api_key
+              "PAPERCUPS_API_KEY" => api_key
             }
           }
         },
@@ -144,7 +144,7 @@ defmodule ChatApi.Aws do
         },
         "Environment" => %{
           "Variables" => %{
-              "PAPERCUPS_API_KEY" => api_key
+            "PAPERCUPS_API_KEY" => api_key
           }
         }
       },
