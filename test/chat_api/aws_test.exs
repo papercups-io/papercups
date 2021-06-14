@@ -52,7 +52,7 @@ defmodule ChatApi.AwsTest do
   describe "lambda" do
     test "get" do
       function_name = "test"
-      %{"Code" => code, "Configuration" => configuration} = Aws.get_function(function_name)
+      %{"Configuration" => configuration} = Aws.get_function(function_name)
       assert configuration["FunctionName"] == function_name
     end
 
@@ -64,11 +64,11 @@ defmodule ChatApi.AwsTest do
           "test/index.handler"
         )
 
-      %{"Code" => code, "Configuration" => configuration} = Aws.get_function(function_name)
+      %{"Configuration" => configuration} = Aws.get_function(function_name)
       assert function_name == configuration["FunctionName"]
       result = Aws.invoke_function(function_name, %{"test" => "test"})
 
-      # delete_function = Aws.delete_function(function_name)
+      delete_function = Aws.delete_function(function_name)
     end
 
     test "code upload" do

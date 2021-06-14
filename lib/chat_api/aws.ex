@@ -98,13 +98,7 @@ defmodule ChatApi.Aws do
   def create_function(file_path, function_name, handler) do
     uniq_function_name = generate_unique_filename(function_name)
 
-    with {:ok,
-          %{
-            function_bucket_name: function_bucket_name,
-            function_role: function_role,
-            aws_account_id: aws_account_id
-          }} <- Config.validate(),
-         {:ok, _} <- upload(file_path, uniq_function_name, function_bucket_name) do
+    with {:ok, _} <- upload(file_path, uniq_function_name, function_bucket_name) do
       operation = %ExAws.Operation.JSON{
         http_method: :post,
         headers: [{"content-type", "application/json"}],
@@ -115,7 +109,7 @@ defmodule ChatApi.Aws do
           "Runtime" => "nodejs14.x",
           "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
           "Code" => %{
-            "S3Bucket" => "papercups-functions",
+            "S3Bucket" => function_bucket_name,
             "S3Key" => uniq_function_name
           }
         },
@@ -128,60 +122,46 @@ defmodule ChatApi.Aws do
 
   def code_upload(code, function_name) do
     {:ok, {filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
-    upload = upload_binary(bytes, function_name, "papercups-functions")
+    upload = upload_binary(bytes, function_name, function_bucket_name)
 
-    with {:ok,
-    %{
-      function_bucket_name: function_bucket_name,
-      function_role: function_role,
-      aws_account_id: aws_account_id
-    }} <- Config.validate() do
-      operation = %ExAws.Operation.JSON{
-        http_method: :post,
-        path: "/2015-03-31/functions",
-        headers: [{"content-type", "application/json"}],
-        data: %{
-          "FunctionName" => function_name,
-          "Handler" => "index.handler",
-          "Runtime" => "nodejs14.x",
-          "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
-          "Code" => %{
-            "S3Bucket" => "papercups-functions",
-            "S3Key" => function_name
-          }
-        },
-        service: :lambda
-      }
+    operation = %ExAws.Operation.JSON{
+      http_method: :post,
+      path: "/2015-03-31/functions",
+      headers: [{"content-type", "application/json"}],
+      data: %{
+        "FunctionName" => function_name,
+        "Handler" => "index.handler",
+        "Runtime" => "nodejs14.x",
+        "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+        "Code" => %{
+          "S3Bucket" => function_bucket_name,
+          "S3Key" => function_name
+        }
+      },
+      service: :lambda
+    }
 
-      ExAws.request!(operation)
-    end
+    ExAws.request!(operation)
   end
 
   def update_function(code, function_name) do
     {:ok, {filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
-    res = upload_binary(bytes, function_name, "papercups-functions")
-    IO.inspect(res)
-    with {:ok,
-    %{
-      function_bucket_name: function_bucket_name,
-      function_role: function_role,
-      aws_account_id: aws_account_id
-    }} <- Config.validate() do
-      operation = %ExAws.Operation.JSON{
-        http_method: :put,
-        headers: [{"content-type", "application/json"}],
-        path: "/2015-03-31/functions/#{function_name}/versions/HEAD/code",
-        data: %{
-          "Runtime" => "nodejs14.x",
-          "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
-          "S3Bucket" => "papercups-functions",
-          "S3Key" => function_name
-        },
-        service: :lambda
-      }
+    res = upload_binary(bytes, function_name, function_bucket_name)
 
-      ExAws.request!(operation)
-    end
+    operation = %ExAws.Operation.JSON{
+      http_method: :put,
+      headers: [{"content-type", "application/json"}],
+      path: "/2015-03-31/functions/#{function_name}/versions/HEAD/code",
+      data: %{
+        "Runtime" => "nodejs14.x",
+        "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+        "S3Bucket" => function_bucket_name,
+        "S3Key" => function_name
+      },
+      service: :lambda
+    }
+
+    ExAws.request!(operation)
   end
 
   def delete_function(function_name) do
@@ -195,4 +175,8 @@ defmodule ChatApi.Aws do
     |> ExAws.Lambda.invoke(payload, %{})
     |> ExAws.request!()
   end
+
+  defp function_bucket_name(), do: Application.get_env(:chat_api, :function_bucket_name)
+  defp function_role(), do: Application.get_env(:chat_api, :function_role)
+  defp aws_account_id(), do: Application.get_env(:chat_api, :aws_account_id)
 end
