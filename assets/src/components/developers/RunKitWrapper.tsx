@@ -26,6 +26,7 @@ type Props = {
   environment?: Array<{name: string; value: string}>;
   onLoad?: (data: any) => void;
   onURLChanged?: (data: any) => void;
+  onResize?: (data: any) => void;
   onEvaluate?: (data: any, source: string) => void;
 };
 
@@ -48,6 +49,7 @@ class RunKitWrapper extends React.Component<Props, State> {
       onLoad: this.handleLoaded,
       onURLChanged: this.handleUrlChanged,
       onEvaluate: this.handleEvaluate,
+      onResize: this.handleResize,
     };
 
     this.notebook = RunKit.createNotebook(options);
@@ -65,6 +67,10 @@ class RunKitWrapper extends React.Component<Props, State> {
 
   handleUrlChanged = (data: any) => {
     this.props.onURLChanged && this.props.onURLChanged(data);
+  };
+
+  handleResize = (data: any) => {
+    this.props.onResize && this.props.onResize(data);
   };
 
   handleEvaluate = (data: any) => {
@@ -93,7 +99,7 @@ class RunKitWrapper extends React.Component<Props, State> {
         ref={(el) => (this.el = el)}
         style={{overflow: 'hidden', paddingLeft: 20, marginLeft: -20}}
       >
-        {this.state.loading && <RunKitLoading height={minHeight + 33} />}
+        {this.state.loading && <RunKitLoading height={minHeight} />}
       </div>
     );
   }

@@ -139,6 +139,8 @@ defmodule ChatApiWeb.Router do
     resources("/canned_responses", CannedResponseController, except: [:new, :edit])
     resources("/lambdas", LambdaController, except: [:new, :edit])
 
+    post("/lambdas/:id/deploy", LambdaController, :deploy)
+    post("/lambdas/:id/invoke", LambdaController, :invoke)
     get("/slack_conversation_threads", SlackConversationThreadController, :index)
     post("/conversations/:conversation_id/archive", ConversationController, :archive)
     get("/conversations/:conversation_id/previous", ConversationController, :previous)

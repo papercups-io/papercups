@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import {Box} from 'theme-ui';
 import {Channel, Socket, Presence} from 'phoenix';
 import {Papercups} from '@papercups-io/chat-widget';
-import {Alert, Button, Paragraph, Text, Title} from '../common';
+import {Alert, Button, Container, Paragraph, Text, Title} from '../common';
 import * as API from '../../api';
 import {SOCKET_URL} from '../../socket';
 import {BrowserSession} from '../../types';
@@ -136,7 +136,7 @@ class SessionsOverview extends React.Component<Props, State> {
     });
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Box mb={5}>
           <Title level={3}>Live Sessions (beta)</Title>
 
@@ -181,7 +181,7 @@ class SessionsOverview extends React.Component<Props, State> {
 
           <SessionsTable loading={loading} sessions={formatted} />
         </Box>
-      </Box>
+      </Container>
     );
   }
 }
