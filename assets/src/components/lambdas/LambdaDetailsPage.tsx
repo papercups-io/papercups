@@ -199,8 +199,38 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     }
   };
 
-  handleDeployLambda = () => {
-    // TODO: implement me!
+  handleDeployLambda = async () => {
+    try {
+      this.setState({deploying: true});
+
+      const lambdaId = this.props.match.params.id;
+      const source = await this.state.runkit.getSource();
+
+      await API.updateLambda(lambdaId, {
+        name: this.state.name,
+        description: this.state.description,
+        code: source,
+      });
+
+      const lambda = await API.deployLambda(lambdaId);
+
+      this.setState({
+        lambda,
+        status: lambda?.status ?? 'pending',
+      });
+
+      await sleep(1000);
+
+      notification.success({
+        message: `Function successfully deployed.`,
+        duration: 2, // 2 seconds
+      });
+    } catch (err) {
+      logger.error('Error deploying lambda:', err);
+      await this.refreshLambdaDetails();
+    } finally {
+      this.setState({deploying: false});
+    }
   };
 
   renderSidebar = ({
@@ -337,6 +367,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       name,
       description,
       status,
+      code,
       last_deployed_at: lastDeployedAt,
     } = lambda;
 
@@ -411,6 +442,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
               defaultHeight={640}
               personalApiKey={personalApiKey}
               accountId={accountId}
+              code={code}
               onLoad={(runkit) => this.setState({runkit})}
               onSuccess={(data) => this.setState({apiExplorerOutput: data})}
               onError={(error) => this.setState({apiExplorerOutput: error})}

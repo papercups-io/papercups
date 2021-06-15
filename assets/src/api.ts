@@ -1655,3 +1655,35 @@ export const deleteLambda = async (id: string, token = getAccessToken()) => {
     .set('Authorization', token)
     .then((res) => res.body);
 };
+
+export const deployLambda = async (
+  id: string,
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/lambdas/${id}/deploy`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const invokeLambda = async (
+  id: string,
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/lambdas/${id}/invoke`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};

@@ -130,15 +130,14 @@ defmodule ChatApi.Aws do
     |> ExAws.request!()
   end
 
-  @spec update_lambda_function(binary(), map()) :: any()
-  def update_lambda_function(function_name, params \\ %{}) do
+  @spec update_lambda_function_code(binary(), map()) :: any()
+  def update_lambda_function_code(function_name, params \\ %{}) do
+    # Reference: https://docs.aws.amazon.com/lambda/latest/dg/API_UpdateFunctionCode.html
     %ExAws.Operation.JSON{
       http_method: :put,
       headers: [{"content-type", "application/json"}],
-      path: "/2015-03-31/functions/#{function_name}/versions/HEAD/code",
+      path: "/2015-03-31/functions/#{function_name}/code",
       data: %{
-        "Runtime" => Map.get(params, "runtime", "nodejs14.x"),
-        "Role" => "arn:aws:iam::#{aws_account_id()}:role/#{function_role()}",
         "S3Bucket" => Map.get(params, "bucket", function_bucket_name()),
         "S3Key" => function_name
       },
@@ -147,9 +146,27 @@ defmodule ChatApi.Aws do
     |> ExAws.request!()
   end
 
+  @spec update_lambda_function_config(binary(), map()) :: any()
+  def update_lambda_function_config(function_name, params \\ %{}) do
+    # Reference: https://docs.aws.amazon.com/lambda/latest/dg/API_UpdateFunctionConfiguration.html
+    %ExAws.Operation.JSON{
+      http_method: :put,
+      headers: [{"content-type", "application/json"}],
+      path: "/2015-03-31/functions/#{function_name}/configuration",
+      data: %{
+        "Runtime" => Map.get(params, "runtime", "nodejs14.x"),
+        "Role" => "arn:aws:iam::#{aws_account_id()}:role/#{function_role()}",
+        "Environment" => %{
+          "Variables" => Map.get(params, "env", %{})
+        }
+      },
+      service: :lambda
+    }
+    |> ExAws.request!()
+  end
+
   @spec create_function_by_file(binary(), binary(), map()) :: any()
   def create_function_by_file(file_path, function_name, params \\ %{}) do
-    # uniq_function_name = generate_unique_filename(function_name)
     bucket = function_bucket_name()
 
     with {:ok, _} <- upload(file_path, function_name, bucket) do
@@ -163,12 +180,10 @@ defmodule ChatApi.Aws do
   end
 
   def create_function_by_code(code, function_name, params \\ %{}) do
-    # TODO: does it matter what we name the zip file? (e.g. "test.zip"?)
-    {:ok, {_filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
-    # uniq_function_name = generate_unique_filename(function_name)
     bucket = function_bucket_name()
-
-    with {:ok, _} <- upload_binary(bytes, function_name, bucket) do
+    # TODO: does it matter what we name the zip file? (e.g. "test.zip"?)
+    with {:ok, {_filename, bytes}} <- :zip.create("test.zip", [{'index.js', code}], [:memory]),
+         {:ok, _} <- upload_binary(bytes, function_name, bucket) do
       create_lambda_function(
         function_name,
         Map.merge(params, %{
@@ -178,14 +193,18 @@ defmodule ChatApi.Aws do
     end
   end
 
-  def update_function_code(code, function_name) do
-    # TODO: does it matter what we name the zip file? (e.g. "test.zip"?)
-    {:ok, {_filename, bytes}} = :zip.create("test.zip", [{'index.js', code}], [:memory])
+  def update_function_code(code, function_name, params \\ %{}) do
     bucket = function_bucket_name()
-
-    with {:ok, _} <- upload_binary(bytes, function_name, bucket) do
-      update_lambda_function(function_name)
+    # TODO: does it matter what we name the zip file? (e.g. "test.zip"?)
+    with {:ok, {_filename, bytes}} <- :zip.create("test.zip", [{'index.js', code}], [:memory]),
+         {:ok, _} <- upload_binary(bytes, function_name, bucket) do
+      # This update works because it syncs with the uploaded binary to S3 in the method above
+      update_lambda_function_code(function_name, params)
     end
+  end
+
+  def update_function_configuration(function_name, params \\ %{}) do
+    update_lambda_function_config(function_name, params)
   end
 
   @spec delete_lambda_function(binary()) :: any()

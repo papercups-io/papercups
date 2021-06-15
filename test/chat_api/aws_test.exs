@@ -85,9 +85,10 @@ defmodule ChatApi.AwsTest do
 
       function_name = Aws.generate_unique_filename("test_function_name")
 
-      Aws.create_function_by_code(code, function_name, %{
-        "env" => %{"PAPERCUPS_API_KEY" => api_key}
-      })
+      %{"FunctionName" => ^function_name} =
+        Aws.create_function_by_code(code, function_name, %{
+          "env" => %{"PAPERCUPS_API_KEY" => api_key}
+        })
 
       %{"body" => body, "statusCode" => status_code} =
         Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
@@ -102,7 +103,7 @@ defmodule ChatApi.AwsTest do
       };
       """
 
-      Aws.update_function_code(updated_code, function_name)
+      %{"FunctionName" => ^function_name} = Aws.update_function_code(updated_code, function_name)
 
       %{"body" => body, "statusCode" => status_code} =
         Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
@@ -114,7 +115,7 @@ defmodule ChatApi.AwsTest do
       Aws.delete_lambda_function(function_name)
     end
 
-    test "creating a function with environment variables" do
+    test "creating and updating a function with environment variables" do
       api_key = "33652476496653383581"
       function_name = Aws.generate_unique_filename("test_function_name")
 
@@ -124,12 +125,22 @@ defmodule ChatApi.AwsTest do
       };
       """
 
-      Aws.create_function_by_code(code, function_name, %{
-        "env" => %{"PAPERCUPS_API_KEY" => api_key}
-      })
+      %{"FunctionName" => ^function_name} =
+        Aws.create_function_by_code(code, function_name, %{
+          "env" => %{"PAPERCUPS_API_KEY" => api_key}
+        })
 
       %{"body" => body} = Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
       assert body =~ api_key
+
+      new_api_key = "NEW_API_KEY"
+
+      Aws.update_function_configuration(function_name, %{
+        "env" => %{"PAPERCUPS_API_KEY" => new_api_key}
+      })
+
+      %{"body" => body} = Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
+      assert body =~ new_api_key
 
       Aws.delete_lambda_function(function_name)
     end

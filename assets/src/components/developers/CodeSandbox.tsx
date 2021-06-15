@@ -62,6 +62,7 @@ const DefaultSidebar = ({
 type Props = {
   personalApiKey: string;
   accountId: string;
+  code?: string;
   defaultHeight?: number;
   sidebar?: (opts: SidebarProps) => React.ReactElement;
   onLoad?: (runkit: any) => void;
@@ -164,14 +165,14 @@ export class CodeSandbox extends React.Component<Props, State> {
   };
 
   render() {
-    const {personalApiKey, accountId} = this.props;
+    const {personalApiKey, accountId, code} = this.props;
     const {output = '', runkitIframeHeight = 720, isExecuting} = this.state;
 
     return (
       <Flex sx={{width: '100%', maxHeight: runkitIframeHeight}}>
         <Box sx={{flex: 1.2}}>
           <RunKitWrapper
-            source={getRunKitCode(CACHE_KEY) || WEBHOOK_HANDLER_SOURCE}
+            source={code || getRunKitCode(CACHE_KEY) || WEBHOOK_HANDLER_SOURCE}
             mode="endpoint"
             environment={[{name: 'PAPERCUPS_API_KEY', value: personalApiKey}]}
             minHeight={runkitIframeHeight}
