@@ -36,9 +36,10 @@ defmodule ChatApi.Aws do
   end
 
   def upload_binary(file_binary, identifier) do
-    bucket = function_bucket_name()
-
-    upload_binary(file_binary, identifier, bucket)
+    # TODO: consolidate Config methods with env variables below
+    with {:ok, %{bucket_name: bucket_name}} <- Config.validate() do
+      upload_binary(file_binary, identifier, bucket_name)
+    end
   end
 
   def upload_binary(file_binary, identifier, bucket_name) do
