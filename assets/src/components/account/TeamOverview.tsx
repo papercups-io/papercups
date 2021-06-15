@@ -3,6 +3,7 @@ import {Box, Flex} from 'theme-ui';
 import {
   notification,
   Button,
+  Container,
   Divider,
   Input,
   Paragraph,
@@ -252,7 +253,7 @@ class TeamOverview extends React.Component<Props, State> {
     const isAdmin = this.hasAdminRole();
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Box mb={4}>
           <Title level={3}>My Team</Title>
         </Box>
@@ -343,7 +344,7 @@ class TeamOverview extends React.Component<Props, State> {
             />
           </Box>
         )}
-      </Box>
+      </Container>
     );
   }
 }

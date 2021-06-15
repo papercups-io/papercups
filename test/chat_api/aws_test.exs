@@ -52,47 +52,46 @@ defmodule ChatApi.AwsTest do
   describe "lambda" do
     @moduletag :lambda_development
 
-    test "get" do
+    test "get_lambda_function" do
       function_name = "test"
-      %{"Configuration" => configuration} = Aws.get_function(function_name)
+      %{"Configuration" => configuration} = Aws.get_lambda_function(function_name)
       assert configuration["FunctionName"] == function_name
     end
 
-    test "create" do
-      %{"FunctionName" => function_name} =
-        Aws.create_function(
-          Path.absname("test/assets/test.zip"),
-          "somefile-name",
-          "test/index.handler"
-        )
+    # test "create" do
+    #   %{"FunctionName" => function_name} =
+    #     Aws.create_function_by_file(
+    #       Path.absname("test/assets/test.zip"),
+    #       Aws.generate_unique_filename("test_function_name"),
+    #       "test/index.handler"
+    #     )
 
-      %{"Configuration" => configuration} = Aws.get_function(function_name)
-      assert function_name == configuration["FunctionName"]
-      Aws.invoke_function(function_name, %{"test" => "test"})
+    #   %{"Configuration" => configuration} = Aws.get_lambda_function(function_name)
+    #   assert function_name == configuration["FunctionName"]
+    #   Aws.invoke_lambda_function(function_name, %{"test" => "test"})
 
-      Aws.delete_function(function_name)
-    end
+    #   Aws.delete_lambda_function(function_name)
+    # end
 
-    test "code upload" do
+    test "creating and updating a function" do
       api_key = "33652476496653383581"
 
       code = """
       exports.handler = async (event) => {
-        // TODO implement
-        const response = {
-            statusCode: 200,
-            body: JSON.stringify(event),
-        };
-        return response;
+        return {statusCode: 200, body: JSON.stringify(event)};
       };
 
       """
 
       function_name = Aws.generate_unique_filename("test_function_name")
-      Aws.code_upload(code, function_name, api_key)
+
+      %{"FunctionName" => ^function_name} =
+        Aws.create_function_by_code(code, function_name, %{
+          "env" => %{"PAPERCUPS_API_KEY" => api_key}
+        })
 
       %{"body" => body, "statusCode" => status_code} =
-        Aws.invoke_function(function_name, %{"hello" => "world"})
+        Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
 
       assert body =~ "hello"
       assert body =~ "world"
@@ -100,52 +99,85 @@ defmodule ChatApi.AwsTest do
 
       updated_code = """
       exports.handler = async (event) => {
-        // TODO implement
-        const response = {
-            statusCode: 200,
-            body: JSON.stringify({"updated": "function"}),
-        };
-        return response;
+        return {statusCode: 200, body: JSON.stringify({"updated": "function"})};
       };
       """
 
-      Aws.update_function(updated_code, function_name)
+      %{"FunctionName" => ^function_name} = Aws.update_function_code(updated_code, function_name)
 
       %{"body" => body, "statusCode" => status_code} =
-        Aws.invoke_function(function_name, %{"hello" => "world"})
+        Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
 
       assert body =~ "updated"
       assert body =~ "function"
       assert status_code == 200
+
+      Aws.delete_lambda_function(function_name)
     end
 
-    test "environment variable" do
+    test "creating and updating a function with environment variables" do
       api_key = "33652476496653383581"
+      function_name = Aws.generate_unique_filename("test_function_name")
 
       code = """
       exports.handler = async (event) => {
-        // TODO implement
-        const response = {
-            statusCode: 200,
-            body: JSON.stringify(process.env.PAPERCUPS_API_KEY),
-        };
-        return response;
+        return {statusCode: 200, body: JSON.stringify(process.env.PAPERCUPS_API_KEY)};
       };
       """
 
-      function_name = Aws.generate_unique_filename("test_function_name")
-      Aws.code_upload(code, function_name, api_key)
-      %{"body" => body} = Aws.invoke_function(function_name, %{"hello" => "world"})
+      %{"FunctionName" => ^function_name} =
+        Aws.create_function_by_code(code, function_name, %{
+          "env" => %{"PAPERCUPS_API_KEY" => api_key}
+        })
+
+      %{"body" => body} = Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
       assert body =~ api_key
+
+      new_api_key = "NEW_API_KEY"
+
+      Aws.update_function_configuration(function_name, %{
+        "env" => %{"PAPERCUPS_API_KEY" => new_api_key}
+      })
+
+      %{"body" => body} = Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
+      assert body =~ new_api_key
+
+      Aws.delete_lambda_function(function_name)
     end
 
-    test "execute" do
-    end
+    test "invoke_lambda_function" do
+      function_name = Aws.generate_unique_filename("test_function_name")
 
-    test "update" do
+      code = """
+      exports.handler = async (event) => {
+        return {statusCode: 200, body: event};
+      };
+      """
+
+      Aws.create_function_by_code(code, function_name)
+
+      %{"statusCode" => 200, "body" => body} =
+        Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
+
+      assert body["hello"] == "world"
     end
 
     test "delete" do
+      function_name = Aws.generate_unique_filename("test_function_name")
+
+      code = """
+      exports.handler = async (event) => {
+        return {statusCode: 200, body: event};
+      };
+      """
+
+      Aws.create_function_by_code(code, function_name)
+      assert Aws.get_lambda_function(function_name)
+      Aws.delete_lambda_function(function_name)
+
+      assert_raise ExAws.Error, ~r/Function not found/, fn ->
+        Aws.get_lambda_function(function_name)
+      end
     end
   end
 end

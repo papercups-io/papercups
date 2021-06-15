@@ -10,6 +10,7 @@ import {
   notification,
   Alert,
   Button,
+  Container,
   Modal,
   Paragraph,
   Select,
@@ -317,7 +318,7 @@ class BillingOverview extends React.Component<Props, State> {
     const trialEndDate = getTrialEndDate(subscription);
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Box mb={4}>
           <Title level={3}>Billing Overview</Title>
           <Paragraph>
@@ -457,7 +458,7 @@ class BillingOverview extends React.Component<Props, State> {
             />
           </Elements>
         </Modal>
-      </Box>
+      </Container>
     );
   }
 }

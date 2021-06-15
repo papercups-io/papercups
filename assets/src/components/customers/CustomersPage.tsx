@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box} from 'theme-ui';
-import {Paragraph, Title} from '../common';
+import {Container, Paragraph, Title} from '../common';
 import {useConversations} from '../conversations/ConversationsProvider';
 import {NewCustomerButton} from './NewCustomerModal';
 import CustomersTableContainer from './CustomersTableContainer';
@@ -18,7 +18,7 @@ const CustomersPage = () => {
   }, {} as {[key: string]: boolean});
 
   return (
-    <Box p={4} sx={{maxWidth: 1080}}>
+    <Container>
       <Box mb={5}>
         <Title level={3}>Customers</Title>
 
@@ -35,7 +35,7 @@ const CustomersPage = () => {
           actions={(onSuccess) => <NewCustomerButton onSuccess={onSuccess} />}
         />
       </Box>
-    </Box>
+    </Container>
   );
 };
 

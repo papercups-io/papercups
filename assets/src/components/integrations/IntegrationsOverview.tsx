@@ -2,7 +2,14 @@ import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
-import {notification, Button, Paragraph, Text, Title} from '../common';
+import {
+  notification,
+  Button,
+  Container,
+  Paragraph,
+  Text,
+  Title,
+} from '../common';
 import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
@@ -465,7 +472,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Box mb={5}>
           <Title level={4}>Integrations</Title>
 
@@ -552,7 +559,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
           onSuccess={this.handleApiKeyModalSuccess}
           onCancel={this.handleApiKeyModalCancel}
         />
-      </Box>
+      </Container>
     );
   }
 }

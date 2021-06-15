@@ -43,6 +43,36 @@ defmodule ChatApi.Lambdas do
     Lambda.changeset(lambda, attrs)
   end
 
+  @spec deploy(Lambda.t(), map()) :: {:ok, Lambda.t()} | {:error, any()}
+  def deploy(%Lambda{} = lambda, opts \\ %{}) do
+    result =
+      case lambda do
+        %Lambda{code: nil} ->
+          # TODO: how should we handle deploys if there is no code?
+          nil
+
+        %Lambda{lambda_function_name: lambda_function_name, code: code}
+        when is_binary(lambda_function_name) ->
+          ChatApi.Aws.update_function_code(code, lambda_function_name, opts)
+
+        %Lambda{name: name, lambda_function_name: _, code: code} ->
+          lambda_function_name = ChatApi.Aws.generate_unique_filename(name)
+
+          ChatApi.Aws.create_function_by_code(code, lambda_function_name, opts)
+      end
+
+    case result do
+      %{"FunctionName" => function_name} ->
+        update_lambda(lambda, %{
+          lambda_function_name: function_name,
+          last_deployed_at: DateTime.utc_now()
+        })
+
+      error ->
+        {:error, error}
+    end
+  end
+
   @spec filter_where(map()) :: %Ecto.Query.DynamicExpr{}
   def filter_where(params) do
     params

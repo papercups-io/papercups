@@ -1,7 +1,7 @@
 import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Paragraph, Text, Title} from '../common';
+import {Button, Container, Paragraph, Text, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
@@ -125,7 +125,7 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
     }
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Box mb={5}>
           <Title level={4}>Event Subscriptions</Title>
 
@@ -162,7 +162,7 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
 
         {!!personalApiKey && !!accountId && (
           <Box mb={5}>
-            <Title level={4}>Webhook handler explorer</Title>
+            <Title level={4}>Webhook handler sandbox</Title>
 
             <CodeSandbox
               personalApiKey={personalApiKey}
@@ -171,7 +171,7 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
             />
           </Box>
         )}
-      </Box>
+      </Container>
     );
   }
 }
