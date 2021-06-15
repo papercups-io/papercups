@@ -2,26 +2,34 @@ import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {debounce} from 'lodash';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
 import {
   notification,
   Button,
   Divider,
   Input,
   Paragraph,
+  Result,
   StandardSyntaxHighlighter,
+  Switch,
   Text,
   TextArea,
   Title,
+  Tooltip,
 } from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
-import {Lambda} from '../../types';
+import {Lambda, LambdaStatus} from '../../types';
 import logger from '../../logger';
 import {BASE_URL} from '../../config';
-import {sleep} from '../../utils';
+import {formatRelativeTime, sleep} from '../../utils';
 import {CodeSandbox, SidebarProps} from '../developers/CodeSandbox';
 import EmbeddableChat from '../developers/EmbeddableChat';
+
+dayjs.extend(utc);
 
 type Props = RouteComponentProps<{id: string}> & {};
 type State = {
@@ -30,6 +38,7 @@ type State = {
   deploying: boolean;
   name: string;
   description: string;
+  status: LambdaStatus;
   lambda: Lambda | null;
   personalApiKey: string | null;
   accountId: string | null;
@@ -44,6 +53,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     deploying: false,
     name: 'Untitled function',
     description: '',
+    status: 'pending',
     lambda: null,
     personalApiKey: null,
     accountId: null,
@@ -65,8 +75,9 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
+        status: lambda?.status ?? 'pending',
+        accountId: lambda?.account_id ?? null,
         personalApiKey: key ? key.value : null,
-        accountId: key ? key.account_id : null,
         loading: false,
       });
     } catch (err) {
@@ -85,6 +96,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
+        status: lambda?.status ?? 'pending',
       });
     } catch (err) {
       logger.error('Error refreshing lambda details:', err);
@@ -97,6 +109,41 @@ class LambdaDetailsPage extends React.Component<Props, State> {
 
   handleChangeDescription = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({description: e.target.value});
+  };
+
+  getNextStatus = (lambda: Lambda, shouldActivate: boolean): LambdaStatus => {
+    const {last_deployed_at: lastDeployedAt} = lambda;
+    const canActivate = !!lastDeployedAt;
+
+    if (canActivate) {
+      return shouldActivate ? 'active' : 'inactive';
+    } else {
+      return 'pending';
+    }
+  };
+
+  handleToggleState = async (isActive: boolean) => {
+    const {lambda} = this.state;
+
+    if (!lambda) {
+      return;
+    }
+
+    const {id: lambdaId, status} = lambda;
+    const nextStatus = this.getNextStatus(lambda, isActive);
+
+    if (status === nextStatus) {
+      return;
+    }
+
+    const result = await API.updateLambda(lambdaId, {
+      status: nextStatus,
+    });
+
+    this.setState({
+      lambda: result,
+      status: result.status ?? 'pending',
+    });
   };
 
   handleSaveLambda = async () => {
@@ -115,6 +162,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
+        status: lambda?.status ?? 'pending',
       });
 
       await sleep(1000);
@@ -132,6 +180,24 @@ class LambdaDetailsPage extends React.Component<Props, State> {
   };
 
   debouncedSaveLambda = debounce(() => this.handleSaveLambda(), 400);
+
+  getStatusDescription = () => {
+    const {lambda} = this.state;
+
+    if (!lambda) {
+      return null;
+    }
+
+    switch (lambda.status) {
+      case 'pending':
+        return 'Your function cannot be activated until it has been deployed.';
+      case 'active':
+        return 'Your function is actively receiving webhook events.';
+      case 'inactive':
+      default:
+        return 'Your function is inactive and will not receive webhook events.';
+    }
+  };
 
   handleDeployLambda = () => {
     // TODO: implement me!
@@ -230,7 +296,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     } = this.state;
 
     // TODO: does an API key need to be required?
-    if (loading || !lambda || !personalApiKey || !accountId) {
+    if (loading || !lambda || !accountId) {
       return (
         <Flex
           sx={{
@@ -244,6 +310,35 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         </Flex>
       );
     }
+
+    if (!personalApiKey) {
+      return (
+        <Flex my={5} sx={{justifyContent: 'center'}}>
+          <Result
+            status="info"
+            title="An API key is required"
+            subTitle={
+              <Text>
+                In order to set up a function, you'll need to generate an API
+                key first.
+              </Text>
+            }
+            extra={
+              <Link to="/developers/personal-api-keys">
+                <Button type="primary">Generate API key</Button>
+              </Link>
+            }
+          />
+        </Flex>
+      );
+    }
+
+    const {
+      name,
+      description,
+      status,
+      last_deployed_at: lastDeployedAt,
+    } = lambda;
 
     return (
       <Flex
@@ -267,8 +362,50 @@ class LambdaDetailsPage extends React.Component<Props, State> {
           </Flex>
 
           <Box mb={4}>
-            <Title level={4}>{lambda.name || 'Untitled function'}</Title>
-            <Paragraph>{lambda.description || 'No description.'}</Paragraph>
+            <Flex sx={{alignItems: 'center', justifyContent: 'space-between'}}>
+              <Box sx={{flex: 1}}>
+                <Title level={4}>{name || 'Untitled function'}</Title>
+                <Paragraph>{description || 'No description.'}</Paragraph>
+              </Box>
+
+              <Box>
+                <Tooltip title={this.getStatusDescription}>
+                  <Flex sx={{alignItems: 'center', justifyContent: 'flex-end'}}>
+                    <Box mx={2}>
+                      {status === 'active' ? (
+                        <Text>Active</Text>
+                      ) : (
+                        <Text type="secondary">Inactive</Text>
+                      )}
+                    </Box>
+                    <Switch
+                      checked={status === 'active'}
+                      onChange={this.handleToggleState}
+                    />
+                  </Flex>
+                </Tooltip>
+
+                <Box mt={1}>
+                  {lastDeployedAt ? (
+                    <Tooltip
+                      title={dayjs(lastDeployedAt).format(
+                        'dddd, MMMM D h:mm A'
+                      )}
+                      placement="bottom"
+                    >
+                      <Text style={{fontSize: 12}}>
+                        Last deployed{' '}
+                        {formatRelativeTime(dayjs(lastDeployedAt))}
+                      </Text>
+                    </Tooltip>
+                  ) : (
+                    <Text style={{fontSize: 12}} type="secondary">
+                      Pending deployment...
+                    </Text>
+                  )}
+                </Box>
+              </Box>
+            </Flex>
 
             <CodeSandbox
               defaultHeight={640}

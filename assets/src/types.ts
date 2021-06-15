@@ -153,6 +153,8 @@ export type Issue = {
   updated_at: string;
 };
 
+export type LambdaStatus = 'pending' | 'active' | 'inactive';
+
 export type Lambda = {
   id: string;
   object: 'lambda';
@@ -162,7 +164,7 @@ export type Lambda = {
   code?: string;
   language?: string;
   runtime?: string;
-  status: string;
+  status: LambdaStatus;
   last_deployed_at?: string;
   last_executed_at?: string;
   created_at: string;
