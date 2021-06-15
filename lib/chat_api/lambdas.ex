@@ -73,6 +73,35 @@ defmodule ChatApi.Lambdas do
     end
   end
 
+  @spec invoke(Lambda.t(), map()) :: {:ok, any()} | {:error, any()}
+  def invoke(%Lambda{} = lambda, payload \\ %{}) do
+    case lambda do
+      %Lambda{lambda_function_name: lambda_function_name}
+      when is_binary(lambda_function_name) ->
+        {:ok, ChatApi.Aws.invoke_lambda_function(lambda_function_name, payload)}
+
+      %Lambda{lambda_function_name: _} ->
+        {:error, :missing_function_name}
+    end
+  end
+
+  @spec notify_active_lambdas(binary(), map()) :: [{:ok, any()} | {:error, any()}]
+  def notify_active_lambdas(account_id, event) do
+    account_id
+    |> list_lambdas(%{status: "active"})
+    |> Enum.filter(fn lambda -> should_handle_event?(lambda, event) end)
+    |> Enum.map(fn lambda -> invoke(lambda, event) end)
+  end
+
+  @spec should_handle_event?(Lambda.t(), binary()) :: boolean()
+  # Do not attempt to handle event if function name or code is missing
+  def should_handle_event?(%Lambda{lambda_function_name: nil}, _event), do: false
+  def should_handle_event?(%Lambda{code: nil}, _event), do: false
+  # Handling these specific events by default for now
+  def should_handle_event?(_lambda, %{"event" => "message:created"}), do: true
+  def should_handle_event?(_lambda, %{"event" => "conversation:created"}), do: true
+  def should_handle_event?(_lambda, _event), do: false
+
   @spec filter_where(map()) :: %Ecto.Query.DynamicExpr{}
   def filter_where(params) do
     params
