@@ -233,6 +233,20 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     }
   };
 
+  // TODO: migrate toward always using lambda instead of runkit?
+  handleMessageSent = (fn: (data: any) => void) => (payload = {}) => {
+    const lambdaId = this.state.lambda?.id;
+
+    if (lambdaId) {
+      return API.invokeLambda(lambdaId, {
+        event: 'message:created',
+        payload,
+      }).then((result) => this.setState({apiExplorerOutput: result}));
+    } else {
+      fn(payload);
+    }
+  };
+
   renderSidebar = ({
     accountId,
     output,
