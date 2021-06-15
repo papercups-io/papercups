@@ -127,6 +127,31 @@ defmodule ChatApi.AwsTest do
       assert body =~ api_key
     end
 
+    test "create function with dependencies" do
+      # code = """
+      # const papercups = require('@papercups-io/papercups')
+
+      # exports.handler = async (event) => {
+      #     // TODO implement
+      #     const response = {
+      #         statusCode: 200,
+      #         body: JSON.stringify(papercups),
+      #     };
+      #     return response;
+      # };
+      # """
+
+      function_name = Aws.generate_unique_filename("test_function_name")
+      IO.inspect(function_name)
+
+     Aws.create_function_with_dependencies(function_name)
+
+      res = Aws.invoke_function(function_name, %{"test" => "test"})
+      IO.inspect(res)
+      # %{"body" => body} = Aws.invoke_function(function_name, %{"hello" => "world"})
+      # assert body =~ api_key
+    end
+
     test "execute" do
     end
 

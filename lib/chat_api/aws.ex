@@ -42,6 +42,7 @@ defmodule ChatApi.Aws do
   end
 
   def upload(file_path, unique_file_name, bucket_name) do
+
     with {:ok, file_binary} <- File.read(file_path) do
       bucket_name
       |> ExAws.S3.put_object(unique_file_name, file_binary)
@@ -170,8 +171,93 @@ defmodule ChatApi.Aws do
       },
       service: :lambda
     }
+  end
 
-    ExAws.request!(operation)
+  # Todo try to use ExAws.Lambda.create_function since its a zip file
+  def create_function_with_dependencies(function_name, api_key \\ "") do
+    path = Path.absname("test/assets/withDeps")
+    # zip_path = create_zip(path)
+
+    File.cd!(path)
+    filename = function_name
+    files = File.ls!(path) |> Enum.map(&String.to_charlist/1)
+    {:ok, {filename, bytes}} = :zip.create(filename, files, [:memory])
+    IO.inspect(bytes)
+    upload = upload_binary(bytes, function_name, function_bucket_name)
+    IO.inspect(upload)
+
+    operation = %ExAws.Operation.JSON{
+      http_method: :post,
+      path: "/2015-03-31/functions",
+      headers: [{"content-type", "application/json"}],
+      data: %{
+        "FunctionName" => function_name,
+        "Handler" => "index.handler",
+        "Runtime" => "nodejs14.x",
+        "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+        "Code" => %{
+          "S3Bucket" => function_bucket_name,
+          "S3Key" => function_name
+        },
+        "Environment" => %{
+          "Variables" => %{
+              "PAPERCUPS_API_KEY" => api_key
+          }
+        }
+      },
+      service: :lambda
+    }
+
+    result = ExAws.request!(operation)
+    IO.inspect(result)
+    update = %ExAws.Operation.JSON{
+      http_method: :put,
+      headers: [{"content-type", "application/json"}],
+      path: "/2015-03-31/functions/#{function_name}/versions/HEAD/code",
+      data: %{
+        "Runtime" => "nodejs14.x",
+        "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+        "S3Bucket" => function_bucket_name,
+        "S3Key" => function_name
+      },
+      service: :lambda
+    }
+    result = ExAws.request!(update)
+    IO.inspect(result)
+    # res = upload(zip_path, function_name, function_bucket_name)
+    # IO.inspect(res)
+    # operation = %ExAws.Operation.JSON{
+    #   http_method: :post,
+    #   path: "/2015-03-31/functions",
+    #   headers: [{"content-type", "application/json"}],
+    #   data: %{
+    #     "FunctionName" => function_name,
+    #     "Handler" => "index.handler",
+    #     "Runtime" => "nodejs14.x",
+    #     "Role" => "arn:aws:iam::#{aws_account_id}:role/#{function_role}",
+    #     "Code" => %{
+    #       "S3Bucket" => function_bucket_name,
+    #       "S3Key" => function_name
+    #     },
+    #     "Environment" => %{
+    #       "Variables" => %{
+    #           "PAPERCUPS_API_KEY" => api_key
+    #       }
+    #     }
+    #   },
+    #   service: :lambda
+    # }
+
+    # ExAws.request!(operation)
+  end
+
+  def create_zip(path, filename \\ "files.zip") do
+    old_path = File.cwd!
+    File.cd!(path)
+    files = File.ls!(path) |> Enum.map(&String.to_charlist/1)
+    :zip.create(filename, files, [{:cwd, path}])
+    File.cd!(old_path)
+    "#{old_path}/#{filename}"
   end
 
   def delete_function(function_name) do
