@@ -81,6 +81,8 @@ import IssueDetailsPage from './issues/IssueDetailsPage';
 import NotesOverview from './notes/NotesOverview';
 import PersonalApiKeysPage from './developers/PersonalApiKeysPage';
 import EventSubscriptionsPage from './developers/EventSubscriptionsPage';
+import LambdaDetailsPage from './lambdas/LambdaDetailsPage';
+import LambdasOverview from './lambdas/LambdasOverview';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -99,6 +101,10 @@ const getSectionKey = (pathname: string) => {
     return ['customers', 'people'];
   } else if (pathname.startsWith('/tags')) {
     return ['customers', 'tags'];
+  } else if (pathname.startsWith('/notes')) {
+    return ['customers', 'notes'];
+  } else if (pathname.startsWith('/functions')) {
+    return ['developers', 'functions'];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
@@ -452,6 +458,9 @@ const Dashboard = (props: RouteComponentProps) => {
                     Event subscriptions
                   </Link>
                 </Menu.Item>
+                <Menu.Item key="functions">
+                  <Link to="/functions">Functions</Link>
+                </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
                 title="Reporting"
@@ -544,6 +553,8 @@ const Dashboard = (props: RouteComponentProps) => {
             path="/developers/event-subscriptions"
             component={EventSubscriptionsPage}
           />
+          <Route path="/functions/:id" component={LambdaDetailsPage} />
+          <Route path="/functions" component={LambdasOverview} />
           <Route path="/conversations/all" component={AllConversations} />
           <Route path="/conversations/me" component={MyConversations} />
           <Route

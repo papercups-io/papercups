@@ -74,10 +74,6 @@ defmodule ChatApi.Lambdas.Lambda do
     |> validate_required([
       :account_id,
       :name,
-      :description,
-      :code,
-      :language,
-      :runtime,
       :status
     ])
     |> validate_inclusion(:status, ["active", "inactive", "pending"])

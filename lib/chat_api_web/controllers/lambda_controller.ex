@@ -4,9 +4,9 @@ defmodule ChatApiWeb.LambdaController do
   alias ChatApi.Lambdas
   alias ChatApi.Lambdas.Lambda
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
 
-  plug(:authorize when action in [:show, :update, :delete])
+  plug(:authorize when action in [:show, :update, :delete, :deploy, :invoke])
 
   @spec authorize(Plug.Conn.t(), any()) :: any()
   defp authorize(conn, _) do
@@ -59,6 +59,26 @@ defmodule ChatApiWeb.LambdaController do
   def delete(conn, _params) do
     with {:ok, %Lambda{}} <- Lambdas.delete_lambda(conn.assigns.current_lambda) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  @spec deploy(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def deploy(conn, params) do
+    with {:ok, %Lambda{} = lambda} <-
+           Lambdas.deploy(conn.assigns.current_lambda, params) do
+      render(conn, "show.json", lambda: lambda)
+    end
+  end
+
+  @spec invoke(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def invoke(conn, params) do
+    case conn.assigns.current_lambda do
+      %Lambda{lambda_function_name: lambda_function_name}
+      when is_binary(lambda_function_name) ->
+        json(conn, %{data: ChatApi.Aws.invoke_lambda_function(lambda_function_name, params)})
+
+      %Lambda{lambda_function_name: _} ->
+        json(conn, %{data: nil})
     end
   end
 end

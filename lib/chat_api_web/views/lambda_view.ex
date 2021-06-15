@@ -14,6 +14,8 @@ defmodule ChatApiWeb.LambdaView do
     %{
       id: lambda.id,
       object: "lambda",
+      created_at: lambda.inserted_at,
+      updated_at: lambda.updated_at,
       account_id: lambda.account_id,
       name: lambda.name,
       description: lambda.description,

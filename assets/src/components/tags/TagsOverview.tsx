@@ -1,7 +1,15 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Input, Paragraph, Table, Tag, Title} from '../common';
+import {
+  Button,
+  Container,
+  Input,
+  Paragraph,
+  Table,
+  Tag,
+  Title,
+} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
@@ -154,7 +162,7 @@ class TagsOverview extends React.Component<Props, State> {
     const {loading, isNewTagModalVisible, filteredTags = []} = this.state;
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Tags</Title>
 
@@ -191,7 +199,7 @@ class TagsOverview extends React.Component<Props, State> {
         <Box my={4}>
           <TagsTable loading={loading} tags={filteredTags} />
         </Box>
-      </Box>
+      </Container>
     );
   }
 }
