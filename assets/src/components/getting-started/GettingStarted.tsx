@@ -10,7 +10,7 @@ type GettingStartedStep = {
   completed: boolean;
   ctaHref: string;
   ctaText: string;
-  text: React.ReactNode;
+  text: React.ReactElement;
 };
 
 const GettingStarted = () => {
@@ -93,7 +93,7 @@ const GettingStarted = () => {
       </Box>
       <Divider />
       {steps.map((step, index) => (
-        <Step {...step} value={index + 1} />
+        <Step {...step} value={index + 1} key={step.ctaText} />
       ))}
     </Box>
   );
