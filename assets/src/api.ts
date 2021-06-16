@@ -1590,3 +1590,14 @@ export const deletePersonalApiKey = async (
     .set('Authorization', token)
     .then((res) => res.body);
 };
+
+export const getGettingStartedSteps = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/getting_started_steps`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};

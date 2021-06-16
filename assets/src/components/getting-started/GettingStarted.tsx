@@ -4,6 +4,8 @@ import {Link} from 'react-router-dom';
 import {colors, Button, Divider, Text, Title} from '../common';
 import {CheckOutlined} from '../icons';
 
+import * as API from '../../api';
+
 type GettingStartedStep = {
   completed: boolean;
   ctaHref: string;
@@ -12,6 +14,9 @@ type GettingStartedStep = {
 };
 
 const GettingStarted = () => {
+  API.getGettingStartedSteps()
+    .then((response) => console.log('getting started steps', response))
+    .catch((error) => console.log({error}));
   const steps: Array<GettingStartedStep> = [
     {
       completed: false,
