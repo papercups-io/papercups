@@ -1,10 +1,12 @@
 import React from 'react';
-import {Box} from 'theme-ui';
+import {Box, Flex, Spinner} from 'theme-ui';
 import {Link} from 'react-router-dom';
 import {colors, Button, Divider, Text, Title} from '../common';
 import {CheckOutlined} from '../icons';
 
 import * as API from '../../api';
+import {GettingStartedSteps as StepStatuses} from '../../types';
+import logger from '../../logger';
 
 type GettingStartedStep = {
   completed: boolean;
@@ -14,12 +16,47 @@ type GettingStartedStep = {
 };
 
 const GettingStarted = () => {
-  API.getGettingStartedSteps()
-    .then((response) => console.log('getting started steps', response))
-    .catch((error) => console.log({error}));
+  const [stepStatuses, setStepStatuses] = React.useState<StepStatuses>({
+    configured_profile: false,
+    configured_storytime: false,
+    has_integrations: false,
+    installed_chat_widget: false,
+    invited_teammates: false,
+    upgraded_subscription: false,
+  });
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const statuses = await API.getGettingStartedSteps();
+        setStepStatuses(statuses);
+      } catch (error) {
+        logger.error('Failed to query getting started steps:', error);
+      }
+
+      setIsLoading(false);
+    })();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <Flex
+        sx={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100%',
+        }}
+      >
+        <Spinner size={40} />
+      </Flex>
+    );
+  }
+
   const steps: Array<GettingStartedStep> = [
     {
-      completed: false,
+      completed: stepStatuses.installed_chat_widget,
       ctaHref: '/settings/chat-widget',
       ctaText: 'Configure chat widget',
       text: (
@@ -30,7 +67,7 @@ const GettingStarted = () => {
       ),
     },
     {
-      completed: false,
+      completed: stepStatuses.invited_teammates,
       ctaHref: '/settings/team',
       ctaText: 'Invite teammates',
       text: (
@@ -41,7 +78,7 @@ const GettingStarted = () => {
       ),
     },
     {
-      completed: false,
+      completed: stepStatuses.configured_profile,
       ctaHref: '/settings/profile',
       ctaText: 'Configure profile',
       text: (
@@ -52,7 +89,7 @@ const GettingStarted = () => {
       ),
     },
     {
-      completed: false,
+      completed: stepStatuses.has_integrations,
       ctaHref: '/integrations',
       ctaText: 'Set up integrations',
       text: (
@@ -63,7 +100,7 @@ const GettingStarted = () => {
       ),
     },
     {
-      completed: false,
+      completed: stepStatuses.configured_storytime,
       ctaHref: '/sessions/setup',
       ctaText: 'Set up StoryTime',
       text: (
@@ -74,7 +111,7 @@ const GettingStarted = () => {
       ),
     },
     {
-      completed: false,
+      completed: stepStatuses.upgraded_subscription,
       ctaHref: '/settings/billing',
       ctaText: 'Upgrade subscription',
       text: (

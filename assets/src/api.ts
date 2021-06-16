@@ -7,6 +7,7 @@ import {
   Conversation,
   Customer,
   CustomerNote,
+  GettingStartedSteps,
   GoogleAuthParams,
   GoogleIntegrationParams,
   Issue,
@@ -1591,7 +1592,9 @@ export const deletePersonalApiKey = async (
     .then((res) => res.body);
 };
 
-export const getGettingStartedSteps = async (token = getAccessToken()) => {
+export const getGettingStartedSteps = async (
+  token = getAccessToken()
+): Promise<GettingStartedSteps> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
