@@ -1,4 +1,4 @@
-defmodule ChatApiWeb.GettingStartedStepsController do
+defmodule ChatApiWeb.SetupStatusController do
   use ChatApiWeb, :controller
 
   alias ChatApi.{Accounts, BrowserSessions, Github, Google, Mattermost, SlackAuthorizations, Twilio, Users}
