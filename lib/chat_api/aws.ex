@@ -21,17 +21,19 @@ defmodule ChatApi.Aws do
   def upload(file, identifier) do
     with {:ok, %{bucket_name: bucket_name}} <- Config.validate(),
          {:ok, file_binary} <- File.read(file.path) do
-      bucket_name
-      |> ExAws.S3.put_object(identifier, file_binary)
-      |> ExAws.request!()
-      |> case do
-        %{status_code: 200} = result -> {:ok, result}
-        result -> {:error, result}
-      end
+      upload_binary(file_binary, identifier, bucket_name)
     else
       {:error, :invalid_aws_config, errors} -> {:error, :invalid_aws_config, errors}
       {:error, error} -> {:error, :file_error, error}
       error -> error
+    end
+  end
+
+  @spec upload(binary(), binary(), binary()) :: {:error, any} | {:ok, any()}
+  def upload(file_path, identifier, bucket_name) when is_binary(file_path) do
+    case File.read(file_path) do
+      {:ok, file_binary} -> upload_binary(file_binary, identifier, bucket_name)
+      {:error, error} -> {:error, :file_error, error}
     end
   end
 
@@ -49,22 +51,6 @@ defmodule ChatApi.Aws do
     |> case do
       %{status_code: 200} = result -> {:ok, result}
       result -> {:error, result}
-    end
-  end
-
-  def upload(file_path, unique_file_name, bucket_name) do
-    with {:ok, file_binary} <- File.read(file_path) do
-      bucket_name
-      |> ExAws.S3.put_object(unique_file_name, file_binary)
-      |> ExAws.request!()
-      |> case do
-        %{status_code: 200} = result -> {:ok, result}
-        result -> {:error, result}
-      end
-    else
-      {:error, :invalid_aws_config, errors} -> {:error, :invalid_aws_config, errors}
-      {:error, error} -> {:error, :file_error, error}
-      error -> error
     end
   end
 
