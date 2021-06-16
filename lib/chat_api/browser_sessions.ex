@@ -30,6 +30,16 @@ defmodule ChatApi.BrowserSessions do
     |> Repo.one()
   end
 
+  def has_browser_sessions?(account_id) do
+    browser_session =
+      BrowserSession
+      |> where(account_id: ^account_id)
+      |> limit(1)
+      |> Repo.one()
+
+    browser_session != nil
+  end
+
   @doc """
   Gets a single browser_session.
 

@@ -275,3 +275,12 @@ export type SlackAuthorization = {
   team_name: string;
   settings: SlackAuthorizationSettings | null;
 };
+
+export type GettingStartedSteps = {
+  configured_profile: boolean;
+  configured_storytime: boolean;
+  has_integrations: boolean;
+  installed_chat_widget: boolean;
+  invited_teammates: boolean;
+  upgraded_subscription: boolean;
+};
