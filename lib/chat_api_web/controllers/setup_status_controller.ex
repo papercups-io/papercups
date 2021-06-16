@@ -1,7 +1,16 @@
 defmodule ChatApiWeb.SetupStatusController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{Accounts, BrowserSessions, Github, Google, Mattermost, SlackAuthorizations, Twilio, Users}
+  alias ChatApi.{
+    Accounts,
+    BrowserSessions,
+    Github,
+    Google,
+    Mattermost,
+    SlackAuthorizations,
+    Twilio,
+    Users
+  }
 
   action_fallback(ChatApiWeb.FallbackController)
 
@@ -46,7 +55,7 @@ defmodule ChatApiWeb.SetupStatusController do
   end
 
   def installed_chat_widget?(account) do
-    host = account.widget_settings.host
+    host = account.widget_settings && account.widget_settings.host
     host != nil && !String.contains?(host, ["papercups", "localhost"])
   end
 
