@@ -2,7 +2,6 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import request from 'superagent';
 
-import {getRunKitCode, setRunKitCode} from '../../storage';
 import {noop} from '../../utils';
 import logger from '../../logger';
 import {BASE_URL} from '../../config';
@@ -10,8 +9,6 @@ import {Divider, StandardSyntaxHighlighter, Text} from '../common';
 import RunKitWrapper from './RunKitWrapper';
 import EmbeddableChat from './EmbeddableChat';
 import {WEBHOOK_HANDLER_SOURCE} from './RunKit';
-
-const CACHE_KEY = 'CodeSandbox';
 
 export type SidebarProps = {
   accountId: string;
@@ -123,10 +120,10 @@ export class CodeSandbox extends React.Component<Props, State> {
       );
     }
 
-    // Cache source after running
-    this.state.runkit
-      .getSource()
-      .then((source: string) => setRunKitCode(CACHE_KEY, source));
+    // // Cache source after running?
+    // this.state.runkit
+    //   .getSource()
+    //   .then((source: string) => setRunKitCode(CACHE_KEY, source));
   };
 
   handleRunWebhookHandler = async (payload = {}) => {
@@ -173,7 +170,7 @@ export class CodeSandbox extends React.Component<Props, State> {
       <Flex sx={{width: '100%', maxHeight: runkitIframeHeight}}>
         <Box sx={{flex: 1.2, position: 'relative'}}>
           <RunKitWrapper
-            source={code || getRunKitCode(CACHE_KEY) || WEBHOOK_HANDLER_SOURCE}
+            source={code || WEBHOOK_HANDLER_SOURCE}
             mode="endpoint"
             environment={[{name: 'PAPERCUPS_API_KEY', value: personalApiKey}]}
             minHeight={runkitIframeHeight}
