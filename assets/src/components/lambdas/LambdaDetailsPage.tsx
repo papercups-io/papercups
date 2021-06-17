@@ -11,6 +11,7 @@ import {
   Divider,
   Input,
   Paragraph,
+  Popconfirm,
   Result,
   StandardSyntaxHighlighter,
   Switch,
@@ -19,7 +20,7 @@ import {
   Title,
   Tooltip,
 } from '../common';
-import {ArrowLeftOutlined} from '../icons';
+import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
 import {Lambda, LambdaStatus} from '../../types';
@@ -35,12 +36,14 @@ dayjs.extend(utc);
 
 type Props = RouteComponentProps<{id: string}> & {};
 type State = {
+  // TODO: consolidate these into a `status` enum?
   loading: boolean;
   saving: boolean;
   deploying: boolean;
+  deleting: boolean;
+  //
   name: string;
   description: string;
-  status: LambdaStatus;
   lambda: Lambda | null;
   personalApiKey: string | null;
   accountId: string | null;
@@ -55,9 +58,9 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     loading: true,
     saving: false,
     deploying: false,
+    deleting: false,
     name: 'Untitled function',
     description: '',
-    status: 'pending',
     lambda: null,
     personalApiKey: null,
     accountId: null,
@@ -79,7 +82,6 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
-        status: lambda?.status ?? 'pending',
         accountId: lambda?.account_id ?? null,
         personalApiKey: key ? key.value : null,
         loading: false,
@@ -100,7 +102,6 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
-        status: lambda?.status ?? 'pending',
       });
     } catch (err) {
       logger.error('Error refreshing lambda details:', err);
@@ -146,7 +147,6 @@ class LambdaDetailsPage extends React.Component<Props, State> {
 
     this.setState({
       lambda: result,
-      status: result.status ?? 'pending',
     });
   };
 
@@ -174,7 +174,6 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
-        status: lambda?.status ?? 'pending',
       });
 
       await sleep(1000);
@@ -229,10 +228,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       // const file = new File([blob], 'lambda.zip');
       const lambda = await deploy(lambdaId, blob);
 
-      this.setState({
-        lambda,
-        status: lambda?.status ?? 'pending',
-      });
+      this.setState({lambda});
 
       await sleep(1000);
 
@@ -245,6 +241,22 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       await this.refreshLambdaDetails();
     } finally {
       this.setState({deploying: false});
+    }
+  };
+
+  handleDeleteLambda = async () => {
+    try {
+      this.setState({deleting: true});
+      const lambdaId = this.props.match.params.id;
+
+      await API.deleteLambda(lambdaId);
+      await sleep(1000);
+
+      this.props.history.push('/functions');
+    } catch (err) {
+      logger.error('Error deleting lambda!', err);
+
+      this.setState({deleting: false});
     }
   };
 
@@ -334,6 +346,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
   render() {
     const {
       loading,
+      deleting,
       lambda,
       personalApiKey,
       accountId,
@@ -405,7 +418,21 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                 Back to all functions
               </Button>
             </Link>
+
+            <Popconfirm
+              title="Are you sure you want to delete this function?"
+              okText="Yes"
+              cancelText="No"
+              placement="bottomLeft"
+              onConfirm={this.handleDeleteLambda}
+            >
+              <Button danger loading={deleting} icon={<DeleteOutlined />}>
+                Delete function
+              </Button>
+            </Popconfirm>
           </Flex>
+
+          <Divider />
 
           <Box mb={4}>
             <Flex sx={{alignItems: 'center', justifyContent: 'space-between'}}>
@@ -495,6 +522,8 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                 : JSON.stringify({response: null}, null, 2)}
             </StandardSyntaxHighlighter>
           </Box>
+
+          <Divider />
         </Box>
       </Flex>
     );
