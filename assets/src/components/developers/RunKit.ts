@@ -42,7 +42,7 @@ export const DEFAULT_ENDPOINT_PREAMBLE = `
       default:
         if (typeof handler == 'function') {
           try {
-            const result = await handler(event, payload)
+            const result = await handler({event, payload})
 
             return res.json({ok: true, data: result});
           } catch (error) {
@@ -76,17 +76,28 @@ const papercups = require('@papercups-io/papercups')(
   {host: "${window.location.origin}"}
 );
 
-async function handler(event, payload) {
+async function handler({event, payload}) {
   switch (event) {
+    // See https://docs.papercups.io/webhook-events#messagecreated
     case 'message:created':
       return handleMessageCreated(payload);
     default:
-      return null;
+      return {event, payload, me: await papercups.me()};
   }
 }
 
 async function handleMessageCreated(message) {
-  // Update logic here to handle incoming messages!
+  const {body, customer_id, conversation_id} = message;
+  const isCustomerMessage = !!customer_id;
+
+  if (isCustomerMessage && body.toLowerCase().startsWith('test')) {
+    // See https://docs.papercups.io/api-endpoints#messages
+    return papercups.messages.create({
+        body: 'Success!',
+        type: 'bot',
+        conversation_id,
+    });
+  }
 
   return message;
 }
