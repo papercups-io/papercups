@@ -3,7 +3,7 @@ defmodule ChatApi.Messages.Notification do
   Notification handlers for messages
   """
 
-  alias ChatApi.EventSubscriptions
+  alias ChatApi.{EventSubscriptions, Lambdas}
   alias ChatApi.Messages.{Helpers, Message}
 
   require Logger
@@ -80,10 +80,14 @@ defmodule ChatApi.Messages.Notification do
     Logger.info("Sending message notification: :webhooks (message #{inspect(message.id)})")
     # TODO: how should we handle errors/retry logic?
     Task.start(fn ->
-      EventSubscriptions.notify_event_subscriptions(account_id, %{
+      event = %{
         "event" => "message:created",
         "payload" => Helpers.format(message)
-      })
+      }
+
+      EventSubscriptions.notify_event_subscriptions(account_id, event)
+      # NB: We treat custom lambdas as webhook event handler
+      Lambdas.notify_active_lambdas(account_id, event)
     end)
 
     message
