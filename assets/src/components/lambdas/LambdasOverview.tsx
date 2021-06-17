@@ -1,10 +1,10 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Container, Paragraph, Table, Title} from '../common';
+import {Badge, Button, Container, Paragraph, Table, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
-import {Lambda} from '../../types';
+import {Lambda, LambdaStatus} from '../../types';
 import logger from '../../logger';
 import {NewLambdaModalButton} from './NewLambdaModal';
 
@@ -41,6 +41,21 @@ const LambdasTable = ({
       },
     },
     {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: LambdaStatus) => {
+        switch (status) {
+          case 'active':
+            return <Badge status="processing" text="Active" />;
+          case 'inactive':
+            return <Badge status="error" text="Inactive" />;
+          default:
+            return <Badge status="default" text="Undeployed" />;
+        }
+      },
+    },
+    {
       title: '',
       dataIndex: 'action',
       key: 'action',
@@ -49,7 +64,7 @@ const LambdasTable = ({
 
         return (
           <Link to={`/functions/${lambdaId}`}>
-            <Button>View</Button>
+            <Button>Configure</Button>
           </Link>
         );
       },
