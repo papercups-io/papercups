@@ -248,9 +248,15 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     }
   };
 
-  // TODO: migrate toward always using lambda instead of runkit?
   handleMessageSent = (fn: (data: any) => void) => (payload = {}) => {
     const lambdaId = this.state.lambda?.id;
+    const isActive = this.state.lambda?.status === 'active';
+
+    if (isActive) {
+      // If the function is active, webhook events will automatically
+      // be sent to the lambda... no need to invoke it manually here
+      return;
+    }
 
     if (lambdaId) {
       return API.invokeLambda(lambdaId, {
