@@ -65,6 +65,7 @@ type Props = {
   code?: string;
   defaultHeight?: number;
   sidebar?: (opts: SidebarProps) => React.ReactElement;
+  footer?: (opts: SidebarProps) => React.ReactElement;
   onLoad?: (runkit: any) => void;
   onSuccess?: (output: any) => void;
   onError?: (error: any) => void;
@@ -170,7 +171,7 @@ export class CodeSandbox extends React.Component<Props, State> {
 
     return (
       <Flex sx={{width: '100%', maxHeight: runkitIframeHeight}}>
-        <Box sx={{flex: 1.2}}>
+        <Box sx={{flex: 1.2, position: 'relative'}}>
           <RunKitWrapper
             source={code || getRunKitCode(CACHE_KEY) || WEBHOOK_HANDLER_SOURCE}
             mode="endpoint"
@@ -180,6 +181,15 @@ export class CodeSandbox extends React.Component<Props, State> {
             onLoad={this.handleRunKitLoaded}
             onResize={this.handleRunKitResize}
           />
+
+          {typeof this.props.footer === 'function'
+            ? this.props.footer({
+                output,
+                accountId,
+                isExecuting,
+                onRunHandler: this.handleRunWebhookHandler,
+              })
+            : null}
         </Box>
 
         {typeof this.props.sidebar === 'function' ? (

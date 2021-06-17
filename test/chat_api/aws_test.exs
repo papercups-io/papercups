@@ -103,7 +103,8 @@ defmodule ChatApi.AwsTest do
       };
       """
 
-      %{"FunctionName" => ^function_name} = Aws.update_function_code(updated_code, function_name)
+      %{"FunctionName" => ^function_name} =
+        Aws.update_function_by_code(updated_code, function_name)
 
       %{"body" => body, "statusCode" => status_code} =
         Aws.invoke_lambda_function(function_name, %{"hello" => "world"})

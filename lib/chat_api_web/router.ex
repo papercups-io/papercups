@@ -195,6 +195,7 @@ defmodule ChatApiWeb.Router do
     get("/", PageController, :index)
     # TODO: move somewhere else?
     get("/google/auth", GoogleController, :index)
+    get("/deps", LambdaController, :deps)
 
     # Fallback to index, which renders React app
     get("/*path", PageController, :index)

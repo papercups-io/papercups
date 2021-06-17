@@ -1,5 +1,11 @@
 export const RunKit = (window as any).RunKit;
 
+export const DEFAULT_LAMBDA_PREAMBLE = `
+const noop = () => {};
+
+exports.handler = typeof handler == 'function' ? handler : noop;
+`;
+
 export const DEFAULT_ENDPOINT_PREAMBLE = `
   const express = require("@runkit/runkit/express-endpoint/1.0.0");
   const bodyParser = require('body-parser');

@@ -26,8 +26,10 @@ import {Lambda, LambdaStatus} from '../../types';
 import logger from '../../logger';
 import {BASE_URL} from '../../config';
 import {formatRelativeTime, sleep} from '../../utils';
+import {zipWithDependencies} from './support/zipper';
 import {CodeSandbox, SidebarProps} from '../developers/CodeSandbox';
 import EmbeddableChat from '../developers/EmbeddableChat';
+import deploy from './support/deploy';
 
 dayjs.extend(utc);
 
@@ -47,6 +49,8 @@ type State = {
 };
 
 class LambdaDetailsPage extends React.Component<Props, State> {
+  papercups: any;
+
   state: State = {
     loading: true,
     saving: false,
@@ -146,6 +150,14 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     });
   };
 
+  handleSendTestMessage = () => {
+    if (this.papercups) {
+      this.papercups.sendNewMessage({
+        body: 'Testing the message:created event!',
+      });
+    }
+  };
+
   handleSaveLambda = async () => {
     try {
       this.setState({saving: true});
@@ -212,7 +224,10 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         code: source,
       });
 
-      const lambda = await API.deployLambda(lambdaId);
+      const blob = await zipWithDependencies(source);
+      // TODO: is there any advantage to using a file vs blob?
+      // const file = new File([blob], 'lambda.zip');
+      const lambda = await deploy(lambdaId, blob);
 
       this.setState({
         lambda,
@@ -247,12 +262,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     }
   };
 
-  renderSidebar = ({
-    accountId,
-    output,
-    isExecuting,
-    onRunHandler,
-  }: SidebarProps) => {
+  renderSidebar = ({accountId, onRunHandler}: SidebarProps) => {
     const {name, description, saving, deploying} = this.state;
 
     return (
@@ -291,7 +301,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                 type="primary"
                 onClick={this.handleDeployLambda}
               >
-                Deploy
+                {deploying ? 'Deploying...' : 'Deploy'}
               </Button>
             </Box>
           </Flex>
@@ -308,24 +318,9 @@ class LambdaDetailsPage extends React.Component<Props, State> {
             newMessagePlaceholder: 'Send a test message...',
             baseUrl: BASE_URL,
           }}
-          onMessageSent={onRunHandler}
+          onChatLoaded={(papercups) => (this.papercups = papercups)}
+          onMessageSent={this.handleMessageSent(onRunHandler)}
         />
-
-        {false && (
-          <Flex sx={{flex: 1, flexDirection: 'column', overflow: 'scroll'}}>
-            <Box>
-              <Text strong>Output:</Text>
-            </Box>
-            <StandardSyntaxHighlighter
-              language="json"
-              style={{fontSize: 12, flex: 1, minHeight: 80}}
-            >
-              {isExecuting
-                ? JSON.stringify({status: 'Running...'}, null, 2)
-                : JSON.stringify(output, null, 2)}
-            </StandardSyntaxHighlighter>
-          </Flex>
-        )}
       </Flex>
     );
   };
@@ -461,6 +456,23 @@ class LambdaDetailsPage extends React.Component<Props, State> {
               onSuccess={(data) => this.setState({apiExplorerOutput: data})}
               onError={(error) => this.setState({apiExplorerOutput: error})}
               sidebar={this.renderSidebar}
+              footer={({isExecuting}) => {
+                return (
+                  <Box
+                    sx={{position: 'absolute', bottom: 0, left: 0, right: 0}}
+                  >
+                    <Button
+                      block
+                      type="primary"
+                      disabled={!this.papercups}
+                      loading={isExecuting}
+                      onClick={this.handleSendTestMessage}
+                    >
+                      Run with test message
+                    </Button>
+                  </Box>
+                );
+              }}
             />
           </Box>
 
