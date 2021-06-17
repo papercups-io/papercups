@@ -166,6 +166,14 @@ defmodule ChatApi.Aws do
     end
   end
 
+  def update_function_by_file(file_path, function_name, params \\ %{}) do
+    bucket = function_bucket_name()
+
+    with {:ok, _} <- upload(file_path, function_name, bucket) do
+      update_lambda_function_code(function_name, params)
+    end
+  end
+
   def create_function_by_code(code, function_name, params \\ %{}) do
     bucket = function_bucket_name()
     # TODO: does it matter what we name the zip file? (e.g. "test.zip"?)
@@ -180,7 +188,7 @@ defmodule ChatApi.Aws do
     end
   end
 
-  def update_function_code(code, function_name, params \\ %{}) do
+  def update_function_by_code(code, function_name, params \\ %{}) do
     bucket = function_bucket_name()
     # TODO: does it matter what we name the zip file? (e.g. "test.zip"?)
     with {:ok, {_filename, bytes}} <- :zip.create("test.zip", [{'index.js', code}], [:memory]),
