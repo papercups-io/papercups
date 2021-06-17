@@ -1,6 +1,5 @@
 import JSZip from 'jszip';
 import JSZipUtils from 'jszip-utils';
-import request from 'superagent';
 import {
   DEFAULT_LAMBDA_PREAMBLE,
   WEBHOOK_HANDLER_SOURCE,
