@@ -63,6 +63,21 @@ defmodule ChatApiWeb.LambdaController do
   end
 
   @spec deploy(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def deploy(conn, %{"file" => file} = params) do
+    with %{current_lambda: lambda, current_user: %{id: user_id, account_id: account_id}} <-
+           conn.assigns,
+         # NB: for now we just get the most recent API key rather than passing it through as a param
+         %ChatApi.ApiKeys.PersonalApiKey{value: api_key} <-
+           ChatApi.ApiKeys.list_personal_api_keys(user_id, account_id) |> List.last(),
+         opts <-
+           params
+           |> Map.delete("file")
+           |> Map.merge(%{"env" => %{"PAPERCUPS_API_KEY" => api_key}}),
+         {:ok, %Lambda{} = lambda} <- Lambdas.deploy_file(lambda, file, opts) do
+      render(conn, "show.json", lambda: lambda)
+    end
+  end
+
   def deploy(conn, params) do
     with {:ok, %Lambda{} = lambda} <-
            Lambdas.deploy(conn.assigns.current_lambda, params) do

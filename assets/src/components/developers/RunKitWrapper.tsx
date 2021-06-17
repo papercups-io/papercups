@@ -52,11 +52,13 @@ class RunKitWrapper extends React.Component<Props, State> {
       onResize: this.handleResize,
     };
 
-    this.notebook = RunKit.createNotebook(options);
+    if (RunKit && typeof RunKit.createNotebook === 'function') {
+      this.notebook = RunKit.createNotebook(options);
+    }
   }
 
   componentWillUnmount() {
-    this.notebook.destroy();
+    this.notebook?.destroy();
     this.notebook = null;
   }
 
@@ -80,15 +82,15 @@ class RunKitWrapper extends React.Component<Props, State> {
   };
 
   evaluate(cb: any) {
-    this.notebook.evaluate(cb);
+    this.notebook?.evaluate(cb);
   }
 
   getSource(): Promise<string> {
-    return this.notebook.getSource();
+    return this.notebook?.getSource();
   }
 
   getURL() {
-    return this.notebook.URL;
+    return this.notebook?.URL;
   }
 
   render() {
