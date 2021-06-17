@@ -53,12 +53,39 @@ defmodule ChatApi.Lambdas do
 
         %Lambda{lambda_function_name: lambda_function_name, code: code}
         when is_binary(lambda_function_name) ->
-          ChatApi.Aws.update_function_code(code, lambda_function_name, opts)
+          ChatApi.Aws.update_function_by_code(code, lambda_function_name, opts)
 
         %Lambda{name: name, lambda_function_name: _, code: code} ->
           lambda_function_name = ChatApi.Aws.generate_unique_filename(name)
 
           ChatApi.Aws.create_function_by_code(code, lambda_function_name, opts)
+      end
+
+    case result do
+      %{"FunctionName" => function_name} ->
+        update_lambda(lambda, %{
+          lambda_function_name: function_name,
+          last_deployed_at: DateTime.utc_now()
+        })
+
+      error ->
+        {:error, error}
+    end
+  end
+
+  @spec deploy_file(Lambda.t(), Plug.Upload.t(), map()) :: {:ok, Lambda.t()} | {:error, any()}
+  def deploy_file(%Lambda{} = lambda, %Plug.Upload{} = file, opts \\ %{}) do
+    result =
+      case lambda do
+        %Lambda{lambda_function_name: lambda_function_name}
+        when is_binary(lambda_function_name) ->
+          ChatApi.Aws.update_lambda_function_config(lambda_function_name, opts)
+          ChatApi.Aws.update_function_by_file(file.path, lambda_function_name, opts)
+
+        %Lambda{name: name, lambda_function_name: _} ->
+          lambda_function_name = ChatApi.Aws.generate_unique_filename(name)
+
+          ChatApi.Aws.create_function_by_file(file.path, lambda_function_name, opts)
       end
 
     case result do

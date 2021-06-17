@@ -168,6 +168,7 @@ const EmbeddableChat = ({
   height,
   width,
   sx = {},
+  onChatLoaded,
   onMessageSent,
   onMessageReceived,
 }: {
@@ -175,12 +176,18 @@ const EmbeddableChat = ({
   height?: number | string;
   width?: number | string;
   sx?: SxStyleProp;
+  onChatLoaded?: (papercups: any) => void;
   onMessageSent?: (message: any) => void;
   onMessageReceived?: (message: any) => void;
 }) => {
   return (
     <ChatBuilder
       config={config}
+      scrollIntoViewOptions={{
+        block: 'nearest',
+        inline: 'start',
+      }}
+      onChatLoaded={onChatLoaded}
       onMessageSent={onMessageSent}
       onMessageReceived={onMessageReceived}
     >
