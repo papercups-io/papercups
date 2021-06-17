@@ -96,4 +96,8 @@ defmodule ChatApiWeb.LambdaController do
         json(conn, %{data: nil})
     end
   end
+
+  def deps(conn, params) do
+    send_file(conn, 200, "./priv/static/deps.zip")
+  end
 end
