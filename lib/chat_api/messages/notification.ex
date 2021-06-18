@@ -76,6 +76,13 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  def notify(
+        %Message{account_id: account_id, metadata: %{"disable_webhook_events" => true}} = message,
+        :webhooks,
+        _opts
+      ),
+      do: message
+
   def notify(%Message{account_id: account_id} = message, :webhooks, _opts) do
     Logger.info("Sending message notification: :webhooks (message #{inspect(message.id)})")
     # TODO: how should we handle errors/retry logic?
