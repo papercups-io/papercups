@@ -36,6 +36,7 @@ import {
 import {SOCKET_URL} from '../socket';
 import analytics from '../analytics';
 import {
+  formatUserExternalId,
   getBrowserVisibilityInfo,
   hasValidStripeKey,
   isWindowHidden,
@@ -148,7 +149,7 @@ const ChatWithUs = ({
         hideToggleButton
         baseUrl="https://app.papercups-eu.io"
         customer={{
-          external_id: [currentUser.id, currentUser.email].join('|'),
+          external_id: formatUserExternalId(currentUser),
           email: currentUser.email,
           metadata: {
             company_name: account?.company_name,
@@ -169,7 +170,7 @@ const ChatWithUs = ({
       accountId={REACT_APP_ADMIN_ACCOUNT_ID}
       hideToggleButton
       customer={{
-        external_id: [currentUser.id, currentUser.email].join('|'),
+        external_id: formatUserExternalId(currentUser),
         email: currentUser.email,
         metadata: {
           company_name: account?.company_name,
@@ -244,7 +245,7 @@ const Dashboard = (props: RouteComponentProps) => {
     }
 
     if (isStorytimeEnabled && currentUser) {
-      const {id, email} = currentUser;
+      const {email} = currentUser;
       // TODO: figure out a better way to initialize this?
       const storytime = Storytime.init({
         accountId: REACT_APP_ADMIN_ACCOUNT_ID,
@@ -252,7 +253,7 @@ const Dashboard = (props: RouteComponentProps) => {
         debug: isDev,
         customer: {
           email,
-          external_id: [id, email].join('|'),
+          external_id: formatUserExternalId(currentUser),
         },
       });
 

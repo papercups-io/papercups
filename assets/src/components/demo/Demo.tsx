@@ -20,6 +20,7 @@ import logger from '../../logger';
 // import {Storytime} from '../../lib/storytime'; // For testing
 import {Storytime} from '@papercups-io/storytime';
 import ChatWidget from '@papercups-io/chat-widget';
+import {formatUserExternalId} from '../../utils';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -98,12 +99,12 @@ class Demo extends React.Component<Props, State> {
       return {};
     }
 
-    const {id, email} = currentUser;
+    const {email} = currentUser;
 
     // TODO: include name if available
     return {
       email: email,
-      external_id: [id, email].join('|'),
+      external_id: formatUserExternalId(currentUser),
       metadata: {
         // Just testing that ad hoc metadata works :)
         ts: +new Date(),

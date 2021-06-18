@@ -153,6 +153,8 @@ defmodule ChatApiWeb.Router do
     post("/customers/:customer_id/issues", CustomerController, :link_issue)
     delete("/customers/:customer_id/issues/:issue_id", CustomerController, :unlink_issue)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
+
+    post("/admin/notifications", AdminNotificationController, :create)
   end
 
   scope "/api/v1", ChatApiWeb do

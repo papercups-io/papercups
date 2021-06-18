@@ -1687,3 +1687,18 @@ export const invokeLambda = async (
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const sendAdminNotification = async (
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/admin/notifications`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
