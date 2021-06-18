@@ -25,8 +25,8 @@ export type User = {
   profile_photo_url?: string;
   created_at?: string;
   disabled_at?: string;
-  role?: 'user' | 'admin';
-  account_id?: string;
+  role: 'user' | 'admin';
+  account_id: string;
 };
 
 export type Customer = {
