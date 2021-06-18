@@ -77,7 +77,7 @@ defmodule ChatApi.Messages.Notification do
   end
 
   def notify(
-        %Message{account_id: account_id, metadata: %{"disable_webhook_events" => true}} = message,
+        %Message{metadata: %{"disable_webhook_events" => true}} = message,
         :webhooks,
         _opts
       ),
