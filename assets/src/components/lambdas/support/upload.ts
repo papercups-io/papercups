@@ -1,6 +1,10 @@
 import {noop} from '../../../utils';
 import type {UploadRequestOption, UploadRequestError} from './types';
 
+/**
+ * Taken from https://github.com/react-component/upload/blob/master/src/request.ts
+ */
+
 function getError(option: UploadRequestOption, xhr: XMLHttpRequest) {
   const msg = `cannot ${option.method} ${option.action} ${xhr.status}'`;
   const err = new Error(msg) as UploadRequestError;
