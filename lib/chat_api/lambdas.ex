@@ -53,6 +53,7 @@ defmodule ChatApi.Lambdas do
 
         %Lambda{lambda_function_name: lambda_function_name, code: code}
         when is_binary(lambda_function_name) ->
+          ChatApi.Aws.update_lambda_function_config(lambda_function_name, opts)
           ChatApi.Aws.update_function_by_code(code, lambda_function_name, opts)
 
         %Lambda{name: name, lambda_function_name: _, code: code} ->
@@ -65,7 +66,12 @@ defmodule ChatApi.Lambdas do
       %{"FunctionName" => function_name} ->
         update_lambda(lambda, %{
           lambda_function_name: function_name,
-          last_deployed_at: DateTime.utc_now()
+          last_deployed_at: DateTime.utc_now(),
+          status:
+            case lambda.status do
+              "pending" -> "inactive"
+              status -> status
+            end
         })
 
       error ->
@@ -92,7 +98,12 @@ defmodule ChatApi.Lambdas do
       %{"FunctionName" => function_name} ->
         update_lambda(lambda, %{
           lambda_function_name: function_name,
-          last_deployed_at: DateTime.utc_now()
+          last_deployed_at: DateTime.utc_now(),
+          status:
+            case lambda.status do
+              "pending" -> "inactive"
+              status -> status
+            end
         })
 
       error ->
