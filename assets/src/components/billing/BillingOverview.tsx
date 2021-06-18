@@ -37,7 +37,7 @@ import {LITE_PRICE, STARTER_PRICE, TEAM_PRICE} from '../../constants';
 import {env} from '../../config';
 import './Billing.css';
 
-const stripe = loadStripe(env.REACT_APP_STRIPE_PUBLIC_KEY);
+const stripe = loadStripe('undefined');
 
 const BillingBreakdownTable = ({
   loading,

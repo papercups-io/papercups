@@ -75,6 +75,35 @@ defmodule ChatApiWeb.ConversationChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  def handle_in("bot:shout", payload, socket) do
+    with %{conversation: conversation} <- socket.assigns,
+         %{id: conversation_id, account_id: account_id} <- conversation,
+         {signature, payload} <- Map.pop(payload, "signature"),
+         user_id <- user_id_of_signature(signature),
+         {:ok, message} <-
+           payload
+           |> Map.merge(%{
+             "conversation_id" => conversation_id,
+             "account_id" => account_id,
+             "user_id" => user_id
+           })
+           |> Messages.create_message() do
+      case Map.get(payload, "file_ids") do
+        file_ids when is_list(file_ids) -> Messages.create_attachments(message, file_ids)
+        _ -> nil
+      end
+
+      message = Messages.get_message!(message.id)
+
+      broadcast_new_message(socket, message)
+    else
+      _ ->
+        broadcast(socket, "shout", payload)
+    end
+
+    {:noreply, socket}
+  end
+
   def handle_in("shout", payload, socket) do
     with %{conversation: conversation} <- socket.assigns,
          %{id: conversation_id, account_id: account_id} <- conversation,
@@ -161,5 +190,9 @@ defmodule ChatApiWeb.ConversationChannel do
       %Conversations.Conversation{} -> true
       _ -> false
     end
+  end
+
+  defp user_id_of_signature(_signature) do
+    1
   end
 end
