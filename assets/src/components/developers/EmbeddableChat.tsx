@@ -192,6 +192,19 @@ const EmbeddableChat = ({
       onMessageReceived={onMessageReceived}
     >
       {({config, state, scrollToRef, onSendMessage}) => {
+        const handleSendMessage = (message: any, email?: string) => {
+          const {metadata = {}} = message;
+
+          return onSendMessage(
+            {
+              ...message,
+              // TODO: make this configurable as a prop
+              metadata: {...metadata, disable_webhook_events: true},
+            },
+            email
+          );
+        };
+
         return (
           <Box
             sx={{
@@ -224,7 +237,7 @@ const EmbeddableChat = ({
               <ChatFooter
                 config={config}
                 state={state}
-                onSendMessage={onSendMessage}
+                onSendMessage={handleSendMessage}
               />
             </Flex>
           </Box>
