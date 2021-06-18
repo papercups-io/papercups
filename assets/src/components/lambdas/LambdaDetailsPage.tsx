@@ -260,14 +260,29 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     }
   };
 
-  handleMessageSent = (fn: (data: any) => void) => (payload = {}) => {
-    const lambdaId = this.state.lambda?.id;
+  handleInvokeLambda = async (payload = {}) => {
+    if (!this.state.lambda) {
+      return;
+    }
 
-    if (lambdaId) {
-      return API.invokeLambda(lambdaId, {
-        event: 'message:created',
-        payload,
-      }).then((result) => this.setState({apiExplorerOutput: result}));
+    const {id: lambdaId, code} = this.state.lambda;
+    const source = await this.state.runkit.getSource();
+
+    if (source !== code) {
+      await this.handleDeployLambda();
+    }
+
+    const output = await API.invokeLambda(lambdaId, {
+      event: 'message:created',
+      payload,
+    });
+
+    this.setState({apiExplorerOutput: output});
+  };
+
+  handleMessageSent = (fn: (data: any) => void) => (payload = {}) => {
+    if (this.state.lambda) {
+      this.handleInvokeLambda(payload);
     } else {
       fn(payload);
     }
@@ -279,43 +294,14 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     return (
       <Flex pl={2} sx={{flex: 1, flexDirection: 'column'}}>
         <Box>
-          <Box mb={3}>
-            <label>Name</label>
-            <Input
-              id="lambda_name"
-              type="text"
-              value={name}
-              onChange={this.handleChangeName}
-            />
-          </Box>
-
-          <Box mb={3}>
-            <label>Description</label>
-            <TextArea
-              id="lambda_description"
-              placeholder="Describe the purpose of this function..."
-              value={description}
-              onChange={this.handleChangeDescription}
-            />
-          </Box>
-
-          <Flex mx={-1}>
-            <Box mx={1} sx={{flex: 1}}>
-              <Button block disabled={saving} onClick={this.handleSaveLambda}>
-                {saving ? 'Saving...' : 'Save draft'}
-              </Button>
-            </Box>
-            <Box mx={1} sx={{flex: 1}}>
-              <Button
-                block
-                disabled={deploying}
-                type="primary"
-                onClick={this.handleDeployLambda}
-              >
-                {deploying ? 'Deploying...' : 'Deploy'}
-              </Button>
-            </Box>
-          </Flex>
+          <Button
+            block
+            disabled={deploying}
+            type="primary"
+            onClick={this.handleDeployLambda}
+          >
+            {deploying ? 'Deploying...' : 'Deploy your code'}
+          </Button>
         </Box>
 
         <Divider />
@@ -346,7 +332,6 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       apiExplorerOutput,
     } = this.state;
 
-    // TODO: does an API key need to be required?
     if (loading || !lambda || !accountId) {
       return (
         <Flex
@@ -430,6 +415,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
           <Box mb={4}>
             <Flex sx={{alignItems: 'center', justifyContent: 'space-between'}}>
               <Box sx={{flex: 1}}>
+                {/* TODO: make these fields editable */}
                 <Title level={4}>{name || 'Untitled function'}</Title>
                 <Paragraph>{description || 'No description.'}</Paragraph>
               </Box>
@@ -489,12 +475,11 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                   >
                     <Button
                       block
-                      type="primary"
                       disabled={!this.papercups}
                       loading={isExecuting}
                       onClick={this.handleSendTestMessage}
                     >
-                      Run with test message
+                      Run with test event
                     </Button>
                   </Box>
                 );
