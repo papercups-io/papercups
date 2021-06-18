@@ -116,13 +116,13 @@ defmodule ChatApiWeb.Router do
     put("/profile", UserProfileController, :update)
     get("/user_settings", UserSettingsController, :show)
     put("/user_settings", UserSettingsController, :update)
-    delete("/users/:id", UserController, :delete)
     post("/users/:id/disable", UserController, :disable)
     post("/users/:id/enable", UserController, :enable)
     post("/payment_methods", PaymentMethodController, :create)
     get("/payment_methods", PaymentMethodController, :show)
     get("/browser_sessions/count", BrowserSessionController, :count)
 
+    resources("/users", UserController, only: [:index, :show, :delete])
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
     resources("/user_invitation_emails", UserInvitationEmailController, only: [:create])
     resources("/accounts", AccountController, only: [:update, :delete])
@@ -165,6 +165,7 @@ defmodule ChatApiWeb.Router do
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit])
     resources("/customers", CustomerController, except: [:new, :edit])
+    resources("/users", UserController, only: [:index, :show])
   end
 
   # Enables LiveDashboard only for development
