@@ -24,6 +24,7 @@ defmodule ChatApi.Users do
   def list_users_by_account(account_id) do
     User
     |> where(account_id: ^account_id)
+    |> where([u], is_nil(u.disabled_at))
     |> Repo.all()
     |> Repo.preload([:profile, :settings])
   end
@@ -216,6 +217,14 @@ defmodule ChatApi.Users do
   def get_user_info(user_id) do
     User
     |> where(id: ^user_id)
+    |> Repo.one()
+    |> Repo.preload([:profile, :settings])
+  end
+
+  @spec get_user_info(binary(), integer()) :: User.t() | nil
+  def get_user_info(account_id, user_id) do
+    User
+    |> where(id: ^user_id, account_id: ^account_id)
     |> Repo.one()
     |> Repo.preload([:profile, :settings])
   end

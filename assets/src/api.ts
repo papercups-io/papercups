@@ -1151,6 +1151,31 @@ export const createPaymentMethod = async (
     .then((res) => res.body.data);
 };
 
+export const fetchAccountUsers = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/users`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchAccountUser = async (
+  id: number,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/users/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const disableAccountUser = async (
   userId: number | string,
   token = getAccessToken()
