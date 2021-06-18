@@ -73,7 +73,9 @@ defmodule ChatApiWeb.LambdaController do
            params
            |> Map.delete("file")
            |> Map.merge(%{"env" => %{"PAPERCUPS_API_KEY" => api_key}}),
-         {:ok, %Lambda{} = lambda} <- Lambdas.deploy_file(lambda, file, opts) do
+         {:ok, %Lambda{} = lambda} <- Lambdas.deploy_file(lambda, file, opts),
+         updates <- Map.take(params, ["name", "description", "code"]),
+         {:ok, %Lambda{} = lambda} <- Lambdas.update_lambda(lambda, updates) do
       render(conn, "show.json", lambda: lambda)
     end
   end
@@ -97,7 +99,7 @@ defmodule ChatApiWeb.LambdaController do
     end
   end
 
-  def deps(conn, params) do
+  def deps(conn, _params) do
     send_file(conn, 200, "./priv/static/deps.zip")
   end
 end

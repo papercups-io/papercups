@@ -9,14 +9,12 @@ import {
   notification,
   Button,
   Divider,
-  Input,
   Paragraph,
   Popconfirm,
   Result,
   StandardSyntaxHighlighter,
   Switch,
   Text,
-  TextArea,
   Title,
   Tooltip,
 } from '../common';
@@ -154,6 +152,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     if (this.papercups) {
       this.papercups.sendNewMessage({
         body: 'Testing the message:created event!',
+        metadata: {disable_webhook_events: true},
       });
     }
   };
@@ -216,17 +215,16 @@ class LambdaDetailsPage extends React.Component<Props, State> {
 
       const lambdaId = this.props.match.params.id;
       const source = await this.state.runkit.getSource();
-
-      await API.updateLambda(lambdaId, {
-        name: this.state.name,
-        description: this.state.description,
-        code: source,
-      });
-
       const blob = await zipWithDependencies(source);
       // TODO: is there any advantage to using a file vs blob?
       // const file = new File([blob], 'lambda.zip');
-      const lambda = await deploy(lambdaId, blob);
+      const lambda = await deploy(lambdaId, blob, {
+        data: {
+          name: this.state.name,
+          description: this.state.description,
+          code: source,
+        },
+      });
 
       this.setState({lambda});
 
@@ -289,7 +287,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
   };
 
   renderSidebar = ({accountId, onRunHandler}: SidebarProps) => {
-    const {name, description, saving, deploying} = this.state;
+    const {deploying} = this.state;
 
     return (
       <Flex pl={2} sx={{flex: 1, flexDirection: 'column'}}>
