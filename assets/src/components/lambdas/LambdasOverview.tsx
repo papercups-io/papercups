@@ -7,7 +7,6 @@ import * as API from '../../api';
 import {Lambda, LambdaStatus} from '../../types';
 import logger from '../../logger';
 import {NewLambdaModalButton} from './NewLambdaModal';
-import LambdasOnboarding from './LambdasOnboarding';
 
 const LambdasTable = ({
   loading,
