@@ -324,6 +324,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     const {
       loading,
       deleting,
+      deploying,
       lambda,
       personalApiKey,
       accountId,
@@ -473,7 +474,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                   >
                     <Button
                       block
-                      disabled={!this.papercups}
+                      disabled={deploying || !this.papercups}
                       loading={isExecuting}
                       onClick={this.handleSendTestMessage}
                     >
