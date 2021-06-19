@@ -110,7 +110,8 @@ defmodule ChatApi.Aws do
         },
         "Environment" => %{
           "Variables" => Map.get(params, "env", %{})
-        }
+        },
+        "Layers" => ["arn:aws:lambda:us-east-2:#{aws_account_id}:layer:papercups-test:1"]
       },
       service: :lambda
     }

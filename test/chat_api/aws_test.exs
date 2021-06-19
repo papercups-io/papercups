@@ -180,5 +180,24 @@ defmodule ChatApi.AwsTest do
         Aws.get_lambda_function(function_name)
       end
     end
+
+    test "with layers and deps" do
+      function_name = Aws.generate_unique_filename("test_function_name")
+      code = """
+      const papercups = require('@papercups-io/papercups')
+
+      exports.handler = async (event) => {
+          const response = {
+              statusCode: 200,
+              body: JSON.stringify(event),
+          };
+          return response;
+      };
+      """
+
+      res = Aws.create_function_by_code(code, function_name)
+      %{"body" => body, "statusCode" => status_code} =
+        Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
+    end
   end
 end
