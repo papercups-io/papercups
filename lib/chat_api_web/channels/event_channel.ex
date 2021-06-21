@@ -1,5 +1,6 @@
 defmodule ChatApiWeb.EventChannel do
   use ChatApiWeb, :channel
+  use Appsignal.Instrumentation.Decorators
 
   alias ChatApiWeb.Presence
 
@@ -99,6 +100,7 @@ defmodule ChatApiWeb.EventChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  @decorate channel_action()
   def handle_in("replay:event:emitted", payload, socket) do
     enqueue_process_browser_replay_event(payload, socket)
     broadcast_to_admin(socket, "replay:event:emitted", payload)
@@ -106,6 +108,7 @@ defmodule ChatApiWeb.EventChannel do
     {:noreply, socket}
   end
 
+  @decorate channel_action()
   def handle_in("session:active", _payload, socket) do
     topic = get_admin_all_topic(socket)
     key = "session:" <> socket.assigns.browser_session_id
@@ -120,6 +123,7 @@ defmodule ChatApiWeb.EventChannel do
     {:noreply, socket}
   end
 
+  @decorate channel_action()
   def handle_in("session:inactive", _payload, socket) do
     topic = get_admin_all_topic(socket)
     key = "session:" <> socket.assigns.browser_session_id
