@@ -29,6 +29,7 @@ import {zipWithDependencies} from './support/zipper';
 import {CodeSandbox, SidebarProps} from '../developers/CodeSandbox';
 import EmbeddableChat from '../developers/EmbeddableChat';
 import deploy from './support/deploy';
+import {DEFAULT_LAMBDA_PREAMBLE} from '../developers/RunKit';
 
 dayjs.extend(utc);
 
@@ -215,9 +216,15 @@ class LambdaDetailsPage extends React.Component<Props, State> {
 
       const lambdaId = this.props.match.params.id;
       const source = await this.state.runkit.getSource();
+      // const lambda = await API.deployLambda(lambdaId, {
+      //   name: this.state.name,
+      //   description: this.state.description,
+      //   code: source,
+      // });
+
       const blob = await zipWithDependencies(source);
       // TODO: is there any advantage to using a file vs blob?
-      // const file = new File([blob], 'lambda.zip');
+      const file = new File([blob], 'lambda.zip');
       const lambda = await deploy(lambdaId, blob, {
         data: {
           name: this.state.name,

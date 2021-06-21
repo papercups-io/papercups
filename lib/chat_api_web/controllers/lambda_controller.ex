@@ -80,9 +80,25 @@ defmodule ChatApiWeb.LambdaController do
     end
   end
 
-  def deploy(conn, params) do
-    with {:ok, %Lambda{} = lambda} <-
-           Lambdas.deploy(conn.assigns.current_lambda, params) do
+  def deploy(conn, %{"code" => code} = params) do
+    # with {:ok, %Lambda{} = lambda} <-
+    #        Lambdas.deploy(conn.assigns.current_lambda, params) do
+    #   render(conn, "show.json", lambda: lambda)
+    # end
+
+    with %{current_lambda: lambda, current_user: %{id: user_id, account_id: account_id}} <-
+           conn.assigns,
+         updates <- Map.take(params, ["name", "description", "code"]),
+         {:ok, %Lambda{} = lambda} <- Lambdas.update_lambda(lambda, updates),
+         # NB: for now we just get the most recent API key rather than passing it through as a param
+         %ChatApi.ApiKeys.PersonalApiKey{value: api_key} <-
+           ChatApi.ApiKeys.list_personal_api_keys(user_id, account_id) |> List.last(),
+         opts <-
+           params
+           |> Map.delete(["name", "description", "code"])
+           |> Map.merge(%{"env" => %{"PAPERCUPS_API_KEY" => api_key}}),
+         deployable_code <- format_code(lambda, code),
+         {:ok, %Lambda{} = lambda} <- Lambdas.deploy_code(lambda, deployable_code, opts) do
       render(conn, "show.json", lambda: lambda)
     end
   end
@@ -102,4 +118,20 @@ defmodule ChatApiWeb.LambdaController do
   def deps(conn, _params) do
     send_file(conn, 200, "./priv/static/deps.zip")
   end
+
+  defp format_code(%Lambda{runtime: "nodejs14.x"}, code) do
+    Enum.join(
+      [
+        code,
+        """
+        const noop = () => {};
+
+        exports.handler = typeof handler == 'function' ? handler : noop;
+        """
+      ],
+      "\n"
+    )
+  end
+
+  defp format_code(_, code), do: code
 end

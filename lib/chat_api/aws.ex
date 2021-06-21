@@ -110,7 +110,12 @@ defmodule ChatApi.Aws do
         },
         "Environment" => %{
           "Variables" => Map.get(params, "env", %{})
-        }
+        },
+        "Layers" => [
+          "arn:aws:lambda:us-east-2:#{aws_account_id()}:layer:#{
+            System.get_env("PAPERCUPS_LAMBDA_DEPENDENCIES_LAYER", "papercups-test")
+          }:1"
+        ]
       },
       service: :lambda
     }
@@ -146,6 +151,11 @@ defmodule ChatApi.Aws do
         "Environment" => %{
           "Variables" => Map.get(params, "env", %{})
         }
+        # "Layers" => [
+        #   "arn:aws:lambda:us-east-2:#{aws_account_id()}:layer:#{
+        #     System.get_env("PAPERCUPS_LAMBDA_DEPENDENCIES_LAYER", "papercups-test")
+        #   }:1"
+        # ]
       },
       service: :lambda
     }
@@ -177,7 +187,7 @@ defmodule ChatApi.Aws do
   def create_function_by_code(code, function_name, params \\ %{}) do
     bucket = function_bucket_name()
     # TODO: does it matter what we name the zip file? (e.g. "test.zip"?)
-    with {:ok, {_filename, bytes}} <- :zip.create("test.zip", [{'index.js', code}], [:memory]),
+    with {:ok, {_filename, bytes}} <- :zip.create("handler.zip", [{'index.js', code}], [:memory]),
          {:ok, _} <- upload_binary(bytes, function_name, bucket) do
       create_lambda_function(
         function_name,

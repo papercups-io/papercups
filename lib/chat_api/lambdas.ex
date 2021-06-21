@@ -43,20 +43,16 @@ defmodule ChatApi.Lambdas do
     Lambda.changeset(lambda, attrs)
   end
 
-  @spec deploy(Lambda.t(), map()) :: {:ok, Lambda.t()} | {:error, any()}
-  def deploy(%Lambda{} = lambda, opts \\ %{}) do
+  @spec deploy_code(Lambda.t(), binary(), map()) :: {:ok, Lambda.t()} | {:error, any()}
+  def deploy_code(%Lambda{} = lambda, code, opts \\ %{}) do
     result =
       case lambda do
-        %Lambda{code: nil} ->
-          # TODO: how should we handle deploys if there is no code?
-          nil
-
-        %Lambda{lambda_function_name: lambda_function_name, code: code}
+        %Lambda{lambda_function_name: lambda_function_name}
         when is_binary(lambda_function_name) ->
           ChatApi.Aws.update_lambda_function_config(lambda_function_name, opts)
           ChatApi.Aws.update_function_by_code(code, lambda_function_name, opts)
 
-        %Lambda{name: name, lambda_function_name: _, code: code} ->
+        %Lambda{name: name, lambda_function_name: _} ->
           lambda_function_name = ChatApi.Aws.generate_unique_filename(name)
 
           ChatApi.Aws.create_function_by_code(code, lambda_function_name, opts)
@@ -93,6 +89,8 @@ defmodule ChatApi.Lambdas do
 
           ChatApi.Aws.create_function_by_file(file.path, lambda_function_name, opts)
       end
+
+    IO.inspect(result, label: "Deployed with file!")
 
     case result do
       %{"FunctionName" => function_name} ->

@@ -150,17 +150,22 @@ defmodule ChatApi.AwsTest do
       function_name = Aws.generate_unique_filename("test_function_name")
 
       code = """
+      const axios = require('axios');
+      const _ = require('lodash');
+      const papercups = require('@papercups-io/papercups');
+
       exports.handler = async (event) => {
-        return {statusCode: 200, body: event};
+        return {status: 200, body: event, dependencies: [typeof papercups, typeof _, typeof axios]};
       };
       """
 
       Aws.create_function_by_code(code, function_name)
 
-      %{"statusCode" => 200, "body" => body} =
+      %{"status" => 200, "body" => body, "dependencies" => dependencies} =
         Aws.invoke_lambda_function(function_name, %{"hello" => "world"})
 
       assert body["hello"] == "world"
+      for dep <- dependencies, do: assert(dep == "function")
     end
 
     test "delete" do
