@@ -20,3 +20,5 @@ config :chat_api, ChatApi.Repo,
   show_sensitive_data_on_connection_error: true,
   socket_options: [:inet],
   pool_size: pool_size
+
+config :appsignal, :config, active: true
