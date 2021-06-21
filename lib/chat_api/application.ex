@@ -15,7 +15,7 @@ defmodule ChatApi.Application do
             # NB: use redis://localhost:6379 for testing locally
             url: redis_url(),
             # Set ssl: true when using `rediss` URLs in Heroku
-            ssl: true,
+            # ssl: true,
             node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
           ]
 
