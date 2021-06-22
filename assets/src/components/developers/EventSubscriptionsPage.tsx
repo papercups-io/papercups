@@ -160,17 +160,17 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
           onCancel={this.handleWebhookModalCancel}
         />
 
-        {!!personalApiKey && !!accountId && (
-          <Box mb={5}>
-            <Title level={4}>Webhook handler sandbox</Title>
+        {/* {!!personalApiKey && !!accountId && (
+          // <Box mb={5}>
+          //   <Title level={4}>Webhook handler sandbox</Title>
 
-            <CodeSandbox
-              personalApiKey={personalApiKey}
-              accountId={accountId}
-              onSuccess={(data) => this.setState({apiExplorerOutput: data})}
-            />
-          </Box>
-        )}
+          //   <CodeSandbox
+          //     personalApiKey={personalApiKey}
+          //     accountId={accountId}
+          //     onSuccess={(data) => this.setState({apiExplorerOutput: data})}
+          //   />
+          // </Box>
+        )} */}
       </Container>
     );
   }

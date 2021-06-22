@@ -88,18 +88,22 @@ async function handler({event, payload}) {
 
 async function handleMessageCreated(message) {
   const {body, customer_id, conversation_id} = message;
-  const isCustomerMessage = !!customer_id;
 
-  if (isCustomerMessage && body.toLowerCase().startsWith('test')) {
+    messageBody = body.toLowerCase()
+    let responseMessage = 'This is the default response'
+    
+    if(messageBody.includes('test')) {
+      responseMessage = "test successful!"
+    } else if (messageBody.includes('pricing')) {
+      responseMessage = "See our pricing page https://papercups.io/pricing"
+    } 
+    
     // See https://docs.papercups.io/api-endpoints#messages
     return papercups.messages.create({
-        body: 'Success!',
+        body: responseMessage,
         type: 'bot',
         conversation_id,
     });
-  }
-
-  return message;
 }
 `.trim();
 
