@@ -41,4 +41,16 @@ defmodule ChatApiWeb.ReportingController do
       }
     })
   end
+
+  def index(conn, params) do
+    conn
+    |> put_status(400)
+    |> json(%{
+      error: %{
+        status: 400,
+        message: "The following parameters are required: from_date, to_date",
+        received: Map.keys(params)
+      }
+    })
+  end
 end

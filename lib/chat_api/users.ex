@@ -21,10 +21,11 @@ defmodule ChatApi.Users do
   end
 
   @spec list_users_by_account(binary()) :: [User.t()]
-  def list_users_by_account(account_id) do
+  def list_users_by_account(account_id, filters \\ %{}) do
     User
     |> where(account_id: ^account_id)
     |> where([u], is_nil(u.disabled_at))
+    |> where(^filter_where(filters))
     |> Repo.all()
     |> Repo.preload([:profile, :settings])
   end
@@ -366,5 +367,29 @@ defmodule ChatApi.Users do
   """
   def change_user_settings(%UserSettings{} = user_settings, attrs \\ %{}) do
     UserSettings.changeset(user_settings, attrs)
+  end
+
+  @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}
+  def filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"email", value}, dynamic ->
+        dynamic([u], ^dynamic and u.email == ^value)
+
+      {"role", value}, dynamic ->
+        dynamic([u], ^dynamic and u.role == ^value)
+
+      {"has_valid_email", value}, dynamic ->
+        dynamic([u], ^dynamic and u.has_valid_email == ^value)
+
+      {"active", "true"}, dynamic ->
+        dynamic([u], ^dynamic and is_nil(u.disabled_at) and is_nil(u.archived_at))
+
+      {"active", "false"}, dynamic ->
+        dynamic([u], ^dynamic and (not is_nil(u.disabled_at) or not is_nil(u.archived_at)))
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end
