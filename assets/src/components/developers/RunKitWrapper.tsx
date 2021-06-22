@@ -26,6 +26,7 @@ type Props = {
   environment?: Array<{name: string; value: string}>;
   onLoad?: (data: any) => void;
   onURLChanged?: (data: any) => void;
+  onResize?: (data: any) => void;
   onEvaluate?: (data: any, source: string) => void;
 };
 
@@ -48,13 +49,16 @@ class RunKitWrapper extends React.Component<Props, State> {
       onLoad: this.handleLoaded,
       onURLChanged: this.handleUrlChanged,
       onEvaluate: this.handleEvaluate,
+      onResize: this.handleResize,
     };
 
-    this.notebook = RunKit.createNotebook(options);
+    if (RunKit && typeof RunKit.createNotebook === 'function') {
+      this.notebook = RunKit.createNotebook(options);
+    }
   }
 
   componentWillUnmount() {
-    this.notebook.destroy();
+    this.notebook?.destroy();
     this.notebook = null;
   }
 
@@ -67,6 +71,10 @@ class RunKitWrapper extends React.Component<Props, State> {
     this.props.onURLChanged && this.props.onURLChanged(data);
   };
 
+  handleResize = (data: any) => {
+    this.props.onResize && this.props.onResize(data);
+  };
+
   handleEvaluate = (data: any) => {
     this.getSource().then((source) => {
       this.props.onEvaluate && this.props.onEvaluate(data, source);
@@ -74,15 +82,15 @@ class RunKitWrapper extends React.Component<Props, State> {
   };
 
   evaluate(cb: any) {
-    this.notebook.evaluate(cb);
+    this.notebook?.evaluate(cb);
   }
 
   getSource(): Promise<string> {
-    return this.notebook.getSource();
+    return this.notebook?.getSource();
   }
 
   getURL() {
-    return this.notebook.URL;
+    return this.notebook?.URL;
   }
 
   render() {
@@ -93,7 +101,7 @@ class RunKitWrapper extends React.Component<Props, State> {
         ref={(el) => (this.el = el)}
         style={{overflow: 'hidden', paddingLeft: 20, marginLeft: -20}}
       >
-        {this.state.loading && <RunKitLoading height={minHeight + 33} />}
+        {this.state.loading && <RunKitLoading height={minHeight} />}
       </div>
     );
   }

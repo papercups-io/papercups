@@ -121,7 +121,7 @@ case mailer_adapter do
 
   "Swoosh.Adapters.Local" ->
     config :swoosh,
-      serve_mailbox: System.get_env("LOCAL_SERVE_MAILBOX", "true") == "true",
+      serve_mailbox: System.get_env("LOCAL_SERVE_MAILBOX", "false") == "true",
       preview_port: System.get_env("LOCAL_MAILBOX_PREVIEW_PORT", "1234") |> String.to_integer()
 
     config :chat_api, ChatApi.Mailers, adapter: Swoosh.Adapters.Local
@@ -141,10 +141,21 @@ aws_key_id = System.get_env("AWS_ACCESS_KEY_ID")
 aws_secret_key = System.get_env("AWS_SECRET_ACCESS_KEY")
 bucket_name = System.get_env("BUCKET_NAME", "papercups-files")
 region = System.get_env("AWS_REGION")
+function_bucket_name = System.get_env("FUNCTION_BUCKET_NAME", "")
+function_role = System.get_env("FUNCTION_ROLE", "")
+aws_account_id = System.get_env("AWS_ACCOUNT_ID", "")
+
+config :chat_api,
+  bucket_name: bucket_name,
+  region: region,
+  function_bucket_name: function_bucket_name,
+  aws_account_id: aws_account_id,
+  function_role: function_role
 
 config :ex_aws,
   access_key_id: aws_key_id,
   secret_access_key: aws_secret_key,
+  region: region,
   s3: [
     scheme: "https://",
     region: region

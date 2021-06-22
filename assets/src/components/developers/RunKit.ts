@@ -1,5 +1,11 @@
 export const RunKit = (window as any).RunKit;
 
+export const DEFAULT_LAMBDA_PREAMBLE = `
+const noop = () => {};
+
+exports.handler = typeof handler == 'function' ? handler : noop;
+`;
+
 export const DEFAULT_ENDPOINT_PREAMBLE = `
   const express = require("@runkit/runkit/express-endpoint/1.0.0");
   const bodyParser = require('body-parser');
@@ -36,7 +42,7 @@ export const DEFAULT_ENDPOINT_PREAMBLE = `
       default:
         if (typeof handler == 'function') {
           try {
-            const result = await handler(event, payload)
+            const result = await handler({event, payload})
 
             return res.json({ok: true, data: result});
           } catch (error) {
@@ -70,17 +76,28 @@ const papercups = require('@papercups-io/papercups')(
   {host: "${window.location.origin}"}
 );
 
-async function handler(event, payload) {
+async function handler({event, payload}) {
   switch (event) {
+    // See https://docs.papercups.io/webhook-events#messagecreated
     case 'message:created':
       return handleMessageCreated(payload);
     default:
-      return null;
+      return {event, payload, me: await papercups.me()};
   }
 }
 
 async function handleMessageCreated(message) {
-  // Update logic here to handle incoming messages!
+  const {body, customer_id, conversation_id} = message;
+  const isCustomerMessage = !!customer_id;
+
+  if (isCustomerMessage && body.toLowerCase().startsWith('test')) {
+    // See https://docs.papercups.io/api-endpoints#messages
+    return papercups.messages.create({
+        body: 'Success!',
+        type: 'bot',
+        conversation_id,
+    });
+  }
 
   return message;
 }
