@@ -162,10 +162,18 @@ defmodule ChatApiWeb.Router do
 
     get("/me", SessionController, :me)
 
+    resources("/profile", UserProfileController, only: [:show, :update])
+    resources("/user_settings", UserSettingsController, only: [:show, :update])
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit])
     resources("/customers", CustomerController, except: [:new, :edit])
     resources("/users", UserController, only: [:index, :show])
+    resources("/tags", TagController, except: [:new, :edit])
+    resources("/issues", IssueController, except: [:new, :edit])
+    resources("/notes", NoteController, except: [:new, :edit])
+    resources("/companies", CompanyController, except: [:new, :edit])
+
+    get("/reporting", ReportingController, :index)
   end
 
   # Enables LiveDashboard only for development

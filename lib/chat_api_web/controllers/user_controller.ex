@@ -8,8 +8,8 @@ defmodule ChatApiWeb.UserController do
   action_fallback(ChatApiWeb.FallbackController)
 
   @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def index(conn, _params) do
-    users = ChatApi.Users.list_users_by_account(conn.assigns.current_user.account_id)
+  def index(conn, params) do
+    users = ChatApi.Users.list_users_by_account(conn.assigns.current_user.account_id, params)
 
     render(conn, "index.json", users: users)
   end
