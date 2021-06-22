@@ -295,25 +295,8 @@ class LambdaDetailsPage extends React.Component<Props, State> {
   };
 
   renderSidebar = ({accountId, onRunHandler}: SidebarProps) => {
-    // const {deploying} = this.state;
-
     return (
       <Flex pl={2} sx={{flex: 1, flexDirection: 'column'}}>
-        {/* 
-        <Box>
-          <Button
-            block
-            loading={deploying}
-            type="primary"
-            onClick={this.handleDeployLambda}
-          >
-            {deploying ? 'Deploying...' : 'Deploy your code'}
-          </Button>
-        </Box>
-
-        <Divider /> 
-        */}
-
         <EmbeddableChat
           sx={{flex: 1, height: '100%', width: '100%'}}
           config={{
@@ -476,24 +459,22 @@ class LambdaDetailsPage extends React.Component<Props, State> {
               onSuccess={(data) => this.setState({apiExplorerOutput: data})}
               onError={(error) => this.setState({apiExplorerOutput: error})}
               sidebar={this.renderSidebar}
-              // footer={({isExecuting}) => {
-              //   return (
-              //     <Box
-              //       sx={{position: 'absolute', bottom: 0, left: 0, right: 0}}
-              //     >
-              //       <Button
-              //         block
-              //         disabled={!this.papercups}
-              //         loading={deploying || isExecuting}
-              //         onClick={this.handleSendTestMessage}
-              //       >
-              //         {deploying || isExecuting
-              //           ? 'Running...'
-              //           : 'Run with test event'}
-              //       </Button>
-              //     </Box>
-              //   );
-              // }}
+              footer={({isExecuting}) => {
+                return (
+                  <Box
+                    sx={{position: 'absolute', bottom: 0, left: 0, right: 0}}
+                  >
+                    <Button
+                      block
+                      loading={deploying || isExecuting}
+                      type="primary"
+                      onClick={this.handleDeployLambda}
+                    >
+                      {deploying ? 'Deploying...' : 'Deploy your code'}
+                    </Button>
+                  </Box>
+                );
+              }}
             />
           </Box>
 
