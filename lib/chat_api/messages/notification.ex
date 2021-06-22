@@ -93,8 +93,12 @@ defmodule ChatApi.Messages.Notification do
       }
 
       EventSubscriptions.notify_event_subscriptions(account_id, event)
-      # NB: We treat custom lambdas as webhook event handler
-      Lambdas.notify_active_lambdas(account_id, event)
+
+      # NB: We treat custom lambdas as webhook event handlers for customer messages
+      case Helpers.get_message_type(message) do
+        :customer -> Lambdas.notify_active_lambdas(account_id, event)
+        _ -> nil
+      end
     end)
 
     message
