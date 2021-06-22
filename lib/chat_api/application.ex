@@ -14,9 +14,10 @@ defmodule ChatApi.Application do
             adapter: Phoenix.PubSub.Redis,
             # NB: use redis://localhost:6379 for testing locally
             url: redis_url(),
+            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:"),
             # Set ssl: true when using `rediss` URLs in Heroku
-            # ssl: true,
-            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
+            ssl: true,
+            socket_opts: [verify: :verify_none]
           ]
 
         "redis://" <> _url ->
