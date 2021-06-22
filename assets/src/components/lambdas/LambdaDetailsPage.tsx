@@ -276,6 +276,14 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     });
 
     this.setState({apiExplorerOutput: output});
+
+    if (output && output.errorMessage) {
+      notification.error({
+        message: `Error running function.`,
+        description: output.errorMessage,
+        duration: null,
+      });
+    }
   };
 
   handleMessageSent = (fn: (data: any) => void) => (payload = {}) => {
