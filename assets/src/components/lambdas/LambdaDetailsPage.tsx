@@ -276,6 +276,14 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     });
 
     this.setState({apiExplorerOutput: output});
+
+    if (output && output.errorMessage) {
+      notification.error({
+        message: `Error running function.`,
+        description: output.errorMessage,
+        duration: null,
+      });
+    }
   };
 
   handleMessageSent = (fn: (data: any) => void) => (payload = {}) => {
@@ -294,7 +302,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         <Box>
           <Button
             block
-            disabled={deploying}
+            loading={deploying}
             type="primary"
             onClick={this.handleDeployLambda}
           >
@@ -474,11 +482,13 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                   >
                     <Button
                       block
-                      disabled={deploying || !this.papercups}
-                      loading={isExecuting}
+                      disabled={!this.papercups}
+                      loading={deploying || isExecuting}
                       onClick={this.handleSendTestMessage}
                     >
-                      Run with test event
+                      {deploying || isExecuting
+                        ? 'Running...'
+                        : 'Run with test event'}
                     </Button>
                   </Box>
                 );
