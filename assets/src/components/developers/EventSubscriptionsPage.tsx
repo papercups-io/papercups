@@ -161,7 +161,7 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
         />
 
         {
-          !!personalApiKey && !!accountId && false
+          false && !!personalApiKey && !!accountId
           // <Box mb={5}>
           //   <Title level={4}>Webhook handler sandbox</Title>
 

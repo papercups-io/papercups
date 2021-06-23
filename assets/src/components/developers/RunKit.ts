@@ -71,39 +71,39 @@ async function run(params = {}) {
 `.trim();
 
 export const WEBHOOK_HANDLER_SOURCE = `
-const papercups = require('@papercups-io/papercups')(
+const papercups = require("@papercups-io/papercups")(
   process.env.PAPERCUPS_API_KEY,
-  {host: "${window.location.origin}"}
+  { host: "${window.location.origin}" }
 );
 
-async function handler({event, payload}) {
+async function handler({ event, payload }) {
   switch (event) {
     // See https://docs.papercups.io/webhook-events#messagecreated
-    case 'message:created':
+    case "message:created":
       return handleMessageCreated(payload);
     default:
-      return {event, payload, me: await papercups.me()};
+      return { event, payload, me: await papercups.me() };
   }
 }
 
 async function handleMessageCreated(message) {
-  const {body, customer_id, conversation_id} = message;
+  const { body, customer_id, conversation_id } = message;
 
-    messageBody = body.toLowerCase()
-    let responseMessage = 'This is the default response'
-    
-    if(messageBody.includes('test')) {
-      responseMessage = "test successful!"
-    } else if (messageBody.includes('pricing')) {
-      responseMessage = "See our pricing page https://papercups.io/pricing"
-    } 
-    
-    // See https://docs.papercups.io/api-endpoints#messages
-    return papercups.messages.create({
-        body: responseMessage,
-        type: 'bot',
-        conversation_id,
-    });
+  messageBody = body.toLowerCase();
+  let responseMessage = "This is the default response";
+
+  if (messageBody.includes("test")) {
+    responseMessage = "Test successful!";
+  } else if (messageBody.includes("pricing")) {
+    responseMessage = "See our [pricing page](https://papercups.io/pricing)";
+  }
+
+  // See https://docs.papercups.io/api-endpoints#messages
+  return papercups.messages.create({
+    body: responseMessage,
+    type: "bot",
+    conversation_id,
+  });
 }
 `.trim();
 
