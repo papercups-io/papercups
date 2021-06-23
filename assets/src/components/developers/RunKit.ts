@@ -71,39 +71,41 @@ async function run(params = {}) {
 `.trim();
 
 export const WEBHOOK_HANDLER_SOURCE = `
-const papercups = require("@papercups-io/papercups")(
+// See https://github.com/papercups-io/papercups-node#usage
+const papercups = require('@papercups-io/papercups')(
   process.env.PAPERCUPS_API_KEY,
-  { host: "${window.location.origin}" }
+  {host: '${window.location.origin}'}
 );
 
-async function handler({ event, payload }) {
+// This function will be exported to handle incoming webhook events!
+async function handler({event, payload}) {
   switch (event) {
     // See https://docs.papercups.io/webhook-events#messagecreated
-    case "message:created":
-      return handleMessageCreated(payload);
+    case 'message:created':
+      const {body, conversation_id} = payload;
+
+      // Sends an auto-response to incoming messages
+      // See https://docs.papercups.io/api-endpoints#messages
+      return papercups.messages.create({
+        body: getResponseMessage(body),
+        type: 'bot',
+        conversation_id,
+      });
     default:
-      return { event, payload, me: await papercups.me() };
+      return {event, payload};
   }
 }
 
-async function handleMessageCreated(message) {
-  const { body, customer_id, conversation_id } = message;
+function getResponseMessage(text) {
+  const formatted = text.toLowerCase();
 
-  messageBody = body.toLowerCase();
-  let responseMessage = "This is the default response";
-
-  if (messageBody.includes("test")) {
-    responseMessage = "Test successful!";
-  } else if (messageBody.includes("pricing")) {
-    responseMessage = "See our [pricing page](https://papercups.io/pricing)";
+  if (formatted.includes('test')) {
+    return 'Test successful!';
+  } else if (formatted.includes('pricing')) {
+    return 'Check out our pricing at [papercups.io/pricing](https://papercups.io/pricing)';
+  } else {
+    return \`This is the default message. Received: "\${text}"\`;
   }
-
-  // See https://docs.papercups.io/api-endpoints#messages
-  return papercups.messages.create({
-    body: responseMessage,
-    type: "bot",
-    conversation_id,
-  });
 }
 `.trim();
 
