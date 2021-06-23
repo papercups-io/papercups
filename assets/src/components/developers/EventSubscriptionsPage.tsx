@@ -9,7 +9,7 @@ import logger from '../../logger';
 import {EventSubscription} from '../../types';
 import WebhooksTable from '../integrations/WebhooksTable';
 import NewWebhookModal from '../integrations/NewWebhookModal';
-import CodeSandbox from './CodeSandbox';
+// import CodeSandbox from './CodeSandbox';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
