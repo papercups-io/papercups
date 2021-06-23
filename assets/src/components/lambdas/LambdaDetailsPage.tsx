@@ -295,23 +295,8 @@ class LambdaDetailsPage extends React.Component<Props, State> {
   };
 
   renderSidebar = ({accountId, onRunHandler}: SidebarProps) => {
-    const {deploying} = this.state;
-
     return (
       <Flex pl={2} sx={{flex: 1, flexDirection: 'column'}}>
-        <Box>
-          <Button
-            block
-            loading={deploying}
-            type="primary"
-            onClick={this.handleDeployLambda}
-          >
-            {deploying ? 'Deploying...' : 'Deploy your code'}
-          </Button>
-        </Box>
-
-        <Divider />
-
         <EmbeddableChat
           sx={{flex: 1, height: '100%', width: '100%'}}
           config={{
@@ -453,8 +438,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                       placement="bottom"
                     >
                       <Text style={{fontSize: 12}}>
-                        Last deployed{' '}
-                        {formatRelativeTime(dayjs(lastDeployedAt))}
+                        Last updated {formatRelativeTime(dayjs(lastDeployedAt))}
                       </Text>
                     </Tooltip>
                   ) : (
@@ -482,13 +466,11 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                   >
                     <Button
                       block
-                      disabled={!this.papercups}
                       loading={deploying || isExecuting}
-                      onClick={this.handleSendTestMessage}
+                      type="primary"
+                      onClick={this.handleDeployLambda}
                     >
-                      {deploying || isExecuting
-                        ? 'Running...'
-                        : 'Run with test event'}
+                      {deploying ? 'Deploying...' : 'Deploy your code'}
                     </Button>
                   </Box>
                 );
