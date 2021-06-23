@@ -9,7 +9,7 @@ import logger from '../../logger';
 import {EventSubscription} from '../../types';
 import WebhooksTable from '../integrations/WebhooksTable';
 import NewWebhookModal from '../integrations/NewWebhookModal';
-import CodeSandbox from './CodeSandbox';
+// import CodeSandbox from './CodeSandbox';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
@@ -160,17 +160,18 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
           onCancel={this.handleWebhookModalCancel}
         />
 
-        {!!personalApiKey && !!accountId && (
-          <Box mb={5}>
-            <Title level={4}>Webhook handler sandbox</Title>
+        {
+          false && !!personalApiKey && !!accountId
+          // <Box mb={5}>
+          //   <Title level={4}>Webhook handler sandbox</Title>
 
-            <CodeSandbox
-              personalApiKey={personalApiKey}
-              accountId={accountId}
-              onSuccess={(data) => this.setState({apiExplorerOutput: data})}
-            />
-          </Box>
-        )}
+          //   <CodeSandbox
+          //     personalApiKey={personalApiKey}
+          //     accountId={accountId}
+          //     onSuccess={(data) => this.setState({apiExplorerOutput: data})}
+          //   />
+          // </Box>
+        }
       </Container>
     );
   }
