@@ -103,8 +103,6 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
       loading,
       isWebhookModalOpen,
       selectedWebhook,
-      personalApiKey,
-      accountId,
       webhooks = [],
     } = this.state;
 
