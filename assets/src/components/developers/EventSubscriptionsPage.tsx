@@ -160,7 +160,8 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
           onCancel={this.handleWebhookModalCancel}
         />
 
-        {/* {!!personalApiKey && !!accountId && (
+        {
+          !!personalApiKey && !!accountId && false
           // <Box mb={5}>
           //   <Title level={4}>Webhook handler sandbox</Title>
 
@@ -170,7 +171,7 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
           //     onSuccess={(data) => this.setState({apiExplorerOutput: data})}
           //   />
           // </Box>
-        )} */}
+        }
       </Container>
     );
   }
