@@ -672,6 +672,25 @@ export const sendUserInvitationEmail = async (
     .then((res) => res.body.data);
 };
 
+export const sendSlackNotification = async (
+  params: {
+    text: string;
+    type?: 'reply' | 'support';
+    channel?: string;
+  },
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/slack/notify`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchSlackAuthorization = async (
   type = 'reply',
   token = getAccessToken()
@@ -824,6 +843,21 @@ export const deleteTwilioAuthorization = async (
   return request
     .delete(`/api/twilio/authorizations/${authorizationId}`)
     .set('Authorization', token);
+};
+
+export const sendTwilioSms = async (
+  params: {to: string; body: string},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/twilio/send`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
 };
 
 export const fetchGoogleAuthorization = async (
