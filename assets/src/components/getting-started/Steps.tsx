@@ -34,7 +34,7 @@ const getStepsMetadata = (
 ): Array<StepMetadata> => {
   return [
     {
-      completed: onboardingStatus.installed_chat_widget,
+      completed: onboardingStatus.is_chat_widget_installed,
       ctaHref: '/settings/chat-widget',
       ctaText: 'Configure chat widget',
       text: (
@@ -45,7 +45,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: onboardingStatus.invited_teammates,
+      completed: onboardingStatus.has_invited_teammates,
       ctaHref: '/settings/team',
       ctaText: 'Invite teammates',
       text: (
@@ -56,7 +56,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: onboardingStatus.configured_profile,
+      completed: onboardingStatus.has_configured_profile,
       ctaHref: '/settings/profile',
       ctaText: 'Configure profile',
       text: (
@@ -78,7 +78,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: onboardingStatus.configured_storytime,
+      completed: onboardingStatus.has_configured_storytime,
       ctaHref: '/sessions/setup',
       ctaText: 'Set up StoryTime',
       text: (
@@ -89,7 +89,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: onboardingStatus.upgraded_subscription,
+      completed: onboardingStatus.has_upgraded_subscription,
       ctaHref: '/settings/billing',
       ctaText: 'Upgrade subscription',
       text: (

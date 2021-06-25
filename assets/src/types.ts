@@ -296,10 +296,10 @@ export type SlackAuthorization = {
 };
 
 export type OnboardingStatus = {
-  configured_profile: boolean;
-  configured_storytime: boolean;
+  has_configured_profile: boolean;
+  has_configured_storytime: boolean;
   has_integrations: boolean;
-  installed_chat_widget: boolean;
-  invited_teammates: boolean;
-  upgraded_subscription: boolean;
+  is_chat_widget_installed: boolean;
+  has_invited_teammates: boolean;
+  has_upgraded_subscription: boolean;
 };

@@ -22,18 +22,18 @@ defmodule ChatApiWeb.OnboardingStatusController do
       account = Accounts.get_account!(account_id)
 
       json(conn, %{
-        configured_profile: configured_profile?(current_user.id),
-        configured_storytime: configured_storytime?(account_id),
+        has_configured_profile: has_configured_profile?(current_user.id),
+        has_configured_storytime: has_configured_storytime?(account_id),
         has_integrations: has_integrations?(account_id),
-        installed_chat_widget: installed_chat_widget?(account),
-        invited_teammates: invited_teammates?(account_id),
-        upgraded_subscription: upgraded_subscription?(account)
+        has_invited_teammates: has_invited_teammates?(account_id),
+        has_upgraded_subscription: has_upgraded_subscription?(account),
+        is_chat_widget_installed: is_chat_widget_installed?(account)
       })
     end
   end
 
-  @spec configured_profile?(number()) :: boolean()
-  defp configured_profile?(user_id) do
+  @spec has_configured_profile?(number()) :: boolean()
+  defp has_configured_profile?(user_id) do
     case Users.get_user_profile(user_id) do
       nil -> false
       %UserProfile{display_name: nil, full_name: nil, profile_photo_url: nil} -> false
@@ -65,20 +65,20 @@ defmodule ChatApiWeb.OnboardingStatusController do
     end)
   end
 
-  defp installed_chat_widget?(account) do
+  defp is_chat_widget_installed?(account) do
     host = account.widget_settings && account.widget_settings.host
     host != nil && !String.contains?(host, ["papercups", "localhost"])
   end
 
-  defp invited_teammates?(account_id) do
+  defp has_invited_teammates?(account_id) do
     Accounts.count_active_users(account_id) > 1
   end
 
-  defp upgraded_subscription?(account) do
+  defp has_upgraded_subscription?(account) do
     account.subscription_plan != "starter"
   end
 
-  defp configured_storytime?(account_id) do
+  defp has_configured_storytime?(account_id) do
     BrowserSessions.has_browser_sessions?(account_id)
   end
 end
