@@ -471,13 +471,13 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/settings/account">Account</Link>
                 </Menu.Item>
                 <Menu.Item key="team">
-                  <Link to="/settings/team">My Team</Link>
+                  <Link to="/settings/team">My team</Link>
                 </Menu.Item>
                 <Menu.Item key="profile">
-                  <Link to="/settings/profile">My Profile</Link>
+                  <Link to="/settings/profile">My profile</Link>
                 </Menu.Item>
                 <Menu.Item key="chat-widget">
-                  <Link to="/settings/chat-widget">Chat Widget</Link>
+                  <Link to="/settings/chat-widget">Chat widget</Link>
                 </Menu.Item>
                 {shouldDisplayBilling && (
                   <Menu.Item key="billing">

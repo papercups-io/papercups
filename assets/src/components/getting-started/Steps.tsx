@@ -61,8 +61,8 @@ const getStepsMetadata = (
       ctaText: 'Configure profile',
       text: (
         <>
-          <Text strong>Configure your profile</Text> by adding your display name
-          and profile photo so your customers know who they're talking to.
+          <Text strong>Configure your profile</Text> by adding your name and
+          photo so your customers know who they're talking to.
         </>
       ),
     },
@@ -73,17 +73,17 @@ const getStepsMetadata = (
       text: (
         <>
           <Text strong>Set up integrations</Text> like Slack, Gmail, and SMS to
-          add more channels for your customers to contact you.
+          add more channels for your customer communication.
         </>
       ),
     },
     {
       completed: onboardingStatus.has_configured_storytime,
       ctaHref: '/sessions/setup',
-      ctaText: 'Set up StoryTime',
+      ctaText: 'Set up Storytime',
       text: (
         <>
-          <Text strong>Set up StoryTime</Text> to view how customers are using
+          <Text strong>Set up Storytime</Text> to view how customers are using
           your website.
         </>
       ),
