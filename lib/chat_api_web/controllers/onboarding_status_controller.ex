@@ -11,6 +11,7 @@ defmodule ChatApiWeb.OnboardingStatusController do
     Twilio,
     Users
   }
+  alias Users.{UserProfile}
 
   action_fallback(ChatApiWeb.FallbackController)
 
@@ -33,8 +34,11 @@ defmodule ChatApiWeb.OnboardingStatusController do
 
   @spec configured_profile?(number()) :: boolean()
   def configured_profile?(user_id) do
-    profile = Users.get_user_profile(user_id)
-    profile.display_name != nil || profile.full_name != nil || profile.profile_photo_url != nil
+    case Users.get_user_profile(user_id) do
+      nil -> false
+      %UserProfile{display_name: nil, full_name: nil, profile_photo_url: nil} -> false
+      %UserProfile{} -> true
+    end
   end
 
   # @spec has_integrations?(binary()) :: boolean()
