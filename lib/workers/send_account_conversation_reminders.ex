@@ -104,16 +104,16 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
       case metadata do
         %{"reminder_count" => n} when n == max and max > 1 ->
           "This is the last reminder to follow up on this conversation :bell: no more will be sent after this!" <>
-            "\n\n" <> "(Click [here](/account/overview) to configure reminders for your account)"
+            "\n\n" <> "(Click [here](/settings/overview) to configure reminders for your account)"
 
         %{"reminder_count" => n} when n < max ->
           "This is an automated reminder (#{n} of #{max}) to follow up on this conversation :bell: " <>
             "the next reminder will be sent in #{hours} #{hours_label}." <>
-            "\n\n" <> "(Click [here](/account/overview) to configure reminders for your account)"
+            "\n\n" <> "(Click [here](/settings/overview) to configure reminders for your account)"
 
         _ ->
           "This is an automated reminder to follow up on this conversation :bell:" <>
-            "\n\n" <> "(Click [here](/account/overview) to configure reminders for your account)"
+            "\n\n" <> "(Click [here](/settings/overview) to configure reminders for your account)"
       end
 
     %{

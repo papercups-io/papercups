@@ -109,6 +109,14 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def mattermost_authorization_factory do
+    %ChatApi.Mattermost.MattermostAuthorization{
+      access_token: "some access_token",
+      account: build(:account),
+      user: build(:user)
+    }
+  end
+
   def issue_factory do
     %ChatApi.Issues.Issue{
       title: sequence("some title"),

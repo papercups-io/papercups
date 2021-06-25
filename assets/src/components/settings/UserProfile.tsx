@@ -52,7 +52,7 @@ class UserProfile extends React.Component<Props, State> {
       const success = await this.authorizeGoogleIntegration(code, q);
 
       if (success) {
-        history.push('/account/profile');
+        history.push('/settings/profile');
       }
     }
 

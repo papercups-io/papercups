@@ -31,7 +31,7 @@ const GettingStartedRedirect = () => {
         title="No messages"
         subTitle="It looks like your widget hasn't been set up yet!"
         extra={
-          <Link to="/account/getting-started">
+          <Link to="/settings/chat-widget">
             <Button type="primary">Get Started</Button>
           </Link>
         }

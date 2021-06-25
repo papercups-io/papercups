@@ -40,7 +40,7 @@ type State = {
   iconVariant: WidgetIconVariant;
 };
 
-class GettingStartedOverview extends React.Component<Props, State> {
+class ChatWidgetSettings extends React.Component<Props, State> {
   state: State = {
     accountId: null,
     account: null,
@@ -273,7 +273,7 @@ class GettingStartedOverview extends React.Component<Props, State> {
         }}
       >
         <Box mb={4}>
-          <Title>Getting Started</Title>
+          <Title>Chat Widget Settings</Title>
           <Paragraph>
             <Text>
               Before you can start chatting with your customers, you'll need to
@@ -677,4 +677,4 @@ const ExamplePage = () => {
   );
 };
 
-export default GettingStartedOverview;
+export default ChatWidgetSettings;

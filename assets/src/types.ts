@@ -294,3 +294,12 @@ export type SlackAuthorization = {
   team_name: string;
   settings: SlackAuthorizationSettings | null;
 };
+
+export type OnboardingStatus = {
+  has_configured_profile: boolean;
+  has_configured_storytime: boolean;
+  has_integrations: boolean;
+  is_chat_widget_installed: boolean;
+  has_invited_teammates: boolean;
+  has_upgraded_subscription: boolean;
+};
