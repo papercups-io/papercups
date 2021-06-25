@@ -20,6 +20,7 @@ import {
 import {InfoCircleTwoTone} from '../icons';
 import {BASE_URL, FRONTEND_BASE_URL} from '../../config';
 import logger from '../../logger';
+import {formatUserExternalId} from '../../utils';
 
 type Props = {};
 type State = {
@@ -229,12 +230,12 @@ class ChatWidgetSettings extends React.Component<Props, State> {
       return {};
     }
 
-    const {id, email} = currentUser;
+    const {email} = currentUser;
 
     // TODO: include name if available
     return {
       email: email,
-      external_id: [id, email].join('|'),
+      external_id: formatUserExternalId(currentUser),
       metadata: {
         company_name: account.company_name,
         subscription_plan: account.subscription_plan,

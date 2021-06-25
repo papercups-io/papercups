@@ -7,16 +7,17 @@ defmodule ChatApi.Application do
 
   def start(_type, _args) do
     pub_sub_opts =
-      case System.get_env("REDIS_URL") do
+      case redis_url() do
         "rediss://" <> _url ->
           [
             name: ChatApi.PubSub,
             adapter: Phoenix.PubSub.Redis,
             # NB: use redis://localhost:6379 for testing locally
-            url: System.get_env("REDIS_URL"),
+            url: redis_url(),
+            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:"),
             # Set ssl: true when using `rediss` URLs in Heroku
             ssl: true,
-            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
+            socket_opts: [verify: :verify_none]
           ]
 
         "redis://" <> _url ->
@@ -24,7 +25,7 @@ defmodule ChatApi.Application do
             name: ChatApi.PubSub,
             adapter: Phoenix.PubSub.Redis,
             # NB: use redis://localhost:6379 for testing locally
-            url: System.get_env("REDIS_URL"),
+            url: redis_url(),
             node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
           ]
 
@@ -68,6 +69,10 @@ defmodule ChatApi.Application do
   # Conditionally disable crontab, queues, or plugins here.
   defp oban_config do
     Application.get_env(:chat_api, Oban)
+  end
+
+  defp redis_url do
+    System.get_env("REDIS_TLS_URL") || System.get_env("REDIS_URL")
   end
 
   defp node_name do

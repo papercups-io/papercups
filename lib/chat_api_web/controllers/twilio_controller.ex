@@ -8,6 +8,20 @@ defmodule ChatApiWeb.TwilioController do
 
   action_fallback(ChatApiWeb.FallbackController)
 
+  @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def send(conn, %{"to" => to, "body" => body}) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %TwilioAuthorization{from_phone_number: from_phone_number} = auth <-
+           Twilio.get_authorization_by_account(account_id),
+         {:ok, %{body: json}} <-
+           Twilio.Client.send_message(%{To: to, From: from_phone_number, Body: body}, auth),
+         {:ok, data} <- Jason.decode(json) do
+      json(conn, %{data: data})
+    else
+      _ -> json(conn, %{data: nil})
+    end
+  end
+
   @spec auth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def auth(conn, %{"authorization" => authorization}) do
     Logger.info("Params from Twilio auth: #{inspect(authorization)}")

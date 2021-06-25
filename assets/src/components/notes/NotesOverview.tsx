@@ -3,7 +3,14 @@ import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import {colors, MarkdownRenderer, Result, Text, Title} from '../common';
+import {
+  colors,
+  Container,
+  MarkdownRenderer,
+  Result,
+  Text,
+  Title,
+} from '../common';
 import * as API from '../../api';
 import * as T from '../../types';
 import {formatCustomerDisplayName} from '../customers/support';
@@ -155,7 +162,7 @@ class NotesOverview extends React.Component<Props, State> {
 
     if (loading) {
       return (
-        <Box p={4} sx={{maxWidth: 1080}}>
+        <Container>
           <Flex
             sx={{
               flex: 1,
@@ -166,26 +173,26 @@ class NotesOverview extends React.Component<Props, State> {
           >
             <Spinner size={40} />
           </Flex>
-        </Box>
+        </Container>
       );
     } else if (notes.length === 0) {
       return (
-        <Box p={4} sx={{maxWidth: 1080}}>
+        <Container>
           <Result
             status="success"
             title="No notes"
             subTitle="You haven't written any customer notes yet!"
           />
-        </Box>
+        </Container>
       );
     }
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Box my={4}>
           <NotesByDate notes={notes} />
         </Box>
-      </Box>
+      </Container>
     );
   }
 }

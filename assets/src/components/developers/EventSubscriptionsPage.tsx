@@ -1,7 +1,7 @@
 import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Paragraph, Text, Title} from '../common';
+import {Button, Container, Paragraph, Text, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
@@ -9,7 +9,6 @@ import logger from '../../logger';
 import {EventSubscription} from '../../types';
 import WebhooksTable from '../integrations/WebhooksTable';
 import NewWebhookModal from '../integrations/NewWebhookModal';
-import CodeSandbox from './CodeSandbox';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
@@ -104,8 +103,6 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
       loading,
       isWebhookModalOpen,
       selectedWebhook,
-      personalApiKey,
-      accountId,
       webhooks = [],
     } = this.state;
 
@@ -125,7 +122,7 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
     }
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Box mb={5}>
           <Title level={4}>Event Subscriptions</Title>
 
@@ -159,19 +156,7 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
           onSuccess={this.handleWebhookModalSuccess}
           onCancel={this.handleWebhookModalCancel}
         />
-
-        {!!personalApiKey && !!accountId && (
-          <Box mb={5}>
-            <Title level={4}>Webhook handler explorer</Title>
-
-            <CodeSandbox
-              personalApiKey={personalApiKey}
-              accountId={accountId}
-              onSuccess={(data) => this.setState({apiExplorerOutput: data})}
-            />
-          </Box>
-        )}
-      </Box>
+      </Container>
     );
   }
 }

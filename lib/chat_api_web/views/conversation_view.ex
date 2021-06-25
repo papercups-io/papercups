@@ -41,7 +41,8 @@ defmodule ChatApiWeb.ConversationView do
       priority: conversation.priority,
       account_id: conversation.account_id,
       customer_id: conversation.customer_id,
-      assignee_id: conversation.assignee_id
+      assignee_id: conversation.assignee_id,
+      metadata: conversation.metadata
     }
   end
 
@@ -59,6 +60,7 @@ defmodule ChatApiWeb.ConversationView do
       account_id: conversation.account_id,
       customer_id: conversation.customer_id,
       assignee_id: conversation.assignee_id,
+      metadata: conversation.metadata,
       customer: render_one(conversation.customer, CustomerView, "customer.json"),
       messages: render_many(conversation.messages, MessageView, "expanded.json"),
       tags: render_tags(conversation.tags)
