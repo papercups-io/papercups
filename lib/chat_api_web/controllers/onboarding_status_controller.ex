@@ -11,6 +11,7 @@ defmodule ChatApiWeb.OnboardingStatusController do
     Twilio,
     Users
   }
+
   alias Users.{UserProfile}
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -43,13 +44,16 @@ defmodule ChatApiWeb.OnboardingStatusController do
 
   # @spec has_integrations?(binary()) :: boolean()
   defp has_integrations?(account_id) do
-    tasks_with_results = Task.yield_many([
-      Task.async(fn -> Github.get_authorization_by_account(account_id) end),
-      Task.async(fn -> Google.get_authorization_by_account(account_id) end),
-      Task.async(fn -> Mattermost.get_authorization_by_account(account_id) end),
-      Task.async(fn -> SlackAuthorizations.find_slack_authorization(%{account_id: account_id}) end),
-      Task.async(fn -> Twilio.get_authorization_by_account(account_id) end)
-    ])
+    tasks_with_results =
+      Task.yield_many([
+        Task.async(fn -> Github.get_authorization_by_account(account_id) end),
+        Task.async(fn -> Google.get_authorization_by_account(account_id) end),
+        Task.async(fn -> Mattermost.get_authorization_by_account(account_id) end),
+        Task.async(fn ->
+          SlackAuthorizations.find_slack_authorization(%{account_id: account_id})
+        end),
+        Task.async(fn -> Twilio.get_authorization_by_account(account_id) end)
+      ])
 
     results =
       Enum.map(tasks_with_results, fn {task, res} ->
