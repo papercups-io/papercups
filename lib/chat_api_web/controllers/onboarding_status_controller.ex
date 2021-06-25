@@ -37,21 +37,28 @@ defmodule ChatApiWeb.OnboardingStatusController do
     profile.display_name != nil || profile.full_name != nil || profile.profile_photo_url != nil
   end
 
-  @spec has_integrations?(binary()) :: boolean()
+  # @spec has_integrations?(binary()) :: boolean()
   def has_integrations?(account_id) do
-    github_authorization = Github.get_authorization_by_account(account_id)
-    google_authorization = Google.get_authorization_by_account(account_id)
-    mattermost_authorization = Mattermost.get_authorization_by_account(account_id)
-    slack_authorization = SlackAuthorizations.find_slack_authorization(%{account_id: account_id})
-    twilio_authorization = Twilio.get_authorization_by_account(account_id)
-
-    Enum.any?([
-      github_authorization,
-      google_authorization,
-      mattermost_authorization,
-      slack_authorization,
-      twilio_authorization
+    tasks_with_results = Task.yield_many([
+      Task.async(fn -> Github.get_authorization_by_account(account_id) end),
+      Task.async(fn -> Google.get_authorization_by_account(account_id) end),
+      Task.async(fn -> Mattermost.get_authorization_by_account(account_id) end),
+      Task.async(fn -> SlackAuthorizations.find_slack_authorization(%{account_id: account_id}) end),
+      Task.async(fn -> Twilio.get_authorization_by_account(account_id) end)
     ])
+
+    results =
+      Enum.map(tasks_with_results, fn {task, res} ->
+        # Shut down the tasks that did not reply nor exit
+        res || Task.shutdown(task, :brutal_kill)
+      end)
+
+    Enum.any?(results, fn result ->
+      case result do
+        {:ok, value} -> value != nil
+        _ -> false
+      end
+    end)
   end
 
   def installed_chat_widget?(account) do
