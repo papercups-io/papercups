@@ -5,6 +5,7 @@
   "license": "MIT",
   "repository": "https://github.com/papercups-io/papercups",
   "dependencies": {
+    "@monaco-editor/react": "^4.2.1",
     "@papercups-io/chat-builder": "0.0.12",
     "@papercups-io/chat-widget": "^1.1.10",
     "@papercups-io/storytime": "^1.0.6",

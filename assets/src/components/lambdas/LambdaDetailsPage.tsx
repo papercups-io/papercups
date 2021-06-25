@@ -30,6 +30,7 @@ import EmbeddableChat from '../developers/EmbeddableChat';
 import deploy from './support/deploy';
 import {WEBHOOK_HANDLER_SOURCE} from '../developers/RunKit';
 import CodeEditor from '../developers/CodeEditor';
+import {MonacoEditor} from '../developers/MonacoEditor';
 
 dayjs.extend(utc);
 
@@ -117,8 +118,8 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     this.setState({description: e.target.value});
   };
 
-  handleChangeCode = (code: string) => {
-    this.setState({code});
+  handleChangeCode = (code?: string) => {
+    this.setState({code: code ?? ''});
   };
 
   getNextStatus = (lambda: Lambda, shouldActivate: boolean): LambdaStatus => {
@@ -423,8 +424,8 @@ class LambdaDetailsPage extends React.Component<Props, State> {
             </Flex>
 
             <Flex sx={{width: '100%', maxHeight: 640}}>
-              <Box sx={{flex: 1.2, position: 'relative'}}>
-                <CodeEditor
+              <Box sx={{flex: 1.4, position: 'relative'}}>
+                {/* <CodeEditor
                   mode="javascript"
                   name="LambdaDetailsPage-CodeEditor"
                   height="608px"
@@ -434,6 +435,15 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                   debounceChangePeriod={200}
                   onChange={this.handleChangeCode}
                   onBlur={this.debouncedSaveLambda}
+                /> */}
+
+                <MonacoEditor
+                  height="608px"
+                  width="100%"
+                  theme="vs-dark"
+                  value={code || WEBHOOK_HANDLER_SOURCE}
+                  // onChange={this.handleChangeCode}
+                  // onValidate={this.debouncedSaveLambda}
                 />
 
                 <Button
