@@ -26,9 +26,10 @@ import logger from '../../logger';
 import {BASE_URL} from '../../config';
 import {formatRelativeTime, sleep} from '../../utils';
 import {zipWithDependencies} from './support/zipper';
-import {CodeSandbox, SidebarProps} from '../developers/CodeSandbox';
 import EmbeddableChat from '../developers/EmbeddableChat';
 import deploy from './support/deploy';
+import {WEBHOOK_HANDLER_SOURCE} from '../developers/RunKit';
+import CodeEditor from '../developers/CodeEditor';
 
 dayjs.extend(utc);
 
@@ -42,11 +43,11 @@ type State = {
   //
   name: string;
   description: string;
+  code: string;
   lambda: Lambda | null;
   personalApiKey: string | null;
   accountId: string | null;
   apiExplorerOutput: any;
-  runkit: any;
 };
 
 class LambdaDetailsPage extends React.Component<Props, State> {
@@ -59,11 +60,11 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     deleting: false,
     name: 'Untitled function',
     description: '',
+    code: '',
     lambda: null,
     personalApiKey: null,
     accountId: null,
     apiExplorerOutput: null,
-    runkit: null,
   };
 
   async componentDidMount() {
@@ -80,6 +81,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
+        code: lambda?.code ?? '',
         accountId: lambda?.account_id ?? null,
         personalApiKey: key ? key.value : null,
         loading: false,
@@ -100,6 +102,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
+        code: lambda?.code ?? '',
       });
     } catch (err) {
       logger.error('Error refreshing lambda details:', err);
@@ -112,6 +115,10 @@ class LambdaDetailsPage extends React.Component<Props, State> {
 
   handleChangeDescription = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({description: e.target.value});
+  };
+
+  handleChangeCode = (code: string) => {
+    this.setState({code});
   };
 
   getNextStatus = (lambda: Lambda, shouldActivate: boolean): LambdaStatus => {
@@ -162,24 +169,16 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       this.setState({saving: true});
 
       const lambdaId = this.props.match.params.id;
-      const source = await this.state.runkit.getSource();
       const lambda = await API.updateLambda(lambdaId, {
         name: this.state.name,
         description: this.state.description,
-        code: source,
+        code: this.state.code,
       });
 
       this.setState({
         lambda,
         name: lambda?.name ?? 'Untitled function',
         description: lambda?.description ?? '',
-      });
-
-      await sleep(1000);
-
-      notification.success({
-        message: `Function successfully saved.`,
-        duration: 2, // 2 seconds
       });
     } catch (err) {
       logger.error('Error saving lambda:', err);
@@ -214,16 +213,12 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       this.setState({deploying: true});
 
       const lambdaId = this.props.match.params.id;
-      const source = await this.state.runkit.getSource();
-      const blob = await zipWithDependencies(source);
+      const {name, description, code} = this.state;
+      const blob = await zipWithDependencies(code);
       // TODO: is there any advantage to using a file vs blob?
       // const file = new File([blob], 'lambda.zip');
       const lambda = await deploy(lambdaId, blob, {
-        data: {
-          name: this.state.name,
-          description: this.state.description,
-          code: source,
-        },
+        data: {name, description, code},
       });
 
       this.setState({lambda});
@@ -263,10 +258,14 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       return;
     }
 
-    const {id: lambdaId, code} = this.state.lambda;
-    const source = await this.state.runkit.getSource();
+    const {
+      id: lambdaId,
+      last_deployed_at: lastDeployedAt,
+      updated_at: updatedAt,
+    } = this.state.lambda;
 
-    if (source !== code) {
+    // TODO: what's the best way to check if the code is out of sync with lambda?
+    if (dayjs(lastDeployedAt).valueOf() !== dayjs.utc(updatedAt).valueOf()) {
       await this.handleDeployLambda();
     }
 
@@ -286,39 +285,13 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     }
   };
 
-  handleMessageSent = (fn: (data: any) => void) => (payload = {}) => {
-    if (this.state.lambda) {
-      this.handleInvokeLambda(payload);
-    } else {
-      fn(payload);
-    }
-  };
-
-  renderSidebar = ({accountId, onRunHandler}: SidebarProps) => {
-    return (
-      <Flex pl={2} sx={{flex: 1, flexDirection: 'column'}}>
-        <EmbeddableChat
-          sx={{flex: 1, height: '100%', width: '100%'}}
-          config={{
-            accountId,
-            primaryColor: '#1890ff',
-            greeting: 'Send a message below to test your webhook handler!',
-            newMessagePlaceholder: 'Send a test message...',
-            baseUrl: BASE_URL,
-          }}
-          onChatLoaded={(papercups) => (this.papercups = papercups)}
-          onMessageSent={this.handleMessageSent(onRunHandler)}
-        />
-      </Flex>
-    );
-  };
-
   render() {
     const {
       loading,
       deleting,
       deploying,
       lambda,
+      code,
       personalApiKey,
       accountId,
       apiExplorerOutput,
@@ -365,7 +338,6 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       name,
       description,
       status,
-      code,
       last_deployed_at: lastDeployedAt,
     } = lambda;
 
@@ -450,32 +422,46 @@ class LambdaDetailsPage extends React.Component<Props, State> {
               </Box>
             </Flex>
 
-            <CodeSandbox
-              defaultHeight={640}
-              personalApiKey={personalApiKey}
-              accountId={accountId}
-              code={code}
-              onLoad={(runkit) => this.setState({runkit})}
-              onSuccess={(data) => this.setState({apiExplorerOutput: data})}
-              onError={(error) => this.setState({apiExplorerOutput: error})}
-              sidebar={this.renderSidebar}
-              footer={({isExecuting}) => {
-                return (
-                  <Box
-                    sx={{position: 'absolute', bottom: 0, left: 0, right: 0}}
-                  >
-                    <Button
-                      block
-                      loading={deploying || isExecuting}
-                      type="primary"
-                      onClick={this.handleDeployLambda}
-                    >
-                      {deploying ? 'Deploying...' : 'Deploy your code'}
-                    </Button>
-                  </Box>
-                );
-              }}
-            />
+            <Flex sx={{width: '100%', maxHeight: 640}}>
+              <Box sx={{flex: 1.2, position: 'relative'}}>
+                <CodeEditor
+                  mode="javascript"
+                  name="LambdaDetailsPage-CodeEditor"
+                  height="608px"
+                  width="100%"
+                  wrapEnabled
+                  value={code || WEBHOOK_HANDLER_SOURCE}
+                  debounceChangePeriod={200}
+                  onChange={this.handleChangeCode}
+                  onBlur={this.debouncedSaveLambda}
+                />
+
+                <Button
+                  block
+                  loading={deploying}
+                  type="primary"
+                  onClick={this.handleDeployLambda}
+                >
+                  {deploying ? 'Deploying...' : 'Deploy your code'}
+                </Button>
+              </Box>
+
+              <Flex pl={2} sx={{flex: 1, flexDirection: 'column'}}>
+                <EmbeddableChat
+                  sx={{flex: 1, height: '100%', width: '100%'}}
+                  config={{
+                    accountId,
+                    primaryColor: '#1890ff',
+                    greeting:
+                      'Send a message below to test your webhook handler!',
+                    newMessagePlaceholder: 'Send a test message...',
+                    baseUrl: BASE_URL,
+                  }}
+                  onChatLoaded={(papercups) => (this.papercups = papercups)}
+                  onMessageSent={this.handleInvokeLambda}
+                />
+              </Flex>
+            </Flex>
           </Box>
 
           <Box>
