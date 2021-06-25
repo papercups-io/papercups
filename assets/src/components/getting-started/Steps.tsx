@@ -2,7 +2,7 @@ import React from 'react';
 import {Box} from 'theme-ui';
 import {Link} from 'react-router-dom';
 
-import {SetupStatus} from '../../types';
+import type {OnboardingStatus} from '../../types';
 import {colors, Button, Divider, Text} from '../common';
 import {CheckOutlined} from '../icons';
 
@@ -14,11 +14,11 @@ type StepMetadata = {
 };
 
 type StepsProps = {
-  setupStatus: Partial<SetupStatus>;
+  onboardingStatus: Partial<OnboardingStatus>;
 };
 
-const Steps = ({setupStatus}: StepsProps) => {
-  const stepsMetadata: Array<StepMetadata> = getStepsMetadata(setupStatus);
+const Steps = ({onboardingStatus}: StepsProps) => {
+  const stepsMetadata: Array<StepMetadata> = getStepsMetadata(onboardingStatus);
 
   return (
     <>
@@ -30,11 +30,11 @@ const Steps = ({setupStatus}: StepsProps) => {
 };
 
 const getStepsMetadata = (
-  setupStatus: Partial<SetupStatus>
+  onboardingStatus: Partial<OnboardingStatus>
 ): Array<StepMetadata> => {
   return [
     {
-      completed: setupStatus.installed_chat_widget,
+      completed: onboardingStatus.installed_chat_widget,
       ctaHref: '/settings/chat-widget',
       ctaText: 'Configure chat widget',
       text: (
@@ -45,7 +45,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: setupStatus.invited_teammates,
+      completed: onboardingStatus.invited_teammates,
       ctaHref: '/settings/team',
       ctaText: 'Invite teammates',
       text: (
@@ -56,7 +56,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: setupStatus.configured_profile,
+      completed: onboardingStatus.configured_profile,
       ctaHref: '/settings/profile',
       ctaText: 'Configure profile',
       text: (
@@ -67,7 +67,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: setupStatus.has_integrations,
+      completed: onboardingStatus.has_integrations,
       ctaHref: '/integrations',
       ctaText: 'Set up integrations',
       text: (
@@ -78,7 +78,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: setupStatus.configured_storytime,
+      completed: onboardingStatus.configured_storytime,
       ctaHref: '/sessions/setup',
       ctaText: 'Set up StoryTime',
       text: (
@@ -89,7 +89,7 @@ const getStepsMetadata = (
       ),
     },
     {
-      completed: setupStatus.upgraded_subscription,
+      completed: onboardingStatus.upgraded_subscription,
       ctaHref: '/settings/billing',
       ctaText: 'Upgrade subscription',
       text: (

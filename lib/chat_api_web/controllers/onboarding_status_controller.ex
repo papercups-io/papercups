@@ -1,4 +1,4 @@
-defmodule ChatApiWeb.SetupStatusController do
+defmodule ChatApiWeb.OnboardingStatusController do
   use ChatApiWeb, :controller
 
   alias ChatApi.{

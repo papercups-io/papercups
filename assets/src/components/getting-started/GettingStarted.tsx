@@ -2,21 +2,21 @@ import React from 'react';
 import {Box, Flex, Spinner} from 'theme-ui';
 
 import * as API from '../../api';
-import {SetupStatus} from '../../types';
+import type {OnboardingStatus} from '../../types';
 import logger from '../../logger';
 import {Divider, Title} from '../common';
 import Steps from './Steps';
 
 const GettingStarted = () => {
-  const [setupStatus, setSetupStatus] = React.useState<Partial<SetupStatus>>(
-    {}
-  );
+  const [onboardingStatus, setOnboardingStatus] = React.useState<
+    Partial<OnboardingStatus>
+  >({});
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     (async () => {
       try {
-        setSetupStatus(await API.getSetupStatus());
+        setOnboardingStatus(await API.getOnboardingStatus());
       } catch (error) {
         logger.error('Failed to get setup status:', error);
       }
@@ -42,7 +42,7 @@ const GettingStarted = () => {
         <Title level={3}>Welcome to Papercups</Title>
       </Box>
       <Divider />
-      <Steps setupStatus={setupStatus} />
+      <Steps onboardingStatus={onboardingStatus} />
     </Box>
   );
 };

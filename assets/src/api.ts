@@ -7,7 +7,7 @@ import {
   Conversation,
   Customer,
   CustomerNote,
-  SetupStatus,
+  OnboardingStatus,
   GoogleAuthParams,
   GoogleIntegrationParams,
   Issue,
@@ -1652,15 +1652,15 @@ export const deletePersonalApiKey = async (
     .then((res) => res.body);
 };
 
-export const getSetupStatus = async (
+export const getOnboardingStatus = async (
   token = getAccessToken()
-): Promise<SetupStatus> => {
+): Promise<OnboardingStatus> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
-    .get(`/api/setup_status`)
+    .get(`/api/onboarding_status`)
     .set('Authorization', token)
     .then((res) => res.body);
 };

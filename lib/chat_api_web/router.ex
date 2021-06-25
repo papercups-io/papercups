@@ -88,7 +88,7 @@ defmodule ChatApiWeb.Router do
     post("/billing", BillingController, :create)
     put("/billing", BillingController, :update)
     get("/reporting", ReportingController, :index)
-    get("/setup_status", SetupStatusController, :index)
+    get("/onboarding_status", OnboardingStatusController, :index)
 
     get("/slack/oauth", SlackController, :oauth)
     post("/slack/notify", SlackController, :notify)

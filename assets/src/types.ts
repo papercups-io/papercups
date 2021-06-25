@@ -295,7 +295,7 @@ export type SlackAuthorization = {
   settings: SlackAuthorizationSettings | null;
 };
 
-export type SetupStatus = {
+export type OnboardingStatus = {
   configured_profile: boolean;
   configured_storytime: boolean;
   has_integrations: boolean;
