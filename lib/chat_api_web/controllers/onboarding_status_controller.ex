@@ -33,7 +33,7 @@ defmodule ChatApiWeb.OnboardingStatusController do
   end
 
   @spec configured_profile?(number()) :: boolean()
-  def configured_profile?(user_id) do
+  defp configured_profile?(user_id) do
     case Users.get_user_profile(user_id) do
       nil -> false
       %UserProfile{display_name: nil, full_name: nil, profile_photo_url: nil} -> false
@@ -42,7 +42,7 @@ defmodule ChatApiWeb.OnboardingStatusController do
   end
 
   # @spec has_integrations?(binary()) :: boolean()
-  def has_integrations?(account_id) do
+  defp has_integrations?(account_id) do
     tasks_with_results = Task.yield_many([
       Task.async(fn -> Github.get_authorization_by_account(account_id) end),
       Task.async(fn -> Google.get_authorization_by_account(account_id) end),
@@ -65,20 +65,20 @@ defmodule ChatApiWeb.OnboardingStatusController do
     end)
   end
 
-  def installed_chat_widget?(account) do
+  defp installed_chat_widget?(account) do
     host = account.widget_settings && account.widget_settings.host
     host != nil && !String.contains?(host, ["papercups", "localhost"])
   end
 
-  def invited_teammates?(account_id) do
+  defp invited_teammates?(account_id) do
     Accounts.count_active_users(account_id) > 1
   end
 
-  def upgraded_subscription?(account) do
+  defp upgraded_subscription?(account) do
     account.subscription_plan != "starter"
   end
 
-  def configured_storytime?(account_id) do
+  defp configured_storytime?(account_id) do
     BrowserSessions.has_browser_sessions?(account_id)
   end
 end
