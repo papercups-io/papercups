@@ -90,6 +90,7 @@ defmodule ChatApiWeb.Router do
     get("/reporting", ReportingController, :index)
 
     get("/slack/oauth", SlackController, :oauth)
+    post("/slack/notify", SlackController, :notify)
     get("/slack/authorization", SlackController, :authorization)
     post("/slack/authorizations/:id/settings", SlackController, :update_settings)
     delete("/slack/authorizations/:id", SlackController, :delete)
@@ -98,6 +99,7 @@ defmodule ChatApiWeb.Router do
     get("/mattermost/channels", MattermostController, :channels)
     get("/mattermost/authorization", MattermostController, :authorization)
     delete("/mattermost/authorizations/:id", MattermostController, :delete)
+    post("/twilio/send", TwilioController, :send)
     post("/twilio/auth", TwilioController, :auth)
     get("/twilio/authorization", TwilioController, :authorization)
     delete("/twilio/authorizations/:id", TwilioController, :delete)
@@ -174,6 +176,9 @@ defmodule ChatApiWeb.Router do
     resources("/companies", CompanyController, except: [:new, :edit])
 
     get("/reporting", ReportingController, :index)
+    post("/slack/notify", SlackController, :notify)
+    post("/twilio/send", TwilioController, :send)
+    post("/gmail/send", GmailController, :send)
   end
 
   # Enables LiveDashboard only for development
