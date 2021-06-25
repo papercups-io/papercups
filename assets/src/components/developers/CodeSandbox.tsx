@@ -1,11 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import request from 'superagent';
-import AceEditor from 'react-ace';
-
-import 'ace-builds/src-noconflict/mode-javascript';
-import 'ace-builds/src-noconflict/theme-tomorrow';
-import 'ace-builds/src-noconflict/ext-language_tools';
 
 import {noop} from '../../utils';
 import logger from '../../logger';
@@ -174,36 +169,16 @@ export class CodeSandbox extends React.Component<Props, State> {
     return (
       <Flex sx={{width: '100%', maxHeight: runkitIframeHeight}}>
         <Box sx={{flex: 1.2, position: 'relative'}}>
-          {false ? (
-            <RunKitWrapper
-              source={code || WEBHOOK_HANDLER_SOURCE}
-              mode="endpoint"
-              environment={[{name: 'PAPERCUPS_API_KEY', value: personalApiKey}]}
-              minHeight={runkitIframeHeight}
-              nodeVersion="14.x.x"
-              onLoad={this.handleRunKitLoaded}
-              onResize={this.handleRunKitResize}
-            />
-          ) : (
-            <AceEditor
-              mode="javascript"
-              theme="tomorrow"
-              name="CodeSandbox-AceEditor"
-              height={runkitIframeHeight ? `${runkitIframeHeight}px` : '100%'}
-              wrapEnabled
-              editorProps={{$blockScrolling: true}}
-              setOptions={{
-                enableBasicAutocompletion: true,
-                enableLiveAutocompletion: true,
-                enableSnippets: true,
-              }}
-              tabSize={2}
-              value={code || WEBHOOK_HANDLER_SOURCE}
-              debounceChangePeriod={200}
-              onChange={console.log}
-            />
-          )}
-
+          <RunKitWrapper
+            source={code || WEBHOOK_HANDLER_SOURCE}
+            mode="endpoint"
+            environment={[{name: 'PAPERCUPS_API_KEY', value: personalApiKey}]}
+            minHeight={runkitIframeHeight}
+            nodeVersion="14.x.x"
+            onLoad={this.handleRunKitLoaded}
+            onResize={this.handleRunKitResize}
+          />
+          )
           {typeof this.props.footer === 'function'
             ? this.props.footer({
                 output,
