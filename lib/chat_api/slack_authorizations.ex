@@ -29,6 +29,7 @@ defmodule ChatApi.SlackAuthorizations do
     SlackAuthorization
     |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
+    |> first()
     |> Repo.one()
   end
 
@@ -38,6 +39,7 @@ defmodule ChatApi.SlackAuthorizations do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
+    |> first()
     |> Repo.one()
   end
 
