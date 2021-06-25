@@ -1,5 +1,6 @@
 defmodule ChatApiWeb.NotificationChannel do
   use ChatApiWeb, :channel
+  use Appsignal.Instrumentation.Decorators
 
   alias ChatApiWeb.Presence
   alias Phoenix.Socket.Broadcast
@@ -26,6 +27,7 @@ defmodule ChatApiWeb.NotificationChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  @decorate channel_action()
   def handle_in("read", %{"conversation_id" => id}, socket) do
     {:ok, conversation} = Conversations.mark_conversation_read(id)
     Conversations.Notification.notify(conversation, :webhooks, event: "conversation:updated")
@@ -33,6 +35,7 @@ defmodule ChatApiWeb.NotificationChannel do
     {:reply, :ok, socket}
   end
 
+  @decorate channel_action()
   def handle_in("shout", payload, socket) do
     with %{current_user: current_user} <- socket.assigns,
          %{id: user_id, account_id: account_id} <- current_user do

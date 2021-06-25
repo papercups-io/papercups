@@ -35,6 +35,7 @@ import {
 import {SOCKET_URL} from '../socket';
 import analytics from '../analytics';
 import {
+  formatUserExternalId,
   getBrowserVisibilityInfo,
   hasValidStripeKey,
   isWindowHidden,
@@ -81,6 +82,8 @@ import IssueDetailsPage from './issues/IssueDetailsPage';
 import NotesOverview from './notes/NotesOverview';
 import PersonalApiKeysPage from './developers/PersonalApiKeysPage';
 import EventSubscriptionsPage from './developers/EventSubscriptionsPage';
+import LambdaDetailsPage from './lambdas/LambdaDetailsPage';
+import LambdasOverview from './lambdas/LambdasOverview';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -99,6 +102,10 @@ const getSectionKey = (pathname: string) => {
     return ['customers', 'people'];
   } else if (pathname.startsWith('/tags')) {
     return ['customers', 'tags'];
+  } else if (pathname.startsWith('/notes')) {
+    return ['customers', 'notes'];
+  } else if (pathname.startsWith('/functions')) {
+    return ['developers', 'functions'];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
@@ -142,7 +149,7 @@ const ChatWithUs = ({
         hideToggleButton
         baseUrl="https://app.papercups-eu.io"
         customer={{
-          external_id: [currentUser.id, currentUser.email].join('|'),
+          external_id: formatUserExternalId(currentUser),
           email: currentUser.email,
           metadata: {
             company_name: account?.company_name,
@@ -163,7 +170,7 @@ const ChatWithUs = ({
       accountId={REACT_APP_ADMIN_ACCOUNT_ID}
       hideToggleButton
       customer={{
-        external_id: [currentUser.id, currentUser.email].join('|'),
+        external_id: formatUserExternalId(currentUser),
         email: currentUser.email,
         metadata: {
           company_name: account?.company_name,
@@ -238,7 +245,7 @@ const Dashboard = (props: RouteComponentProps) => {
     }
 
     if (isStorytimeEnabled && currentUser) {
-      const {id, email} = currentUser;
+      const {email} = currentUser;
       // TODO: figure out a better way to initialize this?
       const storytime = Storytime.init({
         accountId: REACT_APP_ADMIN_ACCOUNT_ID,
@@ -246,7 +253,7 @@ const Dashboard = (props: RouteComponentProps) => {
         debug: isDev,
         customer: {
           email,
-          external_id: [id, email].join('|'),
+          external_id: formatUserExternalId(currentUser),
         },
       });
 
@@ -437,6 +444,9 @@ const Dashboard = (props: RouteComponentProps) => {
                     Event subscriptions
                   </Link>
                 </Menu.Item>
+                <Menu.Item key="functions">
+                  <Link to="/functions">Functions</Link>
+                </Menu.Item>
               </Menu.SubMenu>
               <Menu.Item
                 title="Reporting"
@@ -555,6 +565,8 @@ const Dashboard = (props: RouteComponentProps) => {
             path="/developers/event-subscriptions"
             component={EventSubscriptionsPage}
           />
+          <Route path="/functions/:id" component={LambdaDetailsPage} />
+          <Route path="/functions" component={LambdasOverview} />
           <Route path="/conversations/all" component={AllConversations} />
           <Route path="/conversations/me" component={MyConversations} />
           <Route

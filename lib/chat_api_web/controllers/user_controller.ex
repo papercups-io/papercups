@@ -3,9 +3,23 @@ defmodule ChatApiWeb.UserController do
   alias ChatApi.Users
   require Logger
 
-  plug ChatApiWeb.EnsureRolePlug, :admin when action in [:disable, :enable]
+  plug(ChatApiWeb.EnsureRolePlug, :admin when action in [:disable, :enable])
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
+
+  @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def index(conn, params) do
+    users = ChatApi.Users.list_users_by_account(conn.assigns.current_user.account_id, params)
+
+    render(conn, "index.json", users: users)
+  end
+
+  @spec show(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def show(conn, %{"id" => id}) do
+    user = ChatApi.Users.get_user_info(conn.assigns.current_user.account_id, id)
+
+    render(conn, "show.json", user: user)
+  end
 
   @spec verify_email(Plug.Conn.t(), map) :: Plug.Conn.t()
   def verify_email(conn, %{"token" => token}) do

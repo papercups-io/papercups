@@ -11,6 +11,7 @@ import {
   GoogleAuthParams,
   GoogleIntegrationParams,
   Issue,
+  Lambda,
   Tag,
   User,
   WidgetSettings,
@@ -672,6 +673,25 @@ export const sendUserInvitationEmail = async (
     .then((res) => res.body.data);
 };
 
+export const sendSlackNotification = async (
+  params: {
+    text: string;
+    type?: 'reply' | 'support';
+    channel?: string;
+  },
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/slack/notify`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchSlackAuthorization = async (
   type = 'reply',
   token = getAccessToken()
@@ -824,6 +844,21 @@ export const deleteTwilioAuthorization = async (
   return request
     .delete(`/api/twilio/authorizations/${authorizationId}`)
     .set('Authorization', token);
+};
+
+export const sendTwilioSms = async (
+  params: {to: string; body: string},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/twilio/send`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
 };
 
 export const fetchGoogleAuthorization = async (
@@ -1147,6 +1182,31 @@ export const createPaymentMethod = async (
   return request
     .post(`/api/payment_methods`)
     .send({payment_method: paymentMethod})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchAccountUsers = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/users`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchAccountUser = async (
+  id: number,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/users/${id}`)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -1603,4 +1663,115 @@ export const getSetupStatus = async (
     .get(`/api/setup_status`)
     .set('Authorization', token)
     .then((res) => res.body);
+};
+
+export const fetchLambdas = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/lambdas`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchLambda = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/lambdas/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createNewLambda = async (
+  params: Partial<Lambda>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/lambdas`)
+    .send({lambda: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateLambda = async (
+  id: string,
+  updates: Partial<Lambda>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/lambdas/${id}`)
+    .send({lambda: updates})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteLambda = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/lambdas/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
+export const deployLambda = async (
+  id: string,
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/lambdas/${id}/deploy`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const invokeLambda = async (
+  id: string,
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/lambdas/${id}/invoke`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const sendAdminNotification = async (
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/admin/notifications`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
 };

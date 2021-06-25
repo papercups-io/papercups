@@ -8,6 +8,27 @@ defmodule ChatApiWeb.SlackController do
 
   action_fallback(ChatApiWeb.FallbackController)
 
+  @spec notify(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def notify(conn, %{"text" => text} = params) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %SlackAuthorization{access_token: access_token, channel: channel} <-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: Map.get(params, "type", "reply")
+           }),
+         {:ok, %{body: data}} <-
+           Slack.Client.send_message(
+             %{
+               "channel" => Map.get(params, "channel", channel),
+               "text" => text
+             },
+             access_token
+           ) do
+      json(conn, %{data: data})
+    else
+      _ -> json(conn, %{data: nil})
+    end
+  end
+
   @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def oauth(conn, %{"code" => code} = params) do
     Logger.info("Code from Slack OAuth: #{inspect(code)}")

@@ -127,6 +127,19 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def lambda_factory do
+    %ChatApi.Lambdas.Lambda{
+      name: sequence("some name"),
+      description: "some description",
+      status: "inactive",
+      code: "var message = 'Hello world!';",
+      language: "javascript",
+      runtime: "nodejs14.x",
+      account: build(:account),
+      creator: build(:user)
+    }
+  end
+
   def message_factory do
     %ChatApi.Messages.Message{
       account: build(:account),

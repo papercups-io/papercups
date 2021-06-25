@@ -46,6 +46,7 @@ defmodule ChatApi.MixProject do
       {:customerio, "~> 0.2"},
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
+      {:ex_aws_lambda, "~> 2.0"},
       {:swoosh, "~> 1.0"},
       {:gen_smtp, "~> 0.13"},
       {:phoenix, "~> 1.5.5"},
@@ -78,6 +79,7 @@ defmodule ChatApi.MixProject do
       {:floki, "~> 0.30.0"},
       {:paginator, "~> 1.0.3"},
       {:phoenix_pubsub_redis, "~> 3.0.0"},
+      {:appsignal_phoenix, "~> 2.0.0"},
       {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end

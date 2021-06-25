@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": "https://github.com/papercups-io/papercups",
   "dependencies": {
-    "@papercups-io/chat-builder": "0.0.9",
+    "@papercups-io/chat-builder": "0.0.12",
     "@papercups-io/chat-widget": "^1.1.10",
     "@papercups-io/storytime": "^1.0.6",
     "@sentry/react": "^5.20.1",
@@ -31,6 +31,8 @@
     "antd": "^4.3.5",
     "cpx": "^1.5.0",
     "dayjs": "^1.9.1",
+    "jszip": "^3.6.0",
+    "jszip-utils": "^0.1.0",
     "lodash": "^4.17.20",
     "logrocket": "^1.0.10",
     "mkdirp": "^1.0.4",
@@ -91,6 +93,7 @@
   },
   "proxy": "http://localhost:4000",
   "devDependencies": {
+    "@types/jszip": "^3.4.1",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
     "prettier": "^2.0.5"

@@ -5,6 +5,7 @@ import * as API from '../../api';
 import {
   colors,
   Button,
+  Container,
   Divider,
   Paragraph,
   RangePicker,
@@ -302,7 +303,7 @@ class ReportingDashboard extends React.Component<Props, State> {
     } = this.formatMetricsByWeek(resolutionMetricsByWeek, 'median');
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Flex
           mb={4}
           sx={{justifyContent: 'space-between', alignItems: 'flex-end'}}
@@ -470,7 +471,7 @@ class ReportingDashboard extends React.Component<Props, State> {
           </Flex>
           */}
         </Box>
-      </Box>
+      </Container>
     );
   }
 }

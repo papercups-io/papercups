@@ -168,6 +168,7 @@ const EmbeddableChat = ({
   height,
   width,
   sx = {},
+  onChatLoaded,
   onMessageSent,
   onMessageReceived,
 }: {
@@ -175,16 +176,35 @@ const EmbeddableChat = ({
   height?: number | string;
   width?: number | string;
   sx?: SxStyleProp;
+  onChatLoaded?: (papercups: any) => void;
   onMessageSent?: (message: any) => void;
   onMessageReceived?: (message: any) => void;
 }) => {
   return (
     <ChatBuilder
       config={config}
+      scrollIntoViewOptions={{
+        block: 'nearest',
+        inline: 'start',
+      }}
+      onChatLoaded={onChatLoaded}
       onMessageSent={onMessageSent}
       onMessageReceived={onMessageReceived}
     >
       {({config, state, scrollToRef, onSendMessage}) => {
+        const handleSendMessage = (message: any, email?: string) => {
+          const {metadata = {}} = message;
+
+          return onSendMessage(
+            {
+              ...message,
+              // TODO: make this configurable as a prop
+              metadata: {...metadata, disable_webhook_events: true},
+            },
+            email
+          );
+        };
+
         return (
           <Box
             sx={{
@@ -217,7 +237,7 @@ const EmbeddableChat = ({
               <ChatFooter
                 config={config}
                 state={state}
-                onSendMessage={onSendMessage}
+                onSendMessage={handleSendMessage}
               />
             </Flex>
           </Box>

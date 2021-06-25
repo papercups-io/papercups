@@ -11,6 +11,18 @@ defmodule ChatApi.Emails do
 
   @type deliver_result() :: {:ok, term()} | {:error, binary()} | {:warning, binary()}
 
+  @spec send_ad_hoc_email(keyword()) :: deliver_result()
+  def send_ad_hoc_email(to: to, from: from, subject: subject, text: text, html: html) do
+    Email.generic(
+      to: to,
+      from: from,
+      subject: subject,
+      text: text,
+      html: html
+    )
+    |> deliver()
+  end
+
   @spec send_new_message_alerts(Message.t()) :: [deliver_result()]
   def send_new_message_alerts(message) do
     message

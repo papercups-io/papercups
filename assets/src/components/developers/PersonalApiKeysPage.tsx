@@ -1,7 +1,7 @@
 import React from 'react';
 import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Paragraph, Text, Title} from '../common';
+import {Button, Container, Paragraph, Text, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import Spinner from '../Spinner';
 import * as API from '../../api';
@@ -105,7 +105,7 @@ class PersonalApiKeysPage extends React.Component<Props, State> {
     const latestApiKey = personalApiKeys[personalApiKeys.length - 1];
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container>
         <Box mb={5}>
           <Title level={4}>Personal API keys</Title>
 
@@ -136,7 +136,8 @@ class PersonalApiKeysPage extends React.Component<Props, State> {
           onCancel={this.handleApiKeyModalCancel}
         />
 
-        {latestApiKey && latestApiKey.value && (
+        {/* TODO: we don't want to show this until the UX is a bit more understandable */}
+        {false && latestApiKey && latestApiKey.value && (
           <Box mb={5}>
             <Title level={4}>API explorer</Title>
 
@@ -152,7 +153,7 @@ class PersonalApiKeysPage extends React.Component<Props, State> {
             )}
           </Box>
         )}
-      </Box>
+      </Container>
     );
   }
 }
