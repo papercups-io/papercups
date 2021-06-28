@@ -20,7 +20,7 @@ defmodule ChatApi.Slack.Notification do
 
   alias ChatApi.Users.{User, UserProfile}
 
-  @spec log(binary()) :: :ok | Tesla.Env.result()
+  @spec log(binary() | map()) :: :ok | Tesla.Env.result()
   def log(message) do
     case System.get_env("PAPERCUPS_SLACK_WEBHOOK_URL") do
       "https://hooks.slack.com/services/" <> _rest = url ->
@@ -31,14 +31,21 @@ defmodule ChatApi.Slack.Notification do
     end
   end
 
-  @spec log(binary(), binary()) :: Tesla.Env.result()
+  @spec log(binary() | map(), binary()) :: Tesla.Env.result()
   def log(message, webhook_url) do
+    payload =
+      case message do
+        msg when is_binary(msg) -> %{"text" => message}
+        msg when is_map(msg) -> message
+        _ -> raise "Unsupported message: #{inspect(message)}"
+      end
+
     [
       Tesla.Middleware.JSON,
       {Tesla.Middleware.Headers, [{"content-type", "application/json"}]}
     ]
     |> Tesla.client()
-    |> Tesla.post(webhook_url, %{"text" => message})
+    |> Tesla.post(webhook_url, payload)
   end
 
   @spec notify_primary_channel(Message.t()) :: Tesla.Env.result() | nil | :ok

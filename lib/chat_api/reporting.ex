@@ -7,11 +7,18 @@ defmodule ChatApi.Reporting do
   require Integer
 
   alias ChatApi.{
+    Accounts.Account,
     Repo,
     Conversations.Conversation,
     Messages.Message,
     Users.User,
-    Customers.Customer
+    Customers.Customer,
+    Github.GithubAuthorization,
+    Google.GoogleAuthorization,
+    Mattermost.MattermostAuthorization,
+    SlackAuthorizations.SlackAuthorization,
+    Twilio.TwilioAuthorization,
+    WidgetSettings.WidgetSetting
   }
 
   @type aggregate_by_date() :: %{date: binary(), count: integer()}
@@ -430,4 +437,526 @@ defmodule ChatApi.Reporting do
   end
 
   defp weekdays, do: ~w(Monday Tuesday Wednesday Thursday Friday Saturday Sunday)
+
+  ####################################################################################
+  # Internal metrics
+  ####################################################################################
+
+  def send_weekly_report() do
+    metrics = generate_weekly_report()
+
+    # num_new_accounts
+    # active_accounts_with_messages
+    # num_new_users
+    # active_users_with_messages
+    # num_widget_installations
+    # num_new_messages
+    # num_messages_by_source
+    # num_new_conversations
+    # num_conversations_by_source
+    # num_new_customers
+    # num_customers_by_account
+    # num_customers_by_host
+    # num_new_integrations
+
+    payload = %{
+      "text" => "Weekly metrics for Papercups",
+      "blocks" => [
+        %{
+          "type" => "section",
+          "text" => %{
+            "type" => "mrkdwn",
+            "text" => "Here are this weeks metrics:"
+          }
+        },
+        %{
+          "type" => "section",
+          "fields" => [
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *New accounts:*
+              > #{metrics.current.num_new_accounts} (#{metrics.previous.num_new_accounts} last week)
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *New users:*
+              > #{metrics.current.num_new_users} (#{metrics.previous.num_new_users} last week)
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Most active accounts:*
+              #{
+                metrics.current.active_accounts_with_messages
+                |> Enum.map(fn r ->
+                  "> #{r.account.company_name} (#{r.count} messages)"
+                end)
+                |> Enum.slice(0..4)
+              }
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Most active users:*
+              #{
+                metrics.current.active_users_with_messages
+                |> Enum.map(fn r ->
+                  "> #{r.user.email} (#{r.count} messages)"
+                end)
+                |> Enum.slice(0..4)
+              }
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *New widget installations:*
+              > #{metrics.current.num_widget_installations} (#{
+                metrics.previous.num_widget_installations
+              } last week)
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *New messages:*
+              > #{metrics.current.num_new_messages} (#{metrics.previous.num_new_messages} last week)
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *New conversations:*
+              > #{metrics.current.num_new_conversations} (#{
+                metrics.previous.num_new_conversations
+              } last week)
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *New customers:*
+              > #{metrics.current.num_new_customers} (#{metrics.previous.num_new_customers} last week)
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *New integrations:*
+              > _Slack_: #{metrics.current.num_new_integrations.slack} (#{
+                metrics.previous.num_new_integrations.slack
+              } last week)
+              > _Mattermost_: #{metrics.current.num_new_integrations.mattermost} (#{
+                metrics.previous.num_new_integrations.mattermost
+              } last week)
+              > _Google_: #{metrics.current.num_new_integrations.google} (#{
+                metrics.previous.num_new_integrations.google
+              } last week)
+              > _Twilio_: #{metrics.current.num_new_integrations.twilio} (#{
+                metrics.previous.num_new_integrations.twilio
+              } last week)
+              > _Github_: #{metrics.current.num_new_integrations.github} (#{
+                metrics.previous.num_new_integrations.github
+              } last week)
+
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *New customers by account:*
+              #{
+                metrics.current.num_customers_by_account
+                |> Enum.map(fn r ->
+                  "> #{r.account.company_name} (#{r.count} new customers)"
+                end)
+                |> Enum.slice(0..4)
+              }
+
+              """
+            }
+          ]
+        },
+        %{
+          "type" => "divider"
+        },
+        %{
+          "type" => "section",
+          "text" => %{
+            "type" => "mrkdwn",
+            "text" => "Overall metrics:"
+          }
+        },
+        %{
+          "type" => "section",
+          "fields" => [
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Total accounts:*
+              > #{metrics.total.num_new_accounts}
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Total users:*
+              > #{metrics.total.num_new_users}
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Total widget installations:*
+              > #{metrics.total.num_widget_installations}
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Total messages:*
+              > #{metrics.total.num_new_messages}
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Total conversations:*
+              > #{metrics.total.num_new_conversations}
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Total customers:*
+              > #{metrics.total.num_new_customers}
+              """
+            },
+            %{
+              "type" => "mrkdwn",
+              "text" => """
+              *Total integrations:*
+              > _Slack_: #{metrics.total.num_new_integrations.slack}
+              > _Mattermost_: #{metrics.total.num_new_integrations.mattermost}
+              > _Google_: #{metrics.total.num_new_integrations.google}
+              > _Twilio_: #{metrics.total.num_new_integrations.twilio}
+              > _Github_: #{metrics.total.num_new_integrations.github}
+
+              """
+            }
+          ]
+        }
+      ]
+    }
+
+    ChatApi.Slack.Notification.log(payload)
+  end
+
+  def generate_weekly_report() do
+    today = DateTime.utc_now()
+    one_week_ago = DateTime.add(today, -1 * @seconds_per_week)
+    this_week = %{from_date: one_week_ago, to_date: today}
+
+    last_week = %{
+      from_date: DateTime.add(one_week_ago, -1 * @seconds_per_week),
+      to_date: one_week_ago
+    }
+
+    %{
+      current: generate_internal_metrics(this_week),
+      previous: generate_internal_metrics(last_week),
+      total: generate_internal_metrics()
+    }
+  end
+
+  def generate_internal_metrics(filters \\ %{}) do
+    %{
+      num_new_accounts: count_new_accounts(filters),
+      active_accounts_with_messages: list_active_accounts(filters),
+      num_new_users: count_new_users(filters),
+      active_users_with_messages: list_active_users(filters),
+      num_widget_installations: count_widget_installations(filters),
+      num_new_messages: count_new_messages(filters),
+      num_messages_by_source: group_messages_by_source(filters),
+      num_new_conversations: count_new_conversations(filters),
+      num_conversations_by_source: group_conversations_by_source(filters),
+      num_new_customers: count_new_customers(filters),
+      num_customers_by_account: group_customers_by_account(filters),
+      num_customers_by_host: group_customers_by_host(filters),
+      num_new_integrations: count_new_integrations(filters)
+      # stripe_subscription_metrics: stripe_subscription_metrics(filters)
+    }
+  end
+
+  def count_new_accounts(filters \\ %{}) do
+    Account
+    |> where(^filter_where(filters))
+    |> select([a], count(a.id))
+    |> Repo.one()
+  end
+
+  def list_active_accounts(filters \\ %{}) do
+    filters
+    # result looks like [%{count: 1678, account: %{company_name: "Papercups", id: "a1b2c3"}}]
+    |> group_messages_by_account()
+    |> Enum.filter(fn r -> r.count > 0 end)
+    |> Enum.sort_by(fn r -> r.count end, :desc)
+
+    # |> Enum.map(fn r -> r.account end)
+  end
+
+  def count_new_users(filters \\ %{}) do
+    User
+    |> where(^filter_where(filters))
+    |> select([u], count(u.id))
+    |> Repo.one()
+  end
+
+  def list_active_users(filters \\ %{}) do
+    filters
+    # result looks like [%{count: 1678, user: %{email: "alexreichert621@gmail.com", id: 1}}]
+    |> group_messages_by_user()
+    |> Enum.filter(fn r -> r.count > 0 end)
+    |> Enum.sort_by(fn r -> r.count end, :desc)
+  end
+
+  def count_widget_installations(filters \\ %{}) do
+    WidgetSetting
+    |> where(^filter_where(filters))
+    |> where([w], not ilike(w.host, "papercups"))
+    |> where([w], not ilike(w.host, "localhost"))
+    |> select([w], count(w.id))
+    |> Repo.one()
+  end
+
+  def count_new_messages(filters \\ %{}) do
+    Message
+    |> where(^filter_where(filters))
+    |> select([m], count(m.id))
+    |> Repo.one()
+  end
+
+  def group_messages_by_account(filters \\ %{}) do
+    Message
+    |> where(^filter_where(filters))
+    |> join(:inner, [m], a in Account, on: m.account_id == a.id)
+    |> select([m, a], %{
+      account: %{id: a.id, company_name: a.company_name},
+      count: count(m.account_id)
+    })
+    |> group_by([m, a], [m.account_id, a.id])
+    |> order_by([m], desc: count(m.account_id))
+    |> Repo.all()
+  end
+
+  def group_messages_by_user(filters \\ %{}) do
+    Message
+    |> where(^filter_where(filters))
+    |> join(:inner, [m], u in User, on: m.user_id == u.id)
+    |> select([m, u], %{
+      user: %{id: u.id, email: u.email},
+      count: count(m.user_id)
+    })
+    |> group_by([m, u], [m.user_id, u.id])
+    |> order_by([m], desc: count(m.user_id))
+    |> Repo.all()
+  end
+
+  def group_messages_by_source(filters \\ %{}) do
+    Message
+    |> where(^filter_where(filters))
+    |> select([m], %{source: m.source, count: count(m.id)})
+    |> group_by([m], [m.source])
+    |> order_by([m], desc: count(m.id))
+    |> Repo.all()
+  end
+
+  def count_new_conversations(filters \\ %{}) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> select([c], count(c.id))
+    |> Repo.one()
+  end
+
+  def group_conversations_by_account(filters \\ %{}) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> join(:inner, [c], a in Account, on: c.account_id == a.id)
+    |> select([c, a], %{
+      account: %{id: a.id, company_name: a.company_name},
+      count: count(c.account_id)
+    })
+    |> group_by([c, a], [c.account_id, a.id])
+    |> order_by([c], desc: count(c.account_id))
+    |> Repo.all()
+  end
+
+  def group_conversations_by_source(filters \\ %{}) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> select([c], %{source: c.source, count: count(c.id)})
+    |> group_by([c], [c.source])
+    |> order_by([c], desc: count(c.id))
+    |> Repo.all()
+  end
+
+  def count_new_customers(filters \\ %{}) do
+    Customer
+    |> where(^filter_where(filters))
+    |> select([c], count(c.id))
+    |> Repo.one()
+  end
+
+  def group_customers_by_account(filters \\ %{}) do
+    Customer
+    |> where(^filter_where(filters))
+    |> join(:inner, [c], a in Account, on: c.account_id == a.id)
+    |> select([c, a], %{
+      account: %{id: a.id, company_name: a.company_name},
+      count: count(c.account_id)
+    })
+    |> group_by([c, a], [c.account_id, a.id])
+    |> order_by([c], desc: count(c.account_id))
+    |> Repo.all()
+  end
+
+  def group_customers_by_host(filters \\ %{}) do
+    Customer
+    |> where(^filter_where(filters))
+    |> select([c], %{host: c.host, count: count(c.id)})
+    |> group_by([c], [c.host])
+    |> order_by([c], desc: count(c.id))
+    |> Repo.all()
+  end
+
+  def count_new_integrations(filters \\ %{}) do
+    github =
+      GithubAuthorization
+      |> where(^filter_where(filters))
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    google =
+      GoogleAuthorization
+      |> where(^filter_where(filters))
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    mattermost =
+      MattermostAuthorization
+      |> where(^filter_where(filters))
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    slack =
+      SlackAuthorization
+      |> where(^filter_where(filters))
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    twilio =
+      TwilioAuthorization
+      |> where(^filter_where(filters))
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    %{
+      github: github,
+      google: google,
+      mattermost: mattermost,
+      slack: slack,
+      twilio: twilio,
+      total: github + google + mattermost + slack + twilio
+    }
+  end
+
+  def stripe_subscription_metrics(filters \\ %{}) do
+    case Stripe.Subscription.list(%{limit: 100}) do
+      {:ok, %{data: data}} ->
+        paid_subscriptions = Enum.filter(data, &is_paid_subscription?/1)
+
+        # TODO: include comparisons with previous week?
+        metrics = %{
+          total: Enum.count(paid_subscriptions),
+          current:
+            paid_subscriptions
+            |> Enum.filter(fn sub ->
+              case filters do
+                %{from_date: from, to_date: to} -> sub.start_date > from && sub.start_date < to
+                %{from_date: from} -> sub.start_date > from
+                %{to_date: to} -> sub.start_date < to
+                _ -> true
+              end
+            end)
+            |> Enum.count(),
+          mrr:
+            paid_subscriptions
+            |> Enum.filter(&is_active_subscription?/1)
+            |> Enum.reduce(0, fn sub, total ->
+              total + calculate_subscription_mrr(sub)
+            end)
+        }
+
+        {:ok, metrics}
+
+      error ->
+        error
+    end
+  end
+
+  def is_paid_subscription?(%Stripe.Subscription{plan: %Stripe.Plan{active: true, amount: amount}}),
+      do: amount > 0
+
+  def is_paid_subscription?(_), do: false
+
+  def is_active_subscription?(%Stripe.Subscription{status: "active"}), do: true
+  def is_active_subscription?(_), do: false
+
+  def calculate_subscription_mrr(%Stripe.Subscription{} = subscription) do
+    case subscription do
+      %{
+        plan: %Stripe.Plan{active: true, amount: amount},
+        discount: %Stripe.Discount{
+          coupon: %Stripe.Coupon{
+            duration: "forever",
+            amount_off: amount_off,
+            percent_off: percent_off
+          }
+        }
+      } ->
+        a = min(amount_off || 0, amount)
+        p = min(amount * ((percent_off || 0) / 100), amount)
+
+        amount - a - p
+
+      %{plan: %Stripe.Plan{active: true, amount: amount}} ->
+        amount
+
+      _ ->
+        0
+    end
+  end
+
+  # Optional:
+
+  # Last changelog update (query github?)
+  # -> curl https://raw.githubusercontent.com/papercups-io/papercups/master/CHANGELOG.md
+  # Number of Mailgun emails sent?
+  # Number of Customer IO emails sent?
+  # Number of personal outbound emails sent (excluding replies to inbound)?
+  # -> (will require personal Gmail authorization)
+  # Number of customers/users contacted (using Google Sheets API?)
 end
