@@ -498,6 +498,7 @@ defmodule ChatApi.Reporting do
                   "> #{r.account.company_name} (#{r.count} messages)"
                 end)
                 |> Enum.slice(0..4)
+                |> Enum.join("\n")
               }
 
               """
@@ -512,6 +513,7 @@ defmodule ChatApi.Reporting do
                   "> #{r.user.email} (#{r.count} messages)"
                 end)
                 |> Enum.slice(0..4)
+                |> Enum.join("\n")
               }
 
               """
@@ -584,6 +586,7 @@ defmodule ChatApi.Reporting do
                   "> #{r.account.company_name} (#{r.count} new customers)"
                 end)
                 |> Enum.slice(0..4)
+                |> Enum.join("\n")
               }
 
               """
