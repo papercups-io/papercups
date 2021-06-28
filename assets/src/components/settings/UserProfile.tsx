@@ -6,6 +6,7 @@ import {
   colors,
   notification,
   Button,
+  Container,
   Checkbox,
   Divider,
   Input,
@@ -230,7 +231,7 @@ class UserProfile extends React.Component<Props, State> {
     const hasGmailConnection = !!gmailAuthorizationId;
 
     return (
-      <Box p={4}>
+      <Container sx={{maxWidth: 640}}>
         <Title level={3}>My Profile</Title>
 
         <Box mb={3} sx={{maxWidth: 480}}>
@@ -356,7 +357,7 @@ class UserProfile extends React.Component<Props, State> {
             onDisconnectGmail={this.handleDisconnectGmail}
           />
         </Box>
-      </Box>
+      </Container>
     );
   }
 }

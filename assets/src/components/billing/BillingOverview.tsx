@@ -318,7 +318,7 @@ class BillingOverview extends React.Component<Props, State> {
     const trialEndDate = getTrialEndDate(subscription);
 
     return (
-      <Container>
+      <Container sx={{maxWidth: 640}}>
         <Box mb={4}>
           <Title level={3}>Billing Overview</Title>
           <Paragraph>

@@ -1,6 +1,14 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Button, Divider, Input, Paragraph, Text, Title} from '../common';
+import {
+  Button,
+  Container,
+  Divider,
+  Input,
+  Paragraph,
+  Text,
+  Title,
+} from '../common';
 import Spinner from '../Spinner';
 import WorkingHoursSelector from './WorkingHoursSelector';
 import ConversationRemindersSettings from './ConversationRemindersSettings';
@@ -134,7 +142,7 @@ class AccountOverview extends React.Component<Props, State> {
     const settings = account.settings || {};
 
     return (
-      <Box p={4} sx={{maxWidth: 1080}}>
+      <Container sx={{maxWidth: 640}}>
         <Box mb={4}>
           <Title level={3}>Account Overview</Title>
 
@@ -237,7 +245,7 @@ class AccountOverview extends React.Component<Props, State> {
             onSave={this.handleUpdate}
           />
         </Box>
-      </Box>
+      </Container>
     );
   }
 }
