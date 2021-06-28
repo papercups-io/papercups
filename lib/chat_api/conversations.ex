@@ -147,7 +147,7 @@ defmodule ChatApi.Conversations do
 
     query =
       from(c in Conversation,
-        where: c.status == "open" and c.account_id == ^account_id,
+        where: c.status == "open" and c.account_id == ^account_id and is_nil(c.archived_at),
         join: most_recent_messages in subquery(messages_query),
         on: most_recent_messages.conversation_id == c.id,
         on:
