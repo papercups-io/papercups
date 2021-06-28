@@ -6,15 +6,15 @@ defmodule ChatApiWeb.GmailController do
   alias ChatApi.Google
 
   @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def send(conn, %{"recipient" => recipient, "subject" => subject, "message" => message}) do
+  def send(conn, params) do
     with %{account_id: account_id, email: email, id: user_id} <- conn.assigns.current_user,
          %{refresh_token: refresh_token} <-
            Google.get_support_gmail_authorization(account_id, user_id) do
       Google.Gmail.send_message(refresh_token, %{
-        to: recipient,
-        from: email,
-        subject: subject,
-        text: message
+        to: params["to"] || params["recipient"],
+        from: params["from"] || email,
+        subject: params["subject"],
+        text: params["text"] || params["message"]
       })
       |> case do
         %{"id" => _id} = result ->

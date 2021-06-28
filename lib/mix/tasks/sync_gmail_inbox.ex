@@ -232,6 +232,7 @@ defmodule Mix.Tasks.SyncGmailInbox do
         account_id: account_id,
         customer_id: customer.id,
         assignee_id: assignee_id,
+        subject: initial_message.subject,
         source: "email"
       })
 
