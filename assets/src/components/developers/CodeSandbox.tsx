@@ -178,7 +178,6 @@ export class CodeSandbox extends React.Component<Props, State> {
             onLoad={this.handleRunKitLoaded}
             onResize={this.handleRunKitResize}
           />
-
           {typeof this.props.footer === 'function'
             ? this.props.footer({
                 output,
