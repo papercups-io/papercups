@@ -126,6 +126,22 @@ defmodule ChatApi.Github.Client do
     |> Tesla.get("/repos/#{owner}/#{repo}/issues")
   end
 
+  def create_issue(
+        %GithubAuthorization{github_installation_id: installation_id},
+        owner,
+        repo,
+        issue
+      ),
+      do: create_issue(installation_id, owner, repo, issue)
+
+  def create_issue(installation_id, owner, repo, issue) do
+    {:ok, %{body: %{"token" => token}}} = generate_installation_access_token(installation_id)
+
+    token
+    |> oauth_client()
+    |> Tesla.post("/repos/#{owner}/#{repo}/issues", issue)
+  end
+
   def retrieve_issue(owner, repo, issue_id),
     do: Tesla.get(public_client(), "/repos/#{owner}/#{repo}/issues/#{issue_id}")
 

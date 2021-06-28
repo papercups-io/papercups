@@ -187,6 +187,7 @@ defmodule ChatApiWeb.MessageController do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:conversation_reply_email)
+    |> Messages.Notification.notify(:gmail)
     |> Messages.Notification.notify(:sms)
   end
 end

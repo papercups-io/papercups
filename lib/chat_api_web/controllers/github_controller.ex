@@ -74,8 +74,8 @@ defmodule ChatApiWeb.GithubController do
     end
   end
 
-  @spec repos(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def repos(conn, _payload) do
+  @spec list_repos(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def list_repos(conn, _payload) do
     with %{account_id: account_id} <- conn.assigns.current_user,
          %GithubAuthorization{} = auth <- Github.get_authorization_by_account(account_id),
          {:ok, %{body: %{"repositories" => repos}}} <- Github.Client.list_installation_repos(auth) do
@@ -88,8 +88,8 @@ defmodule ChatApiWeb.GithubController do
     end
   end
 
-  @spec issues(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def issues(conn, %{"url" => url}) do
+  @spec list_issues(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def list_issues(conn, %{"url" => url}) do
     authorization =
       conn
       |> Pow.Plug.current_user()
@@ -112,7 +112,7 @@ defmodule ChatApiWeb.GithubController do
     end
   end
 
-  def issues(conn, %{"owner" => owner, "repo" => repo}) do
+  def list_issues(conn, %{"owner" => owner, "repo" => repo}) do
     authorization =
       conn
       |> Pow.Plug.current_user()
@@ -121,6 +121,24 @@ defmodule ChatApiWeb.GithubController do
 
     with {:ok, %{body: body}} <-
            Github.Client.list_issues(authorization, owner, repo) do
+      json(conn, %{data: body})
+    else
+      error ->
+        Logger.error("Error retrieving GitHub issues for #{owner}/#{repo}: #{inspect(error)}")
+
+        json(conn, %{data: []})
+    end
+  end
+
+  def create_issue(conn, %{"owner" => owner, "repo" => repo, "issue" => issue}) do
+    authorization =
+      conn
+      |> Pow.Plug.current_user()
+      |> Map.get(:account_id)
+      |> Github.get_authorization_by_account()
+
+    with {:ok, %{body: body}} <-
+           Github.Client.create_issue(authorization, owner, repo, issue) do
       json(conn, %{data: body})
     else
       error ->
