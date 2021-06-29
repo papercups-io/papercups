@@ -21,23 +21,24 @@ defmodule ChatApi.Messages do
     |> Repo.all()
   end
 
-  @spec list_by_conversation(binary(), binary(), keyword()) :: [Message.t()]
-  def list_by_conversation(conversation_id, account_id, opts \\ []) do
+  @spec list_by_conversation(binary(), map(), keyword()) :: [Message.t()]
+  def list_by_conversation(conversation_id, filters \\ %{}, opts \\ []) do
     Message
-    |> where(account_id: ^account_id, conversation_id: ^conversation_id)
-    |> handle_order_by(opts)
-    |> maybe_limit(opts)
+    |> where(conversation_id: ^conversation_id)
+    |> where(^filter_where(filters))
+    |> handle_order_by(opts[:order_by])
+    |> maybe_limit(opts[:limit])
     |> preload([:attachments, :customer, [user: :profile]])
     |> Repo.all()
   end
 
-  @spec handle_order_by(Ecto.Query.t(), keyword()) :: Ecto.Query.t()
-  def handle_order_by(query, order_by: order_by), do: query |> order_by(^order_by)
-  def handle_order_by(query, _opts), do: query |> order_by(desc: :inserted_at)
+  @spec handle_order_by(Ecto.Query.t(), keyword() | nil) :: Ecto.Query.t()
+  def handle_order_by(query, nil), do: query |> order_by(desc: :inserted_at)
+  def handle_order_by(query, order_by), do: query |> order_by(^order_by)
 
-  @spec maybe_limit(Ecto.Query.t(), keyword()) :: Ecto.Query.t()
-  def maybe_limit(query, limit: limit), do: query |> limit(^limit)
-  def maybe_limit(query, _opts), do: query
+  @spec maybe_limit(Ecto.Query.t(), integer() | nil) :: Ecto.Query.t()
+  def maybe_limit(query, nil), do: query
+  def maybe_limit(query, limit) when is_integer(limit), do: query |> limit(^limit)
 
   @spec count_messages_by_account(binary()) :: integer()
   def count_messages_by_account(account_id) do
@@ -152,6 +153,9 @@ defmodule ChatApi.Messages do
 
       {"type", value}, dynamic ->
         dynamic([p], ^dynamic and p.type == ^value)
+
+      {"private", value}, dynamic ->
+        dynamic([p], ^dynamic and p.private == ^value)
 
       {"body", value}, dynamic ->
         dynamic([r], ^dynamic and ilike(r.body, ^value))

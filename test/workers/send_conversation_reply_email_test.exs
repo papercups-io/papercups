@@ -132,6 +132,57 @@ defmodule ChatApi.SendConversationReplyEmailTest do
     end
   end
 
+  describe "get_recent_messages/2" do
+    test "get_recent_messages/2 returns up to 5 recent public messages", %{
+      account: account
+    } do
+      conversation = insert(:conversation, account: account)
+      insert_list(10, :message, account: account, conversation: conversation)
+
+      message_ids =
+        conversation.id
+        |> ChatApi.Workers.SendConversationReplyEmail.get_recent_messages(account.id)
+        |> Enum.map(& &1.id)
+
+      assert length(message_ids) == 5
+    end
+
+    test "get_recent_messages/2 does not include private messages", %{
+      account: account
+    } do
+      conversation = insert(:conversation, account: account)
+
+      public_a =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          inserted_at: ~N[2021-06-01 20:00:00]
+        )
+
+      _private_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          private: true,
+          inserted_at: ~N[2021-06-02 20:00:00]
+        )
+
+      public_b =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          inserted_at: ~N[2021-06-03 20:00:00]
+        )
+
+      message_ids =
+        conversation.id
+        |> ChatApi.Workers.SendConversationReplyEmail.get_recent_messages(account.id)
+        |> Enum.map(& &1.id)
+
+      assert message_ids == [public_a.id, public_b.id]
+    end
+  end
+
   describe "should_send_email?/1" do
     test "should_send_email?/1 returns false if the conversation is not from a chat", %{
       account: account,

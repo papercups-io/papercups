@@ -160,7 +160,7 @@ defmodule ChatApi.Slack.Notification do
           } = authorization
       }) do
     with [initial_message | followup_messages] <-
-           Messages.list_by_conversation(conversation_id, account_id,
+           Messages.list_by_conversation(conversation_id, %{"account_id" => account_id},
              order_by: [asc: :inserted_at]
            ),
          # Send the initial messages to Slack to create a new thread

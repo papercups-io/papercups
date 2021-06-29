@@ -66,6 +66,82 @@ defmodule ChatApi.MessagesTest do
          %{message: message} do
       assert %Ecto.Changeset{} = Messages.change_message(message)
     end
+
+    test "list_by_conversation/3 returns messages by conversation" do
+      account = insert(:account)
+      conversation = insert(:conversation, account: account)
+
+      a = insert(:message, conversation: conversation, account: account)
+
+      b =
+        insert(:message, conversation: conversation, account: account, private: true, type: "note")
+
+      c = insert(:message, conversation: conversation, account: account)
+
+      message_ids =
+        conversation.id
+        |> Messages.list_by_conversation()
+        |> Enum.map(& &1.id)
+        |> Enum.sort()
+
+      assert message_ids == Enum.sort([a.id, b.id, c.id])
+    end
+
+    test "list_by_conversation/3 returns messages by conversation with filters" do
+      account = insert(:account)
+      conversation = insert(:conversation, account: account)
+
+      a = insert(:message, conversation: conversation, account: account)
+
+      _b =
+        insert(:message, conversation: conversation, account: account, private: true, type: "note")
+
+      c = insert(:message, conversation: conversation, account: account)
+
+      message_ids =
+        conversation.id
+        |> Messages.list_by_conversation(%{"account_id" => account.id, "private" => false})
+        |> Enum.map(& &1.id)
+        |> Enum.sort()
+
+      assert message_ids == Enum.sort([a.id, c.id])
+    end
+
+    test "list_by_conversation/3 returns messages by conversation with order/limit options" do
+      account = insert(:account)
+      conversation = insert(:conversation, account: account)
+
+      a =
+        insert(:message,
+          conversation: conversation,
+          account: account,
+          inserted_at: ~N[2021-06-01 20:00:00]
+        )
+
+      _b =
+        insert(:message,
+          conversation: conversation,
+          account: account,
+          private: true,
+          type: "note",
+          inserted_at: ~N[2021-06-02 20:00:00]
+        )
+
+      _c =
+        insert(:message,
+          conversation: conversation,
+          account: account,
+          inserted_at: ~N[2021-06-03 20:00:00]
+        )
+
+      message_ids =
+        conversation.id
+        |> Messages.list_by_conversation(%{}, order_by: [asc: :inserted_at], limit: 1)
+        |> Enum.map(& &1.id)
+        |> Enum.sort()
+
+      assert message_ids == [a.id]
+    end
   end
 
   describe "helpers" do
