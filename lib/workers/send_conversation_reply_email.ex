@@ -9,6 +9,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
 
   alias ChatApi.{Accounts, Conversations, Messages, Repo, Users}
   alias ChatApi.Customers.Customer
+  alias ChatApi.Messages.Message
 
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
@@ -44,10 +45,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
           user: Users.get_user_info(user_id),
           customer: Conversations.get_conversation_customer!(conversation_id),
           account: Accounts.get_account!(account_id),
-          messages:
-            conversation_id
-            |> Messages.list_by_conversation(account_id, limit: 5)
-            |> Enum.reverse()
+          messages: get_recent_messages(conversation_id, account_id)
         )
 
       case email do
@@ -68,6 +66,19 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   end
 
   def send_email(_params), do: :error
+
+  @spec get_recent_messages(binary(), binary()) :: [Message.t()]
+  def get_recent_messages(conversation_id, account_id) do
+    conversation_id
+    |> Messages.list_by_conversation(
+      %{
+        "account_id" => account_id,
+        "private" => false
+      },
+      limit: 5
+    )
+    |> Enum.reverse()
+  end
 
   @spec get_pending_job_ids(binary()) :: [integer()]
   def get_pending_job_ids(conversation_id) do
