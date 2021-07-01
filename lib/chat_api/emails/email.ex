@@ -124,11 +124,7 @@ defmodule ChatApi.Emails.Email do
 
     You've received a new message from your chat with #{company} (#{customer.current_url || ""}):
 
-    #{
-      Enum.map(messages, fn msg ->
-        format_sender(msg, company) <> ": " <> msg.body <> "\n"
-      end)
-    }
+    #{Enum.map(messages, fn msg -> format_sender(msg, company) <> ": " <> msg.body <> "\n" end)}
 
     Best,
     #{from}
@@ -161,11 +157,7 @@ defmodule ChatApi.Emails.Email do
     <p>You've received a new message from your chat with
     <a href="#{customer.current_url}">#{company}</a>:</p>
     <hr />
-    #{
-      Enum.map(messages, fn msg ->
-        "<p><strong>#{format_sender(msg, company)}</strong><br />#{msg.body}</p>"
-      end)
-    }
+    #{Enum.map(messages, fn msg -> "<p><strong>#{format_sender(msg, company)}</strong><br />#{msg.body}</p>" end)}
     <hr />
     <p>
     Best,<br />

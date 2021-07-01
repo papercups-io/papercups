@@ -58,9 +58,7 @@ defmodule ChatApi.Google.Gmail do
 
   def get_message_attachment(message_id, attachment_id, refresh_token) do
     scope =
-      "https://gmail.googleapis.com/gmail/v1/users/me/messages/#{message_id}/attachments/#{
-        attachment_id
-      }"
+      "https://gmail.googleapis.com/gmail/v1/users/me/messages/#{message_id}/attachments/#{attachment_id}"
 
     client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
     %{body: result} = OAuth2.Client.get!(client, scope)

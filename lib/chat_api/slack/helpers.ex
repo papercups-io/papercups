@@ -439,9 +439,7 @@ defmodule ChatApi.Slack.Helpers do
         params
 
       _invalid ->
-        raise "Unable to find matching user or customer ID for Slack event #{inspect(event)} on account authorization #{
-                inspect(authorization)
-              }"
+        raise "Unable to find matching user or customer ID for Slack event #{inspect(event)} on account authorization #{inspect(authorization)}"
     end
   end
 
@@ -469,9 +467,7 @@ defmodule ChatApi.Slack.Helpers do
                 %{"customer_id" => customer.id}
 
               _ ->
-                raise "Unable to find matching user or customer ID for Slack user #{
-                        inspect(slack_user_id)
-                      } on account authorization #{inspect(authorization)}"
+                raise "Unable to find matching user or customer ID for Slack user #{inspect(slack_user_id)} on account authorization #{inspect(authorization)}"
             end
         end
     end

@@ -142,9 +142,7 @@ defmodule ChatApi.SlackConversationThreads do
     else
       error ->
         Logger.info(
-          "Could not get channel name for Slack thread #{inspect(slack_conversation_thread)} -- #{
-            inspect(error)
-          }"
+          "Could not get channel name for Slack thread #{inspect(slack_conversation_thread)} -- #{inspect(error)}"
         )
 
         nil
@@ -166,9 +164,7 @@ defmodule ChatApi.SlackConversationThreads do
     else
       error ->
         Logger.info(
-          "Could not get permalink for Slack thread #{inspect(slack_conversation_thread)} -- #{
-            inspect(error)
-          }"
+          "Could not get permalink for Slack thread #{inspect(slack_conversation_thread)} -- #{inspect(error)}"
         )
 
         nil
