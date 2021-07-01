@@ -191,6 +191,33 @@ class TeamOverview extends React.Component<Props, State> {
       .then(() => this.setState({isRefreshing: false}));
   };
 
+  handleSetRole = async (user: User, role: string) => {
+    this.setState({isRefreshing: true});
+    const {id: userId} = user;
+
+      return API.setRoleAccountUser(userId, role)
+      .then((user) => {
+        notification.success({
+          message: 'Successfully changed role!',
+          description: `${user.email} is now ${role == 'user' ? 'Member': 'Admin'}.`,
+        });
+      })
+      .then(() => sleep(400)) // Add slight delay so not too jarring
+      .then(() => this.fetchLatestAccountInfo())
+      .catch((err) => {
+        const description =
+          err?.response?.body?.error?.message ||
+          err?.message ||
+          'Something went wrong. Please contact us or try again in a few minutes.';
+        notification.error({
+          message: 'Failed to disable user!',
+          description,
+        });
+      })
+      .then(() => this.setState({isRefreshing: false}));
+    
+  };
+
   handleEnableUser = async (user: User) => {
     this.setState({isRefreshing: true});
     const {id: userId} = user;
@@ -300,6 +327,7 @@ class TeamOverview extends React.Component<Props, State> {
             currentUser={currentUser}
             isAdmin={isAdmin}
             onDisableUser={this.handleDisableUser}
+            onSetRole={this.handleSetRole}
           />
 
           {isAdmin && isUserInvitationEmailEnabled && (

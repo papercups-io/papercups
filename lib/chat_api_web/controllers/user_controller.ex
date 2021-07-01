@@ -3,7 +3,7 @@ defmodule ChatApiWeb.UserController do
   alias ChatApi.Users
   require Logger
 
-  plug(ChatApiWeb.EnsureRolePlug, :admin when action in [:disable, :enable])
+  plug(ChatApiWeb.EnsureRolePlug, :admin when action in [:disable, :enable, :admin_role, :user_role])
 
   action_fallback(ChatApiWeb.FallbackController)
 
@@ -94,6 +94,38 @@ defmodule ChatApiWeb.UserController do
 
       %{account_id: account_id} ->
         {:ok, user} = user_id |> Users.find_by_id(account_id) |> Users.disable_user()
+
+        render(conn, "show.json", user: user)
+
+      nil ->
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "Not authenticated"}})
+    end
+  end
+
+  @spec user_role(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def user_role(conn, %{"id" => user_id}) do
+
+    case conn.assigns.current_user do
+      %{account_id: account_id} ->
+        {:ok, user} = user_id |> Users.find_by_id(account_id) |> Users.set_user_role()
+
+        render(conn, "show.json", user: user)
+
+      nil ->
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "Not authenticated"}})
+    end
+  end
+
+  @spec admin_role(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def admin_role(conn, %{"id" => user_id}) do
+
+    case conn.assigns.current_user do
+      %{account_id: account_id} ->
+        {:ok, user} = user_id |> Users.find_by_id(account_id) |> Users.set_admin_role()
 
         render(conn, "show.json", user: user)
 

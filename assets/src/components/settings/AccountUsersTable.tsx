@@ -1,8 +1,8 @@
 import React from 'react';
 import {Flex} from 'theme-ui';
 import dayjs from 'dayjs';
-import {colors, Button, Table, Tag, Text} from '../common';
-import {SmileTwoTone} from '../icons';
+import {colors, Button, Table, Tag, Text, Menu, Dropdown} from '../common';
+import {DownOutlined, SmileTwoTone} from '../icons';
 import {User, Alignment} from '../../types';
 
 const AccountUsersTable = ({
@@ -11,16 +11,18 @@ const AccountUsersTable = ({
   currentUser,
   isAdmin,
   onDisableUser,
+  onSetRole,
 }: {
   loading?: boolean;
   users: Array<User>;
   currentUser: User;
   isAdmin?: boolean;
   onDisableUser: (user: User) => void;
+  onSetRole: (user: User, role: string) => void;
 }) => {
   // TODO: how should we sort the users?
   const data = users.map((u) => {
-    return {...u, key: u.id};
+    return { ...u, key: u.id };
   });
 
   const columns = [
@@ -31,10 +33,10 @@ const AccountUsersTable = ({
       render: (value: string, record: User) => {
         if (currentUser && record.id === currentUser.id) {
           return (
-            <Flex sx={{alignItems: 'center'}}>
+            <Flex sx={{ alignItems: 'center' }}>
               <Text strong>{value}</Text>
               <SmileTwoTone
-                style={{fontSize: 16, marginLeft: 4}}
+                style={{ fontSize: 16, marginLeft: 4 }}
                 twoToneColor={colors.primary}
               />
             </Flex>
@@ -49,7 +51,7 @@ const AccountUsersTable = ({
       dataIndex: 'name',
       key: 'name',
       render: (value: string, record: User) => {
-        const {full_name: fullName, display_name: displayName} = record;
+        const { full_name: fullName, display_name: displayName } = record;
 
         return fullName || displayName || '--';
       },
@@ -68,12 +70,36 @@ const AccountUsersTable = ({
       title: 'Role',
       dataIndex: 'role',
       key: 'role',
-      render: (value: string) => {
+      render: (value: string, record: User) => {
+        if (!isAdmin) {
+          return null;
+        }
+
+        // Current user cannot disable themselves
+        if (currentUser && record.id === currentUser.id) {
+          return null;
+        }
+        const menu = (
+          <Menu>
+            <Menu.Item onClick={() => onSetRole(record, "admin")}>
+              Admin
+            </Menu.Item>
+            <Menu.Item onClick={() => onSetRole(record, "user")}>
+              User
+            </Menu.Item>
+          </Menu>
+        );
         switch (value) {
           case 'admin':
-            return <Tag color={colors.green}>Admin</Tag>;
+            // return <Tag color={colors.green}>Admin</Tag>;
+            return <Dropdown overlay={menu}>
+              <Tag color={colors.green}>Admin <DownOutlined /></Tag>
+            </Dropdown>;
           case 'user':
-            return <Tag>Member</Tag>;
+            // return <Tag>Member</Tag>;
+            return <Dropdown overlay={menu}>
+              <Tag>Member <DownOutlined /></Tag>
+            </Dropdown>;
           default:
             return '--';
         }

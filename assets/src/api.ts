@@ -1292,6 +1292,21 @@ export const disableAccountUser = async (
     .then((res) => res.body.data);
 };
 
+export const setRoleAccountUser = async (
+  userId: number | string,
+  role: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/users/${userId}/${role}role`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const enableAccountUser = async (
   userId: number | string,
   token = getAccessToken()
