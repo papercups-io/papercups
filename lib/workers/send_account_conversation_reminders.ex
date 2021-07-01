@@ -23,9 +23,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
 
       true ->
         Logger.info(
-          "Skipping conversation reminders, currently outside working hours: #{
-            inspect(account.working_hours)
-          }"
+          "Skipping conversation reminders, currently outside working hours: #{inspect(account.working_hours)}"
         )
     end
 

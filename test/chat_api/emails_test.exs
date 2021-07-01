@@ -28,9 +28,7 @@ defmodule ChatApi.EmailsTest do
       assert email.text_body == "New message from an anonymous user: some message body"
 
       assert email.html_body ==
-               "New message from an anonymous user:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{
-                 conversation_id
-               }\">View in dashboard</a>"
+               "New message from an anonymous user:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{conversation_id}\">View in dashboard</a>"
     end
 
     test "new_message_alert/2 generates a new message alert for a message from a customer with a name",
@@ -50,9 +48,7 @@ defmodule ChatApi.EmailsTest do
       assert email.text_body == "New message from Test User: some message body"
 
       assert email.html_body ==
-               "New message from Test User:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{
-                 conversation_id
-               }\">View in dashboard</a>"
+               "New message from Test User:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{conversation_id}\">View in dashboard</a>"
     end
 
     test "new_message_alert/2 generates a new message alert for a message from a customer with an email",
@@ -72,9 +68,7 @@ defmodule ChatApi.EmailsTest do
       assert email.text_body == "New message from customer@customer.com: some message body"
 
       assert email.html_body ==
-               "New message from customer@customer.com:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{
-                 conversation_id
-               }\">View in dashboard</a>"
+               "New message from customer@customer.com:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{conversation_id}\">View in dashboard</a>"
     end
 
     test "new_message_alert/2 generates a new message alert for a message from a customer with both a name and an email",
@@ -97,9 +91,7 @@ defmodule ChatApi.EmailsTest do
                "New message from Test User (customer@customer.com): some message body"
 
       assert email.html_body ==
-               "New message from Test User (customer@customer.com):<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{
-                 conversation_id
-               }\">View in dashboard</a>"
+               "New message from Test User (customer@customer.com):<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{conversation_id}\">View in dashboard</a>"
     end
   end
 end
