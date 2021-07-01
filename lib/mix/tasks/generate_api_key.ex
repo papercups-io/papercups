@@ -18,9 +18,7 @@ defmodule Mix.Tasks.GenerateApiKey do
     with [user_id, account_id] <- args,
          {:ok, _personal_api_key} <- generate_api_key(user_id, account_id) do
       Mix.shell().info(
-        "Successfully generated API key for user #{inspect(user_id)} of account #{
-          inspect(account_id)
-        }"
+        "Successfully generated API key for user #{inspect(user_id)} of account #{inspect(account_id)}"
       )
     else
       error -> Mix.shell().info("Failed to generate API key: #{inspect(error)}")

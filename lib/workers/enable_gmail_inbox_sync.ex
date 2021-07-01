@@ -14,9 +14,7 @@ defmodule ChatApi.Workers.EnableGmailInboxSync do
     case enable_gmail_sync(account_id) do
       {:ok, authorization} ->
         Logger.info(
-          "Successfully enabled Gmail syncing for account #{inspect(account_id)} with authorization #{
-            inspect(authorization.id)
-          }"
+          "Successfully enabled Gmail syncing for account #{inspect(account_id)} with authorization #{inspect(authorization.id)}"
         )
 
       {:error, reason} ->

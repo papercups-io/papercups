@@ -106,9 +106,7 @@ defmodule ChatApiWeb.SlackController do
       end
 
       Slack.Helpers.send_internal_notification(
-        "#{email} successfully linked Slack `#{inspect(integration_type)}` integration to channel `#{
-          channel
-        }`"
+        "#{email} successfully linked Slack `#{inspect(integration_type)}` integration to channel `#{channel}`"
       )
 
       json(conn, %{data: %{ok: true}})

@@ -212,9 +212,7 @@ defmodule ChatApiWeb.GithubController do
 
           %{
             body:
-              "#{emoji} A GitHub issue that this person is subscribed to has been #{
-                to_string(action)
-              }: " <>
+              "#{emoji} A GitHub issue that this person is subscribed to has been #{to_string(action)}: " <>
                 github_issue_url,
             type: "bot",
             private: true,
@@ -260,9 +258,7 @@ defmodule ChatApiWeb.GithubController do
        ) do
     # TODO: handle new installation added (create new github_authorization record)
     Logger.debug(
-      "Handling new Github installation event: #{inspect(payload)} (installation #{
-        inspect(installation)
-      })"
+      "Handling new Github installation event: #{inspect(payload)} (installation #{inspect(installation)})"
     )
   end
 
@@ -295,9 +291,7 @@ defmodule ChatApiWeb.GithubController do
          } = _payload
        ) do
     Logger.debug(
-      "Handling `closed` event for Github issue #{inspect(issue)} (installation #{
-        inspect(installation)
-      })"
+      "Handling `closed` event for Github issue #{inspect(issue)} (installation #{inspect(installation)})"
     )
 
     with %{"id" => installation_id} <- installation,
@@ -324,9 +318,7 @@ defmodule ChatApiWeb.GithubController do
          } = _payload
        ) do
     Logger.debug(
-      "Handling `reopened` event for Github issue #{inspect(issue)} (installation #{
-        inspect(installation)
-      })"
+      "Handling `reopened` event for Github issue #{inspect(issue)} (installation #{inspect(installation)})"
     )
 
     with %{"id" => installation_id} <- installation,
@@ -353,9 +345,7 @@ defmodule ChatApiWeb.GithubController do
          } = _payload
        ) do
     Logger.debug(
-      "Handling `opened` event for Github issue #{inspect(issue)} (installation #{
-        inspect(installation)
-      })"
+      "Handling `opened` event for Github issue #{inspect(issue)} (installation #{inspect(installation)})"
     )
   end
 
@@ -368,9 +358,7 @@ defmodule ChatApiWeb.GithubController do
          } = _event
        ) do
     Logger.debug(
-      "Handling new Github comment event: #{inspect(comment)} (installation #{
-        inspect(installation)
-      })"
+      "Handling new Github comment event: #{inspect(comment)} (installation #{inspect(installation)})"
     )
   end
 
