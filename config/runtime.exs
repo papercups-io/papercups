@@ -168,6 +168,7 @@ if System.get_env("APPSIGNAL_API_KEY") do
     push_api_key: System.get_env("APPSIGNAL_API_KEY"),
     env: Mix.env(),
     active: true
+end
 
 case System.get_env("PAPERCUPS_STRIPE_SECRET") do
   "sk_" <> _rest = api_key ->
