@@ -161,7 +161,7 @@ config :ex_aws,
     region: region
   ]
 
-if System.get_env("APPSIGNAL_API_KEY")
+if System.get_env("APPSIGNAL_API_KEY") do
   config :appsignal, :config,
     otp_app: :chat_api,
     name: "chat_api",
