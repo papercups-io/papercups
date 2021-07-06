@@ -161,12 +161,13 @@ config :ex_aws,
     region: region
   ]
 
-config :appsignal, :config,
-  otp_app: :chat_api,
-  name: "chat_api",
-  push_api_key: System.get_env("APPSIGNAL_API_KEY"),
-  env: Mix.env(),
-  active: true
+if System.get_env("APPSIGNAL_API_KEY")
+  config :appsignal, :config,
+    otp_app: :chat_api,
+    name: "chat_api",
+    push_api_key: System.get_env("APPSIGNAL_API_KEY"),
+    env: Mix.env(),
+    active: true
 
 case System.get_env("PAPERCUPS_STRIPE_SECRET") do
   "sk_" <> _rest = api_key ->
