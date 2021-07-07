@@ -174,6 +174,75 @@ defmodule ChatApi.Emails.Email do
     """
   end
 
+  def email_conversation_receipt(
+        company: company,
+        customer: customer,
+        message: message
+      ) do
+    new()
+    |> to(customer.email)
+    |> from({"Papercups", "rob@papercups.io"})
+    |> subject("#{company} has received your message")
+    |> html_body(
+      email_conversation_receipt_html(
+        body: message.body,
+        company: company,
+        customer_name: customer.name,
+        subject: message.subject
+      )
+    )
+    |> text_body(
+      email_conversation_receipt_text(
+        body: message.body,
+        company: company,
+        customer_name: customer.name,
+        subject: message.subject
+      )
+    )
+  end
+
+  defp email_conversation_receipt_text(
+         body: body,
+         company: company,
+         customer_name: customer_name,
+         subject: subject
+       ) do
+    subject_line = if subject, do: "\nSubject: #{subject}\n", else: ""
+
+    """
+    Hi #{customer_name || "there"}!
+
+    #{company} has received your message:
+    #{subject_line}
+    #{body}
+
+    Best,
+    Alex & Kam @ Papercups
+    """
+  end
+
+  defp email_conversation_receipt_html(
+         body: body,
+         company: company,
+         customer_name: customer_name,
+         subject: subject
+       ) do
+    subject_line = if subject, do: "<p>Subject: #{subject}</p>", else: ""
+
+    """
+    <p>Hi #{customer_name || "there"}!</p>
+    <p>#{company} has received your message:</p>
+    <hr />
+    #{subject_line}
+    <p>#{body}</p>
+    <hr />
+    <p>
+    Best,<br />
+    Alex & Kam @ Papercups
+    </p>
+    """
+  end
+
   # TODO: use env variables instead, come up with a better message
   def welcome(to_address) do
     new()

@@ -50,6 +50,7 @@ defmodule ChatApiWeb.Router do
     get("/customers/identify", CustomerController, :identify)
     get("/customers/:id/exists", CustomerController, :exists)
     put("/customers/:id/metadata", CustomerController, :update_metadata)
+    post("/email_conversations", EmailConversationController, :create)
     get("/widget_settings", WidgetSettingsController, :show)
     put("/widget_settings/metadata", WidgetSettingsController, :update_metadata)
     post("/verify_email", UserController, :verify_email)
