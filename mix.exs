@@ -80,6 +80,7 @@ defmodule ChatApi.MixProject do
       {:paginator, "~> 1.0.3"},
       {:phoenix_pubsub_redis, "~> 3.0.0"},
       {:appsignal_phoenix, "~> 2.0.0"},
+      {:earmark, "~> 1.4.15"},
       {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end
