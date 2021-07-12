@@ -8,6 +8,7 @@ import {
   notification,
   Button,
   Card,
+  Container,
   Divider,
   Input,
   Paragraph,
@@ -211,7 +212,7 @@ class SlackIntegrationDetailsContainer extends React.Component<Props, State> {
     const shouldDisplaySettings = type === 'support';
 
     return (
-      <Box p={4} sx={{maxWidth: 720}}>
+      <Container sx={{maxWidth: 720}}>
         <Box mb={4}>
           <Link to="/integrations">
             <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
@@ -340,7 +341,7 @@ class SlackIntegrationDetailsContainer extends React.Component<Props, State> {
             )}
           </Card>
         </Box>
-      </Box>
+      </Container>
     );
   }
 }
