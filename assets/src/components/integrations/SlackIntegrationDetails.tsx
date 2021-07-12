@@ -260,17 +260,26 @@ class SlackIntegrationDetailsContainer extends React.Component<Props, State> {
               </Flex>
 
               {hasAuthorization ? (
-                <Popconfirm
-                  title="Are you sure you want to disconnect from Slack?"
-                  okText="Yes"
-                  cancelText="No"
-                  placement="topLeft"
-                  onConfirm={() => this.disconnect()}
-                >
-                  <Button type="primary" danger>
-                    Disconnect
-                  </Button>
-                </Popconfirm>
+                <Flex mx={-1}>
+                  <Box mx={1}>
+                    <a href={getSlackAuthUrl(type)}>
+                      <Button>Reconnect</Button>
+                    </a>
+                  </Box>
+                  <Box mx={1}>
+                    <Popconfirm
+                      title="Are you sure you want to disconnect from Slack?"
+                      okText="Yes"
+                      cancelText="No"
+                      placement="topLeft"
+                      onConfirm={() => this.disconnect()}
+                    >
+                      <Button type="primary" danger>
+                        Disconnect
+                      </Button>
+                    </Popconfirm>
+                  </Box>
+                </Flex>
               ) : (
                 <a href={getSlackAuthUrl(type)}>
                   <Button type="primary">Connect</Button>
