@@ -48,6 +48,16 @@ defmodule ChatApi.Slack.Client do
     )
   end
 
+  def read_file(url, access_token) do
+    [
+      {Tesla.Middleware.Headers, [{"Authorization", "Bearer " <> access_token}]},
+      Tesla.Middleware.JSON,
+      Tesla.Middleware.Logger
+    ]
+    |> Tesla.client()
+    |> Tesla.get(url, query: [])
+  end
+
   @spec send_message(map(), binary()) :: Tesla.Env.result() | {:ok, nil}
   @doc """
   `message` looks like:
