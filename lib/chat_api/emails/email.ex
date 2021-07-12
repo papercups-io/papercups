@@ -4,6 +4,7 @@ defmodule ChatApi.Emails.Email do
 
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
+  alias ChatApi.Users.UserProfile
 
   @type t :: Swoosh.Email.t()
 
@@ -140,7 +141,7 @@ defmodule ChatApi.Emails.Email do
       %{email: email, profile: nil} ->
         company || email
 
-      %{email: email, profile: profile} ->
+      %{email: email, profile: %UserProfile{} = profile} ->
         profile.display_name || profile.full_name || company || email
 
       _ ->
@@ -161,17 +162,32 @@ defmodule ChatApi.Emails.Email do
     <p>You've received a new message from your chat with
     <a href="#{customer.current_url}">#{company}</a>:</p>
     <hr />
-    #{
-      Enum.map(messages, fn msg ->
-        "<p><strong>#{format_sender(msg, company)}</strong><br />#{msg.body}</p>"
-      end)
-    }
+    #{Enum.map(messages, fn msg -> format_message_html(msg, company) end)}
     <hr />
     <p>
     Best,<br />
     #{from}
     </p>
     """
+  end
+
+  defp format_message_html(message, company) do
+    markdown = """
+    **#{format_sender(message, company)}**\s\s
+    #{message.body}
+    """
+
+    fallback = """
+    <p>
+      <strong>#{format_sender(message, company)}</strong><br />
+      #{message.body}
+    </p>
+    """
+
+    case Earmark.as_html(markdown) do
+      {:ok, html, _} -> html
+      _ -> fallback
+    end
   end
 
   # TODO: use env variables instead, come up with a better message
