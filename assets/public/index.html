@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/logo.svg" />
@@ -26,9 +26,9 @@
     <title>Papercups</title>
 
     <% if (process.env.NODE_ENV === 'production') { %>
-      <script>
-        window.__ENV__ = __SERVER_ENV_DATA__;
-      </script>
+    <script>
+      window.__ENV__ = __SERVER_ENV_DATA__;
+    </script>
     <% } %>
   </head>
   <body>
@@ -44,6 +44,6 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-    <script src='https://embed.runkit.com'></script>
+    <script src="https://embed.runkit.com"></script>
   </body>
 </html>

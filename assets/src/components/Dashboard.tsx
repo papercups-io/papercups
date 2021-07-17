@@ -513,7 +513,12 @@ const Dashboard = (props: RouteComponentProps) => {
         </Flex>
       </Sider>
 
-      <Layout style={{marginLeft: 220, background: colors.white}}>
+      <Layout
+        style={{
+          marginLeft: 220,
+          // background: colors.white
+        }}
+      >
         <Switch>
           <Route path="/getting-started" component={GettingStarted} />
 

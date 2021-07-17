@@ -1,4 +1,5 @@
-@import '~antd/dist/antd.css';
+/* @import '~antd/dist/antd.css'; */
+@import '~antd/dist/antd.dark.css';
 
 * {
   box-sizing: border-box;
@@ -9,6 +10,10 @@ body {
   font-family: 'Open Sans', 'Helvetica Neue', Arial, san-serif;
   font-weight: 400;
   margin: 0;
+}
+
+html.dark {
+  background: #1f1f1f;
 }
 
 #root {
