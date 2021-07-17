@@ -5,6 +5,7 @@
   "license": "MIT",
   "repository": "https://github.com/papercups-io/papercups",
   "dependencies": {
+    "@monaco-editor/react": "^4.2.1",
     "@papercups-io/chat-builder": "0.0.12",
     "@papercups-io/chat-widget": "^1.1.10",
     "@papercups-io/storytime": "^1.0.6",
@@ -37,6 +38,7 @@
     "lodash": "^4.17.21",
     "logrocket": "^1.0.10",
     "mkdirp": "^1.0.4",
+    "monaco-editor": "^0.26.1",
     "phoenix": "^1.5.3",
     "posthog-js": "^1.4.4",
     "query-string": "^6.13.1",

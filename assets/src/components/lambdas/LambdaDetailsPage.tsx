@@ -4,6 +4,7 @@ import {Box, Flex} from 'theme-ui';
 import {debounce} from 'lodash';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import * as monaco from 'monaco-editor';
 
 import {
   notification,
@@ -29,7 +30,9 @@ import {zipWithDependencies} from './support/zipper';
 import EmbeddableChat from '../developers/EmbeddableChat';
 import deploy from './support/deploy';
 import {WEBHOOK_HANDLER_SOURCE} from '../developers/RunKit';
-import CodeEditor from '../developers/CodeEditor';
+// import CodeEditor from '../developers/CodeEditor';
+import MonacoEditor from '../developers/MonacoEditor';
+import {Monaco} from '@monaco-editor/react';
 
 dayjs.extend(utc);
 
@@ -52,6 +55,7 @@ type State = {
 
 class LambdaDetailsPage extends React.Component<Props, State> {
   papercups: any;
+  monaco: monaco.editor.IStandaloneCodeEditor | null = null;
 
   state: State = {
     loading: true,
@@ -117,8 +121,16 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     this.setState({description: e.target.value});
   };
 
-  handleChangeCode = (code: string) => {
+  handleEditorMounted = (editor: monaco.editor.IStandaloneCodeEditor) => {
+    this.monaco = editor;
+  };
+
+  handleChangeCode = (code = '') => {
     this.setState({code});
+  };
+
+  getCurrentCode = () => {
+    return this.monaco?.getValue() || this.state.code;
   };
 
   getNextStatus = (lambda: Lambda, shouldActivate: boolean): LambdaStatus => {
@@ -172,7 +184,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       const lambda = await API.updateLambda(lambdaId, {
         name: this.state.name,
         description: this.state.description,
-        code: this.state.code,
+        code: this.getCurrentCode(),
       });
 
       this.setState({
@@ -213,7 +225,8 @@ class LambdaDetailsPage extends React.Component<Props, State> {
       this.setState({deploying: true});
 
       const lambdaId = this.props.match.params.id;
-      const {name, description, code} = this.state;
+      const {name, description} = this.state;
+      const code = this.getCurrentCode();
       const blob = await zipWithDependencies(code);
       // TODO: is there any advantage to using a file vs blob?
       // const file = new File([blob], 'lambda.zip');
@@ -424,16 +437,13 @@ class LambdaDetailsPage extends React.Component<Props, State> {
 
             <Flex sx={{width: '100%', maxHeight: 640}}>
               <Box sx={{flex: 1.2, position: 'relative'}}>
-                <CodeEditor
-                  mode="javascript"
-                  name="LambdaDetailsPage-CodeEditor"
+                <MonacoEditor
                   height="608px"
                   width="100%"
-                  wrapEnabled
-                  value={code || WEBHOOK_HANDLER_SOURCE}
-                  debounceChangePeriod={200}
-                  onChange={this.handleChangeCode}
-                  onBlur={this.debouncedSaveLambda}
+                  defaultLanguage="javascript"
+                  defaultValue={code || WEBHOOK_HANDLER_SOURCE}
+                  onMount={this.handleEditorMounted}
+                  onValidate={this.debouncedSaveLambda}
                 />
 
                 <Button
