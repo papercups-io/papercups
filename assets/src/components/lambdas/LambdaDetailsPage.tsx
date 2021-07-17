@@ -123,10 +123,23 @@ class LambdaDetailsPage extends React.Component<Props, State> {
 
   handleEditorMounted = (editor: monaco.editor.IStandaloneCodeEditor) => {
     this.monaco = editor;
+
+    this.monaco.addAction({
+      id: 'save',
+      label: 'Save',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 1.5,
+      run: () => {
+        const code = editor.getValue() ?? '';
+
+        this.handleChangeCode(code, () => this.handleSaveLambda());
+      },
+    });
   };
 
-  handleChangeCode = (code = '') => {
-    this.setState({code});
+  handleChangeCode = (code = '', cb?: () => void) => {
+    this.setState({code}, cb);
   };
 
   getCurrentCode = () => {
@@ -442,6 +455,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                   width="100%"
                   defaultLanguage="javascript"
                   defaultValue={code || WEBHOOK_HANDLER_SOURCE}
+                  options={{lineNumbers: 'off'}}
                   onMount={this.handleEditorMounted}
                   onValidate={this.debouncedSaveLambda}
                 />
