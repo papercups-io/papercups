@@ -41,6 +41,7 @@ export const getSlackAuthUrl = (type = 'reply') => {
     'groups:history',
     'groups:read',
     'reactions:read',
+    'files:read',
   ];
   const userScopes = [
     'channels:history',

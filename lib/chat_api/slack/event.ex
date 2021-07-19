@@ -57,7 +57,8 @@ defmodule ChatApi.Slack.Event do
     with {:ok, conversation} <- find_thread_conversation(thread_ts, slack_channel_id),
          %{account_id: account_id, id: conversation_id} <- conversation,
          primary_reply_authorization <-
-           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
+           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}),
+         files <- Map.get(event, "files", []) do
       if Slack.Helpers.is_primary_channel?(primary_reply_authorization, slack_channel_id) do
         text
         |> Slack.Helpers.parse_message_type_params()
@@ -74,7 +75,7 @@ defmodule ChatApi.Slack.Event do
               conversation.assignee_id
             )
         })
-        |> Messages.create_and_fetch!()
+        |> create_and_fetch_message_with_attachments!(files, primary_reply_authorization)
         |> Messages.Notification.broadcast_to_customer!()
         |> Messages.Notification.broadcast_to_admin!()
         |> Messages.Notification.notify(:webhooks)
@@ -100,7 +101,7 @@ defmodule ChatApi.Slack.Event do
               "sent_at" => event |> Map.get("ts") |> Slack.Helpers.slack_ts_to_utc(),
               "source" => "slack"
             })
-            |> Messages.create_and_fetch!()
+            |> create_and_fetch_message_with_attachments!(files, authorization)
             |> Messages.Notification.broadcast_to_customer!()
             |> Messages.Notification.broadcast_to_admin!()
             |> Messages.Notification.notify(:webhooks)
@@ -278,6 +279,60 @@ defmodule ChatApi.Slack.Event do
   end
 
   def handle_reply_to_unknown_thread(_event), do: nil
+
+  @spec create_and_fetch_message_with_attachments!(map(), list(), SlackAuthorization.t()) ::
+          Message.t()
+  def create_and_fetch_message_with_attachments!(
+        payload,
+        files,
+        %SlackAuthorization{} = authorization
+      ) do
+    file_ids = files |> process_message_attachments(authorization) |> Enum.map(& &1.id)
+    {:ok, message} = Messages.create_message(payload)
+    {_, nil} = Messages.create_attachments(message, file_ids)
+
+    Messages.get_message!(message.id)
+  end
+
+  def process_message_attachments(nil, _authorization), do: []
+  def process_message_attachments([], _authorization), do: []
+
+  def process_message_attachments(
+        [_ | _] = files,
+        %SlackAuthorization{
+          account_id: account_id,
+          access_token: access_token
+        } = _authorization
+      ) do
+    files
+    |> Enum.map(fn %{
+                     "title" => filename,
+                     "mimetype" => content_type,
+                     "url_private_download" => url
+                   } = file ->
+      unique_filename = ChatApi.Aws.generate_unique_filename(filename)
+
+      with {:ok, %{status: 200, body: body}} when is_binary(body) <-
+             ChatApi.Slack.Client.read_file(url, access_token),
+           {:ok, %{status_code: 200}} <- ChatApi.Aws.upload_binary(body, unique_filename),
+           {:ok, file} <-
+             ChatApi.Files.create_file(%{
+               "filename" => filename,
+               "unique_filename" => unique_filename,
+               "file_url" => ChatApi.Aws.get_file_url(unique_filename),
+               "content_type" => content_type,
+               "account_id" => account_id
+             }) do
+        file
+      else
+        error ->
+          Logger.error("Failed to process file #{inspect(file)}: #{inspect(error)}")
+
+          nil
+      end
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
 
   # TODO: move to Slack.Helpers?
   @spec create_new_conversation_from_slack_message(map(), SlackAuthorization.t()) ::

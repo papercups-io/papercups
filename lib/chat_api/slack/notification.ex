@@ -100,9 +100,15 @@ defmodule ChatApi.Slack.Notification do
         conversation: %Conversation{id: conversation_id, customer: customer} = conversation,
         message: message,
         authorization:
-          %SlackAuthorization{access_token: access_token, channel: channel} = authorization,
+          %SlackAuthorization{
+            access_token: access_token,
+            channel: channel_name,
+            channel_id: channel_id
+          } = authorization,
         thread: thread
       }) do
+    channel = channel_id || channel_name
+
     payload =
       %{
         conversation: conversation,
