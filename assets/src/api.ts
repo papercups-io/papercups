@@ -439,14 +439,29 @@ export const fetchAllConversations = async (
 };
 
 export const fetchMyConversations = async (
-  userId: number,
+  userId?: number,
   query = {},
   token = getAccessToken()
 ) => {
   return fetchConversations(
     {
       ...query,
-      assignee_id: userId,
+      assignee_id: userId || 'me',
+      status: 'open',
+    },
+    token
+  );
+};
+
+export const fetchMentionedConversations = async (
+  userId?: number,
+  query = {},
+  token = getAccessToken()
+) => {
+  return fetchConversations(
+    {
+      ...query,
+      mentioning: userId || 'me',
       status: 'open',
     },
     token

@@ -20,7 +20,7 @@ defmodule ChatApi.Users do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
-  @spec list_users_by_account(binary()) :: [User.t()]
+  @spec list_users_by_account(binary(), map()) :: [User.t()]
   def list_users_by_account(account_id, filters \\ %{}) do
     User
     |> where(account_id: ^account_id)

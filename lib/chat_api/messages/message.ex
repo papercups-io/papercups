@@ -6,6 +6,7 @@ defmodule ChatApi.Messages.Message do
   alias ChatApi.Accounts.Account
   alias ChatApi.Customers.Customer
   alias ChatApi.Users.User
+  alias ChatApi.Mentions.Mention
   alias ChatApi.Messages.MessageFile
 
   @type t :: %__MODULE__{
@@ -48,6 +49,8 @@ defmodule ChatApi.Messages.Message do
     belongs_to(:customer, Customer)
     belongs_to(:user, User, type: :integer)
 
+    has_many(:mentions, Mention)
+    has_many(:mentioned_users, through: [:mentions, :user])
     has_many(:message_files, MessageFile)
     has_many(:attachments, through: [:message_files, :file])
 

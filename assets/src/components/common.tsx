@@ -12,6 +12,7 @@ import Input from 'antd/lib/input';
 import InputNumber from 'antd/lib/input-number';
 import Layout from 'antd/lib/layout';
 import List from 'antd/lib/list';
+import Mentions from 'antd/lib/mentions';
 import Menu from 'antd/lib/menu';
 import Modal from 'antd/lib/modal';
 import notification from 'antd/lib/notification';
@@ -201,6 +202,7 @@ export {
   InputNumber,
   List,
   MarkdownRenderer,
+  Mentions,
   Menu,
   Modal,
   notification,

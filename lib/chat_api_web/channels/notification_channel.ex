@@ -29,10 +29,20 @@ defmodule ChatApiWeb.NotificationChannel do
 
   @decorate channel_action()
   def handle_in("read", %{"conversation_id" => id}, socket) do
-    {:ok, conversation} = Conversations.mark_conversation_read(id)
-    Conversations.Notification.notify(conversation, :webhooks, event: "conversation:updated")
+    # TODO: the logic around marking conversations read may have to change with mentions,
+    #       because we need to track who has actually seen the message and who hasn't...
+    # TODO: we should probably handle the logic around counting unread messages on the server?
 
-    {:reply, :ok, socket}
+    case Conversations.mark_conversation_read(id) do
+      {:ok, conversation} ->
+        Conversations.Notification.notify(conversation, :webhooks, event: "conversation:updated")
+        {_, nil} = Conversations.mark_mentions_seen(id, socket.assigns.current_user.id)
+
+        {:reply, :ok, socket}
+
+      {:error, error} ->
+        {:reply, {:error, error}, socket}
+    end
   end
 
   @decorate channel_action()
@@ -44,13 +54,20 @@ defmodule ChatApiWeb.NotificationChannel do
         |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
         |> Messages.create_message()
 
+      case Map.get(payload, "mentioned_user_ids") do
+        mentioned_user_ids when is_list(mentioned_user_ids) ->
+          Messages.add_mentioned_users(message, mentioned_user_ids)
+
+        _ ->
+          nil
+      end
+
       case Map.get(payload, "file_ids") do
         file_ids when is_list(file_ids) -> Messages.create_attachments(message, file_ids)
         _ -> nil
       end
 
-      message
-      |> Map.get(:id)
+      message.id
       |> Messages.get_message!()
       |> broadcast_new_message(socket)
       |> Messages.Helpers.handle_post_creation_hooks()

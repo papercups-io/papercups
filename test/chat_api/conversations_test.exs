@@ -81,6 +81,41 @@ defmodule ChatApi.ConversationsTest do
 
       assert [] = Conversations.list_conversations_by_account(account.id, %{"tag_id" => tag.id})
     end
+
+    test "filters conversations for an account by mentioned user", %{
+      account: account,
+      conversation: conversation_x,
+      customer: customer,
+      user: user
+    } do
+      conversation_y = insert(:conversation, account: account, customer: customer)
+
+      mention_x = insert(:mention, conversation: conversation_x, account: account, user: user)
+      _mention_y = insert(:mention, conversation: conversation_y, account: account, user: user)
+
+      result_ids =
+        account.id
+        |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(result_ids) == Enum.sort([conversation_x.id, conversation_y.id])
+
+      ChatApi.Mentions.delete_mention(mention_x)
+
+      result_ids =
+        account.id
+        |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
+        |> Enum.map(& &1.id)
+
+      assert result_ids == [conversation_y.id]
+
+      result_ids =
+        account.id
+        |> Conversations.list_conversations_by_account(%{})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(result_ids) == Enum.sort([conversation_x.id, conversation_y.id])
+    end
   end
 
   describe "list_forgotten_conversations/2" do

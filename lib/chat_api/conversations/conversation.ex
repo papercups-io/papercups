@@ -6,6 +6,7 @@ defmodule ChatApi.Conversations.Conversation do
     Accounts.Account,
     Customers.Customer,
     Issues.ConversationIssue,
+    Mentions.Mention,
     Messages.Message,
     Tags.ConversationTag,
     Users.User
@@ -51,11 +52,13 @@ defmodule ChatApi.Conversations.Conversation do
     field(:last_activity_at, :utc_datetime)
     field(:metadata, :map)
 
-    has_many(:messages, Message)
     belongs_to(:assignee, User, foreign_key: :assignee_id, references: :id, type: :integer)
     belongs_to(:account, Account)
     belongs_to(:customer, Customer)
+    has_many(:messages, Message)
 
+    has_many(:mentions, Mention)
+    has_many(:mentioned_users, through: [:mentions, :user])
     has_many(:conversation_tags, ConversationTag)
     has_many(:tags, through: [:conversation_tags, :tag])
     has_many(:conversation_issues, ConversationIssue)

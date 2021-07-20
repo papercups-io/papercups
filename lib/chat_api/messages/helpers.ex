@@ -29,9 +29,12 @@ defmodule ChatApi.Messages.Helpers do
 
   @spec handle_post_creation_conversation_updates(Message.t(), map()) :: Message.t()
   def handle_post_creation_conversation_updates(%Message{} = message, updates \\ %{}) do
-    message
-    |> build_conversation_updates(updates)
-    |> update_message_conversation(message)
+    conversation = Conversations.get_conversation!(message.conversation_id)
+
+    updates
+    |> Map.merge(%{metadata: Map.get(conversation, :metadata, %{})})
+    |> build_conversation_updates(message)
+    |> update_message_conversation(conversation)
     |> Conversations.Notification.broadcast_conversation_update_to_admin!()
     |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
     |> Conversations.Notification.notify(:slack)
@@ -148,11 +151,12 @@ defmodule ChatApi.Messages.Helpers do
     message
   end
 
-  @spec build_conversation_updates(Message.t(), map()) :: map()
-  def build_conversation_updates(%Message{} = message, updates \\ %{}) do
+  @spec build_conversation_updates(map(), Message.t()) :: map()
+  def build_conversation_updates(updates, %Message{} = message) do
     updates
     |> build_first_reply_updates(message)
     |> build_message_type_updates(message)
+    |> build_metadata_updates(message)
   end
 
   @spec is_first_agent_reply?(Message.t()) :: boolean()
@@ -185,10 +189,27 @@ defmodule ChatApi.Messages.Helpers do
     end
   end
 
-  @spec update_message_conversation(map(), Message.t()) :: Conversation.t()
-  defp update_message_conversation(updates, %Message{conversation_id: conversation_id}) do
+  @spec build_metadata_updates(map(), Message.t()) :: map()
+  defp build_metadata_updates(updates, %Message{} = message) do
+    case message.metadata do
+      %{"mentions" => new_mentions} when is_list(new_mentions) ->
+        existing_metadata = Map.get(updates, :metadata, %{})
+        existing_mentions = Map.get(existing_metadata, "mentions", [])
+        updated_mentions = Enum.uniq_by(existing_mentions ++ new_mentions, & &1["id"])
+        # TODO: if new mentions are added, send email alert to the user(s) who are mentioned?
+
+        Map.merge(updates, %{
+          metadata: Map.merge(existing_metadata, %{"mentions" => updated_mentions})
+        })
+
+      _ ->
+        updates
+    end
+  end
+
+  @spec update_message_conversation(map(), Conversation.t()) :: Conversation.t()
+  defp update_message_conversation(updates, %Conversation{} = conversation) do
     # TODO: don't perform update if conversation state already matches updates?
-    conversation = Conversations.get_conversation!(conversation_id)
     # TODO: DRY up this logic with other places we do conversation updates w/ broadcasting?
     {:ok, conversation} = Conversations.update_conversation(conversation, updates)
 

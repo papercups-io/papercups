@@ -82,8 +82,11 @@ export type Message = {
   conversation_id: string;
   user_id?: number;
   user?: User;
-  file_ids?: string[];
-  attachments?: Attachment[];
+  file_ids?: Array<string>;
+  attachments?: Array<Attachment>;
+  mentioned_user_ids?: Array<number>;
+  mentions?: Array<any>;
+  metadata?: any;
 };
 
 export type FileUpload = {
@@ -115,6 +118,7 @@ export type Conversation = {
   status?: string;
   assignee_id?: number;
   tags?: Array<Tag>;
+  mentions?: Array<any>;
 };
 
 export type CustomerNote = {

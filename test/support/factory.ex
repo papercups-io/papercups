@@ -117,6 +117,15 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def mention_factory do
+    %ChatApi.Mentions.Mention{
+      account: build(:account),
+      conversation: build(:conversation),
+      message: build(:message),
+      user: build(:user)
+    }
+  end
+
   def issue_factory do
     %ChatApi.Issues.Issue{
       title: sequence("some title"),

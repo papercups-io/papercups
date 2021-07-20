@@ -7,6 +7,7 @@ defmodule ChatApi.Messages do
 
   alias ChatApi.Repo
   alias ChatApi.Workers
+  alias ChatApi.Mentions.Mention
   alias ChatApi.Messages.{Message, MessageFile}
 
   require Logger
@@ -107,6 +108,32 @@ defmodule ChatApi.Messages do
       end)
 
     Repo.insert_all(MessageFile, changesets)
+  end
+
+  @spec add_mentioned_users(Message.t(), [binary()]) :: any()
+  def add_mentioned_users(
+        %Message{
+          id: message_id,
+          account_id: account_id,
+          conversation_id: conversation_id
+        },
+        mentioned_user_ids
+      ) do
+    now = NaiveDateTime.truncate(NaiveDateTime.utc_now(), :second)
+
+    changesets =
+      Enum.map(mentioned_user_ids, fn user_id ->
+        %{
+          message_id: message_id,
+          conversation_id: conversation_id,
+          account_id: account_id,
+          user_id: user_id,
+          inserted_at: now,
+          updated_at: now
+        }
+      end)
+
+    Repo.insert_all(Mention, changesets)
   end
 
   @spec query_most_recent_message(keyword()) :: Ecto.Query.t()
