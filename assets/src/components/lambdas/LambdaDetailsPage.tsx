@@ -30,7 +30,6 @@ import {zipWithDependencies} from './support/zipper';
 import EmbeddableChat from '../developers/EmbeddableChat';
 import deploy from './support/deploy';
 import {WEBHOOK_HANDLER_SOURCE} from '../developers/RunKit';
-// import CodeEditor from '../developers/CodeEditor';
 import MonacoEditor from '../developers/MonacoEditor';
 
 dayjs.extend(utc);
