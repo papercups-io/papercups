@@ -32,7 +32,6 @@ import deploy from './support/deploy';
 import {WEBHOOK_HANDLER_SOURCE} from '../developers/RunKit';
 // import CodeEditor from '../developers/CodeEditor';
 import MonacoEditor from '../developers/MonacoEditor';
-import {Monaco} from '@monaco-editor/react';
 
 dayjs.extend(utc);
 
