@@ -1,17 +1,34 @@
 import React from 'react';
 import {Flex} from 'theme-ui';
-import * as monaco from 'monaco-editor';
 import Editor, {EditorProps, BeforeMount, Monaco} from '@monaco-editor/react';
 
-export const MonacoEditor = (props: EditorProps) => {
-  const handleEditorChange = (value: string | undefined, event: any) => {
-    // TODO
+type Props = {onSave?: (code: string) => void} & EditorProps;
+
+export const MonacoEditor = (props: Props) => {
+  const {onMount, onSave, ...rest} = props;
+
+  const handleEditorDidMount = (editor: any, monaco: Monaco) => {
+    if (onMount) {
+      onMount(editor, monaco);
+    }
+
+    if (onSave) {
+      editor.addAction({
+        id: 'save',
+        label: 'Save',
+        keybindings: [2048 | 49], // [KeyMod.CtrlCmd | KeyCode.KEY_S]
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 1.5,
+        run: () => {
+          const code = editor.getValue() ?? '';
+
+          onSave(code);
+        },
+      });
+    }
   };
 
-  const handleEditorDidMount = (
-    editor: monaco.editor.IStandaloneCodeEditor,
-    monaco: Monaco
-  ) => {
+  const handleEditorChange = (value: string | undefined, event: any) => {
     // TODO
   };
 
@@ -19,7 +36,7 @@ export const MonacoEditor = (props: EditorProps) => {
     // TODO
   };
 
-  const handleEditorValidation = (markers: monaco.editor.IMarker[]) => {
+  const handleEditorValidation = (markers: any[]) => {
     // TODO
   };
 
@@ -43,7 +60,7 @@ export const MonacoEditor = (props: EditorProps) => {
       onMount={handleEditorDidMount}
       beforeMount={handleEditorWillMount}
       onValidate={handleEditorValidation}
-      {...props}
+      {...rest}
     />
   );
 };

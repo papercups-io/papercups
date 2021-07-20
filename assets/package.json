@@ -37,7 +37,6 @@
     "lodash": "^4.17.21",
     "logrocket": "^1.0.10",
     "mkdirp": "^1.0.4",
-    "monaco-editor": "^0.26.1",
     "phoenix": "^1.5.3",
     "posthog-js": "^1.4.4",
     "query-string": "^6.13.1",
@@ -66,7 +65,8 @@
     "eject": "react-scripts eject",
     "deploy": "npm run build",
     "prettier": "prettier --write 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
-    "prettier:check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
+    "prettier:check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
+    "analyze": "source-map-explorer 'build/static/js/*.js'"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -102,6 +102,7 @@
     "@types/jszip": "^3.4.1",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "source-map-explorer": "^2.5.2"
   }
 }

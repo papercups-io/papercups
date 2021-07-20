@@ -1,6 +1,5 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import * as monaco from 'monaco-editor';
 import MonacoEditor from './MonacoEditor';
 import {getIframeContents} from './email/html';
 
@@ -34,7 +33,7 @@ const Email = () => {
 
 export class EmailTemplateBuilder extends React.Component<any, any> {
   iframe: HTMLIFrameElement | null = null;
-  monaco: monaco.editor.IStandaloneCodeEditor | null = null;
+  monaco: any | null = null;
 
   handleUpdateIframe = () => {
     const code = this.monaco?.getValue();
@@ -57,19 +56,8 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
     return el?.innerHTML ?? null;
   };
 
-  handleEditorMounted = (editor: monaco.editor.IStandaloneCodeEditor) => {
+  handleEditorMounted = (editor: any) => {
     this.monaco = editor;
-
-    this.monaco.addAction({
-      id: 'save',
-      label: 'Save',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-      contextMenuGroupId: 'navigation',
-      contextMenuOrder: 1.5,
-      run: () => {
-        this.handleUpdateIframe();
-      },
-    });
   };
 
   render() {
@@ -84,6 +72,7 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
             options={{tabSize: 2}}
             onMount={this.handleEditorMounted}
             onValidate={this.handleUpdateIframe}
+            onSave={this.handleUpdateIframe}
           />
         </Box>
         <Box sx={{flex: 1.2}}>

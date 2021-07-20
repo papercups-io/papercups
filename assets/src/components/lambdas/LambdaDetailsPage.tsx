@@ -4,7 +4,6 @@ import {Box, Flex} from 'theme-ui';
 import {debounce} from 'lodash';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import * as monaco from 'monaco-editor';
 
 import {
   notification,
@@ -53,7 +52,7 @@ type State = {
 
 class LambdaDetailsPage extends React.Component<Props, State> {
   papercups: any;
-  monaco: monaco.editor.IStandaloneCodeEditor | null = null;
+  monaco: any | null = null;
 
   state: State = {
     loading: true,
@@ -119,25 +118,16 @@ class LambdaDetailsPage extends React.Component<Props, State> {
     this.setState({description: e.target.value});
   };
 
-  handleEditorMounted = (editor: monaco.editor.IStandaloneCodeEditor) => {
+  handleEditorMounted = (editor: any) => {
     this.monaco = editor;
-
-    this.monaco.addAction({
-      id: 'save',
-      label: 'Save',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S],
-      contextMenuGroupId: 'navigation',
-      contextMenuOrder: 1.5,
-      run: () => {
-        const code = editor.getValue() ?? '';
-
-        this.handleChangeCode(code, () => this.handleSaveLambda());
-      },
-    });
   };
 
   handleChangeCode = (code = '', cb?: () => void) => {
     this.setState({code}, cb);
+  };
+
+  handleEditorSaved = (code: string) => {
+    this.handleChangeCode(code, () => this.handleSaveLambda());
   };
 
   getCurrentCode = () => {
@@ -456,6 +446,7 @@ class LambdaDetailsPage extends React.Component<Props, State> {
                   options={{lineNumbers: 'off'}}
                   onMount={this.handleEditorMounted}
                   onValidate={this.debouncedSaveLambda}
+                  onSave={this.handleEditorSaved}
                 />
 
                 <Button
