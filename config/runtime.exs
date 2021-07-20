@@ -17,17 +17,42 @@ socket_options =
 pool_size = String.to_integer(System.get_env("POOL_SIZE") || "10")
 
 if config_env() === :prod do
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
+  database_url = if System.get_env("DATABASE_URL") === nil do
+                   database_user =
+                     System.get_env("DATABASE_USER") ||
+                       raise """
+                       environment variable DATABASE_USER is missing.
+                       Alternatively, you can use the DATABASE_URL variable (for example: ecto://USER:PASS@HOST/DATABASE).
+                       """
+                   database_password =
+                     (System.get_env("DATABASE_PASSWORD_FILE") && File.read!(System.get_env("DATABASE_PASSWORD_FILE"))) ||
+                     System.get_env("DATABASE_PASSWORD") ||
+                       raise """
+                       environment variables DATABASE_PASSWORD or DATABASE_PASSWORD_FILE are missing.
+                       Alternatively, you can use the DATABASE_URL variable (for example: ecto://USER:PASS@HOST/DATABASE).
+                       """
+                   database_host =
+                     System.get_env("DATABASE_HOST") ||
+                       raise """
+                       environment variable DATABASE_HOST is missing.
+                       Alternatively, you can use the DATABASE_URL variable (for example: ecto://USER:PASS@HOST/DATABASE).
+                       """
+                   database =
+                     System.get_env("DATABASE") ||
+                       raise """
+                       environment variable DATABASE is missing.
+                       Alternatively, you can use the DATABASE_URL variable (for example: ecto://USER:PASS@HOST/DATABASE).
+                       """
+                   "ecto://#{database_user}:#{URI.encode_www_form(database_password)}@#{database_host}/#{database}"
+                 else
+                   System.get_env("DATABASE_URL")
+                 end
 
   secret_key_base =
+    (System.get_env("SECRET_KEY_BASE_FILE") && File.read!(System.get_env("SECRET_KEY_BASE_FILE"))) ||
     System.get_env("SECRET_KEY_BASE") ||
       raise """
-      environment variable SECRET_KEY_BASE is missing.
+      environment variables SECRET_KEY_BASE or SECRET_KEY_BASE_FILE are missing.
       You can generate one by calling: mix phx.gen.secret
       """
 
