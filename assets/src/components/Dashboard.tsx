@@ -82,6 +82,7 @@ import IssueDetailsPage from './issues/IssueDetailsPage';
 import NotesOverview from './notes/NotesOverview';
 import PersonalApiKeysPage from './developers/PersonalApiKeysPage';
 import EventSubscriptionsPage from './developers/EventSubscriptionsPage';
+import EmailTemplateBuilder from './developers/EmailTemplateBuilder';
 import LambdaDetailsPage from './lambdas/LambdaDetailsPage';
 import LambdasOverview from './lambdas/LambdasOverview';
 
@@ -526,6 +527,7 @@ const Dashboard = (props: RouteComponentProps) => {
             to="/settings/chat-widget"
           />
           <Redirect from="/account*" to="/settings*" />
+          <Redirect from="/billing" to="/settings/billing" />
 
           <Route path="/settings/account" component={AccountOverview} />
           <Route path="/settings/team" component={TeamOverview} />
@@ -564,6 +566,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route
             path="/developers/event-subscriptions"
             component={EventSubscriptionsPage}
+          />
+          <Route
+            path="/developers/_templates"
+            component={EmailTemplateBuilder}
           />
           <Route path="/functions/:id" component={LambdaDetailsPage} />
           <Route path="/functions" component={LambdasOverview} />
