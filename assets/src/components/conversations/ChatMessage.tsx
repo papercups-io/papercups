@@ -93,7 +93,6 @@ const ChatMessage = ({
   shouldDisplayTimestamp,
 }: Props) => {
   const {
-    body,
     sent_at,
     created_at,
     seen_at,
@@ -115,10 +114,8 @@ const ChatMessage = ({
         <Flex sx={{justifyContent: 'flex-end'}}>
           <ChatMessageBox
             className={isPrivate ? '' : 'Text--white'}
-            content={body}
+            message={message}
             sx={{
-              px: 3,
-              py: 2,
               background: isPrivate ? colors.note : colors.primary,
             }}
             attachmentTextColor={isPrivate ? colors.text : colors.white}
@@ -152,10 +149,8 @@ const ChatMessage = ({
           color={color}
         />
         <ChatMessageBox
-          content={body}
+          message={message}
           sx={{
-            px: 3,
-            py: 2,
             background: isPrivate ? colors.note : 'rgb(245, 245, 245)',
             maxWidth: '80%',
           }}
