@@ -67,12 +67,21 @@ export type Company = {
   updated_at: string;
 };
 
-export type MessageType = 'reply' | 'note';
+export type MessageType = 'reply' | 'note' | 'bot';
+export type MessageSource =
+  | 'chat'
+  | 'slack'
+  | 'mattermost'
+  | 'email'
+  | 'sms'
+  | 'api'
+  | 'sandbox';
 
 export type Message = {
   id: string;
   body: string;
-  type?: 'reply' | 'note' | 'bot';
+  type?: MessageType;
+  source?: MessageSource;
   private?: boolean;
   created_at: string;
   sent_at?: string;

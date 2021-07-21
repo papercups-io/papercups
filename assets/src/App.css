@@ -45,6 +45,10 @@ body {
   color: #fff;
 }
 
+.Text--white.ant-typography-secondary {
+  color: rgba(250, 250, 250, 0.8);
+}
+
 .Text--white > h1,
 .Text--white > h2,
 .Text--white > h3,
