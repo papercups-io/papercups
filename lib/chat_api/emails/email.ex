@@ -208,7 +208,10 @@ defmodule ChatApi.Emails.Email do
   end
 
   # TODO: figure out a better way to create templates for these
-  defp mention_notification_text(messages, from: from, to: user, company: company) do
+  defp mention_notification_text(messages, from: from, to: _user, company: company) do
+    conversation_id = messages |> List.first() |> Map.get(:conversation_id)
+    dashboard_link = "https://#{@backend_url}/conversations/#{conversation_id}"
+
     """
     Hi there!
 
@@ -220,18 +223,26 @@ defmodule ChatApi.Emails.Email do
       end)
     }
 
+    View in the dashboard at #{dashboard_link}
+
     Best,
     #{from}
     """
   end
 
-  defp mention_notification_html(messages, from: from, to: user, company: company) do
+  defp mention_notification_html(messages, from: from, to: _user, company: company) do
+    conversation_id = messages |> List.first() |> Map.get(:conversation_id)
+    dashboard_link = "https://#{@backend_url}/conversations/#{conversation_id}"
+
     """
     <p>Hi there!</p>
-    <p> You were mentioned in a message on Papercups:</p>
+    <p>You were mentioned in a message on Papercups:</p>
     <hr />
     #{Enum.map(messages, fn msg -> format_message_html(msg, company) end)}
     <hr />
+    <p>
+    (View in the <a href="#{dashboard_link}">dashboard</a>)
+    </p>
     <p>
     Best,<br />
     #{from}

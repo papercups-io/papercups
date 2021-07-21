@@ -28,7 +28,7 @@ const MentionedConversations = () => {
   return (
     <ConversationsDashboard
       loading={loading}
-      title="Assigned to me"
+      title="Mentions"
       account={account}
       conversationIds={inboxes.all.mentioned}
       messagesByConversation={messagesByConversation}
