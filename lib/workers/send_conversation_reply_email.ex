@@ -120,7 +120,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
       account_reply_emails_enabled?(account_id)
   end
 
-  def enabled(_), do: false
+  def enabled?(_), do: false
 
   @spec account_reply_emails_enabled?(binary()) :: boolean()
   def account_reply_emails_enabled?(account_id) do

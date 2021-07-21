@@ -74,11 +74,12 @@ defmodule ChatApiWeb.ConversationController do
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user,
+         filters <- format_filter_options(params, conn.assigns.current_user),
          pagination_options <- format_pagination_options(params),
          %{entries: conversations, metadata: pagination} <-
            Conversations.list_conversations_by_account_paginated(
              account_id,
-             params,
+             filters,
              pagination_options
            ) do
       render(conn, "index.json", conversations: conversations, pagination: pagination)
@@ -319,6 +320,23 @@ defmodule ChatApiWeb.ConversationController do
   end
 
   defp maybe_create_message(_conn, _conversation, _), do: :ok
+
+  defp format_filter_options(params, current_user) do
+    Enum.reduce(
+      params,
+      %{},
+      fn
+        {"assignee_id", "me"}, acc ->
+          Map.merge(acc, %{"assignee_id" => current_user.id})
+
+        {"mentioning", "me"}, acc ->
+          Map.merge(acc, %{"mentioning" => current_user.id})
+
+        {k, v}, acc ->
+          Map.merge(acc, %{k => v})
+      end
+    )
+  end
 
   defp format_pagination_options(params) do
     Enum.reduce(

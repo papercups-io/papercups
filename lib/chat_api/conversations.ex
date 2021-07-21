@@ -9,6 +9,7 @@ defmodule ChatApi.Conversations do
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
+  alias ChatApi.Mentions.Mention
   alias ChatApi.Messages.Message
   alias ChatApi.Tags.ConversationTag
 
@@ -19,8 +20,13 @@ defmodule ChatApi.Conversations do
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
     |> filter_by_tag(filters)
+    |> filter_by_mention(filters)
     |> order_by_most_recent_message()
-    |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
+    |> preload([
+      :customer,
+      mentions: [:user],
+      messages: [:attachments, :customer, user: :profile]
+    ])
     |> Repo.all()
   end
 
@@ -36,8 +42,13 @@ defmodule ChatApi.Conversations do
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
     |> filter_by_tag(filters)
+    |> filter_by_mention(filters)
     |> order_by(desc: :last_activity_at, desc: :id)
-    |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
+    |> preload([
+      :customer,
+      mentions: [:user],
+      messages: [:attachments, :customer, user: :profile]
+    ])
     |> Repo.paginate_with_cursor(
       Keyword.merge(
         [
@@ -326,6 +337,13 @@ defmodule ChatApi.Conversations do
     mark_conversation_unread(conversation)
   end
 
+  def mark_mentions_seen(conversation_id, user_id) do
+    Mention
+    |> where(conversation_id: ^conversation_id, user_id: ^user_id)
+    |> where([m], is_nil(m.seen_at))
+    |> Repo.update_all(set: [seen_at: DateTime.utc_now()])
+  end
+
   @spec get_unseen_agent_messages(binary()) :: [Message.t()]
   def get_unseen_agent_messages(conversation_id) do
     Message
@@ -511,6 +529,18 @@ defmodule ChatApi.Conversations do
   end
 
   def filter_by_tag(query, _filters), do: query
+
+  @spec filter_by_mention(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_mention(query, %{"mentioning" => user_id}) when not is_nil(user_id) do
+    # TODO: should we do a `distinct` query at the top level? we mainly do it here because conversations
+    # can have multiple `mentions` of the same person (i.e. multiple messages with the same mentioned user)
+    query
+    |> distinct([c], c.id)
+    |> join(:left, [c], m in assoc(c, :mentions), as: :mentions)
+    |> where([c, mentions: m], m.user_id == ^user_id and m.conversation_id == c.id)
+  end
+
+  def filter_by_mention(query, _filters), do: query
 
   @spec mark_activity(String.t()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}

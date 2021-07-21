@@ -9,7 +9,7 @@ defmodule ChatApi.Emails.Email do
   @type t :: Swoosh.Email.t()
 
   @from_address System.get_env("FROM_ADDRESS") || ""
-  @backend_url System.get_env("BACKEND_URL") || ""
+  @backend_url System.get_env("BACKEND_URL", "app.papercups.io")
 
   defstruct to_address: nil, message: nil
 
@@ -188,6 +188,66 @@ defmodule ChatApi.Emails.Email do
       {:ok, html, _} -> html
       _ -> fallback
     end
+  end
+
+  def mention_notification(
+        to: to,
+        from: from,
+        reply_to: reply_to,
+        company: company,
+        messages: messages,
+        user: user
+      ) do
+    new()
+    |> to(to)
+    |> from({from, @from_address})
+    |> reply_to(reply_to)
+    |> subject("You were mentioned in a message on Papercups!")
+    |> html_body(mention_notification_html(messages, from: from, to: user, company: company))
+    |> text_body(mention_notification_text(messages, from: from, to: user, company: company))
+  end
+
+  # TODO: figure out a better way to create templates for these
+  defp mention_notification_text(messages, from: from, to: _user, company: company) do
+    conversation_id = messages |> List.first() |> Map.get(:conversation_id)
+    dashboard_link = "#{get_app_domain()}/conversations/mentions?cid=#{conversation_id}"
+
+    """
+    Hi there!
+
+    You were mentioned in a message on Papercups:
+
+    #{
+      Enum.map(messages, fn msg ->
+        format_sender(msg, company) <> ": " <> msg.body <> "\n"
+      end)
+    }
+
+    View in the dashboard at #{dashboard_link}
+
+    Best,
+    #{from}
+    """
+  end
+
+  defp mention_notification_html(messages, from: from, to: _user, company: company) do
+    conversation_id = messages |> List.first() |> Map.get(:conversation_id)
+    dashboard_link = "#{get_app_domain()}/conversations/mentions?cid=#{conversation_id}"
+
+    """
+    <p>Hi there!</p>
+    <p>You were mentioned in a message on Papercups:</p>
+    <hr />
+    #{Enum.map(messages, fn msg -> format_message_html(msg, company) end)}
+    <hr />
+    <p>
+    (View in the <a href="#{dashboard_link}">dashboard</a>)
+    </p>
+    <p>
+    Best,<br />
+    #{from}
+    </p>
+    """
   end
 
   # TODO: use env variables instead, come up with a better message

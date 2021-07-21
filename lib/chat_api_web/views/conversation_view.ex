@@ -1,6 +1,13 @@
 defmodule ChatApiWeb.ConversationView do
   use ChatApiWeb, :view
-  alias ChatApiWeb.{ConversationView, MessageView, CustomerView, TagView}
+
+  alias ChatApiWeb.{
+    ConversationView,
+    MentionView,
+    MessageView,
+    CustomerView,
+    TagView
+  }
 
   def render("index.json", %{conversations: conversations, pagination: pagination}) do
     %{
@@ -65,7 +72,8 @@ defmodule ChatApiWeb.ConversationView do
       metadata: conversation.metadata,
       customer: render_one(conversation.customer, CustomerView, "customer.json"),
       messages: render_many(conversation.messages, MessageView, "expanded.json"),
-      tags: render_tags(conversation.tags)
+      tags: render_tags(conversation.tags),
+      mentions: render_mentions(conversation.mentions)
     }
   end
 
@@ -74,4 +82,10 @@ defmodule ChatApiWeb.ConversationView do
   end
 
   defp render_tags(_tags), do: []
+
+  defp render_mentions([_ | _] = mentions) do
+    render_many(mentions, MentionView, "mention.json")
+  end
+
+  defp render_mentions(_mentions), do: []
 end

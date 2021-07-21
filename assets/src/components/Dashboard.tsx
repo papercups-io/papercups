@@ -53,6 +53,7 @@ import {
 } from './conversations/ConversationsProvider';
 import AllConversations from './conversations/AllConversations';
 import MyConversations from './conversations/MyConversations';
+import MentionedConversations from './conversations/MentionedConversations';
 import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
 import ConversationsBySource from './conversations/ConversationsBySource';
@@ -304,6 +305,22 @@ const Dashboard = (props: RouteComponentProps) => {
                       <Box mr={2}>All conversations</Box>
                       <Badge
                         count={totalNumUnread}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="mentions">
+                  <Link to="/conversations/mentions">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Mentions</Box>
+                      <Badge
+                        count={getUnreadCount(inboxes.all.mentioned)}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -574,6 +591,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/functions/:id" component={LambdaDetailsPage} />
           <Route path="/functions" component={LambdasOverview} />
           <Route path="/conversations/all" component={AllConversations} />
+          <Route
+            path="/conversations/mentions"
+            component={MentionedConversations}
+          />
           <Route path="/conversations/me" component={MyConversations} />
           <Route
             path="/conversations/priority"

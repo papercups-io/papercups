@@ -3,8 +3,8 @@ import {Box, Flex} from 'theme-ui';
 import {
   colors,
   Button,
+  Mentions,
   Menu,
-  TextArea,
   Upload,
   UploadChangeParam,
   UploadFile,
@@ -13,6 +13,7 @@ import {
 import {Message, MessageType, User} from '../../types';
 import {InfoCircleOutlined, PaperClipOutlined} from '../icons';
 import {env} from '../../config';
+import * as API from '../../api';
 import {DashboardShortcutsRenderer} from './DashboardShortcutsModal';
 
 const {REACT_APP_FILE_UPLOADS_ENABLED} = env;
@@ -71,16 +72,25 @@ const ConversationFooter = ({
   const [message, setMessage] = React.useState<string>('');
   const [fileList, setFileList] = React.useState<Array<UploadFile>>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
+  const [mentions, setMentions] = React.useState<Array<string>>([]);
+  const [mentionableUsers, setMentionableUsers] = React.useState<Array<User>>(
+    []
+  );
   const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    API.fetchAccountUsers().then((users) => setMentionableUsers(users));
+  }, []);
 
   const isPrivateNote = messageType === 'note';
   const accountId = currentUser?.account_id;
   const shouldDisplayUploadButton = fileUploadsEnabled(accountId);
 
-  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-    setMessage(e.target.value);
-
   const handleSetMessageType = ({key}: any) => setMessageType(key);
+
+  const handleSelectMentionOption = (option: any, prefix: string) => {
+    setMentions([...new Set([...mentions, option.value])]);
+  };
 
   const handleKeyDown = (e: any) => {
     const {key, metaKey} = e;
@@ -91,14 +101,35 @@ const ConversationFooter = ({
     }
   };
 
+  const findUserByMentionValue = (mention: string) => {
+    return mentionableUsers.find((user) => {
+      const {email, display_name, full_name} = user;
+      const value = display_name || full_name || email;
+
+      return mention === value;
+    });
+  };
+
   const handleSendMessage = (e?: any) => {
     e && e.preventDefault();
 
+    const formattedMessageBody = mentions.reduce((result, mention) => {
+      return result.replaceAll(`@${mention}`, `**@${mention}**`);
+    }, message);
+    const mentionedUsers = mentions
+      .filter((mention) => message.includes(`@${mention}`))
+      .map((mention) => findUserByMentionValue(mention))
+      .filter((user: User | undefined): user is User => !!user);
+
     onSendMessage({
-      body: message,
+      body: formattedMessageBody,
       type: messageType,
       private: isPrivateNote,
       file_ids: fileList.map((f) => f.response?.data?.id),
+      mentioned_user_ids: mentionedUsers.map((user) => user.id),
+      metadata: {
+        mentions: mentionedUsers,
+      },
     });
 
     setFileList([]);
@@ -188,7 +219,7 @@ const ConversationFooter = ({
 
             <Box mb={2}>
               {/* NB: we use the `key` prop to auto-focus the textarea when toggling `messageType` */}
-              <TextArea
+              <Mentions
                 key={messageType}
                 className="TextArea--transparent"
                 placeholder={
@@ -199,9 +230,21 @@ const ConversationFooter = ({
                 autoSize={{minRows: 2, maxRows: 4}}
                 autoFocus
                 value={message}
-                onKeyDown={handleKeyDown}
-                onChange={handleMessageChange}
-              />
+                onPressEnter={handleKeyDown}
+                onChange={setMessage}
+                onSelect={handleSelectMentionOption}
+              >
+                {mentionableUsers.map((user) => {
+                  const {email, display_name, full_name} = user;
+                  const value = display_name || full_name || email;
+
+                  return (
+                    <Mentions.Option key={user.id} value={value}>
+                      {value}
+                    </Mentions.Option>
+                  );
+                })}
+              </Mentions>
             </Box>
             {shouldDisplayUploadButton ? (
               <Flex

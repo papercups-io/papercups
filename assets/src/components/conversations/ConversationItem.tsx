@@ -6,6 +6,8 @@ import {colors, Badge, Text} from '../common';
 import {SmileTwoTone, StarFilled} from '../icons';
 import {formatRelativeTime} from '../../utils';
 import {Conversation, Message} from '../../types';
+import {useConversations} from './ConversationsProvider';
+import {isUnreadConversation} from './support';
 
 dayjs.extend(utc);
 
@@ -41,11 +43,13 @@ const ConversationItem = ({
   isCustomerOnline?: boolean;
   onSelectConversation: (id: string) => void;
 }) => {
+  const {currentUser} = useConversations();
   const formatted = formatConversation(conversation, messages);
-  const {id, priority, status, customer, date, preview, read} = formatted;
+  const {id, priority, status, customer, date, preview} = formatted;
   const {name, email} = customer;
   const isPriority = priority === 'priority';
   const isClosed = status === 'closed';
+  const isRead = !isUnreadConversation(conversation, currentUser);
 
   return (
     <Box
@@ -82,7 +86,7 @@ const ConversationItem = ({
           </Text>
         </Flex>
 
-        {read ? (
+        {isRead ? (
           isCustomerOnline ? (
             <Badge status="success" text="Online" />
           ) : (
@@ -99,7 +103,7 @@ const ConversationItem = ({
           textOverflow: 'ellipsis',
         }}
       >
-        {read ? (
+        {isRead ? (
           <Text type="secondary">{preview}</Text>
         ) : (
           <Text strong>{preview}</Text>

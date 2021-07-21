@@ -1,5 +1,5 @@
 import {colors} from '../common';
-import {Account, Message} from '../../types';
+import {Account, Conversation, Message, User} from '../../types';
 
 const {primary, gold, red, green, purple, magenta} = colors;
 
@@ -20,6 +20,21 @@ export const isBotMessage = (message: Message) => {
 
 export const isAgentMessage = (message: Message) => {
   return !isBotMessage(message) && !!message.user_id;
+};
+
+export const isUnreadConversation = (
+  conversation: Conversation,
+  currentUser: User | null
+) => {
+  if (!conversation.read) {
+    return true;
+  }
+
+  const {mentions = []} = conversation;
+
+  return mentions.some((mention) => {
+    return mention.user_id === currentUser?.id && !mention.seen_at;
+  });
 };
 
 export const getSenderIdentifier = (
