@@ -158,7 +158,7 @@ defmodule ChatApi.Messages.Notification do
           id: message_id,
           account_id: account_id,
           conversation_id: conversation_id,
-          user_id: _user_id
+          user_id: user_id
         } = message,
         :mentions,
         _opts
@@ -171,9 +171,9 @@ defmodule ChatApi.Messages.Notification do
       conversation_id: conversation_id,
       seen_at: nil
     })
-    |> Enum.filter(& &1.user.has_valid_email)
-    # TODO: should we avoid sending notifications if users @mention themselves?
-    # |> Enum.reject(& &1.user_id == user_id)
+    |> Stream.filter(& &1.user.has_valid_email)
+    # Avoid sending notifications if users @mention themselves?
+    |> Stream.reject(&(&1.user_id == user_id))
     |> Enum.each(fn mention ->
       %{
         message: Helpers.format(message),

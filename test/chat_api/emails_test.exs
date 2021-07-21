@@ -28,7 +28,7 @@ defmodule ChatApi.EmailsTest do
       assert email.text_body == "New message from an anonymous user: some message body"
 
       assert email.html_body ==
-               "New message from an anonymous user:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{
+               "New message from an anonymous user:<br /><b>some message body</b><br /><br /><a href=\"https://app.papercups.io/conversations/#{
                  conversation_id
                }\">View in dashboard</a>"
     end
@@ -50,7 +50,7 @@ defmodule ChatApi.EmailsTest do
       assert email.text_body == "New message from Test User: some message body"
 
       assert email.html_body ==
-               "New message from Test User:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{
+               "New message from Test User:<br /><b>some message body</b><br /><br /><a href=\"https://app.papercups.io/conversations/#{
                  conversation_id
                }\">View in dashboard</a>"
     end
@@ -72,7 +72,7 @@ defmodule ChatApi.EmailsTest do
       assert email.text_body == "New message from customer@customer.com: some message body"
 
       assert email.html_body ==
-               "New message from customer@customer.com:<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{
+               "New message from customer@customer.com:<br /><b>some message body</b><br /><br /><a href=\"https://app.papercups.io/conversations/#{
                  conversation_id
                }\">View in dashboard</a>"
     end
@@ -97,7 +97,7 @@ defmodule ChatApi.EmailsTest do
                "New message from Test User (customer@customer.com): some message body"
 
       assert email.html_body ==
-               "New message from Test User (customer@customer.com):<br /><b>some message body</b><br /><br /><a href=\"https:///conversations/#{
+               "New message from Test User (customer@customer.com):<br /><b>some message body</b><br /><br /><a href=\"https://app.papercups.io/conversations/#{
                  conversation_id
                }\">View in dashboard</a>"
     end
