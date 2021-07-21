@@ -156,7 +156,6 @@ defmodule ChatApi.Messages.Helpers do
     updates
     |> build_first_reply_updates(message)
     |> build_message_type_updates(message)
-    |> build_metadata_updates(message)
   end
 
   @spec is_first_agent_reply?(Message.t()) :: boolean()
@@ -186,24 +185,6 @@ defmodule ChatApi.Messages.Helpers do
       # Bot messages should be considered unread by default
       :bot -> Map.merge(updates, %{read: false})
       _ -> updates
-    end
-  end
-
-  @spec build_metadata_updates(map(), Message.t()) :: map()
-  defp build_metadata_updates(updates, %Message{} = message) do
-    case message.metadata do
-      %{"mentions" => new_mentions} when is_list(new_mentions) ->
-        existing_metadata = Map.get(updates, :metadata, %{})
-        existing_mentions = Map.get(existing_metadata, "mentions", [])
-        updated_mentions = Enum.uniq_by(existing_mentions ++ new_mentions, & &1["id"])
-        # TODO: if new mentions are added, send email alert to the user(s) who are mentioned?
-
-        Map.merge(updates, %{
-          metadata: Map.merge(existing_metadata, %{"mentions" => updated_mentions})
-        })
-
-      _ ->
-        updates
     end
   end
 

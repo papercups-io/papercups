@@ -190,6 +190,55 @@ defmodule ChatApi.Emails.Email do
     end
   end
 
+  def mention_notification(
+        to: to,
+        from: from,
+        reply_to: reply_to,
+        company: company,
+        messages: messages,
+        user: user
+      ) do
+    new()
+    |> to(to)
+    |> from({from, @from_address})
+    |> reply_to(reply_to)
+    |> subject("You were mentioned in a message on Papercups!")
+    |> html_body(mention_notification_html(messages, from: from, to: user, company: company))
+    |> text_body(mention_notification_text(messages, from: from, to: user, company: company))
+  end
+
+  # TODO: figure out a better way to create templates for these
+  defp mention_notification_text(messages, from: from, to: user, company: company) do
+    """
+    Hi there!
+
+    You were mentioned in a message on Papercups:
+
+    #{
+      Enum.map(messages, fn msg ->
+        format_sender(msg, company) <> ": " <> msg.body <> "\n"
+      end)
+    }
+
+    Best,
+    #{from}
+    """
+  end
+
+  defp mention_notification_html(messages, from: from, to: user, company: company) do
+    """
+    <p>Hi there!</p>
+    <p> You were mentioned in a message on Papercups:</p>
+    <hr />
+    #{Enum.map(messages, fn msg -> format_message_html(msg, company) end)}
+    <hr />
+    <p>
+    Best,<br />
+    #{from}
+    </p>
+    """
+  end
+
   # TODO: use env variables instead, come up with a better message
   def welcome(to_address) do
     new()

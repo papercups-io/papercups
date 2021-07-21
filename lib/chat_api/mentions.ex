@@ -13,6 +13,7 @@ defmodule ChatApi.Mentions do
     Mention
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
+    |> preload(:user)
     |> Repo.all()
   end
 
@@ -52,16 +53,19 @@ defmodule ChatApi.Mentions do
     end)
     |> Enum.reduce(dynamic(true), fn
       {:account_id, value}, dynamic ->
-        dynamic([r], ^dynamic and r.account_id == ^value)
+        dynamic([m], ^dynamic and m.account_id == ^value)
 
       {:user_id, value}, dynamic ->
-        dynamic([r], ^dynamic and r.user_id == ^value)
+        dynamic([m], ^dynamic and m.user_id == ^value)
 
       {:conversation_id, value}, dynamic ->
-        dynamic([r], ^dynamic and r.conversation_id == ^value)
+        dynamic([m], ^dynamic and m.conversation_id == ^value)
 
       {:message_id, value}, dynamic ->
-        dynamic([r], ^dynamic and r.message_id == ^value)
+        dynamic([m], ^dynamic and m.message_id == ^value)
+
+      {:seen_at, nil}, dynamic ->
+        dynamic([m], ^dynamic and is_nil(m.seen_at))
 
       {_, _}, dynamic ->
         # Not a where parameter

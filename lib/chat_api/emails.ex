@@ -79,6 +79,24 @@ defmodule ChatApi.Emails do
     |> deliver()
   end
 
+  @spec send_mention_notification_email(keyword()) :: deliver_result()
+  def send_mention_notification_email(
+        sender: sender,
+        recipient: recipient,
+        account: account,
+        messages: messages
+      ) do
+    Email.mention_notification(
+      to: recipient.email,
+      from: format_sender_name(sender, account),
+      reply_to: sender.email,
+      company: account.company_name,
+      messages: messages,
+      user: recipient
+    )
+    |> deliver()
+  end
+
   @spec send_user_invitation_email(User.t(), Account.t(), binary(), binary()) :: deliver_result()
   def send_user_invitation_email(user, account, to_address, invitation_token) do
     Email.user_invitation(%{

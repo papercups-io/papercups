@@ -153,6 +153,39 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  def notify(
+        %Message{
+          id: message_id,
+          account_id: account_id,
+          conversation_id: conversation_id,
+          user_id: _user_id
+        } = message,
+        :mentions,
+        _opts
+      ) do
+    Logger.info("Sending message notification: :mentions (message #{inspect(message.id)})")
+
+    account_id
+    |> ChatApi.Mentions.list_mentions(%{
+      message_id: message_id,
+      conversation_id: conversation_id,
+      seen_at: nil
+    })
+    |> Enum.filter(& &1.user.has_valid_email)
+    # TODO: should we avoid sending notifications if users @mention themselves?
+    # |> Enum.reject(& &1.user_id == user_id)
+    |> Enum.each(fn mention ->
+      %{
+        message: Helpers.format(message),
+        user: ChatApiWeb.UserView.render("user.json", user: mention.user)
+      }
+      |> ChatApi.Workers.SendMentionNotification.new()
+      |> Oban.insert()
+    end)
+
+    message
+  end
+
   def notify(%Message{private: false} = message, :gmail, _opts) do
     Logger.info("Sending message notification: :gmail (message #{inspect(message.id)})")
 
