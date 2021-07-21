@@ -113,13 +113,16 @@ const ConversationFooter = ({
   const handleSendMessage = (e?: any) => {
     e && e.preventDefault();
 
+    const formattedMessageBody = mentions.reduce((result, mention) => {
+      return result.replaceAll(`@${mention}`, `**@${mention}**`);
+    }, message);
     const mentionedUsers = mentions
       .filter((mention) => message.includes(`@${mention}`))
       .map((mention) => findUserByMentionValue(mention))
       .filter((user: User | undefined): user is User => !!user);
 
     onSendMessage({
-      body: message,
+      body: formattedMessageBody,
       type: messageType,
       private: isPrivateNote,
       file_ids: fileList.map((f) => f.response?.data?.id),
@@ -227,7 +230,6 @@ const ConversationFooter = ({
                 autoSize={{minRows: 2, maxRows: 4}}
                 autoFocus
                 value={message}
-                split="**"
                 onPressEnter={handleKeyDown}
                 onChange={setMessage}
                 onSelect={handleSelectMentionOption}

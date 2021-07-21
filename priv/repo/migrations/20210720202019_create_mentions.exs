@@ -7,7 +7,12 @@ defmodule ChatApi.Repo.Migrations.CreateMentions do
       add(:seen_at, :utc_datetime)
 
       add(:account_id, references(:accounts, null: false, type: :uuid, on_delete: :delete_all))
-      add(:conversation_id, references(:conversations, null: false, type: :uuid, on_delete: :delete_all))
+
+      add(
+        :conversation_id,
+        references(:conversations, null: false, type: :uuid, on_delete: :delete_all)
+      )
+
       add(:message_id, references(:messages, null: false, type: :uuid, on_delete: :delete_all))
       add(:user_id, references(:users, type: :integer))
 
