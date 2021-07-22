@@ -86,6 +86,7 @@ import EventSubscriptionsPage from './developers/EventSubscriptionsPage';
 import EmailTemplateBuilder from './developers/EmailTemplateBuilder';
 import LambdaDetailsPage from './lambdas/LambdaDetailsPage';
 import LambdasOverview from './lambdas/LambdasOverview';
+import CannedResponsesOverview from './canned-responses/CannedResponsesOverview';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -497,6 +498,9 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="chat-widget">
                   <Link to="/settings/chat-widget">Chat widget</Link>
                 </Menu.Item>
+                <Menu.Item key="saved-replies">
+                  <Link to="/settings/saved-replies">Saved replies</Link>
+                </Menu.Item>
                 {shouldDisplayBilling && (
                   <Menu.Item key="billing">
                     <Link to="/settings/billing">Billing</Link>
@@ -545,10 +549,15 @@ const Dashboard = (props: RouteComponentProps) => {
           />
           <Redirect from="/account*" to="/settings*" />
           <Redirect from="/billing" to="/settings/billing" />
+          <Redirect from="/saved-replies" to="/settings/saved-replies" />
 
           <Route path="/settings/account" component={AccountOverview} />
           <Route path="/settings/team" component={TeamOverview} />
           <Route path="/settings/profile" component={UserProfile} />
+          <Route
+            path="/settings/saved-replies"
+            component={CannedResponsesOverview}
+          />
           <Route path="/settings/chat-widget" component={ChatWidgetSettings} />
           {shouldDisplayBilling && (
             <Route path="/settings/billing" component={BillingOverview} />

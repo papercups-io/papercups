@@ -17,6 +17,14 @@ export type AccountSettings = {
   max_num_conversation_reminders?: number | null;
 };
 
+export type CannedResponse = {
+  id: string;
+  name: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type User = {
   id: number;
   email: string;
