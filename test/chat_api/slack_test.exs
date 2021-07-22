@@ -351,6 +351,7 @@ defmodule ChatApi.SlackTest do
       customer_email = "*Email:*\n#{customer.email}"
       conversation_id = conversation.id
       channel = thread.slack_channel
+      message = insert(:message, customer: customer, user: nil)
 
       assert %{
                "blocks" => [
@@ -368,13 +369,13 @@ defmodule ChatApi.SlackTest do
                        "text" => ^customer_email
                      },
                      %{
-                       "text" => "*URL:*\nN/A"
+                       "text" => "*Source:*\n:speech_balloon: Chat"
                      },
                      %{
-                       "text" => "*Browser:*\nN/A"
+                       "text" => "*Last seen URL:*\nN/A"
                      },
                      %{
-                       "text" => "*OS:*\nN/A"
+                       "text" => "*Device:*\nN/A"
                      },
                      %{
                        "text" => "*Timezone:*\nN/A"
@@ -402,6 +403,7 @@ defmodule ChatApi.SlackTest do
                  channel: channel,
                  conversation: conversation,
                  customer: customer,
+                 message: message,
                  thread: nil
                })
     end
