@@ -826,18 +826,37 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  def format_customer_device(%Customer{browser: nil, os: nil}), do: "N/A"
+
+  def format_customer_device(%Customer{browser: browser, os: os}),
+    do: [os, browser] |> Enum.reject(&is_nil/1) |> Enum.join(" · ")
+
+  def format_message_source(%Message{source: "email", metadata: %{"gmail_subject" => subject}})
+      when is_binary(subject),
+      do: ":email: Email (#{subject})"
+
+  def format_message_source(%Message{source: "email"}), do: ":email: Email"
+  def format_message_source(%Message{source: "chat"}), do: ":speech_balloon: Chat"
+  def format_message_source(%Message{source: "slack"}), do: ":slack: Slack"
+  def format_message_source(%Message{source: "sms"}), do: ":phone: SMS"
+  def format_message_source(%Message{source: "api"}), do: ":robot_face: API"
+  def format_message_source(%Message{source: "mattermost"}), do: "Mattermost"
+  def format_message_source(%Message{source: "sandbox"}), do: "Sandbox"
+  def format_message_source(%Message{source: nil}), do: "N/A"
+  def format_message_source(%Message{source: source}), do: source
+
   @spec get_message_payload(binary(), map()) :: map()
   def get_message_payload(text, %{
         channel: channel,
         conversation: conversation,
-        customer: %Customer{
-          name: name,
-          email: email,
-          current_url: current_url,
-          browser: browser,
-          os: os,
-          time_zone: time_zone
-        },
+        message: message,
+        customer:
+          %Customer{
+            name: name,
+            email: email,
+            current_url: current_url,
+            time_zone: time_zone
+          } = customer,
         thread: nil
       }) do
     %{
@@ -866,15 +885,15 @@ defmodule ChatApi.Slack.Helpers do
             },
             %{
               "type" => "mrkdwn",
-              "text" => "*URL:*\n#{current_url || "N/A"}"
+              "text" => "*Source:*\n#{format_message_source(message)}"
             },
             %{
               "type" => "mrkdwn",
-              "text" => "*Browser:*\n#{browser || "N/A"}"
+              "text" => "*Last seen URL:*\n#{current_url || "N/A"}"
             },
             %{
               "type" => "mrkdwn",
-              "text" => "*OS:*\n#{os || "N/A"}"
+              "text" => "*Device:*\n#{format_customer_device(customer)}"
             },
             %{
               "type" => "mrkdwn",
