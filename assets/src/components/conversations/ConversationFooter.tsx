@@ -1,4 +1,5 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {
   colors,
@@ -311,13 +312,32 @@ const ConversationFooter = ({
                 className="TextArea--transparent"
                 placeholder={
                   isPrivateNote
-                    ? 'Type a private note here'
-                    : 'Type your reply here'
+                    ? 'Type @ to mention a teammate and they will be notified.'
+                    : 'Type / to use a saved reply.'
                 }
                 autoSize={{minRows: 2, maxRows: 4}}
                 autoFocus
                 prefix={['@', '#', '/']}
                 value={message}
+                notFoundContent={
+                  <Box py={1}>
+                    {prefix === '@' ? (
+                      <Text type="secondary">Teammate not found.</Text>
+                    ) : (
+                      <Text type="secondary">
+                        Not found. Create a new saved reply{' '}
+                        <a
+                          href="/saved-replies"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          here
+                        </a>
+                        .
+                      </Text>
+                    )}
+                  </Box>
+                }
                 onPressEnter={handleKeyDown}
                 onChange={setMessage}
                 onSelect={handleSelectMentionOption}

@@ -21,7 +21,11 @@ body {
 .TextArea--transparent,
 .TextArea--transparent:hover,
 .TextArea--transparent:focus,
-.TextArea--transparent:active {
+.TextArea--transparent:active,
+.TextArea--transparent > textarea,
+.TextArea--transparent > textarea:hover,
+.TextArea--transparent > textarea:focus,
+.TextArea--transparent > textarea:active {
   background: transparent;
   border: none;
   box-shadow: none;
