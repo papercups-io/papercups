@@ -1,3 +1,24 @@
+### Friday, 23 July
+- [**Papercups Functions**](https://functions.papercups.io/) is now in beta :rocket: [0]
+- [[#916](https://github.com/papercups-io/papercups/pull/916)] Notify teammates with **@ mentions** in the dashboard [1]
+- [[#919](https://github.com/papercups-io/papercups/pull/919)] Use **canned responses/saved replies** in the dashboard [2]
+- [[#908](https://github.com/papercups-io/papercups/pull/908)] Send files to customers **directly from Slack** :slack:
+- [[#917](https://github.com/papercups-io/papercups/pull/917)] Dashboard messages are now enhanced with more metadata [3]
+
+_[0] Papercups Functions_
+> <img width="800" src="https://user-images.githubusercontent.com/5264279/126827126-c99ec771-6543-4de5-b7d0-3b583383a80a.png" />
+
+_[1] @ mentions_
+> <img width="480" src="https://user-images.githubusercontent.com/5264279/126420797-cdcbd439-a5fe-4b38-beec-fb895c41ff17.gif" />
+
+_[2] Saved replies_
+> <img width="480" src="https://user-images.githubusercontent.com/5264279/126712981-0a4585fe-ce89-4918-8b88-f2949b1270a1.gif" />
+
+_[3] Enhanced message UI_
+| Email | Slack |  
+|---|---|
+| <img alt="Email" src="https://user-images.githubusercontent.com/5264279/126564253-0a5a33bf-ccb3-4b33-8eb0-4f52bb51687f.png"> | <img alt="Slack" src="https://user-images.githubusercontent.com/5264279/126564260-97341660-f597-4b54-834a-9f7bbd4c2fc9.png"> |
+
 ### Friday, 11 June
 - [[#826](https://github.com/papercups-io/papercups/pull/826)] Implement v1 of **conversation nudges/reminders** [0]
 - [[#841](https://github.com/papercups-io/papercups/pull/841)] **Automatically link GitHub issue** to customer when URL is shared in conversation [1]
