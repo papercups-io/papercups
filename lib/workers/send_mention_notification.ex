@@ -68,13 +68,7 @@ defmodule ChatApi.Workers.SendMentionNotification do
   @spec get_recent_messages(binary(), binary()) :: [Message.t()]
   def get_recent_messages(conversation_id, account_id) do
     conversation_id
-    |> Messages.list_by_conversation(
-      %{
-        "account_id" => account_id,
-        "private" => false
-      },
-      limit: 5
-    )
+    |> Messages.list_by_conversation(%{"account_id" => account_id}, limit: 5)
     |> Enum.reverse()
   end
 
