@@ -15,6 +15,7 @@ import {
   Tag,
   User,
   WidgetSettings,
+  CannedResponse,
 } from './types';
 
 // TODO: handle this on the server instead
@@ -1676,6 +1677,62 @@ export const getOnboardingStatus = async (
 
   return request
     .get(`/api/onboarding_status`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
+export const fetchCannedResponses = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/canned_responses`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createCannedResponse = async (
+  params: Partial<CannedResponse>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/canned_responses`)
+    .send({canned_response: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateCannedResponse = async (
+  id: string,
+  updates: Partial<CannedResponse>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/canned_responses/${id}`)
+    .send({canned_response: updates})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteCannedResponse = async (
+  id: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/canned_responses/${id}`)
     .set('Authorization', token)
     .then((res) => res.body);
 };

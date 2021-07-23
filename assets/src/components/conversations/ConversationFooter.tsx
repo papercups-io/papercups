@@ -8,6 +8,7 @@ import {
   Upload,
   UploadChangeParam,
   UploadFile,
+  Text,
   Tooltip,
 } from '../common';
 import {Message, MessageType, User} from '../../types';
@@ -69,17 +70,25 @@ const ConversationFooter = ({
   onSendMessage: (message: Partial<Message>) => void;
   currentUser?: User | null;
 }) => {
+  const textAreaEl = React.useRef<any>(null);
   const [message, setMessage] = React.useState<string>('');
   const [fileList, setFileList] = React.useState<Array<UploadFile>>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
+  const [cannedResponses, setCannedResponses] = React.useState<Array<any>>([]);
   const [mentions, setMentions] = React.useState<Array<string>>([]);
   const [mentionableUsers, setMentionableUsers] = React.useState<Array<User>>(
     []
   );
+  const [prefix, setMentionPrefix] = React.useState<string>('@');
   const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    API.fetchAccountUsers().then((users) => setMentionableUsers(users));
+    Promise.all([API.fetchAccountUsers(), API.fetchCannedResponses()]).then(
+      ([users, responses]) => {
+        setMentionableUsers(users);
+        setCannedResponses(responses);
+      }
+    );
   }, []);
 
   const isPrivateNote = messageType === 'note';
@@ -88,9 +97,50 @@ const ConversationFooter = ({
 
   const handleSetMessageType = ({key}: any) => setMessageType(key);
 
-  const handleSelectMentionOption = (option: any, prefix: string) => {
-    setMentions([...new Set([...mentions, option.value])]);
+  const getPrefixIndex = (index: number) => {
+    for (let i = index; i >= 0; i--) {
+      if (message[i] === '/' || message[i] === '#') {
+        return i;
+      }
+    }
+
+    return -1;
   };
+
+  const handleSelectMentionOption = (option: any, prefix: string) => {
+    switch (prefix) {
+      case '@':
+        return setMentions([...new Set([...mentions, option.value])]);
+      case '#':
+      case '/':
+        const el = textAreaEl.current?.textarea;
+        const y = el?.selectionStart ?? -1;
+        const x = getPrefixIndex(y);
+        const response = cannedResponses.find((r) => r.name === option.value);
+
+        if (el && x !== -1 && y !== -1 && response && response.content) {
+          const update = [
+            message.slice(0, x),
+            response.content,
+            message.slice(y),
+          ].join('');
+          const newCursorIndex = x + response.content.length;
+
+          setMessage(update);
+          // Slight hack to get the cursor to move to the correct spot
+          setTimeout(() => {
+            el.selectionStart = newCursorIndex;
+          }, 0);
+        }
+
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const handleSearchMentions = (str: string, prefix: string) =>
+    setMentionPrefix(prefix);
 
   const handleKeyDown = (e: any) => {
     const {key, metaKey} = e;
@@ -147,6 +197,42 @@ const ConversationFooter = ({
     // Enable send button again when the server has responded
     if (file && file.response) {
       setSendDisabled(false);
+    }
+  };
+
+  const getMentionOptions = () => {
+    switch (prefix) {
+      case '@':
+        return mentionableUsers.map(({id, email, display_name, full_name}) => {
+          const value = display_name || full_name || email;
+
+          return (
+            <Mentions.Option key={id} value={value}>
+              <Box>
+                <Text>{value}</Text>
+              </Box>
+              <Box>
+                <Text type="secondary">{email}</Text>
+              </Box>
+            </Mentions.Option>
+          );
+        });
+      case '#':
+      case '/':
+        return cannedResponses.map(({name, content}) => {
+          return (
+            <Mentions.Option key={name} value={name}>
+              <Box>
+                <Text>{name}</Text>
+              </Box>
+              <Box>
+                <Text type="secondary">{content}</Text>
+              </Box>
+            </Mentions.Option>
+          );
+        });
+      default:
+        return [];
     }
   };
 
@@ -221,29 +307,42 @@ const ConversationFooter = ({
               {/* NB: we use the `key` prop to auto-focus the textarea when toggling `messageType` */}
               <Mentions
                 key={messageType}
+                ref={textAreaEl}
                 className="TextArea--transparent"
                 placeholder={
                   isPrivateNote
-                    ? 'Type a private note here'
-                    : 'Type your reply here'
+                    ? 'Type @ to mention a teammate and they will be notified.'
+                    : 'Type / to use a saved reply.'
                 }
                 autoSize={{minRows: 2, maxRows: 4}}
                 autoFocus
+                prefix={['@', '#', '/']}
                 value={message}
+                notFoundContent={
+                  <Box py={1}>
+                    {prefix === '@' ? (
+                      <Text type="secondary">Teammate not found.</Text>
+                    ) : (
+                      <Text type="secondary">
+                        Not found. Create a new saved reply{' '}
+                        <a
+                          href="/saved-replies"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          here
+                        </a>
+                        .
+                      </Text>
+                    )}
+                  </Box>
+                }
                 onPressEnter={handleKeyDown}
                 onChange={setMessage}
                 onSelect={handleSelectMentionOption}
+                onSearch={handleSearchMentions}
               >
-                {mentionableUsers.map((user) => {
-                  const {email, display_name, full_name} = user;
-                  const value = display_name || full_name || email;
-
-                  return (
-                    <Mentions.Option key={user.id} value={value}>
-                      {value}
-                    </Mentions.Option>
-                  );
-                })}
+                {getMentionOptions()}
               </Mentions>
             </Box>
             {shouldDisplayUploadButton ? (
