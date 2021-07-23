@@ -1,9 +1,9 @@
 ### Friday, 23 July
 - [**Papercups Functions**](https://functions.papercups.io/) is now in beta :rocket: [0]
-- [[#916](https://github.com/papercups-io/papercups/pull/916)] Notify teammates with **@ mentions** in the dashboard [1] 🔊
+- [[#916](https://github.com/papercups-io/papercups/pull/916)] Notify teammates with **@ mentions** in the dashboard 🔊 [1]
 - [[#919](https://github.com/papercups-io/papercups/pull/919)] Use **canned responses/saved replies** in the dashboard [2]
 - [[#908](https://github.com/papercups-io/papercups/pull/908)] Send files to customers **directly from Slack**
-- [[#917](https://github.com/papercups-io/papercups/pull/917)] Dashboard messages are now enhanced with more metadata [3] 🔥
+- [[#917](https://github.com/papercups-io/papercups/pull/917)] Dashboard messages are now enhanced with more metadata 🔥 [3]
 
 _[0] Papercups Functions_
 > <img width="800" src="https://user-images.githubusercontent.com/5264279/126827126-c99ec771-6543-4de5-b7d0-3b583383a80a.png" />
