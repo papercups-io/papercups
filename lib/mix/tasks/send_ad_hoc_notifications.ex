@@ -131,7 +131,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
          false <- already_sent_message?(text, account_id: account_id, customer_id: customer.id),
          :ok <- Logger.info("Sending to #{company_name}: #{text}"),
          {:ok, conversation} <-
-           Conversations.find_or_create_by_customer(account_id, customer.id),
+           Conversations.create_conversation(%{account_id: account_id, customer_id: customer.id}),
          {:ok, message} <-
            Messages.create_message(%{
              source: "api",
@@ -140,7 +140,6 @@ defmodule Mix.Tasks.SendAdHocNotifications do
              customer_id: customer.id,
              body: text
            }) do
-      # TODO: only do this if conversation is actually new? (or just create new conversation for each message)
       conversation
       |> Conversations.Notification.broadcast_new_conversation_to_admin!()
 
