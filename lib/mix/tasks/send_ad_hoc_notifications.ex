@@ -3,7 +3,15 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   require Logger
   import Ecto.Query, warn: false
 
-  alias ChatApi.Repo
+  alias ChatApi.{
+    Accounts,
+    Conversations,
+    Customers,
+    Messages,
+    Repo
+  }
+
+  alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
 
   @shortdoc "Send ad hoc notifications to existing users"
@@ -95,9 +103,52 @@ defmodule Mix.Tasks.SendAdHocNotifications do
     Repo.all(query)
   end
 
+  def already_sent_message?(text, account_id: account_id, customer_id: customer_id) do
+    query =
+      from(m in Message,
+        join: c in Conversation,
+        on: m.conversation_id == c.id,
+        where:
+          m.account_id == ^account_id and
+            m.customer_id == ^customer_id and
+            m.body == ^text and
+            is_nil(c.archived_at),
+        select: count("*")
+      )
+
+    Repo.one(query) > 0
+  end
+
   def notify(text, account_id) do
-    %{text: text, account_id: account_id}
-    |> ChatApi.Workers.SendAdHocNotification.new()
-    |> Oban.insert()
+    with %{company_name: company_name} <- Accounts.get_account!(account_id),
+         # TODO: use founders@
+         {:ok, customer} <-
+           Customers.find_or_create_by_email("alex@papercups.io", account_id, %{
+             name: "Papercups Team",
+             profile_photo_url:
+               "https://avatars.slack-edge.com/2021-01-13/1619416452487_002cddd7d8aea1950018_192.png"
+           }),
+         false <- already_sent_message?(text, account_id: account_id, customer_id: customer.id),
+         :ok <- Logger.info("Sending to #{company_name}: #{text}"),
+         {:ok, conversation} <-
+           Conversations.find_or_create_by_customer(account_id, customer.id),
+         {:ok, message} <-
+           Messages.create_message(%{
+             source: "api",
+             account_id: account_id,
+             conversation_id: conversation.id,
+             customer_id: customer.id,
+             body: text
+           }) do
+      message.id
+      |> Messages.get_message!()
+      |> Messages.Notification.broadcast_to_customer!()
+      |> Messages.Notification.broadcast_to_admin!()
+      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.notify(:mattermost)
+      |> Messages.Notification.notify(:webhooks)
+      |> Messages.Notification.notify(:gmail)
+      |> Messages.Notification.notify(:sms)
+    end
   end
 end
