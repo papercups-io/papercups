@@ -140,15 +140,17 @@ defmodule Mix.Tasks.SendAdHocNotifications do
              customer_id: customer.id,
              body: text
            }) do
+      # TODO: only do this if conversation is actually new? (or just create new conversation for each message)
+      conversation
+      |> Conversations.Notification.broadcast_new_conversation_to_admin!()
+
       message.id
       |> Messages.get_message!()
       |> Messages.Notification.broadcast_to_customer!()
       |> Messages.Notification.broadcast_to_admin!()
-      |> Messages.Notification.notify(:slack)
-      |> Messages.Notification.notify(:mattermost)
-      |> Messages.Notification.notify(:webhooks)
-      |> Messages.Notification.notify(:gmail)
-      |> Messages.Notification.notify(:sms)
+      |> Messages.Notification.notify(:slack, async: false)
+      |> Messages.Notification.notify(:mattermost, async: false)
+      |> Messages.Notification.notify(:new_message_email, async: false)
     end
   end
 end

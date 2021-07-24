@@ -104,15 +104,21 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(%Message{} = message, :new_message_email, _opts) do
+  def notify(%Message{} = message, :new_message_email, opts) do
     Logger.info(
       "Sending message notification: :new_message_email (message #{inspect(message.id)})"
     )
 
-    # TODO: how should we handle errors/retry logic?
-    Task.start(fn ->
-      ChatApi.Emails.send_new_message_alerts(message)
-    end)
+    case opts do
+      [async: false] ->
+        ChatApi.Emails.send_new_message_alerts(message)
+
+      _ ->
+        # TODO: how should we handle errors/retry logic?
+        Task.start(fn ->
+          ChatApi.Emails.send_new_message_alerts(message)
+        end)
+    end
 
     message
   end
