@@ -40,6 +40,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   end
 
   def run([text | args]) do
+    # TODO: make it possible to do dry runs!
     Application.ensure_all_started(:chat_api)
 
     {:ok, message} = parse(text)
