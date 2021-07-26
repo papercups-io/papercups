@@ -595,10 +595,10 @@ window.Papercups = {
 };
 </script>
 <script
-type="text/javascript"
-async
-defer
-src="${FRONTEND_BASE_URL}/widget.js"
+  type="text/javascript"
+  async
+  defer
+  src="${FRONTEND_BASE_URL}/widget.js"
 ></script>
 `.trim()}
           </StandardSyntaxHighlighter>
