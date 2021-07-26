@@ -37,6 +37,7 @@ defmodule ChatApiWeb.Router do
 
     get("/ping", PingController, :ping)
     post("/ping", PingController, :ping)
+    post("/render", PingController, :render)
 
     resources("/registration", RegistrationController, singleton: true, only: [:create])
     resources("/session", SessionController, singleton: true, only: [:create, :delete])

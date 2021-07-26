@@ -1,7 +1,7 @@
-import {JS_COMPONENTS} from './components';
+import {getComponentsString} from './components';
 import {getDefaultCss, getPremailerIgnoredCss} from './styles';
 
-export const getIframeContents = ({
+export const getIframeContentsV1 = ({
   css,
   cssPremailerIgnore,
   js,
@@ -33,13 +33,41 @@ export const getIframeContents = ({
     <script type="text/babel">
       'use strict';
 
-      ${JS_COMPONENTS}
+      ${getComponentsString()}
 
       // const Email = (props) => {...}
       ${js}
 
       ReactDOM.render(<Email />, document.querySelector('#email'));
     </script>
+  </body>
+  </html>
+  `;
+};
+
+export const getIframeContents = ({
+  css,
+  cssPremailerIgnore,
+  html,
+}: {
+  css?: string;
+  cssPremailerIgnore?: string;
+  html: string;
+}) => {
+  return `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <style type="text/css">
+      ${getDefaultCss() || css}
+    </style>
+    <style type="text/css" data-premailer="ignore">
+      ${getPremailerIgnoredCss() || cssPremailerIgnore}
+    </style>
+  </head>
+  <body>
+    ${html}
   </body>
   </html>
   `;

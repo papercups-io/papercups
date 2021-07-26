@@ -2308,3 +2308,18 @@ export const deleteInbox = async (id: string, token = getAccessToken()) => {
     .set('Authorization', token)
     .then((res) => res.body);
 };
+
+export const renderEmailTemplate = async (
+  params: any,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/render`)
+    .set('Authorization', token)
+    .send(params)
+    .then((res) => res.body.data);
+};
