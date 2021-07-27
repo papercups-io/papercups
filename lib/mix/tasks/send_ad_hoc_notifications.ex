@@ -12,6 +12,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   }
 
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
 
   @shortdoc "Send ad hoc notifications to existing users"
@@ -25,6 +26,8 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   $ mix send_ad_hoc_notifications https://gist.github.com/some_markdown_file.md
   $ mix send_ad_hoc_notifications https://gist.github.com/some_text_file.txt
   $ mix send_ad_hoc_notifications hello b3e8e400-125d-495d-bb76-2ae75aaa9ed6
+  $ mix send_ad_hoc_notifications hello --dry_run
+  $ mix send_ad_hoc_notifications hello --dry_run=true
   ```
 
   On Heroku:
@@ -33,6 +36,9 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   $ heroku run "POOL_SIZE=2 mix send_ad_hoc_notifications hello b3e8e400-125d-495d-bb76-2ae75aaa9ed6"
   ```
   """
+
+  # TODO: use founders@
+  @papercups_email "alex@papercups.io"
 
   def run([]) do
     # TODO: set up more helpful error message
@@ -43,7 +49,10 @@ defmodule Mix.Tasks.SendAdHocNotifications do
     # TODO: make it possible to do dry runs!
     Application.ensure_all_started(:chat_api)
 
-    {:ok, message} = parse(text)
+    {:ok, message} = parse_input(text)
+
+    opts = parse_opts(args)
+    args = Enum.reject(args, &String.starts_with?(&1, "--"))
 
     account_ids =
       case args do
@@ -61,7 +70,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
       [_ | _] ->
         account_ids
         |> Enum.uniq()
-        |> Enum.each(&notify(message, &1))
+        |> Enum.each(&notify(message, &1, opts))
     end
   end
 
@@ -81,7 +90,31 @@ defmodule Mix.Tasks.SendAdHocNotifications do
     end
   end
 
-  def parse(text) do
+  def parse_opts(args) do
+    args
+    |> Enum.filter(&String.starts_with?(&1, "--"))
+    |> Map.new(fn opt ->
+      [key, value] =
+        case String.split(opt, "=") do
+          [k] -> [k, "true"]
+          [k, v] -> [k, v]
+        end
+
+      k = key |> String.replace("--", "") |> String.to_atom()
+
+      v =
+        case value do
+          "true" -> true
+          "false" -> false
+          str -> str
+        end
+
+      {k, v}
+    end)
+    |> Map.to_list()
+  end
+
+  def parse_input(text) do
     # TODO: add support for templates?
     if is_valid_url?(text) do
       case Tesla.get(text) do
@@ -104,7 +137,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
     Repo.all(query)
   end
 
-  def already_sent_message?(text, account_id: account_id, customer_id: customer_id) do
+  def validate(text, account_id: account_id, customer_id: customer_id) do
     query =
       from(m in Message,
         join: c in Conversation,
@@ -117,19 +150,32 @@ defmodule Mix.Tasks.SendAdHocNotifications do
         select: count("*")
       )
 
-    Repo.one(query) > 0
+    if Repo.one(query) > 0 do
+      {:error, :message_already_sent}
+    else
+      :ok
+    end
   end
 
-  def notify(text, account_id) do
+  def notify(text, account_id, dry_run: true) do
     with %{company_name: company_name} <- Accounts.get_account!(account_id),
-         # TODO: use founders@
+         %Customer{id: customer_id} <- Customers.find_by_email(@papercups_email, account_id),
+         :ok <- validate(text, account_id: account_id, customer_id: customer_id) do
+      Logger.info("[--dry_run] Would have sent to #{company_name}: #{inspect(text)}")
+    else
+      error -> Logger.info("Skipped sending message to account #{account_id}: #{inspect(error)}")
+    end
+  end
+
+  def notify(text, account_id, _opts) do
+    with %{company_name: company_name} <- Accounts.get_account!(account_id),
          {:ok, customer} <-
-           Customers.find_or_create_by_email("alex@papercups.io", account_id, %{
+           Customers.find_or_create_by_email(@papercups_email, account_id, %{
              name: "Papercups Team",
              profile_photo_url:
                "https://avatars.slack-edge.com/2021-01-13/1619416452487_002cddd7d8aea1950018_192.png"
            }),
-         false <- already_sent_message?(text, account_id: account_id, customer_id: customer.id),
+         :ok <- validate(text, account_id: account_id, customer_id: customer.id),
          :ok <- Logger.info("Sending to #{company_name}: #{text}"),
          {:ok, conversation} <-
            Conversations.create_conversation(%{account_id: account_id, customer_id: customer.id}),
@@ -151,6 +197,8 @@ defmodule Mix.Tasks.SendAdHocNotifications do
       |> Messages.Notification.notify(:slack, async: false)
       |> Messages.Notification.notify(:mattermost, async: false)
       |> Messages.Notification.notify(:new_message_email, async: false)
+    else
+      error -> Logger.info("Skipped sending message to account #{account_id}: #{inspect(error)}")
     end
   end
 end
