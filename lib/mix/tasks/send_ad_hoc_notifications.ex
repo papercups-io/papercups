@@ -25,7 +25,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   $ mix send_ad_hoc_notifications "this is a message that will be sent to all active accounts"
   $ mix send_ad_hoc_notifications https://gist.github.com/some_markdown_file.md
   $ mix send_ad_hoc_notifications https://gist.github.com/some_text_file.txt
-  $ mix send_ad_hoc_notifications hello b3e8e400-125d-495d-bb76-2ae75aaa9ed6
+  $ mix send_ad_hoc_notifications hello b3e8e400-xxxx-xxxx-xxxx-2ae75aaa9ed6 a2e9f33-xxxx-xxxx-xxxx-0bc45bbb7zy1
   $ mix send_ad_hoc_notifications hello --dry_run
   $ mix send_ad_hoc_notifications hello --dry_run=true
   ```
@@ -33,7 +33,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   On Heroku:
   ```
   $ heroku run "POOL_SIZE=2 mix send_ad_hoc_notifications hello"
-  $ heroku run "POOL_SIZE=2 mix send_ad_hoc_notifications hello b3e8e400-125d-495d-bb76-2ae75aaa9ed6"
+  $ heroku run "POOL_SIZE=2 mix send_ad_hoc_notifications hello b3e8e400-xxxx-xxxx-xxxx-2ae75aaa9ed6 a2e9f33-xxxx-xxxx-xxxx-0bc45bbb7zy1"
   ```
   """
 
@@ -41,27 +41,35 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   @papercups_email "alex@papercups.io"
 
   def run([]) do
-    # TODO: set up more helpful error message
-    Logger.error("Please include the message you would like to send out!")
+    Logger.error("""
+    Please include the message you would like to send out.
+
+    For example:
+      $ mix send_ad_hoc_notifications "this is a message that will be sent to all active accounts"
+      $ mix send_ad_hoc_notifications https://gist.github.com/some_markdown_file.md
+      $ mix send_ad_hoc_notifications https://gist.github.com/some_text_file.txt
+      $ mix send_ad_hoc_notifications hello b3e8e400-xxxx-xxxx-xxxx-2ae75aaa9ed6 a2e9f33-xxxx-xxxx-xxxx-0bc45bbb7zy1
+      $ mix send_ad_hoc_notifications hello --dry_run=true
+      $ mix send_ad_hoc_notifications hello --exclude=b3e8e400-xxxx-xxxx-xxxx-2ae75aaa9ed6
+    """)
   end
 
   def run([text | args]) do
-    # TODO: make it possible to do dry runs!
     Application.ensure_all_started(:chat_api)
 
     {:ok, message} = parse_input(text)
 
     opts = parse_opts(args)
     args = Enum.reject(args, &String.starts_with?(&1, "--"))
+    account_ids = parse_account_ids(args, opts)
 
-    account_ids =
-      case args do
-        [] ->
-          account_ids_active_after(ago: [3, "month"])
+    Logger.info("""
+    Running with the following parameters:
 
-        account_ids ->
-          account_ids
-      end
+    > Message: #{inspect(message)}
+    > Options: #{inspect(opts)}
+    > Accounts: #{inspect(account_ids)}
+    """)
 
     case account_ids do
       [] ->
@@ -90,10 +98,40 @@ defmodule Mix.Tasks.SendAdHocNotifications do
     end
   end
 
+  def parse_account_ids(args, opts \\ []) do
+    account_ids =
+      case args do
+        [] ->
+          account_ids_active_after(ago: [3, "month"])
+
+        account_ids ->
+          account_ids
+      end
+
+    case Keyword.get_values(opts, :exclude) do
+      [] ->
+        account_ids
+
+      [_ | _] = excluded_account_ids ->
+        Enum.reject(account_ids, fn id ->
+          if Enum.member?(excluded_account_ids, id) do
+            Logger.info("Excluding account #{id}")
+
+            true
+          else
+            false
+          end
+        end)
+
+      _ ->
+        account_ids
+    end
+  end
+
   def parse_opts(args) do
     args
     |> Enum.filter(&String.starts_with?(&1, "--"))
-    |> Map.new(fn opt ->
+    |> Enum.map(fn opt ->
       [key, value] =
         case String.split(opt, "=") do
           [k] -> [k, "true"]
@@ -111,18 +149,22 @@ defmodule Mix.Tasks.SendAdHocNotifications do
 
       {k, v}
     end)
-    |> Map.to_list()
   end
 
   def parse_input(text) do
     # TODO: add support for templates?
-    if is_valid_url?(text) do
-      case Tesla.get(text) do
-        {:ok, %{body: body}} -> {:ok, body}
-        error -> error
-      end
-    else
-      {:ok, text}
+    cond do
+      is_valid_url?(text) ->
+        case Tesla.get(text) do
+          {:ok, %{body: body}} -> {:ok, body}
+          error -> error
+        end
+
+      String.trim(text) == "" ->
+        {:error, :invalid_message}
+
+      true ->
+        {:ok, text}
     end
   end
 
