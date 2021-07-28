@@ -1139,5 +1139,40 @@ defmodule ChatApi.SlackTest do
                %{"text" => "*Status:*\n:white_check_mark: Closed"}
              ] = latest_fields
     end
+
+    test "Helpers.format_slack_markdown/1 formats vanilla markdown into Slack-flavored markdown" do
+      assert "Hi _there_ this is *bold*!" =
+               Slack.Helpers.format_slack_markdown("Hi _there_ this is **bold**!")
+
+      assert "This <url|text> should be the same" =
+               Slack.Helpers.format_slack_markdown("This <url|text> should be the same")
+
+      assert "This <url|text> should be formatted" =
+               Slack.Helpers.format_slack_markdown("This [text](url) should be formatted")
+
+      assert "This [text] (url) with a space between should be ignored" =
+               Slack.Helpers.format_slack_markdown(
+                 "This [text] (url) with a space between should be ignored"
+               )
+
+      assert """
+             This is a list in Slack:
+
+              • foo
+              • bar
+              • baz
+
+             Done!
+             """ =
+               Slack.Helpers.format_slack_markdown("""
+               This is a list in Slack:
+
+               - foo
+               - bar
+               - baz
+
+               Done!
+               """)
+    end
   end
 end
