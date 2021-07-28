@@ -92,9 +92,6 @@ defmodule Mix.Tasks.SendAdHocNotifications do
         has_valid_ext = String.ends_with?(path, ".md") || String.ends_with?(path, ".txt")
 
         has_valid_scheme && has_valid_ext
-
-      _ ->
-        false
     end
   end
 
@@ -122,9 +119,6 @@ defmodule Mix.Tasks.SendAdHocNotifications do
             false
           end
         end)
-
-      _ ->
-        account_ids
     end
   end
 
