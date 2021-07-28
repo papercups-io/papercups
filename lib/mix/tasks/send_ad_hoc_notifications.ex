@@ -38,7 +38,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   """
 
   # TODO: use founders@
-  @papercups_email "alex@papercups.io"
+  @papercups_email "founders@papercups.io"
 
   def run([]) do
     Logger.error("""
@@ -206,7 +206,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
   def notify(text, account_id, _opts) do
     with %{company_name: company_name} <- Accounts.get_account!(account_id),
          {:ok, customer} <-
-           Customers.find_or_create_by_email(@papercups_email, account_id, %{
+           Customers.create_or_update_by_email(@papercups_email, account_id, %{
              name: "Papercups Team",
              profile_photo_url:
                "https://avatars.slack-edge.com/2021-01-13/1619416452487_002cddd7d8aea1950018_192.png"
