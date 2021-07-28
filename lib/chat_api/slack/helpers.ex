@@ -726,6 +726,57 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @markdown_em_regex ~r/\*\*(.*?)\*\*/
+  @markdown_link_regex ~r/\[(.*?)\]\((.*?)\)/
+  @markdown_list_item_regex ~r/\n-\s+/
+
+  @spec format_slack_links(binary()) :: binary()
+  def format_slack_links(text) do
+    case Regex.scan(@markdown_link_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match, text, url], acc ->
+          String.replace(acc, match, "<#{url}|#{text}>")
+        end)
+    end
+  end
+
+  @spec format_slack_bold(binary()) :: binary()
+  def format_slack_bold(text) do
+    case Regex.scan(@markdown_em_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match, str], acc ->
+          String.replace(acc, match, "*#{str}*")
+        end)
+    end
+  end
+
+  @spec format_slack_lists(binary()) :: binary()
+  def format_slack_lists(text) do
+    case Regex.scan(@markdown_list_item_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match], acc ->
+          String.replace(acc, match, "\n • ")
+        end)
+    end
+  end
+
+  @spec format_slack_markdown(binary()) :: binary()
+  def format_slack_markdown(text) do
+    text
+    |> format_slack_bold()
+    |> format_slack_links()
+    |> format_slack_lists()
+  end
+
   @spec prepend_sender_prefix(binary(), Message.t()) :: binary()
   def prepend_sender_prefix(text, %Message{} = message) do
     case message do
@@ -791,6 +842,7 @@ defmodule ChatApi.Slack.Helpers do
     formatted_text =
       message
       |> format_message_body()
+      |> format_slack_markdown()
       |> prepend_sender_prefix(message, conversation)
       |> append_attachments_text(message)
 
@@ -817,10 +869,12 @@ defmodule ChatApi.Slack.Helpers do
        ) do
       message
       |> format_message_body()
+      |> format_slack_markdown()
       |> append_attachments_text(message)
     else
       message
       |> format_message_body()
+      |> format_slack_markdown()
       |> prepend_sender_prefix(message, conversation)
       |> append_attachments_text(message)
     end
@@ -845,9 +899,7 @@ defmodule ChatApi.Slack.Helpers do
   def format_message_source(%Message{source: nil}), do: "N/A"
   def format_message_source(%Message{source: source}), do: source
 
-  @spec get_message_payload(binary(), map()) :: map()
-  def get_message_payload(text, %{
-        channel: channel,
+  def initial_message_fields(%{
         conversation: conversation,
         message: message,
         customer:
@@ -856,7 +908,72 @@ defmodule ChatApi.Slack.Helpers do
             email: email,
             current_url: current_url,
             time_zone: time_zone
-          } = customer,
+          } = customer
+      }) do
+    fields = [
+      %{
+        "type" => "mrkdwn",
+        "text" => "*Name:*\n#{name || "Anonymous User"}"
+      },
+      %{
+        "type" => "mrkdwn",
+        "text" => "*Email:*\n#{email || "N/A"}"
+      },
+      %{
+        "type" => "mrkdwn",
+        "text" => "*Source:*\n#{format_message_source(message)}"
+      }
+    ]
+
+    case message.source do
+      "chat" ->
+        Enum.concat(fields, [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Last seen URL:*\n#{current_url || "N/A"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Device:*\n#{format_customer_device(customer)}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Timezone:*\n#{time_zone || "N/A"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
+          }
+        ])
+
+      source when source in ["slack", "mattermost", "email"] ->
+        Enum.concat(fields, [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Timezone:*\n#{time_zone || "N/A"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
+          }
+        ])
+
+      _ ->
+        Enum.concat(fields, [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
+          }
+        ])
+    end
+  end
+
+  @spec get_message_payload(binary(), map()) :: map()
+  def get_message_payload(text, %{
+        channel: channel,
+        conversation: conversation,
+        message: message,
+        customer: customer,
         thread: nil
       }) do
     %{
@@ -874,36 +991,12 @@ defmodule ChatApi.Slack.Helpers do
         },
         %{
           "type" => "section",
-          "fields" => [
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Name:*\n#{name || "Anonymous User"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Email:*\n#{email || "N/A"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Source:*\n#{format_message_source(message)}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Last seen URL:*\n#{current_url || "N/A"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Device:*\n#{format_customer_device(customer)}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Timezone:*\n#{time_zone || "N/A"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
-            }
-          ]
+          "fields" =>
+            initial_message_fields(%{
+              conversation: conversation,
+              message: message,
+              customer: customer
+            })
         },
         %{
           "type" => "divider"
