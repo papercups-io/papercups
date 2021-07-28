@@ -144,7 +144,9 @@ case mailer_adapter do
       relay: System.get_env("SMTP_HOST_ADDR", "mail"),
       port: System.get_env("SMTP_HOST_PORT", "25"),
       username: System.get_env("SMTP_USER_NAME"),
-      password: System.get_env("SMTP_USER_PWD"),
+      password:
+        (System.get_env("SMTP_USER_PWD_FILE") && File.read!(System.get_env("SMTP_USER_PWD_FILE"))) ||
+          System.get_env("SMTP_USER_PWD"),
       ssl: System.get_env("SMTP_HOST_SSL_ENABLED") || false,
       tls: :if_available,
       retries: System.get_env("SMTP_RETRIES") || 2,
