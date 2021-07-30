@@ -93,6 +93,7 @@ defmodule ChatApiWeb.Router do
     get("/slack/oauth", SlackController, :oauth)
     post("/slack/notify", SlackController, :notify)
     get("/slack/authorization", SlackController, :authorization)
+    get("/slack/authorizations", SlackController, :authorizations)
     post("/slack/authorizations/:id/settings", SlackController, :update_settings)
     delete("/slack/authorizations/:id", SlackController, :delete)
     get("/slack/channels", SlackController, :channels)

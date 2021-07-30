@@ -58,11 +58,9 @@ import PriorityConversations from './conversations/PriorityConversations';
 import ClosedConversations from './conversations/ClosedConversations';
 import ConversationsBySource from './conversations/ConversationsBySource';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
-import {
-  SlackIntegrationDetails,
-  SlackReplyIntegrationDetails,
-  SlackSyncIntegrationDetails,
-} from './integrations/SlackIntegrationDetails';
+import SlackReplyIntegrationDetails from './integrations/SlackReplyIntegrationDetails';
+import SlackSyncIntegrationDetails from './integrations/SlackSyncIntegrationDetails';
+import SlackIntegrationDetails from './integrations/SlackIntegrationDetails';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import CustomerDetailsPage from './customers/CustomerDetailsPage';

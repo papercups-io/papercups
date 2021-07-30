@@ -72,6 +72,8 @@ export type Company = {
   external_id?: string;
   slack_channel_id?: string;
   slack_channel_name?: string;
+  slack_team_id?: string;
+  slack_team_name?: string;
   updated_at: string;
 };
 
@@ -311,7 +313,9 @@ export type SlackAuthorization = {
   id: string;
   created_at: string;
   channel: string;
+  channel_id: string;
   configuration_url: string;
+  team_id: string;
   team_name: string;
   settings: SlackAuthorizationSettings | null;
 };

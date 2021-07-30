@@ -96,7 +96,11 @@ defmodule ChatApi.Slack.Sync do
           any()
   def sync_slack_message_thread(
         syncable_message_items,
-        %SlackAuthorization{account_id: account_id} = authorization,
+        %SlackAuthorization{
+          id: slack_authorization_id,
+          account_id: account_id,
+          team_id: slack_team_id
+        } = authorization,
         %{
           "type" => "message",
           "thread_ts" => thread_ts,
@@ -120,7 +124,9 @@ defmodule ChatApi.Slack.Sync do
          {:ok, _slack_conversation_thread} <-
            SlackConversationThreads.create_slack_conversation_thread(%{
              slack_channel: slack_channel_id,
+             slack_team: slack_team_id,
              slack_thread_ts: thread_ts,
+             slack_authorization_id: slack_authorization_id,
              account_id: account_id,
              conversation_id: conversation.id
            }) do

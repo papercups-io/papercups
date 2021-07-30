@@ -4,8 +4,9 @@ defmodule ChatApi.SlackAuthorizations do
   """
 
   import Ecto.Query, warn: false
+  require Logger
   alias ChatApi.Repo
-
+  alias ChatApi.Slack
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   @spec list_slack_authorizations(map()) :: [SlackAuthorization.t()]
@@ -43,10 +44,9 @@ defmodule ChatApi.SlackAuthorizations do
     |> Repo.one()
   end
 
-  @spec create_or_update(binary(), map()) ::
+  @spec create_or_update(binary(), map(), map()) ::
           {:ok, SlackAuthorization.t()} | {:error, Ecto.Changeset.t()}
-  def create_or_update(account_id, params) do
-    filters = Map.take(params, [:type])
+  def create_or_update(account_id, filters, params) do
     existing = get_authorization_by_account(account_id, filters)
 
     if existing do
@@ -98,6 +98,31 @@ defmodule ChatApi.SlackAuthorizations do
     }
 
   def get_authorization_settings(%SlackAuthorization{settings: settings}), do: settings
+
+  @spec can_access_channel?(SlackAuthorization.t(), binary()) :: boolean()
+  def can_access_channel?(%SlackAuthorization{access_token: access_token}, slack_channel_id) do
+    case Slack.Client.retrieve_channel_info(slack_channel_id, access_token) do
+      {:ok, %{body: %{"ok" => true}}} ->
+        true
+
+      {:ok, %{body: %{"ok" => false, "error" => error}}} ->
+        Logger.debug("Cannot access channel #{slack_channel_id}: #{inspect(error)}")
+
+        false
+
+      error ->
+        Logger.debug("Cannot access channel #{slack_channel_id}: #{inspect(error)}")
+
+        false
+    end
+  end
+
+  def can_access_channel?(_, _), do: false
+
+  @spec find_authorization_with_channel([SlackAuthorization.t()], binary()) ::
+          SlackAuthorization.t() | nil
+  def find_authorization_with_channel(authorizations, slack_channel_id),
+    do: Enum.find(authorizations, &can_access_channel?(&1, slack_channel_id))
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   defp filter_where(params) do

@@ -4,15 +4,19 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
 
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   @type t :: %__MODULE__{
           slack_channel: String.t() | nil,
+          slack_team: String.t() | nil,
           slack_thread_ts: String.t() | nil,
           # Relations
           account_id: any(),
           account: any(),
           conversation_id: any(),
           conversation: any(),
+          slack_authorization_id: any(),
+          slack_authorization: any(),
           # Timestamps
           inserted_at: any(),
           updated_at: any()
@@ -23,11 +27,13 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
   schema "slack_conversation_threads" do
     # NB: this represents the slack_channel_id, not the name... might be worth
     # renaming this at some point, and also including a field for the slack_channel_name)
-    field :slack_channel, :string
-    field :slack_thread_ts, :string
+    field(:slack_channel, :string)
+    field(:slack_team, :string)
+    field(:slack_thread_ts, :string)
 
     belongs_to(:account, Account)
     belongs_to(:conversation, Conversation)
+    belongs_to(:slack_authorization, SlackAuthorization)
 
     timestamps()
   end
@@ -39,7 +45,19 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
   @doc false
   def changeset(slack_conversation_thread, attrs) do
     slack_conversation_thread
-    |> cast(attrs, [:slack_channel, :slack_thread_ts, :conversation_id, :account_id])
-    |> validate_required([:slack_channel, :slack_thread_ts, :conversation_id, :account_id])
+    |> cast(attrs, [
+      :slack_channel,
+      :slack_team,
+      :slack_thread_ts,
+      :conversation_id,
+      :account_id,
+      :slack_authorization_id
+    ])
+    |> validate_required([
+      :slack_channel,
+      :slack_thread_ts,
+      :conversation_id,
+      :account_id
+    ])
   end
 end

@@ -426,13 +426,19 @@ defmodule ChatApi.ConversationsTest do
       assert_raise Ecto.NoResultsError, fn -> Conversations.get_conversation!(conversation.id) end
     end
 
-    test "deletes the conversation if associated slack_conversation_threads exist" do
+    test "deletes the conversation if associated slack_conversation_threads exist", %{
+      account: account
+    } do
       assert {:ok, %Conversation{} = conversation} =
                Conversations.create_conversation(params_with_assocs(:conversation))
 
+      authorization = insert(:slack_authorization, account: account)
+
       slack_conversation_thread_attrs = %{
         slack_channel: "some slack_channel",
+        slack_team: "some slack_team",
         slack_thread_ts: "some slack_thread_ts",
+        slack_authorization_id: authorization.id,
         conversation_id: conversation.id,
         account_id: conversation.account_id
       }

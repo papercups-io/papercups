@@ -478,10 +478,12 @@ defmodule ChatApi.SlackTest do
              end) =~ "Error retrieving user info"
     end
 
-    test "Helpers.create_new_slack_conversation_thread/2 creates a new thread", %{
+    test "Helpers.create_new_slack_conversation_thread/3 creates a new thread", %{
+      authorization: authorization,
       conversation: conversation
     } do
-      %{account_id: account_id, id: id} = conversation
+      %{account_id: account_id, id: conversation_id} = conversation
+      %{team_id: slack_team_id, id: slack_authorization_id} = authorization
       channel = "bots"
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
@@ -489,10 +491,13 @@ defmodule ChatApi.SlackTest do
       {:ok,
        %SlackConversationThreads.SlackConversationThread{
          slack_channel: ^channel,
+         slack_team: ^slack_team_id,
          slack_thread_ts: ^ts,
+         slack_authorization_id: ^slack_authorization_id,
          account_id: ^account_id,
-         conversation_id: ^id
-       }} = Slack.Helpers.create_new_slack_conversation_thread(id, response)
+         conversation_id: ^conversation_id
+       }} =
+        Slack.Helpers.create_new_slack_conversation_thread(conversation, authorization, response)
     end
 
     test "Helpers.identify_customer/1 returns the message sender type", %{account: account} do

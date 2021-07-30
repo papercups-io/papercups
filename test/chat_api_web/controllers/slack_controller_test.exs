@@ -9,6 +9,7 @@ defmodule ChatApiWeb.SlackControllerTest do
 
   @email "customer@test.com"
   @slack_channel "#test"
+  @slack_team "demo"
 
   setup %{conn: conn} do
     account = insert(:account)
@@ -95,6 +96,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => @slack_channel,
+        "team" => @slack_team,
         "user" => auth.authed_user_id
       }
 
@@ -121,6 +123,7 @@ defmodule ChatApiWeb.SlackControllerTest do
           "ts" => "12345",
           "thread_ts" => thread.slack_thread_ts,
           "channel" => @slack_channel,
+          "team" => @slack_team,
           "user" => auth.authed_user_id
         }
       })
@@ -146,6 +149,7 @@ defmodule ChatApiWeb.SlackControllerTest do
           "ts" => "12345",
           "thread_ts" => thread.slack_thread_ts,
           "channel" => @slack_channel,
+          "team" => @slack_team,
           "user" => auth.authed_user_id
         }
       })
@@ -170,6 +174,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => @slack_channel,
+        "team" => @slack_team,
         "user" => auth.authed_user_id
       }
 
@@ -213,6 +218,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => slack_channel,
+        "team" => @slack_team,
         "user" => auth.authed_user_id
       }
 
@@ -231,9 +237,15 @@ defmodule ChatApiWeb.SlackControllerTest do
            customer: customer
          } do
       slack_channel = "#test-support-channel"
+      slack_team_id = "T123TEST"
 
       auth =
-        insert(:slack_authorization, account: account, channel: slack_channel, type: "support")
+        insert(:slack_authorization,
+          account: account,
+          channel: slack_channel,
+          team_id: slack_team_id,
+          type: "support"
+        )
 
       thread =
         insert(:slack_conversation_thread,
@@ -249,6 +261,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "ts" => "1609459200.0000",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => slack_channel,
+        "team" => slack_team_id,
         "user" => auth.authed_user_id
       }
 
@@ -290,6 +303,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "text" => "hello world #{System.unique_integer([:positive])}",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => "C123UNKNOWN",
+        "team" => @slack_team,
         "user" => auth.authed_user_id
       }
 

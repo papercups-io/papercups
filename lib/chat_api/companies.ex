@@ -8,9 +8,12 @@ defmodule ChatApi.Companies do
 
   alias ChatApi.Companies.Company
 
-  @spec list_companies(binary()) :: [Company.t()]
-  def list_companies(account_id) do
-    Company |> where(account_id: ^account_id) |> Repo.all()
+  @spec list_companies(binary(), map()) :: [Company.t()]
+  def list_companies(account_id, filters \\ %{}) do
+    Company
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> Repo.all()
   end
 
   @spec get_company!(binary()) :: Company.t()
@@ -55,5 +58,31 @@ defmodule ChatApi.Companies do
     |> where(slack_channel_id: ^slack_channel_id)
     |> order_by(desc: :inserted_at)
     |> Repo.one()
+  end
+
+  @spec find_by_account_where(binary(), map()) :: Company.t() | nil
+  def find_by_account_where(account_id, filters \\ %{}) do
+    Company
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> order_by(desc: :inserted_at)
+    |> Repo.one()
+  end
+
+  defp filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {:account_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.account_id == ^value)
+
+      {:slack_channel_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.slack_channel_id == ^value)
+
+      {:slack_team_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.slack_team_id == ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end

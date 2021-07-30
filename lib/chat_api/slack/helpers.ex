@@ -505,16 +505,20 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec create_new_slack_conversation_thread(binary(), map()) ::
+  @spec create_new_slack_conversation_thread(Conversation.t(), SlackAuthorization.t(), map()) ::
           {:ok, SlackConversationThread.t()} | {:error, Ecto.Changeset.t()}
-  def create_new_slack_conversation_thread(conversation_id, response) do
-    conversation = Conversations.get_conversation_with!(conversation_id, [])
-
+  def create_new_slack_conversation_thread(
+        %Conversation{id: conversation_id, account_id: account_id},
+        %SlackAuthorization{id: slack_authorization_id, team_id: slack_team_id},
+        response
+      ) do
     response
     |> Slack.Extractor.extract_slack_conversation_thread_info!()
     |> Map.merge(%{
+      slack_team: slack_team_id,
       conversation_id: conversation_id,
-      account_id: conversation.account_id
+      account_id: account_id,
+      slack_authorization_id: slack_authorization_id
     })
     |> SlackConversationThreads.create_slack_conversation_thread()
   end

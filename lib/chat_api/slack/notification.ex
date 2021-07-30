@@ -6,6 +6,8 @@ defmodule ChatApi.Slack.Notification do
   require Logger
 
   alias ChatApi.{
+    Companies,
+    Companies.Company,
     Conversations,
     Conversations.Conversation,
     Customers.Customer,
@@ -97,7 +99,7 @@ defmodule ChatApi.Slack.Notification do
           :thread => nil | SlackConversationThread.t()
         }) :: {:error, any} | {:ok, nil | Tesla.Env.t()}
   def send_to_primary_channel(%{
-        conversation: %Conversation{id: conversation_id, customer: customer} = conversation,
+        conversation: %Conversation{customer: customer} = conversation,
         message: message,
         authorization:
           %SlackAuthorization{
@@ -134,7 +136,11 @@ defmodule ChatApi.Slack.Notification do
         # If no thread exists yet, start a new thread and kick off the first reply
         if is_nil(thread) do
           {:ok, thread} =
-            Slack.Helpers.create_new_slack_conversation_thread(conversation_id, response)
+            Slack.Helpers.create_new_slack_conversation_thread(
+              conversation,
+              authorization,
+              response
+            )
 
           Slack.Client.send_message(
             %{
@@ -195,9 +201,46 @@ defmodule ChatApi.Slack.Notification do
   end
 
   @spec notify_support_channel(Message.t()) :: :ok
-  def notify_support_channel(%Message{account_id: account_id} = message) do
-    case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
-      %{access_token: access_token, channel_id: channel_id} ->
+  def notify_support_channel(
+        %Message{
+          account_id: account_id,
+          conversation_id: conversation_id
+        } = message
+      ) do
+    # TODO: using a reduce_while is probably not the most efficient way to do this query
+    authorization =
+      conversation_id
+      |> SlackConversationThreads.get_threads_by_conversation_id()
+      |> Enum.reduce_while(nil, fn
+        %SlackConversationThread{
+          slack_channel: slack_channel_id,
+          slack_team: nil
+        },
+        nil ->
+          {:cont,
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: "support",
+             channel_id: slack_channel_id
+           })}
+
+        %SlackConversationThread{
+          slack_channel: slack_channel_id,
+          slack_team: slack_team_id
+        },
+        nil ->
+          {:cont,
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: "support",
+             team_id: slack_team_id,
+             channel_id: slack_channel_id
+           })}
+
+        _thread, %SlackAuthorization{} = acc ->
+          {:halt, acc}
+      end)
+
+    case authorization do
+      %SlackAuthorization{access_token: access_token, channel_id: channel_id} ->
         notify_slack_channel(access_token, channel_id, message)
 
       _ ->
@@ -205,22 +248,99 @@ defmodule ChatApi.Slack.Notification do
     end
   end
 
+  # @spec notify_support_channel(Message.t()) :: :ok
+  # def notify_support_channel(%Message{account_id: account_id} = message) do
+  #   case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
+  #     %{access_token: access_token, channel_id: channel_id} ->
+  #       notify_slack_channel(access_token, channel_id, message)
+
+  #     _ ->
+  #       nil
+  #   end
+  # end
+
   @spec notify_company_channel(Message.t()) :: :ok
   def notify_company_channel(
         %Message{account_id: account_id, conversation_id: conversation_id} = message
       ) do
-    with %{access_token: access_token, channel_id: primary_channel_id} <-
-           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
-         %{customer: %{company: %{slack_channel_id: company_channel_id}}} <-
-           Conversations.get_conversation_with(conversation_id, customer: :company),
-         # If a company has been assigned the channel that matches the primary channel,
-         # we skip sending the notification here to avoid double messages.
-         # In the future we will probably want to deprecated the "primary" support channel,
-         # in which case this check will become irrelevant.
-         false <- primary_channel_id == company_channel_id do
-      notify_slack_channel(access_token, company_channel_id, message)
+    # TODO: using a reduce_while is probably not the most efficient way to do this query
+    company =
+      conversation_id
+      |> SlackConversationThreads.get_threads_by_conversation_id()
+      |> Enum.reduce_while(nil, fn
+        %SlackConversationThread{
+          slack_channel: slack_channel_id,
+          slack_team: nil
+        },
+        nil ->
+          {:cont,
+           Companies.find_by_account_where(account_id, %{
+             slack_channel_id: slack_channel_id
+           })}
+
+        %SlackConversationThread{
+          slack_channel: slack_channel_id,
+          slack_team: slack_team_id
+        },
+        nil ->
+          {:cont,
+           Companies.find_by_account_where(account_id, %{
+             slack_channel_id: slack_channel_id,
+             slack_team_id: slack_team_id
+           })}
+
+        _thread, %Company{} = acc ->
+          {:halt, acc}
+      end)
+
+    # TODO: DRY this up with `find_slack_authorization_by_support_channel`?
+    authorization =
+      case company do
+        %Company{slack_channel_id: slack_channel_id, slack_team_id: nil} ->
+          account_id
+          |> SlackAuthorizations.list_slack_authorizations_by_account(%{type: "support"})
+          |> SlackAuthorizations.find_authorization_with_channel(slack_channel_id)
+
+        %Company{slack_team_id: slack_team_id} ->
+          SlackAuthorizations.get_authorization_by_account(account_id, %{
+            type: "support",
+            team_id: slack_team_id
+          })
+
+        _ ->
+          nil
+      end
+
+    company_slack_channel_id = company.slack_channel_id
+
+    case authorization do
+      %SlackAuthorization{channel_id: ^company_slack_channel_id} ->
+        nil
+
+      %SlackAuthorization{access_token: access_token} ->
+        notify_slack_channel(access_token, company_slack_channel_id, message)
+
+      _ ->
+        nil
     end
   end
+
+  # @spec notify_company_channel(Message.t()) :: :ok
+  # def notify_company_channel(
+  #       %Message{account_id: account_id, conversation_id: conversation_id} = message
+  #     ) do
+  #   with %{access_token: access_token, channel_id: primary_channel_id} <-
+  #          SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
+  #        %{customer: %{company: %{slack_channel_id: company_channel_id}}} <-
+  #          Conversations.get_conversation_with(conversation_id, customer: :company),
+  #        # If a company has been assigned the channel that matches the primary channel,
+  #        # we skip sending the notification here to avoid double messages.
+  #        # In the future we will probably want to deprecated the "primary" support channel,
+  #        # in which case this check will become irrelevant.
+  #        false <- primary_channel_id == company_channel_id do
+  #     notify_slack_channel(access_token, company_channel_id, message)
+  #   end
+  # end
 
   @spec notify_slack_channel(binary(), Message.t()) :: :ok
   def notify_slack_channel(channel_id, %Message{account_id: account_id} = message) do

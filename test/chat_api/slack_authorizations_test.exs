@@ -183,33 +183,37 @@ defmodule ChatApi.SlackAuthorizationsTest do
              })
     end
 
-    test "create_or_update/2 creates a new authorization if none is found for the account",
+    test "create_or_update/3 creates a new authorization if none is found for the account",
          %{slack_authorization: slack_authorization} do
       new_account = insert(:account)
       params = Map.merge(@update_attrs, %{account_id: new_account.id})
 
-      {:ok, created} = SlackAuthorizations.create_or_update(new_account.id, params)
+      {:ok, created} = SlackAuthorizations.create_or_update(new_account.id, %{}, params)
 
       assert created.id != slack_authorization.id
       assert created.access_token == "some updated access_token"
     end
 
-    test "create_or_update/2 creates a new authorization if none is found matching the authorization type",
+    test "create_or_update/3 creates a new authorization if none is found matching the authorization type",
          %{slack_authorization: slack_authorization} do
       params =
         Map.merge(@update_attrs, %{type: "support", account_id: slack_authorization.account_id})
 
       {:ok, created} =
-        SlackAuthorizations.create_or_update(slack_authorization.account_id, params)
+        SlackAuthorizations.create_or_update(
+          slack_authorization.account_id,
+          %{type: "support"},
+          params
+        )
 
       assert created.id != slack_authorization.id
       assert created.access_token == "some updated access_token"
     end
 
-    test "create_or_update/2 updates the existing authorization if one is found for the account",
+    test "create_or_update/3 updates the existing authorization if one is found for the account",
          %{slack_authorization: slack_authorization} do
       {:ok, updated} =
-        SlackAuthorizations.create_or_update(slack_authorization.account_id, @update_attrs)
+        SlackAuthorizations.create_or_update(slack_authorization.account_id, %{}, @update_attrs)
 
       assert updated.id == slack_authorization.id
       assert updated.access_token == "some updated access_token"
