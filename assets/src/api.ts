@@ -16,6 +16,7 @@ import {
   User,
   WidgetSettings,
   CannedResponse,
+  SlackAuthorization,
 } from './types';
 
 // TODO: handle this on the server instead
@@ -712,7 +713,7 @@ export const fetchSlackAuthorization = async (
   type = 'reply',
   query = {},
   token = getAccessToken()
-) => {
+): Promise<SlackAuthorization> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -727,7 +728,7 @@ export const fetchSlackAuthorization = async (
 export const listSlackAuthorizations = async (
   type = 'support',
   token = getAccessToken()
-) => {
+): Promise<Array<SlackAuthorization>> => {
   if (!token) {
     throw new Error('Invalid token!');
   }

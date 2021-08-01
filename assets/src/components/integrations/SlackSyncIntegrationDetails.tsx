@@ -82,6 +82,110 @@ const IntegrationSettings = ({
   );
 };
 
+const IntegrationDetails = ({
+  authorization,
+  onUpdateSettings,
+}: {
+  authorization: SlackAuthorization | null;
+  onUpdateSettings: (
+    authorization: SlackAuthorization,
+    updates: Partial<SlackAuthorizationSettings>
+  ) => void;
+}) => {
+  if (!authorization) {
+    return (
+      <Box mb={4}>
+        <Title level={4}>Integration settings</Title>
+        <Card
+          sx={{
+            p: 3,
+            bg: 'rgb(245, 245, 245)',
+          }}
+        >
+          <Box mb={3}>
+            <label>Channel</label>
+            <Box>
+              <Text type="secondary">Not connected</Text>
+            </Box>
+          </Box>
+          <Box mb={3}>
+            <label>Team</label>
+            <Box>
+              <Text type="secondary">Not connected</Text>
+            </Box>
+          </Box>
+          <Box mb={3}>
+            <label>Slack configuration URL</label>
+            <Box>
+              <Text type="secondary">Not connected</Text>
+            </Box>
+          </Box>
+        </Card>
+      </Box>
+    );
+  }
+
+  const {
+    channel,
+    settings,
+    team_name: teamName,
+    configuration_url: configurationUrl,
+  } = authorization;
+
+  return (
+    <Box mb={4}>
+      <Title level={4}>Settings for {teamName}</Title>
+
+      <Card
+        sx={{
+          p: 3,
+          bg: 'rgb(245, 245, 245)',
+        }}
+      >
+        <Box mb={3}>
+          <label>Channel</label>
+          <Box>
+            <Text strong>{channel}</Text>
+          </Box>
+        </Box>
+        <Box mb={3}>
+          <label>Team</label>
+          <Box>
+            <Text strong>{teamName}</Text>
+          </Box>
+        </Box>
+        <Box mb={3}>
+          <label>Slack configuration URL</label>
+          <Box>
+            <Text>
+              <a
+                href={configurationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {configurationUrl}
+              </a>
+            </Text>
+          </Box>
+        </Box>
+
+        {settings && (
+          <>
+            <Divider />
+
+            <IntegrationSettings
+              settings={settings}
+              onUpdateSettings={(updates) =>
+                onUpdateSettings(authorization, updates)
+              }
+            />
+          </>
+        )}
+      </Card>
+    </Box>
+  );
+};
+
 type Props = RouteComponentProps<{}>;
 type State = {
   status: 'loading' | 'success' | 'error';
@@ -122,12 +226,15 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
   fetchSlackAuthorizations = async () => {
     try {
       const authorizations = await API.listSlackAuthorizations('support');
+      const {selectedSlackAuthorization} = this.state;
       const [selected = null] = authorizations;
 
       this.setState({
         authorizations,
         selectedSlackAuthorization:
-          this.state.selectedSlackAuthorization || selected,
+          authorizations.find(
+            (auth) => auth.id === selectedSlackAuthorization?.id
+          ) || selected,
         status: 'success',
       });
     } catch (error) {
@@ -167,7 +274,6 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
   };
 
   disconnect = (authorization: SlackAuthorization) => {
-    // const {authorization} = this.state;
     const authorizationId = authorization?.id;
 
     if (!authorizationId) {
@@ -210,8 +316,6 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
       return null;
     }
 
-    const settings = selectedSlackAuthorization?.settings;
-
     return (
       <Container sx={{maxWidth: 720}}>
         <Box mb={4}>
@@ -251,144 +355,98 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
         <Divider />
 
         <Box mb={4}>
-          {authorizations.map((authorization) => {
-            const {team_name: teamName} = authorization;
+          {authorizations.length > 0 ? (
+            authorizations.map((authorization) => {
+              const {id, team_name: teamName} = authorization;
+              const isSelected = selectedSlackAuthorization?.id === id;
 
-            return (
-              <Card sx={{p: 3, mb: 2}}>
-                <Flex sx={{justifyContent: 'space-between'}}>
-                  <Flex sx={{alignItems: 'center'}}>
-                    <img src="/slack.svg" alt="Slack" style={{height: 20}} />
-                    <Text strong style={{marginLeft: 8, marginRight: 8}}>
-                      {teamName}
-                    </Text>
-                    {authorization.id && (
-                      <Tag icon={<CheckCircleOutlined />} color="success">
-                        connected
-                      </Tag>
+              return (
+                <Card sx={{p: 3, mb: 2}} shadow={isSelected ? 'small' : false}>
+                  <Flex sx={{justifyContent: 'space-between'}}>
+                    <Flex sx={{alignItems: 'center'}}>
+                      <img src="/slack.svg" alt="Slack" style={{height: 20}} />
+                      <Text strong style={{marginLeft: 8, marginRight: 8}}>
+                        {teamName}
+                      </Text>
+                      {authorization.id && (
+                        <Tag icon={<CheckCircleOutlined />} color="success">
+                          connected
+                        </Tag>
+                      )}
+                    </Flex>
+
+                    {authorization.id ? (
+                      <Flex mx={-1}>
+                        {authorizations.length > 1 && (
+                          <Box mx={1}>
+                            <Button
+                              disabled={isSelected}
+                              onClick={() =>
+                                this.setState({
+                                  selectedSlackAuthorization: authorization,
+                                })
+                              }
+                            >
+                              {isSelected ? 'Viewing...' : 'Configure'}
+                            </Button>
+                          </Box>
+                        )}
+
+                        <Box mx={1}>
+                          <Popconfirm
+                            title="Are you sure you want to disconnect this Slack workspace?"
+                            okText="Yes"
+                            cancelText="No"
+                            placement="topLeft"
+                            onConfirm={() => this.disconnect(authorization)}
+                          >
+                            <Button type="primary" danger>
+                              Disconnect
+                            </Button>
+                          </Popconfirm>
+                        </Box>
+                      </Flex>
+                    ) : (
+                      <a href={getSlackAuthUrl('support')}>
+                        <Button type="primary">Connect</Button>
+                      </a>
                     )}
                   </Flex>
-
-                  {authorization.id ? (
-                    <Flex mx={-1}>
-                      <Box mx={1}>
-                        {/* TODO: on click, set as selected authorization to view settings below */}
-                        <Button
-                          onClick={() =>
-                            this.setState({
-                              selectedSlackAuthorization: authorization,
-                            })
-                          }
-                        >
-                          Settings
-                        </Button>
-                      </Box>
-                      <Box mx={1}>
-                        <Popconfirm
-                          title="Are you sure you want to disconnect this Slack workspace?"
-                          okText="Yes"
-                          cancelText="No"
-                          placement="topLeft"
-                          onConfirm={() => this.disconnect(authorization)}
-                        >
-                          <Button type="primary" danger>
-                            Disconnect
-                          </Button>
-                        </Popconfirm>
-                      </Box>
-                    </Flex>
-                  ) : (
-                    <a href={getSlackAuthUrl('support')}>
-                      <Button type="primary">Connect</Button>
-                    </a>
-                  )}
-                </Flex>
-              </Card>
-            );
-          })}
-
-          <Flex py={2} sx={{justifyContent: 'flex-end'}}>
-            <a href={getSlackAuthUrl('support')}>
-              <Button size="small" icon={<PlusOutlined />}>
-                Add workspace
-              </Button>
-            </a>
-          </Flex>
-        </Box>
-
-        <Box mb={4}>
-          <Title level={4}>
-            {selectedSlackAuthorization
-              ? `Settings for ${selectedSlackAuthorization.team_name}`
-              : 'Integration settings'}
-          </Title>
-
-          <Card
-            sx={{
-              p: 3,
-              bg: 'rgb(245, 245, 245)',
-              opacity: selectedSlackAuthorization ? 1 : 0.6,
-            }}
-          >
-            <Box mb={3}>
-              <label>Channel</label>
-              <Box>
-                {selectedSlackAuthorization &&
-                selectedSlackAuthorization.channel ? (
-                  <Text strong>{selectedSlackAuthorization.channel}</Text>
-                ) : (
-                  <Text type="secondary">Not connected</Text>
-                )}
-              </Box>
-            </Box>
-            <Box mb={3}>
-              <label>Team</label>
-              <Box>
-                {selectedSlackAuthorization &&
-                selectedSlackAuthorization.team_name ? (
-                  <Text strong>{selectedSlackAuthorization.team_name}</Text>
-                ) : (
-                  <Text type="secondary">Not connected</Text>
-                )}
-              </Box>
-            </Box>
-            <Box mb={3}>
-              <label>Slack configuration URL</label>
-              <Box>
-                {selectedSlackAuthorization &&
-                selectedSlackAuthorization.configuration_url ? (
-                  <Text>
-                    <a
-                      href={selectedSlackAuthorization.configuration_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {selectedSlackAuthorization.configuration_url}
-                    </a>
+                </Card>
+              );
+            })
+          ) : (
+            <Card sx={{p: 3, mb: 2}}>
+              <Flex sx={{justifyContent: 'space-between'}}>
+                <Flex sx={{alignItems: 'center'}}>
+                  <img src="/slack.svg" alt="Slack" style={{height: 20}} />
+                  <Text strong style={{marginLeft: 8, marginRight: 8}}>
+                    Sync with Slack
                   </Text>
-                ) : (
-                  <Text type="secondary">Not connected</Text>
-                )}
-              </Box>
-            </Box>
+                </Flex>
 
-            {selectedSlackAuthorization && settings && (
-              <>
-                <Divider />
+                <a href={getSlackAuthUrl('support')}>
+                  <Button type="primary">Connect</Button>
+                </a>
+              </Flex>
+            </Card>
+          )}
 
-                <IntegrationSettings
-                  settings={settings}
-                  onUpdateSettings={(updates) =>
-                    this.updateAuthorizationSettings(
-                      selectedSlackAuthorization,
-                      updates
-                    )
-                  }
-                />
-              </>
-            )}
-          </Card>
+          {authorizations.length > 0 && (
+            <Flex py={2} sx={{justifyContent: 'flex-end'}}>
+              <a href={getSlackAuthUrl('support')}>
+                <Button size="small" icon={<PlusOutlined />}>
+                  Add workspace
+                </Button>
+              </a>
+            </Flex>
+          )}
         </Box>
+
+        <IntegrationDetails
+          authorization={selectedSlackAuthorization}
+          onUpdateSettings={this.updateAuthorizationSettings}
+        />
       </Container>
     );
   }
