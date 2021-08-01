@@ -352,7 +352,6 @@ defmodule ChatApi.Slack.Event do
           "ts" => ts
         } = event,
         %SlackAuthorization{
-          id: slack_authorization_id,
           account_id: account_id,
           team_id: slack_team_id
         } = authorization
@@ -384,7 +383,6 @@ defmodule ChatApi.Slack.Event do
              slack_channel: slack_channel_id,
              slack_team: slack_team_id,
              slack_thread_ts: ts,
-             slack_authorization_id: slack_authorization_id,
              account_id: account_id,
              conversation_id: conversation.id
            }) do

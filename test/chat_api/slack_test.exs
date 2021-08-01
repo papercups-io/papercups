@@ -483,7 +483,7 @@ defmodule ChatApi.SlackTest do
       conversation: conversation
     } do
       %{account_id: account_id, id: conversation_id} = conversation
-      %{team_id: slack_team_id, id: slack_authorization_id} = authorization
+      %{team_id: slack_team_id} = authorization
       channel = "bots"
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
@@ -493,7 +493,6 @@ defmodule ChatApi.SlackTest do
          slack_channel: ^channel,
          slack_team: ^slack_team_id,
          slack_thread_ts: ^ts,
-         slack_authorization_id: ^slack_authorization_id,
          account_id: ^account_id,
          conversation_id: ^conversation_id
        }} =

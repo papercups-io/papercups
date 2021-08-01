@@ -8,7 +8,6 @@ defmodule ChatApi.Slack.Helpers do
   alias ChatApi.{
     Accounts,
     Companies,
-    Conversations,
     Customers,
     Slack,
     SlackAuthorizations,
@@ -509,7 +508,7 @@ defmodule ChatApi.Slack.Helpers do
           {:ok, SlackConversationThread.t()} | {:error, Ecto.Changeset.t()}
   def create_new_slack_conversation_thread(
         %Conversation{id: conversation_id, account_id: account_id},
-        %SlackAuthorization{id: slack_authorization_id, team_id: slack_team_id},
+        %SlackAuthorization{team_id: slack_team_id},
         response
       ) do
     response
@@ -517,8 +516,7 @@ defmodule ChatApi.Slack.Helpers do
     |> Map.merge(%{
       slack_team: slack_team_id,
       conversation_id: conversation_id,
-      account_id: account_id,
-      slack_authorization_id: slack_authorization_id
+      account_id: account_id
     })
     |> SlackConversationThreads.create_slack_conversation_thread()
   end

@@ -4,7 +4,6 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
 
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
-  alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   @type t :: %__MODULE__{
           slack_channel: String.t() | nil,
@@ -15,8 +14,6 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
           account: any(),
           conversation_id: any(),
           conversation: any(),
-          slack_authorization_id: any(),
-          slack_authorization: any(),
           # Timestamps
           inserted_at: any(),
           updated_at: any()
@@ -33,7 +30,6 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
 
     belongs_to(:account, Account)
     belongs_to(:conversation, Conversation)
-    belongs_to(:slack_authorization, SlackAuthorization)
 
     timestamps()
   end
@@ -50,8 +46,7 @@ defmodule ChatApi.SlackConversationThreads.SlackConversationThread do
       :slack_team,
       :slack_thread_ts,
       :conversation_id,
-      :account_id,
-      :slack_authorization_id
+      :account_id
     ])
     |> validate_required([
       :slack_channel,

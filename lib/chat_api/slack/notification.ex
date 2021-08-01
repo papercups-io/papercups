@@ -311,14 +311,11 @@ defmodule ChatApi.Slack.Notification do
           nil
       end
 
-    company_slack_channel_id = company.slack_channel_id
-
-    case authorization do
-      %SlackAuthorization{channel_id: ^company_slack_channel_id} ->
-        nil
-
-      %SlackAuthorization{access_token: access_token} ->
-        notify_slack_channel(access_token, company_slack_channel_id, message)
+    case {company, authorization} do
+      {%Company{slack_channel_id: company_channel_id},
+       %SlackAuthorization{channel_id: auth_channel_id, access_token: access_token}} ->
+        if company_channel_id != auth_channel_id,
+          do: notify_slack_channel(access_token, company_channel_id, message)
 
       _ ->
         nil

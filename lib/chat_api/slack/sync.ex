@@ -97,7 +97,6 @@ defmodule ChatApi.Slack.Sync do
   def sync_slack_message_thread(
         syncable_message_items,
         %SlackAuthorization{
-          id: slack_authorization_id,
           account_id: account_id,
           team_id: slack_team_id
         } = authorization,
@@ -126,7 +125,6 @@ defmodule ChatApi.Slack.Sync do
              slack_channel: slack_channel_id,
              slack_team: slack_team_id,
              slack_thread_ts: thread_ts,
-             slack_authorization_id: slack_authorization_id,
              account_id: account_id,
              conversation_id: conversation.id
            }) do
