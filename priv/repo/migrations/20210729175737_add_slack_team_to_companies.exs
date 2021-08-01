@@ -82,6 +82,9 @@ defmodule ChatApi.Repo.Migrations.AddSlackTeamToCompanies do
         })
 
       case authorizations do
+        [] ->
+          {key, nil}
+
         [auth] ->
           {key, auth}
 
