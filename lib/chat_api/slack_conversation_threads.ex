@@ -123,8 +123,16 @@ defmodule ChatApi.SlackConversationThreads do
 
     # If a match was found with a valid access token, use that; otherwise, check for a "support" type authorization
     case match do
-      %{access_token: access_token} = auth when not is_nil(access_token) -> auth
+      %SlackAuthorization{access_token: access_token} = auth when not is_nil(access_token) -> auth
       _ -> Enum.find(authorizations, fn auth -> auth.type == "support" end)
+    end
+  end
+
+  @spec has_slack_reply_authorization?(SlackConversationThread.t()) :: boolean()
+  def has_slack_reply_authorization?(%SlackConversationThread{} = thread) do
+    case find_matching_slack_authorization(thread) do
+      %SlackAuthorization{type: "reply"} -> true
+      _ -> false
     end
   end
 

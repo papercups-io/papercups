@@ -7,6 +7,7 @@ defmodule ChatApi.Companies do
   alias ChatApi.Repo
 
   alias ChatApi.Companies.Company
+  alias ChatApi.SlackConversationThreads.SlackConversationThread
 
   @spec list_companies(binary(), map()) :: [Company.t()]
   def list_companies(account_id, filters \\ %{}) do
@@ -67,6 +68,33 @@ defmodule ChatApi.Companies do
     |> where(^filter_where(filters))
     |> order_by(desc: :inserted_at)
     |> Repo.one()
+  end
+
+  @spec find_by_slack_conversation_thread(SlackConversationThread.t()) :: Company.t() | nil
+  def find_by_slack_conversation_thread(thread) do
+    case thread do
+      %SlackConversationThread{
+        account_id: account_id,
+        slack_channel: slack_channel_id,
+        slack_team: nil
+      } ->
+        find_by_account_where(account_id, %{
+          slack_channel_id: slack_channel_id
+        })
+
+      %SlackConversationThread{
+        account_id: account_id,
+        slack_channel: slack_channel_id,
+        slack_team: slack_team_id
+      } ->
+        find_by_account_where(account_id, %{
+          slack_channel_id: slack_channel_id,
+          slack_team_id: slack_team_id
+        })
+
+      _ ->
+        nil
+    end
   end
 
   defp filter_where(params) do

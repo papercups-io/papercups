@@ -201,39 +201,14 @@ defmodule ChatApi.Slack.Notification do
   end
 
   @spec notify_support_channel(Message.t()) :: :ok
-  def notify_support_channel(
-        %Message{
-          account_id: account_id,
-          conversation_id: conversation_id
-        } = message
-      ) do
-    # TODO: using a reduce_while is probably not the most efficient way to do this query
+  def notify_support_channel(%Message{conversation_id: conversation_id} = message) do
+    # TODO: is there a better way than using `reduce_while` to handle this?
     authorization =
       conversation_id
       |> SlackConversationThreads.get_threads_by_conversation_id()
       |> Enum.reduce_while(nil, fn
-        %SlackConversationThread{
-          slack_channel: slack_channel_id,
-          slack_team: nil
-        },
-        nil ->
-          {:cont,
-           SlackAuthorizations.get_authorization_by_account(account_id, %{
-             type: "support",
-             channel_id: slack_channel_id
-           })}
-
-        %SlackConversationThread{
-          slack_channel: slack_channel_id,
-          slack_team: slack_team_id
-        },
-        nil ->
-          {:cont,
-           SlackAuthorizations.get_authorization_by_account(account_id, %{
-             type: "support",
-             team_id: slack_team_id,
-             channel_id: slack_channel_id
-           })}
+        thread, nil ->
+          {:cont, SlackAuthorizations.find_support_authorization_by_thread(thread)}
 
         _thread, %SlackAuthorization{} = acc ->
           {:halt, acc}
@@ -248,96 +223,31 @@ defmodule ChatApi.Slack.Notification do
     end
   end
 
-  # @spec notify_support_channel(Message.t()) :: :ok
-  # def notify_support_channel(%Message{account_id: account_id} = message) do
-  #   case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
-  #     %{access_token: access_token, channel_id: channel_id} ->
-  #       notify_slack_channel(access_token, channel_id, message)
-
-  #     _ ->
-  #       nil
-  #   end
-  # end
-
   @spec notify_company_channel(Message.t()) :: :ok
-  def notify_company_channel(
-        %Message{account_id: account_id, conversation_id: conversation_id} = message
-      ) do
-    # TODO: using a reduce_while is probably not the most efficient way to do this query
+  def notify_company_channel(%Message{conversation_id: conversation_id} = message) do
+    # TODO: is there a better way than using `reduce_while` to handle this?
     company =
       conversation_id
       |> SlackConversationThreads.get_threads_by_conversation_id()
+      |> Enum.reject(fn thread ->
+        # Handles edge case where there is a company that points to the "reply" channel
+        SlackConversationThreads.has_slack_reply_authorization?(thread)
+      end)
       |> Enum.reduce_while(nil, fn
-        %SlackConversationThread{
-          slack_channel: slack_channel_id,
-          slack_team: nil
-        },
-        nil ->
-          {:cont,
-           Companies.find_by_account_where(account_id, %{
-             slack_channel_id: slack_channel_id
-           })}
-
-        %SlackConversationThread{
-          slack_channel: slack_channel_id,
-          slack_team: slack_team_id
-        },
-        nil ->
-          {:cont,
-           Companies.find_by_account_where(account_id, %{
-             slack_channel_id: slack_channel_id,
-             slack_team_id: slack_team_id
-           })}
+        thread, nil ->
+          {:cont, Companies.find_by_slack_conversation_thread(thread)}
 
         _thread, %Company{} = acc ->
           {:halt, acc}
       end)
 
-    # TODO: DRY this up with `find_slack_authorization_by_support_channel`?
-    authorization =
-      case company do
-        %Company{slack_channel_id: slack_channel_id, slack_team_id: nil} ->
-          account_id
-          |> SlackAuthorizations.list_slack_authorizations_by_account(%{type: "support"})
-          |> SlackAuthorizations.find_authorization_with_channel(slack_channel_id)
-
-        %Company{slack_team_id: slack_team_id} ->
-          SlackAuthorizations.get_authorization_by_account(account_id, %{
-            type: "support",
-            team_id: slack_team_id
-          })
-
-        _ ->
-          nil
-      end
-
-    case {company, authorization} do
-      {%Company{slack_channel_id: company_channel_id},
-       %SlackAuthorization{channel_id: auth_channel_id, access_token: access_token}} ->
-        if company_channel_id != auth_channel_id,
-          do: notify_slack_channel(access_token, company_channel_id, message)
-
-      _ ->
-        nil
+    with %Company{slack_channel_id: company_channel_id} <- company,
+         %SlackAuthorization{channel_id: auth_channel_id, access_token: access_token} <-
+           SlackAuthorizations.find_support_authorization_by_company(company),
+         false <- company_channel_id == auth_channel_id do
+      notify_slack_channel(access_token, company_channel_id, message)
     end
   end
-
-  # @spec notify_company_channel(Message.t()) :: :ok
-  # def notify_company_channel(
-  #       %Message{account_id: account_id, conversation_id: conversation_id} = message
-  #     ) do
-  #   with %{access_token: access_token, channel_id: primary_channel_id} <-
-  #          SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
-  #        %{customer: %{company: %{slack_channel_id: company_channel_id}}} <-
-  #          Conversations.get_conversation_with(conversation_id, customer: :company),
-  #        # If a company has been assigned the channel that matches the primary channel,
-  #        # we skip sending the notification here to avoid double messages.
-  #        # In the future we will probably want to deprecated the "primary" support channel,
-  #        # in which case this check will become irrelevant.
-  #        false <- primary_channel_id == company_channel_id do
-  #     notify_slack_channel(access_token, company_channel_id, message)
-  #   end
-  # end
 
   @spec notify_slack_channel(binary(), Message.t()) :: :ok
   def notify_slack_channel(channel_id, %Message{account_id: account_id} = message) do

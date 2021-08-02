@@ -5,9 +5,10 @@ defmodule ChatApi.SlackAuthorizations do
 
   import Ecto.Query, warn: false
   require Logger
-  alias ChatApi.Repo
-  alias ChatApi.Slack
+  alias ChatApi.{Companies, Repo, Slack}
+  alias ChatApi.Companies.Company
   alias ChatApi.SlackAuthorizations.SlackAuthorization
+  alias ChatApi.SlackConversationThreads.SlackConversationThread
 
   @spec list_slack_authorizations(map()) :: [SlackAuthorization.t()]
   def list_slack_authorizations(filters \\ %{}) do
@@ -123,6 +124,69 @@ defmodule ChatApi.SlackAuthorizations do
           SlackAuthorization.t() | nil
   def find_authorization_with_channel(authorizations, slack_channel_id),
     do: Enum.find(authorizations, &can_access_channel?(&1, slack_channel_id))
+
+  @spec find_support_authorization_by_company(Company.t() | nil) :: SlackAuthorization.t() | nil
+  def find_support_authorization_by_company(company) do
+    case company do
+      %Company{account_id: account_id, slack_channel_id: slack_channel_id, slack_team_id: nil} ->
+        account_id
+        |> list_slack_authorizations_by_account(%{type: "support"})
+        |> find_authorization_with_channel(slack_channel_id)
+
+      %Company{account_id: account_id, slack_team_id: slack_team_id} ->
+        get_authorization_by_account(account_id, %{
+          type: "support",
+          team_id: slack_team_id
+        })
+
+      _ ->
+        nil
+    end
+  end
+
+  @spec find_support_authorization_by_channel(binary) :: SlackAuthorization.t() | nil
+  def find_support_authorization_by_channel(slack_channel_id) do
+    case Companies.find_by_slack_channel(slack_channel_id) do
+      %Company{} = company ->
+        find_support_authorization_by_company(company)
+
+      _ ->
+        find_slack_authorization(%{
+          channel_id: slack_channel_id,
+          type: "support"
+        })
+    end
+  end
+
+  @spec find_support_authorization_by_thread(SlackConversationThread.t() | nil) ::
+          SlackAuthorization.t() | nil
+  def find_support_authorization_by_thread(thread) do
+    case thread do
+      %SlackConversationThread{
+        account_id: account_id,
+        slack_channel: slack_channel_id,
+        slack_team: nil
+      } ->
+        get_authorization_by_account(account_id, %{
+          type: "support",
+          channel_id: slack_channel_id
+        })
+
+      %SlackConversationThread{
+        account_id: account_id,
+        slack_channel: slack_channel_id,
+        slack_team: slack_team_id
+      } ->
+        get_authorization_by_account(account_id, %{
+          type: "support",
+          team_id: slack_team_id,
+          channel_id: slack_channel_id
+        })
+
+      _ ->
+        nil
+    end
+  end
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   defp filter_where(params) do
