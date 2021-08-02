@@ -30,8 +30,11 @@ defmodule ChatApi.Repo.Migrations.AddSlackTeamToCompanies do
     Application.ensure_all_started(:hackney)
 
     auths_by_key = authorizations_by_key()
-    backfill_company_slack_team_fields(auths_by_key)
-    backfill_conversation_thread_slack_team_field(auths_by_key)
+    companies = backfill_company_slack_team_fields(auths_by_key)
+    threads = backfill_conversation_thread_slack_team_field(auths_by_key)
+
+    Logger.info("Companies updated: #{inspect(companies)}")
+    Logger.info("Threads updated: #{inspect(threads)}")
   end
 
   def keyify(account_id, slack_channel_id), do: "#{account_id}:#{slack_channel_id}"
@@ -65,21 +68,35 @@ defmodule ChatApi.Repo.Migrations.AddSlackTeamToCompanies do
   end
 
   def company_authorizations_by_key(existing \\ %{}) do
-    Company
-    |> select([
-      :account_id,
-      :slack_channel_id
-    ])
-    |> Repo.all()
-    |> Enum.map(&keyify(&1.account_id, &1.slack_channel_id))
-    |> Enum.uniq()
-    |> Map.new(fn key ->
-      [account_id, slack_channel_id] = parse_key(key)
+    companies =
+      Company
+      |> select([
+        :account_id,
+        :slack_channel_id
+      ])
+      |> Repo.all()
 
-      authorizations =
-        SlackAuthorizations.list_slack_authorizations_by_account(account_id, %{
-          type: "support"
-        })
+    auths_by_account =
+      companies
+      |> Enum.map(& &1.account_id)
+      |> Enum.uniq()
+      |> Map.new(fn account_id ->
+        authorizations =
+          SlackAuthorizations.list_slack_authorizations_by_account(account_id, %{
+            type: "support"
+          })
+
+        {account_id, authorizations}
+      end)
+
+    keys =
+      companies
+      |> Enum.map(&keyify(&1.account_id, &1.slack_channel_id))
+      |> Enum.uniq()
+
+    Map.new(keys, fn key ->
+      [account_id, slack_channel_id] = parse_key(key)
+      authorizations = Map.get(auths_by_account, account_id)
 
       case authorizations do
         [] ->
@@ -111,16 +128,32 @@ defmodule ChatApi.Repo.Migrations.AddSlackTeamToCompanies do
   end
 
   def thread_authorizations_by_key(existing \\ %{}) do
-    SlackConversationThread
-    |> select([
-      :account_id,
-      :slack_channel
-    ])
-    |> Repo.all()
-    |> Enum.map(&keyify(&1.account_id, &1.slack_channel))
-    |> Map.new(fn key ->
+    threads =
+      SlackConversationThread
+      |> select([
+        :account_id,
+        :slack_channel
+      ])
+      |> Repo.all()
+
+    auths_by_account =
+      threads
+      |> Enum.map(& &1.account_id)
+      |> Enum.uniq()
+      |> Map.new(fn account_id ->
+        authorizations = SlackAuthorizations.list_slack_authorizations_by_account(account_id)
+
+        {account_id, authorizations}
+      end)
+
+    keys =
+      threads
+      |> Enum.map(&keyify(&1.account_id, &1.slack_channel))
+      |> Enum.uniq()
+
+    Map.new(keys, fn key ->
       [account_id, slack_channel_id] = parse_key(key)
-      authorizations = SlackAuthorizations.list_slack_authorizations_by_account(account_id)
+      authorizations = Map.get(auths_by_account, account_id)
 
       auth =
         case Map.get(existing, key) do
@@ -138,82 +171,45 @@ defmodule ChatApi.Repo.Migrations.AddSlackTeamToCompanies do
   end
 
   def backfill_company_slack_team_fields(auths_by_key) do
-    Company
-    |> select([
-      :id,
-      :name,
-      :account_id,
-      :slack_channel_id,
-      :slack_channel_name,
-      :slack_team_id,
-      :slack_team_name
-    ])
-    |> Repo.all()
-    |> Enum.map(fn
-      %Company{
-        account_id: account_id,
-        slack_channel_id: slack_channel_id,
-        slack_team_name: nil,
-        slack_team_id: nil
-      } = company
-      when is_binary(slack_channel_id) ->
-        key = keyify(account_id, slack_channel_id)
-        auth = Map.get(auths_by_key, key)
-
-        case auth do
-          %SlackAuthorization{team_name: slack_team_name, team_id: slack_team_id} ->
-            {:ok, result} =
-              Companies.update_company(company, %{
-                slack_team_name: slack_team_name,
-                slack_team_id: slack_team_id
-              })
-
-            Logger.info("Company successfully updated: #{inspect(result)}")
-
-          _ ->
-            nil
-        end
-
-      _ ->
-        nil
+    auths_by_key
+    |> Enum.filter(fn
+      {_k, %SlackAuthorization{}} -> true
+      {_k, _auth} -> false
     end)
+    |> Enum.map(fn {key, auth} ->
+      [account_id, slack_channel_id] = parse_key(key)
+
+      {n, _} =
+        Company
+        |> where(account_id: ^account_id)
+        |> where(slack_channel_id: ^slack_channel_id)
+        |> where([c], is_nil(c.slack_team_id))
+        |> where([c], is_nil(c.slack_team_name))
+        |> Repo.update_all(set: [slack_team_id: auth.team_id, slack_team_name: auth.team_name])
+
+      n
+    end)
+    |> Enum.sum()
   end
 
   def backfill_conversation_thread_slack_team_field(auths_by_key) do
-    SlackConversationThread
-    |> select([
-      :id,
-      :slack_channel,
-      :slack_thread_ts,
-      :conversation_id,
-      :account_id
-    ])
-    |> Repo.all()
-    |> Enum.map(fn
-      %SlackConversationThread{
-        account_id: account_id,
-        slack_channel: slack_channel_id,
-        slack_team: nil
-      } = thread
-      when is_binary(slack_channel_id) ->
-        key = keyify(account_id, slack_channel_id)
-        auth = Map.get(auths_by_key, key)
-
-        case auth do
-          %SlackAuthorization{team_id: slack_team_id} ->
-            {:ok, result} =
-              SlackConversationThreads.update_slack_conversation_thread(thread, %{
-                slack_team: slack_team_id
-              })
-
-            Logger.info("Thread successfully updated: #{inspect(result)}")
-
-          _ ->
-            nil
-        end
-
-      _ ->
-        nil
+    auths_by_key
+    |> Enum.filter(fn
+      {_k, %SlackAuthorization{}} -> true
+      {_k, _auth} -> false
     end)
+    |> Enum.map(fn {key, auth} ->
+      [account_id, slack_channel_id] = parse_key(key)
+
+      {n, _} =
+        SlackConversationThread
+        |> where(account_id: ^account_id)
+        |> where(slack_channel: ^slack_channel_id)
+        |> where([t], is_nil(t.slack_team))
+        |> Repo.update_all(set: [slack_team: auth.team_id])
+
+      n
+    end)
+    |> Enum.sum()
   end
 end
