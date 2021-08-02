@@ -14,9 +14,6 @@ defmodule ChatApi.Repo.Migrations.AddSlackTeamToCompanies do
     end
 
     alter table(:slack_conversation_threads) do
-      # TODO: try to backfill these fields based on existing data
-      # (Try using conversation type/source + checking channel... channel is probably enough,
-      # and most accounts probably only have one Slack authorization anyway?)
       add(:slack_team, :string)
     end
 
