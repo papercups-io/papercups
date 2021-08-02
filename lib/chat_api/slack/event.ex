@@ -10,7 +10,6 @@ defmodule ChatApi.Slack.Event do
     SlackConversationThreads
   }
 
-  alias ChatApi.Companies.Company
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
   alias ChatApi.SlackAuthorizations.SlackAuthorization
@@ -146,7 +145,6 @@ defmodule ChatApi.Slack.Event do
            account_id: account_id,
            access_token: access_token,
            channel_id: channel_id,
-           # TODO: set team info on company when created
            team_id: team_id,
            team_name: team_name
          } <-
@@ -224,8 +222,8 @@ defmodule ChatApi.Slack.Event do
     Logger.info("Handling Slack reaction event: #{inspect(event)}")
 
     with :ok <- Slack.Validation.validate_no_existing_thread(channel, ts),
-         {:ok, authorization} <- find_slack_authorization_by_support_channel(channel),
-         %SlackAuthorization{access_token: access_token} <- authorization,
+         %SlackAuthorization{access_token: access_token} = authorization <-
+           SlackAuthorizations.find_support_authorization_by_channel(channel),
          %{sync_by_emoji_tagging: true} <-
            SlackAuthorizations.get_authorization_settings(authorization),
          {:ok, response} <- Slack.Client.retrieve_message(channel, ts, access_token),
@@ -408,38 +406,6 @@ defmodule ChatApi.Slack.Event do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
       %{conversation: conversation} -> {:ok, conversation}
       _ -> {:error, :not_found}
-    end
-  end
-
-  @spec find_slack_authorization_by_support_channel(binary()) ::
-          {:ok, SlackAuthorization.t()} | {:error, :not_found}
-  defp find_slack_authorization_by_support_channel(slack_channel_id) do
-    auth =
-      case ChatApi.Companies.find_by_slack_channel(slack_channel_id) do
-        %Company{account_id: account_id, slack_team_id: nil} ->
-          account_id
-          |> SlackAuthorizations.list_slack_authorizations_by_account(%{type: "support"})
-          |> SlackAuthorizations.find_authorization_with_channel(slack_channel_id)
-
-        %Company{account_id: account_id, slack_team_id: slack_team_id} ->
-          SlackAuthorizations.get_authorization_by_account(account_id, %{
-            team_id: slack_team_id,
-            type: "support"
-          })
-
-        _ ->
-          SlackAuthorizations.find_slack_authorization(%{
-            channel_id: slack_channel_id,
-            type: "support"
-          })
-      end
-
-    case auth do
-      %SlackAuthorization{} ->
-        {:ok, auth}
-
-      _ ->
-        {:error, :not_found}
     end
   end
 end
