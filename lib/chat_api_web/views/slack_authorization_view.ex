@@ -3,6 +3,10 @@ defmodule ChatApiWeb.SlackAuthorizationView do
   alias ChatApiWeb.SlackAuthorizationView
   alias ChatApi.SlackAuthorizations
 
+  def render("index.json", %{slack_authorizations: slack_authorizations}) do
+    %{data: render_many(slack_authorizations, SlackAuthorizationView, "slack_authorization.json")}
+  end
+
   def render("show.json", %{slack_authorization: slack_authorization}) do
     %{
       data:
@@ -22,7 +26,9 @@ defmodule ChatApiWeb.SlackAuthorizationView do
       object: "slack_authorization",
       account_id: slack_authorization.account_id,
       channel: slack_authorization.channel,
+      channel_id: slack_authorization.channel_id,
       configuration_url: slack_authorization.configuration_url,
+      team_id: slack_authorization.team_id,
       team_name: slack_authorization.team_name,
       created_at: slack_authorization.inserted_at,
       updated_at: slack_authorization.updated_at,

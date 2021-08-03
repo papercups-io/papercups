@@ -65,10 +65,16 @@ defmodule ChatApiWeb.SlackController do
              account_id,
              integration_type
            ) do
+      filters =
+        case integration_type do
+          "support" -> %{type: integration_type, team_id: team_id}
+          _ -> %{type: integration_type}
+        end
+
       # TODO: after creating, check if connected channel is private;
       # If yes, use webhook_url to send notification that Papercups app needs
       # to be added manually, along with instructions for how to do so
-      SlackAuthorizations.create_or_update(account_id, %{
+      SlackAuthorizations.create_or_update(account_id, filters, %{
         account_id: account_id,
         access_token: access_token,
         app_id: app_id,
@@ -131,7 +137,12 @@ defmodule ChatApiWeb.SlackController do
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def authorization(conn, payload) do
-    filters = %{type: Map.get(payload, "type", "reply")}
+    filters =
+      payload
+      |> Map.new(fn {key, value} -> {String.to_atom(key), value} end)
+      |> Map.merge(%{
+        type: Map.get(payload, "type", "reply")
+      })
 
     conn
     |> Pow.Plug.current_user()
@@ -146,6 +157,17 @@ defmodule ChatApiWeb.SlackController do
         |> put_view(SlackAuthorizationView)
         |> render("show.json", slack_authorization: auth)
     end
+  end
+
+  @spec authorizations(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def authorizations(conn, payload) do
+    filters = %{type: Map.get(payload, "type", "support")}
+    account_id = conn.assigns.current_user.account_id
+    authorizations = SlackAuthorizations.list_slack_authorizations_by_account(account_id, filters)
+
+    conn
+    |> put_view(SlackAuthorizationView)
+    |> render("index.json", slack_authorizations: authorizations)
   end
 
   @spec update_settings(Plug.Conn.t(), map()) :: Plug.Conn.t()
@@ -211,12 +233,30 @@ defmodule ChatApiWeb.SlackController do
 
   @spec channels(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def channels(conn, payload) do
+    account_id = conn.assigns.current_user.account_id
+
+    filters =
+      payload
+      |> Map.new(fn {key, value} -> {String.to_atom(key), value} end)
+      |> Map.merge(%{
+        type: Map.get(payload, "type", "support")
+      })
+
+    auth =
+      case payload do
+        %{"authorization_id" => id} ->
+          SlackAuthorizations.get_slack_authorization!(id)
+
+        %{"slack_authorization_id" => id} ->
+          SlackAuthorizations.get_slack_authorization!(id)
+
+        _ ->
+          SlackAuthorizations.get_authorization_by_account(account_id, filters)
+      end
+
     # TODO: figure out the best way to handle errors here... should we just return
     # an empty list of channels if the call fails, or indicate that an error occurred?
-    with %{account_id: account_id} <- conn.assigns.current_user,
-         filters <- %{type: Map.get(payload, "type", "support")},
-         %{access_token: access_token} <-
-           SlackAuthorizations.get_authorization_by_account(account_id, filters),
+    with %SlackAuthorization{access_token: access_token} <- auth,
          {:ok, result} <- Slack.Client.list_channels(access_token),
          %{body: %{"ok" => true, "channels" => channels}} <- result do
       json(conn, %{data: channels})

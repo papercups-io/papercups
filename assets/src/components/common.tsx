@@ -46,7 +46,7 @@ import {
   grey,
 } from '@ant-design/colors';
 
-import {Box, Flex, SxStyleProp} from 'theme-ui';
+import {Box, BoxProps, Flex, SxStyleProp} from 'theme-ui';
 import DatePicker from './DatePicker';
 import MarkdownRenderer from './MarkdownRenderer';
 
@@ -105,11 +105,12 @@ export const Card = ({
   children,
   shadow = false,
   sx = {},
+  ...props
 }: {
   children: any;
   shadow?: boolean | 'small' | 'medium' | 'large';
   sx?: SxStyleProp;
-}) => {
+} & BoxProps) => {
   const shadowKey = shadow && typeof shadow === 'boolean' ? 'primary' : shadow;
   const boxShadow = shadowKey ? shadows[shadowKey] || shadows.primary : 'none';
 
@@ -122,6 +123,7 @@ export const Card = ({
         boxShadow,
         ...sx,
       }}
+      {...props}
     >
       {children}
     </Box>

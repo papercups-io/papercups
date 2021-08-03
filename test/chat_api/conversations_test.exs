@@ -432,6 +432,7 @@ defmodule ChatApi.ConversationsTest do
 
       slack_conversation_thread_attrs = %{
         slack_channel: "some slack_channel",
+        slack_team: "some slack_team",
         slack_thread_ts: "some slack_thread_ts",
         conversation_id: conversation.id,
         account_id: conversation.account_id

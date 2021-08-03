@@ -99,6 +99,8 @@ class CompanyDetailsPage extends React.Component<Props, State> {
       external_id: externalId,
       slack_channel_id: slackChannelId,
       slack_channel_name: slackChannelName,
+      slack_team_id: slackTeamId,
+      slack_team_name: slackTeamName,
       id: companyId,
     } = company;
 
@@ -188,16 +190,28 @@ class CompanyDetailsPage extends React.Component<Props, State> {
                   <Text strong>Connected Slack Channel</Text>
                 </Box>
 
-                <Text>
-                  {/* TODO: include Slack team ID if necessary */}
-                  <a
-                    href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {formatSlackChannel(slackChannelName)}
-                  </a>
-                </Text>
+                {slackTeamId && slackTeamName ? (
+                  <Text>
+                    <a
+                      href={`https://slack.com/app_redirect?channel=${slackChannelId}&team=${slackTeamId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {formatSlackChannel(slackChannelName)}
+                    </a>{' '}
+                    in {slackTeamName}
+                  </Text>
+                ) : (
+                  <Text>
+                    <a
+                      href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {formatSlackChannel(slackChannelName)}
+                    </a>
+                  </Text>
+                )}
               </DetailsSectionCard>
             )}
 
