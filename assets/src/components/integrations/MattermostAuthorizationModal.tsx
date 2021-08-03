@@ -91,6 +91,13 @@ const MattermostAuthorizationModal = ({
     setAuthorization({...authorization, verification_token: e.target.value});
 
   const handleChangeMattermostChannel = (value: string, record: any) => {
+    if (!record) {
+      return setAuthorization({
+        ...authorization,
+        channel_id: value,
+      });
+    }
+
     const {channel = {} as MattermostChannel} = record;
     const {name, team_id, team_name} = channel;
 

@@ -58,8 +58,21 @@ defmodule ChatApiWeb.MattermostController do
     # TODO: figure out the best way to handle errors here... should we just return
     # an empty list of channels if the call fails, or indicate that an error occurred?
     case Mattermost.Client.list_channels(authorization) do
-      {:ok, %{body: channels}} -> json(conn, %{data: channels})
-      _ -> json(conn, %{data: []})
+      {:ok, %{body: [_ | _] = channels}} ->
+        json(conn, %{data: channels})
+
+      {:ok, %{body: %{"status_code" => status, "message" => message}}} ->
+        conn
+        |> put_status(status)
+        |> json(%{
+          error: %{
+            status: status,
+            message: message
+          }
+        })
+
+      _ ->
+        json(conn, %{data: []})
     end
   end
 

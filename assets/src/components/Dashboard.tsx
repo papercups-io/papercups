@@ -240,7 +240,8 @@ const Dashboard = (props: RouteComponentProps) => {
 
   useEffect(() => {
     if (currentUser && currentUser.id) {
-      const {id, email} = currentUser;
+      const {email} = currentUser;
+      const id = formatUserExternalId(currentUser);
 
       analytics.identify(id, email);
     }
