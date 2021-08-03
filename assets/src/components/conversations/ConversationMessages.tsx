@@ -1,12 +1,12 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Divider, Result} from '../common';
+import {colors, Button, Divider, Result, Text} from '../common';
 import {SmileOutlined, UpOutlined} from '../icons';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
 import {Account, Conversation, Message, User} from '../../types';
-import {sortConversationMessages} from '../../utils';
+import {sortConversationMessages, zipMessagesWithEvents} from '../../utils';
 import {isBotMessage} from './support';
 
 const noop = () => {};
@@ -43,6 +43,7 @@ const GettingStartedRedirect = () => {
 const ConversationMessages = ({
   conversationId,
   messages,
+  events = [],
   account,
   currentUser,
   loading,
@@ -58,6 +59,7 @@ const ConversationMessages = ({
 }: {
   conversationId?: string | null;
   messages: Array<Message>;
+  events?: Array<any>;
   account?: Account | null;
   currentUser?: User | null;
   loading?: boolean;
@@ -122,6 +124,8 @@ const ConversationMessages = ({
       // No conversation detected yet; do nothing
     }
   };
+
+  const messageEvents = zipMessagesWithEvents(messages, events);
 
   return (
     <Box
@@ -215,7 +219,24 @@ const ConversationMessages = ({
             : null}
 
           {messages.length ? (
-            messages.map((message: Message, key: number) => {
+            messageEvents.map((message: Message | any, key: number) => {
+              const {object} = message;
+
+              // TODO: is there a better way to handle this?
+              if (object === 'posthog_event') {
+                const {id, timestamp, description} = message;
+
+                return (
+                  <Flex
+                    key={id}
+                    mb={2}
+                    sx={{justifyContent: 'center', alignItems: 'center'}}
+                  >
+                    <Text type="secondary">&mdash; {description} &mdash;</Text>
+                  </Flex>
+                );
+              }
+
               // Slight hack
               const next = messages[key + 1];
               const {id: messageId, customer_id: customerId} = message;
@@ -241,6 +262,7 @@ const ConversationMessages = ({
           ) : (
             <EmptyMessagesPlaceholder />
           )}
+
           <div ref={setScrollRef} />
         </Box>
       )}

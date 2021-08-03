@@ -1898,3 +1898,18 @@ export const sendAdminNotification = async (
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
+
+export const fetchPosthogEvents = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/posthog/events`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};

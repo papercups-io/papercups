@@ -116,6 +116,8 @@ defmodule ChatApiWeb.Router do
     get("/google/authorization", GoogleController, :authorization)
     delete("/google/authorizations/:id", GoogleController, :delete)
     post("/gmail/send", GmailController, :send)
+    get("/posthog/events", PosthogController, :events)
+    get("/posthog/persons", PosthogController, :persons)
     put("/widget_settings", WidgetSettingsController, :update)
     get("/profile", UserProfileController, :show)
     put("/profile", UserProfileController, :update)

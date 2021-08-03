@@ -7,6 +7,7 @@ import ConversationHeader from './ConversationHeader';
 import ConversationMessages from './ConversationMessages';
 import ConversationFooter from './ConversationFooter';
 import ConversationDetailsSidebar from './ConversationDetailsSidebar';
+import {formatPosthogEvent} from '../../utils';
 import logger from '../../logger';
 
 const ConversationContainer = ({
@@ -47,6 +48,7 @@ const ConversationContainer = ({
   const [history, setConversationHistory] = React.useState<Array<Conversation>>(
     []
   );
+  const [events, setPosthogEvents] = React.useState<any>([]);
   const [
     isLoadingPreviousConversation,
     setLoadingPreviousConversation,
@@ -64,6 +66,14 @@ const ConversationContainer = ({
     if (!selectedConversationId) {
       return;
     }
+
+    API.fetchPosthogEvents()
+      .then((events) => {
+        const formatted = events.map((e: any) => formatPosthogEvent(e));
+
+        setPosthogEvents(formatted);
+      })
+      .catch(console.log);
 
     API.fetchPreviousConversation(selectedConversationId)
       .then((conversation) => setHasPreviousConversations(!!conversation))
@@ -134,6 +144,7 @@ const ConversationContainer = ({
           conversationId={selectedConversationId}
           account={account}
           messages={messages}
+          events={events}
           history={history}
           currentUser={currentUser}
           loading={loading}

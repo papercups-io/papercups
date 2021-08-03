@@ -148,6 +148,37 @@ export const sortConversationMessages = (messages: Array<Message>) => {
   });
 };
 
+export const sortPosthogEvents = (events: Array<any>) => {
+  return events.sort((a: any, b: any) => {
+    const timestampA = +dayjs.utc(a.timestamp).toDate();
+    const timestampB = +dayjs.utc(b.timestamp).toDate();
+
+    return timestampA - timestampB;
+  });
+};
+
+export const zipMessagesWithEvents = (
+  messages: Array<Message>,
+  events: Array<any>
+) => {
+  return [
+    ...messages.map((message) => {
+      const sentAt = message.sent_at ? +new Date(message.sent_at) : null;
+      const createdAt = +dayjs.utc(message.created_at).toDate();
+      const ts = sentAt && sentAt < createdAt ? sentAt : createdAt;
+
+      return {...message, ts};
+    }),
+    ...events.map((event) => {
+      const ts = +dayjs.utc(event.timestamp).toDate();
+
+      return {...event, ts};
+    }),
+  ].sort((a: any, b: any) => {
+    return a.ts - b.ts;
+  });
+};
+
 export const updateQueryParams = (query: Record<any, any>) => {
   if (window.history.pushState) {
     window.history.pushState(
@@ -271,4 +302,99 @@ export const download = (data = {}, name = 'data') => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+
+const formatPosthogEventType = (type: string) => {
+  switch (type) {
+    case 'click':
+      return 'Clicked';
+    case 'change':
+      return 'Typed something into';
+    case 'submit':
+      return 'Submitted';
+    default:
+      return type;
+  }
+};
+
+const formatPosthogTag = (tag: string) => {
+  switch (tag) {
+    case 'a':
+      return 'link';
+    case 'img':
+      return 'image';
+    default:
+      return tag;
+  }
+};
+
+const formatPosthogElementInfo = (element: any) => {
+  const {attr_id: id, text, href, attributes = {}} = element;
+  const ariaLabel = attributes['attr__aria-label'];
+  const role = attributes['attr__role'];
+
+  if (text && text.length) {
+    return `with text "${text}"`;
+  } else if (ariaLabel && ariaLabel.length) {
+    return `with aria label "${ariaLabel}"`;
+  } else if (href && href.length) {
+    return `with href "${href}"`;
+  } else if (id && id.length) {
+    return `with id "${id}"`;
+  } else if (role && role.length) {
+    return `with role "${role}"`;
+  }
+};
+
+const formatPosthogAutocaptureEvent = (e: any) => {
+  const {elements = [], properties = {}} = e;
+  const [el = {}] = elements;
+  const {tag_name: tag} = el;
+  const type = properties['$event_type'];
+
+  return [
+    formatPosthogEventType(type),
+    formatPosthogTag(tag),
+    formatPosthogElementInfo(el),
+  ]
+    .join(' ')
+    .trim();
+};
+
+export const formatPosthogEvent = (e: any) => {
+  const {id, event, timestamp, properties = {}} = e;
+  const path = properties['$pathname'];
+
+  switch (event) {
+    case '$pageview':
+      return {
+        id,
+        timestamp,
+        object: 'posthog_event',
+        description: `Left page ${path}`,
+      };
+    case '$pageleave':
+      return {
+        id,
+        timestamp,
+        object: 'posthog_event',
+        description: `Viewed page ${path}`,
+      };
+    case '$identify':
+      return {
+        id,
+        timestamp,
+        object: 'posthog_event',
+        description: 'Identified user',
+      };
+    case '$autocapture':
+      return {
+        id,
+        timestamp,
+        object: 'posthog_event',
+        description: formatPosthogAutocaptureEvent(e),
+      };
+    default:
+      return {}; // TODO
+  }
 };
