@@ -2,7 +2,7 @@ defmodule ChatApi.Repo.Migrations.AddSlackTeamToCompanies do
   use Ecto.Migration
   import Ecto.Query, warn: false
   require Logger
-  alias ChatApi.{Companies, Repo, SlackAuthorizations, SlackConversationThreads}
+  alias ChatApi.{Repo, SlackAuthorizations}
   alias ChatApi.Companies.Company
   alias ChatApi.SlackAuthorizations.SlackAuthorization
   alias ChatApi.SlackConversationThreads.SlackConversationThread
