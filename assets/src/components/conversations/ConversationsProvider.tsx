@@ -18,6 +18,18 @@ import {
 import {isUnreadConversation} from './support';
 import ConversationNotificationManager from './ConversationNotificationManager';
 
+type InboxName =
+  | 'open'
+  | 'assigned'
+  | 'mentioned'
+  | 'priority'
+  | 'closed'
+  | 'unread'
+  | 'unassigned'
+  | 'chat'
+  | 'email'
+  | 'slack';
+
 type Inboxes = {
   all: {
     open: string[];
@@ -25,22 +37,56 @@ type Inboxes = {
     mentioned: string[];
     priority: string[];
     closed: string[];
+    unread: string[];
+    unassigned: string[];
   };
   bySource: {
     [key: string]: string[] | undefined;
   };
 };
 
-const getInboxesInitialState = () => ({
-  all: {
-    open: [],
-    assigned: [],
-    mentioned: [],
-    priority: [],
-    closed: [],
-  },
-  bySource: {},
-});
+type UnreadNotifications = {
+  open: number;
+  assigned: number;
+  mentioned: number;
+  priority: number;
+  unread: number;
+  unassigned: number;
+  closed: number;
+  chat: number;
+  email: number;
+  slack: number;
+};
+
+const getInboxesInitialState = () => {
+  return {
+    all: {
+      open: [],
+      assigned: [],
+      mentioned: [],
+      priority: [],
+      closed: [],
+      unread: [],
+      unassigned: [],
+    },
+    bySource: {},
+  };
+};
+
+const getInitialUnreadState = () => {
+  return {
+    open: 0,
+    assigned: 0,
+    mentioned: 0,
+    priority: 0,
+    unread: 0,
+    unassigned: 0,
+    closed: 0,
+    chat: 0,
+    email: 0,
+    slack: 0,
+  };
+};
 
 export const ConversationsContext = React.createContext<{
   loading: boolean;
@@ -53,7 +99,7 @@ export const ConversationsContext = React.createContext<{
   currentlyOnline: {[key: string]: any};
   inboxes: Inboxes;
 
-  getUnreadCount: (conversationIds: string[]) => number;
+  getUnreadCount: (bucket: InboxName, conversationIds: string[]) => number;
   isCustomerOnline: (customerId: string) => boolean;
   onSelectConversation: (id: string | null) => any;
   onUpdateConversation: (id: string, params: any) => Promise<any>;
@@ -99,6 +145,7 @@ type State = {
   currentUser: User | null;
   isNewUser: boolean;
   inboxes: Inboxes;
+  unread: UnreadNotifications;
 
   selectedConversationId: string | null;
   conversationsById: {[key: string]: Conversation};
@@ -113,6 +160,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     currentUser: null,
     isNewUser: false,
     inboxes: getInboxesInitialState(),
+    unread: getInitialUnreadState(),
     selectedConversationId: null,
     conversationsById: {},
     messagesByConversation: {},
@@ -275,6 +323,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
             ),
           });
         }
+
+        this.updateUnreadNotifications();
       }
     },
     1000
@@ -298,6 +348,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
           [conversationId]: {...current, read: true},
         },
       });
+
+      return this.updateUnreadNotifications();
     });
   };
 
@@ -448,9 +500,17 @@ export class ConversationsProvider extends React.Component<Props, State> {
     return conversationIds;
   };
 
+  updateUnreadNotifications = async () => {
+    const unread = await API.countUnreadConversations();
+
+    this.setState({unread});
+  };
+
   fetchAllConversations = async (): Promise<Array<string>> => {
     const {data: conversations} = await API.fetchAllConversations();
     const conversationIds = this.handleSetConversations(conversations);
+    // TODO: where should we handle this?
+    await this.updateUnreadNotifications();
 
     return conversationIds;
   };
@@ -485,6 +545,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     [key: string]: Conversation;
   }) => {
     const conversationsIds = this.getSortedConversationIds(conversationsById);
+
     return conversationsIds.map((id) => conversationsById[id]);
   };
 
@@ -500,6 +561,10 @@ export class ConversationsProvider extends React.Component<Props, State> {
     const priorityConversations = this.getPriorityConversations(
       openConversations
     );
+    const unreadConversations = this.getUnreadConversations(openConversations);
+    const unassignedConversations = this.getUnassignedConversations(
+      openConversations
+    );
     const closedConservations = this.getClosedConservations(conversations);
     const inboxesBySource = this.getInboxesBySource(openConversations);
 
@@ -510,6 +575,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
         mentioned: this.getConversationIds(mentionedConversations),
         priority: this.getConversationIds(priorityConversations),
         closed: this.getConversationIds(closedConservations),
+        unread: this.getConversationIds(unreadConversations),
+        unassigned: this.getConversationIds(unassignedConversations),
       },
       bySource: {
         ...inboxesBySource,
@@ -574,8 +641,21 @@ export class ConversationsProvider extends React.Component<Props, State> {
     );
   };
 
-  getUnreadCount = (conversationIds: string[]) => {
-    const {conversationsById, currentUser} = this.state;
+  getUnreadConversations = (conversations: Conversation[]) => {
+    return conversations.filter((conversation) => !conversation.read);
+  };
+
+  getUnassignedConversations = (conversations: Conversation[]) => {
+    return conversations.filter((conversation) => !conversation.assignee_id);
+  };
+
+  getUnreadCount = (bucket: InboxName, conversationIds: string[]) => {
+    const {conversationsById, currentUser, unread} = this.state;
+
+    if (unread[bucket]) {
+      return unread[bucket];
+    }
+
     const conversations = conversationIds.map((id) => conversationsById[id]);
 
     return conversations.filter((conversation) =>

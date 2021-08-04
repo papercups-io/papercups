@@ -55,6 +55,8 @@ import AllConversations from './conversations/AllConversations';
 import MyConversations from './conversations/MyConversations';
 import MentionedConversations from './conversations/MentionedConversations';
 import PriorityConversations from './conversations/PriorityConversations';
+import UnreadConversations from './conversations/UnreadConversations';
+import UnassignedConversations from './conversations/UnassignedConversations';
 import ClosedConversations from './conversations/ClosedConversations';
 import ConversationsBySource from './conversations/ConversationsBySource';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
@@ -233,7 +235,7 @@ const Dashboard = (props: RouteComponentProps) => {
   const {account, currentUser, inboxes, getUnreadCount} = useConversations();
 
   const [section, key] = getSectionKey(pathname);
-  const totalNumUnread = getUnreadCount(inboxes.all.open);
+  const totalNumUnread = getUnreadCount('open', inboxes.all.open);
   const shouldDisplayBilling = hasValidStripeKey();
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
@@ -310,6 +312,41 @@ const Dashboard = (props: RouteComponentProps) => {
                     </Flex>
                   </Link>
                 </Menu.Item>
+                <Menu.Item key="unread">
+                  <Link to="/conversations/unread">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>All unread</Box>
+                      <Badge
+                        count={getUnreadCount('unread', inboxes.all.unread)}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="unassigned">
+                  <Link to="/conversations/unassigned">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Unassigned</Box>
+                      <Badge
+                        count={getUnreadCount(
+                          'unassigned',
+                          inboxes.all.unassigned
+                        )}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
                 <Menu.Item key="mentions">
                   <Link to="/conversations/mentions">
                     <Flex
@@ -320,7 +357,10 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Mentions</Box>
                       <Badge
-                        count={getUnreadCount(inboxes.all.mentioned)}
+                        count={getUnreadCount(
+                          'mentioned',
+                          inboxes.all.mentioned
+                        )}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -336,7 +376,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Assigned to me</Box>
                       <Badge
-                        count={getUnreadCount(inboxes.all.assigned)}
+                        count={getUnreadCount('assigned', inboxes.all.assigned)}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -352,7 +392,7 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Prioritized</Box>
                       <Badge
-                        count={getUnreadCount(inboxes.all.priority)}
+                        count={getUnreadCount('priority', inboxes.all.priority)}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -377,7 +417,10 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Live chat</Box>
                       <Badge
-                        count={getUnreadCount(inboxes.bySource['chat'] ?? [])}
+                        count={getUnreadCount(
+                          'chat',
+                          inboxes.bySource['chat'] ?? []
+                        )}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -393,7 +436,10 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Email</Box>
                       <Badge
-                        count={getUnreadCount(inboxes.bySource['email'] ?? [])}
+                        count={getUnreadCount(
+                          'email',
+                          inboxes.bySource['email'] ?? []
+                        )}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -409,7 +455,10 @@ const Dashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Slack</Box>
                       <Badge
-                        count={getUnreadCount(inboxes.bySource['slack'] ?? [])}
+                        count={getUnreadCount(
+                          'slack',
+                          inboxes.bySource['slack'] ?? []
+                        )}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -599,6 +648,11 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/functions/:id" component={LambdaDetailsPage} />
           <Route path="/functions" component={LambdasOverview} />
           <Route path="/conversations/all" component={AllConversations} />
+          <Route path="/conversations/unread" component={UnreadConversations} />
+          <Route
+            path="/conversations/unassigned"
+            component={UnassignedConversations}
+          />
           <Route
             path="/conversations/mentions"
             component={MentionedConversations}

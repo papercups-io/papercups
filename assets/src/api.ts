@@ -418,6 +418,19 @@ export type ConversationsListResponse = {
   previous: string | null;
 };
 
+export const countUnreadConversations = async (
+  token = getAccessToken()
+): Promise<any> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/conversations/unread`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchConversations = async (
   query = {},
   token = getAccessToken()
@@ -489,6 +502,27 @@ export const fetchClosedConversations = async (
   token = getAccessToken()
 ) => {
   return fetchConversations({...query, status: 'closed'}, token);
+};
+
+export const fetchUnreadConversations = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  return fetchConversations({...query, status: 'open', read: false}, token);
+};
+
+export const fetchUnassignedConversations = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  return fetchConversations(
+    {
+      ...query,
+      status: 'open',
+      assignee_id: null,
+    },
+    token
+  );
 };
 
 export const fetchConversation = async (

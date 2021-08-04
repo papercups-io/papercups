@@ -86,6 +86,74 @@ defmodule ChatApiWeb.ConversationController do
     end
   end
 
+  @spec unread(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def unread(conn, _params) do
+    with %{id: user_id, account_id: account_id} <- conn.assigns.current_user do
+      json(conn, %{
+        data: %{
+          open:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "read" => false
+            }),
+          assigned:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "read" => false,
+              "assignee_id" => user_id
+            }),
+          priority:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "read" => false,
+              "priority" => "priority"
+            }),
+          unread:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "read" => false
+            }),
+          unassigned:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "assignee_id" => nil,
+              "read" => false
+            }),
+          closed:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "closed",
+              "read" => false
+            }),
+          mentioned:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "has_seen_mention" => false,
+              "mentioning" => user_id
+            }),
+          # By channel
+          chat:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "source" => "chat",
+              "read" => false
+            }),
+          slack:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "source" => "slack",
+              "read" => false
+            }),
+          email:
+            Conversations.count_conversations_where(account_id, %{
+              "status" => "open",
+              "source" => "email",
+              "read" => false
+            })
+        }
+      })
+    end
+  end
+
   # TODO: figure out a better way to handle this
   @spec find_by_customer(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def find_by_customer(conn, %{"customer_id" => customer_id, "account_id" => account_id}) do
@@ -326,11 +394,26 @@ defmodule ChatApiWeb.ConversationController do
       params,
       %{},
       fn
+        {"assignee_id", missing}, acc when missing in [nil, ""] ->
+          Map.merge(acc, %{"assignee_id" => nil})
+
         {"assignee_id", "me"}, acc ->
           Map.merge(acc, %{"assignee_id" => current_user.id})
 
         {"mentioning", "me"}, acc ->
           Map.merge(acc, %{"mentioning" => current_user.id})
+
+        {"assignee_id", value}, acc when is_binary(value) ->
+          case Integer.parse(value) do
+            {parsed, ""} -> Map.merge(acc, %{"assignee_id" => parsed})
+            _ -> acc
+          end
+
+        {"mentioning", value}, acc ->
+          case Integer.parse(value) do
+            {parsed, ""} -> Map.merge(acc, %{"mentioning" => parsed})
+            _ -> acc
+          end
 
         {k, v}, acc ->
           Map.merge(acc, %{k => v})
