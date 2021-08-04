@@ -1,7 +1,15 @@
 import React from 'react';
 import {Box} from 'theme-ui';
 import qs from 'query-string';
-import {colors, Layout, notification, Sider, Title} from '../common';
+import {
+  colors,
+  Divider,
+  Input,
+  Layout,
+  notification,
+  Sider,
+  Title,
+} from '../common';
 import {sleep} from '../../utils';
 import {ConversationsListResponse, PaginationOptions} from '../../api';
 import {Account, Conversation, Message} from '../../types';
@@ -23,13 +31,13 @@ type Props = {
   onUpdateConversation: (id: string, params: any) => Promise<void>;
   onDeleteConversation: (id: string) => Promise<void>;
   onSendMessage: (message: Partial<Message>, fn: () => void) => void;
-  // TODO: deprecate
-  fetch?: () => Promise<Array<string>>;
 };
 
 type State = {
   loading: boolean;
+  searching: boolean;
   selectedConversationId: string | null;
+  conversationSearchResults: Array<string>;
   pagination: PaginationOptions;
   closing: Array<string>;
 };
@@ -39,7 +47,9 @@ class ConversationsDashboard extends React.Component<Props, State> {
 
   state: State = {
     loading: true,
+    searching: false,
     selectedConversationId: null,
+    conversationSearchResults: [],
     pagination: {},
     closing: [],
   };
@@ -95,6 +105,17 @@ class ConversationsDashboard extends React.Component<Props, State> {
       this.scrollIntoView();
     }
   }
+
+  getConversationIds = () => {
+    const {conversationIds = []} = this.props;
+    const {conversationSearchResults = []} = this.state;
+
+    if (conversationSearchResults && conversationSearchResults.length > 0) {
+      return conversationSearchResults;
+    } else {
+      return conversationIds;
+    }
+  };
 
   setupKeyboardShortcuts = () => {
     window.addEventListener('keydown', this.handleKeyboardShortcut);
@@ -176,7 +197,7 @@ class ConversationsDashboard extends React.Component<Props, State> {
 
   getNextConversationId = () => {
     const {selectedConversationId} = this.state;
-    const {conversationIds = []} = this.props;
+    const conversationIds = this.getConversationIds();
 
     if (conversationIds.length === 0) {
       return null;
@@ -195,7 +216,7 @@ class ConversationsDashboard extends React.Component<Props, State> {
 
   getPreviousConversationId = () => {
     const {selectedConversationId} = this.state;
-    const {conversationIds = []} = this.props;
+    const conversationIds = this.getConversationIds();
 
     if (conversationIds.length === 0) {
       return null;
@@ -219,7 +240,7 @@ class ConversationsDashboard extends React.Component<Props, State> {
 
     this.props.onRetrieveConversations(conversations);
 
-    const {conversationIds = []} = this.props;
+    const conversationIds = this.getConversationIds();
     const {selectedConversationId} = this.state;
     const hasValidSelectedId =
       selectedConversationId &&
@@ -324,9 +345,30 @@ class ConversationsDashboard extends React.Component<Props, State> {
     );
   };
 
+  handleSearchConversations = async (q: string) => {
+    this.setState({searching: true});
+
+    const {fetcher, onRetrieveConversations} = this.props;
+    const {data: conversations = [], ...pagination} = await fetcher({q});
+    const ids = onRetrieveConversations(conversations);
+
+    this.setState({
+      pagination,
+      conversationSearchResults: ids,
+      loading: false,
+      searching: false,
+    });
+  };
+
   render() {
-    const {selectedConversationId, pagination = {}, closing = []} = this.state;
-    const {title, conversationIds = []} = this.props;
+    const {
+      selectedConversationId,
+      searching,
+      pagination = {},
+      closing = [],
+    } = this.state;
+    const {title} = this.props;
+    const conversationIds = this.getConversationIds();
     const loading = this.props.loading || this.state.loading;
     const hasMoreConversations =
       !!pagination.next &&
@@ -353,6 +395,16 @@ class ConversationsDashboard extends React.Component<Props, State> {
             <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
               {title || 'Conversations'}
             </Title>
+
+            <Box mt={3}>
+              <Input.Search
+                placeholder="Search messages..."
+                disabled={loading}
+                loading={searching}
+                allowClear
+                onSearch={this.handleSearchConversations}
+              />
+            </Box>
           </Box>
 
           <ConversationsPreviewList
