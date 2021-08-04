@@ -1,15 +1,7 @@
 import React from 'react';
 import {Box} from 'theme-ui';
 import qs from 'query-string';
-import {
-  colors,
-  Divider,
-  Input,
-  Layout,
-  notification,
-  Sider,
-  Title,
-} from '../common';
+import {colors, Input, Layout, notification, Sider, Title} from '../common';
 import {sleep} from '../../utils';
 import {ConversationsListResponse, PaginationOptions} from '../../api';
 import {Account, Conversation, Message} from '../../types';
