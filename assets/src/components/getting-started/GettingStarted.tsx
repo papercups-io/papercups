@@ -1,10 +1,11 @@
 import React from 'react';
-import {Box, Flex, Spinner} from 'theme-ui';
+import {Box, Flex} from 'theme-ui';
 
 import * as API from '../../api';
 import type {OnboardingStatus} from '../../types';
 import logger from '../../logger';
 import {Container, Divider, Title} from '../common';
+import Spinner from '../Spinner';
 import Steps from './Steps';
 
 const GettingStarted = () => {

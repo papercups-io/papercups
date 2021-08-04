@@ -14,7 +14,7 @@ defmodule ChatApi.Application do
             adapter: Phoenix.PubSub.Redis,
             # NB: use redis://localhost:6379 for testing locally
             url: redis_url(),
-            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:"),
+            node_name: node_name()
             # Set ssl: true when using `rediss` URLs in Heroku
             ssl: true,
             socket_opts: [verify: :verify_none]
@@ -26,7 +26,7 @@ defmodule ChatApi.Application do
             adapter: Phoenix.PubSub.Redis,
             # NB: use redis://localhost:6379 for testing locally
             url: redis_url(),
-            node_name: node_name() |> IO.inspect(label: "Running Redis adapter on node:")
+            node_name: node_name()
           ]
 
         _ ->
@@ -80,8 +80,6 @@ defmodule ChatApi.Application do
     fallback =
       System.get_env("NODE") || System.get_env("DYNO") ||
         Base.encode16(:crypto.strong_rand_bytes(6))
-
-    IO.inspect(node(), label: "Checking node() for Redis adapter:")
 
     case node() do
       nil -> fallback
