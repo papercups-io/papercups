@@ -36,6 +36,7 @@ type Props = {
 type State = {
   loading: boolean;
   searching: boolean;
+  query: string;
   selectedConversationId: string | null;
   conversationSearchResults: Array<string>;
   pagination: PaginationOptions;
@@ -48,6 +49,7 @@ class ConversationsDashboard extends React.Component<Props, State> {
   state: State = {
     loading: true,
     searching: false,
+    query: '',
     selectedConversationId: null,
     conversationSearchResults: [],
     pagination: {},
@@ -130,16 +132,29 @@ class ConversationsDashboard extends React.Component<Props, State> {
   };
 
   handleLoadMoreConversations = async (): Promise<void> => {
-    const {pagination = {}} = this.state;
+    const {query, pagination = {}, conversationSearchResults = []} = this.state;
     const {fetcher, onRetrieveConversations} = this.props;
+    const hasValidQuery = query && query.trim().length > 0;
+    const filters = hasValidQuery ? {q: query} : {};
 
-    return fetcher({after: pagination.next}).then((result) => {
-      const {data: conversations = [], ...pagination} = result;
+    const {data: conversations = [], ...next} = await fetcher({
+      after: pagination.next,
+      ...filters,
+    });
 
-      this.setState({pagination, loading: false}, () =>
+    if (hasValidQuery) {
+      const ids = onRetrieveConversations(conversations);
+
+      this.setState({
+        pagination: next,
+        loading: false,
+        conversationSearchResults: [...conversationSearchResults, ...ids],
+      });
+    } else {
+      this.setState({pagination: next, loading: false}, () =>
         onRetrieveConversations(conversations)
       );
-    });
+    }
   };
 
   handleKeyboardShortcut = (e: any) => {
@@ -235,8 +250,10 @@ class ConversationsDashboard extends React.Component<Props, State> {
 
   // TODO: make sure this works as expected
   refreshSelectedConversation = async () => {
+    const {query} = this.state;
     const nextId = this.getNextConversationId();
-    const {data: conversations} = await this.props.fetcher();
+    const filters = query && query.trim().length ? {q: query} : {};
+    const {data: conversations} = await this.props.fetcher(filters);
 
     this.props.onRetrieveConversations(conversations);
 
@@ -346,10 +363,11 @@ class ConversationsDashboard extends React.Component<Props, State> {
   };
 
   handleSearchConversations = async (q: string) => {
-    this.setState({searching: true});
+    this.setState({query: q, searching: true});
 
     const {fetcher, onRetrieveConversations} = this.props;
-    const {data: conversations = [], ...pagination} = await fetcher({q});
+    const filters = q && q.trim().length ? {q} : {};
+    const {data: conversations = [], ...pagination} = await fetcher(filters);
     const ids = onRetrieveConversations(conversations);
 
     this.setState({

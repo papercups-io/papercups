@@ -588,7 +588,16 @@ defmodule ChatApi.Conversations do
     body = "%#{text}%"
 
     query
-    |> join(:left, [c], m in assoc(c, :messages), as: :messages)
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT body FROM messages WHERE conversation_id = ? AND body LIKE ? LIMIT 1",
+        c.id,
+        ^body
+      ),
+      as: :messages
+    )
     |> where([_c, messages: m], ilike(m.body, ^body))
   end
 
