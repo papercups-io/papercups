@@ -14,6 +14,7 @@ import * as API from '../../api';
 import {MattermostAuthorization, MattermostChannel} from '../../types';
 import logger from '../../logger';
 import {IntegrationType} from './support';
+import {formatServerError} from '../../utils';
 
 const MattermostAuthorizationModal = ({
   visible,
@@ -33,7 +34,9 @@ const MattermostAuthorizationModal = ({
     Array<MattermostChannel>
   >([]);
   const [isSaving, setSaving] = React.useState(false);
+  const [error, setErrorMessage] = React.useState<string | null>(null);
 
+  // TODO: debounce this
   const handleRefreshChannels = async (query: MattermostAuthorization) => {
     if (!query.access_token || !query.mattermost_url) {
       return;
@@ -43,8 +46,11 @@ const MattermostAuthorizationModal = ({
       const channels = await API.fetchMattermostChannels(query);
 
       setMattermostChannels(channels);
+      setErrorMessage(null);
     } catch (err) {
-      logger.error('Error fetching Mattermost channels!', err);
+      const e = formatServerError(err);
+      logger.error('Error fetching Mattermost channels!', e);
+      setErrorMessage(`Mattermost error: ${e}`);
     }
   };
 
@@ -56,10 +62,13 @@ const MattermostAuthorizationModal = ({
         ? {...authorization, id: authorizationId}
         : authorization;
       const result = await API.createMattermostAuthorization(params);
+      setErrorMessage(null);
 
       return onSuccess(result);
     } catch (err) {
-      logger.error('Error creating Mattermost authorization!', err);
+      const e = formatServerError(err);
+      logger.error('Error creating Mattermost authorization!', e);
+      setErrorMessage(e);
     } finally {
       setSaving(false);
     }
@@ -231,6 +240,12 @@ const MattermostAuthorizationModal = ({
             onChange={handleChangeWebhookToken}
           />
         </Box>
+
+        {error && (
+          <Box mb={-3}>
+            <Text type="danger">{error}</Text>
+          </Box>
+        )}
       </Box>
     </Modal>
   );
