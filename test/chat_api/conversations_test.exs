@@ -37,12 +37,14 @@ defmodule ChatApi.ConversationsTest do
       insert(:message,
         account: account,
         conversation: conversation_2,
+        body: "least recent",
         inserted_at: ~N[2020-11-02 20:00:00]
       )
 
       insert(:message,
         account: account,
         conversation: conversation_3,
+        body: "second most recent",
         inserted_at: ~N[2020-11-03 20:00:00]
       )
 
@@ -89,8 +91,24 @@ defmodule ChatApi.ConversationsTest do
       user: user
     } do
       conversation_y = insert(:conversation, account: account, customer: customer)
+      conversation_z = insert(:conversation, account: account, customer: customer)
+
+      insert(:message,
+        account: account,
+        conversation: conversation_y,
+        body: "least recent",
+        inserted_at: ~N[2020-11-02 20:00:00]
+      )
+
+      insert(:message,
+        account: account,
+        conversation: conversation_z,
+        body: "second most recent",
+        inserted_at: ~N[2020-11-03 20:00:00]
+      )
 
       mention_x = insert(:mention, conversation: conversation_x, account: account, user: user)
+      mention_xx = insert(:mention, conversation: conversation_x, account: account, user: user)
       _mention_y = insert(:mention, conversation: conversation_y, account: account, user: user)
 
       result_ids =
@@ -98,9 +116,10 @@ defmodule ChatApi.ConversationsTest do
         |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
         |> Enum.map(& &1.id)
 
-      assert Enum.sort(result_ids) == Enum.sort([conversation_x.id, conversation_y.id])
+      assert result_ids == [conversation_x.id, conversation_y.id]
 
       ChatApi.Mentions.delete_mention(mention_x)
+      ChatApi.Mentions.delete_mention(mention_xx)
 
       result_ids =
         account.id
@@ -114,7 +133,29 @@ defmodule ChatApi.ConversationsTest do
         |> Conversations.list_conversations_by_account(%{})
         |> Enum.map(& &1.id)
 
-      assert Enum.sort(result_ids) == Enum.sort([conversation_x.id, conversation_y.id])
+      assert result_ids == [
+               conversation_x.id,
+               conversation_z.id,
+               conversation_y.id
+             ]
+    end
+
+    test "filters conversations for an account by text query", %{
+      account: account,
+      conversation: conversation
+    } do
+      insert(:message, body: "hello world", account: account, conversation: conversation)
+
+      assert [] = Conversations.list_conversations_by_account(account.id, %{"q" => "test"})
+
+      insert(:message, body: "testing 123", account: account, conversation: conversation)
+
+      result_ids =
+        account.id
+        |> Conversations.list_conversations_by_account(%{"q" => "test"})
+        |> Enum.map(& &1.id)
+
+      assert result_ids == [conversation.id]
     end
   end
 

@@ -21,6 +21,7 @@ defmodule ChatApi.Conversations do
     |> where([c], is_nil(c.archived_at))
     |> filter_by_tag(filters)
     |> filter_by_mention(filters)
+    |> filter_by_text(filters)
     |> order_by_most_recent_message()
     |> preload([
       :customer,
@@ -28,6 +29,19 @@ defmodule ChatApi.Conversations do
       messages: [:attachments, :customer, user: :profile]
     ])
     |> Repo.all()
+  end
+
+  @spec count_conversations_where(binary(), map()) :: [Conversation.t()]
+  def count_conversations_where(account_id, filters \\ %{}) do
+    Conversation
+    |> select([c], count(c.id, :distinct))
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> filter_by_tag(filters)
+    |> filter_by_mention(filters)
+    |> filter_by_text(filters)
+    |> Repo.one()
   end
 
   @spec list_conversations_by_account_paginated(binary(), map(), Keyword.t()) ::
@@ -43,6 +57,7 @@ defmodule ChatApi.Conversations do
     |> where([c], is_nil(c.archived_at))
     |> filter_by_tag(filters)
     |> filter_by_mention(filters)
+    |> filter_by_text(filters)
     |> order_by(desc: :last_activity_at, desc: :id)
     |> preload([
       :customer,
@@ -531,16 +546,62 @@ defmodule ChatApi.Conversations do
   def filter_by_tag(query, _filters), do: query
 
   @spec filter_by_mention(Ecto.Query.t(), map()) :: Ecto.Query.t()
-  def filter_by_mention(query, %{"mentioning" => user_id}) when not is_nil(user_id) do
-    # TODO: should we do a `distinct` query at the top level? we mainly do it here because conversations
-    # can have multiple `mentions` of the same person (i.e. multiple messages with the same mentioned user)
+  def filter_by_mention(query, %{"mentioning" => user_id, "has_seen_mention" => has_seen_mention})
+      when not is_nil(user_id) and has_seen_mention in ["true", true] do
     query
-    |> distinct([c], c.id)
-    |> join(:left, [c], m in assoc(c, :mentions), as: :mentions)
+    |> filter_by_mention(%{"mentioning" => user_id})
+    |> where([_c, mentions: m], not is_nil(m.seen_at))
+  end
+
+  def filter_by_mention(query, %{"mentioning" => user_id, "has_seen_mention" => has_seen_mention})
+      when not is_nil(user_id) and has_seen_mention in ["false", false] do
+    query
+    |> filter_by_mention(%{"mentioning" => user_id})
+    |> where([_c, mentions: m], is_nil(m.seen_at))
+  end
+
+  def filter_by_mention(query, %{"mentioning" => user_id}) when is_binary(user_id) do
+    case Integer.parse(user_id) do
+      {parsed, _} -> filter_by_mention(query, %{"mentioning" => parsed})
+      :error -> query
+    end
+  end
+
+  def filter_by_mention(query, %{"mentioning" => user_id}) when is_integer(user_id) do
+    query
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT * FROM mentions WHERE conversation_id = ? LIMIT 1",
+        c.id
+      ),
+      as: :mentions
+    )
     |> where([c, mentions: m], m.user_id == ^user_id and m.conversation_id == c.id)
   end
 
   def filter_by_mention(query, _filters), do: query
+
+  @spec filter_by_text(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_text(query, %{"q" => text}) when not is_nil(text) do
+    body = "%#{text}%"
+
+    query
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT body FROM messages WHERE conversation_id = ? AND body LIKE ? LIMIT 1",
+        c.id,
+        ^body
+      ),
+      as: :messages
+    )
+    |> where([_c, messages: m], ilike(m.body, ^body))
+  end
+
+  def filter_by_text(query, _filters), do: query
 
   @spec mark_activity(String.t()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
@@ -572,22 +633,34 @@ defmodule ChatApi.Conversations do
   defp filter_where(attrs) do
     Enum.reduce(attrs, dynamic(true), fn
       {"status", value}, dynamic ->
-        dynamic([p], ^dynamic and p.status == ^value)
+        dynamic([c], ^dynamic and c.status == ^value)
 
       {"priority", value}, dynamic ->
-        dynamic([p], ^dynamic and p.priority == ^value)
+        dynamic([c], ^dynamic and c.priority == ^value)
+
+      {"read", "true"}, dynamic ->
+        dynamic([c], ^dynamic and c.read == true)
+
+      {"read", "false"}, dynamic ->
+        dynamic([c], ^dynamic and c.read == false)
+
+      {"read", value}, dynamic ->
+        dynamic([p], ^dynamic and p.read == ^value)
+
+      {"assignee_id", missing}, dynamic when missing in [nil, ""] ->
+        dynamic([c], ^dynamic and is_nil(c.assignee_id))
 
       {"assignee_id", value}, dynamic ->
-        dynamic([p], ^dynamic and p.assignee_id == ^value)
+        dynamic([c], ^dynamic and c.assignee_id == ^value)
 
       {"customer_id", value}, dynamic ->
-        dynamic([p], ^dynamic and p.customer_id == ^value)
+        dynamic([c], ^dynamic and c.customer_id == ^value)
 
       {"account_id", value}, dynamic ->
-        dynamic([p], ^dynamic and p.account_id == ^value)
+        dynamic([c], ^dynamic and c.account_id == ^value)
 
       {"source", value}, dynamic ->
-        dynamic([p], ^dynamic and p.source == ^value)
+        dynamic([c], ^dynamic and c.source == ^value)
 
       {_, _}, dynamic ->
         # Not a where parameter

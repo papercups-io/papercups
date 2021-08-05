@@ -126,6 +126,7 @@ defmodule ChatApiWeb.Router do
     post("/payment_methods", PaymentMethodController, :create)
     get("/payment_methods", PaymentMethodController, :show)
     get("/browser_sessions/count", BrowserSessionController, :count)
+    get("/conversations/unread", ConversationController, :unread)
 
     resources("/users", UserController, only: [:index, :show, :delete])
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
