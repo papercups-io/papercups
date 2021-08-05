@@ -119,3 +119,25 @@ a.RelatedCustomerConversation--link:hover {
 .GettingStartedCode .ant-tabs-nav .ant-tabs-tab {
   border-color: #d9d9d9;
 }
+
+.ConversationsSearchInput {
+  border-top: 1px solid rgb(240, 240, 240);
+  border-right: none;
+  border-bottom: none;
+  border-left: none;
+}
+
+.ConversationsSearchInput:hover,
+.ConversationsSearchInput:active,
+.ConversationsSearchInput:focus {
+  border-color: rgb(240, 240, 240);
+}
+
+.ConversationsSearchInput.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  box-shadow: rgb(0 0 0 / 10%) 0px 0px 4px;
+}
+
+.ConversationsSearchInput .ant-input-search-icon::before {
+  border-left: 1px solid rgb(240, 240, 240);
+}

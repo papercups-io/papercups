@@ -5,7 +5,7 @@ import ConversationItem from './ConversationItem';
 import ConversationClosing from './ConversationClosing';
 import {getColorByUuid} from './support';
 import {Conversation} from '../../types';
-import {isScrolledIntoView} from '../../utils';
+import {isScrolledIntoView, sleep} from '../../utils';
 import {useConversations} from './ConversationsProvider';
 
 const ConversationsPreviewList = ({
@@ -51,7 +51,10 @@ const ConversationsPreviewList = ({
 
   const handleLoadMoreConversations = async () => {
     setFetchingMore(true);
+
     await onLoadMoreConversations();
+    await sleep(1000);
+
     setFetchingMore(false);
   };
 

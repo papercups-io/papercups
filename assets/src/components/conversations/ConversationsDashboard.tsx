@@ -102,9 +102,14 @@ class ConversationsDashboard extends React.Component<Props, State> {
 
   getConversationIds = () => {
     const {conversationIds = []} = this.props;
-    const {conversationSearchResults = []} = this.state;
+    const {query, conversationSearchResults = []} = this.state;
+    const hasValidQuery = query && query.trim().length > 0;
 
-    if (conversationSearchResults && conversationSearchResults.length > 0) {
+    if (
+      hasValidQuery &&
+      conversationSearchResults &&
+      conversationSearchResults.length > 0
+    ) {
       return conversationSearchResults;
     } else {
       return conversationIds;
@@ -358,16 +363,25 @@ class ConversationsDashboard extends React.Component<Props, State> {
     this.setState({query: q, searching: true});
 
     const {fetcher, onRetrieveConversations} = this.props;
-    const filters = q && q.trim().length ? {q} : {};
+    const hasValidQuery = q && q.trim().length;
+    const filters = hasValidQuery ? {q} : {};
     const {data: conversations = [], ...pagination} = await fetcher(filters);
     const ids = onRetrieveConversations(conversations);
 
     this.setState({
       pagination,
-      conversationSearchResults: ids,
+      conversationSearchResults: hasValidQuery ? ids : [],
       loading: false,
       searching: false,
     });
+
+    if (q && q.trim().length > 0 && ids.length === 0) {
+      notification.open({
+        message: `No results found for "${q}"`,
+        duration: 4, // 4 seconds
+        description: <Box>Please try another query</Box>,
+      });
+    }
   };
 
   render() {
@@ -401,17 +415,21 @@ class ConversationsDashboard extends React.Component<Props, State> {
             left: 220,
           }}
         >
-          <Box p={3} sx={{borderBottom: '1px solid #f0f0f0'}}>
-            <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
-              {title || 'Conversations'}
-            </Title>
+          <Box sx={{borderBottom: '1px solid #f0f0f0'}}>
+            <Box px={3} pt={3}>
+              <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
+                {title || 'Conversations'}
+              </Title>
+            </Box>
 
-            <Box mt={3}>
+            <Box mt={3} px="1px">
               <Input.Search
+                className="ConversationsSearchInput"
                 placeholder="Search messages..."
-                disabled={loading}
+                disabled={loading || searching}
                 loading={searching}
                 allowClear
+                addonAfter={null}
                 onSearch={this.handleSearchConversations}
               />
             </Box>
