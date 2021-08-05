@@ -107,37 +107,50 @@ defmodule ChatApi.ConversationsTest do
         inserted_at: ~N[2020-11-03 20:00:00]
       )
 
+      another_user = insert(:user, account: account)
+
+      _mention_another_x =
+        insert(:mention, conversation: conversation_x, account: account, user: another_user)
+
       mention_x = insert(:mention, conversation: conversation_x, account: account, user: user)
       mention_xx = insert(:mention, conversation: conversation_x, account: account, user: user)
+
+      _mention_another_xx =
+        insert(:mention, conversation: conversation_x, account: account, user: another_user)
+
       _mention_y = insert(:mention, conversation: conversation_y, account: account, user: user)
 
-      result_ids =
-        account.id
-        |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
-        |> Enum.map(& &1.id)
+      assert [conversation_x.id, conversation_y.id] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
+               |> Enum.map(& &1.id)
 
-      assert result_ids == [conversation_x.id, conversation_y.id]
+      assert [conversation_x.id] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{"mentioning" => another_user.id})
+               |> Enum.map(& &1.id)
 
       ChatApi.Mentions.delete_mention(mention_x)
       ChatApi.Mentions.delete_mention(mention_xx)
 
-      result_ids =
-        account.id
-        |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
-        |> Enum.map(& &1.id)
+      assert [conversation_x.id] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{"mentioning" => another_user.id})
+               |> Enum.map(& &1.id)
 
-      assert result_ids == [conversation_y.id]
+      assert [conversation_y.id] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
+               |> Enum.map(& &1.id)
 
-      result_ids =
-        account.id
-        |> Conversations.list_conversations_by_account(%{})
-        |> Enum.map(& &1.id)
-
-      assert result_ids == [
+      assert [
                conversation_x.id,
                conversation_z.id,
                conversation_y.id
-             ]
+             ] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{})
+               |> Enum.map(& &1.id)
     end
 
     test "filters conversations for an account by text query", %{

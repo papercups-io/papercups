@@ -573,8 +573,9 @@ defmodule ChatApi.Conversations do
       :left_lateral,
       [c],
       f in fragment(
-        "SELECT * FROM mentions WHERE conversation_id = ? LIMIT 1",
-        c.id
+        "SELECT * FROM mentions WHERE conversation_id = ? AND user_id = ? LIMIT 1",
+        c.id,
+        ^user_id
       ),
       as: :mentions
     )
