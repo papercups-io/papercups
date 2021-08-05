@@ -9,9 +9,24 @@ defmodule ChatApiWeb.APIAuthPlug do
   @impl true
   @spec fetch(Conn.t(), Config.t()) :: {Conn.t(), map() | nil}
   def fetch(conn, config) do
-    conn
-    |> fetch_auth_token(config)
-    |> fetch_from_store(conn, config)
+    result =
+      conn
+      |> fetch_auth_token(config)
+      |> fetch_from_store(conn, config)
+
+    case result do
+      {conn, nil} ->
+        {conn, nil}
+
+      {conn, user} ->
+        Sentry.Context.set_user_context(%{
+          id: user.id,
+          email: user.email,
+          account_id: user.account_id
+        })
+
+        {conn, user}
+    end
   end
 
   defp fetch_from_store(nil, conn, _config), do: {conn, nil}

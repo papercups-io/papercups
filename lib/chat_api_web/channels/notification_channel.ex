@@ -146,8 +146,14 @@ defmodule ChatApiWeb.NotificationChannel do
   @spec authorized?(any(), binary()) :: boolean()
   defp authorized?(socket, account_id) do
     with %{current_user: current_user} <- socket.assigns,
-         %{account_id: acct} <- current_user do
-      acct == account_id
+         %{id: user_id, account_id: current_account_id, email: email} <- current_user do
+      Sentry.Context.set_user_context(%{
+        id: user_id,
+        email: email,
+        account_id: current_account_id
+      })
+
+      current_account_id == account_id
     else
       _ -> false
     end
