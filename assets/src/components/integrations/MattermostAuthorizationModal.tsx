@@ -34,6 +34,7 @@ const MattermostAuthorizationModal = ({
   >([]);
   const [isSaving, setSaving] = React.useState(false);
 
+  // TODO: debounce this
   const handleRefreshChannels = async (query: MattermostAuthorization) => {
     if (!query.access_token || !query.mattermost_url) {
       return;

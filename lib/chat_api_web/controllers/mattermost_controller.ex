@@ -48,31 +48,35 @@ defmodule ChatApiWeb.MattermostController do
 
   @spec channels(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def channels(conn, %{"mattermost_url" => mattermost_url, "access_token" => access_token}) do
-    authorization = %MattermostAuthorization{
-      access_token: access_token,
-      mattermost_url: mattermost_url,
-      account_id: conn.assigns.current_user.account_id,
-      user_id: conn.assigns.current_user.id
-    }
+    if is_valid_uri?(mattermost_url) do
+      authorization = %MattermostAuthorization{
+        access_token: access_token,
+        mattermost_url: mattermost_url,
+        account_id: conn.assigns.current_user.account_id,
+        user_id: conn.assigns.current_user.id
+      }
 
-    # TODO: figure out the best way to handle errors here... should we just return
-    # an empty list of channels if the call fails, or indicate that an error occurred?
-    case Mattermost.Client.list_channels(authorization) do
-      {:ok, %{body: [_ | _] = channels}} ->
-        json(conn, %{data: channels})
+      # TODO: figure out the best way to handle errors here... should we just return
+      # an empty list of channels if the call fails, or indicate that an error occurred?
+      case Mattermost.Client.list_channels(authorization) do
+        {:ok, %{body: [_ | _] = channels}} ->
+          json(conn, %{data: channels})
 
-      {:ok, %{body: %{"status_code" => status, "message" => message}}} ->
-        conn
-        |> put_status(status)
-        |> json(%{
-          error: %{
-            status: status,
-            message: message
-          }
-        })
+        {:ok, %{body: %{"status_code" => status, "message" => message}}} ->
+          conn
+          |> put_status(status)
+          |> json(%{
+            error: %{
+              status: status,
+              message: message
+            }
+          })
 
-      _ ->
-        json(conn, %{data: []})
+        _ ->
+          json(conn, %{data: []})
+      end
+    else
+      json(conn, %{data: []})
     end
   end
 
@@ -146,5 +150,16 @@ defmodule ChatApiWeb.MattermostController do
 
   defp handle_event(payload) do
     Logger.info("Unexpected payload from Mattermost: #{inspect(payload)}")
+  end
+
+  @spec is_valid_uri?(binary() | URI.t() | nil) :: boolean()
+  defp is_valid_uri?(nil), do: false
+
+  defp is_valid_uri?(str) do
+    case URI.parse(str) do
+      %URI{scheme: nil} -> false
+      %URI{host: nil} -> false
+      _uri -> true
+    end
   end
 end
