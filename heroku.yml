@@ -1,0 +1,13 @@
+setup:
+  addons:
+    - plan: heroku-postgresql
+      as: DATABASE
+build:
+  docker:
+    web: Dockerfile
+  config:
+    MIX_ENV: prod
+    SECRET_KEY_BASE: $SECRET_KEY_BASE
+    DATABASE_URL: $DATABASE_URL
+    REACT_APP_URL: $REACT_APP_URL
+    BACKEND_URL: $BACKEND_URL
