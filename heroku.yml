@@ -11,3 +11,5 @@ build:
     DATABASE_URL: $DATABASE_URL
     REACT_APP_URL: $REACT_APP_URL
     BACKEND_URL: $BACKEND_URL
+run:
+  web: mix phx.server
