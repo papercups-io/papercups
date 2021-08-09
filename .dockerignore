@@ -36,5 +36,6 @@ chat_api-*.tar
 # Heroku configuration files
 /phoenix_static_buildpack.config
 /Procfile
+heroku.yml
 
 fly.toml
