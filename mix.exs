@@ -12,7 +12,7 @@ defmodule ChatApi.MixProject do
       aliases: aliases(),
       deps: deps(),
       releases: [
-        papercups: [
+        chat_api: [
           include_executables_for: [:unix],
           applications: [chat_api: :permanent]
         ]

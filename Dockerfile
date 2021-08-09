@@ -33,7 +33,7 @@ RUN mix phx.digest priv/static
 
 WORKDIR /app
 COPY rel rel
-RUN mix release papercups
+RUN mix release chat_api
 
 FROM alpine:3.13 AS app
 RUN apk add --no-cache openssl ncurses-libs
@@ -46,7 +46,7 @@ ENV HOME=/app
 
 RUN adduser -h /app -u 1000 -s /bin/sh -D papercupsuser
 
-COPY --from=builder --chown=papercupsuser:papercupsuser /app/_build/prod/rel/papercups /app
+COPY --from=builder --chown=papercupsuser:papercupsuser /app/_build/prod/rel/chat_api /app
 COPY --from=builder --chown=papercupsuser:papercupsuser /app/priv /app/priv
 RUN chown -R papercupsuser:papercupsuser /app
 
