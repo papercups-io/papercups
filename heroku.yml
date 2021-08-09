@@ -12,4 +12,4 @@ build:
     REACT_APP_URL: $REACT_APP_URL
     BACKEND_URL: $BACKEND_URL
 run:
-  web: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && echo 'running' && /entrypoint.sh run"
+  web: sh -c "sleep 10 && /entrypoint.sh db migrate && echo 'running' && /entrypoint.sh run"
