@@ -1,5 +1,8 @@
 FROM elixir:1.11.3-alpine as builder
 
+# build step
+ARG MIX_ENV=prod
+
 RUN mkdir /app
 WORKDIR /app
 
