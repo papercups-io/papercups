@@ -8,7 +8,9 @@ defmodule ChatApi.Github.Helpers do
 
   @github_issue_regex ~r/https?:\/\/github\.com\/(?:[^\/\s]+\/)+(?:issues\/\d+)/
 
-  @spec extract_github_issue_links(binary()) :: [String.t()]
+  @spec extract_github_issue_links(binary() | nil) :: [String.t()]
+  def extract_github_issue_links(nil), do: []
+
   def extract_github_issue_links(str) do
     @github_issue_regex
     |> Regex.scan(str)

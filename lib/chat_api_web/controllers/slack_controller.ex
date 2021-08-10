@@ -198,12 +198,8 @@ defmodule ChatApiWeb.SlackController do
     Logger.debug("Payload from Slack webhook: #{inspect(payload)}")
 
     case payload do
-      %{"event" => _event, "is_ext_shared_channel" => true} ->
+      %{"event" => _event} ->
         handle_webhook_payload(payload)
-        send_resp(conn, 200, "")
-
-      %{"event" => event} ->
-        handle_webhook_event(event)
         send_resp(conn, 200, "")
 
       %{"challenge" => challenge} ->

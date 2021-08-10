@@ -15,31 +15,44 @@ defmodule ChatApi.Slack.Event do
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   @spec handle_payload(map()) :: any()
-  def handle_payload(
-        %{
-          "event" => event,
-          "team_id" => team,
-          "is_ext_shared_channel" => true
-        } = _payload
-      ) do
+
+  def handle_payload(%{
+        "event" => event,
+        "team_id" => team,
+        "is_ext_shared_channel" => true
+      }) do
     # NB: this is a bit of a hack -- we override the "team" id in the "event" payload
-    # to match the "team" where the Papercups app is installed
+    # to match the "team" where the Papercups app is installed (rather than the "team"
+    # of the external workspace, where messages may also originate from)
     event
     |> Map.merge(%{"team" => team})
     |> handle_event()
   end
 
+  def handle_payload(
+        %{
+          "event" => %{"team" => team} = event,
+          "team_id" => payload_team_id,
+          "is_ext_shared_channel" => false
+        } = payload
+      ) do
+    if payload_team_id != team do
+      Logger.error(
+        "Team IDs on Slack event payload do not match: #{inspect(payload_team_id)} #{
+          inspect(team)
+        } (#{inspect(payload)})"
+      )
+    end
+
+    handle_event(event)
+  end
+
+  def handle_payload(%{"event" => event}), do: handle_event(event)
   def handle_payload(_), do: nil
 
   @spec handle_event(map()) :: any()
   def handle_event(%{"bot_id" => _bot_id} = _event) do
     # Don't do anything on bot events for now
-    nil
-  end
-
-  def handle_event(%{"type" => "message", "text" => ""} = _event) do
-    # Don't do anything for blank messages (e.g. when only an attachment is sent)
-    # TODO: add better support for image/file attachments
     nil
   end
 

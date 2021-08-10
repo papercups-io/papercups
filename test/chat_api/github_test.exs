@@ -119,6 +119,7 @@ defmodule ChatApi.GithubTest do
 
   describe "helpers" do
     test "Github.Helpers.extract_github_issue_links/1 handles strings without GitHub issue links" do
+      assert [] = Github.Helpers.extract_github_issue_links(nil)
       assert [] = Github.Helpers.extract_github_issue_links("")
       assert [] = Github.Helpers.extract_github_issue_links("hello world")
 
