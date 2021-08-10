@@ -309,15 +309,6 @@ defmodule ChatApiWeb.SlackController do
     end
   end
 
-  @spec handle_webhook_event(map()) :: any()
-  defp handle_webhook_event(event) do
-    # TODO: figure out a better way to handle this in tests
-    case Application.get_env(:chat_api, :environment) do
-      :test -> Slack.Event.handle_event(event)
-      _ -> Task.start(fn -> Slack.Event.handle_event(event) end)
-    end
-  end
-
   # TODO: maybe it would make more sense to put these in the Slack.Notification module
   @spec send_private_channel_instructions(:reply | :support, binary()) :: any()
   defp send_private_channel_instructions(:reply, webhook_url) do
