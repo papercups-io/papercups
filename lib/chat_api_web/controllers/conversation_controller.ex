@@ -301,6 +301,7 @@ defmodule ChatApiWeb.ConversationController do
            Conversations.update_conversation(conversation, conversation_params) do
       # Broadcast updates asynchronously if these channels have been configured
       conversation
+      |> Conversations.Notification.broadcast_conversation_update_to_admin!()
       |> Conversations.Notification.notify(:slack)
       |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
 
