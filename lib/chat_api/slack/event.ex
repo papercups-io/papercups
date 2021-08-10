@@ -47,6 +47,17 @@ defmodule ChatApi.Slack.Event do
     handle_event(event)
   end
 
+  def handle_payload(%{
+        "event" => event,
+        "team_id" => team,
+        "is_ext_shared_channel" => false
+      }) do
+    # If the "team" field is missing from the "event", add the payload "team_id"
+    event
+    |> Map.merge(%{"team" => team})
+    |> handle_event()
+  end
+
   def handle_payload(%{"event" => event}), do: handle_event(event)
   def handle_payload(_), do: nil
 
