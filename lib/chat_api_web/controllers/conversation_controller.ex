@@ -383,6 +383,7 @@ defmodule ChatApiWeb.ConversationController do
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:mattermost)
       |> Messages.Notification.notify(:webhooks)
+      |> Messages.Notification.notify(:push)
 
       :ok
     end

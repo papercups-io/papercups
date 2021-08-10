@@ -125,6 +125,7 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:mentions)
+    |> Messages.Notification.notify(:push)
   end
 
   defp broadcast_new_message(message, socket) do
@@ -138,6 +139,7 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:mentions)
+    |> Messages.Notification.notify(:push)
     |> Messages.Notification.notify(:conversation_reply_email)
     |> Messages.Notification.notify(:gmail)
     |> Messages.Notification.notify(:sms)

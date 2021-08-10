@@ -267,6 +267,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     |> Messages.get_message!()
     |> Messages.Notification.broadcast_to_admin!()
     |> Messages.Notification.notify(:webhooks)
+    |> Messages.Notification.notify(:push)
     # NB: we need to make sure the messages are created in the correct order, so we set async: false
     |> Messages.Notification.notify(:slack, async: false)
     |> Messages.Notification.notify(:mattermost, async: false)

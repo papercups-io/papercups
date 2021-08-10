@@ -228,6 +228,7 @@ defmodule ChatApiWeb.GithubController do
           |> Messages.Notification.notify(:slack)
           |> Messages.Notification.notify(:mattermost)
           |> Messages.Notification.notify(:webhooks)
+          |> Messages.Notification.notify(:push)
           # Make sure conversation is re-opened if it is currently closed
           |> Messages.Helpers.handle_post_creation_hooks(%{status: "open"})
       end
