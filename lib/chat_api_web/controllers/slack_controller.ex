@@ -198,12 +198,8 @@ defmodule ChatApiWeb.SlackController do
     Logger.debug("Payload from Slack webhook: #{inspect(payload)}")
 
     case payload do
-      %{"event" => _event, "is_ext_shared_channel" => true} ->
+      %{"event" => _event} ->
         handle_webhook_payload(payload)
-        send_resp(conn, 200, "")
-
-      %{"event" => event} ->
-        handle_webhook_event(event)
         send_resp(conn, 200, "")
 
       %{"challenge" => challenge} ->
@@ -310,15 +306,6 @@ defmodule ChatApiWeb.SlackController do
     case Application.get_env(:chat_api, :environment) do
       :test -> Slack.Event.handle_payload(payload)
       _ -> Task.start(fn -> Slack.Event.handle_payload(payload) end)
-    end
-  end
-
-  @spec handle_webhook_event(map()) :: any()
-  defp handle_webhook_event(event) do
-    # TODO: figure out a better way to handle this in tests
-    case Application.get_env(:chat_api, :environment) do
-      :test -> Slack.Event.handle_event(event)
-      _ -> Task.start(fn -> Slack.Event.handle_event(event) end)
     end
   end
 

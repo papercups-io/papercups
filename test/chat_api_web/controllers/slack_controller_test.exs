@@ -572,6 +572,43 @@ defmodule ChatApiWeb.SlackControllerTest do
       end
     end
 
+    test "uses the payload team_id when the event is missing a team field", %{
+      conn: conn,
+      account: account,
+      auth: auth,
+      thread: thread
+    } do
+      event_params = %{
+        "type" => "message",
+        "text" => "hello world #{System.unique_integer([:positive])}",
+        "channel" => @slack_channel,
+        "user" => auth.authed_user_id,
+        "thread_ts" => thread.slack_thread_ts,
+        "ts" => "1234.56789"
+      }
+
+      slack_user = %{
+        "real_name" => "Test User",
+        "tz" => "America/New_York",
+        "profile" => %{"email" => @email}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end,
+        send_message: fn _, _ -> {:ok, nil} end do
+        post(conn, Routes.slack_path(conn, :webhook), %{
+          "event" => event_params,
+          "is_ext_shared_channel" => false,
+          "team_id" => @slack_team
+        })
+
+        assert [%{body: body, source: "slack"}] = Messages.list_messages(account.id)
+        assert body == event_params["text"]
+      end
+    end
+
     test "sending a new message event to the webhook from an unknown channel", %{
       conn: conn,
       account: account
