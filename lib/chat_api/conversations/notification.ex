@@ -81,4 +81,14 @@ defmodule ChatApi.Conversations.Notification do
 
     conversation
   end
+
+  def notify(%Conversation{account_id: account_id} = conversation, :mobile_badge_count, _opts) do
+    Logger.info("Sending conversation notification: :mobile_badge_count")
+
+    %{account_id: account_id}
+    |> ChatApi.Workers.SendPushNotifications.new()
+    |> Oban.insert()
+
+    conversation
+  end
 end

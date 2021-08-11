@@ -35,8 +35,11 @@ defmodule ChatApiWeb.NotificationChannel do
 
     case Conversations.mark_conversation_read(id) do
       {:ok, conversation} ->
-        Conversations.Notification.notify(conversation, :webhooks, event: "conversation:updated")
         {_, nil} = Conversations.mark_mentions_seen(id, socket.assigns.current_user.id)
+
+        conversation
+        |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
+        |> Conversations.Notification.notify(:mobile_badge_count)
 
         {:reply, :ok, socket}
 
