@@ -292,7 +292,7 @@ defmodule ChatApi.Users do
     UserSettings.changeset(user_settings, attrs)
   end
 
-  @spec list_users_for_push_notification(binary(), integer() | nil) :: any
+  @spec list_users_for_push_notification(binary(), integer() | nil) :: [User.t()]
   def list_users_for_push_notification(account_id, excluded_user_id \\ nil) do
     User
     |> join(:left, [u], s in assoc(u, :settings))
