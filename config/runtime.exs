@@ -50,7 +50,6 @@ if config_env() === :prod do
       _ -> true
     end
 
-
   # Configure your database
   config :chat_api, ChatApi.Repo,
     ssl: require_db_ssl,
