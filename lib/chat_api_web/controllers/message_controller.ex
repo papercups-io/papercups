@@ -186,6 +186,7 @@ defmodule ChatApiWeb.MessageController do
     |> Messages.Notification.notify(:slack_company_channel)
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
+    |> Messages.Notification.notify(:push)
     |> Messages.Notification.notify(:conversation_reply_email)
     |> Messages.Notification.notify(:gmail)
     |> Messages.Notification.notify(:sms)

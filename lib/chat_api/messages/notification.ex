@@ -104,6 +104,16 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  def notify(%Message{id: message_id} = message, :push, _opts) do
+    Logger.info("Sending message notification: :push (message #{inspect(message.id)})")
+
+    %{message_id: message_id}
+    |> ChatApi.Workers.SendPushNotifications.new()
+    |> Oban.insert()
+
+    message
+  end
+
   def notify(%Message{} = message, :new_message_email, opts) do
     Logger.info(
       "Sending message notification: :new_message_email (message #{inspect(message.id)})"

@@ -154,6 +154,7 @@ defmodule ChatApiWeb.ConversationChannel do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:new_message_email)
     |> Messages.Notification.notify(:webhooks)
+    |> Messages.Notification.notify(:push)
     |> Messages.Helpers.handle_post_creation_hooks()
   end
 

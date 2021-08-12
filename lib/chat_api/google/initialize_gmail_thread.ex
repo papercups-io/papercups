@@ -75,6 +75,7 @@ defmodule ChatApi.Google.InitializeGmailThread do
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:mattermost)
       |> Messages.Notification.notify(:webhooks)
+      |> Messages.Notification.notify(:push)
     end
   end
 

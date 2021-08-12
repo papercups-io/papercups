@@ -31,7 +31,7 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
-  @spec count_conversations_where(binary(), map()) :: [Conversation.t()]
+  @spec count_conversations_where(binary(), map()) :: integer()
   def count_conversations_where(account_id, filters \\ %{}) do
     Conversation
     |> select([c], count(c.id, :distinct))

@@ -15,9 +15,9 @@ defmodule ChatApiWeb.UserSettingsController do
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"user_settings" => user_settings_params}) do
-    with %{id: user_id} <- conn.assigns.current_user do
-      params = Map.merge(user_settings_params, %{"user_id" => user_id})
-      {:ok, user_settings} = Users.update_user_settings(user_id, params)
+    with %{id: user_id} <- conn.assigns.current_user,
+         params <- Map.merge(user_settings_params, %{"user_id" => user_id}),
+         {:ok, user_settings} <- Users.update_user_settings(user_id, params) do
       render(conn, "show.json", user_settings: user_settings)
     end
   end

@@ -35,8 +35,11 @@ defmodule ChatApiWeb.NotificationChannel do
 
     case Conversations.mark_conversation_read(id) do
       {:ok, conversation} ->
-        Conversations.Notification.notify(conversation, :webhooks, event: "conversation:updated")
         {_, nil} = Conversations.mark_mentions_seen(id, socket.assigns.current_user.id)
+
+        conversation
+        |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
+        |> Conversations.Notification.notify(:mobile_badge_count)
 
         {:reply, :ok, socket}
 
@@ -125,6 +128,7 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:mentions)
+    |> Messages.Notification.notify(:push)
   end
 
   defp broadcast_new_message(message, socket) do
@@ -138,6 +142,7 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:mentions)
+    |> Messages.Notification.notify(:push)
     |> Messages.Notification.notify(:conversation_reply_email)
     |> Messages.Notification.notify(:gmail)
     |> Messages.Notification.notify(:sms)
