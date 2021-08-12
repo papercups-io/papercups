@@ -47,7 +47,7 @@
       "required": false
     }
   },
-  "addons": ["heroku-postgresql"],
+  "addons": ["heroku-postgresql", "heroku-redis"],
   "scripts": {
     "postdeploy": "POOL_SIZE=2 mix ecto.migrate"
   },
