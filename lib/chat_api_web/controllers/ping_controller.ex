@@ -41,6 +41,64 @@ defmodule ChatApiWeb.PingController do
     end
   end
 
+  # TODO: move into "sql_controller" or "query_controller" or something like that
+  @spec sql(Conn.t(), map()) :: Conn.t()
+  def sql(conn, %{"credentials" => credentials, "query" => query} = params) do
+    data = Map.get(params, "data", [])
+
+    db_opts =
+      Enum.filter(
+        %{
+          hostname: Map.get(credentials, "hostname", "localhost"),
+          database: Map.get(credentials, "database", "chat_api_dev"),
+          username: Map.get(credentials, "username"),
+          password: Map.get(credentials, "password"),
+          ssl: Map.get(credentials, "ssl")
+        },
+        fn
+          {_k, nil} -> false
+          {_k, ""} -> false
+          _ -> true
+        end
+      )
+
+    with {:ok, pid} <- Postgrex.start_link(db_opts),
+         {:ok, %Postgrex.Result{columns: columns, rows: rows}} <- Postgrex.query(pid, query, data) do
+      json(conn, %{
+        data: format_sql_results(columns, rows)
+      })
+    else
+      {:error, e} ->
+        conn
+        |> put_status(400)
+        |> json(%{
+          error: %{
+            status: 400,
+            message: e.description
+          }
+        })
+    end
+  end
+
+  defp format_sql_results(columns, rows) do
+    rows
+    |> Enum.map(fn r ->
+      Enum.map(r, fn item ->
+        if String.valid?(item) do
+          item
+        else
+          case Ecto.UUID.cast(item) do
+            {:ok, uuid} -> uuid
+            _ -> item
+          end
+        end
+      end)
+    end)
+    |> Enum.map(fn r ->
+      columns |> Enum.zip(r) |> Map.new()
+    end)
+  end
+
   defp atomize_keys(map) do
     Map.new(map, fn {k, v} ->
       value =

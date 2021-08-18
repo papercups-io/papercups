@@ -88,6 +88,7 @@ import NotesOverview from './notes/NotesOverview';
 import PersonalApiKeysPage from './developers/PersonalApiKeysPage';
 import EventSubscriptionsPage from './developers/EventSubscriptionsPage';
 import EmailTemplateBuilder from './developers/EmailTemplateBuilder';
+import SqlRunner from './developers/SqlRunner';
 import LambdaDetailsPage from './lambdas/LambdaDetailsPage';
 import LambdasOverview from './lambdas/LambdasOverview';
 import CannedResponsesOverview from './canned-responses/CannedResponsesOverview';
@@ -564,6 +565,7 @@ const Dashboard = (props: RouteComponentProps) => {
             path="/developers/_templates"
             component={EmailTemplateBuilder}
           />
+          <Route path="/developers/_sql" component={SqlRunner} />
           <Route path="/functions/:id" component={LambdaDetailsPage} />
           <Route path="/functions" component={LambdasOverview} />
           <Route path="/reporting" component={ReportingDashboard} />

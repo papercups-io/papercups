@@ -5,7 +5,7 @@ import Editor, {EditorProps, BeforeMount, Monaco} from '@monaco-editor/react';
 type Props = {onSave?: (code: string) => void} & EditorProps;
 
 export const MonacoEditor = (props: Props) => {
-  const {onMount, onSave, ...rest} = props;
+  const {options = {}, onMount, onSave, ...rest} = props;
 
   const handleEditorDidMount = (editor: any, monaco: Monaco) => {
     if (onMount) {
@@ -56,6 +56,7 @@ export const MonacoEditor = (props: Props) => {
           }}
         ></Flex>
       }
+      options={{tabSize: 2, minimap: {enabled: false}, ...options}}
       onChange={handleEditorChange}
       onMount={handleEditorDidMount}
       beforeMount={handleEditorWillMount}

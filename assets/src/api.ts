@@ -2323,3 +2323,15 @@ export const renderEmailTemplate = async (
     .send(params)
     .then((res) => res.body.data);
 };
+
+export const runSqlQuery = async (params: any, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/sql`)
+    .set('Authorization', token)
+    .send(params)
+    .then((res) => res.body.data);
+};

@@ -198,7 +198,6 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
               width="100%"
               defaultLanguage="json"
               defaultValue={JSON.stringify(this.state.json, null, 2)}
-              options={{tabSize: 2}}
               onChange={this.handleUpdateJson}
             />
           </Box>
@@ -209,7 +208,6 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
                 width="100%"
                 defaultLanguage="javascript"
                 defaultValue={DEFAULT_CODE_VALUE}
-                options={{tabSize: 2}}
                 onMount={this.handleEditorMounted}
                 onValidate={this.handleUpdateReactIframe}
                 onSave={this.handleUpdateReactIframe}
