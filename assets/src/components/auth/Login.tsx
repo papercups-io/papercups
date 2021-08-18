@@ -6,8 +6,13 @@ import {Button, Input, Text, Title} from '../common';
 import {useAuth} from './AuthProvider';
 import logger from '../../logger';
 
-type Props = RouteComponentProps & {
-  onSubmit: (params: any) => Promise<void>;
+type Props = {
+  query: string;
+  onSubmit: (
+    email: string,
+    password: string,
+    redirect: string
+  ) => Promise<void>;
 };
 type State = {
   loading: boolean;
@@ -17,7 +22,7 @@ type State = {
   redirect: string;
 };
 
-class Login extends React.Component<Props, State> {
+export class Login extends React.Component<Props, State> {
   state: State = {
     loading: false,
     email: '',
@@ -27,7 +32,7 @@ class Login extends React.Component<Props, State> {
   };
 
   componentDidMount() {
-    const {redirect = '/conversations'} = qs.parse(this.props.location.search);
+    const {redirect = '/conversations'} = qs.parse(this.props.query);
 
     this.setState({redirect: String(redirect)});
   }
@@ -47,20 +52,16 @@ class Login extends React.Component<Props, State> {
     const {email, password, redirect} = this.state;
 
     // TODO: handle login through API
-    this.props
-      .onSubmit({email, password})
-      .then(() => this.props.history.push(redirect))
-      .catch((err) => {
-        logger.error('Error!', err);
-        const error =
-          err.response?.body?.error?.message || 'Invalid credentials';
+    this.props.onSubmit(email, password, redirect).catch((err) => {
+      logger.error('Error!', err);
+      const error = err.response?.body?.error?.message || 'Invalid credentials';
 
-        this.setState({error, loading: false});
-      });
+      this.setState({error, loading: false});
+    });
   };
 
   render() {
-    const {location} = this.props;
+    const {query} = this.props;
     const {loading, email, password, error} = this.state;
 
     return (
@@ -121,7 +122,7 @@ class Login extends React.Component<Props, State> {
 
             <Box mt={error ? 3 : 4}>
               Don't have an account?{' '}
-              <Link to={`/register${location.search}`}>Sign up!</Link>
+              <Link to={`/register${query}`}>Sign up!</Link>
             </Box>
             <Box my={3}>
               <Link to="/reset-password">Forgot your password?</Link>
@@ -136,7 +137,17 @@ class Login extends React.Component<Props, State> {
 const LoginPage = (props: RouteComponentProps) => {
   const auth = useAuth();
 
-  return <Login {...props} onSubmit={auth.login} />;
+  const handleSubmit = async (
+    email: string,
+    password: string,
+    redirect: string
+  ) => {
+    return auth
+      .login({email, password})
+      .then(() => props.history.push(redirect));
+  };
+
+  return <Login query={props.location.search} onSubmit={handleSubmit} />;
 };
 
 export default LoginPage;

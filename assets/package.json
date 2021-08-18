@@ -65,10 +65,22 @@
     "eject": "react-scripts eject",
     "deploy": "npm run build",
     "prettier": "prettier --write 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
-    "prettier:check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
+    "prettier:check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
+    "storybook": "start-storybook -p 6006 -s public",
+    "build-storybook": "build-storybook -s public"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "react-app",
+    "overrides": [
+      {
+        "files": [
+          "**/*.stories.*"
+        ],
+        "rules": {
+          "import/no-anonymous-default-export": "off"
+        }
+      }
+    ]
   },
   "husky": {
     "hooks": {
@@ -98,6 +110,12 @@
   },
   "proxy": "http://localhost:4000",
   "devDependencies": {
+    "@storybook/addon-actions": "^6.3.7",
+    "@storybook/addon-essentials": "^6.3.7",
+    "@storybook/addon-links": "^6.3.7",
+    "@storybook/node-logger": "^6.3.7",
+    "@storybook/preset-create-react-app": "^3.2.0",
+    "@storybook/react": "^6.3.7",
     "@types/jszip": "^3.4.1",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
