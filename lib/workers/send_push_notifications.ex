@@ -52,7 +52,8 @@ defmodule ChatApi.Workers.SendPushNotifications do
             "customer_id" => message.customer_id,
             "message_id" => message.id,
             "user_id" => message.user_id,
-            "inserted_at" => message.inserted_at
+            "inserted_at" => message.inserted_at,
+            "url" => "messages/#{message.conversation_id}"
           },
           # TODO: how should we handle this?
           badge:
