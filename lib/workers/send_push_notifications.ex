@@ -46,6 +46,15 @@ defmodule ChatApi.Workers.SendPushNotifications do
           to: user.settings.expo_push_token,
           title: format_notification_title(message),
           body: body,
+          data: %{
+            "account_id" => message.account_id,
+            "conversation_id" => message.conversation_id,
+            "customer_id" => message.customer_id,
+            "message_id" => message.id,
+            "user_id" => message.user_id,
+            "inserted_at" => message.inserted_at,
+            "url" => "messages/#{message.conversation_id}"
+          },
           # TODO: how should we handle this?
           badge:
             Conversations.count_conversations_where(account_id, %{
