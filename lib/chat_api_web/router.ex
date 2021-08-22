@@ -173,6 +173,7 @@ defmodule ChatApiWeb.Router do
     post("/conversations/:conversation_id/share", ConversationController, :share)
     post("/conversations/:conversation_id/tags", ConversationController, :add_tag)
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
+    post("/customers/import", CustomerController, :import)
     post("/customers/:customer_id/tags", CustomerController, :add_tag)
     delete("/customers/:customer_id/tags/:tag_id", CustomerController, :remove_tag)
     post("/customers/:customer_id/issues", CustomerController, :link_issue)

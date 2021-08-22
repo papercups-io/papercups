@@ -230,6 +230,24 @@ export const deleteCustomer = async (id: string, token = getAccessToken()) => {
     .then((res) => res.body);
 };
 
+export const importCustomers = async (
+  params: {
+    customers: Array<any>;
+    dry?: boolean;
+  },
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/customers/import`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const createNewCompany = async (
   params: Record<string, any>,
   token = getAccessToken()

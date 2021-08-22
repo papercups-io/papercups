@@ -68,6 +68,16 @@ defmodule ChatApiWeb.PingController do
         data: format_sql_results(columns, rows)
       })
     else
+      {:error, %DBConnection.ConnectionError{} = e} ->
+        conn
+        |> put_status(400)
+        |> json(%{
+          error: %{
+            status: 400,
+            message: e.message
+          }
+        })
+
       {:error, e} ->
         conn
         |> put_status(400)

@@ -192,7 +192,10 @@ defmodule ChatApi.Customers do
         |> create_customer()
 
       customer ->
-        update_customer(customer, attrs)
+        metadata = Map.get(attrs, "metadata", %{})
+        updates = Map.merge(attrs, %{"metadata" => merge_updated_metadata(customer, metadata)})
+
+        update_customer(customer, updates)
     end
   end
 
@@ -239,7 +242,10 @@ defmodule ChatApi.Customers do
         |> create_customer()
 
       customer ->
-        update_customer(customer, attrs)
+        metadata = Map.get(attrs, "metadata", %{})
+        updates = Map.merge(attrs, %{"metadata" => merge_updated_metadata(customer, metadata)})
+
+        update_customer(customer, updates)
     end
   end
 
@@ -330,6 +336,14 @@ defmodule ChatApi.Customers do
   end
 
   def sanitize_ad_hoc_metadata(metadata), do: metadata
+
+  @spec merge_updated_metadata(Customer.t(), map()) :: map()
+  def merge_updated_metadata(_, metadata \\ %{})
+
+  def merge_updated_metadata(%Customer{metadata: existing}, metadata) when is_map(existing),
+    do: Map.merge(existing, metadata)
+
+  def merge_updated_metadata(_, metadata), do: metadata
 
   @spec delete_customer(Customer.t()) :: {:ok, Customer.t()} | {:error, Ecto.Changeset.t()}
   def delete_customer(%Customer{} = customer) do

@@ -47,10 +47,20 @@ const DynamicTable = ({
     };
   });
 
+  const formatted = data.map((item, idx) => {
+    if (item.key) {
+      return item;
+    } else if (item.id) {
+      return {...item, key: item.id};
+    } else {
+      return {...item, key: idx};
+    }
+  });
+
   return (
     <Table
       loading={loading}
-      dataSource={data}
+      dataSource={formatted}
       columns={columns}
       scroll={{x: '100%'}}
     />

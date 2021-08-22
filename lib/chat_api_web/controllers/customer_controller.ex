@@ -3,6 +3,8 @@ defmodule ChatApiWeb.CustomerController do
 
   require Logger
 
+  alias Ecto.Changeset
+  alias ChatApiWeb.{ErrorHelpers, CustomerView}
   alias ChatApi.{Accounts, Customers}
   alias ChatApi.Customers.Customer
 
@@ -59,6 +61,26 @@ defmodule ChatApiWeb.CustomerController do
       |> put_resp_header("location", Routes.customer_path(conn, :show, customer))
       |> render("show.json", customer: customer)
     end
+  end
+
+  def import(conn, %{"customers" => customers, "dry" => true}) when is_list(customers) do
+    account_id = conn.assigns.current_user.account_id
+
+    json(conn, %{
+      data: prepare_importable_customers(customers, account_id)
+    })
+  end
+
+  def import(conn, %{"customers" => customers}) when is_list(customers) do
+    account_id = conn.assigns.current_user.account_id
+
+    response =
+      customers
+      |> prepare_importable_customers(account_id)
+      |> perform_customers_import(account_id)
+      |> IO.inspect(label: "Imported customers")
+
+    json(conn, response)
   end
 
   @spec show(Plug.Conn.t(), map) :: Plug.Conn.t()
@@ -209,6 +231,68 @@ defmodule ChatApiWeb.CustomerController do
   @spec resp_format(map()) :: String.t()
   defp resp_format(%{"format" => "csv"}), do: "csv"
   defp resp_format(_), do: "json"
+
+  defp prepare_importable_customers(customers, account_id) do
+    customers
+    |> Stream.map(fn
+      %{"id" => external_id} = customer ->
+        customer
+        |> Map.delete("id")
+        |> Map.put("external_id", external_id)
+        |> Customers.sanitize_metadata()
+
+      customer ->
+        customer
+    end)
+    |> Enum.map(fn params ->
+      changes = Customer.changeset(%Customer{}, params).changes
+      valid_keys = changes |> Map.keys() |> Enum.map(&to_string/1)
+
+      params
+      |> Map.take(valid_keys)
+      |> Map.merge(%{
+        "account_id" => account_id,
+        "metadata" => Map.drop(params, valid_keys)
+      })
+    end)
+  end
+
+  defp perform_customers_import(customers, account_id) do
+    customers
+    |> Enum.map(fn customer ->
+      IO.inspect(customer, label: "Creating or updating...")
+
+      case customer do
+        %{"email" => email, "account_id" => ^account_id} ->
+          Customers.create_or_update_by_email(email, account_id, customer)
+
+        %{"external_id" => external_id, "account_id" => ^account_id} ->
+          Customers.create_or_update_by_external_id(external_id, account_id, customer)
+
+        %{"account_id" => ^account_id} ->
+          Customers.create_customer(customer)
+
+        _ ->
+          {:error, "Invalid customer #{inspect(customer)}"}
+      end
+    end)
+    |> Enum.group_by(
+      fn
+        {:ok, _} -> :data
+        {:error, _} -> :errors
+      end,
+      fn
+        {:ok, customer} ->
+          CustomerView.render("customer.json", customer: customer)
+
+        {:error, %Ecto.Changeset{} = changeset} ->
+          Changeset.traverse_errors(changeset, &ErrorHelpers.translate_error/1)
+
+        {:error, error} ->
+          error
+      end
+    )
+  end
 
   @spec send_account_not_found_error(Plug.Conn.t(), binary()) :: Plug.Conn.t()
   defp send_account_not_found_error(conn, account_id) do
