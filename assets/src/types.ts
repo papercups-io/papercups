@@ -117,6 +117,9 @@ export type Message = {
   metadata?: any;
 };
 
+// TODO
+export type MessageTemplate = any;
+
 export type FileUpload = {
   id: string;
   filename: string;

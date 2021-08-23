@@ -259,17 +259,18 @@ defmodule ChatApiWeb.CustomerController do
 
   defp perform_customers_import(customers, account_id) do
     customers
+    |> Enum.map(&atomize_keys/1)
     |> Enum.map(fn customer ->
       IO.inspect(customer, label: "Creating or updating...")
 
       case customer do
-        %{"email" => email, "account_id" => ^account_id} ->
+        %{email: email, account_id: ^account_id} ->
           Customers.create_or_update_by_email(email, account_id, customer)
 
-        %{"external_id" => external_id, "account_id" => ^account_id} ->
+        %{external_id: external_id, account_id: ^account_id} ->
           Customers.create_or_update_by_external_id(external_id, account_id, customer)
 
-        %{"account_id" => ^account_id} ->
+        %{account_id: ^account_id} ->
           Customers.create_customer(customer)
 
         _ ->
@@ -313,6 +314,18 @@ defmodule ChatApiWeb.CustomerController do
       x when x == "1" or x == "true" -> true
       _ -> false
     end
+  end
+
+  defp atomize_keys(map) do
+    Map.new(map, fn {k, v} ->
+      value =
+        case v do
+          m when is_map(m) -> atomize_keys(m)
+          v -> v
+        end
+
+      {String.to_atom(k), value}
+    end)
   end
 
   defp format_pagination_options(params) do

@@ -7,11 +7,15 @@ import DynamicTable from './DynamicTable';
 import logger from '../../logger';
 
 const DEFAULT_SQL_VALUE = `
-select u.id, u.email, count(m.id) as num_messages
-  from users u
-  join messages m on m.user_id = u.id
-  group by u.id
-  order by num_messages desc;
+-- select u.id, u.email, count(m.id) as num_messages
+--   from users u
+--   join messages m on m.user_id = u.id
+--   group by u.id
+--   order by num_messages desc;
+
+select u.email, p.display_name as name
+  from users u join user_profiles p on u.id = p.user_id
+  where u.id = 1;
 `;
 
 export class SqlRunner extends React.Component<any, any> {
@@ -35,9 +39,10 @@ export class SqlRunner extends React.Component<any, any> {
   handleImportCustomers = async () => {
     try {
       const {results = []} = this.state;
+      const isDryRun = false; // TODO: make this configurable
       const {data: customers} = await API.importCustomers({
         customers: results,
-        dry: true,
+        dry: isDryRun,
       });
 
       notification.success({
@@ -45,6 +50,8 @@ export class SqlRunner extends React.Component<any, any> {
         description: `${customers.length} customers successfully imported.`,
         duration: 10, // 10 seconds
       });
+
+      return customers;
     } catch (err) {
       console.error('Failed to import customers:', err);
     }
@@ -77,6 +84,25 @@ export class SqlRunner extends React.Component<any, any> {
       logger.error('Failed to run query:', err);
     } finally {
       this.setState({running: false});
+    }
+  };
+
+  handleSendEmails = async () => {
+    try {
+      const customers = await this.handleImportCustomers();
+      console.log('Sending to:', customers);
+
+      const customerIds = customers.map((c: any) => c.id);
+      // TODO: remove this after testing
+      const templateId = 'a3d152c1-37cf-4408-87fd-b14125717ed7';
+      const result = await API.sendMessageTemplateEmail(
+        templateId,
+        customerIds
+      );
+
+      console.log('Sent!', result);
+    } catch (err) {
+      logger.error('Failed to send emails!', err);
     }
   };
 
@@ -152,26 +178,31 @@ export class SqlRunner extends React.Component<any, any> {
         </Box>
 
         <Box py={3}>
-          <Flex sx={{justifyContent: 'flex-end'}}>
-            {/* TODO: make it possible to import contacts? */}
-            <Box mr={2}>
-              <Button
-                disabled={this.state.running}
-                onClick={this.handleImportCustomers}
-              >
-                Import contacts
-              </Button>
-            </Box>
+          <Flex sx={{justifyContent: 'space-between'}}>
+            <Button type="primary" onClick={this.handleSendEmails}>
+              Send emails
+            </Button>
 
-            <Box>
-              <Button
-                type="primary"
-                loading={this.state.running}
-                onClick={this.handleRunSql}
-              >
-                Run query
-              </Button>
-            </Box>
+            <Flex>
+              <Box mr={2}>
+                <Button
+                  disabled={this.state.running}
+                  onClick={this.handleImportCustomers}
+                >
+                  Import contacts
+                </Button>
+              </Box>
+
+              <Box>
+                <Button
+                  type="primary"
+                  loading={this.state.running}
+                  onClick={this.handleRunSql}
+                >
+                  Run query
+                </Button>
+              </Box>
+            </Flex>
           </Flex>
 
           <Box my={4}>

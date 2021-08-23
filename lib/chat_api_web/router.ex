@@ -163,6 +163,7 @@ defmodule ChatApiWeb.Router do
     resources("/lambdas", LambdaController, except: [:new, :edit])
     resources("/forwarding_addresses", ForwardingAddressController, except: [:new, :edit])
     resources("/inboxes", InboxController, except: [:new, :edit])
+    resources("/message_templates", MessageTemplateController, except: [:new, :edit])
 
     post("/lambdas/:id/deploy", LambdaController, :deploy)
     post("/lambdas/:id/invoke", LambdaController, :invoke)
@@ -179,6 +180,7 @@ defmodule ChatApiWeb.Router do
     post("/customers/:customer_id/issues", CustomerController, :link_issue)
     delete("/customers/:customer_id/issues/:issue_id", CustomerController, :unlink_issue)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
+    post("/message_templates/:id/send", MessageTemplateController, :send)
 
     post("/admin/notifications", AdminNotificationController, :create)
   end

@@ -3,7 +3,7 @@ import {renderToStaticMarkup} from 'react-dom/server';
 import {Box, Flex} from 'theme-ui';
 // @ts-ignore
 import {generateElement} from 'react-live';
-import {MarkdownRenderer} from '../common';
+import {Button, MarkdownRenderer} from '../common';
 import MonacoEditor from './MonacoEditor';
 import {getIframeContents} from './email/html';
 import {
@@ -74,7 +74,14 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
   iframe: HTMLIFrameElement | null = null;
   monaco: any | null = null;
 
-  state = {mode: 'react', json: {name: 'Alex', company: 'Papercups'}};
+  state = {
+    mode: 'react',
+    text: '',
+    react: DEFAULT_CODE_VALUE,
+    markdown: EXAMPLE_MARKDOWN,
+    html: '',
+    json: {name: 'Alex', company: 'Papercups'},
+  };
 
   handleUpdateJson = (code?: string) => {
     if (!code) {
@@ -86,6 +93,14 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
     } catch (e) {
       //
     }
+  };
+
+  getHtmlInnerText = (html: string) => {
+    const el = document.createElement('html');
+    el.innerHTML = html;
+    const [body] = el.getElementsByTagName('body');
+    // TODO: figure out a way to preserve whitespace better (e.g. line breaks between paragraphs)
+    return body && body.innerText ? body.innerText.trim() : '';
   };
 
   handleUpdateReactIframe = async () => {
@@ -124,6 +139,12 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
       doc.open();
       doc.write(rendered);
       doc.close();
+
+      this.setState({
+        react: code,
+        html: contents,
+        text: this.getHtmlInnerText(contents),
+      });
     } catch (e) {
       logger.error(e);
     }
@@ -167,6 +188,12 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
       doc.open();
       doc.write(rendered);
       doc.close();
+
+      this.setState({
+        markdown: code,
+        html: contents,
+        text: this.getHtmlInnerText(contents),
+      });
     } catch (e) {
       logger.error(e);
     }
@@ -185,6 +212,27 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
       this.handleUpdateReactIframe();
     } else {
       this.handleUpdateMarkdownIframe();
+    }
+  };
+
+  handleSaveTemplate = async () => {
+    const {mode, react, markdown, text, html} = this.state;
+
+    if (mode === 'react') {
+      const result = await API.createMessageTemplate({
+        name: 'Test template',
+        plain_text: text,
+        raw_html: html,
+        react_js: react,
+      });
+
+      console.log('Result:', result);
+    } else {
+      await API.createMessageTemplate({
+        markdown,
+        plain_text: text,
+        raw_html: html,
+      });
     }
   };
 
@@ -227,13 +275,18 @@ export class EmailTemplateBuilder extends React.Component<any, any> {
             )}
           </Box>
         </Flex>
-        <Box sx={{flex: 1.2}}>
-          <iframe
-            title="email"
-            style={{height: '100%', width: '100%', border: 'none'}}
-            ref={(el) => (this.iframe = el)}
-          />
-        </Box>
+        <Flex sx={{flex: 1.2, flexDirection: 'column'}}>
+          <Flex p={2} sx={{justifyContent: 'flex-end'}}>
+            <Button onClick={this.handleSaveTemplate}>Save template</Button>
+          </Flex>
+          <Box sx={{flex: 1}}>
+            <iframe
+              title="email"
+              style={{height: '100%', width: '100%', border: 'none'}}
+              ref={(el) => (this.iframe = el)}
+            />
+          </Box>
+        </Flex>
       </Flex>
     );
   }

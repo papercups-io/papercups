@@ -14,6 +14,7 @@ import {
   Issue,
   Lambda,
   Message,
+  MessageTemplate,
   Tag,
   User,
   WidgetSettings,
@@ -2226,6 +2227,78 @@ export const invokeLambda = async (
   return request
     .post(`/api/lambdas/${id}/invoke`)
     .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchMessageTemplates = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/message_templates`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createMessageTemplate = async (
+  params: Partial<MessageTemplate>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/message_templates`)
+    .send({message_template: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateMessageTemplate = async (
+  id: string,
+  updates: Partial<MessageTemplate>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/message_templates/${id}`)
+    .send({message_template: updates})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteMessageTemplate = async (
+  id: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/message_templates/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
+export const sendMessageTemplateEmail = async (
+  id: string,
+  customerIds: Array<string>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/message_templates/${id}/send`)
+    .send({customers: customerIds})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

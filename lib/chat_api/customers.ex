@@ -192,8 +192,8 @@ defmodule ChatApi.Customers do
         |> create_customer()
 
       customer ->
-        metadata = Map.get(attrs, "metadata", %{})
-        updates = Map.merge(attrs, %{"metadata" => merge_updated_metadata(customer, metadata)})
+        metadata = Map.get(attrs, :metadata, %{})
+        updates = Map.merge(attrs, %{metadata: merge_updated_metadata(customer, metadata)})
 
         update_customer(customer, updates)
     end
@@ -242,8 +242,8 @@ defmodule ChatApi.Customers do
         |> create_customer()
 
       customer ->
-        metadata = Map.get(attrs, "metadata", %{})
-        updates = Map.merge(attrs, %{"metadata" => merge_updated_metadata(customer, metadata)})
+        metadata = Map.get(attrs, :metadata, %{})
+        updates = Map.merge(attrs, %{metadata: merge_updated_metadata(customer, metadata)})
 
         update_customer(customer, updates)
     end

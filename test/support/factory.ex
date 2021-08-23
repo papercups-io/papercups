@@ -203,6 +203,22 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def message_template_factory do
+    %ChatApi.MessageTemplates.MessageTemplate{
+      account: build(:account),
+      name: "some name",
+      description: "some description",
+      markdown: "some _markdown_",
+      plain_text: "some plain_text",
+      raw_html: "<html>some raw_html</html>",
+      react_js: "<SomeReactJs />",
+      react_markdown: "some **react markdown**",
+      slack_markdown: "some <slack|markdown>",
+      type: "some type",
+      default_variable_values: %{}
+    }
+  end
+
   def note_factory do
     account = build(:account)
 
