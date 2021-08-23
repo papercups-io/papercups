@@ -5,7 +5,7 @@ defmodule ChatApi.BroadcastsTest do
   alias ChatApi.Broadcasts
 
   describe "companies" do
-    alias ChatApi.Broadcasts.Broadcast
+    alias ChatApi.Broadcasts.{Broadcast, BroadcastCustomer}
 
     @update_attrs %{
       name: "some updated name",
@@ -93,6 +93,62 @@ defmodule ChatApi.BroadcastsTest do
       broadcast: broadcast
     } do
       assert %Ecto.Changeset{} = Broadcasts.change_broadcast(broadcast)
+    end
+
+    test "list_broadcast_customers/1 returns a list of the broadcast customers", %{
+      account: account,
+      broadcast: broadcast
+    } do
+      customers = [
+        insert(:customer, account: account, name: "foo"),
+        insert(:customer, account: account, name: "bar"),
+        insert(:customer, account: account, name: "baz")
+      ]
+
+      assert [] = Broadcasts.list_broadcast_customers(broadcast)
+
+      customer_ids = Enum.map(customers, & &1.id)
+      Broadcasts.add_broadcast_customers(broadcast, customer_ids)
+      results = Broadcasts.list_broadcast_customers(broadcast)
+
+      assert Enum.sort(customer_ids) == results |> Enum.map(& &1.id) |> Enum.sort()
+    end
+
+    test "add_broadcast_customers/2 adds customers to a broadcast", %{
+      account: account,
+      broadcast: broadcast
+    } do
+      customers = [
+        insert(:customer, account: account, name: "foo"),
+        insert(:customer, account: account, name: "bar"),
+        insert(:customer, account: account, name: "baz")
+      ]
+
+      customer_ids = Enum.map(customers, & &1.id)
+
+      assert {3, nil} = Broadcasts.add_broadcast_customers(broadcast, customer_ids)
+    end
+
+    test "remove_broadcast_customer/2 removes a customer from a broadcast", %{
+      account: account,
+      broadcast: broadcast
+    } do
+      customer = insert(:customer, account: account, name: "foo")
+      customer_id = customer.id
+      account_id = account.id
+      broadcast_id = broadcast.id
+
+      assert {1, nil} = Broadcasts.add_broadcast_customers(broadcast, [customer.id])
+
+      assert [customer.id] ==
+               broadcast |> Broadcasts.list_broadcast_customers() |> Enum.map(& &1.id)
+
+      assert {:ok,
+              %BroadcastCustomer{
+                account_id: ^account_id,
+                broadcast_id: ^broadcast_id,
+                customer_id: ^customer_id
+              }} = Broadcasts.remove_broadcast_customer(broadcast, customer.id)
     end
   end
 end

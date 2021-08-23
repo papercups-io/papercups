@@ -4,6 +4,7 @@ defmodule ChatApi.Customers.Customer do
 
   alias ChatApi.{
     Accounts.Account,
+    Broadcasts.BroadcastCustomer,
     Companies.Company,
     Conversations.Conversation,
     Issues.CustomerIssue,
@@ -82,6 +83,8 @@ defmodule ChatApi.Customers.Customer do
     has_many(:tags, through: [:customer_tags, :tag])
     has_many(:customer_issues, CustomerIssue)
     has_many(:issues, through: [:customer_issues, :issue])
+    has_many(:broadcast_customers, BroadcastCustomer)
+    has_many(:broadcasts, through: [:broadcast_customers, :broadcast])
 
     timestamps()
   end

@@ -2,6 +2,7 @@ defmodule ChatApi.Broadcasts.Broadcast do
   use Ecto.Schema
   import Ecto.Changeset
   alias ChatApi.Accounts.Account
+  alias ChatApi.Broadcasts.BroadcastCustomer
   alias ChatApi.MessageTemplates.MessageTemplate
 
   @type t :: %__MODULE__{
@@ -31,6 +32,9 @@ defmodule ChatApi.Broadcasts.Broadcast do
 
     belongs_to(:account, Account)
     belongs_to(:message_template, MessageTemplate)
+
+    has_many(:broadcast_customers, BroadcastCustomer)
+    has_many(:customers, through: [:broadcast_customers, :customer])
 
     timestamps()
   end
