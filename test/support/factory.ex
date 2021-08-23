@@ -9,6 +9,18 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def broadcast_factory do
+    %ChatApi.Broadcasts.Broadcast{
+      account: build(:account),
+      message_template: build(:message_template),
+      name: "some name",
+      description: "some description",
+      state: "unstarted",
+      finished_at: "2010-04-17T14:00:00Z",
+      started_at: "2010-04-17T14:00:00Z"
+    }
+  end
+
   def personal_api_key_factory do
     %ChatApi.ApiKeys.PersonalApiKey{
       account: build(:account),

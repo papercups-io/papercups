@@ -34,7 +34,6 @@ defmodule ChatApiWeb.MessageTemplateController do
          {:ok, %MessageTemplate{} = message_template} <-
            message_template_params
            |> Map.merge(%{"account_id" => account_id})
-           #  |> IO.inspect(label: "!!! WTF")
            |> MessageTemplates.create_message_template() do
       conn
       |> put_status(:created)

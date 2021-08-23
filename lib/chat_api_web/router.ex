@@ -164,6 +164,7 @@ defmodule ChatApiWeb.Router do
     resources("/forwarding_addresses", ForwardingAddressController, except: [:new, :edit])
     resources("/inboxes", InboxController, except: [:new, :edit])
     resources("/message_templates", MessageTemplateController, except: [:new, :edit])
+    resources("/broadcasts", BroadcastController, except: [:new, :edit])
 
     post("/lambdas/:id/deploy", LambdaController, :deploy)
     post("/lambdas/:id/invoke", LambdaController, :invoke)

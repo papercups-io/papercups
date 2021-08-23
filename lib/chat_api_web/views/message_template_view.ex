@@ -14,6 +14,8 @@ defmodule ChatApiWeb.MessageTemplateView do
     %{
       id: message_template.id,
       object: "message_template",
+      created_at: message_template.inserted_at,
+      updated_at: message_template.updated_at,
       name: message_template.name,
       description: message_template.description,
       type: message_template.type,
