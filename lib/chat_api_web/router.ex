@@ -181,6 +181,7 @@ defmodule ChatApiWeb.Router do
     post("/customers/:customer_id/issues", CustomerController, :link_issue)
     delete("/customers/:customer_id/issues/:issue_id", CustomerController, :unlink_issue)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
+    post("/broadcasts/:id/send", BroadcastController, :send)
     get("/broadcasts/:broadcast_id/customers", BroadcastCustomerController, :index)
     post("/broadcasts/:broadcast_id/customers", BroadcastCustomerController, :create)
 
@@ -189,9 +190,6 @@ defmodule ChatApiWeb.Router do
       BroadcastCustomerController,
       :delete
     )
-
-    # TODO: deprecate
-    post("/message_templates/:id/send", MessageTemplateController, :send)
 
     post("/admin/notifications", AdminNotificationController, :create)
   end

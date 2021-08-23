@@ -27,18 +27,15 @@ defmodule ChatApiWeb.BroadcastCustomerController do
 
     conn
     |> put_view(CustomerView)
-    |> render("index.json", customers: customers)
+    |> render("list.json", customers: customers)
   end
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"customers" => customer_ids}) do
-    broadcast = conn.assigns.current_broadcast
-    customers = Broadcasts.add_broadcast_customers(broadcast, customer_ids)
-
-    conn
-    |> put_status(:created)
-    |> put_view(CustomerView)
-    |> render("index.json", customers: customers)
+    with %{current_broadcast: broadcast} <- conn.assigns,
+         {count, nil} <- Broadcasts.add_broadcast_customers(broadcast, customer_ids) do
+      json(conn, %{data: %{count: count}})
+    end
   end
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()

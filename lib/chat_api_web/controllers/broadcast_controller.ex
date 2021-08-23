@@ -1,12 +1,13 @@
 defmodule ChatApiWeb.BroadcastController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.Broadcasts
+  alias ChatApi.{Broadcasts, MessageTemplates}
   alias ChatApi.Broadcasts.Broadcast
+  alias ChatApi.MessageTemplates.MessageTemplate
 
   action_fallback ChatApiWeb.FallbackController
 
-  plug :authorize when action in [:show, :update, :delete]
+  plug :authorize when action in [:show, :update, :delete, :send]
 
   defp authorize(conn, _) do
     id = conn.path_params["id"]
@@ -62,6 +63,37 @@ defmodule ChatApiWeb.BroadcastController do
     with {:ok, %Broadcast{}} <-
            Broadcasts.delete_broadcast(conn.assigns.current_broadcast) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def send(conn, %{"id" => _id}) do
+    with %{current_user: current_user, current_broadcast: broadcast} <- conn.assigns,
+         %{account_id: account_id, email: email, id: user_id} <- current_user,
+         %{message_template_id: template_id} <- broadcast,
+         %{refresh_token: refresh_token} <-
+           ChatApi.Google.get_support_gmail_authorization(account_id, user_id),
+         %MessageTemplate{raw_html: raw_html, plain_text: plain_text} <-
+           MessageTemplates.get_message_template!(template_id) do
+      results =
+        broadcast
+        |> Broadcasts.list_broadcast_customers()
+        |> Enum.map(fn customer ->
+          {:ok, text} = MessageTemplates.render(plain_text, customer)
+          {:ok, html} = MessageTemplates.render(raw_html, customer)
+
+          # TODO: figure out the best way to handle errors here
+          # TODO: based on result, update broadcast_customer record state/sent_at fields
+          ChatApi.Google.Gmail.send_message(refresh_token, %{
+            to: customer.email,
+            from: email,
+            subject: "Test Papercups template",
+            text: text,
+            html: html
+          })
+        end)
+
+      json(conn, %{ok: true, num_sent: length(results)})
     end
   end
 end

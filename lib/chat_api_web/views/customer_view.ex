@@ -36,6 +36,10 @@ defmodule ChatApiWeb.CustomerView do
     |> CSVHelpers.dump_csv_rfc4180(@customer_csv_ordered_fields)
   end
 
+  def render("list.json", %{customers: customers}) do
+    %{data: render_many(customers, CustomerView, "customer.json")}
+  end
+
   def render("show.json", %{customer: customer}) do
     %{data: render_one(customer, CustomerView, "customer.json")}
   end

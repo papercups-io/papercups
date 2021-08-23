@@ -2231,6 +2231,93 @@ export const invokeLambda = async (
     .then((res) => res.body.data);
 };
 
+export const fetchBroadcasts = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/broadcasts`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createNewBroadcast = async (
+  params: Partial<any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/broadcast`)
+    .send({broadcast: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateBroadcast = async (
+  id: string,
+  updates: Partial<any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/broadcasts/${id}`)
+    .send({broadcast: updates})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchBroadcastCustomers = async (
+  broadcastId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/broadcasts/${broadcastId}/customers`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const addCustomersToBroadcast = async (
+  broadcastId: string,
+  customerIds: Array<string>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/broadcasts/${broadcastId}/customers`)
+    .send({customers: customerIds})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const sendBroadcastEmail = async (
+  id: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/broadcasts/${id}/send`)
+    .send({})
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const fetchMessageTemplates = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
@@ -2285,22 +2372,6 @@ export const deleteMessageTemplate = async (
     .delete(`/api/message_templates/${id}`)
     .set('Authorization', token)
     .then((res) => res.body);
-};
-
-export const sendMessageTemplateEmail = async (
-  id: string,
-  customerIds: Array<string>,
-  token = getAccessToken()
-) => {
-  if (!token) {
-    throw new Error('Invalid token!');
-  }
-
-  return request
-    .post(`/api/message_templates/${id}/send`)
-    .send({customers: customerIds})
-    .set('Authorization', token)
-    .then((res) => res.body.data);
 };
 
 export const sendAdminNotification = async (

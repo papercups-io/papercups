@@ -65,32 +65,4 @@ defmodule ChatApiWeb.MessageTemplateController do
       send_resp(conn, :no_content, "")
     end
   end
-
-  # TODO: handle this in a "broadcast_controller" or something like that
-  @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def send(conn, %{"id" => id, "customers" => customer_ids}) do
-    with %{account_id: account_id, email: email, id: user_id} <- conn.assigns.current_user,
-         %{refresh_token: refresh_token} <-
-           ChatApi.Google.get_support_gmail_authorization(account_id, user_id),
-         %MessageTemplate{raw_html: raw_html, plain_text: plain_text} <-
-           MessageTemplates.get_message_template!(id) do
-      results =
-        Enum.map(customer_ids, fn customer_id ->
-          customer = ChatApi.Customers.get_customer!(customer_id)
-          {:ok, text} = MessageTemplates.render(plain_text, customer)
-          {:ok, html} = MessageTemplates.render(raw_html, customer)
-
-          # TODO: figure out the best way to handle errors here
-          ChatApi.Google.Gmail.send_message(refresh_token, %{
-            to: customer.email,
-            from: email,
-            subject: "Test Papercups template",
-            text: text,
-            html: html
-          })
-        end)
-
-      json(conn, %{ok: true, num_sent: length(results)})
-    end
-  end
 end

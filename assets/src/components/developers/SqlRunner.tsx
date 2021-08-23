@@ -5,6 +5,7 @@ import {Button, Container, Checkbox, Input, notification} from '../common';
 import * as API from '../../api';
 import DynamicTable from './DynamicTable';
 import logger from '../../logger';
+import {Customer} from '../../types';
 
 const DEFAULT_SQL_VALUE = `
 -- select u.id, u.email, count(m.id) as num_messages
@@ -44,6 +45,12 @@ export class SqlRunner extends React.Component<any, any> {
         customers: results,
         dry: isDryRun,
       });
+
+      const customerIds = customers.map((c: Customer) => c.id);
+      // TODO: remove this after testing
+      const broadcastId = 'e0df500a-90af-4ebb-a81b-ab668fb63f38';
+
+      await API.addCustomersToBroadcast(broadcastId, customerIds);
 
       notification.success({
         message: 'Done!',
@@ -92,13 +99,15 @@ export class SqlRunner extends React.Component<any, any> {
       const customers = await this.handleImportCustomers();
       console.log('Sending to:', customers);
 
-      const customerIds = customers.map((c: any) => c.id);
+      const customerIds = customers.map((c: Customer) => c.id);
       // TODO: remove this after testing
+      const broadcastId = 'e0df500a-90af-4ebb-a81b-ab668fb63f38';
       const templateId = 'a3d152c1-37cf-4408-87fd-b14125717ed7';
-      const result = await API.sendMessageTemplateEmail(
-        templateId,
-        customerIds
-      );
+      // const broadcast = await API.updateBroadcast(broadcastId, {
+      //   message_template_id: templateId,
+      // });
+      // console.log('Broadcast:', broadcast);
+      const result = await API.sendBroadcastEmail(broadcastId);
 
       console.log('Sent!', result);
     } catch (err) {

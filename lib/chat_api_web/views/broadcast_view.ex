@@ -21,7 +21,8 @@ defmodule ChatApiWeb.BroadcastView do
       state: broadcast.state,
       started_at: broadcast.started_at,
       finished_at: broadcast.finished_at,
-      account_id: broadcast.account_id
+      account_id: broadcast.account_id,
+      message_template_id: broadcast.message_template_id
     }
   end
 end
