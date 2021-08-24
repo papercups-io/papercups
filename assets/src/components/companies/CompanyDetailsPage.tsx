@@ -9,6 +9,7 @@ import {sleep} from '../../utils';
 import Spinner from '../Spinner';
 import CustomersTableContainer from '../customers/CustomersTableContainer';
 import logger from '../../logger';
+import {generateSlackChannelUrl} from './support';
 
 const formatSlackChannel = (name: string) => {
   return name.startsWith('#') ? name : `#${name}`;
@@ -97,12 +98,11 @@ class CompanyDetailsPage extends React.Component<Props, State> {
       description,
       website_url: websiteUrl,
       external_id: externalId,
-      slack_channel_id: slackChannelId,
       slack_channel_name: slackChannelName,
-      slack_team_id: slackTeamId,
       slack_team_name: slackTeamName,
       id: companyId,
     } = company;
+    const slackChannelUrl = generateSlackChannelUrl(company);
 
     return (
       <Flex
@@ -184,16 +184,16 @@ class CompanyDetailsPage extends React.Component<Props, State> {
               </Box>
             </DetailsSectionCard>
 
-            {slackChannelId && slackChannelName && (
+            {slackChannelUrl && slackChannelName && (
               <DetailsSectionCard>
                 <Box>
                   <Text strong>Connected Slack Channel</Text>
                 </Box>
 
-                {slackTeamId && slackTeamName ? (
+                {slackTeamName ? (
                   <Text>
                     <a
-                      href={`https://slack.com/app_redirect?channel=${slackChannelId}&team=${slackTeamId}`}
+                      href={slackChannelUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -204,7 +204,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
                 ) : (
                   <Text>
                     <a
-                      href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
+                      href={slackChannelUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
