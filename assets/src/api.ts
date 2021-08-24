@@ -1292,7 +1292,7 @@ export const disableAccountUser = async (
     .then((res) => res.body.data);
 };
 
-export const setRoleAccountUser = async (
+export const setAccountUserRole = async (
   userId: number | string,
   role: string,
   token = getAccessToken()
@@ -1302,8 +1302,9 @@ export const setRoleAccountUser = async (
   }
 
   return request
-    .post(`/api/users/${userId}/${role}role`)
+    .put(`/api/users/${userId}/role`)
     .set('Authorization', token)
+    .send({role})
     .then((res) => res.body.data);
 };
 

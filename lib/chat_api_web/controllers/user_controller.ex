@@ -1,11 +1,12 @@
 defmodule ChatApiWeb.UserController do
   use ChatApiWeb, :controller
   alias ChatApi.Users
+  alias ChatApi.Users.User
   require Logger
 
   plug(
     ChatApiWeb.EnsureRolePlug,
-    :admin when action in [:disable, :enable, :admin_role, :user_role]
+    :admin when action in [:disable, :enable, :set_role]
   )
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -107,34 +108,27 @@ defmodule ChatApiWeb.UserController do
     end
   end
 
-  @spec user_role(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def user_role(conn, %{"id" => user_id}) do
-    case conn.assigns.current_user do
-      %{account_id: account_id} ->
-        {:ok, user} = user_id |> Users.find_by_id(account_id) |> Users.set_user_role()
-
-        render(conn, "show.json", user: user)
-
-      nil ->
-        conn
-        |> put_status(401)
-        |> json(%{error: %{status: 401, message: "Not authenticated"}})
+  @spec update_role(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def update_role(conn, %{"id" => user_id, "role" => "user"}) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %User{} = user <- Users.find_by_id(user_id, account_id),
+         {:ok, user} <- Users.set_user_role(user) do
+      render(conn, "show.json", user: user)
     end
   end
 
-  @spec admin_role(Plug.Conn.t(), map) :: Plug.Conn.t()
-  def admin_role(conn, %{"id" => user_id}) do
-    case conn.assigns.current_user do
-      %{account_id: account_id} ->
-        {:ok, user} = user_id |> Users.find_by_id(account_id) |> Users.set_admin_role()
-
-        render(conn, "show.json", user: user)
-
-      nil ->
-        conn
-        |> put_status(401)
-        |> json(%{error: %{status: 401, message: "Not authenticated"}})
+  def update_role(conn, %{"id" => user_id, "role" => "admin"}) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %User{} = user <- Users.find_by_id(user_id, account_id),
+         {:ok, user} <- Users.set_admin_role(user) do
+      render(conn, "show.json", user: user)
     end
+  end
+
+  def update_role(conn, _params) do
+    conn
+    |> put_status(400)
+    |> json(%{error: %{status: 400, message: "Role must be either 'user' or 'admin'"}})
   end
 
   @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()

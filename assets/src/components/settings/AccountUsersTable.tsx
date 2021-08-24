@@ -11,19 +11,23 @@ const AccountUsersTable = ({
   currentUser,
   isAdmin,
   onDisableUser,
-  onSetRole,
+  onUpdateRole,
 }: {
   loading?: boolean;
   users: Array<User>;
   currentUser: User;
   isAdmin?: boolean;
   onDisableUser: (user: User) => void;
-  onSetRole: (user: User, role: string) => void;
+  onUpdateRole: (user: User, role: string) => void;
 }) => {
   // TODO: how should we sort the users?
-  const data = users.map((u) => {
-    return { ...u, key: u.id };
-  });
+  const data = users
+    .map((u) => {
+      return {...u, key: u.id};
+    })
+    .sort((a, b) => {
+      return +new Date(a.created_at) - +new Date(b.created_at);
+    });
 
   const columns = [
     {
@@ -33,10 +37,10 @@ const AccountUsersTable = ({
       render: (value: string, record: User) => {
         if (currentUser && record.id === currentUser.id) {
           return (
-            <Flex sx={{ alignItems: 'center' }}>
+            <Flex sx={{alignItems: 'center'}}>
               <Text strong>{value}</Text>
               <SmileTwoTone
-                style={{ fontSize: 16, marginLeft: 4 }}
+                style={{fontSize: 16, marginLeft: 4}}
                 twoToneColor={colors.primary}
               />
             </Flex>
@@ -51,7 +55,7 @@ const AccountUsersTable = ({
       dataIndex: 'name',
       key: 'name',
       render: (value: string, record: User) => {
-        const { full_name: fullName, display_name: displayName } = record;
+        const {full_name: fullName, display_name: displayName} = record;
 
         return fullName || displayName || '--';
       },
@@ -75,31 +79,44 @@ const AccountUsersTable = ({
           return null;
         }
 
-        // Current user cannot disable themselves
+        // Current user cannot modify their own role
         if (currentUser && record.id === currentUser.id) {
           return null;
         }
+
+        // TODO: move logic to "actions" section below in a dropdown
+        // that handles disabling and updating user roles
+        const handleSetAdmin = () => onUpdateRole(record, 'admin');
+        const handleSetUser = () => onUpdateRole(record, 'user');
+
         const menu = (
           <Menu>
-            <Menu.Item onClick={() => onSetRole(record, "admin")}>
+            <Menu.Item key="admin" onClick={handleSetAdmin}>
               Admin
             </Menu.Item>
-            <Menu.Item onClick={() => onSetRole(record, "user")}>
+            <Menu.Item key="user" onClick={handleSetUser}>
               User
             </Menu.Item>
           </Menu>
         );
+
         switch (value) {
           case 'admin':
-            // return <Tag color={colors.green}>Admin</Tag>;
-            return <Dropdown overlay={menu}>
-              <Tag color={colors.green}>Admin <DownOutlined /></Tag>
-            </Dropdown>;
+            return (
+              <Dropdown overlay={menu}>
+                <Tag color={colors.green}>
+                  Admin <DownOutlined />
+                </Tag>
+              </Dropdown>
+            );
           case 'user':
-            // return <Tag>Member</Tag>;
-            return <Dropdown overlay={menu}>
-              <Tag>Member <DownOutlined /></Tag>
-            </Dropdown>;
+            return (
+              <Dropdown overlay={menu}>
+                <Tag>
+                  Member <DownOutlined />
+                </Tag>
+              </Dropdown>
+            );
           default:
             return '--';
         }
