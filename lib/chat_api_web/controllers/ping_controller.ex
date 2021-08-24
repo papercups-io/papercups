@@ -21,15 +21,13 @@ defmodule ChatApiWeb.PingController do
   # TODO: move into "template_controller" or something like that
   @spec render(Conn.t(), map()) :: Conn.t()
   def render(conn, %{"html" => html, "data" => data}) do
-    try do
-      mustache_params = atomize_keys(data)
-      eex_params = Map.to_list(mustache_params)
-      # TODO: just copy code from https://github.com/schultyy/Mustache.ex instead of using dep?
-      result = html |> EEx.eval_string(eex_params) |> Mustache.render(mustache_params)
+    params = atomize_keys(data)
 
-      json(conn, %{data: result})
-    rescue
-      e ->
+    case ChatApi.MessageTemplates.render(html, params) do
+      {:ok, result} ->
+        json(conn, %{data: result})
+
+      {:error, e} ->
         conn
         |> put_status(400)
         |> json(%{
@@ -47,6 +45,7 @@ defmodule ChatApiWeb.PingController do
     data = Map.get(params, "data", [])
     db_opts = parse_postgres_credentials(credentials)
 
+    # TODO: close postgres connection after finished!
     with {:ok, pid} <- Postgrex.start_link(db_opts),
          {:ok, %Postgrex.Result{columns: columns, rows: rows}} <- Postgrex.query(pid, query, data) do
       json(conn, %{

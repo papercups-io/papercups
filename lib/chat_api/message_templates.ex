@@ -48,15 +48,22 @@ defmodule ChatApi.MessageTemplates do
   @spec render(binary(), map()) :: {:ok, binary()} | {:error, any()}
   def render(content, data \\ %{}) do
     try do
-      eex_params = Map.to_list(data)
+      params = flatten_template_metadata(data)
+      eex_params = Map.to_list(params)
       # TODO: just copy code from https://github.com/schultyy/Mustache.ex instead of using dep?
-      result = content |> EEx.eval_string(eex_params) |> Mustache.render(data)
+      result = content |> EEx.eval_string(eex_params) |> Mustache.render(params)
 
       {:ok, result}
     rescue
       e -> {:error, e}
     end
   end
+
+  defp flatten_template_metadata(%{metadata: metadata} = data) when is_map(metadata),
+    do: Map.merge(metadata, data)
+
+  defp flatten_template_metadata(data) when is_map(data), do: data
+  defp flatten_template_metadata(_), do: %{}
 
   defp filter_where(params) do
     Enum.reduce(params, dynamic(true), fn

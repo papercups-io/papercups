@@ -16,8 +16,10 @@ defmodule ChatApi.Broadcasts do
     |> Repo.all()
   end
 
-  @spec get_broadcast!(binary()) :: Broadcast.t()
-  def get_broadcast!(id), do: Repo.get!(Broadcast, id)
+  @spec get_broadcast!(binary(), list()) :: Broadcast.t()
+  def get_broadcast!(id, preloaded \\ []) do
+    Broadcast |> Repo.get!(id) |> Repo.preload(preloaded)
+  end
 
   @spec create_broadcast(map()) ::
           {:ok, Broadcast.t()} | {:error, Ecto.Changeset.t()}

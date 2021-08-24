@@ -17,6 +17,8 @@ export type AccountSettings = {
   max_num_conversation_reminders?: number | null;
 };
 
+export type Broadcast = any;
+
 export type CannedResponse = {
   id: string;
   name: string;

@@ -43,8 +43,11 @@ defmodule ChatApiWeb.BroadcastController do
   end
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def show(conn, %{"id" => _id}) do
-    render(conn, "show.json", broadcast: conn.assigns.current_broadcast)
+  def show(conn, %{"id" => id}) do
+    broadcast =
+      Broadcasts.get_broadcast!(id, [:message_template, [broadcast_customers: :customer]])
+
+    render(conn, "show.json", broadcast: broadcast)
   end
 
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
