@@ -71,6 +71,7 @@ defmodule ChatApiWeb.Router do
     post("/mattermost/webhook", MattermostController, :webhook)
     post("/twilio/webhook", TwilioController, :webhook)
     post("/github/webhook", GithubController, :webhook)
+    post("/ses/webhook", SesController, :webhook)
     # TODO: move to protected route after testing?
     get("/hubspot/oauth", HubspotController, :oauth)
 
