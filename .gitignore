@@ -40,3 +40,5 @@ chat_api-*.tar
 .DS_Store
 
 fly.toml
+
+scripts/lambda-send-email-to-webhook/node_modules/
