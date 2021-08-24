@@ -149,8 +149,6 @@ defmodule ChatApi.Slack.Event do
   end
 
   # NB: this currently listens for the Papercups app being added to a Slack channel.
-  # At the moment, it doesn't do anything. But in the future, we may auto-create a
-  # `company` record based on the Slack channel info (if this use case is common enough)
   def handle_event(
         %{
           "type" => "message",
@@ -205,6 +203,16 @@ defmodule ChatApi.Slack.Event do
       Logger.info(inspect(result))
     end
   end
+
+  def handle_event(%{
+        "type" => "message",
+        "subtype" => subtype,
+        "user" => _,
+        "channel" => _
+      })
+      # Public channels use prefix "channel_*", while private channels use "group_*"
+      when subtype in ["channel_join", "group_join", "channel_leave", "group_leave"],
+      do: nil
 
   # TODO: ignore message if it's from a bot?
   def handle_event(

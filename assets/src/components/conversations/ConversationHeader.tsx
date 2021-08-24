@@ -172,9 +172,7 @@ const ConversationHeader = ({
               placement="leftBottom"
               onConfirm={() => onDeleteConversation(conversationId)}
             >
-              <Tooltip title="Delete conversation" placement="bottomRight">
-                <Button icon={<DeleteOutlined />} />
-              </Tooltip>
+              <Button icon={<DeleteOutlined />} />
             </Popconfirm>
           </Box>
         </Flex>
