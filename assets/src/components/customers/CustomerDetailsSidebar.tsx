@@ -18,6 +18,7 @@ import {
 } from '../icons';
 import {SidebarCustomerTags} from '../conversations/SidebarTagSection';
 import {BrowserSession, Company, Customer} from '../../types';
+import {generateSlackChannelUrl} from '../companies/support';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -209,25 +210,9 @@ const CompanyDetailsSection = ({company}: {company?: Company}) => {
     id: companyId,
     name,
     website_url: websiteUrl,
-    slack_channel_id: slackChannelId,
     slack_channel_name: slackChannelName,
   } = company;
-
-  let slackPropertyValue;
-
-  if (slackChannelName && slackChannelId) {
-    slackPropertyValue = (
-      <a
-        href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        {slackChannelName}
-      </a>
-    );
-  } else {
-    slackPropertyValue = <CustomerDetailsDefaultPropertyValue />;
-  }
+  const slackChannelUrl = generateSlackChannelUrl(company);
 
   return (
     <CustomerDetailsSection title={title}>
@@ -252,7 +237,15 @@ const CompanyDetailsSection = ({company}: {company?: Company}) => {
       <CustomerDetailsProperty
         icon={<LinkOutlined style={{color: colors.primary}} />}
         name="Slack Channel"
-        value={slackPropertyValue}
+        value={
+          slackChannelName && slackChannelUrl ? (
+            <a href={slackChannelUrl} target="_blank" rel="noopener noreferrer">
+              {slackChannelName}
+            </a>
+          ) : (
+            <CustomerDetailsDefaultPropertyValue />
+          )
+        }
       />
     </CustomerDetailsSection>
   );

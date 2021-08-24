@@ -41,6 +41,7 @@ import * as API from '../../api';
 import {Company, Conversation, Customer} from '../../types';
 import {download} from '../../utils';
 import logger from '../../logger';
+import {generateSlackChannelUrl} from '../companies/support';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -104,9 +105,9 @@ const CustomerCompanyDetails = ({customerId}: {customerId: string}) => {
     id: companyId,
     name = 'Unknown',
     website_url: websiteUrl,
-    slack_channel_id: slackChannelId,
     slack_channel_name: slackChannelName,
   } = company;
+  const slackChannelUrl = generateSlackChannelUrl(company);
 
   return (
     <DetailsSectionCard>
@@ -124,14 +125,10 @@ const CustomerCompanyDetails = ({customerId}: {customerId: string}) => {
           <LinkOutlined /> {websiteUrl || 'Unknown'}
         </Box>
       )}
-      {slackChannelId && slackChannelName && (
+      {slackChannelUrl && slackChannelName && (
         <Box mb={1}>
           <Image src="/slack.svg" alt="Slack" sx={{height: 16, mr: 1}} />
-          <a
-            href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href={slackChannelUrl} target="_blank" rel="noopener noreferrer">
             {slackChannelName}
           </a>
         </Box>
