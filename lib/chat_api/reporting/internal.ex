@@ -53,10 +53,12 @@ defmodule ChatApi.Reporting.Internal do
               "type" => "mrkdwn",
               "text" => """
               *Most active accounts:*
-              #{metrics.current.active_accounts_with_messages
-              |> Enum.map(fn r -> "> #{r.account.company_name} (#{r.count} messages)" end)
-              |> Enum.slice(0..4)
-              |> Enum.join("\n")}
+              #{
+                metrics.current.active_accounts_with_messages
+                |> Enum.map(fn r -> "> #{r.account.company_name} (#{r.count} messages)" end)
+                |> Enum.slice(0..4)
+                |> Enum.join("\n")
+              }
 
               """
             },
@@ -64,10 +66,12 @@ defmodule ChatApi.Reporting.Internal do
               "type" => "mrkdwn",
               "text" => """
               *Most active users:*
-              #{metrics.current.active_users_with_messages
-              |> Enum.map(fn r -> "> #{r.user.email} (#{r.count} messages)" end)
-              |> Enum.slice(0..4)
-              |> Enum.join("\n")}
+              #{
+                metrics.current.active_users_with_messages
+                |> Enum.map(fn r -> "> #{r.user.email} (#{r.count} messages)" end)
+                |> Enum.slice(0..4)
+                |> Enum.join("\n")
+              }
 
               """
             },
@@ -75,7 +79,9 @@ defmodule ChatApi.Reporting.Internal do
               "type" => "mrkdwn",
               "text" => """
               *New widget installations:*
-              > #{metrics.current.num_widget_installations} (#{metrics.previous.num_widget_installations} last week)
+              > #{metrics.current.num_widget_installations} (#{
+                metrics.previous.num_widget_installations
+              } last week)
 
               """
             },
@@ -91,7 +97,9 @@ defmodule ChatApi.Reporting.Internal do
               "type" => "mrkdwn",
               "text" => """
               *New conversations:*
-              > #{metrics.current.num_new_conversations} (#{metrics.previous.num_new_conversations} last week)
+              > #{metrics.current.num_new_conversations} (#{
+                metrics.previous.num_new_conversations
+              } last week)
 
               """
             },
@@ -107,11 +115,21 @@ defmodule ChatApi.Reporting.Internal do
               "type" => "mrkdwn",
               "text" => """
               *New integrations:*
-              > _Slack_: #{metrics.current.num_new_integrations.slack} (#{metrics.previous.num_new_integrations.slack} last week)
-              > _Mattermost_: #{metrics.current.num_new_integrations.mattermost} (#{metrics.previous.num_new_integrations.mattermost} last week)
-              > _Google_: #{metrics.current.num_new_integrations.google} (#{metrics.previous.num_new_integrations.google} last week)
-              > _Twilio_: #{metrics.current.num_new_integrations.twilio} (#{metrics.previous.num_new_integrations.twilio} last week)
-              > _Github_: #{metrics.current.num_new_integrations.github} (#{metrics.previous.num_new_integrations.github} last week)
+              > _Slack_: #{metrics.current.num_new_integrations.slack} (#{
+                metrics.previous.num_new_integrations.slack
+              } last week)
+              > _Mattermost_: #{metrics.current.num_new_integrations.mattermost} (#{
+                metrics.previous.num_new_integrations.mattermost
+              } last week)
+              > _Google_: #{metrics.current.num_new_integrations.google} (#{
+                metrics.previous.num_new_integrations.google
+              } last week)
+              > _Twilio_: #{metrics.current.num_new_integrations.twilio} (#{
+                metrics.previous.num_new_integrations.twilio
+              } last week)
+              > _Github_: #{metrics.current.num_new_integrations.github} (#{
+                metrics.previous.num_new_integrations.github
+              } last week)
 
               """
             },
@@ -119,10 +137,12 @@ defmodule ChatApi.Reporting.Internal do
               "type" => "mrkdwn",
               "text" => """
               *New customers by account:*
-              #{metrics.current.num_customers_by_account
-              |> Enum.map(fn r -> "> #{r.account.company_name} (#{r.count} new customers)" end)
-              |> Enum.slice(0..4)
-              |> Enum.join("\n")}
+              #{
+                metrics.current.num_customers_by_account
+                |> Enum.map(fn r -> "> #{r.account.company_name} (#{r.count} new customers)" end)
+                |> Enum.slice(0..4)
+                |> Enum.join("\n")
+              }
 
               """
             }

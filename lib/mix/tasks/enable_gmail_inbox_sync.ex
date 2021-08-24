@@ -41,7 +41,9 @@ defmodule Mix.Tasks.EnableGmailInboxSync do
     case result do
       {:ok, authorization} ->
         Logger.info(
-          "Successfully updated authorization metadata for account #{inspect(authorization.account_id)}: #{inspect(authorization.metadata)}"
+          "Successfully updated authorization metadata for account #{
+            inspect(authorization.account_id)
+          }: #{inspect(authorization.metadata)}"
         )
 
       {:error, reason} ->
