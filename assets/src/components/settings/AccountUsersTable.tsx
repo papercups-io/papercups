@@ -2,7 +2,7 @@ import React from 'react';
 import {Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import {colors, Button, Table, Tag, Text, Menu, Dropdown} from '../common';
-import {DownOutlined, SmileTwoTone} from '../icons';
+import {DownOutlined, SettingOutlined, SmileTwoTone} from '../icons';
 import {User, Alignment} from '../../types';
 
 const AccountUsersTable = ({
@@ -18,7 +18,7 @@ const AccountUsersTable = ({
   currentUser: User;
   isAdmin?: boolean;
   onDisableUser: (user: User) => void;
-  onUpdateRole: (user: User, role: string) => void;
+  onUpdateRole: (user: User, role: 'user' | 'admin') => void;
 }) => {
   // TODO: how should we sort the users?
   const data = users
@@ -74,49 +74,12 @@ const AccountUsersTable = ({
       title: 'Role',
       dataIndex: 'role',
       key: 'role',
-      render: (value: string, record: User) => {
-        if (!isAdmin) {
-          return null;
-        }
-
-        // Current user cannot modify their own role
-        if (currentUser && record.id === currentUser.id) {
-          return null;
-        }
-
-        // TODO: move logic to "actions" section below in a dropdown
-        // that handles disabling and updating user roles
-        const handleSetAdmin = () => onUpdateRole(record, 'admin');
-        const handleSetUser = () => onUpdateRole(record, 'user');
-
-        const menu = (
-          <Menu>
-            <Menu.Item key="admin" onClick={handleSetAdmin}>
-              Admin
-            </Menu.Item>
-            <Menu.Item key="user" onClick={handleSetUser}>
-              User
-            </Menu.Item>
-          </Menu>
-        );
-
+      render: (value: string) => {
         switch (value) {
           case 'admin':
-            return (
-              <Dropdown overlay={menu}>
-                <Tag color={colors.green}>
-                  Admin <DownOutlined />
-                </Tag>
-              </Dropdown>
-            );
+            return <Tag color={colors.green}>Admin</Tag>;
           case 'user':
-            return (
-              <Dropdown overlay={menu}>
-                <Tag>
-                  Member <DownOutlined />
-                </Tag>
-              </Dropdown>
-            );
+            return <Tag>Member</Tag>;
           default:
             return '--';
         }
@@ -137,10 +100,34 @@ const AccountUsersTable = ({
           return null;
         }
 
+        const handleMenuClick = (data: any) => {
+          switch (data.key) {
+            case 'admin':
+              return onUpdateRole(record, 'admin');
+            case 'user':
+              return onUpdateRole(record, 'user');
+            case 'disable':
+              return onDisableUser(record);
+            default:
+              return null;
+          }
+        };
+
         return (
-          <Button danger onClick={() => onDisableUser(record)}>
-            Disable
-          </Button>
+          <Dropdown
+            overlay={
+              <Menu onClick={handleMenuClick}>
+                {record.role === 'user' ? (
+                  <Menu.Item key="admin">Grant admin permissions</Menu.Item>
+                ) : (
+                  <Menu.Item key="user">Remove admin permissions</Menu.Item>
+                )}
+                <Menu.Item key="disable">Disable user</Menu.Item>
+              </Menu>
+            }
+          >
+            <Button icon={<SettingOutlined />} />
+          </Dropdown>
         );
       },
     },

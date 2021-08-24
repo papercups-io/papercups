@@ -1322,6 +1322,20 @@ export const enableAccountUser = async (
     .then((res) => res.body.data);
 };
 
+export const archiveAccountUser = async (
+  userId: number | string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/users/${userId}/archive`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchNotes = async (
   query = {},
   token = getAccessToken()
