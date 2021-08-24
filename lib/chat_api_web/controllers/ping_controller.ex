@@ -45,22 +45,7 @@ defmodule ChatApiWeb.PingController do
   @spec sql(Conn.t(), map()) :: Conn.t()
   def sql(conn, %{"credentials" => credentials, "query" => query} = params) do
     data = Map.get(params, "data", [])
-
-    db_opts =
-      Enum.filter(
-        %{
-          hostname: Map.get(credentials, "hostname", "localhost"),
-          database: Map.get(credentials, "database", "chat_api_dev"),
-          username: Map.get(credentials, "username"),
-          password: Map.get(credentials, "password"),
-          ssl: Map.get(credentials, "ssl")
-        },
-        fn
-          {_k, nil} -> false
-          {_k, ""} -> false
-          _ -> true
-        end
-      )
+    db_opts = parse_postgres_credentials(credentials)
 
     with {:ok, pid} <- Postgrex.start_link(db_opts),
          {:ok, %Postgrex.Result{columns: columns, rows: rows}} <- Postgrex.query(pid, query, data) do
@@ -89,6 +74,67 @@ defmodule ChatApiWeb.PingController do
         })
     end
   end
+
+  @spec parse_postgres_credentials(map()) :: list()
+  def parse_postgres_credentials(%{"uri" => uri} = credentials) do
+    case parse_postgres_uri(uri) do
+      {:ok, results} ->
+        results |> parse_postgres_credentials()
+
+      {:error, _} ->
+        credentials |> Map.delete("uri") |> parse_postgres_credentials()
+    end
+  end
+
+  def parse_postgres_credentials(credentials) do
+    Enum.filter(
+      %{
+        hostname: Map.get(credentials, "hostname", "localhost"),
+        database: Map.get(credentials, "database", "chat_api_dev"),
+        username: Map.get(credentials, "username"),
+        password: Map.get(credentials, "password"),
+        ssl: Map.get(credentials, "ssl")
+      },
+      fn
+        {_k, nil} -> false
+        {_k, ""} -> false
+        _ -> true
+      end
+    )
+  end
+
+  @spec parse_postgres_uri(any) :: {:ok, map()} | {:error, atom()}
+  def parse_postgres_uri(uri) when is_binary(uri),
+    do: uri |> URI.parse() |> parse_postgres_uri()
+
+  def parse_postgres_uri(%URI{host: nil}), do: {:error, :invalid_host}
+  def parse_postgres_uri(%URI{path: nil}), do: {:error, :invalid_database_path}
+  def parse_postgres_uri(%URI{userinfo: nil}), do: {:error, :invalid_user_info}
+
+  def parse_postgres_uri(%URI{host: host, path: path, userinfo: user_info})
+      when is_binary(host) and is_binary(path) and is_binary(user_info) do
+    case String.split(user_info, ":") do
+      [username, password] ->
+        {:ok,
+         %{
+           "hostname" => host,
+           "database" => String.replace(path, "/", ""),
+           "username" => username,
+           "password" => password,
+           "ssl" => should_use_ssl?(host)
+         }}
+
+      _ ->
+        {:error, :invalid_user_info}
+    end
+  end
+
+  def parse_postgres_uri(_), do: {:error, :invalid_uri}
+
+  def should_use_ssl?("localhost"), do: false
+  def should_use_ssl?("127.0.0.1"), do: false
+  def should_use_ssl?(host) when is_binary(host), do: true
+  def should_use_ssl?(_), do: false
 
   defp format_sql_results(columns, rows) do
     rows
