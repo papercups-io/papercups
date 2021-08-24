@@ -2,7 +2,7 @@ import React from 'react';
 import {Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import {colors, Button, Table, Tag, Text, Menu, Dropdown} from '../common';
-import {DownOutlined, SettingOutlined, SmileTwoTone} from '../icons';
+import {SettingOutlined, SmileTwoTone} from '../icons';
 import {User, Alignment} from '../../types';
 
 const AccountUsersTable = ({
