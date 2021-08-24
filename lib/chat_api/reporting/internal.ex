@@ -55,7 +55,9 @@ defmodule ChatApi.Reporting.Internal do
               *Most active accounts:*
               #{
                 metrics.current.active_accounts_with_messages
-                |> Enum.map(fn r -> "> #{r.account.company_name} (#{r.count} messages)" end)
+                |> Enum.map(fn r ->
+                  "> #{r.account.company_name} (#{r.count} messages)"
+                end)
                 |> Enum.slice(0..4)
                 |> Enum.join("\n")
               }
@@ -68,7 +70,9 @@ defmodule ChatApi.Reporting.Internal do
               *Most active users:*
               #{
                 metrics.current.active_users_with_messages
-                |> Enum.map(fn r -> "> #{r.user.email} (#{r.count} messages)" end)
+                |> Enum.map(fn r ->
+                  "> #{r.user.email} (#{r.count} messages)"
+                end)
                 |> Enum.slice(0..4)
                 |> Enum.join("\n")
               }
@@ -139,7 +143,9 @@ defmodule ChatApi.Reporting.Internal do
               *New customers by account:*
               #{
                 metrics.current.num_customers_by_account
-                |> Enum.map(fn r -> "> #{r.account.company_name} (#{r.count} new customers)" end)
+                |> Enum.map(fn r ->
+                  "> #{r.account.company_name} (#{r.count} new customers)"
+                end)
                 |> Enum.slice(0..4)
                 |> Enum.join("\n")
               }
