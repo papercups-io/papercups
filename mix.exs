@@ -47,6 +47,7 @@ defmodule ChatApi.MixProject do
       {:ex_aws, "~> 2.1"},
       {:ex_aws_s3, "~> 2.0"},
       {:ex_aws_lambda, "~> 2.0"},
+      {:ex_aws_ses, "~> 2.0"},
       {:swoosh, "~> 1.0"},
       {:gen_smtp, "~> 0.13"},
       {:phoenix, "~> 1.5.5"},

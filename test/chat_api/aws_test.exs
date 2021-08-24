@@ -2,6 +2,7 @@ defmodule ChatApi.AwsTest do
   use ChatApi.DataCase
 
   alias ChatApi.Aws
+  alias ChatApiWeb.SesController
 
   describe "aws" do
     test "validate_config/0 validates that all the environment variables are set" do
@@ -46,6 +47,20 @@ defmodule ChatApi.AwsTest do
 
       assert Aws.get_file_url(filename, bucket) ==
                "https://papercups.s3.amazonaws.com/test-file.jpg"
+    end
+  end
+
+  describe "SES" do
+    test "Creates an inbox and get an email" do
+      SesController.send(
+        ["kam@papercups.io"],
+        [],
+        [],
+        "this is the subject",
+        "hello is the body",
+        "html body",
+        "test@chat.papercups.io"
+      )
     end
   end
 
