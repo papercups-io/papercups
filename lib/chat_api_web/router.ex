@@ -123,6 +123,8 @@ defmodule ChatApiWeb.Router do
     put("/user_settings", UserSettingsController, :update)
     post("/users/:id/disable", UserController, :disable)
     post("/users/:id/enable", UserController, :enable)
+    post("/users/:id/archive", UserController, :archive)
+    put("/users/:id/role", UserController, :update_role)
     post("/payment_methods", PaymentMethodController, :create)
     get("/payment_methods", PaymentMethodController, :show)
     get("/browser_sessions/count", BrowserSessionController, :count)

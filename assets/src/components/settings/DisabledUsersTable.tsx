@@ -1,6 +1,7 @@
 import React from 'react';
 import dayjs from 'dayjs';
-import {Button, Table} from '../common';
+import {Button, Dropdown, Menu, Table} from '../common';
+import {SettingOutlined} from '../icons';
 import {User, Alignment} from '../../types';
 
 const DisabledUsersTable = ({
@@ -8,11 +9,13 @@ const DisabledUsersTable = ({
   users,
   isAdmin,
   onEnableUser,
+  onArchiveUser,
 }: {
   loading?: boolean;
   users: Array<User>;
   isAdmin?: boolean;
   onEnableUser: (user: User) => void;
+  onArchiveUser: (user: User) => void;
 }) => {
   // TODO: how should we sort the users?
   const data = users.map((u) => {
@@ -68,7 +71,29 @@ const DisabledUsersTable = ({
           return null;
         }
 
-        return <Button onClick={() => onEnableUser(record)}>Enable</Button>;
+        const handleMenuClick = (data: any) => {
+          switch (data.key) {
+            case 'enable':
+              return onEnableUser(record);
+            case 'archive':
+              return onArchiveUser(record);
+            default:
+              return null;
+          }
+        };
+
+        return (
+          <Dropdown
+            overlay={
+              <Menu onClick={handleMenuClick}>
+                <Menu.Item key="enable">Enable user</Menu.Item>
+                <Menu.Item key="archive">Archive user</Menu.Item>
+              </Menu>
+            }
+          >
+            <Button icon={<SettingOutlined />} />
+          </Dropdown>
+        );
       },
     },
   ];

@@ -1,8 +1,8 @@
 import React from 'react';
 import {Flex} from 'theme-ui';
 import dayjs from 'dayjs';
-import {colors, Button, Table, Tag, Text} from '../common';
-import {SmileTwoTone} from '../icons';
+import {colors, Button, Table, Tag, Text, Menu, Dropdown} from '../common';
+import {SettingOutlined, SmileTwoTone} from '../icons';
 import {User, Alignment} from '../../types';
 
 const AccountUsersTable = ({
@@ -11,17 +11,23 @@ const AccountUsersTable = ({
   currentUser,
   isAdmin,
   onDisableUser,
+  onUpdateRole,
 }: {
   loading?: boolean;
   users: Array<User>;
   currentUser: User;
   isAdmin?: boolean;
   onDisableUser: (user: User) => void;
+  onUpdateRole: (user: User, role: 'user' | 'admin') => void;
 }) => {
   // TODO: how should we sort the users?
-  const data = users.map((u) => {
-    return {...u, key: u.id};
-  });
+  const data = users
+    .map((u) => {
+      return {...u, key: u.id};
+    })
+    .sort((a, b) => {
+      return +new Date(a.created_at) - +new Date(b.created_at);
+    });
 
   const columns = [
     {
@@ -94,10 +100,34 @@ const AccountUsersTable = ({
           return null;
         }
 
+        const handleMenuClick = (data: any) => {
+          switch (data.key) {
+            case 'admin':
+              return onUpdateRole(record, 'admin');
+            case 'user':
+              return onUpdateRole(record, 'user');
+            case 'disable':
+              return onDisableUser(record);
+            default:
+              return null;
+          }
+        };
+
         return (
-          <Button danger onClick={() => onDisableUser(record)}>
-            Disable
-          </Button>
+          <Dropdown
+            overlay={
+              <Menu onClick={handleMenuClick}>
+                {record.role === 'user' ? (
+                  <Menu.Item key="admin">Grant admin permissions</Menu.Item>
+                ) : (
+                  <Menu.Item key="user">Remove admin permissions</Menu.Item>
+                )}
+                <Menu.Item key="disable">Disable user</Menu.Item>
+              </Menu>
+            }
+          >
+            <Button icon={<SettingOutlined />} />
+          </Dropdown>
         );
       },
     },

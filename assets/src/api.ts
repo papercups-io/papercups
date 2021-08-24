@@ -1292,6 +1292,22 @@ export const disableAccountUser = async (
     .then((res) => res.body.data);
 };
 
+export const setAccountUserRole = async (
+  userId: number | string,
+  role: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/users/${userId}/role`)
+    .set('Authorization', token)
+    .send({role})
+    .then((res) => res.body.data);
+};
+
 export const enableAccountUser = async (
   userId: number | string,
   token = getAccessToken()
@@ -1302,6 +1318,20 @@ export const enableAccountUser = async (
 
   return request
     .post(`/api/users/${userId}/enable`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const archiveAccountUser = async (
+  userId: number | string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/users/${userId}/archive`)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

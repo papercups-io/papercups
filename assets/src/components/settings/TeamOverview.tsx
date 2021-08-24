@@ -165,9 +165,8 @@ class TeamOverview extends React.Component<Props, State> {
     this.setState({inviteUserEmail: e.target.value});
   };
 
-  handleDisableUser = async (user: User) => {
+  handleDisableUser = async ({id: userId}: User) => {
     this.setState({isRefreshing: true});
-    const {id: userId} = user;
 
     return API.disableAccountUser(userId)
       .then((user) => {
@@ -191,9 +190,35 @@ class TeamOverview extends React.Component<Props, State> {
       .then(() => this.setState({isRefreshing: false}));
   };
 
-  handleEnableUser = async (user: User) => {
+  handleUpdateRole = async ({id: userId}: User, role: 'user' | 'admin') => {
     this.setState({isRefreshing: true});
-    const {id: userId} = user;
+
+    return API.setAccountUserRole(userId, role)
+      .then((user) => {
+        notification.success({
+          message: 'Successfully changed role!',
+          description: `${user.email} is now ${
+            role === 'user' ? 'a team member' : 'an admin'
+          }.`,
+        });
+      })
+      .then(() => sleep(400)) // Add slight delay so not too jarring
+      .then(() => this.fetchLatestAccountInfo())
+      .catch((err) => {
+        const description =
+          err?.response?.body?.error?.message ||
+          err?.message ||
+          'Something went wrong. Please contact us or try again in a few minutes.';
+        notification.error({
+          message: 'Failed to update role!',
+          description,
+        });
+      })
+      .then(() => this.setState({isRefreshing: false}));
+  };
+
+  handleEnableUser = async ({id: userId}: User) => {
+    this.setState({isRefreshing: true});
 
     return API.enableAccountUser(userId)
       .then((user) => {
@@ -211,6 +236,31 @@ class TeamOverview extends React.Component<Props, State> {
           'Something went wrong. Please contact us or try again in a few minutes.';
         notification.error({
           message: 'Failed to enable user!',
+          description,
+        });
+      })
+      .then(() => this.setState({isRefreshing: false}));
+  };
+
+  handleArchiveUser = async ({id: userId}: User) => {
+    this.setState({isRefreshing: true});
+
+    return API.archiveAccountUser(userId)
+      .then((user) => {
+        notification.success({
+          message: 'Successfully archived user!',
+          description: `If this was a mistake, please notify us and we will reverse the action.`,
+        });
+      })
+      .then(() => sleep(400)) // Add slight delay so not too jarring
+      .then(() => this.fetchLatestAccountInfo())
+      .catch((err) => {
+        const description =
+          err?.response?.body?.error?.message ||
+          err?.message ||
+          'Something went wrong. Please contact us or try again in a few minutes.';
+        notification.error({
+          message: 'Failed to archive user!',
           description,
         });
       })
@@ -300,6 +350,7 @@ class TeamOverview extends React.Component<Props, State> {
             currentUser={currentUser}
             isAdmin={isAdmin}
             onDisableUser={this.handleDisableUser}
+            onUpdateRole={this.handleUpdateRole}
           />
 
           {isAdmin && isUserInvitationEmailEnabled && (
@@ -341,6 +392,7 @@ class TeamOverview extends React.Component<Props, State> {
               users={users.filter((u: User) => !!u.disabled_at)}
               isAdmin={isAdmin}
               onEnableUser={this.handleEnableUser}
+              onArchiveUser={this.handleArchiveUser}
             />
           </Box>
         )}
