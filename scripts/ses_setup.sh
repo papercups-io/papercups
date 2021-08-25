@@ -8,7 +8,7 @@ npm install
 # REQUIREMENT TO CREATE A LAMBDA ROLE: See: https://aws.amazon.com/blogs/messaging-and-targeting/forward-incoming-email-to-an-external-destination/
 
 zip -r function.zip .
-aws lambda create-function --function-name "send-email-to-webhook" \
+aws lambda create-function --function-name "send-email-to-webhook-kam" \
     --runtime 'nodejs14.x' \
     --handler "email-arrived-alert.handler" \
     --role "arn:aws:iam::775327867774:role/lambda-s3-role" \
