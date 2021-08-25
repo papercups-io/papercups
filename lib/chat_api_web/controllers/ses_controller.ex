@@ -11,8 +11,10 @@ defmodule ChatApiWeb.SesController do
     bucket_name = Application.get_env(:chat_api, :ses_bucket_name)
     ses_region = Application.get_env(:chat_api, :ses_region)
     IO.inspect(ses_region)
-    file = Aws.download_file(bucket_name, file_name, ses_region)
-    Logger.debug("Downloaded email: #{inspect(file)}")
+    {:ok, %{body: body}} = Aws.download_file(bucket_name, file_name, ses_region)
+
+    parsed_email = Mail.Parsers.RFC2822.parse(body)
+    Logger.debug("Downloaded email: #{inspect(parsed_email)}")
 
     send_resp(conn, 200, "")
   end
