@@ -98,8 +98,8 @@ class BroadcastsOverview extends React.Component<Props, State> {
 
         <Box mb={4}>
           <Paragraph>
-            Use broadcasts to organize and manage your customers and
-            conversations.
+            Broadcasts allow you to send emails and other notifications to your
+            customers for important announcements.
           </Paragraph>
         </Box>
 

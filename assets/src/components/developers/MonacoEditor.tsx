@@ -56,7 +56,12 @@ export const MonacoEditor = (props: Props) => {
           }}
         ></Flex>
       }
-      options={{tabSize: 2, minimap: {enabled: false}, ...options}}
+      options={{
+        tabSize: 2,
+        wordWrap: 'on',
+        minimap: {enabled: false},
+        ...options,
+      }}
       onChange={handleEditorChange}
       onMount={handleEditorDidMount}
       beforeMount={handleEditorWillMount}

@@ -134,14 +134,14 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
       return null;
     }
 
-    const {name, description} = broadcast;
+    const {name} = broadcast;
     const customers = formatBroadcastCustomers(broadcast);
 
     return (
-      <Box p={4}>
+      <Flex p={4} sx={{flex: 1, flexDirection: 'column'}}>
         <Title level={2}>{name}</Title>
 
-        <Flex>
+        <Flex sx={{flex: 1}}>
           <Box pr={4} sx={{flex: 1}}>
             <BroadcastCustomersTable
               customers={customers}
@@ -149,7 +149,7 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
             />
           </Box>
 
-          <Box sx={{flex: 1, height: 400}}>
+          <Box sx={{flex: 1}}>
             <iframe
               title="Broadcast email template"
               style={{height: '100%', width: '100%', border: 'none'}}
@@ -157,7 +157,7 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
             />
           </Box>
         </Flex>
-      </Box>
+      </Flex>
     );
   }
 }

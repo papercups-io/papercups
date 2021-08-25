@@ -99,10 +99,10 @@ export class SqlRunner extends React.Component<any, any> {
       const customers = await this.handleImportCustomers();
       console.log('Sending to:', customers);
 
-      const customerIds = customers.map((c: Customer) => c.id);
+      // const customerIds = customers.map((c: Customer) => c.id);
       // TODO: remove this after testing
       const broadcastId = 'e0df500a-90af-4ebb-a81b-ab668fb63f38';
-      const templateId = 'a3d152c1-37cf-4408-87fd-b14125717ed7';
+      // const templateId = 'a3d152c1-37cf-4408-87fd-b14125717ed7';
       // const broadcast = await API.updateBroadcast(broadcastId, {
       //   message_template_id: templateId,
       // });

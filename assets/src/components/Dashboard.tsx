@@ -96,6 +96,8 @@ import ForwardingAddressSettings from './settings/ForwardingAddressSettings';
 import InboxesDashboard from './inboxes/InboxesDashboard';
 import BroadcastsOverview from './broadcasts/BroadcastsOverview';
 import BroadcastDetailsPage from './broadcasts/BroadcastDetailsPage';
+import MessageTemplatesOverview from './message-templates/MessageTemplatesOverview';
+import MessageTemplateEditor from './message-templates/MessageTemplateEditor';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -582,6 +584,14 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/notes" component={NotesOverview} />
           <Route path="/broadcasts/:id" component={BroadcastDetailsPage} />
           <Route path="/broadcasts" component={BroadcastsOverview} />
+          <Route
+            path="/message-templates/:id"
+            component={MessageTemplateEditor}
+          />
+          <Route
+            path="/message-templates"
+            component={MessageTemplatesOverview}
+          />
           <Route path="/conversations*" component={InboxesDashboard} />
           <Route path="/inboxes*" component={InboxesDashboard} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
