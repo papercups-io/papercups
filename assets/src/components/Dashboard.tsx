@@ -98,6 +98,7 @@ import BroadcastsOverview from './broadcasts/BroadcastsOverview';
 import BroadcastDetailsPage from './broadcasts/BroadcastDetailsPage';
 import MessageTemplatesOverview from './message-templates/MessageTemplatesOverview';
 import MessageTemplateEditor from './message-templates/MessageTemplateEditor';
+import BroadcastCustomersPage from './broadcasts/BroadcastCustomersPage';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -582,6 +583,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/issues/:id" component={IssueDetailsPage} />
           <Route path="/issues" component={IssuesOverview} />
           <Route path="/notes" component={NotesOverview} />
+          <Route
+            path="/broadcasts/:id/customers"
+            component={BroadcastCustomersPage}
+          />
           <Route path="/broadcasts/:id" component={BroadcastDetailsPage} />
           <Route path="/broadcasts" component={BroadcastsOverview} />
           <Route
