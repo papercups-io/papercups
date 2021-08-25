@@ -54,6 +54,16 @@ defmodule ChatApi.Aws do
     end
   end
 
+  def download_file(bucket, identifier, region) do
+    bucket
+    |> ExAws.S3.get_object(identifier)
+    |> ExAws.request!(region: region)
+    |> case do
+      %{status_code: 200} = result -> {:ok, result}
+      result -> {:error, result}
+    end
+  end
+
   @spec get_file_url(binary(), binary()) :: binary()
   def get_file_url(identifier, bucket) do
     "https://#{bucket}.s3.amazonaws.com/#{identifier}"

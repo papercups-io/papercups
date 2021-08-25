@@ -1,10 +1,18 @@
 defmodule ChatApiWeb.SesController do
   use ChatApiWeb, :controller
   require Logger
+  alias ChatApi.Aws
 
   @spec webhook(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def webhook(conn, payload) do
     Logger.debug("Payload from SES webhook: #{inspect(payload)}")
+    file_name = payload["messageId"]
+
+    bucket_name = Application.get_env(:chat_api, :ses_bucket_name)
+    ses_region = Application.get_env(:chat_api, :ses_region)
+    IO.inspect(ses_region)
+    file = Aws.download_file(bucket_name, file_name, ses_region)
+    Logger.debug("Downloaded email: #{inspect(file)}")
 
     send_resp(conn, 200, "")
   end
