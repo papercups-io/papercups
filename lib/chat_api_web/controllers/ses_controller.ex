@@ -15,13 +15,22 @@ defmodule ChatApiWeb.SesController do
 
     parsed_email = Mail.Parsers.RFC2822.parse(body)
     Logger.debug("Downloaded email: #{inspect(parsed_email)}")
-
     send_resp(conn, 200, "")
   end
 
-  # Maybe make this into a map?
-  @spec send([binary], [binary], [binary], binary, binary, binary, binary) :: any
-  def send(to, cc, bcc, subject, body, html_body, from) do
+  # For replies you references and in_reply_to needs to have the message_id
+  # the subject has to be the same as the reply thread as well
+  def send(
+        to: to,
+        cc: cc,
+        bcc: bcc,
+        subject: subject,
+        body: body,
+        html_body: html_body,
+        from: from,
+        in_reply_to: in_reply_to,
+        references: references
+      ) do
     ExAws.Config
 
     destination = %{
@@ -30,8 +39,17 @@ defmodule ChatApiWeb.SesController do
       bcc: bcc
     }
 
-    message = ExAws.SES.build_message(html_body, body, subject)
-    request = ExAws.SES.send_email(destination, message, from, [])
+    message =
+      Mail.build()
+      |> Mail.put_text(body)
+      |> Mail.put_to(to)
+      |> Mail.put_from(from)
+      |> Mail.put_subject(subject)
+      |> Mail.Message.put_header("In-Reply-To", in_reply_to)
+      |> Mail.Message.put_header("References", references)
+
+    rendered_message = Mail.Renderers.RFC2822.render(message)
+    request = ExAws.SES.send_raw_email(rendered_message)
 
     # SES is only supported in specific region and it is
     # different than our services
