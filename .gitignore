@@ -41,4 +41,4 @@ chat_api-*.tar
 
 fly.toml
 
-scripts/lambda-send-email-to-webhook/node_modules/
+**/node_modules

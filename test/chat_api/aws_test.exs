@@ -51,20 +51,12 @@ defmodule ChatApi.AwsTest do
   end
 
   describe "SES" do
-    test "Creates an inbox and get an email" do
-      in_reply_to = "Some thread"
+    test "sending an email" do
+      # TODO
+    end
 
-      SesController.send(
-        to: ["hello@papercups.io"],
-        cc: [],
-        bcc: [],
-        subject: "something message thing",
-        body: "hello is the body",
-        html_body: "html body",
-        from: "test@chat.papercups.io",
-        in_reply_to: in_reply_to,
-        references: in_reply_to
-      )
+    test "sending an email reply to an existing thread" do
+      # TODO
     end
   end
 

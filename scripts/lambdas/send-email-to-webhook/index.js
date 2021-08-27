@@ -4,14 +4,17 @@ const request = require("requestretry");
 
 const parseFromAddress = (email) => {
   const found = email.match("<(.*?)>");
+
   if (!found[1]) {
-    throw Error("invalid email address: " + email);
+    throw Error(`Invalid email address: ${email}`);
   }
+
   return found[1];
 };
 
 const handler = async (event) => {
   const url = process.env.WEBHOOK_URL;
+
   if (!url) {
     throw Error("MISSING WEBHOOK URL ENVIRONMENT VARIABLE");
   }
@@ -22,11 +25,11 @@ const handler = async (event) => {
   const fromAddress = mail.commonHeaders.from;
 
   if (!messageId || !toAddresses || !fromAddress) {
-    throw Error("Missing parameter in message");
+    throw Error("Missing required fields in message");
   }
 
   const params = {
-    url: url + "/api/ses/webhook",
+    url: `${url}/api/ses/webhook`,
     body: {
       messageId,
       toAddresses,
