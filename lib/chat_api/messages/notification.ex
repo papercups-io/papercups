@@ -3,7 +3,8 @@ defmodule ChatApi.Messages.Notification do
   Notification handlers for messages
   """
 
-  alias ChatApi.{EventSubscriptions, Lambdas}
+  alias ChatApi.{Conversations, EventSubscriptions, Lambdas}
+  alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.{Helpers, Message}
 
   require Logger
@@ -232,6 +233,73 @@ defmodule ChatApi.Messages.Notification do
 
     Task.start(fn ->
       ChatApi.Slack.Notification.notify_support_channel(message)
+    end)
+
+    message
+  end
+
+  def notify(
+        %Message{
+          private: false,
+          conversation_id: conversation_id,
+          conversation: %Conversation{source: "email"}
+        } = message,
+        :ses,
+        _opts
+      ) do
+    Logger.info("Sending message notification: :ses (message #{inspect(message.id)})")
+
+    Task.start(fn ->
+      case Conversations.get_previous_message(conversation_id, message) do
+        %Message{
+          metadata:
+            %{
+              "ses_message_id" => ses_message_id,
+              "ses_references" => ses_references,
+              "ses_subject" => ses_subject,
+              "ses_from" => ses_from
+            } = metadata
+        } ->
+          references =
+            case ses_references do
+              nil -> ses_message_id
+              references -> references <> " " <> ses_message_id
+            end
+
+          result =
+            ChatApi.Aws.send_email(%{
+              to: ses_from,
+              from: "alex@papercups.io",
+              reply_to: "reply+#{conversation_id}@chat.papercups.io",
+              subject: ses_subject,
+              text: message.body,
+              in_reply_to: ses_message_id,
+              references: references
+            })
+
+          case result do
+            %{body: %{message_id: raw_message_id}, status_code: 200} ->
+              ChatApi.Messages.update_message(message, %{
+                metadata:
+                  metadata
+                  |> Map.merge(message.metadata)
+                  |> Map.merge(%{
+                    "ses_message_id" => "<#{raw_message_id}@email.amazonses.com>",
+                    "ses_in_reply_to" => ses_message_id,
+                    "ses_references" => references,
+                    "ses_subject" => ses_subject,
+                    "ses_from" => ses_from
+                  })
+              })
+              |> IO.inspect(label: "Successfully replied!")
+
+            _ ->
+              nil
+          end
+
+        _ ->
+          nil
+      end
     end)
 
     message

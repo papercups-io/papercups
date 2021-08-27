@@ -492,6 +492,20 @@ defmodule ChatApi.Conversations do
   def is_first_message?(%Message{conversation_id: conversation_id, id: message_id}),
     do: is_first_message?(conversation_id, message_id)
 
+  @spec get_previous_message(binary(), Message.t()) :: Message.t() | nil
+  def get_previous_message(conversation_id, %Message{inserted_at: inserted_at}) do
+    Message
+    |> where(conversation_id: ^conversation_id)
+    |> where([m], m.inserted_at < ^inserted_at)
+    |> order_by(desc: :inserted_at)
+    |> first()
+    |> Repo.one()
+  end
+
+  @spec get_previous_message(Conversation.t(), Message.t()) :: Message.t() | nil
+  def get_previous_message(%Conversation{id: conversation_id}, %Message{} = message),
+    do: get_previous_message(conversation_id, message)
+
   @spec count_agent_replies(binary()) :: number()
   def count_agent_replies(conversation_id) do
     Message

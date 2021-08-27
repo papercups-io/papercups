@@ -82,6 +82,7 @@ defmodule ChatApi.MixProject do
       {:phoenix_pubsub_redis, "~> 3.0.0"},
       {:appsignal_phoenix, "~> 2.0.0"},
       {:earmark, "~> 1.4.15"},
+      {:sweet_xml, "~> 0.7.1"},
       # TODO: just copy code over?
       {:exponent_server_sdk, "~> 0.2.0"},
       {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}

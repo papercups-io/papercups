@@ -157,6 +157,21 @@ defmodule ChatApi.Aws do
     |> build_email_message()
     |> ExAws.SES.send_raw_email()
     |> ExAws.request!(%{region: region})
+    |> case do
+      %{body: xml, status_code: 200} = result when is_binary(xml) ->
+        Map.put(result, :body, parse_send_email_response_xml(xml))
+
+      response ->
+        response
+    end
+  end
+
+  @spec parse_send_email_response_xml(binary()) :: map()
+  def parse_send_email_response_xml(xml) do
+    %{
+      message_id: SweetXml.xpath(xml, SweetXml.sigil_x("//MessageId/text()")),
+      request_id: SweetXml.xpath(xml, SweetXml.sigil_x("//RequestId/text()"))
+    }
   end
 
   @spec format_ses_email(binary(), Mail.Message.t()) :: map()
