@@ -2,6 +2,7 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import {Button, Table} from '../common';
 import {Broadcast} from '../../types';
+import {formatDateTime} from './support';
 
 export const BroadcastsTable = ({
   loading,
@@ -48,7 +49,7 @@ export const BroadcastsTable = ({
       dataIndex: 'started_at',
       key: 'started_at',
       render: (value: string) => {
-        return value || '--';
+        return value ? formatDateTime(value) : '--';
       },
     },
     {
@@ -56,7 +57,7 @@ export const BroadcastsTable = ({
       dataIndex: 'finished_at',
       key: 'finished_at',
       render: (value: string) => {
-        return value || '--';
+        return value ? formatDateTime(value) : '--';
       },
     },
     {

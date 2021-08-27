@@ -1,31 +1,13 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router-dom';
+import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 
-import {Table, Title} from '../common';
+import {Button, Card, Empty, Table, Text, Title} from '../common';
 import * as API from '../../api';
 import {Broadcast} from '../../types';
-
-const formatBroadcastCustomers = (broadcast: Broadcast) => {
-  const {broadcast_customers: broadcastCustomers = []} = broadcast;
-
-  return broadcastCustomers.map((bc: any) => {
-    const {customer = {}, id: key, created_at, updated_at, sent_at, state} = bc;
-    const {name, email, time_zone, metadata = {}} = customer;
-
-    return {
-      key,
-      created_at,
-      updated_at,
-      state,
-      sent_at,
-      name,
-      email,
-      time_zone,
-      metadata,
-    };
-  });
-};
+import logger from '../../logger';
+import {SendOutlined} from '../icons';
+import {formatBroadcastCustomers, formatDateTime} from './support';
 
 // TODO: make it possible to select customer to preview in email template
 const BroadcastCustomersTable = ({
@@ -65,7 +47,7 @@ const BroadcastCustomersTable = ({
       dataIndex: 'sent_at',
       key: 'sent_at',
       render: (value: string) => {
-        return value || '--';
+        return value ? formatDateTime(value) : '--';
       },
     },
     {
@@ -103,7 +85,6 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
 
   async componentDidMount() {
     const {id: broadcastId} = this.props.match.params;
-
     const broadcast = await API.fetchBroadcast(broadcastId);
 
     this.setState({broadcast}, () => this.handleUpdateIframe());
@@ -127,6 +108,18 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
     doc.close();
   };
 
+  handleSendBroadcast = async () => {
+    try {
+      const {id: broadcastId} = this.props.match.params;
+      const broadcast = await API.sendBroadcastEmail(broadcastId);
+
+      logger.info('Sent!', broadcast);
+      this.setState({broadcast});
+    } catch (err) {
+      logger.error('Failed to send emails!', err);
+    }
+  };
+
   render() {
     const {broadcast} = this.state;
 
@@ -134,27 +127,200 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
       return null;
     }
 
-    const {name} = broadcast;
+    const {
+      id: broadcastId,
+      message_template: template,
+      started_at: startedAt,
+      finished_at: finishedAt,
+      name,
+      state,
+    } = broadcast;
     const customers = formatBroadcastCustomers(broadcast);
+    const isUnstarted = state === 'unstarted';
+    const numCustomersSent = customers.filter((c) => !!c.sent_at).length;
 
     return (
       <Flex p={4} sx={{flex: 1, flexDirection: 'column'}}>
-        <Title level={2}>{name}</Title>
+        <Flex
+          mb={3}
+          pb={3}
+          sx={{
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid rgba(0,0,0,.06)',
+          }}
+        >
+          <Title level={2} style={{margin: 0}}>
+            {name}
+          </Title>
+          {isUnstarted && (
+            <Button
+              type="primary"
+              size="large"
+              icon={<SendOutlined />}
+              onClick={this.handleSendBroadcast}
+            >
+              Send broadcast
+            </Button>
+          )}
+        </Flex>
+
+        <Box py={3} mb={4}>
+          <Card shadow="medium" px={4} py={3}>
+            <Flex
+              mx={-2}
+              sx={{
+                flexDirection: ['column', 'column', 'row'],
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box mx={2}>
+                <Box>
+                  <Text style={{fontSize: 16}}>{state}</Text>
+                </Box>
+                <Text type="secondary" style={{fontSize: 12}}>
+                  Status
+                </Text>
+              </Box>
+              <Box mx={2}>
+                <Box>
+                  <Text style={{fontSize: 16}}>
+                    {startedAt ? formatDateTime(startedAt) : '--'}
+                  </Text>
+                </Box>
+                <Text type="secondary" style={{fontSize: 12}}>
+                  Started at
+                </Text>
+              </Box>
+              <Box mx={2}>
+                <Box>
+                  <Text style={{fontSize: 16}}>
+                    {finishedAt ? formatDateTime(finishedAt) : '--'}
+                  </Text>
+                </Box>
+                <Text type="secondary" style={{fontSize: 12}}>
+                  Finished at
+                </Text>
+              </Box>
+              <Box mx={2}>
+                <Box>
+                  <Text style={{fontSize: 16}}>{numCustomersSent}</Text>
+                </Box>
+                <Text type="secondary" style={{fontSize: 12}}>
+                  Sent
+                </Text>
+              </Box>
+              <Box mx={2}>
+                <Box>
+                  <Text style={{fontSize: 16}}>--</Text>
+                </Box>
+                <Text type="secondary" style={{fontSize: 12}}>
+                  Delivered
+                </Text>
+              </Box>
+              <Box mx={2}>
+                <Box>
+                  <Text style={{fontSize: 16}}>--</Text>
+                </Box>
+                <Text type="secondary" style={{fontSize: 12}}>
+                  Bounced
+                </Text>
+              </Box>
+              <Box mx={2}>
+                <Box>
+                  <Text style={{fontSize: 16}}>--</Text>
+                </Box>
+                <Text type="secondary" style={{fontSize: 12}}>
+                  Unsubscribed
+                </Text>
+              </Box>
+              <Box mx={2}>
+                <Box>
+                  <Text style={{fontSize: 16}}>--</Text>
+                </Box>
+                <Text type="secondary" style={{fontSize: 12}}>
+                  Failed
+                </Text>
+              </Box>
+            </Flex>
+          </Card>
+        </Box>
 
         <Flex sx={{flex: 1}}>
           <Box pr={4} sx={{flex: 1}}>
-            <BroadcastCustomersTable
-              customers={customers}
-              onSelectPreview={this.handleUpdateIframe}
-            />
+            <Flex mb={2} sx={{justifyContent: 'space-between'}}>
+              <Title level={4} style={{margin: 0}}>
+                Contacts
+              </Title>
+
+              {isUnstarted && customers.length > 0 && (
+                <Link to={`/broadcasts/${broadcastId}/customers`}>
+                  <Button>Update contacts</Button>
+                </Link>
+              )}
+            </Flex>
+
+            {customers && customers.length ? (
+              <BroadcastCustomersTable
+                customers={customers}
+                onSelectPreview={this.handleUpdateIframe}
+              />
+            ) : (
+              <Box my={4}>
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    <Text type="secondary">No contacts selected</Text>
+                  }
+                >
+                  <Link to={`/broadcasts/${broadcastId}/customers`}>
+                    <Button type="primary">Select contacts</Button>
+                  </Link>
+                </Empty>
+              </Box>
+            )}
           </Box>
 
           <Box sx={{flex: 1}}>
-            <iframe
-              title="Broadcast email template"
-              style={{height: '100%', width: '100%', border: 'none'}}
-              ref={(el) => (this.iframe = el)}
-            />
+            <Flex
+              mb={2}
+              sx={{justifyContent: 'space-between', alignItems: 'center'}}
+            >
+              <Box>
+                <Title level={4} style={{margin: 0}}>
+                  {template?.name || 'Message template'}
+                </Title>
+              </Box>
+              {isUnstarted &&
+                (template ? (
+                  <Link
+                    to={`/message-templates/${template.id}?bid=${broadcastId}`}
+                  >
+                    <Button>Update template</Button>
+                  </Link>
+                ) : null)}
+            </Flex>
+
+            {template ? (
+              <iframe
+                title="Broadcast email template"
+                style={{height: '100%', width: '100%', border: 'none'}}
+                ref={(el) => (this.iframe = el)}
+              />
+            ) : (
+              <Box my={4}>
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    <Text type="secondary">No template selected</Text>
+                  }
+                >
+                  <Link to={`/message-templates?bid=${broadcastId}`}>
+                    <Button type="primary">Select template</Button>
+                  </Link>
+                </Empty>
+              </Box>
+            )}
           </Box>
         </Flex>
       </Flex>

@@ -48,6 +48,32 @@ defmodule ChatApi.Broadcasts do
     Broadcast.changeset(broadcast, attrs)
   end
 
+  @spec update_broadcast_customer(BroadcastCustomer.t(), map()) ::
+          {:ok, BroadcastCustomer.t()} | {:error, Ecto.Changeset.t()}
+  def update_broadcast_customer(%BroadcastCustomer{} = broadcast_customer, attrs) do
+    broadcast_customer
+    |> BroadcastCustomer.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @spec update_broadcast_customer(Broadcast.t(), Customer.t(), map()) ::
+          {:ok, BroadcastCustomer.t()} | {:error, Ecto.Changeset.t()}
+  def update_broadcast_customer(%Broadcast{id: broadcast_id}, %Customer{id: customer_id}, attrs) do
+    update_broadcast_customer(broadcast_id, customer_id, attrs)
+  end
+
+  @spec update_broadcast_customer(binary(), binary(), map()) ::
+          {:ok, Broadcast.t()} | {:error, Ecto.Changeset.t()}
+  def update_broadcast_customer(broadcast_id, customer_id, attrs)
+      when is_binary(broadcast_id) and is_binary(customer_id) do
+    BroadcastCustomer
+    |> where(broadcast_id: ^broadcast_id)
+    |> where(customer_id: ^customer_id)
+    |> Repo.one!()
+    |> BroadcastCustomer.changeset(attrs)
+    |> Repo.update()
+  end
+
   @spec list_broadcast_customers(Broadcast.t()) :: [Customer.t()]
   def list_broadcast_customers(%Broadcast{id: broadcast_id, account_id: account_id}) do
     Customer
@@ -79,6 +105,20 @@ defmodule ChatApi.Broadcasts do
       end),
       on_conflict: :nothing
     )
+  end
+
+  @spec remove_all_broadcast_customers(Broadcast.t()) :: {:ok, any()} | {:error, any()}
+  def remove_all_broadcast_customers(%Broadcast{id: broadcast_id, account_id: account_id}) do
+    BroadcastCustomer
+    |> where(account_id: ^account_id)
+    |> where(broadcast_id: ^broadcast_id)
+    |> Repo.delete_all()
+  end
+
+  @spec set_broadcast_customers(Broadcast.t(), [binary()]) :: {any, nil | list}
+  def set_broadcast_customers(broadcast, customer_ids \\ []) do
+    remove_all_broadcast_customers(broadcast)
+    add_broadcast_customers(broadcast, customer_ids)
   end
 
   @spec remove_broadcast_customer(Broadcast.t(), any) :: {:ok, any()} | {:error, any()}

@@ -1,8 +1,11 @@
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
+import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+import qs from 'query-string';
 // @ts-ignore
 import {generateElement} from 'react-live';
+
 import {Button, MarkdownRenderer, Title} from '../common';
 import MonacoEditor from '../developers/MonacoEditor';
 import {getIframeContents} from '../developers/email/html';
@@ -17,9 +20,37 @@ import {
 } from '../developers/email/boilerplate';
 import * as API from '../../api';
 import logger from '../../logger';
-import {RouteComponentProps} from 'react-router-dom';
 import {MessageTemplate} from '../../types';
 import {sleep} from '../../utils';
+import {ArrowLeftOutlined} from '../icons';
+
+const DEFAULT_CODE_VALUE = `
+const Email = () => {
+  return (
+    <Layout background="#f9f9f9">
+      <Container minWidth={320} maxWidth={640}>
+        <Content bordered theme={{color: "#1890ff"}}>
+          <Body>
+            <Paragraph>
+              Hey <Variable template="<%= name %>" />!
+            </Paragraph>
+            <Paragraph>
+              Papercups v2.0 is out! Here are the biggest changes...
+            </Paragraph>
+
+            <H2>
+              Slack Integration
+            </H2>
+            <Paragraph>
+              Our Slack integration allows you to...
+            </Paragraph>
+          </Body>
+        </Content>
+      </Container>
+    </Layout>
+  );
+};
+`;
 
 const MARKDOWN_CODE_VALUE = `
 const Email = () => {
@@ -42,6 +73,7 @@ type Props = RouteComponentProps<{id: string}>;
 type State = {
   isLoading: boolean;
   isSaving: boolean;
+  broadcastId: string | null;
   template: MessageTemplate | null;
   mode: string;
   text: string;
@@ -58,6 +90,7 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
   state: State = {
     isLoading: true,
     isSaving: false,
+    broadcastId: null,
     template: null,
     mode: 'react',
     text: '',
@@ -69,10 +102,19 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
 
   async componentDidMount() {
     const {id} = this.props.match.params;
+    const q = qs.parse(this.props.location.search);
+    const broadcastId = q.bid ? String(q.bid) : null;
     const template = await API.fetchMessageTemplate(id);
     const {raw_html: html, react_js: react, plain_text: text} = template;
 
-    this.setState({template, html, react, text, isLoading: false});
+    this.setState({
+      broadcastId,
+      template,
+      html,
+      text,
+      react: react || DEFAULT_CODE_VALUE,
+      isLoading: false,
+    });
   }
 
   handleUpdateJson = (code?: string) => {
@@ -137,7 +179,8 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
       this.setState({
         react: code,
         html: contents,
-        text: this.getHtmlInnerText(contents),
+        // TODO: make sure this is reliable
+        text: this.getEmailText() || this.getHtmlInnerText(contents),
       });
     } catch (e) {
       logger.error(e);
@@ -197,7 +240,15 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
     const [body] =
       this.iframe?.contentWindow?.document?.getElementsByTagName('body') ?? [];
 
-    return body && body.innerText ? body.innerText.trim() : null;
+    if (!body || !body.innerText) {
+      return null;
+    }
+
+    return body.innerText
+      .trim()
+      .split('\n\n')
+      .map((str) => str.trim())
+      .join('\n\n');
   };
 
   handleEditorMounted = (editor: any) => {
@@ -215,10 +266,9 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
       this.setState({isSaving: true});
 
       const {id: templateId} = this.props.match.params;
-      const {mode, react, text, html} = this.state;
+      const {mode, react, text, html, broadcastId} = this.state;
 
       const template = await API.updateMessageTemplate(templateId, {
-        name: 'August Product Update',
         plain_text: text,
         raw_html: html,
         react_js: react,
@@ -226,6 +276,10 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
       });
 
       this.setState({template});
+
+      if (broadcastId) {
+        this.props.history.push(`/broadcasts/${broadcastId}`);
+      }
     } catch (err) {
       logger.error('Error saving message template:', err);
     } finally {
@@ -233,27 +287,10 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
 
       this.setState({isSaving: false});
     }
-
-    // if (mode === 'react') {
-    //   const result = await API.createMessageTemplate({
-    //     name: 'Test template',
-    //     plain_text: text,
-    //     raw_html: html,
-    //     react_js: react,
-    //   });
-
-    //   console.log('Result:', result);
-    // } else {
-    //   await API.createMessageTemplate({
-    //     markdown,
-    //     plain_text: text,
-    //     raw_html: html,
-    //   });
-    // }
   };
 
   render() {
-    const {template, react, markdown, isLoading, isSaving} = this.state;
+    const {mode, template, react, markdown, isLoading, isSaving} = this.state;
 
     if (isLoading || !template) {
       return null;
@@ -271,9 +308,17 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
             borderBottom: '1px solid rgba(0,0,0,.06)',
           }}
         >
-          <Title level={4} style={{margin: 0}}>
-            {name}
-          </Title>
+          <Flex sx={{alignItems: 'center'}}>
+            <Box mr={4}>
+              <Link to={`/message-templates${this.props.location.search}`}>
+                <Button icon={<ArrowLeftOutlined />}>Back</Button>
+              </Link>
+            </Box>
+
+            <Title level={4} style={{margin: 0}}>
+              {name}
+            </Title>
+          </Flex>
           {/* TODO: auto-save instead? */}
           <Button
             type="primary"
@@ -285,8 +330,8 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
         </Flex>
 
         <Flex sx={{width: '100%', flex: 1}}>
-          <Flex sx={{flex: 1, flexDirection: 'column'}}>
-            {this.state.mode === 'react' ? (
+          <Flex sx={{flex: 1, flexDirection: 'column', overflow: 'hidden'}}>
+            {mode === 'react' ? (
               <MonacoEditor
                 height="100%"
                 width="100%"

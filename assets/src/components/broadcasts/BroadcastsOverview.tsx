@@ -1,13 +1,16 @@
 import React from 'react';
+import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Container, Input, Paragraph, Title} from '../common';
+
+import {Container, Input, Paragraph, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import {Broadcast} from '../../types';
 import BroadcastsTable from './BroadcastsTable';
 import logger from '../../logger';
+import {NewBroadcastModalButton} from './NewBroadcastModal';
 
-type Props = {};
+type Props = RouteComponentProps<{}>;
 type State = {
   filterQuery: string;
   filteredBroadcasts: Array<Broadcast>;
@@ -83,6 +86,10 @@ class BroadcastsOverview extends React.Component<Props, State> {
     }
   };
 
+  handleNewBroadcast = (broadcast: Broadcast) => {
+    this.props.history.push(`/broadcasts/${broadcast.id}`);
+  };
+
   render() {
     const {loading, filteredBroadcasts = []} = this.state;
 
@@ -91,9 +98,13 @@ class BroadcastsOverview extends React.Component<Props, State> {
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Broadcasts</Title>
 
-          <Button type="primary" icon={<PlusOutlined />}>
+          <NewBroadcastModalButton
+            type="primary"
+            icon={<PlusOutlined />}
+            onSuccess={this.handleNewBroadcast}
+          >
             New broadcast
-          </Button>
+          </NewBroadcastModalButton>
         </Flex>
 
         <Box mb={4}>

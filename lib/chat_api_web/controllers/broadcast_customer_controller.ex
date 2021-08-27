@@ -31,11 +31,17 @@ defmodule ChatApiWeb.BroadcastCustomerController do
   end
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def create(conn, %{"customers" => customer_ids}) do
-    with %{current_broadcast: broadcast} <- conn.assigns,
-         {count, nil} <- Broadcasts.add_broadcast_customers(broadcast, customer_ids) do
-      json(conn, %{data: %{count: count}})
-    end
+  def create(conn, %{"customers" => customer_ids} = params) do
+    broadcast = conn.assigns.current_broadcast
+
+    {count, nil} =
+      case Map.get(params, "action", "replace") do
+        "add" -> Broadcasts.add_broadcast_customers(broadcast, customer_ids)
+        "replace" -> Broadcasts.set_broadcast_customers(broadcast, customer_ids)
+        _ -> Broadcasts.set_broadcast_customers(broadcast, customer_ids)
+      end
+
+    json(conn, %{data: %{count: count}})
   end
 
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()

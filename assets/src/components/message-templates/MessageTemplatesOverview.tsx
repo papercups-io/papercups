@@ -1,17 +1,22 @@
 import React from 'react';
+import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+import qs from 'query-string';
+
 import {Button, Container, Input, Paragraph, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import {MessageTemplate} from '../../types';
 import MessageTemplatesTable from './MessageTemplatesTable';
 import logger from '../../logger';
+import {NewMessageTemplateModalButton} from './NewMessageTemplateModal';
 
-type Props = {};
+type Props = RouteComponentProps<{}>;
 type State = {
   filterQuery: string;
   filteredMessageTemplates: Array<MessageTemplate>;
   loading: boolean;
+  broadcastId: string | null;
   messageTemplates: Array<MessageTemplate>;
 };
 
@@ -45,11 +50,17 @@ class MessageTemplatesOverview extends React.Component<Props, State> {
   state: State = {
     filteredMessageTemplates: [],
     filterQuery: '',
+    broadcastId: null,
     loading: true,
     messageTemplates: [],
   };
 
   async componentDidMount() {
+    const q = qs.parse(this.props.location.search);
+    const broadcastId = q.bid ? String(q.bid) : null;
+
+    this.setState({broadcastId});
+
     await this.handleRefreshMessageTemplates();
   }
 
@@ -92,17 +103,39 @@ class MessageTemplatesOverview extends React.Component<Props, State> {
     }
   };
 
+  handleNewMessageTemplate = (template: MessageTemplate) => {
+    this.props.history.push(
+      `/message-templates/${template.id}${this.props.location.search}`
+    );
+  };
+
+  handleSelectTemplate = (id: string) => {
+    const {broadcastId} = this.state;
+
+    if (!broadcastId) {
+      return;
+    }
+
+    API.updateBroadcast(broadcastId, {message_template_id: id}).then(() =>
+      this.props.history.push(`/broadcasts/${broadcastId}`)
+    );
+  };
+
   render() {
-    const {loading, filteredMessageTemplates = []} = this.state;
+    const {loading, broadcastId, filteredMessageTemplates = []} = this.state;
 
     return (
       <Container>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Message Templates</Title>
 
-          <Button type="primary" icon={<PlusOutlined />}>
+          <NewMessageTemplateModalButton
+            type="primary"
+            icon={<PlusOutlined />}
+            onSuccess={this.handleNewMessageTemplate}
+          >
             New message template
-          </Button>
+          </NewMessageTemplateModalButton>
         </Flex>
 
         <Box mb={4}>
@@ -124,7 +157,9 @@ class MessageTemplatesOverview extends React.Component<Props, State> {
         <Box my={4}>
           <MessageTemplatesTable
             loading={loading}
+            isSelectEnabled={!!broadcastId}
             messageTemplates={filteredMessageTemplates}
+            onSelect={this.handleSelectTemplate}
           />
         </Box>
       </Container>

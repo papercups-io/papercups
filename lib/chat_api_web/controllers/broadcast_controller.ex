@@ -5,9 +5,9 @@ defmodule ChatApiWeb.BroadcastController do
   alias ChatApi.Broadcasts.Broadcast
   alias ChatApi.MessageTemplates.MessageTemplate
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
 
-  plug :authorize when action in [:show, :update, :delete, :send]
+  plug(:authorize when action in [:show, :update, :delete, :send])
 
   defp authorize(conn, _) do
     id = conn.path_params["id"]
@@ -71,32 +71,60 @@ defmodule ChatApiWeb.BroadcastController do
 
   @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def send(conn, %{"id" => _id}) do
+    # TODO: move more of this logic out of the controller into the Broadcasts context
     with %{current_user: current_user, current_broadcast: broadcast} <- conn.assigns,
-         %{account_id: account_id, email: email, id: user_id} <- current_user,
+         %{account_id: account_id, email: email} <- current_user,
          %{message_template_id: template_id} <- broadcast,
          %{refresh_token: refresh_token} <-
-           ChatApi.Google.get_support_gmail_authorization(account_id, user_id),
+           ChatApi.Google.get_support_gmail_authorization(account_id),
          %MessageTemplate{raw_html: raw_html, plain_text: plain_text} <-
            MessageTemplates.get_message_template!(template_id) do
-      results =
-        broadcast
-        |> Broadcasts.list_broadcast_customers()
-        |> Enum.map(fn customer ->
-          {:ok, text} = MessageTemplates.render(plain_text, customer)
-          {:ok, html} = MessageTemplates.render(raw_html, customer)
+      {:ok, broadcast} =
+        Broadcasts.update_broadcast(broadcast, %{
+          state: "started",
+          started_at: DateTime.utc_now()
+        })
 
-          # TODO: figure out the best way to handle errors here
-          # TODO: based on result, update broadcast_customer record state/sent_at fields
-          ChatApi.Google.Gmail.send_message(refresh_token, %{
-            to: customer.email,
-            from: email,
-            subject: "Test Papercups template",
-            text: text,
-            html: html
-          })
-        end)
+      # TODO: move to worker?
+      broadcast
+      |> Broadcasts.list_broadcast_customers()
+      |> Enum.map(fn customer ->
+        data = Map.from_struct(customer)
 
-      json(conn, %{ok: true, num_sent: length(results)})
+        {:ok, text} = MessageTemplates.render(plain_text, data)
+        {:ok, html} = MessageTemplates.render(raw_html, data)
+
+        # TODO: figure out the best way to handle errors here
+        # TODO: based on result, update broadcast_customer record state/sent_at fields
+        ChatApi.Google.Gmail.send_message(refresh_token, %{
+          to: customer.email,
+          from: email,
+          subject: "Test Papercups template",
+          text: text,
+          html: html
+        })
+
+        Broadcasts.update_broadcast_customer(broadcast, customer, %{
+          state: "sent",
+          sent_at: DateTime.utc_now()
+        })
+      end)
+
+      {:ok, broadcast} =
+        Broadcasts.update_broadcast(broadcast, %{
+          state: "finished",
+          finished_at: DateTime.utc_now()
+        })
+
+      render(conn, "show.json",
+        broadcast:
+          Broadcasts.get_broadcast!(broadcast.id, [
+            :message_template,
+            [broadcast_customers: :customer]
+          ])
+      )
+
+      # json(conn, %{ok: true, num_sent: length(results)})
     end
   end
 end
