@@ -1,5 +1,5 @@
-//Using js file since lambda function doesn't support typescript by default
-//to use ts in lambda you have to set up custom runtime (April 5, 2020)
+// Using js file since lambda function doesn't support typescript by default
+// to use ts in lambda you have to set up custom runtime (April 5, 2020)
 const request = require("requestretry");
 
 const parseFromAddress = (email) => {

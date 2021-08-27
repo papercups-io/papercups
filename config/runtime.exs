@@ -149,12 +149,10 @@ ses_bucket_name = System.get_env("SES_BUCKET_NAME", "")
 ses_region = System.get_env("SES_REGION", "")
 
 config :chat_api,
-  ses_bucket_name: ses_bucket_name,
-  ses_region: ses_region
-
-config :chat_api,
   bucket_name: bucket_name,
   region: region,
+  ses_bucket_name: ses_bucket_name,
+  ses_region: ses_region,
   function_bucket_name: function_bucket_name,
   aws_account_id: aws_account_id,
   function_role: function_role

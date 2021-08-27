@@ -37,6 +37,7 @@ defmodule ChatApi.Aws do
     end
   end
 
+  @spec upload_binary(binary(), binary()) :: {:error, any()} | {:ok, any()}
   def upload_binary(file_binary, identifier) do
     # TODO: consolidate Config methods with env variables below
     with {:ok, %{bucket_name: bucket_name}} <- Config.validate() do
@@ -44,6 +45,7 @@ defmodule ChatApi.Aws do
     end
   end
 
+  @spec upload_binary(binary(), binary(), binary()) :: {:error, any} | {:ok, any()}
   def upload_binary(file_binary, identifier, bucket_name) do
     bucket_name
     |> ExAws.S3.put_object(identifier, file_binary)
@@ -54,10 +56,11 @@ defmodule ChatApi.Aws do
     end
   end
 
-  def download_file(bucket, identifier, region) do
-    bucket
+  @spec download_file(binary(), binary(), keyword()) :: {:error, any()} | {:ok, any()}
+  def download_file(identifier, bucket_name, opts \\ []) do
+    bucket_name
     |> ExAws.S3.get_object(identifier)
-    |> ExAws.request!(region: region)
+    |> ExAws.request!(opts)
     |> case do
       %{status_code: 200} = result -> {:ok, result}
       result -> {:error, result}
@@ -86,6 +89,64 @@ defmodule ChatApi.Aws do
     sanitized_filename = String.replace(filename, " ", "-")
 
     "#{uuid}-#{sanitized_filename}"
+  end
+
+  # SES (Simple Email Service)
+
+  @spec download_email_message(binary()) :: {:error, any()} | {:ok, any()}
+  def download_email_message(ses_message_id) do
+    bucket_name = Application.get_env(:chat_api, :ses_bucket_name)
+    ses_region = Application.get_env(:chat_api, :ses_region)
+
+    download_file(ses_message_id, bucket_name, region: ses_region)
+  end
+
+  # For replies, the `References` and `In-Reply-To` headers need to have the message-id
+  # of the previous email, and the subject line has to match as well (with a "Re:" prefix?)
+  @spec build_email_message(map()) :: binary()
+  def build_email_message(
+        %{
+          to: to,
+          from: from,
+          subject: subject,
+          text: text
+        } = email
+      ) do
+    Mail.build()
+    |> Mail.put_to(to)
+    |> Mail.put_from(from)
+    |> Mail.put_cc(Map.get(email, :cc, []))
+    |> Mail.put_bcc(Map.get(email, :bcc, []))
+    |> Mail.put_subject(subject)
+    |> Mail.put_text(text)
+    |> build_email_html(email)
+    |> build_email_headers(email)
+    |> Mail.Renderers.RFC2822.render()
+  end
+
+  def build_email_html(message, %{html: nil}), do: message
+
+  def build_email_html(message, %{html: html}) when is_binary(html),
+    do: Mail.put_html(message, html)
+
+  def build_email_html(message, _), do: message
+
+  def build_email_headers(message, %{in_reply_to: in_reply_to, references: references}) do
+    message
+    |> Mail.Message.put_header("In-Reply-To", in_reply_to)
+    |> Mail.Message.put_header("References", references)
+  end
+
+  def build_email_headers(message, _), do: message
+
+  @spec send_email(map()) :: any()
+  def send_email(%{to: _, from: _, subject: _, text: _} = email) do
+    region = Application.get_env(:chat_api, :ses_region)
+
+    email
+    |> build_email_message()
+    |> ExAws.SES.send_raw_email()
+    |> ExAws.request!(%{region: region})
   end
 
   # Lambda
