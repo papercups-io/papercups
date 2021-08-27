@@ -484,6 +484,8 @@ defmodule ChatApi.Google.Gmail do
   # TODO: evaluate this repo as a more robust alternative:
   # https://github.com/hellogustav/elixir_email_reply_parser/blob/master/lib/elixir_email_reply_parser/parser.ex
 
+  def remove_original_email(nil), do: nil
+
   def remove_original_email(email) do
     email
     |> remove_quoted_email()

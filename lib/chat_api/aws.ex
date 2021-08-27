@@ -101,6 +101,14 @@ defmodule ChatApi.Aws do
     download_file(ses_message_id, bucket_name, region: ses_region)
   end
 
+  @spec retrieve_formatted_email(binary()) :: {:error, any()} | {:ok, any()}
+  def retrieve_formatted_email(ses_message_id) do
+    with {:ok, %{body: email}} <- download_email_message(ses_message_id),
+         %Mail.Message{} = parsed <- Mail.Parsers.RFC2822.parse(email) do
+      {:ok, format_ses_email(ses_message_id, parsed)}
+    end
+  end
+
   # For replies, the `References` and `In-Reply-To` headers need to have the message-id
   # of the previous email, and the subject line has to match as well (with a "Re:" prefix?)
   @spec build_email_message(map()) :: binary()
@@ -115,6 +123,8 @@ defmodule ChatApi.Aws do
     Mail.build()
     |> Mail.put_to(to)
     |> Mail.put_from(from)
+    # TODO: how should we handle reply_to addresses?
+    |> Mail.put_reply_to(Map.get(email, :reply_to, from))
     |> Mail.put_cc(Map.get(email, :cc, []))
     |> Mail.put_bcc(Map.get(email, :bcc, []))
     |> Mail.put_subject(subject)
@@ -147,6 +157,71 @@ defmodule ChatApi.Aws do
     |> build_email_message()
     |> ExAws.SES.send_raw_email()
     |> ExAws.request!(%{region: region})
+  end
+
+  @spec format_ses_email(binary(), Mail.Message.t()) :: map()
+  def format_ses_email(ses_message_id, %Mail.Message{body: body, headers: headers, parts: parts})
+      when not is_nil(headers) do
+    %{
+      id: ses_message_id,
+      headers: headers,
+      message_id: headers["message-id"],
+      subject: headers["subject"],
+      from: headers["from"],
+      to: headers["to"],
+      cc: headers["cc"],
+      bcc: headers["bcc"],
+      in_reply_to: headers["in-reply-to"],
+      references: headers["references"],
+      # Default to the body, may override with `format_message_parts` if multipart: true
+      text: body,
+      html: body,
+      formatted_text: ChatApi.Google.Gmail.remove_original_email(body),
+      # TODO: handle attachments
+      attachments: []
+    }
+    |> format_message_parts(parts)
+  end
+
+  @spec format_message_parts(map(), list()) :: map()
+  def format_message_parts(message, parts \\ []) do
+    Enum.reduce(parts, message, fn part, acc ->
+      case part do
+        %Mail.Message{multipart: true, parts: embedded_parts} ->
+          format_message_parts(acc, embedded_parts)
+
+        %Mail.Message{body: text, headers: %{"content-type" => ["text/plain", _]}} ->
+          Map.merge(acc, %{
+            text: text,
+            formatted_text: ChatApi.Google.Gmail.remove_original_email(text)
+          })
+
+        %Mail.Message{body: html, headers: %{"content-type" => ["text/html", _]}} ->
+          Map.merge(acc, %{html: html})
+
+        _ ->
+          acc
+      end
+    end)
+  end
+
+  def format_message_metadata(message) do
+    %{
+      ses_id: message.id,
+      ses_message_id: message.message_id,
+      ses_subject: message.subject,
+      ses_from:
+        case message.from do
+          {name, email} -> "#{name} <#{email}>"
+          {email} -> email
+          email -> email
+        end,
+      ses_to: message.to,
+      ses_cc: message.cc,
+      ses_bcc: message.bcc,
+      ses_in_reply_to: message.in_reply_to,
+      ses_references: message.references
+    }
   end
 
   # Lambda

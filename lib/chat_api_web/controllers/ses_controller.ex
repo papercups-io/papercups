@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.SesController do
   use ChatApiWeb, :controller
   require Logger
-  alias ChatApi.{Aws, Customers}
+  alias ChatApi.{Aws, Conversations, Customers, Messages}
   alias ChatApi.Customers.Customer
 
   @spec webhook(Plug.Conn.t(), map()) :: Plug.Conn.t()
@@ -22,18 +22,53 @@ defmodule ChatApiWeb.SesController do
       label: "Payload from SES webhook"
     )
 
+    # TODO: move to worker
     with %{account_id: account_id} <- find_matching_account(to_addresses),
-         IO.inspect(account_id, label: "Found matching account"),
-         {:ok, %{body: email}} <- Aws.download_email_message(ses_message_id),
-         IO.inspect(email, label: "Unparsed email"),
-         %Mail.Message{} = parsed <- Mail.Parsers.RFC2822.parse(email),
-         IO.inspect(parsed, label: "Parsed email"),
-         {:ok, %Customer{} = customer} <-
-           Customers.find_or_create_by_email(from_address, account_id) do
-      # TODO: check where email is coming from/to
-      # TODO: check to_addresses for valid address matching account
-      # TODO: use from_address to find/create customer record
+         {:ok, email} <- Aws.retrieve_formatted_email(ses_message_id) do
+      IO.inspect(email, label: "Formatted email")
+
+      {:ok, %Customer{} = customer} = Customers.find_or_create_by_email(from_address, account_id)
+
       IO.inspect(customer, label: "Customer")
+
+      {:ok, conversation} =
+        Conversations.create_conversation(%{
+          account_id: account_id,
+          customer_id: customer.id,
+          subject: email.subject,
+          # TODO: distinguish between gmail and SES?
+          source: "email"
+        })
+
+      conversation
+      |> Conversations.Notification.broadcast_new_conversation_to_admin!()
+      |> Conversations.Notification.notify(:webhooks, event: "conversation:created")
+
+      IO.inspect(conversation, label: "Created conversation!")
+
+      {:ok, message} =
+        Messages.create_message(%{
+          body: email.formatted_text,
+          account_id: account_id,
+          conversation_id: conversation.id,
+          customer_id: customer.id,
+          # TODO: distinguish between gmail and SES?
+          source: "email",
+          metadata: Aws.format_message_metadata(email),
+          sent_at: DateTime.utc_now()
+        })
+
+      IO.inspect(message, label: "Created message!")
+
+      message.id
+      |> Messages.get_message!()
+      |> Messages.Notification.broadcast_to_admin!()
+      |> Messages.Notification.notify(:webhooks)
+      |> Messages.Notification.notify(:push)
+      |> Messages.Notification.notify(:slack)
+      |> Messages.Notification.notify(:mattermost)
+      # NB: for email threads, for now we want to reopen the conversation if it was closed
+      |> Messages.Helpers.handle_post_creation_hooks()
 
       send_resp(conn, 200, "")
     else
