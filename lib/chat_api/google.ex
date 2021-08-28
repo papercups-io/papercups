@@ -58,6 +58,11 @@ defmodule ChatApi.Google do
     |> Repo.one()
   end
 
+  @spec get_google_sheets_authorization(binary()) :: GoogleAuthorization.t() | nil
+  def get_google_sheets_authorization(account_id),
+    do: get_authorization_by_account(account_id, %{client: "sheets"})
+
+  @spec get_personal_gmail_authorization(binary(), integer()) :: GoogleAuthorization.t() | nil
   def get_personal_gmail_authorization(account_id, user_id),
     do:
       get_authorization_by_account(account_id, %{
@@ -66,9 +71,11 @@ defmodule ChatApi.Google do
         user_id: user_id
       })
 
+  @spec get_support_gmail_authorization(binary(), integer()) :: GoogleAuthorization.t() | nil
   def get_support_gmail_authorization(account_id, _user_id),
     do: get_support_gmail_authorization(account_id)
 
+  @spec get_support_gmail_authorization(binary()) :: GoogleAuthorization.t() | nil
   def get_support_gmail_authorization(account_id),
     do:
       get_authorization_by_account(account_id, %{

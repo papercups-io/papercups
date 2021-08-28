@@ -1,4 +1,35 @@
 defmodule ChatApi.Google.Sheets do
+  @spec get_spreadsheet_info(binary(), binary()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
+  def get_spreadsheet_info(refresh_token, id) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      scope = "https://sheets.googleapis.com/v4/spreadsheets/#{id}"
+
+      OAuth2.Client.get(client, scope)
+    end
+  end
+
+  @spec get_spreadsheet_values(binary(), binary()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
+  def get_spreadsheet_values(refresh_token, id) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token),
+         {:ok, %{body: %{"sheets" => _} = result}} <- get_spreadsheet_info(refresh_token, id),
+         {:ok, [default_sheet_name | _]} <- extract_sheet_names(result) do
+      range = "#{default_sheet_name}!A:Z"
+      scope = "https://sheets.googleapis.com/v4/spreadsheets/#{id}/values/#{range}"
+
+      OAuth2.Client.get(client, scope)
+    end
+  end
+
+  @spec get_spreadsheet_values(binary(), binary(), binary()) ::
+          {:error, any()} | {:ok, OAuth2.Response.t()}
+  def get_spreadsheet_values(refresh_token, id, range) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      scope = "https://sheets.googleapis.com/v4/spreadsheets/#{id}/values/#{range}"
+
+      OAuth2.Client.get(client, scope)
+    end
+  end
+
   @spec get_spreadsheet_by_id(binary(), binary(), binary()) ::
           {:error, any()} | {:ok, OAuth2.Response.t()}
   def get_spreadsheet_by_id(refresh_token, id, range \\ "Sheet1!A:Z") do
@@ -48,8 +79,17 @@ defmodule ChatApi.Google.Sheets do
     end
   end
 
+  def extract_sheet_names(%{"sheets" => sheets}) when is_list(sheets) do
+    {:ok,
+     Enum.map(sheets, fn sheet ->
+       get_in(sheet, ["properties", "title"])
+     end)}
+  end
+
+  def extract_sheet_names(_), do: {:error, "Unable to find sheets for spreadsheet!"}
+
   def format_as_json(%{"values" => values}) when is_list(values) do
-    [headers | rows] = values
+    [headers | rows] = Enum.reject(values, &Enum.empty?/1)
 
     keys =
       Enum.map(headers, fn header ->

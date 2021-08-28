@@ -7,7 +7,7 @@ import DynamicTable from '../developers/DynamicTable';
 import logger from '../../logger';
 import {Broadcast, Customer} from '../../types';
 import {Link, RouteComponentProps} from 'react-router-dom';
-import {sleep} from '../../utils';
+import {formatServerError, sleep} from '../../utils';
 import {ArrowLeftOutlined} from '../icons';
 
 const DEFAULT_SQL_VALUE = `
@@ -86,7 +86,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
 
       return this.props.history.push(`/broadcasts/${broadcastId}`);
     } catch (err) {
-      console.error('Failed to import customers:', err);
+      logger.error('Failed to import customers:', formatServerError(err));
     }
   };
 
@@ -116,7 +116,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
 
       this.setState({results});
     } catch (err) {
-      logger.error('Failed to run query:', err);
+      logger.error('Failed to run query:', formatServerError(err));
     } finally {
       this.setState({isRunning: false});
     }
