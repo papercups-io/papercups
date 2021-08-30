@@ -1,7 +1,7 @@
 defmodule ChatApiWeb.SesController do
   use ChatApiWeb, :controller
   require Logger
-  alias ChatApi.{Aws, Conversations, Customers, Messages}
+  alias ChatApi.{Aws, Conversations, Customers, ForwardingAddresses, Messages}
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
@@ -27,12 +27,16 @@ defmodule ChatApiWeb.SesController do
     # TODO: move to worker?
     case get_message_resource(to_addresses) do
       %Conversation{} = conversation ->
+        IO.inspect(conversation, label: "Found conversation!")
+
         handle_existing_thread(conversation, %{
           ses_message_id: ses_message_id,
           from_address: from_address
         })
 
       %Account{} = account ->
+        IO.inspect(account, label: "Found account!")
+
         handle_new_thread(account, %{
           ses_message_id: ses_message_id,
           from_address: from_address
@@ -151,8 +155,10 @@ defmodule ChatApiWeb.SesController do
   end
 
   def find_account_by_address(email) do
-    if String.contains?(email, "@chat.papercups.io") do
-      ChatApi.Accounts.get_account!("2ebbad4c-b162-4ed2-aff5-eaf9ebf469a5")
+    domain = Application.get_env(:chat_api, :ses_forwarding_domain)
+
+    if String.contains?(email, domain) do
+      ForwardingAddresses.find_account_by_forwarding_address(email)
     else
       nil
     end

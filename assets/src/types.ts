@@ -124,6 +124,17 @@ export type FileUpload = {
   content_type: string;
 };
 
+export type ForwardingAddress = {
+  id: string;
+  forwarding_email_address: string;
+  source_email_address?: string;
+  description?: string;
+  state?: string;
+  created_at: string;
+  updated_at: string;
+  account_id: string;
+};
+
 // Alias
 export type Attachment = FileUpload;
 

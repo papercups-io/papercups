@@ -89,6 +89,7 @@ import EmailTemplateBuilder from './developers/EmailTemplateBuilder';
 import LambdaDetailsPage from './lambdas/LambdaDetailsPage';
 import LambdasOverview from './lambdas/LambdasOverview';
 import CannedResponsesOverview from './canned-responses/CannedResponsesOverview';
+import ForwardingAddressSettings from './settings/ForwardingAddressSettings';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -551,6 +552,11 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="saved-replies">
                   <Link to="/settings/saved-replies">Saved replies</Link>
                 </Menu.Item>
+                <Menu.Item key="forwarding-addresses">
+                  <Link to="/settings/forwarding-addresses">
+                    Forwarding addresses
+                  </Link>
+                </Menu.Item>
                 {shouldDisplayBilling && (
                   <Menu.Item key="billing">
                     <Link to="/settings/billing">Billing</Link>
@@ -607,6 +613,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route
             path="/settings/saved-replies"
             component={CannedResponsesOverview}
+          />
+          <Route
+            path="/settings/forwarding-addresses"
+            component={ForwardingAddressSettings}
           />
           <Route path="/settings/chat-widget" component={ChatWidgetSettings} />
           {shouldDisplayBilling && (

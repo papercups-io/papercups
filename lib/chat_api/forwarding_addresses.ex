@@ -4,8 +4,8 @@ defmodule ChatApi.ForwardingAddresses do
   """
 
   import Ecto.Query, warn: false
-  alias ChatApi.Repo
-
+  alias ChatApi.{Repo, Accounts}
+  alias ChatApi.Accounts.Account
   alias ChatApi.ForwardingAddresses.ForwardingAddress
 
   @spec list_forwarding_addresses(binary(), map()) :: [ForwardingAddress.t()]
@@ -18,6 +18,24 @@ defmodule ChatApi.ForwardingAddresses do
 
   @spec get_forwarding_address!(binary()) :: ForwardingAddress.t()
   def get_forwarding_address!(id), do: Repo.get!(ForwardingAddress, id)
+
+  @spec find_by_forwarding_email(binary()) :: ForwardingAddress.t() | nil
+  def find_by_forwarding_email(email) do
+    ForwardingAddress
+    |> where(forwarding_email_address: ^email)
+    |> Repo.one()
+  end
+
+  @spec find_account_by_forwarding_address(binary()) :: Account.t() | nil
+  def find_account_by_forwarding_address(email) do
+    case find_by_forwarding_email(email) do
+      %ForwardingAddress{account_id: account_id} ->
+        Accounts.get_account!(account_id)
+
+      nil ->
+        nil
+    end
+  end
 
   @spec create_forwarding_address(map()) ::
           {:ok, ForwardingAddress.t()} | {:error, Ecto.Changeset.t()}
@@ -48,9 +66,9 @@ defmodule ChatApi.ForwardingAddresses do
 
   def generate_forwarding_email_address(domain) do
     prefix =
-      :crypto.strong_rand_bytes(64)
+      :crypto.strong_rand_bytes(32)
       |> Base.encode32()
-      |> binary_part(0, 64)
+      |> binary_part(0, 32)
       |> String.downcase()
 
     "#{prefix}@#{domain}"

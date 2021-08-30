@@ -66,7 +66,7 @@ const CannedResponsesTable = ({
 
             <Box mx={1}>
               <Popconfirm
-                title="Are you sure you want to delete this API key?"
+                title="Are you sure you want to delete this saved reply?"
                 okText="Yes"
                 cancelText="No"
                 placement="topLeft"
@@ -188,7 +188,7 @@ class CannedResponsesOverview extends React.Component<Props, State> {
     const {loading, filteredCannedResponses = []} = this.state;
 
     return (
-      <Container>
+      <Container sx={{maxWidth: 800}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Saved replies</Title>
 
