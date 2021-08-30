@@ -185,9 +185,9 @@ defmodule ChatApiWeb.CompanyControllerTest do
       conn = delete(authed_conn, Routes.company_path(authed_conn, :delete, company))
       assert response(conn, 204)
 
-      assert_error_sent 404, fn ->
+      assert_error_sent(404, fn ->
         get(authed_conn, Routes.company_path(authed_conn, :show, company))
-      end
+      end)
     end
 
     test "renders 404 when deleting another account's company",

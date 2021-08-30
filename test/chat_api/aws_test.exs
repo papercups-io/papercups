@@ -2,7 +2,6 @@ defmodule ChatApi.AwsTest do
   use ChatApi.DataCase
 
   alias ChatApi.Aws
-  alias ChatApiWeb.SesController
 
   describe "aws" do
     test "validate_config/0 validates that all the environment variables are set" do

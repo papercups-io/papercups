@@ -88,6 +88,17 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def forwarding_address_factory do
+    %ChatApi.ForwardingAddresses.ForwardingAddress{
+      account: build(:account),
+      forwarding_email_address:
+        sequence(:forwarding_email_address, &"forwarding-#{&1}@chat.papercups.io"),
+      source_email_address: "source@company.com",
+      description: "some description",
+      state: "some state"
+    }
+  end
+
   def github_authorization_factory do
     %ChatApi.Github.GithubAuthorization{
       access_token: "some access_token",
