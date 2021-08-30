@@ -1,7 +1,7 @@
 defmodule ChatApi.Workers.SendPushNotifications do
   @moduledoc false
 
-  use Oban.Worker, queue: :mailers
+  use Oban.Worker, queue: :default
   import Ecto.Query, warn: false
   require Logger
 
