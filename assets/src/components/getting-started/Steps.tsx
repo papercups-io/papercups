@@ -77,17 +77,17 @@ const getStepsMetadata = (
         </>
       ),
     },
-    {
-      completed: onboardingStatus.has_configured_storytime,
-      ctaHref: '/sessions/setup',
-      ctaText: 'Set up Storytime',
-      text: (
-        <>
-          <Text strong>Set up Storytime</Text> to view how customers are using
-          your website.
-        </>
-      ),
-    },
+    // {
+    //   completed: onboardingStatus.has_configured_storytime,
+    //   ctaHref: '/sessions/setup',
+    //   ctaText: 'Set up Storytime',
+    //   text: (
+    //     <>
+    //       <Text strong>Set up Storytime</Text> to view how customers are using
+    //       your website.
+    //     </>
+    //   ),
+    // },
     {
       completed: onboardingStatus.has_upgraded_subscription,
       ctaHref: '/settings/billing',
