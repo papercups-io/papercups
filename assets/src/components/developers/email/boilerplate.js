@@ -22,6 +22,16 @@ export const Paragraph = (props) => {
   );
 };
 
+export const H1 = (props) => {
+  const {children, align = 'left'} = props;
+
+  return (
+    <h1 className={`papercups-align-${align}`} align={align}>
+      {children}
+    </h1>
+  );
+};
+
 export const H2 = (props) => {
   const {children, align = 'left'} = props;
 
@@ -29,6 +39,29 @@ export const H2 = (props) => {
     <h2 className={`papercups-align-${align}`} align={align}>
       {children}
     </h2>
+  );
+};
+
+export const H3 = (props) => {
+  const {children, align = 'left'} = props;
+
+  return (
+    <h3 className={`papercups-align-${align}`} align={align}>
+      {children}
+    </h3>
+  );
+};
+
+export const Image = (props) => {
+  const {alt = '', align = 'center'} = props;
+
+  return (
+    <img
+      alt={alt}
+      className={`papercups-align-${align}`}
+      align={align}
+      {...props}
+    />
   );
 };
 

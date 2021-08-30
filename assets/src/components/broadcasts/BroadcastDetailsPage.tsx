@@ -6,7 +6,7 @@ import {Button, Card, Empty, Table, Text, Title} from '../common';
 import * as API from '../../api';
 import {Broadcast} from '../../types';
 import logger from '../../logger';
-import {SendOutlined} from '../icons';
+import {ArrowLeftOutlined, SendOutlined} from '../icons';
 import {formatBroadcastCustomers, formatDateTime} from './support';
 
 // TODO: make it possible to select customer to preview in email template
@@ -150,9 +150,16 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
             borderBottom: '1px solid rgba(0,0,0,.06)',
           }}
         >
-          <Title level={2} style={{margin: 0}}>
-            {name}
-          </Title>
+          <Flex sx={{alignItems: 'center'}}>
+            <Box mr={3}>
+              <Link to={`/broadcasts`}>
+                <Button icon={<ArrowLeftOutlined />}>Back</Button>
+              </Link>
+            </Box>
+            <Title level={2} style={{margin: 0}}>
+              {name}
+            </Title>
+          </Flex>
           {isUnstarted && (
             <Button
               type="primary"

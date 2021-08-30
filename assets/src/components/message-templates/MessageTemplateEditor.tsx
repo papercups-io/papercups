@@ -6,7 +6,7 @@ import qs from 'query-string';
 // @ts-ignore
 import {generateElement} from 'react-live';
 
-import {Button, MarkdownRenderer, Title} from '../common';
+import {Button, MarkdownRenderer, Select, Title} from '../common';
 import MonacoEditor from '../developers/MonacoEditor';
 import {getIframeContents} from '../developers/email/html';
 import {
@@ -15,7 +15,10 @@ import {
   Content,
   Body,
   Paragraph,
+  H1,
   H2,
+  H3,
+  Image,
   Variable,
 } from '../developers/email/boilerplate';
 import * as API from '../../api';
@@ -23,6 +26,19 @@ import logger from '../../logger';
 import {MessageTemplate} from '../../types';
 import {sleep} from '../../utils';
 import {ArrowLeftOutlined} from '../icons';
+
+const DEFAULT_MARKDOWN_VALUE = `
+Hey {{name}}!
+
+Papercups v2.0 is out! Here are the biggest changes...
+
+## Slack Integration
+
+Our Slack integration allows you to...
+
+Best,
+Papercups Team
+`;
 
 const DEFAULT_CODE_VALUE = `
 const Email = () => {
@@ -54,19 +70,11 @@ const Email = () => {
 
 const MARKDOWN_CODE_VALUE = `
 const Email = () => {
-  return (
-    <Layout background="#f9f9f9">
-      <Container minWidth={320} maxWidth={640}>
-        <Content bordered theme={{color: "#1890ff"}}>
-          <Body>
-            <Markdown source={__MARKDOWN__} />
-          </Body>
-        </Content>
-      </Container>
-    </Layout>
-  );
+  return <Markdown source={__MARKDOWN__} />;
 };
 `;
+
+type TemplateMode = 'react' | 'markdown' | 'plain_text';
 
 type Props = RouteComponentProps<{id: string}>;
 
@@ -75,7 +83,7 @@ type State = {
   isSaving: boolean;
   broadcastId: string | null;
   template: MessageTemplate | null;
-  mode: string;
+  mode: TemplateMode;
   text: string;
   react: string;
   markdown: string;
@@ -105,14 +113,22 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
     const q = qs.parse(this.props.location.search);
     const broadcastId = q.bid ? String(q.bid) : null;
     const template = await API.fetchMessageTemplate(id);
-    const {raw_html: html, react_js: react, plain_text: text} = template;
+    const {
+      raw_html: html,
+      react_js: react,
+      plain_text: text,
+      markdown,
+      type,
+    } = template;
 
     this.setState({
       broadcastId,
       template,
       html,
       text,
+      mode: type,
       react: react || DEFAULT_CODE_VALUE,
+      markdown: markdown || DEFAULT_MARKDOWN_VALUE,
       isLoading: false,
     });
   }
@@ -157,7 +173,10 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
             Content,
             Body,
             Paragraph,
+            Image,
+            H1,
             H2,
+            H3,
             Variable,
           },
         },
@@ -187,6 +206,39 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
     }
   };
 
+  handleUpdatePlainTextIframe = async () => {
+    const text = this.monaco?.getValue();
+    const doc = this.iframe?.contentDocument;
+
+    if (!text || !doc) {
+      return;
+    }
+
+    try {
+      // TODO: don't use an iframe for this?
+
+      const contents = getIframeContents({
+        html: `<main>${text}</main>`,
+        cssPremailerIgnore: '',
+        css: `main {
+          padding: 40px;
+          font-family: Arial, Helvetica, sans-serif;
+          white-space: break-spaces;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }`,
+      });
+
+      doc.open();
+      doc.write(contents);
+      doc.close();
+
+      this.setState({text, html: contents});
+    } catch (e) {
+      logger.error(e);
+    }
+  };
+
   handleUpdateMarkdownIframe = async () => {
     const code = this.monaco?.getValue();
     const doc = this.iframe?.contentDocument;
@@ -201,35 +253,38 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
         {
           code: MARKDOWN_CODE_VALUE.replace('const Email = ', ''),
           scope: {
-            Layout,
-            Container,
-            Content,
-            Body,
-            Paragraph,
-            H2,
-            Variable,
             Markdown: MarkdownRenderer,
             __MARKDOWN__: code,
           },
         },
         logger.error
       );
-
       const html = renderToStaticMarkup(<Element />);
-      const contents = getIframeContents({html});
-      const rendered = await API.renderEmailTemplate({
-        html: contents,
-        data: this.state.json,
+      const contents = getIframeContents({
+        html,
+        css: `
+        .Text--markdown {
+          padding: 40px;
+          font-family: Arial, Helvetica, sans-serif;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }`,
       });
 
+      // const rendered = await API.renderEmailTemplate({
+      //   html: contents,
+      //   data: this.state.json,
+      // });
+
       doc.open();
-      doc.write(rendered);
+      doc.write(contents);
       doc.close();
 
       this.setState({
         markdown: code,
-        html: contents,
-        text: this.getHtmlInnerText(contents),
+        html: html,
+        // TODO: make sure this is reliable
+        text: this.getEmailText() || this.getHtmlInnerText(contents),
       });
     } catch (e) {
       logger.error(e);
@@ -254,10 +309,13 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
   handleEditorMounted = (editor: any) => {
     this.monaco = editor;
 
-    if (this.state.mode === 'react') {
-      this.handleUpdateReactIframe();
-    } else {
-      this.handleUpdateMarkdownIframe();
+    switch (this.state.mode) {
+      case 'react':
+        return this.handleUpdateReactIframe();
+      case 'markdown':
+        return this.handleUpdateMarkdownIframe();
+      case 'plain_text':
+        return this.handleUpdatePlainTextIframe();
     }
   };
 
@@ -266,12 +324,13 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
       this.setState({isSaving: true});
 
       const {id: templateId} = this.props.match.params;
-      const {mode, react, text, html, broadcastId} = this.state;
+      const {mode, react, markdown, text, html, broadcastId} = this.state;
 
       const template = await API.updateMessageTemplate(templateId, {
         plain_text: text,
         raw_html: html,
         react_js: react,
+        markdown: markdown,
         type: mode,
       });
 
@@ -331,30 +390,69 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
 
         <Flex sx={{width: '100%', flex: 1}}>
           <Flex sx={{flex: 1, flexDirection: 'column', overflow: 'hidden'}}>
-            {mode === 'react' ? (
-              <MonacoEditor
-                height="100%"
-                width="100%"
-                defaultLanguage="javascript"
-                defaultValue={react}
-                onMount={this.handleEditorMounted}
-                onValidate={this.handleUpdateReactIframe}
-                onSave={this.handleUpdateReactIframe}
+            <Box p={3}>
+              <Select
+                style={{width: '100%'}}
+                placeholder="Select template mode"
+                value={mode}
+                onChange={(value: TemplateMode) => {
+                  this.setState({mode: value});
+                }}
+                options={[
+                  {value: 'react', display: 'ReactJS'},
+                  {value: 'markdown', display: 'Markdown'},
+                  // {value: 'react_markdown', display: 'ReactJS + Markdown'},
+                  {value: 'plain_text', display: 'Plain text'},
+                ].map(({value, display}) => {
+                  return {id: value, key: value, label: display, value};
+                })}
               />
-            ) : (
-              <MonacoEditor
-                height="100%"
-                width="100%"
-                defaultLanguage="markdown"
-                defaultValue={markdown}
-                options={{tabSize: 2}}
-                onMount={this.handleEditorMounted}
-                onChange={this.handleUpdateMarkdownIframe}
-                onValidate={this.handleUpdateMarkdownIframe}
-                onSave={this.handleUpdateMarkdownIframe}
-              />
-            )}
+            </Box>
+
+            {{
+              react: (
+                <MonacoEditor
+                  key={mode}
+                  height="100%"
+                  width="100%"
+                  defaultLanguage="javascript"
+                  defaultValue={react}
+                  onMount={this.handleEditorMounted}
+                  onValidate={this.handleUpdateReactIframe}
+                  onSave={this.handleUpdateReactIframe}
+                />
+              ),
+              markdown: (
+                <MonacoEditor
+                  key={mode}
+                  height="100%"
+                  width="100%"
+                  defaultLanguage="markdown"
+                  defaultValue={markdown}
+                  options={{tabSize: 2}}
+                  onMount={this.handleEditorMounted}
+                  onChange={this.handleUpdateMarkdownIframe}
+                  onValidate={this.handleUpdateMarkdownIframe}
+                  onSave={this.handleUpdateMarkdownIframe}
+                />
+              ),
+              plain_text: (
+                <MonacoEditor
+                  key={mode}
+                  height="100%"
+                  width="100%"
+                  defaultLanguage="text"
+                  defaultValue={markdown}
+                  options={{tabSize: 2}}
+                  onMount={this.handleEditorMounted}
+                  onChange={this.handleUpdatePlainTextIframe}
+                  onValidate={this.handleUpdatePlainTextIframe}
+                  onSave={this.handleUpdatePlainTextIframe}
+                />
+              ),
+            }[mode] || null}
           </Flex>
+
           <Flex sx={{flex: 1.2, flexDirection: 'column'}}>
             <Box sx={{flex: 1}}>
               <iframe

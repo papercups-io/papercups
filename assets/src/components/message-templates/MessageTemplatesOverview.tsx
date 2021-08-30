@@ -3,7 +3,7 @@ import {RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 
-import {Button, Container, Input, Paragraph, Title} from '../common';
+import {Container, Input, Paragraph, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import {MessageTemplate} from '../../types';

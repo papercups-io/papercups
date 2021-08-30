@@ -77,7 +77,7 @@ defmodule ChatApiWeb.BroadcastController do
          %{message_template_id: template_id} <- broadcast,
          %{refresh_token: refresh_token} <-
            ChatApi.Google.get_support_gmail_authorization(account_id),
-         %MessageTemplate{raw_html: raw_html, plain_text: plain_text} <-
+         %MessageTemplate{raw_html: raw_html, plain_text: plain_text, type: type} <-
            MessageTemplates.get_message_template!(template_id) do
       {:ok, broadcast} =
         Broadcasts.update_broadcast(broadcast, %{
@@ -99,9 +99,14 @@ defmodule ChatApiWeb.BroadcastController do
         ChatApi.Google.Gmail.send_message(refresh_token, %{
           to: customer.email,
           from: email,
+          # TODO: should this be set at the broadcast level or message_template level?
           subject: "Test Papercups template",
           text: text,
-          html: html
+          html:
+            case type do
+              "plain_text" -> nil
+              _ -> html
+            end
         })
 
         Broadcasts.update_broadcast_customer(broadcast, customer, %{

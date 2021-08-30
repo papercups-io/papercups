@@ -60,10 +60,10 @@ export const getIframeContents = ({
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <style type="text/css">
-      ${getDefaultCss() || css}
+      ${css || getDefaultCss()}
     </style>
     <style type="text/css" data-premailer="ignore">
-      ${getPremailerIgnoredCss() || cssPremailerIgnore}
+      ${cssPremailerIgnore || getPremailerIgnoredCss()}
     </style>
   </head>
   <body>
