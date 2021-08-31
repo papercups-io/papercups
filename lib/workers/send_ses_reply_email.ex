@@ -2,15 +2,16 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
   use Oban.Worker, queue: :mailers
 
   require Logger
-  alias ChatApi.{Aws, Conversations, Messages}
+  alias ChatApi.{Accounts, Aws, Conversations, Emails, Messages}
   alias ChatApi.Messages.Message
   alias ChatApi.Users.User
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"message_id" => message_id}}) do
     with %Message{
+           account_id: account_id,
            conversation_id: conversation_id,
-           user: %User{email: sender_email_address}
+           user: %User{} = user
          } = message <-
            Messages.get_message!(message_id),
          %Message{
@@ -23,11 +24,14 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
              } = metadata
          } <- Conversations.get_previous_message(conversation_id, message) do
       references = build_references(ses_references, ses_message_id)
+      account = Accounts.get_account!(account_id)
+      reply_to_address = "reply+#{conversation_id}@chat.papercups.io"
 
       email = %{
         to: ses_from,
-        from: sender_email_address,
-        reply_to: "reply+#{conversation_id}@chat.papercups.io",
+        # TODO: should we use an alias instead of the reply_to_address here?
+        from: "#{Emails.format_sender_name(user, account)} <#{reply_to_address}>",
+        reply_to: reply_to_address,
         subject: ses_subject,
         text: message.body,
         in_reply_to: ses_message_id,
