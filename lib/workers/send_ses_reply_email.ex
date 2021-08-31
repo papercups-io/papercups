@@ -26,6 +26,7 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
       references = build_references(ses_references, ses_message_id)
       account = Accounts.get_account!(account_id)
       reply_to_address = "reply+#{conversation_id}@chat.papercups.io"
+      original_metadata = message.metadata || %{}
 
       email = %{
         to: ses_from,
@@ -45,7 +46,7 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
           Messages.update_message(message, %{
             metadata:
               metadata
-              |> Map.merge(message.metadata)
+              |> Map.merge(original_metadata)
               |> Map.merge(%{
                 "ses_message_id" => "<#{raw_message_id}@email.amazonses.com>",
                 "ses_in_reply_to" => ses_message_id,
