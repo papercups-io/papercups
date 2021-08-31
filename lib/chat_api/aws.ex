@@ -214,6 +214,26 @@ defmodule ChatApi.Aws do
         %Mail.Message{body: html, headers: %{"content-type" => ["text/html", _]}} ->
           Map.merge(acc, %{html: html})
 
+        %Mail.Message{
+          body: binary,
+          headers: %{
+            "content-disposition" => ["attachment", {"filename", filename}],
+            "content-type" => [content_type, metadata]
+          }
+        } ->
+          Map.merge(acc, %{
+            attachments: [
+              %{
+                body: binary,
+                filename: filename,
+                message_id: message.id,
+                content_type: content_type,
+                metadata: metadata
+              }
+              | acc.attachments
+            ]
+          })
+
         _ ->
           acc
       end

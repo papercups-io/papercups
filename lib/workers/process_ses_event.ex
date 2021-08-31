@@ -2,7 +2,16 @@ defmodule ChatApi.Workers.ProcessSesEvent do
   use Oban.Worker, queue: :default
 
   require Logger
-  alias ChatApi.{Aws, Conversations, Customers, ForwardingAddresses, Messages}
+
+  alias ChatApi.{
+    Aws,
+    Conversations,
+    Customers,
+    Files,
+    ForwardingAddresses,
+    Messages
+  }
+
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
@@ -65,16 +74,19 @@ defmodule ChatApi.Workers.ProcessSesEvent do
              source: "email"
            }),
          IO.inspect(conversation, label: "Created conversation!") do
-      create_and_broadcast_message(%{
-        body: email.formatted_text,
-        account_id: account_id,
-        conversation_id: conversation.id,
-        customer_id: customer.id,
-        # TODO: distinguish between gmail and SES?
-        source: "email",
-        metadata: Aws.format_message_metadata(email),
-        sent_at: DateTime.utc_now()
-      })
+      create_and_broadcast_message(
+        %{
+          body: email.formatted_text,
+          account_id: account_id,
+          conversation_id: conversation.id,
+          customer_id: customer.id,
+          # TODO: distinguish between gmail and SES?
+          source: "email",
+          metadata: Aws.format_message_metadata(email),
+          sent_at: DateTime.utc_now()
+        },
+        email.attachments
+      )
     else
       error ->
         Logger.error("Something went wrong in `handle_new_thread/2`: #{inspect(error)}")
@@ -93,16 +105,19 @@ defmodule ChatApi.Workers.ProcessSesEvent do
          {:ok, %Customer{} = customer} <-
            Customers.find_or_create_by_email(from_address, account_id),
          IO.inspect(customer, label: "Customer") do
-      create_and_broadcast_message(%{
-        body: email.formatted_text,
-        account_id: account_id,
-        conversation_id: conversation.id,
-        customer_id: customer.id,
-        # TODO: distinguish between gmail and SES?
-        source: "email",
-        metadata: Aws.format_message_metadata(email),
-        sent_at: DateTime.utc_now()
-      })
+      create_and_broadcast_message(
+        %{
+          body: email.formatted_text,
+          account_id: account_id,
+          conversation_id: conversation.id,
+          customer_id: customer.id,
+          # TODO: distinguish between gmail and SES?
+          source: "email",
+          metadata: Aws.format_message_metadata(email),
+          sent_at: DateTime.utc_now()
+        },
+        email.attachments
+      )
     else
       error ->
         Logger.error("Something went wrong in `handle_existing_thread/2`: #{inspect(error)}")
@@ -126,10 +141,12 @@ defmodule ChatApi.Workers.ProcessSesEvent do
     end
   end
 
-  @spec create_and_broadcast_message(map()) :: {:ok, Message.t()} | {:error, any()}
-  def create_and_broadcast_message(params) do
+  @spec create_and_broadcast_message(map(), list()) :: {:ok, Message.t()} | {:error, any()}
+  def create_and_broadcast_message(params, attachments \\ []) do
     case Messages.create_message(params) do
       {:ok, message} ->
+        process_email_attachments(attachments, message)
+
         message.id
         |> Messages.get_message!()
         |> Messages.Notification.broadcast_to_admin!()
@@ -146,6 +163,43 @@ defmodule ChatApi.Workers.ProcessSesEvent do
         error
     end
   end
+
+  def process_email_attachment(
+        %{
+          filename: filename,
+          body: body,
+          content_type: content_type
+        },
+        %Message{} = message
+      ) do
+    with identifier <- Aws.generate_unique_filename(filename),
+         {:ok, %{status_code: 200}} <- Aws.upload_binary(body, identifier),
+         file_url <- Aws.get_file_url(identifier),
+         {:ok, file} <-
+           Files.create_file(%{
+             "filename" => filename,
+             "unique_filename" => identifier,
+             "file_url" => file_url,
+             "content_type" => content_type,
+             "account_id" => message.account_id
+           }),
+         {:ok, _} <- Messages.add_attachment(message, file) do
+      {:ok, file}
+    else
+      error ->
+        Logger.error("Failed to process attachment #{inspect(filename)}: #{inspect(error)}")
+
+        error
+    end
+  end
+
+  def process_email_attachments(nil, _), do: :ok
+  def process_email_attachments([], _), do: :ok
+
+  def process_email_attachments([_ | _] = attachments, %Message{} = message),
+    do: Enum.each(attachments, &process_email_attachment(&1, message))
+
+  def process_email_attachments(_, _), do: :ok
 
   @spec find_account_by_address(binary()) :: Account.t() | nil
   def find_account_by_address(email) do
