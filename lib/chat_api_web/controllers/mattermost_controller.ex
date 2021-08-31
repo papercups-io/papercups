@@ -144,6 +144,7 @@ defmodule ChatApiWeb.MattermostController do
       |> Messages.Notification.notify(:conversation_reply_email)
       |> Messages.Notification.notify(:gmail)
       |> Messages.Notification.notify(:sms)
+      |> Messages.Notification.notify(:ses)
       |> Messages.Helpers.handle_post_creation_hooks()
     end
   end

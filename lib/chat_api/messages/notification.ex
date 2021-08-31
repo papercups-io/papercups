@@ -258,6 +258,8 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
+  def notify(%Message{} = message, :ses, _opts), do: message
+
   def notify(%Message{private: true} = message, type, _opts) do
     Logger.debug(
       "Skipping notification type #{inspect(type)} for private message #{inspect(message)}"
