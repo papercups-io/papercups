@@ -75,7 +75,7 @@ defmodule ChatApi.ForwardingAddresses do
   end
 
   def generate_forwarding_email_address() do
-    domain = Application.get_env(:chat_api, :ses_forwarding_domain)
+    domain = Application.get_env(:chat_api, :ses_forwarding_domain, "chat.papercups.io")
 
     generate_forwarding_email_address(domain)
   end

@@ -220,21 +220,25 @@ defmodule ChatApi.Aws do
     end)
   end
 
+  def format_metadata_email_field({name, email}), do: "#{name} <#{email}>"
+  def format_metadata_email_field({email}), do: email
+  def format_metadata_email_field(email) when is_binary(email), do: email
+
+  def format_metadata_email_field(emails) when is_list(emails),
+    do: Enum.map(emails, &format_metadata_email_field/1)
+
+  def format_metadata_email_field(_), do: nil
+
   def format_message_metadata(message) do
     %{
       ses_id: message.id,
       ses_message_id: message.message_id,
       ses_subject: message.subject,
-      ses_from:
-        case message.from do
-          {name, email} -> "#{name} <#{email}>"
-          {email} -> email
-          email -> email
-        end,
-      ses_to: message.to,
-      ses_cc: message.cc,
-      ses_bcc: message.bcc,
-      ses_in_reply_to: message.in_reply_to,
+      ses_from: format_metadata_email_field(message.from),
+      ses_to: format_metadata_email_field(message.to),
+      ses_cc: format_metadata_email_field(message.cc),
+      ses_bcc: format_metadata_email_field(message.bcc),
+      ses_in_reply_to: format_metadata_email_field(message.in_reply_to),
       ses_references: message.references
     }
   end

@@ -32,7 +32,7 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
         to: ses_from,
         # TODO: should we use an alias instead of the reply_to_address here?
         from: "#{Emails.format_sender_name(user, account)} <#{reply_to_address}>",
-        reply_to: reply_to_address,
+        # reply_to: reply_to_address,
         subject: ses_subject,
         text: message.body,
         in_reply_to: ses_message_id,
