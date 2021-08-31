@@ -345,6 +345,43 @@ defmodule ChatApi.SlackTest do
              end) =~ "Unrecognized message format"
     end
 
+    test "Helpers.get_message_text/1 handles email messages differently",
+         %{
+           account: account,
+           authorization: authorization,
+           customer: customer
+         } do
+      conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          source: "email",
+          subject: "Test subject line"
+        )
+
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer,
+          source: "email",
+          body: "Test email message"
+        )
+
+      assert Slack.Helpers.get_message_text(%{
+               conversation: conversation,
+               message: message,
+               authorization: authorization,
+               thread: nil
+             }) =~
+               """
+               > :email: From: *#{customer.email}*
+               > Subject: *Test subject line*
+
+               Test email message
+               """
+    end
+
     test "Helpers.get_message_payload/2 returns payload for initial slack thread",
          %{customer: customer, conversation: conversation, thread: thread} do
       text = "Hello world"

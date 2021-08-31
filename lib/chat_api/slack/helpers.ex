@@ -834,6 +834,36 @@ defmodule ChatApi.Slack.Helpers do
 
   @spec get_message_text(map()) :: binary()
   def get_message_text(%{
+        conversation:
+          %Conversation{
+            source: "email",
+            subject: email_subject_line,
+            customer: %Customer{email: customer_email}
+          } = conversation,
+        message: %Message{source: "email"} = message,
+        authorization: _,
+        thread: nil
+      }) do
+    dashboard_link = "<#{get_dashboard_conversation_url(conversation.id)}|dashboard>"
+
+    content =
+      message
+      |> format_message_body()
+      |> format_slack_markdown()
+      |> append_attachments_text(message)
+
+    """
+    > :email: From: *#{customer_email}*
+    > Subject: *#{email_subject_line}*
+
+    #{content}
+
+    > Reply to this thread to respond to this email, or view in the #{dashboard_link} :rocket:
+    > (Start a message with `;;` or `\\\\` to send an <https://github.com/papercups-io/papercups/pull/562|internal note>.)
+    """
+  end
+
+  def get_message_text(%{
         conversation: %Conversation{customer: %Customer{}} = conversation,
         message: %Message{} = message,
         authorization: _authorization,
@@ -912,7 +942,7 @@ defmodule ChatApi.Slack.Helpers do
             time_zone: time_zone
           } = customer
       }) do
-    fields = [
+    default_fields = [
       %{
         "type" => "mrkdwn",
         "text" => "*Name:*\n#{name || "Anonymous User"}"
@@ -929,7 +959,7 @@ defmodule ChatApi.Slack.Helpers do
 
     case message.source do
       "chat" ->
-        Enum.concat(fields, [
+        Enum.concat(default_fields, [
           %{
             "type" => "mrkdwn",
             "text" => "*Last seen URL:*\n#{current_url || "N/A"}"
@@ -948,8 +978,24 @@ defmodule ChatApi.Slack.Helpers do
           }
         ])
 
-      source when source in ["slack", "mattermost", "email"] ->
-        Enum.concat(fields, [
+      "email" ->
+        [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Name:*\n#{name || "Anonymous User"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Email:*\n#{email || "N/A"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
+          }
+        ]
+
+      source when source in ["slack", "mattermost"] ->
+        Enum.concat(default_fields, [
           %{
             "type" => "mrkdwn",
             "text" => "*Timezone:*\n#{time_zone || "N/A"}"
@@ -961,7 +1007,7 @@ defmodule ChatApi.Slack.Helpers do
         ])
 
       _ ->
-        Enum.concat(fields, [
+        Enum.concat(default_fields, [
           %{
             "type" => "mrkdwn",
             "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
