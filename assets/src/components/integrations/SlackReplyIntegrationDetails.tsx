@@ -17,7 +17,7 @@ import {
 } from '../common';
 import {ArrowLeftOutlined, CheckCircleOutlined} from '../icons';
 import * as API from '../../api';
-import {SlackAuthorization, SlackAuthorizationSettings} from '../../types';
+import {SlackAuthorization} from '../../types';
 import {getSlackAuthUrl, getSlackRedirectUrl} from './support';
 import logger from '../../logger';
 
@@ -110,25 +110,6 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
       .catch((err) =>
         logger.error('Failed to remove Slack authorization:', err)
       );
-  };
-
-  updateAuthorizationSettings = async (
-    updates: Partial<SlackAuthorizationSettings> = {}
-  ) => {
-    const {authorization} = this.state;
-
-    if (!authorization || !authorization.id) {
-      return null;
-    }
-
-    const {id: authorizationId, settings = {}} = authorization;
-
-    const result = await API.updateSlackAuthorizationSettings(authorizationId, {
-      ...settings,
-      ...updates,
-    });
-
-    this.setState({authorization: result});
   };
 
   render() {

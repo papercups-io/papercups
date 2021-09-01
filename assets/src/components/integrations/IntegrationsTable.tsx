@@ -7,7 +7,6 @@ import {SettingOutlined} from '../icons';
 import {IntegrationType, getGoogleAuthUrl} from './support';
 import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
 import {TwilioAuthorizationButton} from './TwilioAuthorizationModal';
-import {SupportGmailAuthorizationButton} from './GoogleAuthorizationButton';
 import {GithubAuthorizationButton} from './GithubAuthorizationButton';
 
 const IntegrationsTable = ({
@@ -77,7 +76,7 @@ const IntegrationsTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (action: any, record: IntegrationType) => {
-        const {key, status, authorization_id: authorizationId} = record;
+        const {key, status} = record;
         const isConnected = status === 'connected';
 
         switch (key) {
@@ -96,11 +95,9 @@ const IntegrationsTable = ({
             );
           case 'gmail':
             return (
-              <SupportGmailAuthorizationButton
-                isConnected={isConnected}
-                authorizationId={authorizationId}
-                onDisconnectGmail={onDisconnectGmail}
-              />
+              <Link to="/integrations/google/gmail">
+                <Button icon={<SettingOutlined />}>Configure</Button>
+              </Link>
             );
           case 'sheets':
             return (
