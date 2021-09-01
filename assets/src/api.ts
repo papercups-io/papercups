@@ -17,6 +17,7 @@ import {
   WidgetSettings,
   CannedResponse,
   SlackAuthorization,
+  UserSettings,
 } from './types';
 
 // TODO: handle this on the server instead
@@ -377,7 +378,9 @@ export const updateUserProfile = async (
     .then((res) => res.body.data);
 };
 
-export const fetchUserSettings = async (token = getAccessToken()) => {
+export const fetchUserSettings = async (
+  token = getAccessToken()
+): Promise<UserSettings> => {
   if (!token) {
     throw new Error('Invalid token!');
   }

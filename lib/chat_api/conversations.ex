@@ -489,6 +489,9 @@ defmodule ChatApi.Conversations do
     end
   end
 
+  def is_first_message?(%Message{conversation_id: conversation_id, id: message_id}),
+    do: is_first_message?(conversation_id, message_id)
+
   @spec count_agent_replies(binary()) :: number()
   def count_agent_replies(conversation_id) do
     Message

@@ -11,6 +11,7 @@ import {
   Divider,
   Input,
   Paragraph,
+  Text,
   Title,
 } from '../common';
 import * as API from '../../api';
@@ -24,6 +25,7 @@ type State = {
   displayName: string;
   profilePhotoUrl: string;
   shouldEmailOnNewMessages: boolean;
+  shouldEmailOnNewConversations: boolean;
   personalGmailAuthorization: any | null;
   isLoading: boolean;
   isEditing: boolean;
@@ -38,6 +40,7 @@ class UserProfile extends React.Component<Props, State> {
     displayName: '',
     profilePhotoUrl: '',
     shouldEmailOnNewMessages: false,
+    shouldEmailOnNewConversations: false,
     personalGmailAuthorization: null,
     isLoading: true,
     isEditing: false,
@@ -125,11 +128,13 @@ class UserProfile extends React.Component<Props, State> {
     if (settings) {
       this.setState({
         shouldEmailOnNewMessages: settings.email_alert_on_new_message,
+        shouldEmailOnNewConversations: settings.email_alert_on_new_conversation,
       });
     } else {
       // NB: this also handles resetting these values if the optimistic update fails
       this.setState({
         shouldEmailOnNewMessages: false,
+        shouldEmailOnNewConversations: false,
       });
     }
   };
@@ -192,7 +197,7 @@ class UserProfile extends React.Component<Props, State> {
       .then(() => this.setState({isEditing: false}));
   };
 
-  handleToggleEmailAlertSetting = async (e: any) => {
+  handleEmailAlertOnNewMessage = async (e: any) => {
     const shouldEmailOnNewMessages = e.target.checked;
 
     // Optimistic update
@@ -200,6 +205,21 @@ class UserProfile extends React.Component<Props, State> {
 
     return API.updateUserSettings({
       email_alert_on_new_message: shouldEmailOnNewMessages,
+    }).catch((err) => {
+      logger.error('Failed to update settings!', err);
+      // Reset if fails to actually update
+      return this.fetchLatestSettings();
+    });
+  };
+
+  handleEmailAlertOnNewConversation = async (e: any) => {
+    const shouldEmailOnNewConversations = e.target.checked;
+
+    // Optimistic update
+    this.setState({shouldEmailOnNewConversations});
+
+    return API.updateUserSettings({
+      email_alert_on_new_conversation: shouldEmailOnNewConversations,
     }).catch((err) => {
       logger.error('Failed to update settings!', err);
       // Reset if fails to actually update
@@ -220,6 +240,7 @@ class UserProfile extends React.Component<Props, State> {
       profilePhotoUrl,
       personalGmailAuthorization,
       shouldEmailOnNewMessages,
+      shouldEmailOnNewConversations,
       isEditing,
     } = this.state;
 
@@ -332,12 +353,28 @@ class UserProfile extends React.Component<Props, State> {
           </Paragraph>
         </Box>
 
-        <Checkbox
-          checked={shouldEmailOnNewMessages}
-          onChange={this.handleToggleEmailAlertSetting}
-        >
-          Send email alert on new messages
-        </Checkbox>
+        <Box mb={3}>
+          <Checkbox
+            checked={shouldEmailOnNewConversations}
+            onChange={this.handleEmailAlertOnNewConversation}
+          >
+            <Text>
+              Send email alert on <Text strong>new conversations</Text> (initial
+              message only)
+            </Text>
+          </Checkbox>
+        </Box>
+
+        <Box mb={3}>
+          <Checkbox
+            checked={shouldEmailOnNewMessages}
+            onChange={this.handleEmailAlertOnNewMessage}
+          >
+            <Text>
+              Send email alert on <Text strong>all new messages</Text>
+            </Text>
+          </Checkbox>
+        </Box>
 
         <Divider />
 
