@@ -5,7 +5,9 @@ const request = require("requestretry");
 const parseEmailAddress = (email) => {
   const found = email.match("<(.*?)>");
 
-  if (!found[1]) {
+  if (!found && email.match(/^\S+@\S+$/)) {
+    return email;
+  } else if (!found[1]) {
     throw new Error(`Invalid email address: ${email}`);
   }
 
@@ -20,15 +22,21 @@ const handler = async (event) => {
   }
 
   const mail = event.Records[0].ses.mail;
-  const messageId = mail.messageId;
-  const toAddresses = mail.commonHeaders.to;
-  const fromAddress = mail.commonHeaders.from;
+
+  if (!mail) {
+    throw new Error("Missing SES mail object!");
+  }
+
+  const { messageId, commonHeaders = {}, headers = [] } = mail;
+  const messageId = messageId;
+  const toAddresses = commonHeaders.to;
+  const fromAddress = commonHeaders.from;
 
   if (!messageId || !toAddresses || !fromAddress) {
     throw new Error("Missing required fields in message (messageId/to/from)");
   }
 
-  const headers = mail.headers.reduce((acc, header) => {
+  const formattedHeaders = headers.reduce((acc, header) => {
     const { name, value } = header;
 
     if (name && value) {
@@ -52,7 +60,7 @@ const handler = async (event) => {
       message_id: messageId,
       to_addresses: parsedToAddresses,
       from_address: parsedFromAddresses,
-      forwarded_to: headers["x-forwarded-to"],
+      forwarded_to: formattedHeaders["x-forwarded-to"],
       // Deprecated fields
       messageId,
       toAddresses: parsedToAddresses,

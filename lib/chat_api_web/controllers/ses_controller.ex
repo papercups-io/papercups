@@ -23,4 +23,11 @@ defmodule ChatApiWeb.SesController do
 
     send_resp(conn, 200, "")
   end
+
+  def webhook(conn, payload) do
+    IO.inspect(payload, label: "[Deprecated] Payload from SES webhook")
+    IO.inspect("Not doing anything... please use updated webhook handler!")
+
+    send_resp(conn, 200, "")
+  end
 end
