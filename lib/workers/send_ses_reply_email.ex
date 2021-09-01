@@ -3,6 +3,7 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
 
   require Logger
   alias ChatApi.{Accounts, Aws, Conversations, Emails, Messages}
+  alias ChatApi.Files.FileUpload
   alias ChatApi.Messages.Message
   alias ChatApi.Users.User
 
@@ -27,6 +28,7 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
       account = Accounts.get_account!(account_id)
       reply_to_address = "reply+#{conversation_id}@chat.papercups.io"
       original_metadata = message.metadata || %{}
+      attachments = message.attachments || []
 
       email = %{
         to: ses_from,
@@ -36,7 +38,8 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
         subject: ses_subject,
         text: message.body,
         in_reply_to: ses_message_id,
-        references: references
+        references: references,
+        attachments: format_email_attachments(attachments)
       }
 
       IO.inspect(email, label: "[SendSesReplyEmail] Sending SES email")
@@ -68,6 +71,25 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
 
     :ok
   end
+
+  def format_email_attachment(%FileUpload{
+        file_url: file_url,
+        filename: filename,
+        content_type: _
+      }) do
+    case ChatApi.Aws.download_file_url(file_url) do
+      {:ok, %{body: data, status_code: 200}} ->
+        {filename, data}
+
+      _ ->
+        nil
+    end
+  end
+
+  def format_email_attachment(_), do: nil
+
+  def format_email_attachments(attachments \\ []),
+    do: attachments |> Enum.map(&format_email_attachment/1) |> Enum.reject(&is_nil/1)
 
   def build_references(nil, new_message_id), do: new_message_id
 

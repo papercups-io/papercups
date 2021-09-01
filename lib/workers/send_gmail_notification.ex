@@ -10,13 +10,14 @@ defmodule ChatApi.Workers.SendGmailNotification do
   @spec perform(Oban.Job.t()) :: :ok
   def perform(%Oban.Job{
         args: %{
-          "message" => %{
-            "id" => message_id,
-            "account_id" => account_id,
-            "conversation_id" => conversation_id,
-            "user_id" => user_id,
-            "body" => body
-          }
+          "message" =>
+            %{
+              "id" => message_id,
+              "account_id" => account_id,
+              "conversation_id" => conversation_id,
+              "user_id" => user_id,
+              "body" => body
+            } = message
         }
       }) do
     with %{refresh_token: refresh_token} = authorization <-
@@ -73,7 +74,8 @@ defmodule ChatApi.Workers.SendGmailNotification do
         cc: cc,
         in_reply_to: gmail_message_id,
         references: references,
-        thread_id: gmail_thread_id
+        thread_id: gmail_thread_id,
+        attachments: message |> Map.get("attachments", []) |> format_gmail_attachments()
       }
 
       Logger.info("Sending payload to Gmail: #{inspect(payload)}")
@@ -99,6 +101,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
     :ok
   end
 
+  @spec extract_last_gmail_message!(binary()) :: map()
   def extract_last_gmail_message!(conversation_id) do
     conversation_id
     |> Conversations.get_conversation!()
@@ -107,5 +110,33 @@ defmodule ChatApi.Workers.SendGmailNotification do
     |> Enum.reject(&is_nil/1)
     |> Enum.sort_by(& &1["gmail_ts"])
     |> List.last()
+  end
+
+  @spec format_gmail_attachment(map()) :: Swoosh.Attachment.t() | nil
+  def format_gmail_attachment(%{
+        "file_url" => file_url,
+        "filename" => filename,
+        "content_type" => content_type
+      }) do
+    case ChatApi.Aws.download_file_url(file_url) do
+      {:ok, %{body: data, status_code: 200}} ->
+        Swoosh.Attachment.new({:data, data},
+          content_type: content_type,
+          filename: filename,
+          type: :inline
+        )
+
+      _ ->
+        nil
+    end
+  end
+
+  def format_gmail_attachment(_), do: nil
+
+  @spec format_gmail_attachment([map()]) :: [Swoosh.Attachment.t()]
+  def format_gmail_attachments(attachments \\ []) do
+    attachments
+    |> Enum.map(&format_gmail_attachment/1)
+    |> Enum.reject(&is_nil/1)
   end
 end

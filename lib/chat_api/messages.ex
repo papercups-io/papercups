@@ -92,7 +92,7 @@ defmodule ChatApi.Messages do
     Message.changeset(message, attrs)
   end
 
-  @spec add_attachment(Message.t(), File.t()) ::
+  @spec add_attachment(Message.t(), FileUpload.t()) ::
           {:ok, MessageFile.t()} | {:error, Ecto.Changeset.t()}
   def add_attachment(%Message{id: message_id, account_id: account_id}, %FileUpload{id: file_id}) do
     %MessageFile{}

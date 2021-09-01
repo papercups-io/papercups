@@ -57,7 +57,8 @@ defmodule ChatApi.Aws do
   end
 
   @spec download_file(binary(), binary(), keyword()) :: {:error, any()} | {:ok, any()}
-  def download_file(identifier, bucket_name, opts \\ []) do
+  def download_file(identifier, bucket_name, opts \\ [])
+      when is_binary(identifier) and is_binary(bucket_name) do
     bucket_name
     |> ExAws.S3.get_object(identifier)
     |> ExAws.request!(opts)
@@ -65,6 +66,24 @@ defmodule ChatApi.Aws do
       %{status_code: 200} = result -> {:ok, result}
       result -> {:error, result}
     end
+  end
+
+  @spec download_file_url(URI.t() | binary(), keyword()) :: {:error, any()} | {:ok, any()}
+  def download_file_url(uri, opts \\ [])
+
+  def download_file_url(%URI{host: host, path: path}, opts)
+      when is_binary(host) and is_binary(path) do
+    with [bucket, "s3", "amazonaws", "com"] <- String.split(host, "."),
+         [identifier] <- String.split(path, "/", trim: true) do
+      download_file(identifier, bucket, opts)
+    else
+      _ ->
+        {:error, :invalid_uri}
+    end
+  end
+
+  def download_file_url(uri, opts) when is_binary(uri) do
+    uri |> URI.parse() |> download_file_url(opts)
   end
 
   @spec get_file_url(binary(), binary()) :: binary()
@@ -120,7 +139,8 @@ defmodule ChatApi.Aws do
           text: text
         } = email
       ) do
-    Mail.build()
+    # TODO: should this ever be multipart: false (e.g. Mail.build instead of Mail.build_multipart)?
+    Mail.build_multipart()
     |> Mail.put_to(to)
     |> Mail.put_from(from)
     # TODO: how should we handle reply_to addresses?
@@ -129,8 +149,11 @@ defmodule ChatApi.Aws do
     |> Mail.put_bcc(Map.get(email, :bcc, []))
     |> Mail.put_subject(subject)
     |> Mail.put_text(text)
+    # NB: this overrides the text body if multipart: false
+    |> build_email_attachments(Map.get(email, :attachments, []))
     |> build_email_html(email)
     |> build_email_headers(email)
+    |> IO.inspect(label: "Pre-rendered SES email")
     |> Mail.Renderers.RFC2822.render()
   end
 
@@ -148,6 +171,16 @@ defmodule ChatApi.Aws do
   end
 
   def build_email_headers(message, _), do: message
+
+  # Attachments should be structured like: [{filename, binary}]
+  # See https://github.com/DockYard/elixir-mail#multi-part
+  def build_email_attachments(message, [attachment | rest]) do
+    message
+    |> Mail.put_attachment(attachment)
+    |> build_email_attachments(rest)
+  end
+
+  def build_email_attachments(message, _), do: message
 
   @spec send_email(map()) :: any()
   def send_email(%{to: _, from: _, subject: _, text: _} = email) do

@@ -31,6 +31,9 @@ defmodule ChatApi.Workers.ProcessSesEvent do
       ) do
     Logger.info("Processing SES event: #{inspect(job)}")
 
+    # TODO: should we first check the email to see if we can find
+    # an existing thread based on the references header?
+    # (e.g. check for a previous message where the email message ID matches?)
     case get_message_resource(to_addresses, forwarded_to) do
       %Conversation{} = conversation ->
         IO.inspect(conversation, label: "Found conversation!")

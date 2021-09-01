@@ -549,13 +549,13 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="chat-widget">
                   <Link to="/settings/chat-widget">Chat widget</Link>
                 </Menu.Item>
-                <Menu.Item key="saved-replies">
-                  <Link to="/settings/saved-replies">Saved replies</Link>
-                </Menu.Item>
                 <Menu.Item key="forwarding-addresses">
                   <Link to="/settings/forwarding-addresses">
-                    Forwarding addresses
+                    Email forwarding
                   </Link>
+                </Menu.Item>
+                <Menu.Item key="saved-replies">
+                  <Link to="/settings/saved-replies">Saved replies</Link>
                 </Menu.Item>
                 {shouldDisplayBilling && (
                   <Menu.Item key="billing">

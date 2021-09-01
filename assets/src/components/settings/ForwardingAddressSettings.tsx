@@ -203,7 +203,7 @@ class ForwardingAddressesOverview extends React.Component<Props, State> {
     return (
       <Container sx={{maxWidth: 800}}>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
-          <Title level={3}>Forwarding addresses</Title>
+          <Title level={3}>Email forwarding</Title>
 
           <NewForwardingAddressModalButton
             onSuccess={this.handleRefreshForwardingAddresses}
