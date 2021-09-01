@@ -37,6 +37,15 @@ export type User = {
   account_id: string;
 };
 
+export type UserSettings = {
+  id: string;
+  object: 'user_settings';
+  user_id: number;
+  email_alert_on_new_message: boolean;
+  email_alert_on_new_conversation: boolean;
+  expo_push_token?: string | null;
+};
+
 export type Customer = {
   id: string;
   email?: string;

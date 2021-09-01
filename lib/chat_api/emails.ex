@@ -3,10 +3,10 @@ defmodule ChatApi.Emails do
 
   require Logger
 
-  alias ChatApi.{Accounts, Repo, Users}
+  alias ChatApi.{Accounts, Conversations, Repo, Users}
   alias ChatApi.Emails.Email
   alias ChatApi.Messages.Message
-  alias ChatApi.Users.{User, UserSettings}
+  alias ChatApi.Users.User
   alias ChatApi.Accounts.Account
 
   @type deliver_result() :: {:ok, term()} | {:error, binary()} | {:warning, binary()}
@@ -24,9 +24,8 @@ defmodule ChatApi.Emails do
   end
 
   @spec send_new_message_alerts(Message.t()) :: [deliver_result()]
-  def send_new_message_alerts(message) do
+  def send_new_message_alerts(%Message{} = message) do
     message
-    |> Map.get(:account_id)
     |> get_users_to_email()
     |> Enum.map(fn email ->
       email |> Email.new_message_alert(message) |> deliver()
@@ -124,17 +123,27 @@ defmodule ChatApi.Emails do
     |> deliver(access_token: access_token)
   end
 
-  @spec get_users_to_email(binary()) :: [User.t()]
-  def get_users_to_email(account_id) do
-    query =
-      from(u in User,
-        join: s in UserSettings,
-        on: s.user_id == u.id,
-        where: u.account_id == ^account_id and s.email_alert_on_new_message == true,
-        select: u.email
-      )
+  @spec get_users_to_email(Message.t()) :: [User.t()]
+  def get_users_to_email(%Message{account_id: account_id} = message) do
+    User
+    |> join(:left, [u], s in assoc(u, :settings), as: :settings)
+    |> where([u], u.account_id == ^account_id)
+    |> where([u], is_nil(u.disabled_at) and is_nil(u.archived_at))
+    |> where_alerts_enabled(is_first_message: Conversations.is_first_message?(message))
+    |> select([u], u.email)
+    |> Repo.all()
+  end
 
-    Repo.all(query)
+  def where_alerts_enabled(query, is_first_message: true) do
+    query
+    |> where(
+      [_u, settings: s],
+      s.email_alert_on_new_message == true or s.email_alert_on_new_conversation == true
+    )
+  end
+
+  def where_alerts_enabled(query, _) do
+    query |> where([_u, settings: s], s.email_alert_on_new_message == true)
   end
 
   @spec has_valid_to_addresses?(Email.t()) :: boolean()
