@@ -77,6 +77,7 @@ defmodule ChatApiWeb.GoogleController do
             data: %{
               id: auth.id,
               created_at: auth.inserted_at,
+              updated_at: auth.updated_at,
               account_id: auth.account_id,
               user_id: auth.user_id,
               scope: auth.scope

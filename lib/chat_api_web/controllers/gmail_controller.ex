@@ -4,6 +4,26 @@ defmodule ChatApiWeb.GmailController do
   require Logger
 
   alias ChatApi.Google
+  alias ChatApi.Google.GoogleAuthorization
+
+  @spec profile(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def profile(conn, _params) do
+    with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
+         %GoogleAuthorization{refresh_token: refresh_token} <-
+           Google.get_support_gmail_authorization(account_id, user_id) do
+      case Google.Gmail.get_profile(refresh_token) do
+        %{"emailAddress" => email} ->
+          json(conn, %{ok: true, data: %{email: email}})
+
+        error ->
+          Logger.error("Error retrieving gmail profile: #{inspect(error)}")
+
+          json(conn, %{ok: false, data: nil})
+      end
+    else
+      _ -> {:error, :forbidden, "Authorization required"}
+    end
+  end
 
   @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def send(conn, params) do
@@ -25,6 +45,8 @@ defmodule ChatApiWeb.GmailController do
 
           json(conn, %{ok: false})
       end
+    else
+      _ -> {:error, :forbidden, "Authorization required"}
     end
   end
 end

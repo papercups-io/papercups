@@ -1013,6 +1013,17 @@ export const findGithubIssues = async (
     .then((res) => res.body.data);
 };
 
+export const fetchGmailProfile = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/gmail/profile`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export type EmailParams = {
   recipient: string;
   subject: string;

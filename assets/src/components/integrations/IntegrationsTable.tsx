@@ -96,11 +96,9 @@ const IntegrationsTable = ({
             );
           case 'gmail':
             return (
-              <SupportGmailAuthorizationButton
-                isConnected={isConnected}
-                authorizationId={authorizationId}
-                onDisconnectGmail={onDisconnectGmail}
-              />
+              <Link to="/integrations/google/gmail">
+                <Button icon={<SettingOutlined />}>Configure</Button>
+              </Link>
             );
           case 'sheets':
             return (
