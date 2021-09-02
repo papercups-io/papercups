@@ -1,16 +1,20 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+
 import {
+  Alert,
   Button,
   Container,
   Input,
   Paragraph,
   Popconfirm,
   Table,
+  Text,
   Title,
 } from '../common';
 import * as API from '../../api';
-import {ForwardingAddress} from '../../types';
+import {Account, ForwardingAddress} from '../../types';
 import logger from '../../logger';
 import {NewForwardingAddressModalButton} from './NewForwardingAddressModal';
 
@@ -85,15 +89,6 @@ const ForwardingAddressesTable = ({
   return <Table loading={loading} dataSource={data} columns={columns} />;
 };
 
-type Props = {};
-type State = {
-  filterQuery: string;
-  filteredForwardingAddresses: Array<ForwardingAddress>;
-  isNewForwardingAddressModalVisible: boolean;
-  loading: boolean;
-  forwardingAddresses: Array<ForwardingAddress>;
-};
-
 const filterForwardingAddressesByQuery = (
   forwardingAddresses: Array<ForwardingAddress>,
   query?: string
@@ -132,8 +127,19 @@ const filterForwardingAddressesByQuery = (
   });
 };
 
+type Props = {};
+type State = {
+  account: Account | null;
+  filterQuery: string;
+  filteredForwardingAddresses: Array<ForwardingAddress>;
+  isNewForwardingAddressModalVisible: boolean;
+  loading: boolean;
+  forwardingAddresses: Array<ForwardingAddress>;
+};
+
 class ForwardingAddressesOverview extends React.Component<Props, State> {
   state: State = {
+    account: null,
     filteredForwardingAddresses: [],
     filterQuery: '',
     isNewForwardingAddressModalVisible: false,
@@ -142,6 +148,8 @@ class ForwardingAddressesOverview extends React.Component<Props, State> {
   };
 
   async componentDidMount() {
+    this.setState({account: await API.fetchAccountInfo()});
+
     await this.handleRefreshForwardingAddresses();
   }
 
@@ -197,11 +205,36 @@ class ForwardingAddressesOverview extends React.Component<Props, State> {
     }
   };
 
+  isOnStarterPlan = () => {
+    const {account} = this.state;
+
+    if (!account) {
+      return false;
+    }
+
+    return account.subscription_plan === 'starter';
+  };
+
   render() {
     const {loading, filteredForwardingAddresses = []} = this.state;
 
     return (
       <Container sx={{maxWidth: 800}}>
+        {this.isOnStarterPlan() && (
+          <Box mb={4}>
+            <Alert
+              message={
+                <Text>
+                  Email forwarding will only be available on the Lite and Team
+                  subscription plans.{' '}
+                  <Link to="billing">Sign up for a free trial!</Link>
+                </Text>
+              }
+              type="warning"
+              showIcon
+            />
+          </Box>
+        )}
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Email forwarding</Title>
 

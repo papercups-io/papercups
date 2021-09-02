@@ -8,6 +8,7 @@ import utc from 'dayjs/plugin/utc';
 
 import {
   notification,
+  Alert,
   Button,
   Card,
   Container,
@@ -22,12 +23,14 @@ import * as API from '../../api';
 import logger from '../../logger';
 import {SupportGmailAuthorizationButton} from './GoogleAuthorizationButton';
 import Spinner from '../Spinner';
+import {Account} from '../../types';
 
 dayjs.extend(utc);
 
 type Props = RouteComponentProps<{}>;
 type State = {
   status: 'loading' | 'success' | 'error';
+  account: Account | null;
   authorization: any | null;
   connectedEmailAddress: string | null;
   error: any;
@@ -36,6 +39,7 @@ type State = {
 class GmailIntegrationDetails extends React.Component<Props, State> {
   state: State = {
     status: 'loading',
+    account: null,
     authorization: null,
     connectedEmailAddress: null,
     error: null,
@@ -64,6 +68,7 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
 
   fetchGoogleAuthorization = async () => {
     try {
+      const account = await API.fetchAccountInfo();
       const auth = await API.fetchGoogleAuthorization({
         client: 'gmail',
         type: 'support',
@@ -73,12 +78,14 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
         const profile = await API.fetchGmailProfile();
 
         this.setState({
+          account,
           authorization: auth,
           connectedEmailAddress: profile?.email ?? null,
           status: 'success',
         });
       } else {
         this.setState({
+          account,
           authorization: null,
           connectedEmailAddress: null,
           status: 'success',
@@ -130,6 +137,16 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
       );
   };
 
+  isOnStarterPlan = () => {
+    const {account} = this.state;
+
+    if (!account) {
+      return false;
+    }
+
+    return account.subscription_plan === 'starter';
+  };
+
   render() {
     const {authorization, connectedEmailAddress, status} = this.state;
 
@@ -157,6 +174,22 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
             <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
           </Link>
         </Box>
+
+        {this.isOnStarterPlan() && (
+          <Box mb={4}>
+            <Alert
+              message={
+                <Text>
+                  This integration is only available on the Lite and Team
+                  subscription plans.{' '}
+                  <Link to="billing">Sign up for a free trial!</Link>
+                </Text>
+              }
+              type="warning"
+              showIcon
+            />
+          </Box>
+        )}
 
         <Box mb={4}>
           <Title level={3}>Gmail (beta)</Title>
