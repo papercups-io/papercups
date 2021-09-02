@@ -506,6 +506,10 @@ defmodule ChatApi.Conversations do
   def get_previous_message(%Conversation{id: conversation_id}, %Message{} = message),
     do: get_previous_message(conversation_id, message)
 
+  @spec get_previous_message(Message.t()) :: Message.t() | nil
+  def get_previous_message(%Message{conversation_id: conversation_id} = message),
+    do: get_previous_message(conversation_id, message)
+
   @spec count_agent_replies(binary()) :: number()
   def count_agent_replies(conversation_id) do
     Message
