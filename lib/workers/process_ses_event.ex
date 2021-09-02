@@ -31,6 +31,23 @@ defmodule ChatApi.Workers.ProcessSesEvent do
       ) do
     Logger.info("Processing SES event: #{inspect(job)}")
 
+    # TODO: what kind of retry-logic should we use here?
+    process_event(%{
+      ses_message_id: ses_message_id,
+      from_address: from_address,
+      to_addresses: to_addresses,
+      forwarded_to: forwarded_to
+    })
+
+    :ok
+  end
+
+  def process_event(%{
+        ses_message_id: ses_message_id,
+        from_address: from_address,
+        to_addresses: to_addresses,
+        forwarded_to: forwarded_to
+      }) do
     # TODO: should we first check the email to see if we can find
     # an existing thread based on the references header?
     # (e.g. check for a previous message where the email message ID matches?)
@@ -54,8 +71,6 @@ defmodule ChatApi.Workers.ProcessSesEvent do
       _ ->
         nil
     end
-
-    :ok
   end
 
   @spec handle_new_thread(Account.t(), map()) :: {:ok, Message.t()} | {:error, any()}

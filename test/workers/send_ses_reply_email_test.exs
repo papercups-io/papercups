@@ -1,5 +1,5 @@
 defmodule ChatApi.SendSesReplyEmailTest do
-  use ChatApi.DataCase, async: true
+  use ChatApi.DataCase
 
   import ChatApi.Factory
   import Mock

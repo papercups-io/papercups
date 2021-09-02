@@ -1042,6 +1042,86 @@ defmodule ChatApi.ConversationsTest do
     end
   end
 
+  describe "get_previous_message/2" do
+    test "gets the previous message from the same conversation",
+         %{account: account, conversation: conversation, customer: customer, user: user} do
+      customer_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer,
+          user: nil,
+          inserted_at: ~N[2021-08-01 20:00:00]
+        )
+
+      refute Conversations.get_previous_message(customer_message)
+
+      user_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: nil,
+          user: user,
+          inserted_at: ~N[2021-08-02 20:00:00]
+        )
+
+      previous_message = Conversations.get_previous_message(user_message)
+
+      assert previous_message.id == customer_message.id
+      assert previous_message.body == customer_message.body
+    end
+
+    test "gets the previous message with filters applied",
+         %{account: account, conversation: conversation, customer: customer, user: user} do
+      customer_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer,
+          user: nil,
+          inserted_at: ~N[2021-08-01 20:00:00]
+        )
+
+      refute Conversations.get_previous_message(customer_message)
+
+      user_private_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: nil,
+          user: user,
+          type: "note",
+          private: true,
+          inserted_at: ~N[2021-08-02 20:00:00]
+        )
+
+      user_public_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: nil,
+          user: user,
+          type: "reply",
+          private: false,
+          inserted_at: ~N[2021-08-03 20:00:00]
+        )
+
+      previous_message = Conversations.get_previous_message(user_public_message)
+
+      assert previous_message.id == user_private_message.id
+      assert previous_message.body == user_private_message.body
+
+      previous_public_message =
+        Conversations.get_previous_message(user_public_message, %{
+          "private" => false,
+          "type" => "reply"
+        })
+
+      assert previous_public_message.id == customer_message.id
+      assert previous_public_message.body == customer_message.body
+    end
+  end
+
   defp days_ago(days) do
     DateTime.utc_now()
     |> DateTime.add(days * 60 * 60 * 24 * -1)

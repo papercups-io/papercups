@@ -10,8 +10,14 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"message_id" => message_id}}) do
     with %Message{user: %User{}} = message <- Messages.get_message!(message_id),
+         # TODO: this is a slight/temporary hack, in the future we should make it possible
+         # to find previous message with SES metadata. This is necessary because we need to
+         # get the previous References and In-Reply-To headers from the email metadata
          %Message{metadata: %{"ses_message_id" => _} = metadata} <-
-           Conversations.get_previous_message(message) do
+           Conversations.get_previous_message(message, %{
+             "private" => false,
+             "type" => "reply"
+           }) do
       send_email_via_ses(message, metadata)
     else
       error -> Logger.info("[SendSesReplyEmail] Something went wrong: #{inspect(error)}")
@@ -78,7 +84,10 @@ defmodule ChatApi.Workers.SendSesReplyEmail do
   def send_email_via_ses(_message, _metadata), do: nil
 
   def send_email_via_ses(%Message{user: %User{}} = message) do
-    case Conversations.get_previous_message(message) do
+    case Conversations.get_previous_message(message, %{
+           "private" => false,
+           "type" => "reply"
+         }) do
       %Message{metadata: %{"ses_message_id" => _} = metadata} ->
         send_email_via_ses(message, metadata)
 

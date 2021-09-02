@@ -28,7 +28,6 @@ const handler = async (event) => {
   }
 
   const { messageId, commonHeaders = {}, headers = [] } = mail;
-  const messageId = messageId;
   const toAddresses = commonHeaders.to;
   const fromAddress = commonHeaders.from;
 
