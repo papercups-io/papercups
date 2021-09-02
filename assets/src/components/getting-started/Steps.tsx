@@ -45,6 +45,17 @@ const getStepsMetadata = (
       ),
     },
     {
+      completed: onboardingStatus.has_email_forwarding,
+      ctaHref: '/settings/email-forwarding',
+      ctaText: 'Set up email forwarding',
+      text: (
+        <>
+          <Text strong>Set up email forwarding</Text> to start syncing email
+          messages.
+        </>
+      ),
+    },
+    {
       completed: onboardingStatus.has_invited_teammates,
       ctaHref: '/settings/team',
       ctaText: 'Invite teammates',
@@ -127,7 +138,7 @@ const Step = ({completed, ctaHref, ctaText, text, value}: StepProps) => {
             opacity,
           }}
         >
-          <Button>{ctaText}</Button>
+          <Button type="default">{ctaText}</Button>
         </Link>
       </Box>
       <Divider />

@@ -549,10 +549,8 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="chat-widget">
                   <Link to="/settings/chat-widget">Chat widget</Link>
                 </Menu.Item>
-                <Menu.Item key="forwarding-addresses">
-                  <Link to="/settings/forwarding-addresses">
-                    Email forwarding
-                  </Link>
+                <Menu.Item key="email-forwarding">
+                  <Link to="/settings/email-forwarding">Email forwarding</Link>
                 </Menu.Item>
                 <Menu.Item key="saved-replies">
                   <Link to="/settings/saved-replies">Saved replies</Link>
@@ -615,7 +613,7 @@ const Dashboard = (props: RouteComponentProps) => {
             component={CannedResponsesOverview}
           />
           <Route
-            path="/settings/forwarding-addresses"
+            path="/settings/email-forwarding"
             component={ForwardingAddressSettings}
           />
           <Route path="/settings/chat-widget" component={ChatWidgetSettings} />

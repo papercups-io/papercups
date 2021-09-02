@@ -16,6 +16,19 @@ defmodule ChatApi.ForwardingAddresses do
     |> Repo.all()
   end
 
+  @spec count_forwarding_addresses(binary(), map()) :: number()
+  def count_forwarding_addresses(account_id, filters \\ %{}) do
+    ForwardingAddress
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> select([f], count(f.id))
+    |> Repo.one()
+  end
+
+  @spec has_forwarding_addresses?(binary()) :: boolean()
+  def has_forwarding_addresses?(account_id),
+    do: count_forwarding_addresses(account_id) > 0
+
   @spec get_forwarding_address!(binary()) :: ForwardingAddress.t()
   def get_forwarding_address!(id), do: Repo.get!(ForwardingAddress, id)
 

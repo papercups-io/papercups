@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box} from 'theme-ui';
 import {ButtonProps} from 'antd/lib/button';
-import {Button, Input, Modal, Text, TextArea} from '../common';
+import {Button, Input, Modal, Paragraph, Text} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';
@@ -23,7 +23,7 @@ const NewForwardingAddressModal = ({
 
   const handleChangeSourceEmailAddress = (e: any) =>
     setSourceEmailAddress(e.target.value);
-  const handleChangeDescription = (e: any) => setDescription(e.target.value);
+
   const resetInputFields = () => {
     setSourceEmailAddress('');
     setDescription('');
@@ -76,10 +76,14 @@ const NewForwardingAddressModal = ({
       ]}
     >
       <Box>
-        <Box mb={3}>
-          <label htmlFor="source_email_address">
-            Which email address will you be forwarding from?
-          </label>
+        <Box mb={4}>
+          <Box mb={1}>
+            <label htmlFor="source_email_address">
+              <Text strong>
+                Which email address will you be forwarding from?
+              </Text>
+            </label>
+          </Box>
           <Input
             id="source_email_address"
             type="text"
@@ -89,14 +93,25 @@ const NewForwardingAddressModal = ({
             onChange={handleChangeSourceEmailAddress}
           />
         </Box>
-        <Box mb={3}>
-          <label htmlFor="description">Description</label>
-          <TextArea
-            id="description"
-            value={description}
-            placeholder="Optional"
-            onChange={handleChangeDescription}
-          />
+
+        <Box>
+          <Box mb={1}>
+            <Text strong>How to set up email forwarding</Text>
+          </Box>
+
+          <Paragraph>
+            <Text type="secondary">
+              To set up automatic email forwarding in Gmail, follow{' '}
+              <a
+                href="https://support.google.com/mail/answer/10957?hl=en"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                these instructions
+              </a>
+              .
+            </Text>
+          </Paragraph>
         </Box>
 
         {error && (
