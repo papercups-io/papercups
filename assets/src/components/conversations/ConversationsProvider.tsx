@@ -656,7 +656,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
       return unread[bucket];
     }
 
-    const conversations = conversationIds.map((id) => conversationsById[id]);
+    const conversations = conversationIds
+      .map((id) => conversationsById[id])
+      .filter((conversation) => !!conversation);
 
     return conversations.filter((conversation) =>
       isUnreadConversation(conversation, currentUser)
