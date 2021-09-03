@@ -497,7 +497,7 @@ defmodule ChatApi.Conversations do
         %Message{
           inserted_at: inserted_at,
           conversation_id: conversation_id
-        } = message,
+        },
         filters \\ %{}
       ) do
     Message
