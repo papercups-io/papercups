@@ -58,7 +58,8 @@ defmodule ChatApi.ProcessSesEventText do
             ses_message_id: "ses_message_id",
             from_address: "customer@example.co",
             to_addresses: ["support@me.com"],
-            forwarded_to: "company@chat.papercups.io"
+            forwarded_to: "company@chat.papercups.io",
+            received_by: []
           })
 
         message = ChatApi.Messages.get_message!(message.id)
@@ -117,7 +118,8 @@ defmodule ChatApi.ProcessSesEventText do
             ses_message_id: "ses_message_id",
             from_address: customer.email,
             to_addresses: ["reply+#{conversation.id}@chat.papercups.io"],
-            forwarded_to: nil
+            forwarded_to: nil,
+            received_by: []
           })
 
         message = ChatApi.Messages.get_message!(message.id)
@@ -135,7 +137,8 @@ defmodule ChatApi.ProcessSesEventText do
         ses_message_id: "ses_message_id",
         from_address: customer.email,
         to_addresses: ["random@chat.papercups.io"],
-        forwarded_to: nil
+        forwarded_to: nil,
+        received_by: []
       })
     end
   end
