@@ -18,6 +18,7 @@ import {
   CannedResponse,
   SlackAuthorization,
   UserSettings,
+  ForwardingAddress,
 } from './types';
 
 // TODO: handle this on the server instead
@@ -1116,6 +1117,65 @@ export const deleteEventSubscription = async (
 
   return request
     .delete(`/api/event_subscriptions/${id}`)
+    .set('Authorization', token);
+};
+
+export const fetchForwardingAddresses = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/forwarding_addresses`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createForwardingAddress = async (
+  params: Partial<ForwardingAddress>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/forwarding_addresses`)
+    .set('Authorization', token)
+    .send({
+      forwarding_address: params,
+    })
+    .then((res) => res.body.data);
+};
+
+export const updateForwardingAddress = async (
+  id: string,
+  updates: Partial<ForwardingAddress>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/forwarding_addresses/${id}`)
+    .set('Authorization', token)
+    .send({
+      forwarding_address: updates,
+    })
+    .then((res) => res.body.data);
+};
+
+export const deleteForwardingAddress = async (
+  id: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/forwarding_addresses/${id}`)
     .set('Authorization', token);
 };
 

@@ -124,6 +124,17 @@ export type FileUpload = {
   content_type: string;
 };
 
+export type ForwardingAddress = {
+  id: string;
+  forwarding_email_address: string;
+  source_email_address?: string;
+  description?: string;
+  state?: string;
+  created_at: string;
+  updated_at: string;
+  account_id: string;
+};
+
 // Alias
 export type Attachment = FileUpload;
 
@@ -332,6 +343,7 @@ export type SlackAuthorization = {
 export type OnboardingStatus = {
   has_configured_profile: boolean;
   has_configured_storytime: boolean;
+  has_email_forwarding: boolean;
   has_integrations: boolean;
   is_chat_widget_installed: boolean;
   has_invited_teammates: boolean;

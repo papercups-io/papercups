@@ -71,6 +71,7 @@ defmodule ChatApiWeb.Router do
     post("/mattermost/webhook", MattermostController, :webhook)
     post("/twilio/webhook", TwilioController, :webhook)
     post("/github/webhook", GithubController, :webhook)
+    post("/ses/webhook", SesController, :webhook)
     # TODO: move to protected route after testing?
     get("/hubspot/oauth", HubspotController, :oauth)
 
@@ -147,6 +148,7 @@ defmodule ChatApiWeb.Router do
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
     resources("/canned_responses", CannedResponseController, except: [:new, :edit])
     resources("/lambdas", LambdaController, except: [:new, :edit])
+    resources("/forwarding_addresses", ForwardingAddressController, except: [:new, :edit])
 
     post("/lambdas/:id/deploy", LambdaController, :deploy)
     post("/lambdas/:id/invoke", LambdaController, :invoke)

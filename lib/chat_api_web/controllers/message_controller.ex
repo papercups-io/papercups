@@ -190,5 +190,6 @@ defmodule ChatApiWeb.MessageController do
     |> Messages.Notification.notify(:conversation_reply_email)
     |> Messages.Notification.notify(:gmail)
     |> Messages.Notification.notify(:sms)
+    |> Messages.Notification.notify(:ses)
   end
 end

@@ -5,12 +5,12 @@ defmodule ChatApi.Messages do
 
   import Ecto.Query, warn: false
 
-  alias ChatApi.Repo
-  alias ChatApi.Workers
+  require Logger
+
+  alias ChatApi.{Repo, Workers}
+  alias ChatApi.Files.FileUpload
   alias ChatApi.Mentions.Mention
   alias ChatApi.Messages.{Message, MessageFile}
-
-  require Logger
 
   @spec list_messages(binary(), map()) :: [Message.t()]
   def list_messages(account_id, filters \\ %{}) do
@@ -90,6 +90,18 @@ defmodule ChatApi.Messages do
   @spec change_message(Message.t(), map()) :: Ecto.Changeset.t()
   def change_message(%Message{} = message, attrs \\ %{}) do
     Message.changeset(message, attrs)
+  end
+
+  @spec add_attachment(Message.t(), FileUpload.t()) ::
+          {:ok, MessageFile.t()} | {:error, Ecto.Changeset.t()}
+  def add_attachment(%Message{id: message_id, account_id: account_id}, %FileUpload{id: file_id}) do
+    %MessageFile{}
+    |> MessageFile.changeset(%{
+      message_id: message_id,
+      account_id: account_id,
+      file_id: file_id
+    })
+    |> Repo.insert()
   end
 
   @spec create_attachments(Message.t(), [binary()]) :: any()

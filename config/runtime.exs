@@ -145,10 +145,16 @@ region = System.get_env("AWS_REGION")
 function_bucket_name = System.get_env("FUNCTION_BUCKET_NAME", "")
 function_role = System.get_env("FUNCTION_ROLE", "")
 aws_account_id = System.get_env("AWS_ACCOUNT_ID", "")
+ses_bucket_name = System.get_env("SES_BUCKET_NAME", "")
+ses_region = System.get_env("SES_REGION", "")
+ses_forwarding_domain = System.get_env("SES_FORWARDING_DOMAIN", "chat.papercups.io")
 
 config :chat_api,
   bucket_name: bucket_name,
   region: region,
+  ses_bucket_name: ses_bucket_name,
+  ses_region: ses_region,
+  ses_forwarding_domain: ses_forwarding_domain,
   function_bucket_name: function_bucket_name,
   aws_account_id: aws_account_id,
   function_role: function_role

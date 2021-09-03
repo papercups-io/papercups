@@ -5,6 +5,7 @@ import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 import {
   notification,
+  Alert,
   Button,
   Card,
   Container,
@@ -17,7 +18,7 @@ import {
 } from '../common';
 import {ArrowLeftOutlined, CheckCircleOutlined} from '../icons';
 import * as API from '../../api';
-import {SlackAuthorization} from '../../types';
+import {Account, SlackAuthorization} from '../../types';
 import {getSlackAuthUrl, getSlackRedirectUrl} from './support';
 import logger from '../../logger';
 
@@ -25,12 +26,14 @@ type Props = RouteComponentProps<{}>;
 type State = {
   status: 'loading' | 'success' | 'error';
   authorization: SlackAuthorization | null;
+  account: Account | null;
   error: any;
 };
 
 class SlackReplyIntegrationDetails extends React.Component<Props, State> {
   state: State = {
     status: 'loading',
+    account: null,
     authorization: null,
     error: null,
   };
@@ -59,8 +62,9 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
   fetchSlackAuthorization = async () => {
     try {
       const auth = await API.fetchSlackAuthorization('reply');
+      const account = await API.fetchAccountInfo();
 
-      this.setState({authorization: auth, status: 'success'});
+      this.setState({account, authorization: auth, status: 'success'});
     } catch (error) {
       logger.error(error);
 
@@ -112,6 +116,16 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
       );
   };
 
+  isOnStarterPlan = () => {
+    const {account} = this.state;
+
+    if (!account) {
+      return false;
+    }
+
+    return account.subscription_plan === 'starter';
+  };
+
   render() {
     const {authorization, status} = this.state;
 
@@ -128,6 +142,22 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
             <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
           </Link>
         </Box>
+
+        {this.isOnStarterPlan() && (
+          <Box mb={4}>
+            <Alert
+              message={
+                <Text>
+                  This integration is only available on the Lite and Team
+                  subscription plans.{' '}
+                  <Link to="billing">Sign up for a free trial!</Link>
+                </Text>
+              }
+              type="warning"
+              showIcon
+            />
+          </Box>
+        )}
 
         <Box mb={4}>
           <Title level={3}>Reply from Slack</Title>

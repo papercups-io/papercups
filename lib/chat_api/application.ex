@@ -5,6 +5,8 @@ defmodule ChatApi.Application do
 
   use Application
 
+  require Logger
+
   def start(_type, _args) do
     pub_sub_opts =
       case redis_url() do
@@ -33,7 +35,7 @@ defmodule ChatApi.Application do
           [name: ChatApi.PubSub]
       end
 
-    IO.inspect(pub_sub_opts, label: "Inspecting PubSub configuration:")
+    Logger.debug("Inspecting PubSub configuration: #{inspect(pub_sub_opts)}")
 
     children = [
       # Start the Ecto repository

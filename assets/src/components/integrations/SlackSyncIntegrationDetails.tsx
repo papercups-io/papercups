@@ -6,6 +6,7 @@ import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 import {
   notification,
+  Alert,
   Button,
   Card,
   Container,
@@ -21,7 +22,11 @@ import {
 } from '../common';
 import {ArrowLeftOutlined, CheckCircleOutlined, PlusOutlined} from '../icons';
 import * as API from '../../api';
-import {SlackAuthorization, SlackAuthorizationSettings} from '../../types';
+import {
+  Account,
+  SlackAuthorization,
+  SlackAuthorizationSettings,
+} from '../../types';
 import {getSlackAuthUrl, getSlackRedirectUrl} from './support';
 import logger from '../../logger';
 
@@ -189,6 +194,7 @@ const IntegrationDetails = ({
 type Props = RouteComponentProps<{}>;
 type State = {
   status: 'loading' | 'success' | 'error';
+  account: Account | null;
   authorizations: Array<SlackAuthorization>;
   selectedSlackAuthorization: SlackAuthorization | null;
   error: any;
@@ -197,6 +203,7 @@ type State = {
 class SlackSyncIntegrationDetails extends React.Component<Props, State> {
   state: State = {
     status: 'loading',
+    account: null,
     authorizations: [],
     selectedSlackAuthorization: null,
     error: null,
@@ -226,10 +233,12 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
   fetchSlackAuthorizations = async () => {
     try {
       const authorizations = await API.listSlackAuthorizations('support');
+      const account = await API.fetchAccountInfo();
       const {selectedSlackAuthorization} = this.state;
       const [selected = null] = authorizations;
 
       this.setState({
+        account,
         authorizations,
         selectedSlackAuthorization:
           authorizations.find(
@@ -305,6 +314,16 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
     return this.fetchSlackAuthorizations();
   };
 
+  isOnStarterPlan = () => {
+    const {account} = this.state;
+
+    if (!account) {
+      return false;
+    }
+
+    return account.subscription_plan === 'starter';
+  };
+
   render() {
     const {
       authorizations = [],
@@ -323,6 +342,22 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
             <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
           </Link>
         </Box>
+
+        {this.isOnStarterPlan() && (
+          <Box mb={4}>
+            <Alert
+              message={
+                <Text>
+                  This integration is only available on the Lite and Team
+                  subscription plans.{' '}
+                  <Link to="billing">Sign up for a free trial!</Link>
+                </Text>
+              }
+              type="warning"
+              showIcon
+            />
+          </Box>
+        )}
 
         <Box mb={4}>
           <Title level={3}>Sync with Slack</Title>

@@ -4,7 +4,9 @@ defmodule ChatApi.Messages.Notification do
   """
 
   alias ChatApi.{EventSubscriptions, Lambdas}
+  alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.{Helpers, Message}
+  alias ChatApi.Users.User
 
   require Logger
 
@@ -236,6 +238,27 @@ defmodule ChatApi.Messages.Notification do
 
     message
   end
+
+  def notify(
+        %Message{
+          private: false,
+          id: message_id,
+          user: %User{},
+          conversation: %Conversation{source: "email"}
+        } = message,
+        :ses,
+        _opts
+      ) do
+    Logger.info("Sending message notification: :ses (message #{inspect(message.id)})")
+
+    %{message_id: message_id}
+    |> ChatApi.Workers.SendSesReplyEmail.new()
+    |> Oban.insert()
+
+    message
+  end
+
+  def notify(%Message{} = message, :ses, _opts), do: message
 
   def notify(%Message{private: true} = message, type, _opts) do
     Logger.debug(

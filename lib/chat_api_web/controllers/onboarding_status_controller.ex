@@ -4,6 +4,7 @@ defmodule ChatApiWeb.OnboardingStatusController do
   alias ChatApi.{
     Accounts,
     BrowserSessions,
+    ForwardingAddresses,
     Github,
     Google,
     Mattermost,
@@ -28,7 +29,8 @@ defmodule ChatApiWeb.OnboardingStatusController do
         has_integrations: has_integrations?(account_id),
         has_invited_teammates: has_invited_teammates?(account_id),
         has_upgraded_subscription: has_upgraded_subscription?(account),
-        is_chat_widget_installed: is_chat_widget_installed?(account)
+        is_chat_widget_installed: is_chat_widget_installed?(account),
+        has_email_forwarding: ForwardingAddresses.has_forwarding_addresses?(account_id)
       })
     end
   end

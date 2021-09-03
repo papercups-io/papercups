@@ -70,7 +70,7 @@ const ChatMessageBox = ({
 }: Props) => {
   const {body, source, created_at, metadata = {}} = message;
   const createdAt = dayjs.utc(created_at).local().format('ddd, MMM D h:mm A');
-  const subject = metadata?.gmail_subject ?? null;
+  const subject = metadata?.gmail_subject ?? metadata?.ses_subject ?? null;
   const [formattedSource, sourceIcon] = getMessageSourceDetails(source);
   const parsedSx = Object.assign(sx, {
     px: 3,

@@ -6,6 +6,19 @@ defmodule ChatApi.Messages.MessageFile do
   alias ChatApi.Files.FileUpload
   alias ChatApi.Accounts.Account
 
+  @type t :: %__MODULE__{
+          # Foreign keys
+          account_id: Ecto.UUID.t(),
+          account: any(),
+          file_id: Ecto.UUID.t(),
+          file: any(),
+          message_id: Ecto.UUID.t(),
+          message: any(),
+          # Timestamps
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "message_files" do
