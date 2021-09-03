@@ -103,9 +103,7 @@ const ChatMessageBox = ({
 
       {rawEmailHtml ? (
         // TODO: not sure the best way to handle this yet, but I think this is fine for now ¯\_(ツ)_/¯
-        <div
-          dangerouslySetInnerHTML={{__html: sanitizeHtml(rawEmailHtml)}}
-        ></div>
+        <div dangerouslySetInnerHTML={{__html: sanitizeHtml(rawEmailHtml)}} />
       ) : (
         <MarkdownRenderer className={className} source={body} />
       )}
