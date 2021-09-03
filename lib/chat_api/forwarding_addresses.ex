@@ -50,6 +50,24 @@ defmodule ChatApi.ForwardingAddresses do
     end
   end
 
+  @spec find_by_source_email(binary()) :: ForwardingAddress.t() | nil
+  def find_by_source_email(email) do
+    ForwardingAddress
+    |> where(source_email_address: ^email)
+    |> Repo.one()
+  end
+
+  @spec find_account_by_source_address(binary()) :: Account.t() | nil
+  def find_account_by_source_address(email) do
+    case find_by_source_email(email) do
+      %ForwardingAddress{account_id: account_id} ->
+        Accounts.get_account!(account_id)
+
+      nil ->
+        nil
+    end
+  end
+
   @spec create_forwarding_address(map()) ::
           {:ok, ForwardingAddress.t()} | {:error, Ecto.Changeset.t()}
   def create_forwarding_address(attrs \\ %{}) do

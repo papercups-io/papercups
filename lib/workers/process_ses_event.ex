@@ -25,7 +25,8 @@ defmodule ChatApi.Workers.ProcessSesEvent do
             "ses_message_id" => ses_message_id,
             "from_address" => from_address,
             "to_addresses" => to_addresses,
-            "forwarded_to" => forwarded_to
+            "forwarded_to" => forwarded_to,
+            "received_by" => received_by
           }
         } = job
       ) do
@@ -36,7 +37,8 @@ defmodule ChatApi.Workers.ProcessSesEvent do
       ses_message_id: ses_message_id,
       from_address: from_address,
       to_addresses: to_addresses,
-      forwarded_to: forwarded_to
+      forwarded_to: forwarded_to,
+      received_by: received_by
     })
 
     :ok
@@ -46,12 +48,15 @@ defmodule ChatApi.Workers.ProcessSesEvent do
         ses_message_id: ses_message_id,
         from_address: from_address,
         to_addresses: to_addresses,
-        forwarded_to: forwarded_to
+        forwarded_to: forwarded_to,
+        received_by: received_by
       }) do
     # TODO: should we first check the email to see if we can find
     # an existing thread based on the references header?
     # (e.g. check for a previous message where the email message ID matches?)
-    case get_message_resource(to_addresses, forwarded_to) do
+    addresses = [forwarded_to] ++ to_addresses ++ received_by
+
+    case get_message_resource(addresses) do
       %Conversation{} = conversation ->
         IO.inspect(conversation, label: "Found conversation!")
 
@@ -265,7 +270,6 @@ defmodule ChatApi.Workers.ProcessSesEvent do
   def get_message_resource(email_addresses) do
     email_addresses
     |> Enum.reject(&is_nil/1)
-    |> Enum.filter(&String.contains?(&1, "@chat.papercups.io"))
     |> Enum.reduce_while(nil, fn
       email, nil ->
         if is_reply_address?(email) do
