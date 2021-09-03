@@ -2,6 +2,8 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import sanitizeHtml from 'sanitize-html';
+
 import {MarkdownRenderer, Text} from '../common';
 import {Attachment, Message, MessageSource} from '../../types';
 import {PaperClipOutlined} from '../icons';
@@ -70,7 +72,10 @@ const ChatMessageBox = ({
 }: Props) => {
   const {body, source, created_at, metadata = {}} = message;
   const createdAt = dayjs.utc(created_at).local().format('ddd, MMM D h:mm A');
+  // TODO: pull this from the conversation, or use the `message.subject` field instead
   const subject = metadata?.gmail_subject ?? metadata?.ses_subject ?? null;
+  // TODO: add a `content_type` field to messages, which can be `text` or `html`
+  const rawEmailHtml = metadata?.ses_html;
   const [formattedSource, sourceIcon] = getMessageSourceDetails(source);
   const parsedSx = Object.assign(sx, {
     px: 3,
@@ -96,7 +101,14 @@ const ChatMessageBox = ({
         </Box>
       )}
 
-      <MarkdownRenderer className={className} source={body} />
+      {rawEmailHtml ? (
+        // TODO: not sure the best way to handle this yet, but I think this is fine for now ¯\_(ツ)_/¯
+        <div
+          dangerouslySetInnerHTML={{__html: sanitizeHtml(rawEmailHtml)}}
+        ></div>
+      ) : (
+        <MarkdownRenderer className={className} source={body} />
+      )}
 
       {attachments && attachments.length > 0 && (
         <Box mt={2} className={className}>
