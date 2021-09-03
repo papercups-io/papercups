@@ -49,16 +49,6 @@ defmodule ChatApi.AwsTest do
     end
   end
 
-  describe "SES" do
-    test "sending an email" do
-      # TODO
-    end
-
-    test "sending an email reply to an existing thread" do
-      # TODO
-    end
-  end
-
   describe "lambda" do
     @moduletag :lambda_development
 
