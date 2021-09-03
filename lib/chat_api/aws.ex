@@ -294,7 +294,13 @@ defmodule ChatApi.Aws do
       ses_in_reply_to: format_metadata_email_field(message.in_reply_to),
       ses_references: message.references
     }
+    |> maybe_merge_raw_html(message)
   end
+
+  def maybe_merge_raw_html(metadata, %{formatted_text: nil, html: html}) when is_binary(html),
+    do: Map.merge(metadata, %{ses_html: html})
+
+  def maybe_merge_raw_html(metadata, _), do: metadata
 
   # Lambda
 

@@ -53,6 +53,7 @@
     "remark-breaks": "^2.0.0",
     "rrweb": "^0.9.7",
     "rrweb-player": "^0.6.2",
+    "sanitize-html": "^2.4.0",
     "superagent": "^5.3.1",
     "theme-ui": "^0.3.1",
     "typescript": "~3.9.7"
@@ -99,6 +100,7 @@
   "proxy": "http://localhost:4000",
   "devDependencies": {
     "@types/jszip": "^3.4.1",
+    "@types/sanitize-html": "^2.3.2",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
     "prettier": "^2.0.5"
