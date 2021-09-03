@@ -129,5 +129,14 @@ defmodule ChatApi.ProcessSesEventText do
         assert message.customer.email == customer.email
       end
     end
+
+    test "invalid input", %{customer: customer} do
+      ChatApi.Workers.ProcessSesEvent.process_event(%{
+        ses_message_id: "ses_message_id",
+        from_address: customer.email,
+        to_addresses: ["random@chat.papercups.io"],
+        forwarded_to: nil
+      })
+    end
   end
 end
