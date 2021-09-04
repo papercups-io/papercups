@@ -16,6 +16,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "@types/jest": "^24.0.0",
+    "@types/jszip": "^3.4.1",
     "@types/lodash": "^4.14.159",
     "@types/node": "^12.0.0",
     "@types/phoenix": "^1.4.4",
@@ -27,6 +28,7 @@
     "@types/react-router-dom": "^5.1.5",
     "@types/react-syntax-highlighter": "^11.0.4",
     "@types/recharts": "^1.8.15",
+    "@types/sanitize-html": "^2.3.2",
     "@types/superagent": "^4.1.8",
     "@types/theme-ui": "^0.3.4",
     "antd": "^4.3.5",
@@ -99,8 +101,6 @@
   },
   "proxy": "http://localhost:4000",
   "devDependencies": {
-    "@types/jszip": "^3.4.1",
-    "@types/sanitize-html": "^2.3.2",
     "husky": "^4.2.5",
     "lint-staged": "^10.2.11",
     "prettier": "^2.0.5"
