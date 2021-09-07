@@ -107,6 +107,8 @@ const getSectionKey = (pathname: string) => {
     return ['customers', 'notes'];
   } else if (pathname.startsWith('/functions')) {
     return ['developers', 'functions'];
+  } else if (pathname.startsWith('/channels')) {
+    return ['conversations', ...pathname.split('/').slice(2)];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
@@ -504,6 +506,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/functions/:id" component={LambdaDetailsPage} />
           <Route path="/functions" component={LambdasOverview} />
           <Route path="/conversations*" component={InboxesDashboard} />
+          <Route path="/channels*" component={InboxesDashboard} />
           <Route path="/reporting" component={ReportingDashboard} />
           <Route path="/sessions/live/:session" component={LiveSessionViewer} />
           <Route path="/sessions/list" component={SessionsOverview} />

@@ -240,12 +240,6 @@ const InboxesDashboard = (props: RouteComponentProps) => {
         </Flex>
       </Sider>
 
-      {/* <Layout
-        style={{
-          marginLeft: DASHBOARD_COLLAPSED_SIDER_WIDTH,
-          background: colors.white,
-        }}
-      > */}
       <Switch>
         <Route path="/conversations/all" component={AllConversations} />
         <Route path="/conversations/unread" component={UnreadConversations} />
@@ -283,7 +277,6 @@ const InboxesDashboard = (props: RouteComponentProps) => {
 
         <Route path="*" render={() => <Redirect to="/conversations/all" />} />
       </Switch>
-      {/* </Layout> */}
     </Layout>
   );
 };
