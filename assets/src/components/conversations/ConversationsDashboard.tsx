@@ -2,7 +2,12 @@ import React from 'react';
 import {Box} from 'theme-ui';
 import qs from 'query-string';
 import {colors, Input, Layout, notification, Sider, Title} from '../common';
-import {sleep} from '../../utils';
+import {
+  CONVERSATIONS_DASHBOARD_OFFSET,
+  CONVERSATIONS_DASHBOARD_SIDER_OFFSET,
+  CONVERSATIONS_DASHBOARD_SIDER_WIDTH,
+  sleep,
+} from '../../utils';
 import {ConversationsListResponse, PaginationOptions} from '../../api';
 import {Account, Conversation, Message} from '../../types';
 import * as API from '../../api';
@@ -406,13 +411,13 @@ class ConversationsDashboard extends React.Component<Props, State> {
       <Layout style={{background: colors.white}}>
         <Sider
           theme="light"
-          width={280}
+          width={CONVERSATIONS_DASHBOARD_SIDER_WIDTH}
           style={{
             borderRight: '1px solid #f0f0f0',
             overflow: 'auto',
             height: '100vh',
             position: 'fixed',
-            left: 220,
+            left: CONVERSATIONS_DASHBOARD_SIDER_OFFSET,
           }}
         >
           <Box sx={{borderBottom: '1px solid #f0f0f0'}}>
@@ -447,7 +452,12 @@ class ConversationsDashboard extends React.Component<Props, State> {
             onLoadMoreConversations={this.handleLoadMoreConversations}
           />
         </Sider>
-        <Layout style={{marginLeft: 280, background: colors.white}}>
+        <Layout
+          style={{
+            marginLeft: CONVERSATIONS_DASHBOARD_OFFSET,
+            background: colors.white,
+          }}
+        >
           <ConversationContainer
             loading={loading}
             selectedConversationId={selectedConversationId}

@@ -141,3 +141,12 @@ a.RelatedCustomerConversation--link:hover {
 .ConversationsSearchInput .ant-input-search-icon::before {
   border-left: 1px solid rgb(240, 240, 240);
 }
+
+.Dashboard-Sider {
+  background: #000c17;
+}
+
+.Dashboard-Sider ul.ant-menu.ant-menu-dark,
+.Dashboard-Sider ul.ant-menu.ant-menu-dark .ant-menu-sub {
+  background: transparent;
+}

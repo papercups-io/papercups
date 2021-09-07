@@ -12,10 +12,11 @@ import {Box, Flex} from 'theme-ui';
 import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
 // import {Storytime} from '../lib/storytime'; // For testing
 import {Storytime} from '@papercups-io/storytime';
-import {colors, Badge, Layout, Menu, Sider} from './common';
+import {colors, Layout, Menu, Sider} from './common';
 import {
   ApiOutlined,
   CodeOutlined,
+  GlobalOutlined,
   LineChartOutlined,
   LogoutOutlined,
   MailOutlined,
@@ -35,6 +36,7 @@ import {
 import {SOCKET_URL} from '../socket';
 import analytics from '../analytics';
 import {
+  DASHBOARD_COLLAPSED_SIDER_WIDTH,
   formatUserExternalId,
   getBrowserVisibilityInfo,
   hasValidStripeKey,
@@ -51,14 +53,6 @@ import {
   ConversationsProvider,
   useConversations,
 } from './conversations/ConversationsProvider';
-import AllConversations from './conversations/AllConversations';
-import MyConversations from './conversations/MyConversations';
-import MentionedConversations from './conversations/MentionedConversations';
-import PriorityConversations from './conversations/PriorityConversations';
-import UnreadConversations from './conversations/UnreadConversations';
-import UnassignedConversations from './conversations/UnassignedConversations';
-import ClosedConversations from './conversations/ClosedConversations';
-import ConversationsBySource from './conversations/ConversationsBySource';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
 import SlackReplyIntegrationDetails from './integrations/SlackReplyIntegrationDetails';
 import SlackSyncIntegrationDetails from './integrations/SlackSyncIntegrationDetails';
@@ -90,6 +84,7 @@ import LambdaDetailsPage from './lambdas/LambdaDetailsPage';
 import LambdasOverview from './lambdas/LambdasOverview';
 import CannedResponsesOverview from './canned-responses/CannedResponsesOverview';
 import ForwardingAddressSettings from './settings/ForwardingAddressSettings';
+import InboxesDashboard from './inboxes/InboxesDashboard';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -273,8 +268,8 @@ const Dashboard = (props: RouteComponentProps) => {
       <DashboardHtmlHead totalNumUnread={totalNumUnread} />
 
       <Sider
-        width={220}
-        collapsed={false}
+        width={DASHBOARD_COLLAPSED_SIDER_WIDTH}
+        collapsed={true}
         style={{
           overflow: 'auto',
           height: '100vh',
@@ -285,189 +280,30 @@ const Dashboard = (props: RouteComponentProps) => {
       >
         <Flex sx={{flexDirection: 'column', height: '100%'}}>
           <Box py={3} sx={{flex: 1}}>
-            <Menu
-              selectedKeys={[section, key]}
-              defaultOpenKeys={[section, 'conversations']}
-              mode="inline"
-              theme="dark"
-            >
-              <Menu.Item key="getting-started">
-                <Link to="/getting-started">Getting Started</Link>
+            <Menu selectedKeys={[section, key]} mode="inline" theme="dark">
+              <Menu.Item
+                key="getting-started"
+                icon={<GlobalOutlined />}
+                title="Getting started"
+              >
+                <Link to="/getting-started">Getting started</Link>
               </Menu.Item>
-              <Menu.SubMenu
+              <Menu.Item
                 key="conversations"
                 icon={<MailOutlined />}
                 title="Inbox"
               >
-                <Menu.Item key="all">
-                  <Link to="/conversations/all">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>All conversations</Box>
-                      <Badge
-                        count={totalNumUnread}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="unread">
-                  <Link to="/conversations/unread">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>All unread</Box>
-                      <Badge
-                        count={getUnreadCount('unread', inboxes.all.unread)}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="unassigned">
-                  <Link to="/conversations/unassigned">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Unassigned</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'unassigned',
-                          inboxes.all.unassigned
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="mentions">
-                  <Link to="/conversations/mentions">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Mentions</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'mentioned',
-                          inboxes.all.mentioned
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="me">
-                  <Link to="/conversations/me">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Assigned to me</Box>
-                      <Badge
-                        count={getUnreadCount('assigned', inboxes.all.assigned)}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="priority">
-                  <Link to="/conversations/priority">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Prioritized</Box>
-                      <Badge
-                        count={getUnreadCount('priority', inboxes.all.priority)}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="closed">
-                  <Link to="/conversations/closed">Closed</Link>
-                </Menu.Item>
-              </Menu.SubMenu>
-              <Menu.SubMenu
-                key="channels"
-                icon={<MailOutlined />}
-                title="Channels"
+                <Link to="/conversations/all">Inbox</Link>
+              </Menu.Item>
+
+              <Menu.Item
+                title="Integrations"
+                icon={<ApiOutlined />}
+                key="integrations"
               >
-                <Menu.Item key="live-chat">
-                  <Link to="/channels/live-chat">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Live chat</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'chat',
-                          inboxes.bySource['chat'] ?? []
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="email">
-                  <Link to="/channels/email">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Email</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'email',
-                          inboxes.bySource['email'] ?? []
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="slack">
-                  <Link to="/channels/slack">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Slack</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'slack',
-                          inboxes.bySource['slack'] ?? []
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-              </Menu.SubMenu>
+                <Link to="/integrations">Integrations</Link>
+              </Menu.Item>
+
               <Menu.SubMenu
                 key="customers"
                 icon={<TeamOutlined />}
@@ -489,18 +325,15 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/notes">Notes</Link>
                 </Menu.Item>
               </Menu.SubMenu>
-              <Menu.SubMenu
-                key="sessions"
-                icon={<VideoCameraOutlined />}
-                title="Sessions"
+
+              <Menu.Item
+                title="Reporting"
+                icon={<LineChartOutlined />}
+                key="reporting"
               >
-                <Menu.Item key="list">
-                  <Link to="/sessions/list">Live sessions</Link>
-                </Menu.Item>
-                <Menu.Item key="setup">
-                  <Link to="/sessions/setup">Set up Storytime</Link>
-                </Menu.Item>
-              </Menu.SubMenu>
+                <Link to="/reporting">Reporting</Link>
+              </Menu.Item>
+
               <Menu.SubMenu
                 key="developers"
                 icon={<CodeOutlined />}
@@ -518,20 +351,20 @@ const Dashboard = (props: RouteComponentProps) => {
                   <Link to="/functions">Functions</Link>
                 </Menu.Item>
               </Menu.SubMenu>
-              <Menu.Item
-                title="Reporting"
-                icon={<LineChartOutlined />}
-                key="reporting"
+
+              <Menu.SubMenu
+                key="sessions"
+                icon={<VideoCameraOutlined />}
+                title="Sessions"
               >
-                <Link to="/reporting">Reporting</Link>
-              </Menu.Item>
-              <Menu.Item
-                title="Integrations"
-                icon={<ApiOutlined />}
-                key="integrations"
-              >
-                <Link to="/integrations">Integrations</Link>
-              </Menu.Item>
+                <Menu.Item key="list">
+                  <Link to="/sessions/list">Live sessions</Link>
+                </Menu.Item>
+                <Menu.Item key="setup">
+                  <Link to="/sessions/setup">Set up Storytime</Link>
+                </Menu.Item>
+              </Menu.SubMenu>
+
               <Menu.SubMenu
                 key="settings"
                 icon={<SettingOutlined />}
@@ -589,7 +422,12 @@ const Dashboard = (props: RouteComponentProps) => {
         </Flex>
       </Sider>
 
-      <Layout style={{marginLeft: 220, background: colors.white}}>
+      <Layout
+        style={{
+          marginLeft: DASHBOARD_COLLAPSED_SIDER_WIDTH,
+          background: colors.white,
+        }}
+      >
         <Switch>
           <Route path="/getting-started" component={GettingStarted} />
 
@@ -665,41 +503,7 @@ const Dashboard = (props: RouteComponentProps) => {
           />
           <Route path="/functions/:id" component={LambdaDetailsPage} />
           <Route path="/functions" component={LambdasOverview} />
-          <Route path="/conversations/all" component={AllConversations} />
-          <Route path="/conversations/unread" component={UnreadConversations} />
-          <Route
-            path="/conversations/unassigned"
-            component={UnassignedConversations}
-          />
-          <Route
-            path="/conversations/mentions"
-            component={MentionedConversations}
-          />
-          <Route path="/conversations/me" component={MyConversations} />
-          <Route
-            path="/conversations/priority"
-            component={PriorityConversations}
-          />
-          <Route path="/conversations/closed" component={ClosedConversations} />
-          <Route
-            path="/conversations/:id"
-            render={(props: RouteComponentProps<{id: string}>) => {
-              const {id: conversationId} = props.match.params;
-
-              return (
-                <Redirect to={`/conversations/all?cid=${conversationId}`} />
-              );
-            }}
-          />
-          <Route path="/channels/live-chat" key="chat">
-            <ConversationsBySource title="Live chat" source="chat" />
-          </Route>
-          <Route path="/channels/email" key="email">
-            <ConversationsBySource title="Email" source="email" />
-          </Route>
-          <Route path="/channels/slack" key="slack">
-            <ConversationsBySource title="Slack" source="slack" />
-          </Route>
+          <Route path="/conversations*" component={InboxesDashboard} />
           <Route path="/reporting" component={ReportingDashboard} />
           <Route path="/sessions/live/:session" component={LiveSessionViewer} />
           <Route path="/sessions/list" component={SessionsOverview} />

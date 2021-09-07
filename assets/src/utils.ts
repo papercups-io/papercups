@@ -9,6 +9,14 @@ dayjs.extend(utc);
 
 const {REACT_APP_STRIPE_PUBLIC_KEY} = env;
 
+export const DASHBOARD_COLLAPSED_SIDER_WIDTH = 80;
+export const INBOXES_DASHBOARD_SIDER_WIDTH = 220;
+export const CONVERSATIONS_DASHBOARD_SIDER_WIDTH = 280;
+export const CONVERSATIONS_DASHBOARD_SIDER_OFFSET =
+  DASHBOARD_COLLAPSED_SIDER_WIDTH + INBOXES_DASHBOARD_SIDER_WIDTH;
+export const CONVERSATIONS_DASHBOARD_OFFSET =
+  INBOXES_DASHBOARD_SIDER_WIDTH + CONVERSATIONS_DASHBOARD_SIDER_WIDTH;
+
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 export const noop = () => {};
