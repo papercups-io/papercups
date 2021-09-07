@@ -62,13 +62,14 @@ const InboxesDashboard = (props: RouteComponentProps) => {
       >
         <Flex sx={{flexDirection: 'column', height: '100%'}}>
           <Box py={3} sx={{flex: 1}}>
+            {/* TODO: eventually we should design our own sidebar menu so we have more control over the UX */}
             <Menu
               selectedKeys={[section, key]}
               defaultOpenKeys={['conversations', 'channels']}
               mode="inline"
               theme="dark"
             >
-              <Menu.SubMenu key="conversations" title="Inbox">
+              <Menu.SubMenu key="conversations" title="Primary Inbox">
                 <Menu.Item key="all">
                   <Link to="/conversations/all">
                     <Flex
