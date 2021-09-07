@@ -168,6 +168,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
       googleSheetId,
       googleSheetUrl,
       isSslEnabled,
+      isRunning,
     } = this.state;
 
     if (!broadcast) {
@@ -262,9 +263,10 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                   <Button
                     type="primary"
                     block
+                    loading={isRunning}
                     onClick={this.fetchCustomersFromGoogleSheet}
                   >
-                    Import customers
+                    {isRunning ? 'Importing...' : 'Import customers'}
                   </Button>
                 </Box>
               </Box>
@@ -349,11 +351,8 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                 />
 
                 <Box px={2} style={{position: 'absolute', top: 12, right: 16}}>
-                  <Button
-                    loading={this.state.isRunning}
-                    onClick={this.handleRunSql}
-                  >
-                    {this.state.isRunning ? 'Running...' : 'Run query'}
+                  <Button loading={isRunning} onClick={this.handleRunSql}>
+                    {isRunning ? 'Running...' : 'Run query'}
                   </Button>
                 </Box>
               </Box>
@@ -372,7 +371,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
 
               <Button
                 type="primary"
-                disabled={this.state.isRunning}
+                disabled={isRunning}
                 onClick={this.handleImportCustomers}
               >
                 Select customer segment

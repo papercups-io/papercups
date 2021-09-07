@@ -17,7 +17,19 @@ export type AccountSettings = {
   max_num_conversation_reminders?: number | null;
 };
 
-export type Broadcast = any;
+export type Broadcast = {
+  id: string;
+  object: 'broadcast';
+  created_at: string;
+  updated_at: string;
+  name: string;
+  description?: string | null;
+  state: string;
+  started_at?: string | null;
+  finished_at?: string | null;
+  message_template?: MessageTemplate;
+  broadcast_customers?: Array<any>;
+};
 
 export type CannedResponse = {
   id: string;
@@ -119,8 +131,22 @@ export type Message = {
   metadata?: any;
 };
 
-// TODO
-export type MessageTemplate = any;
+export type MessageTemplate = {
+  id: string;
+  object: 'message_template';
+  created_at: string;
+  updated_at: string;
+  name: string;
+  description?: string | null;
+  type: string;
+  account_id: string;
+  plain_text?: string | null;
+  raw_html?: string | null;
+  markdown?: string | null;
+  react_js?: string | null;
+  react_markdown?: string | null;
+  slack_markdown?: string | null;
+};
 
 export type FileUpload = {
   id: string;

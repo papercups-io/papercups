@@ -76,12 +76,15 @@ const BroadcastCustomersTable = ({
 };
 
 type Props = RouteComponentProps<{id: string}>;
-type State = {broadcast: Broadcast | null};
+type State = {
+  broadcast: Broadcast | null;
+  isSending: boolean;
+};
 
 export class BroadcastDetailsPage extends React.Component<Props, State> {
   iframe: any = null;
 
-  state: State = {broadcast: null};
+  state: State = {broadcast: null, isSending: false};
 
   async componentDidMount() {
     const {id: broadcastId} = this.props.match.params;
@@ -110,6 +113,8 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
 
   handleSendBroadcast = async () => {
     try {
+      this.setState({isSending: true});
+
       const {id: broadcastId} = this.props.match.params;
       const broadcast = await API.sendBroadcastEmail(broadcastId);
 
@@ -117,11 +122,13 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
       this.setState({broadcast});
     } catch (err) {
       logger.error('Failed to send emails!', err);
+    } finally {
+      this.setState({isSending: false});
     }
   };
 
   render() {
-    const {broadcast} = this.state;
+    const {broadcast, isSending} = this.state;
 
     if (!broadcast) {
       return null;
@@ -164,7 +171,10 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
             <Button
               type="primary"
               size="large"
+              // TODO: disable this if the broadcast is not yet ready to send
+              // disabled={!isReadyToSend}
               icon={<SendOutlined />}
+              loading={isSending}
               onClick={this.handleSendBroadcast}
             >
               Send broadcast

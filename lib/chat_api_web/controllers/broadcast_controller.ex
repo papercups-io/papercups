@@ -75,6 +75,7 @@ defmodule ChatApiWeb.BroadcastController do
     with %{current_user: current_user, current_broadcast: broadcast} <- conn.assigns,
          %{account_id: account_id, email: email} <- current_user,
          %{message_template_id: template_id} <- broadcast,
+         # TODO: add better error handling if no gmail authorization is available
          %{refresh_token: refresh_token} <-
            ChatApi.Google.get_support_gmail_authorization(account_id),
          %MessageTemplate{raw_html: raw_html, plain_text: plain_text, type: type} <-
