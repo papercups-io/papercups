@@ -1,36 +1,20 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {Button, Popconfirm} from '../common';
-import * as API from '../../api';
-import logger from '../../logger';
 import {GITHUB_APP_NAME} from '../../config';
-import {IntegrationType} from './support';
 
 export const GithubAuthorizationButton = ({
-  integration,
-  onUpdate,
+  isConnected,
+  authorizationId,
+  onDisconnect,
 }: {
-  integration: IntegrationType;
-  onUpdate: () => void;
+  isConnected?: boolean;
+  authorizationId?: string | null;
+  onDisconnect: (id: string) => void;
 }) => {
-  const {status, authorization_id: authorizationId} = integration;
-  const isConnected = status === 'connected' && !!authorizationId;
-
-  const handleDisconnect = async () => {
-    if (!authorizationId) {
-      return;
-    }
-
-    return API.deleteGithubAuthorization(authorizationId)
-      .then(() => onUpdate())
-      .catch((err) =>
-        logger.error('Error deleting Github authorization!', err)
-      );
-  };
-
   return (
     <>
-      {isConnected ? (
+      {authorizationId && isConnected ? (
         <Flex mx={-1}>
           <Box mx={1}>
             <a
@@ -47,7 +31,7 @@ export const GithubAuthorizationButton = ({
               okText="Yes"
               cancelText="No"
               placement="topLeft"
-              onConfirm={handleDisconnect}
+              onConfirm={() => onDisconnect(authorizationId)}
             >
               <Button danger>Disconnect</Button>
             </Popconfirm>

@@ -17,8 +17,6 @@ defmodule ChatApiWeb.TwilioController do
            Twilio.Client.send_message(%{To: to, From: from_phone_number, Body: body}, auth),
          {:ok, data} <- Jason.decode(json) do
       json(conn, %{data: data})
-    else
-      _ -> json(conn, %{data: nil})
     end
   end
 
@@ -57,7 +55,9 @@ defmodule ChatApiWeb.TwilioController do
           data: %{
             id: auth.id,
             created_at: auth.inserted_at,
-            from_phone_number: auth.from_phone_number
+            from_phone_number: auth.from_phone_number,
+            twilio_account_sid: auth.twilio_account_sid,
+            twilio_auth_token: auth.twilio_auth_token
           }
         })
     end

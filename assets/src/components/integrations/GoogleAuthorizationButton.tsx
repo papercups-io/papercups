@@ -101,3 +101,51 @@ export const PersonalGmailAuthorizationButton = ({
     </Tooltip>
   );
 };
+
+export const GoogleSheetsAuthorizationButton = ({
+  isConnected,
+  authorizationId,
+  onDisconnect,
+}: {
+  isConnected?: boolean;
+  authorizationId?: string | null;
+  onDisconnect: (id: string) => void;
+}) => {
+  if (isConnected && authorizationId) {
+    return (
+      <Flex mx={-1}>
+        <Box mx={1}>
+          <a href={getGoogleAuthUrl({client: 'sheets'})}>
+            <Button>Reconnect</Button>
+          </a>
+        </Box>
+        <Box mx={1}>
+          <Popconfirm
+            title="Are you sure you want to disconnect from Google Sheets?"
+            okText="Yes"
+            cancelText="No"
+            placement="topLeft"
+            onConfirm={() => onDisconnect(authorizationId)}
+          >
+            <Button danger>Disconnect</Button>
+          </Popconfirm>
+        </Box>
+      </Flex>
+    );
+  }
+
+  return (
+    <Tooltip
+      title={
+        <Box>
+          Our verification with the Google API is pending, but you can still
+          link your Google Sheets account to opt into new features.
+        </Box>
+      }
+    >
+      <a href={getGoogleAuthUrl({client: 'sheets'})}>
+        <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
+      </a>
+    </Tooltip>
+  );
+};

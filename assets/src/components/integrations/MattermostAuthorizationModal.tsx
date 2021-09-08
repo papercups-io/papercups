@@ -13,7 +13,6 @@ import {
 import * as API from '../../api';
 import {MattermostAuthorization, MattermostChannel} from '../../types';
 import logger from '../../logger';
-import {IntegrationType} from './support';
 import {formatServerError} from '../../utils';
 
 const MattermostAuthorizationModal = ({
@@ -35,6 +34,16 @@ const MattermostAuthorizationModal = ({
   >([]);
   const [isSaving, setSaving] = React.useState(false);
   const [error, setErrorMessage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    API.fetchMattermostAuthorization().then((auth) => {
+      if (!auth) {
+        return;
+      }
+
+      setAuthorization(auth);
+    });
+  }, [visible, authorizationId]);
 
   // TODO: debounce this
   const handleRefreshChannels = async (query: MattermostAuthorization) => {
@@ -187,7 +196,7 @@ const MattermostAuthorizationModal = ({
 
         <Box mb={3}>
           <label htmlFor="bot_access_token">
-            <Text strong>Bot token</Text>
+            <Text strong>Bot access token</Text>
           </label>
 
           <Input
@@ -252,63 +261,63 @@ const MattermostAuthorizationModal = ({
 };
 
 export const MattermostAuthorizationButton = ({
-  integration,
+  isConnected,
+  authorizationId,
   onUpdate,
+  onDisconnect,
 }: {
-  integration: IntegrationType;
+  isConnected?: boolean;
+  authorizationId?: string | null;
   onUpdate: () => void;
+  onDisconnect: (id: string) => void;
 }) => {
   const [isOpen, setOpen] = React.useState(false);
 
-  const {status, authorization_id: authorizationId} = integration;
-  const isConnected = status === 'connected' && !!authorizationId;
-
   const handleOpenModal = () => setOpen(true);
   const handleCloseModal = () => setOpen(false);
+
   const handleSuccess = () => {
     onUpdate();
     handleCloseModal();
   };
 
-  const handleDisconnect = async () => {
-    if (!authorizationId) {
-      return;
-    }
-
-    return API.deleteMattermostAuthorization(authorizationId)
-      .then(() => onUpdate())
-      .catch((err) =>
-        logger.error('Error deleting Mattermost authorization!', err)
-      );
-  };
+  if (isConnected && authorizationId) {
+    return (
+      <Flex mx={-1}>
+        <Box mx={1}>
+          <Button onClick={handleOpenModal}>Update</Button>
+          <MattermostAuthorizationModal
+            visible={isOpen}
+            authorizationId={authorizationId}
+            onCancel={handleCloseModal}
+            onSuccess={handleSuccess}
+          />
+        </Box>
+        <Box mx={1}>
+          <Popconfirm
+            title="Are you sure you want to disconnect from Mattermost?"
+            okText="Yes"
+            cancelText="No"
+            placement="topLeft"
+            onConfirm={() => onDisconnect(authorizationId)}
+          >
+            <Button danger>Disconnect</Button>
+          </Popconfirm>
+        </Box>
+      </Flex>
+    );
+  }
 
   return (
     <>
-      {isConnected ? (
-        <Flex mx={-1}>
-          <Box mx={1}>
-            <Button onClick={handleOpenModal}>Update</Button>
-          </Box>
-          <Box mx={1}>
-            <Popconfirm
-              title="Are you sure you want to disconnect from Mattermost?"
-              okText="Yes"
-              cancelText="No"
-              placement="topLeft"
-              onConfirm={handleDisconnect}
-            >
-              <Button danger>Disconnect</Button>
-            </Popconfirm>
-          </Box>
-        </Flex>
-      ) : (
-        <Button onClick={handleOpenModal}>Connect</Button>
-      )}
+      <Button onClick={handleOpenModal}>
+        {isConnected ? 'Reconnect' : 'Connect'}
+      </Button>
       <MattermostAuthorizationModal
         visible={isOpen}
         authorizationId={authorizationId}
-        onSuccess={handleSuccess}
         onCancel={handleCloseModal}
+        onSuccess={handleSuccess}
       />
     </>
   );

@@ -266,14 +266,9 @@ class ChatWidgetSettings extends React.Component<Props, State> {
     const customer = this.getUserMetadata();
 
     return (
-      <Box
-        p={4}
-        sx={{
-          maxWidth: 720,
-        }}
-      >
+      <Box px={5} py={4} sx={{maxWidth: 720}}>
         <Box mb={4}>
-          <Title>Chat Widget Settings</Title>
+          <Title level={3}>Chat Widget Settings</Title>
           <Paragraph>
             <Text>
               Before you can start chatting with your customers, you'll need to
@@ -283,7 +278,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
         </Box>
 
         <Box mb={4}>
-          <Title level={3}>Customize your widget</Title>
+          <Title level={4}>Customize your widget</Title>
 
           <Box mb={3}>
             <label htmlFor="title">Update the title:</label>
@@ -469,7 +464,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
         </Box>
 
         <Box mb={4}>
-          <Title level={3}>Installing the widget</Title>
+          <Title level={4}>Installing the widget</Title>
           <Paragraph>
             <Text>
               Before you can start receiving messages here in your dashboard,
@@ -496,7 +491,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
           iconVariant={iconVariant}
         />
 
-        <Title level={3}>Learn more</Title>
+        <Title level={4}>Learn more</Title>
         <Paragraph>
           <Text>
             See the code and star our{' '}
@@ -556,7 +551,7 @@ const CodeSnippet: FunctionComponent<Pick<
     >
       <Tabs.TabPane tab="HTML" key={Languages.HTML}>
         <Box mb={4}>
-          <Title level={3}>Usage in HTML</Title>
+          <Title level={4}>Usage in HTML</Title>
           <Paragraph>
             <Text>
               Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
@@ -607,7 +602,7 @@ window.Papercups = {
 
       <Tabs.TabPane tab="React" tabKey={Languages.REACT}>
         <Box mb={4}>
-          <Title level={3}>Usage in React</Title>
+          <Title level={4}>Usage in React</Title>
           <Paragraph>
             <Text>
               First, install the <Text code>@papercups-io/chat-widget</Text>{' '}

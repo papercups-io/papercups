@@ -72,8 +72,8 @@ const getStepsMetadata = (
       ctaText: 'Configure profile',
       text: (
         <>
-          <Text strong>Configure your profile</Text> by adding your name and
-          photo so your customers know who they're talking to.
+          <Text strong>Configure your profile</Text> so your customers know who
+          they're talking to.
         </>
       ),
     },
@@ -83,8 +83,7 @@ const getStepsMetadata = (
       ctaText: 'Set up integrations',
       text: (
         <>
-          <Text strong>Set up integrations</Text> like Slack, Gmail, and SMS to
-          add more channels for your customer communication.
+          <Text strong>Set up integrations</Text> like Slack, Gmail, and SMS.
         </>
       ),
     },
@@ -128,7 +127,7 @@ const Step = ({completed, ctaHref, ctaText, text, value}: StepProps) => {
     <>
       <Box p={3} sx={{display: 'flex', alignItems: 'center'}}>
         <StepIcon value={value} completed={completed} />
-        <Box mx={3} sx={{flexGrow: 1, opacity}}>
+        <Box mx={3} mr={4} sx={{flexGrow: 1, opacity}}>
           {text}
         </Box>
         <Link
@@ -156,11 +155,10 @@ const StepIcon = ({completed, value}: StepIconProps) => {
     alignItems: 'center',
     borderRadius: '50%',
     display: 'flex',
-    fontSize: '16px',
-    height: '40px',
+    height: '32px',
     justifyContent: 'center',
-    minWidth: '40px',
-    width: '40px',
+    minWidth: '32px',
+    width: '32px',
   };
 
   if (completed) {
