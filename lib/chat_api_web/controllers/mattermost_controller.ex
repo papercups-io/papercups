@@ -17,8 +17,6 @@ defmodule ChatApiWeb.MattermostController do
          params <- Map.merge(authorization, %{"account_id" => account_id, "user_id" => user_id}),
          {:ok, result} <- Mattermost.create_or_update_authorization!(params) do
       json(conn, %{data: %{ok: true, id: result.id}})
-    else
-      _ -> json(conn, %{data: %{ok: false}})
     end
   end
 
@@ -40,7 +38,11 @@ defmodule ChatApiWeb.MattermostController do
             id: auth.id,
             created_at: auth.inserted_at,
             channel: auth.channel_name,
-            team_name: auth.team_domain
+            team_name: auth.team_domain,
+            # Custom fields
+            mattermost_url: auth.mattermost_url,
+            access_token: auth.access_token,
+            verification_token: auth.verification_token
           }
         })
     end

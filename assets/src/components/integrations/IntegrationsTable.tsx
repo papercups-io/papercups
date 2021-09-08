@@ -2,24 +2,18 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Table, Tag, Text, Tooltip} from '../common';
+import {colors, Button, Table, Tag, Text} from '../common';
 import {SettingOutlined} from '../icons';
-import {IntegrationType, getGoogleAuthUrl} from './support';
-import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
-import {TwilioAuthorizationButton} from './TwilioAuthorizationModal';
+import {IntegrationType} from './support';
 import {GithubAuthorizationButton} from './GithubAuthorizationButton';
 
 const IntegrationsTable = ({
   loading,
   integrations,
-  onDisconnectSlack,
-  onDisconnectGmail,
   onUpdateIntegration,
 }: {
   loading?: boolean;
   integrations: Array<IntegrationType>;
-  onDisconnectSlack: (id: string) => void;
-  onDisconnectGmail: (id: string) => void;
   onUpdateIntegration: (data?: any) => void;
 }) => {
   const columns = [
@@ -76,8 +70,7 @@ const IntegrationsTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (action: any, record: IntegrationType) => {
-        const {key, status} = record;
-        const isConnected = status === 'connected';
+        const {key} = record;
 
         switch (key) {
           case 'slack':
@@ -88,10 +81,9 @@ const IntegrationsTable = ({
             );
           case 'mattermost':
             return (
-              <MattermostAuthorizationButton
-                integration={record}
-                onUpdate={onUpdateIntegration}
-              />
+              <Link to="/integrations/mattermost">
+                <Button icon={<SettingOutlined />}>Configure</Button>
+              </Link>
             );
           case 'gmail':
             return (
@@ -101,33 +93,21 @@ const IntegrationsTable = ({
             );
           case 'sheets':
             return (
-              <Tooltip
-                title={
-                  <Box>
-                    Our verification with the Google API is pending, but you can
-                    still link your Google Sheets account to opt into new
-                    features.
-                  </Box>
-                }
-              >
-                <a href={getGoogleAuthUrl({client: 'sheets'})}>
-                  <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-                </a>
-              </Tooltip>
+              <Link to="/integrations/google/sheets">
+                <Button icon={<SettingOutlined />}>Configure</Button>
+              </Link>
             );
           case 'twilio':
             return (
-              <TwilioAuthorizationButton
-                integration={record}
-                onUpdate={onUpdateIntegration}
-              />
+              <Link to="/integrations/twilio">
+                <Button icon={<SettingOutlined />}>Configure</Button>
+              </Link>
             );
           case 'github':
             return (
-              <GithubAuthorizationButton
-                integration={record}
-                onUpdate={onUpdateIntegration}
-              />
+              <Link to="/integrations/github">
+                <Button icon={<SettingOutlined />}>Configure</Button>
+              </Link>
             );
           case 'slack:sync':
             return (

@@ -17,8 +17,17 @@ export const GoogleIntegrationDetails = (props: RouteComponentProps<{}>) => {
           })}`}
         />
       );
-    // TODO: still need to set up separate page for sheets once the integration is useful
     case 'https://www.googleapis.com/auth/spreadsheets':
+      return (
+        <Redirect
+          to={`/integrations/google/sheets?${qs.stringify({
+            state,
+            scope,
+            type,
+            ...rest,
+          })}`}
+        />
+      );
     default:
       return <Redirect to={`/integrations`} />;
   }

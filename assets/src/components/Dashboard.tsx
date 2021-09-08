@@ -58,7 +58,11 @@ import SlackReplyIntegrationDetails from './integrations/SlackReplyIntegrationDe
 import SlackSyncIntegrationDetails from './integrations/SlackSyncIntegrationDetails';
 import SlackIntegrationDetails from './integrations/SlackIntegrationDetails';
 import GmailIntegrationDetails from './integrations/GmailIntegrationDetails';
+import GoogleSheetsIntegrationDetails from './integrations/GoogleSheetsIntegrationDetails';
 import GoogleIntegrationDetails from './integrations/GoogleIntegrationDetails';
+import MattermostIntegrationDetails from './integrations/MattermostIntegrationDetails';
+import TwilioIntegrationDetails from './integrations/TwilioIntegrationDetails';
+import GithubIntegrationDetails from './integrations/GithubIntegrationDetails';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import CustomerDetailsPage from './customers/CustomerDetailsPage';
@@ -485,8 +489,24 @@ const Dashboard = (props: RouteComponentProps) => {
             component={GmailIntegrationDetails}
           />
           <Route
+            path="/integrations/google/sheets"
+            component={GoogleSheetsIntegrationDetails}
+          />
+          <Route
             path="/integrations/google"
             component={GoogleIntegrationDetails}
+          />
+          <Route
+            path="/integrations/mattermost"
+            component={MattermostIntegrationDetails}
+          />
+          <Route
+            path="/integrations/twilio"
+            component={TwilioIntegrationDetails}
+          />
+          <Route
+            path="/integrations/github"
+            component={GithubIntegrationDetails}
           />
           <Route path="/integrations/:type" component={IntegrationsOverview} />
           <Route path="/integrations" component={IntegrationsOverview} />
@@ -505,8 +525,6 @@ const Dashboard = (props: RouteComponentProps) => {
           />
           <Route path="/functions/:id" component={LambdaDetailsPage} />
           <Route path="/functions" component={LambdasOverview} />
-          <Route path="/conversations*" component={InboxesDashboard} />
-          <Route path="/channels*" component={InboxesDashboard} />
           <Route path="/reporting" component={ReportingDashboard} />
           <Route path="/sessions/live/:session" component={LiveSessionViewer} />
           <Route path="/sessions/list" component={SessionsOverview} />
@@ -517,6 +535,8 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/issues/:id" component={IssueDetailsPage} />
           <Route path="/issues" component={IssuesOverview} />
           <Route path="/notes" component={NotesOverview} />
+          <Route path="/conversations*" component={InboxesDashboard} />
+          <Route path="/channels*" component={InboxesDashboard} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
