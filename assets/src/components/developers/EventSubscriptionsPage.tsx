@@ -124,7 +124,7 @@ class EventSubscriptionsPage extends React.Component<Props, State> {
     return (
       <Container>
         <Box mb={5}>
-          <Title level={4}>Event Subscriptions</Title>
+          <Title level={3}>Event Subscriptions</Title>
 
           <Flex sx={{justifyContent: 'space-between', alignItems: 'baseline'}}>
             <Paragraph>

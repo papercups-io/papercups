@@ -107,7 +107,7 @@ class PersonalApiKeysPage extends React.Component<Props, State> {
     return (
       <Container>
         <Box mb={5}>
-          <Title level={4}>Personal API keys</Title>
+          <Title level={3}>Personal API keys</Title>
 
           <Flex sx={{justifyContent: 'space-between', alignItems: 'baseline'}}>
             <Paragraph>
