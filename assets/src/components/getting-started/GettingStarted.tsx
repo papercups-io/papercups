@@ -42,9 +42,9 @@ const GettingStarted = () => {
   }
 
   return (
-    <Container>
-      <Box mb={4}>
-        <Title level={3}>Welcome to Papercups</Title>
+    <Container sx={{maxWidth: 800}}>
+      <Box mb={4} px={3}>
+        <Title level={3}>Get started with Papercups</Title>
       </Box>
       <Divider />
       <Steps onboardingStatus={onboardingStatus} />

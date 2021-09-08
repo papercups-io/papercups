@@ -349,7 +349,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
     return (
       <Container>
         <Box mb={5}>
-          <Title level={4}>Integrations</Title>
+          <Title level={3}>Integrations</Title>
 
           <Paragraph>
             <Text>
