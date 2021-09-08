@@ -364,7 +364,6 @@ class IntegrationsOverview extends React.Component<Props, State> {
             <IntegrationsTable
               loading={refreshing}
               integrations={integrations}
-              onUpdateIntegration={this.refreshAllIntegrations}
             />
           </Box>
         </Box>

@@ -5,16 +5,13 @@ import {Box, Flex} from 'theme-ui';
 import {colors, Button, Table, Tag, Text} from '../common';
 import {SettingOutlined} from '../icons';
 import {IntegrationType} from './support';
-import {GithubAuthorizationButton} from './GithubAuthorizationButton';
 
 const IntegrationsTable = ({
   loading,
   integrations,
-  onUpdateIntegration,
 }: {
   loading?: boolean;
   integrations: Array<IntegrationType>;
-  onUpdateIntegration: (data?: any) => void;
 }) => {
   const columns = [
     {

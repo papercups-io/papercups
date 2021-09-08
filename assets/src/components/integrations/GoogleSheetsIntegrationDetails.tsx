@@ -3,8 +3,6 @@ import {RouteComponentProps} from 'react-router';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 
 import {
   notification,
@@ -24,8 +22,6 @@ import logger from '../../logger';
 import {GoogleSheetsAuthorizationButton} from './GoogleAuthorizationButton';
 import Spinner from '../Spinner';
 import {Account} from '../../types';
-
-dayjs.extend(utc);
 
 type Props = RouteComponentProps<{}>;
 type State = {

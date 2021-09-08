@@ -12,7 +12,6 @@ import {
 import * as API from '../../api';
 import {TwilioAuthorization} from '../../types';
 import logger from '../../logger';
-import {IntegrationType} from './support';
 
 const TwilioAuthorizationModal = ({
   visible,
