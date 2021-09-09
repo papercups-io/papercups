@@ -62,14 +62,14 @@ config :chat_api, Oban,
   queues: [default: 10, events: 50, mailers: 20],
   crontab: [
     # Hourly example worker
-    {"0 * * * *", ChatApi.Workers.Example},
-    {"0 * * * *", ChatApi.Workers.ArchiveStaleClosedConversations},
+    # {"0 * * * *", ChatApi.Workers.Example},
+    # {"0 * * * *", ChatApi.Workers.ArchiveStaleClosedConversations},
     # Syncs every minute
-    {"* * * * *", ChatApi.Workers.SyncGmailInboxes},
+    # {"* * * * *", ChatApi.Workers.SyncGmailInboxes},
     # Check for reminders every 30 mins
-    {"*/30 * * * *", ChatApi.Workers.SendAllConversationReminders},
+    # {"*/30 * * * *", ChatApi.Workers.SendAllConversationReminders}
     # Sends everyday at 2pm UTC/9am EST
-    {"0 14 * * *", ChatApi.Workers.SendPgNewsletter}
+    # {"0 14 * * *", ChatApi.Workers.SendPgNewsletter}
     # TODO: uncomment this after testing manually
     # {"0 * * * *", ChatApi.Workers.ArchiveStaleFreeTierConversations}
   ]
