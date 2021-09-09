@@ -680,6 +680,9 @@ defmodule ChatApi.Conversations do
       {"account_id", value}, dynamic ->
         dynamic([c], ^dynamic and c.account_id == ^value)
 
+      {"inbox_id", value}, dynamic ->
+        dynamic([c], ^dynamic and c.inbox_id == ^value)
+
       {"source", value}, dynamic ->
         dynamic([c], ^dynamic and c.source == ^value)
 

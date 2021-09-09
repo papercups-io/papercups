@@ -149,6 +149,7 @@ defmodule ChatApiWeb.Router do
     resources("/canned_responses", CannedResponseController, except: [:new, :edit])
     resources("/lambdas", LambdaController, except: [:new, :edit])
     resources("/forwarding_addresses", ForwardingAddressController, except: [:new, :edit])
+    resources("/inboxes", InboxController, except: [:new, :edit])
 
     post("/lambdas/:id/deploy", LambdaController, :deploy)
     post("/lambdas/:id/invoke", LambdaController, :invoke)

@@ -120,6 +120,16 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def inbox_factory do
+    %ChatApi.Inboxes.Inbox{
+      account: build(:account),
+      name: "some inbox name",
+      description: "some description",
+      is_primary: false,
+      is_private: false
+    }
+  end
+
   def mattermost_authorization_factory do
     %ChatApi.Mattermost.MattermostAuthorization{
       access_token: "some access_token",

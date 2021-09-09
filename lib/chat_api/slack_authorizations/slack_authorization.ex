@@ -3,6 +3,7 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
   import Ecto.Changeset
 
   alias ChatApi.Accounts.Account
+  alias ChatApi.Inboxes.Inbox
   alias ChatApi.SlackAuthorizations.Settings
 
   @type t :: %__MODULE__{
@@ -50,6 +51,7 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
     embeds_one(:settings, Settings, on_replace: :delete)
 
     belongs_to(:account, Account)
+    belongs_to(:inbox, Inbox)
 
     timestamps()
   end

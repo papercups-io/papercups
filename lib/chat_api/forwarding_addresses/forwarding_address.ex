@@ -2,6 +2,7 @@ defmodule ChatApi.ForwardingAddresses.ForwardingAddress do
   use Ecto.Schema
   import Ecto.Changeset
   alias ChatApi.Accounts.Account
+  alias ChatApi.Inboxes.Inbox
 
   @type t :: %__MODULE__{
           forwarding_email_address: String.t(),
@@ -11,6 +12,8 @@ defmodule ChatApi.ForwardingAddresses.ForwardingAddress do
           # Relations
           account_id: binary(),
           account: any(),
+          inbox_id: binary(),
+          inbox: any(),
           # Timestamps
           inserted_at: any(),
           updated_at: any()
@@ -25,6 +28,7 @@ defmodule ChatApi.ForwardingAddresses.ForwardingAddress do
     field(:description, :string)
 
     belongs_to(:account, Account)
+    belongs_to(:inbox, Inbox)
 
     timestamps()
   end

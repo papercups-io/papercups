@@ -3,6 +3,7 @@ defmodule ChatApi.Twilio.TwilioAuthorization do
   import Ecto.Changeset
 
   alias ChatApi.Accounts.Account
+  alias ChatApi.Inboxes.Inbox
   alias ChatApi.Users.User
 
   @type t :: %__MODULE__{
@@ -13,6 +14,7 @@ defmodule ChatApi.Twilio.TwilioAuthorization do
           settings: any(),
           # Foreign keys
           account_id: Ecto.UUID.t(),
+          inbox_id: Ecto.UUID.t(),
           user_id: integer(),
           # Timestamps
           inserted_at: DateTime.t(),
@@ -32,6 +34,7 @@ defmodule ChatApi.Twilio.TwilioAuthorization do
     # embeds_one(:settings, Settings, on_replace: :delete)
 
     belongs_to(:account, Account)
+    belongs_to(:inbox, Inbox)
     belongs_to(:user, User, type: :integer)
 
     timestamps()

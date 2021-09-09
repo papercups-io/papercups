@@ -5,6 +5,7 @@ defmodule ChatApi.Conversations.Conversation do
   alias ChatApi.{
     Accounts.Account,
     Customers.Customer,
+    Inboxes.Inbox,
     Issues.ConversationIssue,
     Mentions.Mention,
     Messages.Message,
@@ -29,6 +30,8 @@ defmodule ChatApi.Conversations.Conversation do
           account: any(),
           customer_id: any(),
           customer: any(),
+          inbox_id: any(),
+          inbox: any(),
           messages: any(),
           conversation_tags: any(),
           tags: any(),
@@ -55,6 +58,7 @@ defmodule ChatApi.Conversations.Conversation do
     belongs_to(:assignee, User, foreign_key: :assignee_id, references: :id, type: :integer)
     belongs_to(:account, Account)
     belongs_to(:customer, Customer)
+    belongs_to(:inbox, Inbox)
     has_many(:messages, Message)
 
     has_many(:mentions, Mention)
