@@ -2,15 +2,7 @@ defmodule ChatApi.Google.Gmail do
   require Logger
 
   @spec send_message(binary(), map()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
-  def send_message(
-        refresh_token,
-        %{
-          to: _,
-          from: _,
-          subject: _,
-          text: _
-        } = params
-      ) do
+  def send_message(refresh_token, %{to: _, from: _, subject: _, text: _} = params) do
     with {:ok, client} <- ChatApi.Google.Auth.get_token(refresh_token: refresh_token),
          %{token: %{access_token: access_token}} <- client do
       scope = "https://www.googleapis.com/gmail/v1/users/me/messages/send"
