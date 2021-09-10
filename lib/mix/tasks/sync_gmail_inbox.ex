@@ -40,8 +40,8 @@ defmodule Mix.Tasks.SyncGmailInbox do
            metadata: %{"next_history_id" => start_history_id}
          } = authorization <-
            Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
-         %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
-         %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
+         {:ok, %{body: %{"emailAddress" => email}}} <- Gmail.get_profile(refresh_token),
+         {:ok, %{body: %{"historyId" => next_history_id, "history" => [_ | _] = history}}} <-
            Gmail.list_history(refresh_token,
              start_history_id: start_history_id,
              history_types: "messageAdded"
@@ -64,8 +64,8 @@ defmodule Mix.Tasks.SyncGmailInbox do
   def sync_messages(account_id, start_history_id) do
     with %GoogleAuthorization{refresh_token: refresh_token} = authorization <-
            Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
-         %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
-         %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
+         {:ok, %{body: %{"emailAddress" => email}}} <- Gmail.get_profile(refresh_token),
+         {:ok, %{body: %{"historyId" => next_history_id, "history" => [_ | _] = history}}} <-
            Gmail.list_history(refresh_token,
              start_history_id: start_history_id,
              history_types: "messageAdded"
@@ -89,8 +89,8 @@ defmodule Mix.Tasks.SyncGmailInbox do
   def sync_messages_by_label(account_id, start_history_id, label_id) do
     with %GoogleAuthorization{refresh_token: refresh_token} = authorization <-
            Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
-         %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
-         %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
+         {:ok, %{body: %{"emailAddress" => email}}} <- Gmail.get_profile(refresh_token),
+         {:ok, %{body: %{"historyId" => next_history_id, "history" => [_ | _] = history}}} <-
            Gmail.list_history(refresh_token,
              start_history_id: start_history_id,
              label_id: label_id
@@ -123,9 +123,13 @@ defmodule Mix.Tasks.SyncGmailInbox do
     end)
     |> Enum.uniq_by(fn %{"threadId" => thread_id} -> thread_id end)
     |> Enum.map(fn %{"threadId" => thread_id} ->
-      thread_id
-      |> Gmail.get_thread(refresh_token)
-      |> Gmail.format_thread(exclude_labels: ["SPAM", "DRAFT", "CATEGORY_PROMOTIONS"])
+      case Gmail.get_thread(refresh_token, thread_id) do
+        {:ok, %{body: thread}} ->
+          Gmail.format_thread(thread, exclude_labels: ["SPAM", "DRAFT", "CATEGORY_PROMOTIONS"])
+
+        _ ->
+          nil
+      end
     end)
     |> Enum.reject(&skip_processing_thread?/1)
     |> Enum.each(fn thread ->
@@ -135,7 +139,9 @@ defmodule Mix.Tasks.SyncGmailInbox do
     end)
   end
 
-  @spec skip_processing_thread?(Gmail.GmailThread.t()) :: boolean
+  @spec skip_processing_thread?(Gmail.GmailThread.t() | nil) :: boolean
+  def skip_processing_thread?(nil), do: true
+
   def skip_processing_thread?(%Gmail.GmailThread{} = thread) do
     case thread do
       %{messages: []} ->

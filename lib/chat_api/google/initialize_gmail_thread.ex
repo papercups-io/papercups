@@ -22,38 +22,26 @@ defmodule ChatApi.Google.InitializeGmailThread do
     with {:ok, %{refresh_token: refresh_token, user_id: _auth_user_id} = authorization} <-
            get_gmail_authorization(account_id, user_id),
          {:ok, from} <- get_authorized_gmail_address(refresh_token),
-         {:ok, to} <- validate_conversation_customer_email(conversation_id) do
-      sender = Google.format_sender_display_name(authorization, user_id, account_id)
-
-      subject =
-        case subject do
-          nil -> get_default_subject(account_id)
-          str -> str
-        end
-
-      %{
-        "id" => gmail_message_id,
-        "threadId" => gmail_thread_id
-      } =
-        Google.Gmail.send_message(refresh_token, %{
-          to: to,
-          from: {sender, from},
-          subject: subject,
-          text: text
-        })
-
-      {:ok, _gmail_conversation_thread} =
-        Google.create_gmail_conversation_thread(%{
-          gmail_thread_id: gmail_thread_id,
-          gmail_initial_subject: subject,
-          conversation_id: conversation_id,
-          account_id: account_id
-        })
-
-      gmail_message =
-        gmail_message_id
-        |> Google.Gmail.get_message(refresh_token)
-        |> Google.Gmail.format_thread_message()
+         {:ok, to} <- validate_conversation_customer_email(conversation_id),
+         sender <- Google.format_sender_display_name(authorization, user_id, account_id),
+         subject <- subject || get_default_subject(account_id),
+         {:ok, %{body: %{"id" => gmail_message_id, "threadId" => gmail_thread_id}}} <-
+           Google.Gmail.send_message(refresh_token, %{
+             to: to,
+             from: {sender, from},
+             subject: subject,
+             text: text
+           }),
+         {:ok, _gmail_conversation_thread} <-
+           Google.create_gmail_conversation_thread(%{
+             gmail_thread_id: gmail_thread_id,
+             gmail_initial_subject: subject,
+             conversation_id: conversation_id,
+             account_id: account_id
+           }),
+         {:ok, %{body: gmail_message}} <-
+           Google.Gmail.get_message(refresh_token, gmail_message_id) do
+      formatted_gmail_message = Google.Gmail.format_thread_message(gmail_message)
 
       %{
         body: text,
@@ -61,9 +49,9 @@ defmodule ChatApi.Google.InitializeGmailThread do
         account_id: account_id,
         user_id: user_id,
         source: "email",
-        metadata: Google.Gmail.format_message_metadata(gmail_message),
+        metadata: Google.Gmail.format_message_metadata(formatted_gmail_message),
         sent_at:
-          with {unix, _} <- Integer.parse(gmail_message.ts),
+          with {unix, _} <- Integer.parse(formatted_gmail_message.ts),
                {:ok, datetime} <- DateTime.from_unix(unix, :millisecond) do
             datetime
           else
@@ -91,7 +79,7 @@ defmodule ChatApi.Google.InitializeGmailThread do
   @spec get_authorized_gmail_address(binary()) :: {:ok, binary()} | {:error, binary()}
   defp get_authorized_gmail_address(refresh_token) do
     case Google.Gmail.get_profile(refresh_token) do
-      %{"emailAddress" => from} -> {:ok, from}
+      {:ok, %{body: %{"emailAddress" => from}}} -> {:ok, from}
       _ -> {:error, "Invalid Gmail authorization"}
     end
   end

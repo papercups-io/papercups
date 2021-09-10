@@ -74,7 +74,7 @@ defmodule ChatApi.Newsletters.Pg do
   end
 
   def notify(token, url, recipients) when is_list(recipients) do
-    with %{"emailAddress" => sender} <- Google.Gmail.get_profile(token) do
+    with {:ok, %{body: %{"emailAddress" => sender}}} <- Google.Gmail.get_profile(token) do
       case extract_essay_data(url) do
         {:ok, {title, text, html}} ->
           Logger.debug("Sending PG essay #{inspect(url)} to #{inspect(recipients)}")

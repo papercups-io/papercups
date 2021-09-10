@@ -35,14 +35,13 @@ defmodule ChatApi.Workers.EnableGmailInboxSync do
     case Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}) do
       %GoogleAuthorization{refresh_token: token} = authorization ->
         history_id =
-          token
-          |> Gmail.list_threads()
-          |> Map.get("threads", [])
-          |> List.first()
-          |> Map.get("historyId")
+          case Gmail.list_threads(token) do
+            {:ok, %{body: %{"threads" => [%{"historyId" => id}]}}} -> id
+            _ -> nil
+          end
 
         case Gmail.list_history(token, start_history_id: history_id) do
-          %{"historyId" => next_history_id} ->
+          {:ok, %{body: %{"historyId" => next_history_id}}} ->
             Google.update_google_authorization(authorization, %{
               metadata: %{next_history_id: next_history_id}
             })

@@ -26,8 +26,6 @@ defmodule ChatApi.Workers.SendPushNotifications do
         Logger.error(
           "Unexpected args for ChatApi.Workers.SendPushNotifications: #{inspect(args)}"
         )
-
-        nil
     end
 
     :ok
@@ -40,12 +38,16 @@ defmodule ChatApi.Workers.SendPushNotifications do
     |> Users.list_users_for_push_notification(excluded_user_id)
     |> Enum.map(fn user ->
       Logger.info("Sending push notification to user: #{inspect(user.email)}")
-      # Send it to Expo
-      {:ok, response} =
-        ExponentServerSdk.PushNotification.push(%{
+
+      params =
+        ExponentServerSdk.PushMessage.create(%{
           to: user.settings.expo_push_token,
           title: format_notification_title(message),
-          body: body,
+          body:
+            case body do
+              text when is_binary(text) -> text
+              _ -> "Sent a message"
+            end,
           data: %{
             "account_id" => message.account_id,
             "conversation_id" => message.conversation_id,
@@ -63,7 +65,8 @@ defmodule ChatApi.Workers.SendPushNotifications do
             })
         })
 
-      response
+      # Send it to Expo
+      ExponentServerSdk.PushNotification.push(params)
     end)
   end
 
@@ -79,15 +82,16 @@ defmodule ChatApi.Workers.SendPushNotifications do
         })
 
       Logger.info("Updating badge count to #{inspect(count)} for user: #{inspect(user.email)}")
-      # Send it to Expo
-      {:ok, response} =
-        ExponentServerSdk.PushNotification.push(%{
+
+      params =
+        ExponentServerSdk.PushMessage.create(%{
           to: user.settings.expo_push_token,
           # TODO: how should we handle this?
           badge: count
         })
 
-      response
+      # Send it to Expo
+      ExponentServerSdk.PushNotification.push(params)
     end)
   end
 

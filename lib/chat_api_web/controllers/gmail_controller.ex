@@ -12,7 +12,7 @@ defmodule ChatApiWeb.GmailController do
          %GoogleAuthorization{refresh_token: refresh_token} <-
            Google.get_support_gmail_authorization(account_id, user_id) do
       case Google.Gmail.get_profile(refresh_token) do
-        %{"emailAddress" => email} ->
+        {:ok, %{body: %{"emailAddress" => email}}} ->
           json(conn, %{ok: true, data: %{email: email}})
 
         error ->
@@ -37,7 +37,7 @@ defmodule ChatApiWeb.GmailController do
         text: params["text"] || params["message"]
       })
       |> case do
-        %{"id" => _id} = result ->
+        {:ok, %{body: %{"id" => _id}}} = result ->
           json(conn, %{ok: true, data: result})
 
         error ->

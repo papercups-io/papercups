@@ -21,8 +21,8 @@ defmodule ChatApi.Workers.SyncGmailInbox do
            metadata: %{"next_history_id" => start_history_id}
          } = authorization <-
            Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
-         %{"emailAddress" => email} <- Gmail.get_profile(refresh_token),
-         %{"historyId" => next_history_id, "history" => [_ | _] = history} <-
+         {:ok, %{body: %{"emailAddress" => email}}} <- Gmail.get_profile(refresh_token),
+         {:ok, %{body: %{"historyId" => next_history_id, "history" => [_ | _] = history}}} <-
            Gmail.list_history(refresh_token,
              start_history_id: start_history_id,
              history_types: "messageAdded"
@@ -43,7 +43,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
             "Google authorization is either missing :refresh_token or :metadata.next_history_id"
         )
 
-      %{"historyId" => history_id} ->
+      {:ok, %{body: %{"historyId" => history_id}}} ->
         Logger.debug(
           "Skipped syncing Gmail messages for account #{inspect(account_id)}. " <>
             "No new message history found since ID #{inspect(history_id)}."
@@ -69,12 +69,12 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     end)
     |> Enum.uniq_by(fn %{"threadId" => thread_id} -> thread_id end)
     |> Enum.map(fn %{"threadId" => thread_id} ->
-      case Gmail.get_thread(thread_id, refresh_token) do
-        nil ->
-          nil
-
-        thread ->
+      case Gmail.get_thread(refresh_token, thread_id) do
+        {:ok, %{body: thread}} ->
           Gmail.format_thread(thread, exclude_labels: ["SPAM", "DRAFT", "CATEGORY_PROMOTIONS"])
+
+        _ ->
+          nil
       end
     end)
     |> Enum.reject(&skip_processing_thread?/1)
@@ -287,7 +287,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
       ) do
     Enum.map(attachments, fn %Gmail.GmailAttachment{filename: filename} = attachment ->
       unique_filename = ChatApi.Aws.generate_unique_filename(filename)
-      file_url = Gmail.download_message_attachment(attachment, refresh_token)
+      file_url = Gmail.download_message_attachment(refresh_token, attachment)
 
       {:ok, file} =
         Files.create_file(%{
