@@ -74,7 +74,7 @@ defmodule Mix.Tasks.EnableGmailInboxSync do
       %GoogleAuthorization{refresh_token: token} = authorization ->
         history_id =
           case Gmail.list_threads(token) do
-            {:ok, %{body: %{"threads" => [%{"historyId" => id}]}}} -> id
+            {:ok, %{body: %{"threads" => [%{"historyId" => id} | _]}}} -> id
             _ -> nil
           end
 

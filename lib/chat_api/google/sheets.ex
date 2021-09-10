@@ -1,7 +1,9 @@
 defmodule ChatApi.Google.Sheets do
+  # TODO: refactor the same way Gmail is handled
+
   def get_spreadsheet_by_id!(refresh_token, id, range \\ "Sheet1!A:Z") do
     scope = "https://sheets.googleapis.com/v4/spreadsheets/#{id}/values/#{range}"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
+    client = ChatApi.Google.Auth.get_access_token!(refresh_token: refresh_token)
     %{body: result} = OAuth2.Client.get!(client, scope)
 
     result
@@ -10,7 +12,7 @@ defmodule ChatApi.Google.Sheets do
   def append_to_spreadsheet!(refresh_token, id, data \\ [], range \\ "Sheet1!A:Z") do
     qs = URI.encode_query(%{valueInputOption: "USER_ENTERED", includeValuesInResponse: true})
     scope = "https://sheets.googleapis.com/v4/spreadsheets/#{id}/values/#{range}:append?#{qs}"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
+    client = ChatApi.Google.Auth.get_access_token!(refresh_token: refresh_token)
 
     payload = %{
       "majorDimension" => "ROWS",

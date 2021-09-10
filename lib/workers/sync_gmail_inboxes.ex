@@ -31,7 +31,7 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
 
     Oban.Job
     |> where(worker: "ChatApi.Workers.SyncGmailInbox")
-    |> where([j], j.state in ["available", "scheduled" or "retryable"])
+    |> where([j], j.state in ["available", "scheduled", "retryable"])
     |> where([_j], fragment("(args->>'account_id' in (?))", ^ids))
     |> Repo.all()
     |> Enum.each(fn job -> Oban.cancel_job(job.id) end)
@@ -39,7 +39,7 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
 
   @spec list_authorized_account_ids() :: [binary()]
   def list_authorized_account_ids() do
-    %{client: "gmail"}
+    %{client: "gmail", type: "support"}
     |> ChatApi.Google.list_google_authorizations()
     |> Enum.map(& &1.account_id)
   end
