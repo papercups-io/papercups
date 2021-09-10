@@ -5,7 +5,7 @@ defmodule ChatApi.Inboxes do
 
   import Ecto.Query, warn: false
   alias ChatApi.Repo
-  alias ChatApi.Inboxes.Inbox
+  alias ChatApi.Inboxes.{Inbox, InboxMember}
 
   @spec list_inboxes(binary(), map()) :: [Inbox.t()]
   def list_inboxes(account_id, filters \\ %{}) do
@@ -79,5 +79,49 @@ defmodule ChatApi.Inboxes do
         # Not a where parameter
         dynamic
     end)
+  end
+
+  @spec list_inbox_members(binary()) :: [InboxMember.t()]
+  def list_inbox_members(inbox_id) do
+    InboxMember
+    |> where(inbox_id: ^inbox_id)
+    |> Repo.all()
+  end
+
+  @spec count_inbox_members(binary()) :: number()
+  def count_inbox_members(inbox_id) do
+    InboxMember
+    |> where(inbox_id: ^inbox_id)
+    |> select([f], count(f.id))
+    |> Repo.one()
+  end
+
+  @spec has_inbox_members?(binary()) :: boolean()
+  def has_inbox_members?(inbox_id),
+    do: count_inbox_members(inbox_id) > 0
+
+  @spec get_inbox_member!(binary()) :: InboxMember.t()
+  def get_inbox_member!(id), do: Repo.get!(InboxMember, id)
+
+  @spec create_inbox_member(map()) ::
+          {:ok, InboxMember.t()} | {:error, Ecto.Changeset.t()}
+  def create_inbox_member(attrs \\ %{}) do
+    %InboxMember{}
+    |> InboxMember.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @spec update_inbox_member(InboxMember.t(), map()) ::
+          {:ok, InboxMember.t()} | {:error, Ecto.Changeset.t()}
+  def update_inbox_member(%InboxMember{} = inbox_member, attrs) do
+    inbox_member
+    |> InboxMember.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @spec delete_inbox_member(InboxMember.t()) ::
+          {:ok, InboxMember.t()} | {:error, Ecto.Changeset.t()}
+  def delete_inbox_member(%InboxMember{} = inbox_member) do
+    Repo.delete(inbox_member)
   end
 end
