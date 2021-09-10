@@ -39,34 +39,41 @@ defmodule ChatApi.Workers.SendPushNotifications do
     |> Enum.map(fn user ->
       Logger.info("Sending push notification to user: #{inspect(user.email)}")
 
-      params =
-        ExponentServerSdk.PushMessage.create(%{
-          to: user.settings.expo_push_token,
-          title: format_notification_title(message),
-          body:
-            case body do
-              text when is_binary(text) -> text
-              _ -> "Sent a message"
-            end,
-          data: %{
-            "account_id" => message.account_id,
-            "conversation_id" => message.conversation_id,
-            "customer_id" => message.customer_id,
-            "message_id" => message.id,
-            "user_id" => message.user_id,
-            "inserted_at" => message.inserted_at,
-            "url" => "messages/#{message.conversation_id}"
-          },
-          # TODO: how should we handle this?
-          badge:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false
-            })
-        })
+      params = %{
+        to: user.settings.expo_push_token,
+        title: format_notification_title(message),
+        body:
+          case body do
+            text when is_binary(text) -> text
+            _ -> "Sent a message"
+          end,
+        data: %{
+          "account_id" => message.account_id,
+          "conversation_id" => message.conversation_id,
+          "customer_id" => message.customer_id,
+          "message_id" => message.id,
+          "user_id" => message.user_id,
+          "inserted_at" => message.inserted_at,
+          "url" => "messages/#{message.conversation_id}"
+        },
+        # TODO: how should we handle this?
+        badge:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false
+          })
+      }
 
       # Send it to Expo
-      ExponentServerSdk.PushNotification.push(params)
+      case ExponentServerSdk.PushNotification.push(params) do
+        {:ok, result} ->
+          result
+
+        error ->
+          Logger.error("Failed to send push notification #{inspect(params)}: #{inspect(error)}")
+
+          nil
+      end
     end)
   end
 
@@ -83,15 +90,22 @@ defmodule ChatApi.Workers.SendPushNotifications do
 
       Logger.info("Updating badge count to #{inspect(count)} for user: #{inspect(user.email)}")
 
-      params =
-        ExponentServerSdk.PushMessage.create(%{
-          to: user.settings.expo_push_token,
-          # TODO: how should we handle this?
-          badge: count
-        })
+      params = %{
+        to: user.settings.expo_push_token,
+        # TODO: how should we handle this?
+        badge: count
+      }
 
       # Send it to Expo
-      ExponentServerSdk.PushNotification.push(params)
+      case ExponentServerSdk.PushNotification.push(params) do
+        {:ok, result} ->
+          result
+
+        error ->
+          Logger.error("Failed to update badge count #{inspect(params)}: #{inspect(error)}")
+
+          nil
+      end
     end)
   end
 
