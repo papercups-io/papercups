@@ -1,14 +1,11 @@
 defmodule ChatApi.Google.Gmail do
   require Logger
 
-  def send_message(
-        refresh_token,
-        %{to: _to, from: _from, subject: _subject, text: _text} = params
-      ) do
-    with %{token: %{access_token: access_token}} <-
-           ChatApi.Google.Auth.get_token!(refresh_token: refresh_token) do
+  @spec send_message(binary(), map()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
+  def send_message(refresh_token, %{to: _, from: _, subject: _, text: _} = params) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token),
+         %{token: %{access_token: access_token}} <- client do
       scope = "https://www.googleapis.com/gmail/v1/users/me/messages/send"
-      client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
 
       body =
         params
@@ -18,117 +15,156 @@ defmodule ChatApi.Google.Gmail do
           thread_id: params[:thread_id]
         )
 
-      %{body: result} = OAuth2.Client.post!(client, scope, body)
-
-      result
+      OAuth2.Client.post(client, scope, body)
     end
   end
 
-  def reply_to_thread(
-        refresh_token,
-        %{
-          to: _to,
-          from: _from,
-          subject: _subject,
-          text: _text,
-          in_reply_to: _in_reply_to,
-          references: _references,
-          thread_id: _gmail_thread_id
-        } = params
-      ) do
-    send_message(refresh_token, params)
+  @spec send_message!(binary(), map()) :: OAuth2.Response.t()
+  def send_message!(refresh_token, params) do
+    case send_message(refresh_token, params) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
   end
 
+  @spec list_messages(binary(), keyword()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
   def list_messages(refresh_token, query \\ []) do
-    q = query |> Enum.map_join(" ", fn {k, v} -> "#{k}:#{v}" end) |> URI.encode()
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/messages?q=#{q}"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-    %{body: result} = OAuth2.Client.get!(client, scope)
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      q = query |> Enum.map_join(" ", fn {k, v} -> "#{k}:#{v}" end) |> URI.encode()
+      scope = "https://gmail.googleapis.com/gmail/v1/users/me/messages?q=#{q}"
 
-    result
+      OAuth2.Client.get(client, scope)
+    end
   end
 
-  def get_message(message_id, refresh_token) do
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/messages/#{message_id}"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-    %{body: result} = OAuth2.Client.get!(client, scope)
-
-    result
+  @spec list_messages!(binary(), keyword()) :: OAuth2.Response.t()
+  def list_messages!(refresh_token, query \\ []) do
+    case list_messages(refresh_token, query) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
   end
 
-  def get_message_attachment(message_id, attachment_id, refresh_token) do
-    scope =
-      "https://gmail.googleapis.com/gmail/v1/users/me/messages/#{message_id}/attachments/#{
-        attachment_id
-      }"
+  @spec get_message(binary(), binary()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
+  def get_message(refresh_token, message_id) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      scope = "https://gmail.googleapis.com/gmail/v1/users/me/messages/#{message_id}"
 
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-    %{body: result} = OAuth2.Client.get!(client, scope)
-
-    result
+      OAuth2.Client.get(client, scope)
+    end
   end
 
+  @spec get_message!(binary(), binary()) :: OAuth2.Response.t()
+  def get_message!(refresh_token, message_id) do
+    case get_message(refresh_token, message_id) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
+  end
+
+  @spec get_message_attachment(binary(), binary(), binary()) ::
+          {:error, any()} | {:ok, OAuth2.Response.t()}
+  def get_message_attachment(refresh_token, message_id, attachment_id) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      scope =
+        "https://gmail.googleapis.com/gmail/v1/users/me/messages/#{message_id}/attachments/#{
+          attachment_id
+        }"
+
+      OAuth2.Client.get(client, scope)
+    end
+  end
+
+  @spec get_message_attachment!(binary(), binary(), binary()) :: OAuth2.Response.t()
+  def get_message_attachment!(refresh_token, message_id, attachment_id) do
+    case get_message_attachment(refresh_token, message_id, attachment_id) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
+  end
+
+  @spec list_threads(binary(), keyword()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
   def list_threads(refresh_token, query \\ []) do
-    q = query |> Enum.map_join(" ", fn {k, v} -> "#{k}:#{v}" end) |> URI.encode()
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/threads?q=#{q}"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-    %{body: result} = OAuth2.Client.get!(client, scope)
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      q = query |> Enum.map_join(" ", fn {k, v} -> "#{k}:#{v}" end) |> URI.encode()
+      scope = "https://gmail.googleapis.com/gmail/v1/users/me/threads?q=#{q}"
 
-    result
-  end
-
-  def get_thread(thread_id, refresh_token) do
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/threads/#{thread_id}?format=full"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-
-    case OAuth2.Client.get(client, scope) do
-      {:ok, %{body: result}} ->
-        result
-
-      {:error, %{body: %{"error" => %{"code" => 404}}}} ->
-        Logger.warn("Gmail thread #{inspect(thread_id)} not found")
-
-        nil
-
-      {:error, error} ->
-        raise error
+      OAuth2.Client.get(client, scope)
     end
   end
 
+  @spec list_threads!(binary(), keyword()) :: OAuth2.Response.t()
+  def list_threads!(refresh_token, query \\ []) do
+    case list_threads(refresh_token, query) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
+  end
+
+  @spec get_thread(binary(), binary()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
+  def get_thread(refresh_token, thread_id) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      scope = "https://gmail.googleapis.com/gmail/v1/users/me/threads/#{thread_id}?format=full"
+
+      OAuth2.Client.get(client, scope)
+    end
+  end
+
+  def get_thread!(refresh_token, thread_id) do
+    case get_thread(refresh_token, thread_id) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
+  end
+
+  @spec list_history(binary(), keyword()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
   def list_history(refresh_token, query \\ []) do
-    qs = URI.encode_query(query)
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/history?#{qs}"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      qs = URI.encode_query(query)
+      scope = "https://gmail.googleapis.com/gmail/v1/users/me/history?#{qs}"
 
-    case OAuth2.Client.get(client, scope) do
-      {:ok, %{body: result}} ->
-        result
-
-      {:error, %{body: %{"error" => %{"code" => 404}}}} ->
-        Logger.warn("Gmail history not found for #{inspect(qs)}")
-
-        nil
-
-      {:error, error} ->
-        raise error
+      OAuth2.Client.get(client, scope)
     end
   end
 
-  def list_labels(refresh_token, query \\ []) do
-    qs = URI.encode_query(query)
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/labels?#{qs}"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-    %{body: result} = OAuth2.Client.get!(client, scope)
-
-    result
+  def list_history!(refresh_token, query \\ []) do
+    case list_history(refresh_token, query) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
   end
 
-  def get_profile(refresh_token) do
-    scope = "https://gmail.googleapis.com/gmail/v1/users/me/profile"
-    client = ChatApi.Google.Auth.get_token!(refresh_token: refresh_token)
-    %{body: result} = OAuth2.Client.get!(client, scope)
+  @spec list_labels(binary(), keyword()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
+  def list_labels(refresh_token, query \\ []) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      qs = URI.encode_query(query)
+      scope = "https://gmail.googleapis.com/gmail/v1/users/me/labels?#{qs}"
 
-    result
+      OAuth2.Client.get(client, scope)
+    end
+  end
+
+  def list_labels!(refresh_token, query \\ []) do
+    case list_labels(refresh_token, query) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
+  end
+
+  @spec get_profile(binary()) :: {:error, any()} | {:ok, OAuth2.Response.t()}
+  def get_profile(refresh_token) do
+    with {:ok, client} <- ChatApi.Google.Auth.get_access_token(refresh_token: refresh_token) do
+      scope = "https://gmail.googleapis.com/gmail/v1/users/me/profile"
+
+      OAuth2.Client.get(client, scope)
+    end
+  end
+
+  def get_profile!(refresh_token) do
+    case get_profile(refresh_token) do
+      {:ok, result} -> result
+      {:error, error} -> raise error
+    end
   end
 
   #############################################################################
@@ -144,18 +180,6 @@ defmodule ChatApi.Google.Gmail do
     |> Base.decode64()
   end
 
-  # Example use case:
-  #  token
-  #   |> ChatApi.Google.Gmail.list_threads(in: "sent", subject: "October product updates")
-  #   |> Map.get("threads", [])
-  #   |> Enum.map(fn thread ->
-  #     thread
-  #     |> Map.get("id")
-  #     |> ChatApi.Google.Gmail.get_thread(token)
-  #     |> ChatApi.Google.Gmail.get_original_recipient()
-  #   end)
-  #
-  # => outputs user emails that received the "October product updates" email
   def get_original_recipient(thread) do
     thread
     |> Map.get("messages")
@@ -178,17 +202,17 @@ defmodule ChatApi.Google.Gmail do
   end
 
   def download_message_attachment(
+        refresh_token,
         %GmailAttachment{
           attachment_id: attachment_id,
           message_id: message_id,
           filename: filename
-        },
-        refresh_token
+        }
       ) do
     identifier = ChatApi.Aws.generate_unique_filename(filename)
 
-    with %{"data" => encoded_attachment_data} <-
-           get_message_attachment(message_id, attachment_id, refresh_token),
+    with {:ok, %{body: %{"data" => encoded_attachment_data}}} <-
+           get_message_attachment(refresh_token, message_id, attachment_id),
          {:ok, decoded_attachment_data} <- decode_message_body(encoded_attachment_data),
          {:ok, _result} <- ChatApi.Aws.upload_binary(decoded_attachment_data, identifier) do
       ChatApi.Aws.get_file_url(identifier)

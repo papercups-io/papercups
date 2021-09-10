@@ -21,7 +21,7 @@ defmodule ChatApiWeb.GoogleController do
           _ -> nil
         end
 
-      client = Google.Auth.get_token!(code: code, redirect_uri: get_redirect_uri(type))
+      client = Google.Auth.get_access_token!(code: code, redirect_uri: get_redirect_uri(type))
       Logger.debug("Gmail access token: #{inspect(client.token)}")
       scope = client.token.other_params["scope"] || params["scope"] || ""
 

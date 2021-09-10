@@ -20,6 +20,7 @@ defmodule ChatApi.Workers.SendGmailNotification do
             } = message
         }
       }) do
+    # TODO: clean this up a bit, move some logic into smaller functions
     with %{refresh_token: refresh_token} = authorization <-
            Google.get_support_gmail_authorization(account_id, user_id),
          %{gmail_initial_subject: gmail_initial_subject, gmail_thread_id: gmail_thread_id} <-
@@ -30,16 +31,12 @@ defmodule ChatApi.Workers.SendGmailNotification do
            "gmail_to" => gmail_to,
            "gmail_cc" => gmail_cc,
            "gmail_references" => gmail_references
-         } = last_gmail_message <- extract_last_gmail_message!(conversation_id) do
+         } = last_gmail_message <- extract_last_gmail_message!(conversation_id),
+         {:ok, %{body: %{"emailAddress" => from}}} <- Google.Gmail.get_profile(refresh_token) do
       Logger.info("Last Gmail message: #{inspect(last_gmail_message)}")
 
       # TODO: double check logic for determining from/to/cc/etc
       # TODO: write tests for this logic!
-      from =
-        refresh_token
-        |> Google.Gmail.get_profile()
-        |> Map.get("emailAddress")
-
       sender = Google.format_sender_display_name(authorization, user_id, account_id)
       last_from = Google.Gmail.extract_email_address(gmail_from)
       last_to = gmail_to |> String.split(",") |> Enum.map(&Google.Gmail.extract_email_address/1)
@@ -80,25 +77,37 @@ defmodule ChatApi.Workers.SendGmailNotification do
 
       Logger.info("Sending payload to Gmail: #{inspect(payload)}")
 
-      %{"id" => gmail_message_id, "threadId" => ^gmail_thread_id} =
-        Google.Gmail.send_message(refresh_token, payload)
+      case Google.Gmail.send_message(refresh_token, payload) do
+        {:ok, %{body: %{"id" => gmail_message_id, "threadId" => ^gmail_thread_id}}} ->
+          Logger.info("Gmail message sent: #{inspect(gmail_message_id)}")
 
-      Logger.info("Gmail message sent: #{inspect(gmail_message_id)}")
+          message_id
+          |> Messages.get_message!()
+          |> Messages.update_message(%{
+            metadata: format_message_metadata(refresh_token, gmail_message_id)
+          })
 
-      metadata =
-        gmail_message_id
-        |> Google.Gmail.get_message(refresh_token)
-        |> Google.Gmail.format_thread_message()
-        |> Google.Gmail.format_message_metadata()
-
-      message_id
-      |> Messages.get_message!()
-      |> Messages.update_message(%{metadata: metadata})
+        error ->
+          Logger.error("Failed to send Gmail message: #{error}")
+      end
     else
       error -> Logger.info("Skipped sending Gmail notification: #{inspect(error)}")
     end
 
     :ok
+  end
+
+  @spec format_message_metadata(binary(), binary()) :: map()
+  def format_message_metadata(refresh_token, gmail_message_id) do
+    case Google.Gmail.get_message(refresh_token, gmail_message_id) do
+      {:ok, %{body: result}} ->
+        result
+        |> Google.Gmail.format_thread_message()
+        |> Google.Gmail.format_message_metadata()
+
+      _ ->
+        %{}
+    end
   end
 
   @spec extract_last_gmail_message!(binary()) :: map()

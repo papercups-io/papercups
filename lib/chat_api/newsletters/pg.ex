@@ -74,7 +74,7 @@ defmodule ChatApi.Newsletters.Pg do
   end
 
   def notify(token, url, recipients) when is_list(recipients) do
-    with %{"emailAddress" => sender} <- Google.Gmail.get_profile(token) do
+    with {:ok, %{body: %{"emailAddress" => sender}}} <- Google.Gmail.get_profile(token) do
       case extract_essay_data(url) do
         {:ok, {title, text, html}} ->
           Logger.debug("Sending PG essay #{inspect(url)} to #{inspect(recipients)}")
@@ -105,12 +105,13 @@ defmodule ChatApi.Newsletters.Pg do
          %{refresh_token: sheets_token} <-
            Google.get_authorization_by_account(account_id, %{client: "sheets"}),
          %{refresh_token: gmail_token} <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}) do
+           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
+         {:ok, %{body: spreadsheet}} <-
+           Google.Sheets.get_spreadsheet_by_id(sheets_token, sheet_id) do
       url = pick_essay_url(Date.utc_today(), start_date)
 
       recipients =
-        sheets_token
-        |> Google.Sheets.get_spreadsheet_by_id!(sheet_id)
+        spreadsheet
         |> Google.Sheets.format_as_json()
         |> Enum.map(fn record ->
           case record do

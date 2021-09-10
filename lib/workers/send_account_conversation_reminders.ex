@@ -46,6 +46,7 @@ defmodule ChatApi.Workers.SendAccountConversationReminders do
     max = get_max_reminders_config(settings)
 
     account_id
+    # TODO: optimize this query, seems to be unnecessarily expensive
     |> Conversations.list_forgotten_conversations(hours)
     |> Enum.filter(fn conv -> should_send_reminder?(conv, max) end)
     # Just handle 10 at a time for now to avoid spamming reminders
