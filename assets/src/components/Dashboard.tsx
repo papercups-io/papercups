@@ -241,14 +241,11 @@ const Dashboard = (props: RouteComponentProps) => {
   const {pathname} = useLocation();
   const {unread} = useConversations();
   const [account, setAccount] = React.useState<Account | null>(null);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  const {currentUser} = auth;
 
   React.useEffect(() => {
     // TODO: figure out a better way to handle this
-    Promise.all([
-      API.me().then((user) => setCurrentUser(user)),
-      API.fetchAccountInfo().then((account) => setAccount(account)),
-    ]);
+    API.fetchAccountInfo().then((account) => setAccount(account));
   }, []);
 
   const [section, key] = getSectionKey(pathname);
@@ -563,7 +560,7 @@ const Dashboard = (props: RouteComponentProps) => {
 };
 
 const DashboardWrapper = (props: RouteComponentProps) => {
-  const {refresh, currentUser} = useAuth();
+  const {refresh} = useAuth();
 
   return (
     <SocketProvider url={SOCKET_URL} refresh={refresh}>

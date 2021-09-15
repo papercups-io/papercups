@@ -18,6 +18,7 @@ import ConversationHeader from './ConversationHeader';
 import {useConversations} from './ConversationsProvider';
 import {isUnreadConversation} from './support';
 import {useNotifications} from './NotificationsProvider';
+import {useAuth} from '../auth/AuthProvider';
 
 const defaultConversationFilter = () => true;
 
@@ -138,15 +139,16 @@ const ConversationsDashboard = ({
   }, [title]);
 
   React.useEffect(() => {
-    scrollIntoView();
+    scrollToEl.current?.scrollIntoView();
   }, [title, selectedConversationId, messages.length]);
+
+  function setScrollRef(el: any) {
+    scrollToEl.current = el || null;
+    scrollToEl.current?.scrollIntoView();
+  }
 
   function fetchFilteredConversations(params = {}) {
     return fetchConversations({...filter, ...params});
-  }
-
-  function scrollIntoView() {
-    scrollToEl.current?.scrollIntoView();
   }
 
   function handleSelectConversation(conversationId: string | null) {
@@ -356,7 +358,7 @@ const ConversationsDashboard = ({
             currentUser={currentUser}
             conversation={conversation}
             isClosing={isClosingSelected}
-            setScrollRef={scrollToEl}
+            setScrollRef={setScrollRef}
             onSendMessage={handleSendNewMessage}
           />
         ) : null}
@@ -398,19 +400,17 @@ const isValidBucket = (bucket: string): bucket is ConversationBucket => {
 const Wrapper = (props: RouteComponentProps<{bucket: string}>) => {
   const {bucket} = props.match.params;
   const [account, setAccount] = React.useState<Account | null>(null);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>(
     'loading'
   );
   const [error, setErrorMessage] = React.useState<string | null>(null);
+  const {currentUser} = useAuth();
 
   React.useEffect(() => {
     setStatus('loading');
 
-    Promise.all([
-      API.me().then((user) => setCurrentUser(user)),
-      API.fetchAccountInfo().then((account) => setAccount(account)),
-    ])
+    API.fetchAccountInfo()
+      .then((account) => setAccount(account))
       .then(() => setStatus('success'))
       .catch((error) => {
         setStatus('error');

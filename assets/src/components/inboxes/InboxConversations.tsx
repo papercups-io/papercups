@@ -18,6 +18,7 @@ import ConversationHeader from '../conversations/ConversationHeader';
 import {useConversations} from '../conversations/ConversationsProvider';
 import {isUnreadConversation} from '../conversations/support';
 import {useNotifications} from '../conversations/NotificationsProvider';
+import {useAuth} from '../auth/AuthProvider';
 
 const defaultConversationFilter = () => true;
 
@@ -138,15 +139,16 @@ const InboxConversations = ({
   }, [inboxId]);
 
   React.useEffect(() => {
-    scrollIntoView();
+    scrollToEl.current?.scrollIntoView();
   }, [inboxId, selectedConversationId, messages.length]);
+
+  function setScrollRef(el: any) {
+    scrollToEl.current = el || null;
+    scrollToEl.current?.scrollIntoView();
+  }
 
   function fetchFilteredConversations(params = {}) {
     return fetchConversations({...filter, ...params});
-  }
-
-  function scrollIntoView() {
-    scrollToEl.current?.scrollIntoView();
   }
 
   function handleSelectConversation(conversationId: string | null) {
@@ -356,7 +358,7 @@ const InboxConversations = ({
             currentUser={currentUser}
             conversation={conversation}
             isClosing={isClosingSelected}
-            setScrollRef={scrollToEl}
+            setScrollRef={setScrollRef}
             onSendMessage={handleSendNewMessage}
           />
         ) : null}
@@ -368,18 +370,17 @@ const InboxConversations = ({
 const Wrapper = (props: RouteComponentProps<{id: string}>) => {
   const {id: inboxId} = props.match.params;
   const [account, setAccount] = React.useState<Account | null>(null);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [inbox, setSelectedInbox] = React.useState<Inbox | null>(null);
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>(
     'loading'
   );
   const [error, setErrorMessage] = React.useState<string | null>(null);
+  const {currentUser} = useAuth();
 
   React.useEffect(() => {
     setStatus('loading');
 
     Promise.all([
-      API.me().then((user) => setCurrentUser(user)),
       API.fetchAccountInfo().then((account) => setAccount(account)),
       API.fetchInbox(inboxId).then((result) => setSelectedInbox(result)),
     ])

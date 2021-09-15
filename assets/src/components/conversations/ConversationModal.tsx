@@ -2,12 +2,12 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import {Flex} from 'theme-ui';
 import {colors, Button, Modal} from '../common';
-import * as API from '../../api';
 import {useConversations} from './ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
 import {useNotifications} from './NotificationsProvider';
+import {useAuth} from '../auth/AuthProvider';
 
 type Props = {
   visible?: boolean;
@@ -116,7 +116,7 @@ const ConversationModalWrapper = ({
   conversationId: string;
   onClose: () => void;
 }) => {
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  const {currentUser} = useAuth();
   const {
     loading,
     fetchConversationById,
@@ -125,11 +125,7 @@ const ConversationModalWrapper = ({
   const {handleSendMessage} = useNotifications();
 
   React.useEffect(() => {
-    Promise.all([
-      API.me().then((user) => setCurrentUser(user)),
-      fetchConversationById(conversationId),
-    ]);
-
+    fetchConversationById(conversationId);
     // eslint-disable-next-line
   }, [conversationId]);
 
