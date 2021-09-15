@@ -3,6 +3,28 @@ import {Account, Conversation, Message, User} from '../../types';
 
 const {primary, gold, red, green, purple, magenta} = colors;
 
+export const mapConversationsById = (conversations: Array<Conversation>) => {
+  return conversations.reduce((acc, conversation) => {
+    const {id} = conversation;
+
+    return {...acc, [id]: conversation};
+  }, {} as {[id: string]: Conversation});
+};
+
+export const mapMessagesByConversationId = (
+  conversations: Array<Conversation>
+) => {
+  return conversations.reduce((acc, {id, messages = []}) => {
+    return {
+      ...acc,
+      // TODO: move sorting logic to server?
+      [id]: messages.sort(
+        (a, b) => +new Date(a.created_at) - +new Date(b.created_at)
+      ),
+    };
+  }, {} as {[id: string]: Array<Message>});
+};
+
 export const getColorByUuid = (uuid?: string | null) => {
   if (!uuid) {
     return primary;

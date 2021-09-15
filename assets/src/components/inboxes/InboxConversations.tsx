@@ -3,7 +3,7 @@ import {RouteComponentProps} from 'react-router';
 import {Box, Flex} from 'theme-ui';
 
 import * as API from '../../api';
-import {Account, Conversation, Message, User} from '../../types';
+import {Account, Conversation, Inbox, Message, User} from '../../types';
 import {colors, Layout, notification, Result, Sider, Title} from '../common';
 import {
   CONVERSATIONS_DASHBOARD_OFFSET,
@@ -12,12 +12,12 @@ import {
   formatServerError,
   sleep,
 } from '../../utils';
-import ConversationsPreviewList from './ConversationsPreviewList';
-import SelectedConversationContainer from './SelectedConversationContainer';
-import ConversationHeader from './ConversationHeader';
-import {useConversations} from './ConversationsProvider';
-import {isUnreadConversation} from './support';
-import {useNotifications} from './NotificationsProvider';
+import ConversationsPreviewList from '../conversations/ConversationsPreviewList';
+import SelectedConversationContainer from '../conversations/SelectedConversationContainer';
+import ConversationHeader from '../conversations/ConversationHeader';
+import {useConversations} from '../conversations/ConversationsProvider';
+import {isUnreadConversation} from '../conversations/support';
+import {useNotifications} from '../conversations/NotificationsProvider';
 
 const defaultConversationFilter = () => true;
 
@@ -59,20 +59,20 @@ const getNextSelectedConversationId = (
   }
 };
 
-// TODO: DRY up with InboxConversations component
-const ConversationsDashboard = ({
-  title,
+const InboxConversations = ({
+  inbox,
   account,
   currentUser,
   filter = {},
   isValidConversation = defaultConversationFilter,
 }: {
-  title: string;
+  inbox: Inbox;
   account: Account;
   currentUser: User;
   filter: Record<string, any>;
   isValidConversation: (conversation: Conversation) => boolean;
 }) => {
+  const {id: inboxId} = inbox;
   const scrollToEl = React.useRef<any>(null);
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>(
     'loading'
@@ -135,11 +135,11 @@ const ConversationsDashboard = ({
       });
     // FIXME?
     // eslint-disable-next-line
-  }, [title]);
+  }, [inboxId]);
 
   React.useEffect(() => {
     scrollIntoView();
-  }, [title, selectedConversationId, messages.length]);
+  }, [inboxId, selectedConversationId, messages.length]);
 
   function fetchFilteredConversations(params = {}) {
     return fetchConversations({...filter, ...params});
@@ -312,7 +312,7 @@ const ConversationsDashboard = ({
         <Box sx={{borderBottom: '1px solid #f0f0f0'}}>
           <Box px={3} py={3}>
             <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
-              {title}
+              {inbox.name}
             </Title>
           </Box>
         </Box>
@@ -365,40 +365,11 @@ const ConversationsDashboard = ({
   );
 };
 
-type ConversationBucket =
-  | 'all'
-  | 'me'
-  | 'mentions'
-  | 'unread'
-  | 'unassigned'
-  | 'priority'
-  | 'closed';
-
-type BucketMapping = {
-  title: string;
-  filter: Record<string, any>;
-  isValidConversation: (conversation: Conversation) => boolean;
-};
-
-const isValidBucket = (bucket: string): bucket is ConversationBucket => {
-  switch (bucket) {
-    case 'all':
-    case 'me':
-    case 'mentions':
-    case 'unread':
-    case 'unassigned':
-    case 'priority':
-    case 'closed':
-      return true;
-    default:
-      return false;
-  }
-};
-
-const Wrapper = (props: RouteComponentProps<{bucket: string}>) => {
-  const {bucket} = props.match.params;
+const Wrapper = (props: RouteComponentProps<{id: string}>) => {
+  const {id: inboxId} = props.match.params;
   const [account, setAccount] = React.useState<Account | null>(null);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  const [inbox, setSelectedInbox] = React.useState<Inbox | null>(null);
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>(
     'loading'
   );
@@ -410,18 +381,14 @@ const Wrapper = (props: RouteComponentProps<{bucket: string}>) => {
     Promise.all([
       API.me().then((user) => setCurrentUser(user)),
       API.fetchAccountInfo().then((account) => setAccount(account)),
+      API.fetchInbox(inboxId).then((result) => setSelectedInbox(result)),
     ])
       .then(() => setStatus('success'))
       .catch((error) => {
         setStatus('error');
         setErrorMessage(formatServerError(error));
       });
-  }, [bucket]);
-
-  if (!isValidBucket(bucket)) {
-    // TODO: render error or redirect to default
-    return null;
-  }
+  }, [inboxId]);
 
   if (error || status === 'error') {
     // TODO: render better error state?
@@ -443,116 +410,26 @@ const Wrapper = (props: RouteComponentProps<{bucket: string}>) => {
     );
   } else if (status === 'loading') {
     return null;
-  } else if (!account || !currentUser) {
+  } else if (!inbox || !account || !currentUser) {
     return null;
   }
 
-  const getBucketConfig = (bucket: ConversationBucket): BucketMapping => {
-    switch (bucket) {
-      case 'all':
-        return {
-          title: 'All conversations',
-          filter: {status: 'open'},
-          isValidConversation: (conversation) => {
-            const {status, archived_at, closed_at} = conversation;
-
-            return status === 'open' && !archived_at && !closed_at;
-          },
-        };
-      case 'me':
-        return {
-          title: 'Assigned to me',
-          filter: {status: 'open', assignee_id: 'me'},
-          isValidConversation: (conversation) => {
-            const {status, archived_at, closed_at, assignee_id} = conversation;
-
-            return (
-              assignee_id === currentUser.id &&
-              status === 'open' &&
-              !archived_at &&
-              !closed_at
-            );
-          },
-        };
-      case 'mentions':
-        return {
-          title: 'Mentions',
-          filter: {status: 'open', mentioning: 'me'},
-          isValidConversation: (conversation) => {
-            const {
-              status,
-              archived_at,
-              closed_at,
-              mentions = [],
-            } = conversation;
-            const isMentioned = mentions.some((mention) => {
-              return mention.user_id === currentUser.id;
-            });
-
-            return (
-              isMentioned && status === 'open' && !archived_at && !closed_at
-            );
-          },
-        };
-      case 'unread':
-        return {
-          title: 'All unread',
-          filter: {status: 'open', read: false},
-          isValidConversation: (conversation) => {
-            const {status, archived_at, closed_at} = conversation;
-
-            return status === 'open' && !archived_at && !closed_at;
-          },
-        };
-      case 'unassigned':
-        return {
-          title: 'Unassigned',
-          filter: {status: 'open', assignee_id: null},
-          isValidConversation: (conversation) => {
-            const {status, archived_at, closed_at, assignee_id} = conversation;
-
-            return (
-              !assignee_id && status === 'open' && !archived_at && !closed_at
-            );
-          },
-        };
-      case 'priority':
-        return {
-          title: 'Prioritized',
-          filter: {status: 'open', priority: 'priority'},
-          isValidConversation: (conversation) => {
-            const {status, archived_at, closed_at, priority} = conversation;
-
-            return (
-              priority === 'priority' &&
-              status === 'open' &&
-              !archived_at &&
-              !closed_at
-            );
-          },
-        };
-      case 'closed':
-        return {
-          title: 'Closed',
-          filter: {status: 'closed'},
-          isValidConversation: (conversation) => {
-            const {status, archived_at} = conversation;
-
-            return status === 'closed' && !archived_at;
-          },
-        };
-    }
-  };
-
-  const {title, filter, isValidConversation} = getBucketConfig(bucket);
-
   return (
-    <ConversationsDashboard
-      title={title}
+    <InboxConversations
+      inbox={inbox}
       account={account}
       currentUser={currentUser}
-      filter={filter}
-      isValidConversation={isValidConversation}
+      filter={{inbox_id: inboxId, status: 'open'}}
+      isValidConversation={(conversation: Conversation) => {
+        const {status, inbox_id, archived_at, closed_at} = conversation;
+
+        return (
+          inbox_id === inboxId &&
+          status === 'open' &&
+          !archived_at &&
+          !closed_at
+        );
+      }}
     />
   );
 };

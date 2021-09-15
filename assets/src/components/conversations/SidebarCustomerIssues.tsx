@@ -5,36 +5,21 @@ import {Text, Tooltip} from '../common';
 import * as API from '../../api';
 import {Issue} from '../../types';
 import logger from '../../logger';
-import {useSocket} from '../auth/SocketProvider';
 import {IssueStateTag} from '../issues/IssuesTable';
 import {NewIssueModalButton} from '../issues/NewIssueModal';
 import Spinner from '../Spinner';
+import useChannel from './useChannel';
 
 const SidebarCustomerIssues = ({customerId}: {customerId: string}) => {
   const [loading, setLoading] = React.useState(false);
   const [customerIssues, setCustomerIssues] = React.useState<Array<Issue>>([]);
-  const {socket} = useSocket();
 
-  React.useEffect(() => {
-    const channel = socket.channel(`issue:lobby:${customerId}`, {});
-
-    channel.on('issue:created', () => refreshCustomerIssues());
-    channel.on('issue:updated', () => refreshCustomerIssues());
-
-    channel
-      .join()
-      .receive('ok', (res) => {
-        logger.debug('Joined issue channel successfully', res);
-      })
-      .receive('error', (err) => {
-        logger.error('Unable to join', err);
-      });
-
-    return () => {
-      channel.leave();
-    };
-    // eslint-disable-next-line
-  }, [customerId, socket]);
+  useChannel(`issue:lobby:${customerId}`, {
+    handlers: {
+      'issue:created': () => refreshCustomerIssues(),
+      'issue:updated': () => refreshCustomerIssues(),
+    },
+  });
 
   React.useEffect(() => {
     setLoading(true);

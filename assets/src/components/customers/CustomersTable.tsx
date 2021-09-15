@@ -18,6 +18,7 @@ import {
 import {SettingOutlined} from '../icons';
 import {StartConversationWrapper} from '../conversations/StartConversationButton';
 import {ConversationModalRenderer} from '../conversations/ConversationModal';
+import {useNotifications} from '../conversations/NotificationsProvider';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
@@ -96,7 +97,7 @@ const CustomerActionsDropdown = ({customer}: {customer: Customer}) => {
 const CustomersTable = ({
   loading,
   customers,
-  currentlyOnline = {},
+  // currentlyOnline = {},
   shouldIncludeAnonymous,
   action,
   onUpdate,
@@ -104,17 +105,18 @@ const CustomersTable = ({
 }: {
   loading?: boolean;
   customers: Array<Customer>;
-  currentlyOnline?: Record<string, any>;
+  // currentlyOnline?: Record<string, any>;
   shouldIncludeAnonymous?: boolean;
   action?: (customer: Customer) => React.ReactElement;
   pagination?: false | TablePaginationConfig;
   onUpdate?: () => Promise<void>;
 }) => {
-  const isCustomerOnline = (customer: Customer) => {
-    const {id: customerId} = customer;
+  const {isCustomerOnline} = useNotifications();
+  // const isCustomerOnline = (customer: Customer) => {
+  //   const {id: customerId} = customer;
 
-    return currentlyOnline[customerId];
-  };
+  //   return currentlyOnline[customerId];
+  // };
 
   const data = customers
     // Only show customers with email by default
@@ -124,9 +126,9 @@ const CustomersTable = ({
     })
     // TODO: make sorting configurable from the UI
     .sort((a, b) => {
-      if (isCustomerOnline(a)) {
+      if (isCustomerOnline(a.id)) {
         return -1;
-      } else if (isCustomerOnline(b)) {
+      } else if (isCustomerOnline(b.id)) {
         return 1;
       }
 
@@ -186,7 +188,7 @@ const CustomersTable = ({
       render: (value: string, record: Customer) => {
         const {id, pathname, current_url} = record;
         const formatted = dayjs(value).format('ddd, MMM D h:mm A');
-        const isOnline = currentlyOnline[id];
+        const isOnline = isCustomerOnline(id);
 
         if (isOnline) {
           return <Badge status="processing" text="Online now!" />;

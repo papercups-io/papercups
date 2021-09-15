@@ -147,7 +147,10 @@ export type Conversation = {
   account_id: string;
   customer_id: string;
   customer: Customer;
-  created_at?: string;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string | null;
+  archived_at?: string | null;
   last_activity_at?: string;
   date: string;
   preview: string;
@@ -156,6 +159,7 @@ export type Conversation = {
   read?: boolean;
   status?: string;
   assignee_id?: number;
+  inbox_id?: string;
   tags?: Array<Tag>;
   mentions?: Array<any>;
 };
@@ -176,6 +180,19 @@ export type Tag = {
   name: string;
   description?: string;
   color?: string;
+  updated_at: string;
+};
+
+export type Inbox = {
+  id: string;
+  object: 'inbox';
+  name: string;
+  description?: string | null;
+  slug?: string | null;
+  account_id: string;
+  is_primary?: boolean;
+  is_private?: boolean;
+  created_at: string;
   updated_at: string;
 };
 

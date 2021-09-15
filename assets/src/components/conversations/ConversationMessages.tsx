@@ -67,7 +67,7 @@ const ConversationMessages = ({
   hasPreviousConversations?: boolean;
   history?: Array<Conversation>;
   sx?: any;
-  setScrollRef: (el: any) => void;
+  setScrollRef: any; // (el: any) => void;
   isCurrentUserMessage?: (message: Message) => boolean;
   onLoadPreviousConversation?: (conversationId: string) => void;
 }) => {

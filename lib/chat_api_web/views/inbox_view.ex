@@ -16,6 +16,7 @@ defmodule ChatApiWeb.InboxView do
       object: "inbox",
       name: inbox.name,
       description: inbox.description,
+      slug: inbox.slug,
       is_primary: inbox.is_primary,
       is_private: inbox.is_private,
       account_id: inbox.account_id

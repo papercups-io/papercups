@@ -43,6 +43,7 @@ import {
   isWindowHidden,
 } from '../utils';
 import {Account, User} from '../types';
+import * as API from '../api';
 import {useAuth} from './auth/AuthProvider';
 import {SocketProvider, SocketContext} from './auth/SocketProvider';
 import AccountOverview from './settings/AccountOverview';
@@ -50,6 +51,7 @@ import TeamOverview from './settings/TeamOverview';
 import UserProfile from './settings/UserProfile';
 import ChatWidgetSettings from './settings/ChatWidgetSettings';
 import {
+  ConversationsContext,
   ConversationsProvider,
   useConversations,
 } from './conversations/ConversationsProvider';
@@ -89,6 +91,7 @@ import LambdasOverview from './lambdas/LambdasOverview';
 import CannedResponsesOverview from './canned-responses/CannedResponsesOverview';
 import ForwardingAddressSettings from './settings/ForwardingAddressSettings';
 import InboxesDashboard from './inboxes/InboxesDashboard';
+import NotificationsProvider from './conversations/NotificationsProvider';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -236,10 +239,20 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
-  const {account, currentUser, inboxes, getUnreadCount} = useConversations();
+  const {unread} = useConversations();
+  const [account, setAccount] = React.useState<Account | null>(null);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+
+  React.useEffect(() => {
+    // TODO: figure out a better way to handle this
+    Promise.all([
+      API.me().then((user) => setCurrentUser(user)),
+      API.fetchAccountInfo().then((account) => setAccount(account)),
+    ]);
+  }, []);
 
   const [section, key] = getSectionKey(pathname);
-  const totalNumUnread = getUnreadCount('open', inboxes.all.open);
+  const totalNumUnread = unread.conversations.open || 0;
   const shouldDisplayBilling = hasValidStripeKey();
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
@@ -537,6 +550,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/notes" component={NotesOverview} />
           <Route path="/conversations*" component={InboxesDashboard} />
           <Route path="/channels*" component={InboxesDashboard} />
+          <Route path="/inboxes*" component={InboxesDashboard} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
@@ -549,15 +563,28 @@ const Dashboard = (props: RouteComponentProps) => {
 };
 
 const DashboardWrapper = (props: RouteComponentProps) => {
-  const {refresh} = useAuth();
+  const {refresh, currentUser} = useAuth();
 
   return (
     <SocketProvider url={SOCKET_URL} refresh={refresh}>
       <SocketContext.Consumer>
         {({socket}) => {
           return (
-            <ConversationsProvider socket={socket}>
-              <Dashboard {...props} />
+            <ConversationsProvider>
+              <ConversationsContext.Consumer>
+                {({onNewMessage, onNewConversation, onConversationUpdated}) => {
+                  return (
+                    <NotificationsProvider
+                      socket={socket}
+                      onNewMessage={onNewMessage}
+                      onNewConversation={onNewConversation}
+                      onConversationUpdated={onConversationUpdated}
+                    >
+                      <Dashboard {...props} />
+                    </NotificationsProvider>
+                  );
+                }}
+              </ConversationsContext.Consumer>
             </ConversationsProvider>
           );
         }}

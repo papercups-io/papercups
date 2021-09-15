@@ -1,503 +1,340 @@
 import React, {useContext} from 'react';
-import {debounce, throttle} from 'lodash';
-import {Socket} from 'phoenix';
+
 import * as API from '../../api';
-import {notification} from '../common';
-import {Account, Conversation, Message, User} from '../../types';
-import {
-  isWindowHidden,
-  sortConversationMessages,
-  updateQueryParams,
-} from '../../utils';
+import {Conversation, Message} from '../../types';
+import {mapConversationsById, mapMessagesByConversationId} from './support';
 import logger from '../../logger';
-import {
-  PhoenixPresence,
-  PresenceDiff,
-  updatePresenceWithDiff,
-} from '../../presence';
-import {isUnreadConversation} from './support';
-import ConversationNotificationManager from './ConversationNotificationManager';
 
-type InboxName =
-  | 'open'
-  | 'assigned'
-  | 'mentioned'
-  | 'priority'
-  | 'closed'
-  | 'unread'
-  | 'unassigned'
-  | 'chat'
-  | 'email'
-  | 'slack';
+const defaultFilterCallback = () => true;
 
-type Inboxes = {
-  all: {
-    open: string[];
-    assigned: string[];
-    mentioned: string[];
-    priority: string[];
-    closed: string[];
-    unread: string[];
-    unassigned: string[];
+type Unread = {
+  conversations: {
+    open: number;
+    assigned: number;
+    priority: number;
+    unread: number;
+    unassigned: number;
+    closed: number;
+    mentioned: number;
   };
-  bySource: {
-    [key: string]: string[] | undefined;
-  };
-};
-
-type UnreadNotifications = {
-  open: number;
-  assigned: number;
-  mentioned: number;
-  priority: number;
-  unread: number;
-  unassigned: number;
-  closed: number;
-  chat: number;
-  email: number;
-  slack: number;
-};
-
-const getInboxesInitialState = () => {
-  return {
-    all: {
-      open: [],
-      assigned: [],
-      mentioned: [],
-      priority: [],
-      closed: [],
-      unread: [],
-      unassigned: [],
-    },
-    bySource: {},
-  };
-};
-
-const getInitialUnreadState = () => {
-  return {
-    open: 0,
-    assigned: 0,
-    mentioned: 0,
-    priority: 0,
-    unread: 0,
-    unassigned: 0,
-    closed: 0,
-    chat: 0,
-    email: 0,
-    slack: 0,
+  inboxes: {
+    [id: string]: number;
   };
 };
 
 export const ConversationsContext = React.createContext<{
-  loading: boolean;
-  account: Account | null;
-  currentUser: User | null;
-  isNewUser: boolean;
-
-  conversationsById: {[key: string]: any};
-  messagesByConversation: {[key: string]: any};
-  currentlyOnline: {[key: string]: any};
-  inboxes: Inboxes;
-
-  getUnreadCount: (bucket: InboxName, conversationIds: string[]) => number;
-  isCustomerOnline: (customerId: string) => boolean;
-  onSelectConversation: (id: string | null) => any;
-  onUpdateConversation: (id: string, params: any) => Promise<any>;
-  onDeleteConversation: (id: string) => Promise<any>;
-  onSendMessage: (message: Partial<Message>, cb?: () => void) => any;
-
-  onSetConversations: (conversations: Array<Conversation>) => Array<string>;
-
-  fetchAllConversations: () => Promise<Array<string>>;
-  // TODO: should this be different?
-  fetchConversationById: (conversationId: string) => Promise<Array<string>>;
+  loading?: boolean;
+  unread: Unread;
+  getValidConversations: (
+    conversationIds: Array<string>,
+    filter?: (conversation: Conversation) => boolean
+  ) => Array<Conversation>;
+  fetchConversations: (
+    query?: Record<string, any>
+  ) => Promise<API.ConversationsListResponse>;
+  fetchConversationById: (id: string) => Promise<Conversation | null>;
+  updateConversationById: (
+    id: string,
+    updates: Record<any, any>
+  ) => Promise<Conversation | null>;
+  archiveConversationById: (id: string) => Promise<void>;
+  getConversationById: (id: string | null) => Conversation | null;
+  getMessagesByConversationId: (id: string | null) => Array<Message>;
+  onNewMessage: (message: Message) => void;
+  onNewConversation: (conversationId: string) => void;
+  onConversationUpdated: (
+    conversationId: string,
+    updates: Record<string, any>
+  ) => void;
 }>({
-  loading: true,
-  account: null,
-  currentUser: null,
-  isNewUser: false,
-  conversationsById: {},
-  messagesByConversation: {},
-  currentlyOnline: {},
-  inboxes: getInboxesInitialState(),
-
-  getUnreadCount: () => 0,
-
-  isCustomerOnline: () => false,
-  onSelectConversation: () => {},
-  onSendMessage: () => {},
-
-  onSetConversations: () => [],
-
-  onUpdateConversation: () => Promise.resolve(),
-  onDeleteConversation: () => Promise.resolve(),
-
-  fetchAllConversations: () => Promise.resolve([]),
-  fetchConversationById: () => Promise.resolve([]),
+  loading: false,
+  unread: {
+    conversations: {
+      open: 0,
+      assigned: 0,
+      priority: 0,
+      unread: 0,
+      unassigned: 0,
+      closed: 0,
+      mentioned: 0,
+    },
+    inboxes: {},
+  },
+  getValidConversations: () => [],
+  fetchConversations: () =>
+    Promise.resolve({
+      data: [],
+      next: null,
+      previous: null,
+      limit: null,
+      total: null,
+    }),
+  fetchConversationById: () => Promise.resolve(null),
+  updateConversationById: () => Promise.resolve(null),
+  archiveConversationById: () => Promise.resolve(),
+  getConversationById: () => null,
+  getMessagesByConversationId: () => [],
+  onNewMessage: () => {},
+  onNewConversation: () => {},
+  onConversationUpdated: () => {},
 });
 
 export const useConversations = () => useContext(ConversationsContext);
 
-type Props = {socket: Socket} & React.PropsWithChildren<{}>;
+type Props = React.PropsWithChildren<{}>;
 type State = {
   loading: boolean;
-  account: Account | null;
-  currentUser: User | null;
-  isNewUser: boolean;
-  inboxes: Inboxes;
-  unread: UnreadNotifications;
-
-  selectedConversationId: string | null;
-  conversationsById: {[key: string]: Conversation};
-  messagesByConversation: {[key: string]: any};
-  presence: PhoenixPresence;
+  connecting: boolean;
+  conversationIds: Array<string>;
+  conversationsById: {[id: string]: Conversation};
+  messagesByConversationId: {[id: string]: Array<Message>};
+  unread: Unread;
+  pagination: API.PaginationOptions;
 };
 
 export class ConversationsProvider extends React.Component<Props, State> {
-  state: State = {
-    loading: true,
-    account: null,
-    currentUser: null,
-    isNewUser: false,
-    inboxes: getInboxesInitialState(),
-    unread: getInitialUnreadState(),
-    selectedConversationId: null,
-    conversationsById: {},
-    messagesByConversation: {},
-    presence: {},
-  };
+  constructor(props: Props) {
+    super(props);
 
-  notificationManager: ConversationNotificationManager | null = null;
+    this.state = {
+      loading: true,
+      connecting: false,
+
+      conversationIds: [],
+      conversationsById: {},
+      messagesByConversationId: {},
+      unread: {
+        conversations: {
+          open: 0,
+          assigned: 0,
+          priority: 0,
+          unread: 0,
+          unassigned: 0,
+          closed: 0,
+          mentioned: 0,
+        },
+        inboxes: {},
+      },
+      pagination: {
+        previous: null,
+        next: null,
+        limit: undefined,
+        total: undefined,
+      },
+    };
+  }
 
   async componentDidMount() {
-    const [currentUser, account, numTotalMessages] = await Promise.all([
-      API.me(),
-      API.fetchAccountInfo(),
-      API.countMessages().then((r) => r.count),
-    ]);
-    this.setState({
-      currentUser,
-      account,
-      isNewUser: numTotalMessages === 0,
-    });
-    const {id: accountId} = account;
+    await this.fetchConversations({status: 'open'});
 
-    this.notificationManager = new ConversationNotificationManager(
-      this.props.socket,
-      {
-        accountId,
-        onNewMessage: this.handleNewMessage,
-        onNewConversation: this.handleNewConversation,
-        onConversationUpdated: this.debouncedConversationUpdate,
-        onPresenceInit: this.handlePresenceInit,
-        onPresenceDiff: this.handlePresenceDiff,
-      }
-    );
-    this.notificationManager.connect();
-
-    await this.fetchAllConversations();
+    this.setState({loading: false});
   }
 
-  componentDidUpdate(prev: Props) {
-    if (prev.socket !== this.props.socket && this.state.account) {
-      this.notificationManager = new ConversationNotificationManager(
-        this.props.socket,
-        {
-          accountId: this.state.account.id,
-          onNewMessage: this.handleNewMessage,
-          onNewConversation: this.handleNewConversation,
-          onConversationUpdated: this.debouncedConversationUpdate,
-          onPresenceInit: this.handlePresenceInit,
-          onPresenceDiff: this.handlePresenceDiff,
-        }
-      );
-      this.notificationManager.connect();
-    }
-  }
+  // TODO: distinguish between partial updates (i.e. just updating some conversation fields)
+  // versus full update (i.e. complete refresh of conversation/customer/messages data)?
+  updateConversationState = (conversation: Conversation) => {
+    const {id, messages = []} = conversation;
+    const {
+      conversationIds = [],
+      conversationsById = {},
+      messagesByConversationId = {},
+    } = this.state;
+    const cachedConversation = conversationsById[id] || {};
+    const cachedMessages = messagesByConversationId[id] || [];
 
-  componentWillUnmount() {
-    this.notificationManager?.disconnect();
-  }
-
-  handlePresenceInit = (state: PhoenixPresence) => {
-    this.setState({presence: state});
-  };
-
-  handlePresenceDiff = (diff: PresenceDiff) => {
     this.setState({
-      presence: updatePresenceWithDiff(this.state.presence, diff),
-    });
-  };
-
-  isCustomerOnline = (customerId: string) => {
-    if (!customerId) {
-      return false;
-    }
-
-    const {presence = {}} = this.state;
-    const key = `customer:${customerId}`;
-
-    return !!(presence && presence[key]);
-  };
-
-  playNotificationSound = async (volume: number) => {
-    try {
-      const file = '/alert-v2.mp3';
-      const audio = new Audio(file);
-      audio.volume = volume;
-
-      await audio?.play();
-    } catch (err) {
-      logger.error('Failed to play notification sound:', err);
-    }
-  };
-
-  throttledNotificationSound = throttle(
-    (volume = 0.2) => this.playNotificationSound(volume),
-    10 * 1000, // throttle every 10 secs so we don't get spammed with sounds
-    {trailing: false}
-  );
-
-  handleNewMessage = async (message: Message) => {
-    logger.debug('New message!', message);
-
-    const {messagesByConversation} = this.state;
-    const {conversation_id: conversationId} = message;
-    const existingMessages = messagesByConversation[conversationId] || [];
-    const updatedMessagesByConversation = {
-      ...messagesByConversation,
-      [conversationId]: [...existingMessages, message],
-    };
-
-    this.setState(
-      {
-        messagesByConversation: updatedMessagesByConversation,
-      },
-      () =>
-        this.debouncedNewMessagesCallback(message, {
-          isFirstMessage: existingMessages.length === 0,
-        })
-    );
-  };
-
-  debouncedNewMessagesCallback = debounce(
-    (message: Message, {isFirstMessage}: {isFirstMessage: boolean}) => {
-      const {selectedConversationId, conversationsById} = this.state;
-      const {
-        conversation_id: conversationId,
-        customer_id: customerId,
-      } = message;
-
-      if (isWindowHidden(document || window.document)) {
-        // Play a slightly louder sound if this is the first message
-        const volume = isFirstMessage ? 0.2 : 0.1;
-
-        this.throttledNotificationSound(volume);
-      }
-      // TODO: this is a bit hacky... there's probably a better way to
-      // handle listening for changes on conversation records...
-      if (selectedConversationId === conversationId) {
-        // If the new message matches the id of the selected conversation,
-        // mark it as read right away and scroll to the latest message
-        this.handleConversationRead(selectedConversationId);
-      } else {
-        // Otherwise, find the updated conversation and mark it as unread
-        const conversation = conversationsById[conversationId];
-        const shouldDisplayAlert =
-          !!customerId && conversation && conversation.status === 'open';
-
-        this.setState({
-          conversationsById: {
-            ...conversationsById,
-            [conversationId]: {...conversation, read: false},
-          },
-        });
-
-        if (shouldDisplayAlert) {
-          notification.open({
-            message: 'New message',
-            description: (
-              <a href={`/conversations/all?cid=${conversationId}`}>
-                {message.body}
-              </a>
-            ),
-          });
-        }
-
-        this.updateUnreadNotifications();
-      }
-    },
-    1000
-  );
-
-  handleConversationRead = (conversationId: string | null) => {
-    if (!conversationId) {
-      return;
-    }
-
-    this.notificationManager?.markConversationAsRead(conversationId, (res) => {
-      logger.debug('Marked as read!', {res, conversationId});
-
-      const {conversationsById} = this.state;
-      const current = conversationsById[conversationId];
-
-      // Optimistic update
-      this.setState({
-        conversationsById: {
-          ...conversationsById,
-          [conversationId]: {...current, read: true},
-        },
-      });
-
-      return this.updateUnreadNotifications();
-    });
-  };
-
-  handleNewConversation = async (conversationId?: string) => {
-    logger.debug('Listening to new conversation:', conversationId);
-
-    await this.fetchAllConversations();
-    await this.throttledNotificationSound();
-  };
-
-  debouncedConversationUpdate = debounce(
-    (id: string, updates: Partial<Conversation>) => {
-      logger.debug('Handling conversation update:', id, updates);
-
-      const {conversationsById} = this.state;
-      const conversation = conversationsById[id];
-
-      this.setState({
-        conversationsById: {
-          ...conversationsById,
-          [id]: {...conversation, ...updates},
-        },
-      });
-
-      return this.fetchAllConversations();
-    },
-    400
-  );
-
-  handleSelectConversation = (id: string | null) => {
-    this.setState({selectedConversationId: id}, () => {
-      if (!id) {
-        return;
-      }
-
-      const {conversationsById = {}, currentUser} = this.state;
-      const conversation = conversationsById[id];
-
-      if (conversation && isUnreadConversation(conversation, currentUser)) {
-        this.handleConversationRead(id);
-      }
-
-      updateQueryParams({cid: id});
-    });
-  };
-
-  handleSendMessage = (message: Partial<Message>, cb?: () => void) => {
-    this.notificationManager?.sendMessage(message, cb);
-  };
-
-  handleUpdateConversation = async (conversationId: string, params: any) => {
-    const {conversationsById} = this.state;
-    const existing = conversationsById[conversationId];
-
-    // Optimistic update
-    this.setState({
+      conversationIds: [...new Set([...conversationIds, id])],
       conversationsById: {
         ...conversationsById,
-        [conversationId]: {...existing, ...params},
+        [id]: {...cachedConversation, ...conversation},
+      },
+      messagesByConversationId: {
+        ...messagesByConversationId,
+        [id]:
+          messages.length > cachedMessages.length ? messages : cachedMessages,
       },
     });
+  };
 
+  fetchConversations = async (
+    query: Record<string, any> = {status: 'open'}
+  ) => {
     try {
-      await API.updateConversation(conversationId, {
-        conversation: params,
-      });
-    } catch (err) {
-      // Revert state if there's an error
+      const result = await API.fetchConversations(query);
+      const {data: conversations = []} = result;
+      const {
+        conversationIds = [],
+        conversationsById = {},
+        messagesByConversationId = {},
+      } = this.state;
+
       this.setState({
-        conversationsById: conversationsById,
+        conversationIds: [
+          ...new Set([...conversationIds, ...conversations.map((c) => c.id)]),
+        ],
+        conversationsById: {
+          ...conversationsById,
+          ...mapConversationsById(conversations),
+        },
+        messagesByConversationId: {
+          ...messagesByConversationId,
+          ...mapMessagesByConversationId(conversations),
+        },
       });
+
+      await this.updateUnreadNotifications();
+
+      return result;
+    } catch (err) {
+      logger.error('Failed to fetch conversations:', err);
+
+      throw err;
     }
   };
 
-  handleDeleteConversation = async (conversationId: string) => {
-    const {conversationsById} = this.state;
+  fetchConversationById = async (conversationId: string) => {
+    try {
+      const conversation = await API.fetchConversation(conversationId);
+      this.updateConversationState(conversation);
+      await this.updateUnreadNotifications();
 
+      return conversation;
+    } catch (err) {
+      logger.error('Failed to fetch conversation:', conversationId, err);
+
+      throw err;
+    }
+  };
+
+  updateConversationById = async (
+    conversationId: string,
+    updates: Record<any, any>
+  ) => {
+    try {
+      const conversation = await API.updateConversation(conversationId, {
+        conversation: updates,
+      });
+      this.updateConversationState(conversation);
+
+      return conversation;
+    } catch (err) {
+      logger.error(
+        'Failed to update conversation:',
+        conversationId,
+        updates,
+        err
+      );
+
+      throw err;
+    }
+  };
+
+  archiveConversationById = async (conversationId: string) => {
     try {
       await API.archiveConversation(conversationId);
 
-      delete conversationsById[conversationId];
+      delete this.state.conversationsById[conversationId];
     } catch (err) {
-      // Revert state if there's an error
-      this.setState({
-        conversationsById: conversationsById,
-      });
+      logger.error('Failed to archive conversation:', conversationId, err);
+
+      throw err;
     }
   };
 
-  formatConversationState = (conversations: Array<Conversation>) => {
-    const conversationsById = conversations.reduce(
-      (acc: any, conv: Conversation) => {
-        return {...acc, [conv.id]: conv};
-      },
-      {}
-    );
-    const messagesByConversation = conversations.reduce(
-      (acc: any, conv: Conversation) => {
-        const {messages = []} = conv;
+  getConversationById = (
+    conversationId: string | null
+  ): Conversation | null => {
+    if (!conversationId) {
+      return null;
+    }
 
-        return {
-          ...acc,
-          [conv.id]: sortConversationMessages(messages),
-        };
-      },
-      {}
-    );
-    const sortedConversationIds = this.getSortedConversationIds(
-      conversationsById
-    );
+    const conversation = this.state.conversationsById[conversationId];
 
+    if (!conversation) {
+      // TODO: figure out the best way to avoid this... probably needs to be
+      // handled on the server where we handle emitting events via channels)
+      logger.warn(`Missing conversation in cache for id: ${conversationId}`);
+
+      return null;
+    }
+
+    const messages = this.getMessagesByConversationId(conversationId);
+
+    return {...conversation, messages};
+  };
+
+  getValidConversations = (
+    conversationIds: Array<string>,
+    filter: (conversation: Conversation) => boolean = defaultFilterCallback
+  ): Array<Conversation> => {
+    return conversationIds
+      .map((id) => this.getConversationById(id))
+      .filter(
+        (conversation: Conversation | null): conversation is Conversation =>
+          !!conversation
+      )
+      .map((conversation: Conversation) => {
+        const messages = this.getMessagesByConversationId(conversation.id);
+
+        return {...conversation, messages};
+      })
+      .filter(({messages = []}) => messages && messages.length > 0)
+      .sort((a: Conversation, b: Conversation) => {
+        const x = a.last_activity_at || a.updated_at;
+        const y = b.last_activity_at || b.updated_at;
+
+        return +new Date(y) - +new Date(x);
+      })
+      .filter((conversation: Conversation) => filter(conversation));
+  };
+
+  getMessagesByConversationId = (conversationId: string | null) => {
+    if (!conversationId) {
+      return [];
+    }
+
+    const messages = this.state.messagesByConversationId[conversationId];
+
+    if (!messages) {
+      // TODO: figure out the best way to avoid this... probably needs to be
+      // handled on the server where we handle emitting events via channels)
+      logger.warn(
+        `Missing messages in cache for conversation: ${conversationId}`
+      );
+
+      return [];
+    }
+
+    return messages;
+  };
+
+  addMessagesByConversationId = (
+    conversationId: string,
+    messages: Array<Message>
+  ) => {
     return {
-      conversationsById,
-      messagesByConversation,
-      conversationIds: sortedConversationIds,
+      ...this.state.messagesByConversationId,
+      [conversationId]: [
+        ...this.getMessagesByConversationId(conversationId),
+        ...messages,
+      ],
     };
   };
 
-  updateConversationState = (conversations: Array<Conversation>) => {
-    const {conversationsById, messagesByConversation} = this.state;
-    const state = this.formatConversationState(conversations);
-    const updatedConversationsById = {
-      ...conversationsById,
-      ...state.conversationsById,
-    };
-    const updatedMessagesByConversation = {
-      ...messagesByConversation,
-      ...state.messagesByConversation,
-    };
+  handleIncomingMessage = (message: Message) => {
+    const {conversation_id: conversationId} = message;
 
-    const updates = {
-      loading: false,
-      conversationsById: updatedConversationsById,
-      messagesByConversation: updatedMessagesByConversation,
-    };
-    const inboxes = this.getInboxes(updatedConversationsById);
-
-    return this.setState({
-      ...updates,
-      inboxes,
+    this.setState({
+      messagesByConversationId: {
+        ...this.state.messagesByConversationId,
+        [conversationId]: [
+          ...this.getMessagesByConversationId(conversationId),
+          message,
+        ],
+      },
     });
-  };
 
-  handleSetConversations = (conversations: Array<Conversation>) => {
-    const {conversationIds} = this.formatConversationState(conversations);
-    this.updateConversationState(conversations);
-
-    return conversationIds;
+    this.updateUnreadNotifications();
   };
 
   updateUnreadNotifications = async () => {
@@ -506,202 +343,67 @@ export class ConversationsProvider extends React.Component<Props, State> {
     this.setState({unread});
   };
 
-  fetchAllConversations = async (): Promise<Array<string>> => {
-    const {data: conversations} = await API.fetchAllConversations();
-    const conversationIds = this.handleSetConversations(conversations);
-    // TODO: where should we handle this?
-    await this.updateUnreadNotifications();
+  handleNewConversation = async (conversationId: string) => {
+    const conversation = await this.fetchConversationById(conversationId);
 
-    return conversationIds;
-  };
-
-  fetchConversationById = async (
-    conversationId: string
-  ): Promise<Array<string>> => {
-    const conversation = await API.fetchConversation(conversationId);
-    const conversationIds = this.handleSetConversations([conversation]);
-
-    return conversationIds;
-  };
-
-  getSortedConversationIds = (conversationsById: {
-    [key: string]: Conversation;
-  }) => {
-    return Object.keys(conversationsById).sort((x: string, y: string) => {
-      const a = conversationsById[x];
-      const b = conversationsById[y];
-      const left = a.last_activity_at
-        ? +new Date(a.last_activity_at)
-        : -Infinity;
-      const right = b.last_activity_at
-        ? +new Date(b.last_activity_at)
-        : -Infinity;
-
-      return right - left;
+    this.setState({
+      conversationsById: {
+        ...this.state.conversationsById,
+        [conversationId]: conversation,
+      },
     });
+
+    this.updateUnreadNotifications();
   };
 
-  getSortedConversations = (conversationsById: {
-    [key: string]: Conversation;
-  }) => {
-    const conversationsIds = this.getSortedConversationIds(conversationsById);
+  handleConversationUpdated = async (
+    conversationId: string,
+    updates: Record<any, any>
+  ) => {
+    const existing = this.getConversationById(conversationId);
 
-    return conversationsIds.map((id) => conversationsById[id]);
-  };
-
-  getInboxes = (conversationsById: {[key: string]: Conversation}): Inboxes => {
-    const conversations = this.getSortedConversations(conversationsById);
-    const openConversations = this.getOpenConversations(conversations);
-    const assignedConversations = this.getAssignedConversations(
-      openConversations
-    );
-    const mentionedConversations = this.getMentionedConversations(
-      openConversations
-    );
-    const priorityConversations = this.getPriorityConversations(
-      openConversations
-    );
-    const unreadConversations = this.getUnreadConversations(openConversations);
-    const unassignedConversations = this.getUnassignedConversations(
-      openConversations
-    );
-    const closedConservations = this.getClosedConservations(conversations);
-    const inboxesBySource = this.getInboxesBySource(openConversations);
-
-    return {
-      all: {
-        open: this.getConversationIds(openConversations),
-        assigned: this.getConversationIds(assignedConversations),
-        mentioned: this.getConversationIds(mentionedConversations),
-        priority: this.getConversationIds(priorityConversations),
-        closed: this.getConversationIds(closedConservations),
-        unread: this.getConversationIds(unreadConversations),
-        unassigned: this.getConversationIds(unassignedConversations),
-      },
-      bySource: {
-        ...inboxesBySource,
-      },
-    };
-  };
-
-  getInboxesBySource = (conversations: Conversation[]) => {
-    return conversations.reduce((acc, conversation) => {
-      const {id, source} = conversation;
-
-      if (!source) {
-        return acc;
-      }
-
-      return {
-        ...acc,
-        [source]: (acc[source] ?? []).concat(id),
-      };
-    }, {} as {[source: string]: string[]});
-  };
-
-  getConversationIds = (conversations: Conversation[]): string[] => {
-    return conversations.map((c) => c.id);
-  };
-
-  getOpenConversations = (conversations: Conversation[]) => {
-    return conversations.filter(
-      (conversation) => conversation.status === 'open'
-    );
-  };
-
-  getClosedConservations = (conversations: Conversation[]) => {
-    return conversations.filter(
-      (conversation) => conversation.status === 'closed'
-    );
-  };
-
-  getAssignedConversations = (conversations: Conversation[]) => {
-    const {currentUser} = this.state;
-
-    return conversations.filter(
-      (conversation) => conversation.assignee_id === currentUser?.id
-    );
-  };
-
-  getMentionedConversations = (conversations: Conversation[]) => {
-    const {currentUser} = this.state;
-
-    return conversations.filter((conversation) => {
-      const {mentions = []} = conversation;
-
-      return mentions.some((mention) => {
-        return mention.user_id === currentUser?.id;
+    if (existing) {
+      this.setState({
+        conversationsById: {
+          ...this.state.conversationsById,
+          [conversationId]: {
+            ...existing,
+            ...updates,
+          },
+        },
       });
-    });
-  };
+    } else {
+      const conversation = await this.fetchConversationById(conversationId);
 
-  getPriorityConversations = (conversations: Conversation[]) => {
-    return conversations.filter(
-      (conversation) => conversation.priority === 'priority'
-    );
-  };
-
-  getUnreadConversations = (conversations: Conversation[]) => {
-    return conversations.filter((conversation) => !conversation.read);
-  };
-
-  getUnassignedConversations = (conversations: Conversation[]) => {
-    return conversations.filter((conversation) => !conversation.assignee_id);
-  };
-
-  getUnreadCount = (bucket: InboxName, conversationIds: string[]) => {
-    const {conversationsById, currentUser, unread} = this.state;
-
-    if (unread[bucket]) {
-      return unread[bucket];
+      this.setState({
+        conversationsById: {
+          ...this.state.conversationsById,
+          [conversationId]: conversation,
+        },
+      });
     }
 
-    const conversations = conversationIds
-      .map((id) => conversationsById[id])
-      .filter((conversation) => !!conversation);
-
-    return conversations.filter((conversation) =>
-      isUnreadConversation(conversation, currentUser)
-    ).length;
+    this.updateUnreadNotifications();
   };
 
   render() {
-    const {
-      loading,
-      account,
-      currentUser,
-      inboxes,
-      isNewUser,
-      conversationsById,
-      messagesByConversation,
-      presence,
-    } = this.state;
+    const {loading, unread} = this.state;
 
     return (
       <ConversationsContext.Provider
         value={{
           loading,
-          account,
-          currentUser,
-          isNewUser,
-          conversationsById,
-          messagesByConversation,
-          inboxes,
-          currentlyOnline: presence,
-
-          getUnreadCount: this.getUnreadCount,
-
-          isCustomerOnline: this.isCustomerOnline,
-
-          onSelectConversation: this.handleSelectConversation,
-          onUpdateConversation: this.handleUpdateConversation,
-          onDeleteConversation: this.handleDeleteConversation,
-          onSendMessage: this.handleSendMessage,
-
-          onSetConversations: this.handleSetConversations,
-
-          fetchAllConversations: this.fetchAllConversations,
+          unread,
+          getValidConversations: this.getValidConversations,
+          fetchConversations: this.fetchConversations,
           fetchConversationById: this.fetchConversationById,
+          updateConversationById: this.updateConversationById,
+          archiveConversationById: this.archiveConversationById,
+          getConversationById: this.getConversationById,
+          getMessagesByConversationId: this.getMessagesByConversationId,
+          onNewMessage: this.handleIncomingMessage,
+          onNewConversation: this.handleNewConversation,
+          onConversationUpdated: this.handleConversationUpdated,
         }}
       >
         {this.props.children}

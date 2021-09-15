@@ -10,6 +10,7 @@ import {
   OnboardingStatus,
   GoogleAuthParams,
   GoogleIntegrationParams,
+  Inbox,
   Issue,
   Lambda,
   Tag,
@@ -448,6 +449,14 @@ export const fetchConversations = async (
     .query(query)
     .set('Authorization', token)
     .then((res) => res.body);
+};
+
+export const fetchConversationsByInbox = async (
+  inboxId: string,
+  query = {},
+  token = getAccessToken()
+): Promise<ConversationsListResponse> => {
+  return fetchConversations({...query, inbox_id: inboxId}, token);
 };
 
 export const fetchAllConversations = async (
@@ -2001,4 +2010,68 @@ export const sendAdminNotification = async (
     .send(params)
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export const fetchInboxes = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/inboxes`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchInbox = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/inboxes/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createInbox = async (
+  params: Partial<Inbox>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/inboxes`)
+    .send({inbox: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateInbox = async (
+  id: string,
+  updates: Partial<Inbox>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/inboxes/${id}`)
+    .send({inbox: updates})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteInbox = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/inboxes/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
 };

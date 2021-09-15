@@ -6,12 +6,12 @@ import ConversationClosing from './ConversationClosing';
 import {getColorByUuid} from './support';
 import {Conversation} from '../../types';
 import {isScrolledIntoView, sleep} from '../../utils';
-import {useConversations} from './ConversationsProvider';
+import {useNotifications} from './NotificationsProvider';
 
 const ConversationsPreviewList = ({
   loading,
   selectedConversationId,
-  conversationIds = [],
+  conversations = [],
   hasMoreConversations,
   isConversationClosing,
   onSelectConversation,
@@ -19,23 +19,19 @@ const ConversationsPreviewList = ({
 }: {
   loading: boolean;
   selectedConversationId: string | null;
-  conversationIds: Array<string>;
+  conversations: Array<Conversation>;
   hasMoreConversations?: boolean;
   isConversationClosing: (conversationId: string) => boolean;
   onSelectConversation: (conversationId: string | null) => any;
   onLoadMoreConversations: () => Promise<void>;
 }) => {
   const [isFetchingMore, setFetchingMore] = React.useState(false);
-  const {
-    conversationsById,
-    messagesByConversation,
-    isCustomerOnline,
-  } = useConversations();
+  const {isCustomerOnline} = useNotifications();
 
   React.useEffect(() => {
     if (
       selectedConversationId &&
-      conversationIds.indexOf(selectedConversationId) !== -1
+      conversations.map((c) => c.id).indexOf(selectedConversationId) !== -1
     ) {
       // Scrolls to highlighted ConversationItem component if not visible
       const el = document.getElementById(
@@ -52,32 +48,23 @@ const ConversationsPreviewList = ({
   const handleLoadMoreConversations = async () => {
     setFetchingMore(true);
 
+    await sleep(400);
     await onLoadMoreConversations();
-    await sleep(1000);
+    await sleep(400);
 
     setFetchingMore(false);
   };
 
-  const conversations = conversationIds
-    .map((conversationId) => conversationsById[conversationId])
-    .sort((a: Conversation, b: Conversation) => {
-      const left = a.last_activity_at
-        ? +new Date(a.last_activity_at)
-        : -Infinity;
-      const right = b.last_activity_at
-        ? +new Date(b.last_activity_at)
-        : -Infinity;
-
-      return right - left;
-    });
-
   return (
     <Box>
-      {!loading && conversationIds.length ? (
+      {!loading && conversations.length ? (
         conversations.map((conversation) => {
-          const {id: conversationId, customer_id: customerId} = conversation;
-          // TODO: we only care about the most recent message?
-          const messages = messagesByConversation[conversationId];
+          const {
+            id: conversationId,
+            customer_id: customerId,
+            // NB: we only care about the most recent message
+            messages = [],
+          } = conversation;
           const isOnline = isCustomerOnline(customerId);
           const isHighlighted = conversationId === selectedConversationId;
           const isClosing = isConversationClosing(conversationId);
@@ -112,7 +99,7 @@ const ConversationsPreviewList = ({
         </Box>
       )}
 
-      {!loading && conversationIds.length > 0 && !!hasMoreConversations && (
+      {!loading && conversations.length > 0 && !!hasMoreConversations && (
         <Flex p={2} sx={{justifyContent: 'center'}}>
           <Button
             type="text"

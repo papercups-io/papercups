@@ -2,10 +2,12 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import {Flex} from 'theme-ui';
 import {colors, Button, Modal} from '../common';
-import {useConversations} from '../conversations/ConversationsProvider';
+import * as API from '../../api';
+import {useConversations} from './ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
+import {useNotifications} from './NotificationsProvider';
 
 type Props = {
   visible?: boolean;
@@ -114,35 +116,34 @@ const ConversationModalWrapper = ({
   conversationId: string;
   onClose: () => void;
 }) => {
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const {
     loading,
-    currentUser,
-    conversationsById = {},
-    messagesByConversation = {},
     fetchConversationById,
-    onSendMessage,
-    onSelectConversation,
+    getConversationById,
   } = useConversations();
+  const {handleSendMessage} = useNotifications();
 
   React.useEffect(() => {
-    if (visible) {
-      fetchConversationById(conversationId).then(() =>
-        onSelectConversation(conversationId)
-      );
-    }
+    Promise.all([
+      API.me().then((user) => setCurrentUser(user)),
+      fetchConversationById(conversationId),
+    ]);
+
     // eslint-disable-next-line
-  }, [visible, conversationId]);
+  }, [conversationId]);
 
   if (loading) {
     return null;
   }
 
-  const conversation = conversationsById[conversationId] || null;
-  const messages = messagesByConversation[conversationId] || null;
+  const conversation = getConversationById(conversationId);
 
-  if (!conversation || !messages) {
+  if (!conversation) {
     return null;
   }
+
+  const {messages = []} = conversation;
 
   return (
     <ConversationModal
@@ -150,7 +151,7 @@ const ConversationModalWrapper = ({
       conversation={conversation}
       messages={messages}
       currentUser={currentUser}
-      onSendMessage={onSendMessage}
+      onSendMessage={handleSendMessage}
       onClose={onClose}
     />
   );

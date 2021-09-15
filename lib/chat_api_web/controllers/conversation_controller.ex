@@ -2,7 +2,7 @@ defmodule ChatApiWeb.ConversationController do
   use ChatApiWeb, :controller
   use PhoenixSwagger
 
-  alias ChatApi.{Conversations, Messages}
+  alias ChatApi.{Conversations, Inboxes, Messages}
   alias ChatApi.Conversations.{Conversation, Helpers}
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -89,67 +89,69 @@ defmodule ChatApiWeb.ConversationController do
   @spec unread(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def unread(conn, _params) do
     with %{id: user_id, account_id: account_id} <- conn.assigns.current_user do
+      inboxes = Inboxes.list_inboxes(account_id)
+
+      unread_by_inbox =
+        Map.new(inboxes, fn inbox ->
+          {inbox.id,
+           Conversations.count_conversations_where(account_id, %{
+             "status" => "open",
+             "read" => false,
+             "inbox_id" => inbox.id
+           })}
+        end)
+
+      unread_conversations = %{
+        open:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false
+          }),
+        assigned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false,
+            "assignee_id" => user_id
+          }),
+        priority:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false,
+            "priority" => "priority"
+          }),
+        unread:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false
+          }),
+        unassigned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "assignee_id" => nil,
+            "read" => false
+          }),
+        closed:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "closed",
+            "read" => false
+          }),
+        mentioned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "has_seen_mention" => false,
+            "mentioning" => user_id
+          })
+      }
+
       json(conn, %{
-        data: %{
-          open:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false
-            }),
-          assigned:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false,
-              "assignee_id" => user_id
-            }),
-          priority:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false,
-              "priority" => "priority"
-            }),
-          unread:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false
-            }),
-          unassigned:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "assignee_id" => nil,
-              "read" => false
-            }),
-          closed:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "closed",
-              "read" => false
-            }),
-          mentioned:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "has_seen_mention" => false,
-              "mentioning" => user_id
-            }),
-          # By channel
-          chat:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "source" => "chat",
-              "read" => false
-            }),
-          slack:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "source" => "slack",
-              "read" => false
-            }),
-          email:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "source" => "email",
-              "read" => false
-            })
-        }
+        data:
+          %{
+            conversations: unread_conversations,
+            inboxes: unread_by_inbox
+          }
+          # TODO: deprecate
+          |> Map.merge(unread_conversations)
+          |> Map.merge(unread_by_inbox)
       })
     end
   end
