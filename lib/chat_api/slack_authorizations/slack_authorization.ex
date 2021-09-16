@@ -25,6 +25,8 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
           # Relations
           account_id: any(),
           account: any(),
+          inbox_id: any(),
+          inbox: any(),
           # Timestamps
           inserted_at: any(),
           updated_at: any()
@@ -61,6 +63,7 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
     slack_authorization
     |> cast(attrs, [
       :account_id,
+      :inbox_id,
       :type,
       :access_token,
       :app_id,

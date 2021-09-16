@@ -19,6 +19,7 @@ import {useConversations} from '../conversations/ConversationsProvider';
 import {isUnreadConversation} from '../conversations/support';
 import {useNotifications} from '../conversations/NotificationsProvider';
 import {useAuth} from '../auth/AuthProvider';
+import {ConversationsDashboard} from '../conversations/ConversationsDashboard';
 
 const defaultConversationFilter = () => true;
 
@@ -60,7 +61,7 @@ const getNextSelectedConversationId = (
   }
 };
 
-const InboxConversations = ({
+export const InboxConversations = ({
   inbox,
   account,
   currentUser,
@@ -103,10 +104,7 @@ const InboxConversations = ({
 
   const {users = []} = account;
   // TODO: is there a more efficient way to do this?
-  const conversations = getValidConversations(
-    conversationIds,
-    isValidConversation
-  );
+  const conversations = getValidConversations(isValidConversation);
   const hasMoreConversations =
     !!pagination.next &&
     !!pagination.total &&
@@ -124,7 +122,8 @@ const InboxConversations = ({
         const {data: conversations, ...pagination} = result;
         const conversationIds = conversations.map((c) => c.id);
         const [first] = conversationIds;
-
+        // TODO: should we handle conversation IDs and pagination options here,
+        // or in the ConversationsProvider? (Might need to keep pagination here)
         setConversationIds(conversationIds);
         setPaginationOptions(pagination);
         handleSelectConversation(first || null);
@@ -416,8 +415,8 @@ const Wrapper = (props: RouteComponentProps<{id: string}>) => {
   }
 
   return (
-    <InboxConversations
-      inbox={inbox}
+    <ConversationsDashboard
+      title={inbox.name}
       account={account}
       currentUser={currentUser}
       filter={{inbox_id: inboxId, status: 'open'}}

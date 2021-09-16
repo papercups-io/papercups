@@ -41,7 +41,8 @@ defmodule ChatApi.ForwardingAddresses.ForwardingAddress do
       :source_email_address,
       :state,
       :description,
-      :account_id
+      :account_id,
+      :inbox_id
     ])
     |> validate_required([
       :forwarding_email_address,

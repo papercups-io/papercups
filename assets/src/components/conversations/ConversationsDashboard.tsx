@@ -10,13 +10,14 @@ import {
   CONVERSATIONS_DASHBOARD_SIDER_OFFSET,
   CONVERSATIONS_DASHBOARD_SIDER_WIDTH,
   formatServerError,
+  isWindowHidden,
   sleep,
 } from '../../utils';
 import ConversationsPreviewList from './ConversationsPreviewList';
 import SelectedConversationContainer from './SelectedConversationContainer';
 import ConversationHeader from './ConversationHeader';
 import {useConversations} from './ConversationsProvider';
-import {isUnreadConversation} from './support';
+import {isUnreadConversation, throttledNotificationSound} from './support';
 import {useNotifications} from './NotificationsProvider';
 import {useAuth} from '../auth/AuthProvider';
 
@@ -61,7 +62,7 @@ const getNextSelectedConversationId = (
 };
 
 // TODO: DRY up with InboxConversations component
-const ConversationsDashboard = ({
+export const ConversationsDashboard = ({
   title,
   account,
   currentUser,
@@ -79,6 +80,7 @@ const ConversationsDashboard = ({
     'loading'
   );
   const [error, setErrorMessage] = React.useState<string | null>(null);
+  // TODO: maybe we don't even need to track these here?
   const [conversationIds, setConversationIds] = React.useState<Array<string>>(
     []
   );
@@ -99,14 +101,60 @@ const ConversationsDashboard = ({
     archiveConversationById,
   } = useConversations();
 
-  const {handleSendMessage, handleConversationSeen} = useNotifications();
+  const {
+    channel,
+    handleSendMessage,
+    handleConversationSeen,
+    onNewMessage,
+    onNewConversation,
+  } = useNotifications();
+
+  // TODO: are these necessary? Still unclear on React.useCallback usage
+  const onMessageCreated = React.useCallback(onNewMessage, [
+    selectedConversationId,
+  ]);
+  const onConversationCreated = React.useCallback(onNewConversation, []);
+
+  React.useEffect(() => {
+    if (!channel) {
+      return;
+    }
+
+    const subscriptions = [
+      onMessageCreated(handleNewMessage),
+      onConversationCreated(handleNewConversation),
+    ];
+
+    return () => {
+      subscriptions.forEach((unsubscribe) => unsubscribe());
+    };
+    // eslint-disable-next-line
+  }, [
+    channel,
+    selectedConversationId,
+    onMessageCreated,
+    onConversationCreated,
+  ]);
+
+  function handleNewMessage(message: Message) {
+    const {conversation_id: conversationId} = message;
+
+    if (isWindowHidden(document || window.document)) {
+      console.log('Playing notification sound!', message);
+      throttledNotificationSound();
+    } else if (selectedConversationId === conversationId) {
+      console.log('Marking as seen!', message);
+      handleConversationSeen(conversationId);
+    }
+  }
+
+  function handleNewConversation(conversationId: string) {
+    // TODO: is there anything we need to do on new conversation events?
+  }
 
   const {users = []} = account;
   // TODO: is there a more efficient way to do this?
-  const conversations = getValidConversations(
-    conversationIds,
-    isValidConversation
-  );
+  const conversations = getValidConversations(isValidConversation);
   const hasMoreConversations =
     !!pagination.next &&
     !!pagination.total &&
@@ -124,7 +172,8 @@ const ConversationsDashboard = ({
         const {data: conversations, ...pagination} = result;
         const conversationIds = conversations.map((c) => c.id);
         const [first] = conversationIds;
-
+        // TODO: should we handle conversation IDs and pagination options here,
+        // or in the ConversationsProvider? (Might need to keep pagination here)
         setConversationIds(conversationIds);
         setPaginationOptions(pagination);
         handleSelectConversation(first || null);
@@ -134,6 +183,7 @@ const ConversationsDashboard = ({
         setStatus('error');
         setErrorMessage(formatServerError(error));
       });
+
     // FIXME?
     // eslint-disable-next-line
   }, [title]);

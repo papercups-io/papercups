@@ -89,6 +89,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
       :new_messages_notification_text,
       :base_url,
       :account_id,
+      :inbox_id,
       :host,
       :pathname,
       :last_seen_at,

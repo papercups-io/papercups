@@ -31,6 +31,22 @@ defmodule ChatApi.Inboxes do
   @spec get_inbox!(binary()) :: Inbox.t()
   def get_inbox!(id), do: Repo.get!(Inbox, id)
 
+  @spec get_account_primary_inbox(binary()) :: Inbox.t() | nil
+  def get_account_primary_inbox(account_id) do
+    Inbox
+    |> where(account_id: ^account_id)
+    |> where(is_primary: true)
+    |> Repo.one()
+  end
+
+  @spec get_account_primary_inbox_id(binary()) :: binary() | nil
+  def get_account_primary_inbox_id(account_id) do
+    case get_account_primary_inbox(account_id) do
+      %Inbox{id: inbox_id} -> inbox_id
+      _ -> nil
+    end
+  end
+
   @spec create_inbox(map()) ::
           {:ok, Inbox.t()} | {:error, Ecto.Changeset.t()}
   def create_inbox(attrs \\ %{}) do

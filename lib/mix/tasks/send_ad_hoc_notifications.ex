@@ -7,6 +7,7 @@ defmodule Mix.Tasks.SendAdHocNotifications do
     Accounts,
     Conversations,
     Customers,
+    Inboxes,
     Messages,
     Repo
   }
@@ -214,7 +215,11 @@ defmodule Mix.Tasks.SendAdHocNotifications do
          :ok <- validate(text, account_id: account_id, customer_id: customer.id),
          :ok <- Logger.info("Sending to #{company_name}: #{text}"),
          {:ok, conversation} <-
-           Conversations.create_conversation(%{account_id: account_id, customer_id: customer.id}),
+           Conversations.create_conversation(%{
+             account_id: account_id,
+             customer_id: customer.id,
+             inbox_id: Inboxes.get_account_primary_inbox_id(account_id)
+           }),
          {:ok, message} <-
            Messages.create_message(%{
              source: "api",

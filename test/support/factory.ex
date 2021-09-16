@@ -53,6 +53,7 @@ defmodule ChatApi.Factory do
     %ChatApi.Conversations.Conversation{
       account: build(:account),
       customer: build(:customer),
+      inbox: build(:inbox),
       status: "open",
       source: "chat"
     }

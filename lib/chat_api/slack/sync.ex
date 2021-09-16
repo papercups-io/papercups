@@ -98,6 +98,7 @@ defmodule ChatApi.Slack.Sync do
         syncable_message_items,
         %SlackAuthorization{
           account_id: account_id,
+          inbox_id: inbox_id,
           team_id: slack_team_id
         } = authorization,
         %{
@@ -117,6 +118,7 @@ defmodule ChatApi.Slack.Sync do
          {:ok, conversation} <-
            Conversations.create_conversation(%{
              account_id: account_id,
+             inbox_id: inbox_id,
              customer_id: customer.id,
              source: "slack"
            }),

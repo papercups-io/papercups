@@ -62,7 +62,8 @@ defmodule ChatApi.Google.GoogleAuthorization do
       :metadata,
       :settings,
       :user_id,
-      :account_id
+      :account_id,
+      :inbox_id
     ])
     |> validate_required([:client, :refresh_token, :user_id, :account_id])
     |> validate_inclusion(:type, ["personal", "support", "sheets"])

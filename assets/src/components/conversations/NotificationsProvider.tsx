@@ -19,12 +19,21 @@ export const NotificationsContext = React.createContext<{
     conversationId: string,
     onSuccess?: (result: any) => void
   ) => void;
+  // Listeners
+  onNewMessage: (cb: (message: Message) => void) => () => void;
+  onNewConversation: (cb: (id: string) => void) => () => void;
+  onConversationUpdated: (
+    cb: (id: string, updates: Partial<Conversation>) => void
+  ) => () => void;
 }>({
   channel: null,
   presence: null,
   isCustomerOnline: () => false,
   handleSendMessage: () => {},
   handleConversationSeen: () => {},
+  onNewMessage: () => () => {},
+  onNewConversation: () => () => {},
+  onConversationUpdated: () => () => {},
 });
 
 export const useNotifications = () => useContext(NotificationsContext);
@@ -100,25 +109,67 @@ export class NotificationsProvider extends React.Component<Props, State> {
     this.channel?.leave();
   };
 
+  onNewMessage = (cb: (payload: Message) => void) => {
+    this.channel?.on('shout', (payload) => cb(payload));
+
+    // Reset defaults
+    return () => {
+      const {onNewMessage = noop} = this.props;
+
+      this.channel?.off('shout');
+      this.channel?.on('shout', (payload) => onNewMessage(payload));
+    };
+  };
+
+  onNewConversation = (cb: (conversationId: string) => void) => {
+    this.channel?.on('conversation:created', ({id: conversationId}) =>
+      cb(conversationId)
+    );
+
+    // Reset defaults
+    return () => {
+      const {onNewConversation = noop} = this.props;
+
+      this.channel?.off('conversation:created');
+      this.channel?.on('conversation:created', ({id: conversationId}) =>
+        onNewConversation(conversationId)
+      );
+    };
+  };
+
+  onConversationUpdated = (
+    cb: (conversationId: string, updates: Partial<Conversation>) => void
+  ) => {
+    this.channel?.on(
+      'conversation:updated',
+      ({id: conversationId, updates = {}}) => cb(conversationId, updates)
+    );
+
+    // Reset defaults
+    return () => {
+      const {onConversationUpdated = noop} = this.props;
+
+      this.channel?.off('conversation:updated');
+      this.channel?.on('conversation:updated', ({id, updates}) =>
+        onConversationUpdated(id, updates)
+      );
+    };
+  };
+
   handlePresenceInit = (presence: PhoenixPresence) => {
-    // const {onPresenceInit = noop} = this.props;
     this.setState({presence});
-    // onPresenceInit(presence);
   };
 
   handlePresenceDiff = (diff: PresenceDiff) => {
-    // const {onPresenceDiff = noop} = this.props;
     const {presence} = this.state;
 
     if (!presence) {
-      // return onPresenceDiff(diff);
       return null;
     }
 
     const updated = updatePresenceWithDiff(presence, diff);
 
     this.setState({presence: updated});
-    // onPresenceDiff(diff);
   };
 
   isCustomerOnline = (customerId: string) => {
@@ -177,6 +228,10 @@ export class NotificationsProvider extends React.Component<Props, State> {
           isCustomerOnline: this.isCustomerOnline,
           handleSendMessage: this.handleSendMessage,
           handleConversationSeen: this.handleConversationSeen,
+          // listeners
+          onNewMessage: this.onNewMessage,
+          onNewConversation: this.onNewConversation,
+          onConversationUpdated: this.onConversationUpdated,
         }}
       >
         {this.props.children}

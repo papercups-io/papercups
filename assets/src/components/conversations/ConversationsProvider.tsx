@@ -26,7 +26,6 @@ export const ConversationsContext = React.createContext<{
   loading?: boolean;
   unread: Unread;
   getValidConversations: (
-    conversationIds: Array<string>,
     filter?: (conversation: Conversation) => boolean
   ) => Array<Conversation>;
   fetchConversations: (
@@ -264,10 +263,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   getValidConversations = (
-    conversationIds: Array<string>,
     filter: (conversation: Conversation) => boolean = defaultFilterCallback
   ): Array<Conversation> => {
-    return conversationIds
+    return this.state.conversationIds
       .map((id) => this.getConversationById(id))
       .filter(
         (conversation: Conversation | null): conversation is Conversation =>
@@ -321,7 +319,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
     };
   };
 
-  handleIncomingMessage = (message: Message) => {
+  handleNewMessage = (message: Message) => {
     const {conversation_id: conversationId} = message;
 
     this.setState({
@@ -401,7 +399,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
           archiveConversationById: this.archiveConversationById,
           getConversationById: this.getConversationById,
           getMessagesByConversationId: this.getMessagesByConversationId,
-          onNewMessage: this.handleIncomingMessage,
+          onNewMessage: this.handleNewMessage,
           onNewConversation: this.handleNewConversation,
           onConversationUpdated: this.handleConversationUpdated,
         }}

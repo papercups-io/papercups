@@ -235,6 +235,7 @@ defmodule ChatApiWeb.ConversationController do
     with {:ok, %Conversation{} = conversation} <-
            params
            |> Map.merge(%{"account_id" => account_id})
+           |> maybe_set_default_inbox(account_id)
            |> Conversations.create_conversation(),
          :ok <- maybe_create_message(conn, conversation, params) do
       conversation
@@ -252,7 +253,7 @@ defmodule ChatApiWeb.ConversationController do
   def create(conn, %{"conversation" => conversation_params}) do
     # TODO: add support for creating a conversation with an initial message here as well?
     with {:ok, %Conversation{} = conversation} <-
-           Conversations.create_conversation(conversation_params) do
+           conversation_params |> maybe_set_default_inbox() |> Conversations.create_conversation() do
       conversation
       |> Conversations.Notification.broadcast_new_conversation_to_admin!()
       |> Conversations.Notification.broadcast_new_conversation_to_customer!()
@@ -350,6 +351,30 @@ defmodule ChatApiWeb.ConversationController do
       json(conn, %{data: %{ok: true}})
     end
   end
+
+  @spec maybe_set_default_inbox(map(), binary()) :: map()
+  defp maybe_set_default_inbox(params, account_id) do
+    case params do
+      %{"inbox_id" => inbox_id} when is_binary(inbox_id) ->
+        params
+
+      _ ->
+        Map.merge(params, %{"inbox_id" => Inboxes.get_account_primary_inbox_id(account_id)})
+    end
+  end
+
+  @spec maybe_set_default_inbox(map()) :: map()
+  defp maybe_set_default_inbox(%{"account_id" => account_id} = params) do
+    case params do
+      %{"inbox_id" => inbox_id} when is_binary(inbox_id) ->
+        params
+
+      _ ->
+        Map.merge(params, %{"inbox_id" => Inboxes.get_account_primary_inbox_id(account_id)})
+    end
+  end
+
+  defp maybe_set_default_inbox(params), do: params
 
   @spec maybe_create_message(Plug.Conn.t(), Conversation.t(), map()) :: any()
   defp maybe_create_message(

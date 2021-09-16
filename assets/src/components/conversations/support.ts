@@ -1,5 +1,7 @@
 import {colors} from '../common';
 import {Account, Conversation, Message, User} from '../../types';
+import logger from '../../logger';
+import {throttle} from 'lodash';
 
 const {primary, gold, red, green, purple, magenta} = colors;
 
@@ -100,3 +102,21 @@ export const getSenderProfilePhoto = (
     return null;
   }
 };
+
+export const playNotificationSound = async (volume: number) => {
+  try {
+    const file = '/alert-v2.mp3';
+    const audio = new Audio(file);
+    audio.volume = volume;
+
+    await audio?.play();
+  } catch (err) {
+    logger.error('Failed to play notification sound:', err);
+  }
+};
+
+export const throttledNotificationSound = throttle(
+  (volume = 0.2) => playNotificationSound(volume),
+  10 * 1000, // throttle every 10 secs so we don't get spammed with sounds
+  {trailing: false}
+);

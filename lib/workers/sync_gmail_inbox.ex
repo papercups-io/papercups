@@ -158,6 +158,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
         %Gmail.GmailThread{thread_id: gmail_thread_id, messages: [_ | _] = messages} = _thread,
         %GoogleAuthorization{
           account_id: account_id,
+          inbox_id: inbox_id,
           user_id: authorization_user_id
         } = authorization
       ) do
@@ -183,6 +184,7 @@ defmodule ChatApi.Workers.SyncGmailInbox do
     {:ok, conversation} =
       Conversations.create_conversation(%{
         account_id: account_id,
+        inbox_id: inbox_id,
         customer_id: customer.id,
         assignee_id: assignee_id,
         subject: initial_message.subject,

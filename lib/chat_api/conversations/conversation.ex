@@ -80,6 +80,7 @@ defmodule ChatApi.Conversations.Conversation do
       :read,
       :assignee_id,
       :account_id,
+      :inbox_id,
       :customer_id,
       :archived_at,
       :first_replied_at,
@@ -92,6 +93,7 @@ defmodule ChatApi.Conversations.Conversation do
     |> validate_inclusion(:source, ["chat", "slack", "email", "sms", "api", "sandbox"])
     |> put_closed_and_last_activity_at()
     |> foreign_key_constraint(:account_id)
+    |> foreign_key_constraint(:inbox_id)
     |> foreign_key_constraint(:customer_id)
   end
 

@@ -74,7 +74,8 @@ defmodule ChatApi.Mattermost.MattermostAuthorization do
       :metadata,
       :settings,
       :user_id,
-      :account_id
+      :account_id,
+      :inbox_id
     ])
     |> validate_required([:access_token, :user_id, :account_id])
   end

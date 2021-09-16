@@ -384,6 +384,7 @@ defmodule ChatApi.Slack.Event do
         } = event,
         %SlackAuthorization{
           account_id: account_id,
+          inbox_id: inbox_id,
           team_id: slack_team_id
         } = authorization
       ) do
@@ -397,6 +398,7 @@ defmodule ChatApi.Slack.Event do
          {:ok, conversation} <-
            Conversations.create_conversation(%{
              account_id: account_id,
+             inbox_id: inbox_id,
              customer_id: customer.id,
              source: "slack"
            }),
