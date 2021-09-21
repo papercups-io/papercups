@@ -252,7 +252,9 @@ export class ConversationsProvider extends React.Component<Props, State> {
     if (!conversation) {
       // TODO: figure out the best way to avoid this... probably needs to be
       // handled on the server where we handle emitting events via channels)
-      logger.warn(`Missing conversation in cache for id: ${conversationId}`);
+      logger.debug(
+        `[Warning] Missing conversation in cache for id: ${conversationId}`
+      );
 
       return null;
     }
@@ -296,8 +298,8 @@ export class ConversationsProvider extends React.Component<Props, State> {
     if (!messages) {
       // TODO: figure out the best way to avoid this... probably needs to be
       // handled on the server where we handle emitting events via channels)
-      logger.warn(
-        `Missing messages in cache for conversation: ${conversationId}`
+      logger.debug(
+        `[Warning] Missing messages in cache for conversation: ${conversationId}`
       );
 
       return [];

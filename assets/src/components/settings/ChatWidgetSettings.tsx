@@ -68,11 +68,11 @@ class ChatWidgetSettings extends React.Component<Props, State> {
     const {inbox_id: inboxId} = this.props.match.params;
     const currentUser = await API.me();
     const account = await API.fetchAccountInfo();
-    const {
-      id: accountId,
-      company_name: company,
-      widget_settings: widgetSettings,
-    } = account;
+    const {id: accountId, company_name: company} = account;
+    const widgetSettings = await API.fetchWidgetSettings({
+      account_id: accountId,
+      inbox_id: inboxId,
+    });
 
     if (inboxId) {
       const inbox = await API.fetchInbox(inboxId);
@@ -280,7 +280,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
     }
 
     const customer = this.getUserMetadata();
-    const {inbox_id: inboxId = null} = this.props.match.params;
+    const {inbox_id: inboxId} = this.props.match.params;
 
     return (
       <Box px={5} py={4} sx={{maxWidth: 720}}>
@@ -476,9 +476,9 @@ class ChatWidgetSettings extends React.Component<Props, State> {
           </Box>
 
           <ChatWidget
-            // inbox={inboxId}
-            // key={accountId}
             accountId={accountId}
+            token={accountId}
+            inbox={inboxId}
             title={title || 'Welcome!'}
             subtitle={subtitle}
             primaryColor={color}
@@ -551,7 +551,7 @@ enum Languages {
 
 type CodeSnippetProps = {
   accountId: string | null;
-  inboxId: string | null;
+  inboxId?: string;
   title: string;
   subtitle: string;
   color: string;
@@ -601,20 +601,26 @@ const CodeSnippet: FunctionComponent<CodeSnippetProps> = ({
 <script>
 window.Papercups = {
   config: {
-    token: "${accountId}",
-    inbox: "${inboxId}",
-    title: "${title}",
-    subtitle: "${subtitle}",
-    primaryColor: "${color}",
-    greeting: "${greeting || ''}",
-    awayMessage: "${awayMessage || ''}",
-    newMessagePlaceholder: "${newMessagePlaceholder || ''}",
-    showAgentAvailability: ${showAgentAvailability},
-    agentAvailableText: "${agentAvailableText}",
-    agentUnavailableText: "${agentUnavailableText}",
-    requireEmailUpfront: ${requireEmailUpfront},
-    iconVariant: "${iconVariant}",
-    baseUrl: "${BASE_URL}",
+    ${[
+      `token: "${accountId}"`,
+      inboxId && `inbox: "${inboxId}"`,
+      `title: "${title}"`,
+      `subtitle: "${subtitle}"`,
+      `primaryColor: "${color}"`,
+      greeting && `greeting: "${greeting || ''}"`,
+      awayMessage && `awayMessage: "${awayMessage || ''}"`,
+      newMessagePlaceholder &&
+        `newMessagePlaceholder: "${newMessagePlaceholder || ''}"`,
+      `showAgentAvailability: ${showAgentAvailability}`,
+      agentAvailableText && `agentAvailableText: "${agentAvailableText || ''}"`,
+      agentUnavailableText &&
+        `agentUnavailableText: "${agentUnavailableText || ''}"`,
+      `requireEmailUpfront: ${requireEmailUpfront}`,
+      `iconVariant: "${iconVariant}"`,
+      `baseUrl: "${BASE_URL}"`,
+    ]
+      .filter(Boolean)
+      .join(',\n    ')}
     // Optionally include data about your customer here to identify them
     // customer: {
     //   name: __CUSTOMER__.name,
@@ -676,20 +682,26 @@ const ExamplePage = () => {
         if you would like it to render on every page
       */}
       <ChatWidget
-        token="${accountId}"
-        inbox="${inboxId}"
-        title="${title}"
-        subtitle="${subtitle}"
-        primaryColor="${color}"
-        greeting="${greeting || ''}"
-        awayMessage="${awayMessage || ''}"
-        newMessagePlaceholder="${newMessagePlaceholder}"
-        showAgentAvailability={${showAgentAvailability}}
-        agentAvailableText="${agentAvailableText}"
-        agentUnavailableText="${agentUnavailableText}"
-        requireEmailUpfront={${requireEmailUpfront}}
-        iconVariant="${iconVariant}"
-        baseUrl="${BASE_URL}"
+        ${[
+          `token="${accountId}"`,
+          inboxId && `inbox="${inboxId}"`,
+          `title="${title}"`,
+          `subtitle="${subtitle}"`,
+          `primaryColor="${color}"`,
+          greeting && `greeting="${greeting || ''}"`,
+          awayMessage && `awayMessage="${awayMessage || ''}"`,
+          newMessagePlaceholder &&
+            `newMessagePlaceholder="${newMessagePlaceholder || ''}"`,
+          `showAgentAvailability={${showAgentAvailability}}`,
+          agentAvailableText && `agentAvailableText="${agentAvailableText}"`,
+          agentUnavailableText &&
+            `agentUnavailableText="${agentUnavailableText}"`,
+          `requireEmailUpfront={${requireEmailUpfront}}`,
+          `iconVariant="${iconVariant}"`,
+          `baseUrl="${BASE_URL}"`,
+        ]
+          .filter(Boolean)
+          .join('\n        ')}
         // Optionally include data about your customer here to identify them
         // customer={{
         //   name: __CUSTOMER__.name,

@@ -51,7 +51,7 @@ defmodule ChatApi.Accounts.Account do
     has_many(:conversations, Conversation)
     has_many(:messages, Message)
     has_many(:users, User)
-    has_one(:widget_settings, WidgetSetting)
+    has_many(:widget_settings, WidgetSetting)
     has_many(:canned_responses, CannedResponse)
 
     embeds_one(:settings, Settings, on_replace: :delete)

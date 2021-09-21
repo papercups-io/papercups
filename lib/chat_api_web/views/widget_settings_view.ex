@@ -40,6 +40,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
 
   def render("expanded.json", %{widget_settings: widget_settings}) do
     %{
+      id: widget_settings.id,
       object: "widget_settings",
       created_at: widget_settings.inserted_at,
       updated_at: widget_settings.updated_at,

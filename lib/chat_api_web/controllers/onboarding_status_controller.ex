@@ -72,8 +72,17 @@ defmodule ChatApiWeb.OnboardingStatusController do
   end
 
   defp is_chat_widget_installed?(account) do
-    host = account.widget_settings && account.widget_settings.host
-    host != nil && !String.contains?(host, ["papercups", "localhost"])
+    account
+    |> Map.get(:widget_settings, [])
+    |> Enum.any?(fn settings ->
+      case settings.host do
+        host when is_binary(host) ->
+          !String.contains?(host, ["papercups", "localhost"])
+
+        _ ->
+          false
+      end
+    end)
   end
 
   defp has_invited_teammates?(account_id) do

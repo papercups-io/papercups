@@ -153,11 +153,12 @@ const ChatWithUs = ({
   if (isEuEdition) {
     return (
       <ChatWidget
+        token={REACT_APP_ADMIN_ACCOUNT_ID}
+        accountId={REACT_APP_ADMIN_ACCOUNT_ID}
         title="Need help with anything?"
         subtitle="Ask us in the chat window below 😊"
         greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
         primaryColor="#1890ff"
-        accountId={REACT_APP_ADMIN_ACCOUNT_ID}
         hideToggleButton
         baseUrl="https://app.papercups-eu.io"
         customer={{
@@ -175,11 +176,12 @@ const ChatWithUs = ({
 
   return (
     <ChatWidget
+      token={REACT_APP_ADMIN_ACCOUNT_ID}
+      accountId={REACT_APP_ADMIN_ACCOUNT_ID}
       title="Need help with anything?"
       subtitle="Ask us in the chat window below 😊"
       greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
       primaryColor="#1890ff"
-      accountId={REACT_APP_ADMIN_ACCOUNT_ID}
       hideToggleButton
       customer={{
         external_id: formatUserExternalId(currentUser),

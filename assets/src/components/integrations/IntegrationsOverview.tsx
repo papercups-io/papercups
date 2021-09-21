@@ -10,7 +10,6 @@ import logger from '../../logger';
 import {IntegrationType, getSlackRedirectUrl} from './support';
 import IntegrationsTable from './IntegrationsTable';
 import {isEuEdition} from '../../config';
-import {WidgetSettings} from '../../types';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
@@ -97,9 +96,10 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   fetchChatIntegration = async (): Promise<IntegrationType> => {
-    const {
-      widget_settings: widgetSettings = {} as Partial<WidgetSettings>,
-    } = await API.fetchAccountInfo();
+    const {id: accountId} = await API.fetchAccountInfo();
+    const widgetSettings = await API.fetchWidgetSettings({
+      account_id: accountId,
+    });
     const {count = 0} = await API.countAllConversations({});
     const {id: widgetSettingsId, created_at: createdAt} = widgetSettings;
     const description = 'Chat with users on your website via Papercups.';

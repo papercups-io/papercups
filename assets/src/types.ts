@@ -5,7 +5,7 @@ export type Account = {
   time_zone?: string;
   subscription_plan?: string;
   users?: Array<User>;
-  widget_settings: WidgetSettings;
+  widget_settings: Array<WidgetSettings>;
   working_hours: Array<any>;
   settings?: AccountSettings | null;
 };
