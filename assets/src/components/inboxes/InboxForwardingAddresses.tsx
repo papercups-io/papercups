@@ -2,16 +2,7 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 
-import {
-  Alert,
-  Button,
-  Input,
-  Paragraph,
-  Popconfirm,
-  Table,
-  Text,
-  Title,
-} from '../common';
+import {Alert, Button, Popconfirm, Table, Text, Title} from '../common';
 import * as API from '../../api';
 import {Account, ForwardingAddress, Inbox} from '../../types';
 import logger from '../../logger';

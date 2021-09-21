@@ -4,7 +4,7 @@ defmodule ChatApiWeb.WidgetSettingsController do
   alias ChatApi.{Accounts, WidgetSettings}
   alias ChatApi.WidgetSettings.WidgetSetting
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
 
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, %{"account_id" => account_id} = params) do

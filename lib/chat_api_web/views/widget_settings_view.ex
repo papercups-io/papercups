@@ -33,7 +33,8 @@ defmodule ChatApiWeb.WidgetSettingsView do
       new_messages_notification_text: widget_settings.new_messages_notification_text,
       is_branding_hidden: widget_settings.is_branding_hidden,
       base_url: widget_settings.base_url,
-      away_message: widget_settings.away_message
+      away_message: widget_settings.away_message,
+      inbox_id: widget_settings.inbox_id
     }
   end
 
@@ -60,6 +61,7 @@ defmodule ChatApiWeb.WidgetSettingsView do
       is_branding_hidden: widget_settings.is_branding_hidden,
       base_url: widget_settings.base_url,
       away_message: widget_settings.away_message,
+      inbox_id: widget_settings.inbox_id,
       account: render_one(widget_settings.account, AccountView, "basic.json")
     }
   end

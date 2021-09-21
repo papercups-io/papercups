@@ -681,6 +681,10 @@ defmodule ChatApi.Conversations do
       {"account_id", value}, dynamic ->
         dynamic([c], ^dynamic and c.account_id == ^value)
 
+      # TODO: should inbox_id be a required field?
+      {"inbox_id", nil}, dynamic ->
+        dynamic([c], ^dynamic and is_nil(c.inbox_id))
+
       {"inbox_id", value}, dynamic ->
         dynamic([c], ^dynamic and c.inbox_id == ^value)
 

@@ -71,9 +71,10 @@ defmodule ChatApi.SlackTest do
   describe "Slack.Notification" do
     setup do
       account = insert(:account)
-      auth = insert(:slack_authorization, account: account, type: "support")
+      inbox = insert(:inbox, account: account, is_primary: true)
+      auth = insert(:slack_authorization, account: account, inbox: inbox, type: "support")
       customer = insert(:customer, account: account)
-      conversation = insert(:conversation, account: account, customer: customer)
+      conversation = insert(:conversation, account: account, customer: customer, inbox: inbox)
 
       thread =
         insert(:slack_conversation_thread,
@@ -83,9 +84,10 @@ defmodule ChatApi.SlackTest do
         )
 
       {:ok,
-       conversation: conversation,
        auth: auth,
        account: account,
+       inbox: inbox,
+       conversation: conversation,
        customer: customer,
        thread: thread}
     end

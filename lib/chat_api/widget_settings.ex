@@ -3,9 +3,11 @@ defmodule ChatApi.WidgetSettings do
   The WidgetSettings context.
   """
 
-  import Ecto.Query, warn: false
-  alias ChatApi.Repo
+  require Logger
 
+  import Ecto.Query, warn: false
+
+  alias ChatApi.{Inboxes, Repo}
   alias ChatApi.WidgetSettings.WidgetSetting
 
   @spec list_widget_settings() :: [WidgetSetting.t()]
@@ -44,7 +46,7 @@ defmodule ChatApi.WidgetSettings do
 
       nil ->
         filters
-        |> Map.merge(%{"account_id" => account_id})
+        |> ensure_required_fields_included(account_id)
         |> create_widget_settings()
         |> case do
           {:ok, settings} -> {:ok, get_widget_setting!(settings.id)}
@@ -89,10 +91,28 @@ defmodule ChatApi.WidgetSettings do
     WidgetSetting.changeset(widget_setting, attrs)
   end
 
+  @spec ensure_required_fields_included(map(), binary()) :: map()
+  defp ensure_required_fields_included(params, account_id) do
+    case params do
+      %{"inbox_id" => inbox_id} when is_binary(inbox_id) ->
+        Map.merge(params, %{"account_id" => account_id, "inbox_id" => inbox_id})
+
+      _ ->
+        Map.merge(params, %{
+          "account_id" => account_id,
+          "inbox_id" => Inboxes.get_account_primary_inbox_id(account_id)
+        })
+    end
+  end
+
   defp filter_where(params) do
     Enum.reduce(params, dynamic(true), fn
       {"account_id", value}, dynamic ->
         dynamic([r], ^dynamic and r.account_id == ^value)
+
+      # TODO: should inbox_id be a required field?
+      {"inbox_id", nil}, dynamic ->
+        dynamic([r], ^dynamic and is_nil(r.inbox_id))
 
       {"inbox_id", value}, dynamic ->
         dynamic([r], ^dynamic and r.inbox_id == ^value)
