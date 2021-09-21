@@ -86,6 +86,15 @@ defmodule ChatApiWeb.ConversationController do
     end
   end
 
+  @spec count(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def count(conn, filters) do
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      count = Conversations.count_conversations_where(account_id, filters)
+
+      json(conn, %{data: %{count: count}})
+    end
+  end
+
   @spec unread(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def unread(conn, _params) do
     with %{id: user_id, account_id: account_id} <- conn.assigns.current_user do
@@ -158,8 +167,9 @@ defmodule ChatApiWeb.ConversationController do
 
   # TODO: figure out a better way to handle this
   @spec find_by_customer(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def find_by_customer(conn, %{"customer_id" => customer_id, "account_id" => account_id}) do
-    conversations = Conversations.find_by_customer(customer_id, account_id)
+  def find_by_customer(conn, %{"customer_id" => customer_id, "account_id" => account_id} = params) do
+    filters = Map.drop(params, ["account_id", "customer_id"])
+    conversations = Conversations.find_by_customer(customer_id, account_id, filters)
 
     render(conn, "index.json", conversations: conversations)
   end

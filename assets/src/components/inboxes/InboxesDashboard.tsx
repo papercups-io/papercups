@@ -10,6 +10,7 @@ import {
 import {Box, Flex} from 'theme-ui';
 
 import {colors, Badge, Layout, Menu, Sider} from '../common';
+import {SettingOutlined} from '../icons';
 import {
   DASHBOARD_COLLAPSED_SIDER_WIDTH,
   INBOXES_DASHBOARD_SIDER_WIDTH,
@@ -17,8 +18,8 @@ import {
 import * as API from '../../api';
 import {Inbox} from '../../types';
 import {useConversations} from '../conversations/ConversationsProvider';
-import InboxConversations from './InboxConversations';
 import ConversationsDashboard from '../conversations/ConversationsDashboard';
+import InboxConversations from './InboxConversations';
 
 const getSectionKey = (pathname: string) => {
   if (pathname.startsWith('/companies')) {
@@ -196,6 +197,14 @@ const InboxesDashboard = (props: RouteComponentProps) => {
                   );
                 })}
               </Menu.SubMenu>
+
+              <Menu.Item
+                key="settings"
+                icon={<SettingOutlined />}
+                title="Inbox settings"
+              >
+                <Link to="/inboxes">Settings</Link>
+              </Menu.Item>
             </Menu>
           </Box>
         </Flex>
@@ -203,11 +212,19 @@ const InboxesDashboard = (props: RouteComponentProps) => {
 
       <Switch>
         <Route
+          path="/conversations/:bucket/:conversation_id"
+          component={ConversationsDashboard}
+        />
+        <Route
           path="/conversations/:bucket"
           component={ConversationsDashboard}
         />
         <Route
-          path="/inboxes/:id/conversations"
+          path="/inboxes/:inbox_id/conversations/:conversation_id"
+          component={InboxConversations}
+        />
+        <Route
+          path="/inboxes/:inbox_id/conversations"
           component={InboxConversations}
         />
         <Route path="*" render={() => <Redirect to="/conversations/all" />} />

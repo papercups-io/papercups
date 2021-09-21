@@ -55,7 +55,7 @@ defmodule ChatApi.AccountsTest do
     test "create_account/1 with valid data creates a account and widget_setting" do
       assert {:ok, %Account{} = account} = Accounts.create_account(@valid_attrs)
       assert account.company_name != nil
-      assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account(account.id)
+      assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account!(account.id)
     end
 
     test "create_account/1 with invalid data returns error changeset" do

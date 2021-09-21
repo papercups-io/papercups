@@ -150,7 +150,7 @@ defmodule ChatApiWeb.OnboardingStatusControllerTest do
     test "is_chat_widget_installed is true if the widget settings host exists and isn't papercups or localhost",
          %{authed_conn: authed_conn, account: account} do
       # false because host is nil
-      widget_settings = WidgetSettings.get_settings_by_account(account.id)
+      widget_settings = WidgetSettings.get_settings_by_account!(account.id)
       {:ok, widget_settings} = WidgetSettings.update_widget_setting(widget_settings, %{host: nil})
       response = get(authed_conn, Routes.onboarding_status_path(authed_conn, :index))
       assert %{"is_chat_widget_installed" => false} = json_response(response, 200)

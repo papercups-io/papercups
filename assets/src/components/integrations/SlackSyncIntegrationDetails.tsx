@@ -24,10 +24,15 @@ import {ArrowLeftOutlined, CheckCircleOutlined, PlusOutlined} from '../icons';
 import * as API from '../../api';
 import {
   Account,
+  Inbox,
   SlackAuthorization,
   SlackAuthorizationSettings,
 } from '../../types';
-import {getSlackAuthUrl, getSlackRedirectUrl} from './support';
+import {
+  getSlackAuthUrl,
+  getSlackRedirectUrl,
+  parseSlackAuthState,
+} from './support';
 import logger from '../../logger';
 
 const IntegrationSettings = ({
@@ -191,11 +196,12 @@ const IntegrationDetails = ({
   );
 };
 
-type Props = RouteComponentProps<{}>;
+type Props = RouteComponentProps<{inbox_id?: string}>;
 type State = {
   status: 'loading' | 'success' | 'error';
   account: Account | null;
   authorizations: Array<SlackAuthorization>;
+  inbox: Inbox | null;
   selectedSlackAuthorization: SlackAuthorization | null;
   error: any;
 };
@@ -205,21 +211,33 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
     status: 'loading',
     account: null,
     authorizations: [],
+    inbox: null,
     selectedSlackAuthorization: null,
     error: null,
   };
 
   async componentDidMount() {
     try {
-      const {location, history} = this.props;
+      const {location, history, match} = this.props;
       const {search} = location;
+      const {inbox_id: inboxId} = match.params;
       const q = qs.parse(search);
       const code = q.code ? String(q.code) : null;
 
       if (code) {
         await this.authorize(code, q);
 
-        history.push(`/integrations/slack/support`);
+        const redirect = inboxId
+          ? `/inboxes/${inboxId}/integrations/slack/support`
+          : `/integrations/slack/support`;
+
+        history.push(redirect);
+      }
+
+      if (inboxId) {
+        const inbox = await API.fetchInbox(inboxId);
+
+        this.setState({inbox});
       }
 
       this.fetchSlackAuthorizations();
@@ -232,7 +250,10 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
 
   fetchSlackAuthorizations = async () => {
     try {
-      const authorizations = await API.listSlackAuthorizations('support');
+      const {inbox_id: inboxId} = this.props.match.params;
+      const authorizations = await API.listSlackAuthorizations('support', {
+        inbox_id: inboxId,
+      });
       const account = await API.fetchAccountInfo();
       const {selectedSlackAuthorization} = this.state;
       const [selected = null] = authorizations;
@@ -254,17 +275,17 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
   };
 
   authorize = async (code: string, query: any) => {
-    const state = query.state ? String(query.state) : null;
+    const state = query.state ? String(query.state) : '';
+    const {type = 'support', inboxId} = parseSlackAuthState(state);
 
     if (!code) {
       return null;
     }
 
-    const authorizationType = state || 'reply';
-
     return API.authorizeSlackIntegration({
       code,
-      type: authorizationType,
+      type,
+      inbox_id: inboxId,
       redirect_url: getSlackRedirectUrl(),
     })
       .then((result) => logger.debug('Successfully authorized Slack:', result))
@@ -325,9 +346,11 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
   };
 
   render() {
+    const {inbox_id: inboxId} = this.props.match.params;
     const {
       authorizations = [],
       selectedSlackAuthorization,
+      inbox,
       status,
     } = this.state;
 
@@ -335,12 +358,22 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
       return null;
     }
 
+    const authorizationUrl = getSlackAuthUrl('support', inboxId);
+
     return (
       <Container sx={{maxWidth: 720}}>
         <Box mb={4}>
-          <Link to="/integrations">
-            <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
-          </Link>
+          {inboxId ? (
+            <Link to={`/inboxes/${inboxId}`}>
+              <Button icon={<ArrowLeftOutlined />}>
+                Back to {inbox?.name || 'inbox'}
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/integrations">
+              <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
+            </Link>
+          )}
         </Box>
 
         {this.isOnStarterPlan() && (
@@ -442,7 +475,7 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
                         </Box>
                       </Flex>
                     ) : (
-                      <a href={getSlackAuthUrl('support')}>
+                      <a href={authorizationUrl}>
                         <Button type="primary">Connect</Button>
                       </a>
                     )}
@@ -460,7 +493,7 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
                   </Text>
                 </Flex>
 
-                <a href={getSlackAuthUrl('support')}>
+                <a href={authorizationUrl}>
                   <Button type="primary">Connect</Button>
                 </a>
               </Flex>
@@ -469,7 +502,7 @@ class SlackSyncIntegrationDetails extends React.Component<Props, State> {
 
           {authorizations.length > 0 && (
             <Flex py={2} sx={{justifyContent: 'flex-end'}}>
-              <a href={getSlackAuthUrl('support')}>
+              <a href={authorizationUrl}>
                 <Button size="small" icon={<PlusOutlined />}>
                   Add workspace
                 </Button>

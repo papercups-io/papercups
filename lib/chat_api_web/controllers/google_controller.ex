@@ -24,6 +24,7 @@ defmodule ChatApiWeb.GoogleController do
       client = Google.Auth.get_access_token!(code: code, redirect_uri: get_redirect_uri(type))
       Logger.debug("Gmail access token: #{inspect(client.token)}")
       scope = client.token.other_params["scope"] || params["scope"] || ""
+      inbox_id = Map.get(params, "inbox_id")
 
       client_type =
         cond do
@@ -34,6 +35,7 @@ defmodule ChatApiWeb.GoogleController do
 
       case Google.create_or_update_authorization(account_id, %{
              account_id: account_id,
+             inbox_id: inbox_id,
              user_id: user_id,
              access_token: client.token.access_token,
              refresh_token: client.token.refresh_token,
@@ -58,15 +60,17 @@ defmodule ChatApiWeb.GoogleController do
   end
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def authorization(conn, %{"client" => client} = params) do
+  def authorization(conn, %{"client" => _} = params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      filters =
-        case Map.get(params, "type") do
-          "personal" -> %{client: client, type: "personal"}
-          "support" -> %{client: client, type: "support"}
-          "sheets" -> %{client: client, type: "sheets"}
-          _ -> %{client: client}
-        end
+      filters = Map.new(params, fn {key, value} -> {String.to_atom(key), value} end)
+
+      # filters =
+      #   case Map.get(formatted, :type) do
+      #     "personal" -> %{client: client, type: "personal"}
+      #     "support" -> %{client: client, type: "support"}
+      #     "sheets" -> %{client: client, type: "sheets"}
+      #     _ -> %{client: client}
+      #   end
 
       case Google.get_authorization_by_account(account_id, filters) do
         nil ->
@@ -79,6 +83,7 @@ defmodule ChatApiWeb.GoogleController do
               created_at: auth.inserted_at,
               updated_at: auth.updated_at,
               account_id: auth.account_id,
+              inbox_id: auth.inbox_id,
               user_id: auth.user_id,
               scope: auth.scope
             }
@@ -102,7 +107,7 @@ defmodule ChatApiWeb.GoogleController do
           scope: scope,
           prompt: "consent",
           access_type: "offline",
-          state: Map.get(params, "type"),
+          state: get_auth_state(params),
           redirect_uri: get_redirect_uri(params)
         )
     )
@@ -122,7 +127,7 @@ defmodule ChatApiWeb.GoogleController do
         scope: scope,
         prompt: "consent",
         access_type: "offline",
-        state: Map.get(params, "type"),
+        state: get_auth_state(params),
         redirect_uri: get_redirect_uri(params)
       )
 
@@ -136,6 +141,24 @@ defmodule ChatApiWeb.GoogleController do
            Google.get_google_authorization!(id),
          {:ok, %GoogleAuthorization{}} <- Google.delete_google_authorization(auth) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  defp get_auth_state(params) do
+    IO.inspect(params, label: "!!!")
+
+    case params do
+      %{"state" => state} ->
+        state
+
+      %{"type" => type, "inbox_id" => inbox_id} when is_binary(type) and is_binary(inbox_id) ->
+        "#{type}:#{inbox_id}"
+
+      %{"type" => type} ->
+        type
+
+      _ ->
+        nil
     end
   end
 

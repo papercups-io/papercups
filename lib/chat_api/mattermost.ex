@@ -71,9 +71,10 @@ defmodule ChatApi.Mattermost do
   end
 
   @spec get_authorization_by_account(binary(), map()) :: MattermostAuthorization.t() | nil
-  def get_authorization_by_account(account_id, _filters \\ %{}) do
+  def get_authorization_by_account(account_id, filters \\ %{}) do
     MattermostAuthorization
     |> where(account_id: ^account_id)
+    |> where(^filter_authorizations_where(filters))
     |> order_by(desc: :inserted_at)
     |> first()
     |> Repo.one()
@@ -92,6 +93,9 @@ defmodule ChatApi.Mattermost do
     Enum.reduce(params, dynamic(true), fn
       {:account_id, value}, dynamic ->
         dynamic([r], ^dynamic and r.account_id == ^value)
+
+      {:inbox_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.inbox_id == ^value)
 
       {:channel_id, value}, dynamic ->
         dynamic([r], ^dynamic and r.channel_id == ^value)

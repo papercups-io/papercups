@@ -195,8 +195,8 @@ defmodule ChatApi.Conversations do
   @customer_conversations_limit 3
 
   # Used externally in chat widget
-  @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
-  def find_by_customer(customer_id, account_id) do
+  @spec find_by_customer(binary(), binary(), map()) :: [Conversation.t()]
+  def find_by_customer(customer_id, account_id, filters \\ %{}) do
     # NB: this is the method used to fetch conversations for a customer in the widget,
     # so we need to make sure that private messages are excluded from the query.
     messages =
@@ -209,6 +209,7 @@ defmodule ChatApi.Conversations do
     Conversation
     |> where(customer_id: ^customer_id)
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> where(source: "chat")
     |> where(status: "open")
     |> where([c], is_nil(c.archived_at))

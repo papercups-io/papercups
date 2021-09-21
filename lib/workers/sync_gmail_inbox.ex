@@ -3,25 +3,45 @@ defmodule ChatApi.Workers.SyncGmailInbox do
 
   require Logger
 
-  alias ChatApi.{Conversations, Customers, Files, Google, Messages, Users}
+  alias ChatApi.{Conversations, Customers, Files, Google, Inboxes, Messages, Users}
   alias ChatApi.Google.{Gmail, GmailConversationThread, GoogleAuthorization}
 
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
+  def perform(%Oban.Job{
+        args: %{"account_id" => account_id, "authorization_id" => authorization_id}
+      }) do
+    Logger.debug(
+      "Syncing Gmail inbox for account #{inspect(account_id)} with authorization #{
+        inspect(authorization_id)
+      }"
+    )
+
+    case Google.get_google_authorization!(authorization_id) do
+      %GoogleAuthorization{refresh_token: _, metadata: %{"next_history_id" => _}} = authorization ->
+        sync(authorization)
+
+      _ ->
+        :ok
+    end
+  end
+
+  # TODO: deprecate
   def perform(%Oban.Job{args: %{"account_id" => account_id}}) do
     Logger.debug("Syncing Gmail inbox for account: #{inspect(account_id)}")
 
     sync(account_id)
   end
 
-  @spec sync(binary()) :: :ok
-  def sync(account_id) do
-    with %GoogleAuthorization{
-           refresh_token: refresh_token,
-           metadata: %{"next_history_id" => start_history_id}
-         } = authorization <-
-           Google.get_authorization_by_account(account_id, %{client: "gmail", type: "support"}),
-         {:ok, %{body: %{"emailAddress" => email}}} <- Gmail.get_profile(refresh_token),
+  @spec sync(GoogleAuthorization.t() | binary()) :: :ok
+  def sync(
+        %GoogleAuthorization{
+          account_id: account_id,
+          refresh_token: refresh_token,
+          metadata: %{"next_history_id" => start_history_id}
+        } = authorization
+      ) do
+    with {:ok, %{body: %{"emailAddress" => email}}} <- Gmail.get_profile(refresh_token),
          {:ok, %{body: %{"historyId" => next_history_id, "history" => [_ | _] = history}}} <-
            Gmail.list_history(refresh_token,
              start_history_id: start_history_id,
@@ -55,6 +75,25 @@ defmodule ChatApi.Workers.SyncGmailInbox do
         )
     end
   end
+
+  def sync(account_id) when is_binary(account_id) do
+    auth =
+      Google.get_authorization_by_account(account_id, %{
+        client: "gmail",
+        type: "support",
+        inbox_id: Inboxes.get_account_primary_inbox_id(account_id)
+      })
+
+    case auth do
+      %GoogleAuthorization{refresh_token: _, metadata: %{"next_history_id" => _}} = authorization ->
+        sync(authorization)
+
+      _ ->
+        :ok
+    end
+  end
+
+  def sync(_), do: :ok
 
   @spec process_history(list(), GoogleAuthorization.t(), binary()) :: :ok
   def process_history(

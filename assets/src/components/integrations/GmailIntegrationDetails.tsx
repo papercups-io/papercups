@@ -23,14 +23,16 @@ import * as API from '../../api';
 import logger from '../../logger';
 import {SupportGmailAuthorizationButton} from './GoogleAuthorizationButton';
 import Spinner from '../Spinner';
-import {Account} from '../../types';
+import {Account, Inbox} from '../../types';
+import {parseGoogleAuthState} from './support';
 
 dayjs.extend(utc);
 
-type Props = RouteComponentProps<{}>;
+type Props = RouteComponentProps<{inbox_id?: string}>;
 type State = {
   status: 'loading' | 'success' | 'error';
   account: Account | null;
+  inbox: Inbox | null;
   authorization: any | null;
   connectedEmailAddress: string | null;
   error: any;
@@ -40,6 +42,7 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
   state: State = {
     status: 'loading',
     account: null,
+    inbox: null,
     authorization: null,
     connectedEmailAddress: null,
     error: null,
@@ -47,15 +50,34 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
 
   async componentDidMount() {
     try {
-      const {location, history} = this.props;
+      const {location, history, match} = this.props;
       const {search} = location;
       const q = qs.parse(search);
       const code = q.code ? String(q.code) : null;
 
       if (code) {
-        await this.authorize(code, q);
+        const state = q.state ? String(q.state) : '';
+        const scope = q.scope ? String(q.scope) : '';
+        const {type, inboxId} = parseGoogleAuthState(state);
+        const redirect = inboxId
+          ? `/inboxes/${inboxId}/integrations/google/gmail`
+          : `/integrations/google/gmail`;
 
-        history.push(`/integrations/google/gmail`);
+        await this.authorize(code, {
+          scope,
+          state: type,
+          inbox_id: inboxId,
+        });
+
+        history.push(redirect);
+      }
+
+      const {inbox_id: inboxId} = match.params;
+
+      if (inboxId) {
+        const inbox = await API.fetchInbox(inboxId);
+
+        this.setState({inbox});
       }
 
       this.fetchGoogleAuthorization();
@@ -68,14 +90,16 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
 
   fetchGoogleAuthorization = async () => {
     try {
+      const {inbox_id: inboxId} = this.props.match.params;
       const account = await API.fetchAccountInfo();
       const auth = await API.fetchGoogleAuthorization({
         client: 'gmail',
         type: 'support',
+        inbox_id: inboxId,
       });
 
       if (auth) {
-        const profile = await API.fetchGmailProfile();
+        const profile = await API.fetchGmailProfile({inbox_id: inboxId});
 
         this.setState({
           account,
@@ -98,15 +122,21 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
     }
   };
 
-  authorize = async (code: string, query: any) => {
+  authorize = async (
+    code: string,
+    params: {
+      scope: string | null;
+      state: string | null;
+      inbox_id: string | null;
+    }
+  ) => {
+    const {scope, state, inbox_id} = params;
+
     if (!code) {
       return null;
     }
 
-    const scope = query.scope ? String(query.scope) : null;
-    const state = query.state ? String(query.state) : null;
-
-    return API.authorizeGoogleIntegration({code, scope, state})
+    return API.authorizeGoogleIntegration({code, scope, state, inbox_id})
       .then((result) => logger.debug('Successfully authorized Gmail:', result))
       .catch((err) => {
         logger.error('Failed to authorize Gmail:', err);
@@ -148,7 +178,8 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
   };
 
   render() {
-    const {authorization, connectedEmailAddress, status} = this.state;
+    const {inbox_id: inboxId} = this.props.match.params;
+    const {authorization, inbox, connectedEmailAddress, status} = this.state;
 
     if (status === 'loading') {
       return (
@@ -170,9 +201,17 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
     return (
       <Container sx={{maxWidth: 720}}>
         <Box mb={4}>
-          <Link to="/integrations">
-            <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
-          </Link>
+          {inboxId ? (
+            <Link to={`/inboxes/${inboxId}`}>
+              <Button icon={<ArrowLeftOutlined />}>
+                Back to {inbox?.name || 'inbox'}
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/integrations">
+              <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
+            </Link>
+          )}
         </Box>
 
         {this.isOnStarterPlan() && (
@@ -239,6 +278,7 @@ class GmailIntegrationDetails extends React.Component<Props, State> {
 
               <SupportGmailAuthorizationButton
                 isConnected={hasAuthorization}
+                inboxId={inboxId}
                 authorizationId={authorization?.id}
                 onDisconnectGmail={this.disconnect}
               />

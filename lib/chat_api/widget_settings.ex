@@ -9,124 +9,97 @@ defmodule ChatApi.WidgetSettings do
   alias ChatApi.WidgetSettings.WidgetSetting
 
   @spec list_widget_settings() :: [WidgetSetting.t()]
-  @doc """
-  Returns the list of widget_settings.
-
-  ## Examples
-
-      iex> list_widget_settings()
-      [%WidgetSetting{}, ...]
-
-  """
   def list_widget_settings do
     Repo.all(WidgetSetting)
   end
 
   @spec get_widget_setting!(binary()) :: WidgetSetting.t()
-  @doc """
-  Gets a single widget_setting.
+  def get_widget_setting!(id) do
+    WidgetSetting |> preload(:account) |> Repo.get!(id)
+  end
 
-  Raises `Ecto.NoResultsError` if the Widget config does not exist.
+  @spec find_settings_by_account(binary(), map()) :: WidgetSetting.t() | nil
+  def find_settings_by_account(account_id, filters \\ %{}) do
+    WidgetSetting
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> preload(:account)
+    |> Repo.one()
+  end
 
-  ## Examples
-
-      iex> get_widget_setting!(123)
-      %WidgetSetting{}
-
-      iex> get_widget_setting!(456)
-      ** (Ecto.NoResultsError)
-
-  """
-  def get_widget_setting!(id), do: Repo.get!(WidgetSetting, id)
-
-  @spec get_settings_by_account(binary()) :: WidgetSetting.t() | {:error, Ecto.Changeset.t()}
-  def get_settings_by_account(account_id) do
-    existing_settings =
-      WidgetSetting
-      |> where(account_id: ^account_id)
-      |> preload(:account)
-      |> Repo.one()
-
-    case existing_settings do
-      %WidgetSetting{} -> existing_settings
-      nil -> create_setting_by_account(account_id)
+  @spec get_settings_by_account!(binary(), map()) :: WidgetSetting.t()
+  def get_settings_by_account!(account_id, filters \\ %{}) do
+    case find_or_create_settings_by_account(account_id, filters) do
+      {:ok, %WidgetSetting{} = settings} -> settings
+      {:error, error} -> raise error
     end
   end
 
-  defp create_setting_by_account(account_id) do
-    %WidgetSetting{}
-    |> WidgetSetting.changeset(%{account_id: account_id})
-    |> Repo.insert()
-    |> case do
-      {:ok, _settings} ->
-        WidgetSetting
-        |> where(account_id: ^account_id)
-        |> preload(:account)
-        |> Repo.one()
+  @spec find_or_create_settings_by_account(binary(), map()) ::
+          {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
+  def find_or_create_settings_by_account(account_id, filters \\ %{}) do
+    case find_settings_by_account(account_id, filters) do
+      %WidgetSetting{} = result ->
+        {:ok, result}
 
-      error ->
-        error
+      nil ->
+        filters
+        |> Map.merge(%{"account_id" => account_id})
+        |> create_widget_settings()
+        |> case do
+          {:ok, settings} -> {:ok, get_widget_setting!(settings.id)}
+          error -> error
+        end
     end
+  end
+
+  @spec create_widget_settings(map()) :: {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
+  def create_widget_settings(attrs \\ %{}) do
+    %WidgetSetting{}
+    |> WidgetSetting.changeset(attrs)
+    |> Repo.insert()
   end
 
   @spec update_widget_setting(WidgetSetting.t(), map()) ::
           {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Updates a widget_setting.
-
-  ## Examples
-
-      iex> update_widget_setting(widget_setting, %{field: new_value})
-      {:ok, %WidgetSetting{}}
-
-      iex> update_widget_setting(widget_setting, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
   def update_widget_setting(%WidgetSetting{} = widget_setting, attrs) do
     widget_setting
     |> WidgetSetting.changeset(attrs)
     |> Repo.update()
   end
 
-  @spec update_widget_metadata(binary(), map()) ::
+  @spec update_widget_metadata(binary(), map(), map()) ::
           {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
-  def update_widget_metadata(account_id, metadata) do
+  def update_widget_metadata(account_id, metadata, filters \\ %{}) do
     attrs = Map.take(metadata, ["host", "pathname", "last_seen_at"])
 
-    get_settings_by_account(account_id)
+    account_id
+    |> get_settings_by_account!(filters)
     |> update_widget_setting(attrs)
   end
 
   @spec delete_widget_setting(WidgetSetting.t()) ::
           {:ok, WidgetSetting.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Deletes a widget_setting.
-
-  ## Examples
-
-      iex> delete_widget_setting(widget_setting)
-      {:ok, %WidgetSetting{}}
-
-      iex> delete_widget_setting(widget_setting)
-      {:error, %Ecto.Changeset{}}
-
-  """
   def delete_widget_setting(%WidgetSetting{} = widget_setting) do
     Repo.delete(widget_setting)
   end
 
   @spec change_widget_setting(WidgetSetting.t(), map()) :: Ecto.Changeset.t()
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking widget_setting changes.
-
-  ## Examples
-
-      iex> change_widget_setting(widget_setting)
-      %Ecto.Changeset{data: %WidgetSetting{}}
-
-  """
   def change_widget_setting(%WidgetSetting{} = widget_setting, attrs \\ %{}) do
     WidgetSetting.changeset(widget_setting, attrs)
+  end
+
+  defp filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"account_id", value}, dynamic ->
+        dynamic([r], ^dynamic and r.account_id == ^value)
+
+      {"inbox_id", value}, dynamic ->
+        dynamic([r], ^dynamic and r.inbox_id == ^value)
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end

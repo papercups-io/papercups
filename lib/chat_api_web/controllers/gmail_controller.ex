@@ -7,10 +7,15 @@ defmodule ChatApiWeb.GmailController do
   alias ChatApi.Google.GoogleAuthorization
 
   @spec profile(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def profile(conn, _params) do
-    with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
+  def profile(conn, params) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
          %GoogleAuthorization{refresh_token: refresh_token} <-
-           Google.get_support_gmail_authorization(account_id, user_id) do
+           Google.get_authorization_by_account(account_id, %{
+             client: "gmail",
+             type: "support",
+             inbox_id:
+               params["inbox_id"] || ChatApi.Inboxes.get_account_primary_inbox_id(account_id)
+           }) do
       case Google.Gmail.get_profile(refresh_token) do
         {:ok, %{body: %{"emailAddress" => email}}} ->
           json(conn, %{ok: true, data: %{email: email}})

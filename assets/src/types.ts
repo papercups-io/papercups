@@ -133,6 +133,7 @@ export type ForwardingAddress = {
   created_at: string;
   updated_at: string;
   account_id: string;
+  inbox_id?: string | null;
 };
 
 // Alias
@@ -287,7 +288,9 @@ export type TwilioAuthorization = {
 export type WidgetIconVariant = 'outlined' | 'filled';
 
 export type WidgetSettings = {
-  id?: string;
+  id: string | null;
+  inbox_id?: string | null;
+  acccount_id?: string | null;
   title?: string;
   subtitle?: string;
   color?: string;
@@ -309,7 +312,7 @@ export type WidgetSettings = {
   pathname?: string;
   last_seen_at: string | null;
   account_id: string;
-  inserted_at: string | null;
+  created_at: string | null;
   updated_at: string | null;
 };
 
@@ -331,12 +334,14 @@ export type GoogleIntegrationType = 'personal' | 'support';
 export type GoogleIntegrationParams = {
   client: GoogleIntegrationClient;
   type?: GoogleIntegrationType;
+  inbox_id?: string | null;
 };
 
 export type GoogleAuthParams = {
   code: string;
   state?: string | null;
   scope?: string | null;
+  inbox_id?: string | null;
 };
 
 export type SlackAuthorizationSettings = {

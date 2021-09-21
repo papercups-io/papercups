@@ -11,6 +11,7 @@ import {
   CONVERSATIONS_DASHBOARD_SIDER_WIDTH,
   formatServerError,
   isWindowHidden,
+  noop,
   sleep,
 } from '../../utils';
 import ConversationsPreviewList from './ConversationsPreviewList';
@@ -66,13 +67,17 @@ export const ConversationsDashboard = ({
   title,
   account,
   currentUser,
+  initialSelectedConversationId,
   filter = {},
+  onSelectConversation = noop,
   isValidConversation = defaultConversationFilter,
 }: {
   title: string;
   account: Account;
   currentUser: User;
+  initialSelectedConversationId: string | null;
   filter: Record<string, any>;
+  onSelectConversation: (conversationId: string) => void;
   isValidConversation: (conversation: Conversation) => boolean;
 }) => {
   const scrollToEl = React.useRef<any>(null);
@@ -89,11 +94,14 @@ export const ConversationsDashboard = ({
   >({});
   const [selectedConversationId, setSelectedConversationId] = React.useState<
     string | null
-  >(null);
+  >(initialSelectedConversationId);
   const [closing, setClosingConversations] = React.useState<Array<string>>([]);
+
+  // TODO: set up keyboard shortcuts as well
 
   const {
     fetchConversations,
+    fetchConversationById,
     getValidConversations,
     getConversationById,
     getMessagesByConversationId,
@@ -152,6 +160,14 @@ export const ConversationsDashboard = ({
     // TODO: is there anything we need to do on new conversation events?
   }
 
+  function fetchInitialConversation() {
+    if (!initialSelectedConversationId) {
+      return null;
+    }
+
+    return fetchConversationById(initialSelectedConversationId);
+  }
+
   const {users = []} = account;
   // TODO: is there a more efficient way to do this?
   const conversations = getValidConversations(isValidConversation);
@@ -167,16 +183,26 @@ export const ConversationsDashboard = ({
   React.useEffect(() => {
     setStatus('loading');
 
-    fetchFilteredConversations()
-      .then((result) => {
+    Promise.all([fetchFilteredConversations(), fetchInitialConversation()])
+      .then(([result, initialSelectedConversation]) => {
         const {data: conversations, ...pagination} = result;
-        const conversationIds = conversations.map((c) => c.id);
+        // TODO: clean this up
+        const conversationIds = [
+          ...new Set(
+            [initialSelectedConversation, ...conversations]
+              .filter(
+                (conversation): conversation is Conversation => !!conversation
+              )
+              .map((c) => c.id)
+          ),
+        ];
         const [first] = conversationIds;
+        const selected = initialSelectedConversation?.id ?? first;
         // TODO: should we handle conversation IDs and pagination options here,
         // or in the ConversationsProvider? (Might need to keep pagination here)
         setConversationIds(conversationIds);
         setPaginationOptions(pagination);
-        handleSelectConversation(first || null);
+        handleSelectConversation(selected || null);
       })
       .then(() => setStatus('success'))
       .catch((error) => {
@@ -214,7 +240,7 @@ export const ConversationsDashboard = ({
       handleConversationSeen(conversationId);
     }
 
-    // TODO: history.push(/inboxes/:inbox_id/conversations/:conversation_id)
+    onSelectConversation(conversationId);
   }
 
   async function handleLoadMoreConversations() {
@@ -447,8 +473,10 @@ const isValidBucket = (bucket: string): bucket is ConversationBucket => {
   }
 };
 
-const Wrapper = (props: RouteComponentProps<{bucket: string}>) => {
-  const {bucket} = props.match.params;
+const Wrapper = (
+  props: RouteComponentProps<{bucket: string; conversation_id?: string}>
+) => {
+  const {bucket, conversation_id: conversationId = null} = props.match.params;
   const [account, setAccount] = React.useState<Account | null>(null);
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>(
     'loading'
@@ -596,12 +624,17 @@ const Wrapper = (props: RouteComponentProps<{bucket: string}>) => {
 
   const {title, filter, isValidConversation} = getBucketConfig(bucket);
 
+  const handleSelectConversation = (conversationId: string) =>
+    props.history.push(`/conversations/${bucket}/${conversationId}`);
+
   return (
     <ConversationsDashboard
       title={title}
       account={account}
       currentUser={currentUser}
       filter={filter}
+      initialSelectedConversationId={conversationId}
+      onSelectConversation={handleSelectConversation}
       isValidConversation={isValidConversation}
     />
   );

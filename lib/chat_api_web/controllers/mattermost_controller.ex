@@ -21,14 +21,14 @@ defmodule ChatApiWeb.MattermostController do
   end
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def authorization(conn, _payload) do
-    authorization =
-      conn
-      |> Pow.Plug.current_user()
-      |> Map.get(:account_id)
-      |> Mattermost.get_authorization_by_account()
+  def authorization(conn, params) do
+    current_user = Pow.Plug.current_user(conn)
+    account_id = current_user.account_id
+    filters = Map.new(params, fn {key, value} -> {String.to_atom(key), value} end)
 
-    case authorization do
+    IO.inspect(filters, label: "HUH???")
+
+    case Mattermost.get_authorization_by_account(account_id, filters) do
       nil ->
         json(conn, %{data: nil})
 

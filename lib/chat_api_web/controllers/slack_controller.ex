@@ -13,7 +13,8 @@ defmodule ChatApiWeb.SlackController do
     with %{account_id: account_id} <- conn.assigns.current_user,
          %SlackAuthorization{access_token: access_token, channel: channel} <-
            SlackAuthorizations.get_authorization_by_account(account_id, %{
-             type: Map.get(params, "type", "reply")
+             type: Map.get(params, "type", "reply"),
+             inbox_id: ChatApi.Inboxes.get_account_primary_inbox_id(account_id)
            }),
          {:ok, %{body: data}} <-
            Slack.Client.send_message(
@@ -59,6 +60,7 @@ defmodule ChatApiWeb.SlackController do
            "url" => webhook_url
          } <- incoming_webhook,
          integration_type <- Map.get(params, "type", "reply"),
+         inbox_id <- Map.get(params, "inbox_id"),
          :ok <-
            Slack.Validation.validate_authorization_channel_id(
              channel_id,
@@ -66,30 +68,38 @@ defmodule ChatApiWeb.SlackController do
              integration_type
            ) do
       filters =
-        case integration_type do
-          "support" -> %{type: integration_type, team_id: team_id}
-          _ -> %{type: integration_type}
+        case params do
+          %{"type" => "support", "inbox_id" => inbox_id} ->
+            %{type: "support", team_id: team_id, inbox_id: inbox_id}
+
+          %{"inbox_id" => inbox_id} ->
+            %{type: integration_type, inbox_id: inbox_id}
+
+          _ ->
+            %{type: integration_type}
         end
 
       # TODO: after creating, check if connected channel is private;
       # If yes, use webhook_url to send notification that Papercups app needs
       # to be added manually, along with instructions for how to do so
-      SlackAuthorizations.create_or_update(account_id, filters, %{
-        account_id: account_id,
-        access_token: access_token,
-        app_id: app_id,
-        authed_user_id: authed_user_id,
-        bot_user_id: bot_user_id,
-        scope: scope,
-        token_type: token_type,
-        channel: channel,
-        channel_id: channel_id,
-        configuration_url: configuration_url,
-        team_id: team_id,
-        team_name: team_name,
-        webhook_url: webhook_url,
-        type: integration_type
-      })
+      {:ok, _} =
+        SlackAuthorizations.create_or_update(account_id, filters, %{
+          account_id: account_id,
+          inbox_id: inbox_id,
+          access_token: access_token,
+          app_id: app_id,
+          authed_user_id: authed_user_id,
+          bot_user_id: bot_user_id,
+          scope: scope,
+          token_type: token_type,
+          channel: channel,
+          channel_id: channel_id,
+          configuration_url: configuration_url,
+          team_id: team_id,
+          team_name: team_name,
+          webhook_url: webhook_url,
+          type: integration_type
+        })
 
       cond do
         integration_type == "reply" ->
@@ -161,7 +171,13 @@ defmodule ChatApiWeb.SlackController do
 
   @spec authorizations(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def authorizations(conn, payload) do
-    filters = %{type: Map.get(payload, "type", "support")}
+    filters =
+      payload
+      |> Map.new(fn {key, value} -> {String.to_atom(key), value} end)
+      |> Map.merge(%{
+        type: Map.get(payload, "type", "support")
+      })
+
     account_id = conn.assigns.current_user.account_id
     authorizations = SlackAuthorizations.list_slack_authorizations_by_account(account_id, filters)
 

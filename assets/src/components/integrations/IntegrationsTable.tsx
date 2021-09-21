@@ -70,6 +70,12 @@ const IntegrationsTable = ({
         const {key} = record;
 
         switch (key) {
+          case 'chat':
+            return (
+              <Link to="/settings/chat-widget">
+                <Button icon={<SettingOutlined />}>Configure</Button>
+              </Link>
+            );
           case 'slack':
             return (
               <Link to="/integrations/slack/reply">

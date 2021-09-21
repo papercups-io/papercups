@@ -18,15 +18,20 @@ import {
 } from '../common';
 import {ArrowLeftOutlined, CheckCircleOutlined} from '../icons';
 import * as API from '../../api';
-import {Account, SlackAuthorization} from '../../types';
-import {getSlackAuthUrl, getSlackRedirectUrl} from './support';
+import {Account, Inbox, SlackAuthorization} from '../../types';
+import {
+  getSlackAuthUrl,
+  getSlackRedirectUrl,
+  parseSlackAuthState,
+} from './support';
 import logger from '../../logger';
 
-type Props = RouteComponentProps<{}>;
+type Props = RouteComponentProps<{inbox_id?: string}>;
 type State = {
   status: 'loading' | 'success' | 'error';
   authorization: SlackAuthorization | null;
   account: Account | null;
+  inbox: Inbox | null;
   error: any;
 };
 
@@ -35,23 +40,35 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
     status: 'loading',
     account: null,
     authorization: null,
+    inbox: null,
     error: null,
   };
 
   async componentDidMount() {
     try {
-      const {location, history} = this.props;
+      const {location, history, match} = this.props;
       const {search} = location;
+      const {inbox_id: inboxId} = match.params;
       const q = qs.parse(search);
       const code = q.code ? String(q.code) : null;
 
       if (code) {
         await this.authorize(code, q);
 
-        history.push(`/integrations/slack/reply`);
+        const redirect = inboxId
+          ? `/inboxes/${inboxId}/integrations/slack/reply`
+          : `/integrations/slack/reply`;
+
+        history.push(redirect);
       }
 
-      this.fetchSlackAuthorization();
+      if (inboxId) {
+        const inbox = await API.fetchInbox(inboxId);
+
+        this.setState({inbox});
+      }
+
+      await this.fetchSlackAuthorization();
     } catch (error) {
       logger.error(error);
 
@@ -61,7 +78,10 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
 
   fetchSlackAuthorization = async () => {
     try {
-      const auth = await API.fetchSlackAuthorization('reply');
+      const {inbox_id: inboxId} = this.props.match.params;
+      const auth = await API.fetchSlackAuthorization('reply', {
+        inbox_id: inboxId,
+      });
       const account = await API.fetchAccountInfo();
 
       this.setState({account, authorization: auth, status: 'success'});
@@ -73,17 +93,17 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
   };
 
   authorize = async (code: string, query: any) => {
-    const state = query.state ? String(query.state) : null;
+    const state = query.state ? String(query.state) : '';
+    const {type = 'reply', inboxId} = parseSlackAuthState(state);
 
     if (!code) {
       return null;
     }
 
-    const authorizationType = state || 'reply';
-
     return API.authorizeSlackIntegration({
       code,
-      type: authorizationType,
+      type,
+      inbox_id: inboxId,
       redirect_url: getSlackRedirectUrl(),
     })
       .then((result) => logger.debug('Successfully authorized Slack:', result))
@@ -127,20 +147,30 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
   };
 
   render() {
-    const {authorization, status} = this.state;
+    const {inbox_id: inboxId} = this.props.match.params;
+    const {authorization, inbox, status} = this.state;
 
     if (status === 'loading') {
       return null;
     }
 
     const hasAuthorization = !!(authorization && authorization.id);
+    const authorizationUrl = getSlackAuthUrl('reply', inboxId);
 
     return (
       <Container sx={{maxWidth: 720}}>
         <Box mb={4}>
-          <Link to="/integrations">
-            <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
-          </Link>
+          {inboxId ? (
+            <Link to={`/inboxes/${inboxId}`}>
+              <Button icon={<ArrowLeftOutlined />}>
+                Back to {inbox?.name || 'inbox'}
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/integrations">
+              <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
+            </Link>
+          )}
         </Box>
 
         {this.isOnStarterPlan() && (
@@ -209,7 +239,7 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
               {hasAuthorization ? (
                 <Flex mx={-1}>
                   <Box mx={1}>
-                    <a href={getSlackAuthUrl('reply')}>
+                    <a href={authorizationUrl}>
                       <Button>Reconnect</Button>
                     </a>
                   </Box>
@@ -228,7 +258,7 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
                   </Box>
                 </Flex>
               ) : (
-                <a href={getSlackAuthUrl('reply')}>
+                <a href={authorizationUrl}>
                   <Button type="primary">Connect</Button>
                 </a>
               )}
@@ -246,6 +276,15 @@ class SlackReplyIntegrationDetails extends React.Component<Props, State> {
               opacity: hasAuthorization ? 1 : 0.6,
             }}
           >
+            {inbox && inbox.name ? (
+              <Box mb={3}>
+                <label>Inbox</label>
+                <Box>
+                  <Text strong>{inbox.name}</Text>
+                </Box>
+              </Box>
+            ) : null}
+
             <Box mb={3}>
               <label>Channel</label>
               <Box>

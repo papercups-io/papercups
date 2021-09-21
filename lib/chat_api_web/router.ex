@@ -84,6 +84,7 @@ defmodule ChatApiWeb.Router do
 
     get("/me", SessionController, :me)
     get("/accounts/me", AccountController, :me)
+    get("/conversations/count", ConversationController, :count)
     get("/messages/count", MessageController, :count)
     get("/billing", BillingController, :show)
     post("/billing", BillingController, :create)

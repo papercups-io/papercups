@@ -13,11 +13,18 @@ defmodule ChatApi.Conversations.Helpers do
 
   @spec broadcast_conversation_updates_to_slack(Conversation.t()) :: any()
   def broadcast_conversation_updates_to_slack(
-        %Conversation{id: conversation_id, account_id: account_id} = conversation
+        %Conversation{
+          id: conversation_id,
+          account_id: account_id,
+          inbox_id: inbox_id
+        } = conversation
       ) do
     # TODO: we need to ensure that the Papercups app is added to the channel manually before this can work
     with %{channel_id: channel, access_token: access_token} <-
-           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}),
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: "reply",
+             inbox_id: inbox_id
+           }),
          [%{slack_thread_ts: ts}] <-
            SlackConversationThreads.get_threads_by_conversation_id(conversation_id, %{
              "account_id" => account_id,

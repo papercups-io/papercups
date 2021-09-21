@@ -9,10 +9,12 @@ import {formatServerError} from '../../utils';
 
 const NewForwardingAddressModal = ({
   visible,
+  inboxId,
   onSuccess,
   onCancel,
 }: {
   visible: boolean;
+  inboxId?: string | null;
   onSuccess: (params: any) => void;
   onCancel: () => void;
 }) => {
@@ -40,6 +42,7 @@ const NewForwardingAddressModal = ({
 
     return API.createForwardingAddress({
       description,
+      inbox_id: inboxId,
       source_email_address: sourceEmailAddress,
     })
       .then((result) => {
@@ -125,9 +128,11 @@ const NewForwardingAddressModal = ({
 };
 
 export const NewForwardingAddressModalButton = ({
+  inboxId,
   onSuccess,
   ...rest
 }: {
+  inboxId?: string | null;
   onSuccess: (data?: any) => void;
 } & ButtonProps) => {
   const [isModalOpen, setModalOpen] = React.useState(false);
@@ -150,6 +155,7 @@ export const NewForwardingAddressModalButton = ({
 
       <NewForwardingAddressModal
         visible={isModalOpen}
+        inboxId={inboxId}
         onSuccess={handleSuccess}
         onCancel={handleCloseModal}
       />

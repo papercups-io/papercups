@@ -42,7 +42,7 @@ defmodule ChatApi.Messages.Notification do
   def notify(message, type, opts \\ [])
 
   def notify(
-        %Message{body: _body, conversation_id: _conversation_id} = message,
+        %Message{body: _, conversation_id: _} = message,
         :slack,
         opts
       ) do

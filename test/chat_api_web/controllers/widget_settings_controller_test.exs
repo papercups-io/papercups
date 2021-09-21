@@ -16,7 +16,7 @@ defmodule ChatApiWeb.WidgetSettingsControllerTest do
   describe "update" do
     test "returns existing widget_settings",
          %{authed_conn: authed_conn, account: account} do
-      assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account(account.id)
+      assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account!(account.id)
 
       settings = %{
         title: "Test title",

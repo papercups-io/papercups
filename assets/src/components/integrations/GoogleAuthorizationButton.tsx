@@ -5,10 +5,12 @@ import {getGoogleAuthUrl} from './support';
 
 export const SupportGmailAuthorizationButton = ({
   isConnected,
+  inboxId,
   authorizationId,
   onDisconnectGmail,
 }: {
   isConnected?: boolean;
+  inboxId?: string | null;
   authorizationId?: string | null;
   onDisconnectGmail: (id: string) => void;
 }) => {
@@ -16,7 +18,13 @@ export const SupportGmailAuthorizationButton = ({
     return (
       <Flex mx={-1}>
         <Box mx={1}>
-          <a href={getGoogleAuthUrl({client: 'gmail', type: 'support'})}>
+          <a
+            href={getGoogleAuthUrl({
+              client: 'gmail',
+              type: 'support',
+              inbox_id: inboxId,
+            })}
+          >
             <Button>Reconnect</Button>
           </a>
         </Box>
@@ -44,7 +52,13 @@ export const SupportGmailAuthorizationButton = ({
         </Box>
       }
     >
-      <a href={getGoogleAuthUrl({client: 'gmail', type: 'support'})}>
+      <a
+        href={getGoogleAuthUrl({
+          client: 'gmail',
+          type: 'support',
+          inbox_id: inboxId,
+        })}
+      >
         <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
       </a>
     </Tooltip>
@@ -53,10 +67,12 @@ export const SupportGmailAuthorizationButton = ({
 
 export const PersonalGmailAuthorizationButton = ({
   isConnected,
+  inboxId,
   authorizationId,
   onDisconnectGmail,
 }: {
   isConnected?: boolean;
+  inboxId?: string | null;
   authorizationId?: string | null;
   onDisconnectGmail: (id: string) => void;
 }) => {
@@ -64,7 +80,13 @@ export const PersonalGmailAuthorizationButton = ({
     return (
       <Flex mx={-1}>
         <Box mx={1}>
-          <a href={getGoogleAuthUrl({client: 'gmail', type: 'personal'})}>
+          <a
+            href={getGoogleAuthUrl({
+              client: 'gmail',
+              type: 'personal',
+              inbox_id: inboxId,
+            })}
+          >
             <Button>Reconnect with Gmail</Button>
           </a>
         </Box>
@@ -93,7 +115,13 @@ export const PersonalGmailAuthorizationButton = ({
         </Box>
       }
     >
-      <a href={getGoogleAuthUrl({client: 'gmail', type: 'personal'})}>
+      <a
+        href={getGoogleAuthUrl({
+          client: 'gmail',
+          type: 'personal',
+          inbox_id: inboxId,
+        })}
+      >
         <Button type="primary">
           {isConnected ? 'Reconnect with Gmail' : 'Connect with Gmail'}
         </Button>

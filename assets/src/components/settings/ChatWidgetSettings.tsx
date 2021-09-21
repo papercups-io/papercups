@@ -1,12 +1,15 @@
 import React, {FunctionComponent} from 'react';
+import {RouteComponentProps} from 'react-router';
 import {capitalize, debounce} from 'lodash';
 import {Box} from 'theme-ui';
 import {TwitterPicker} from 'react-color';
 import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
+
 import * as API from '../../api';
-import {Account, User, WidgetIconVariant} from '../../types';
+import {Account, Inbox, User, WidgetIconVariant} from '../../types';
 import {
   colors,
+  Button,
   Paragraph,
   Popover,
   Input,
@@ -17,15 +20,17 @@ import {
   Title,
   Tabs,
 } from '../common';
-import {InfoCircleTwoTone} from '../icons';
+import {ArrowLeftOutlined, InfoCircleTwoTone} from '../icons';
 import {BASE_URL, FRONTEND_BASE_URL} from '../../config';
 import logger from '../../logger';
 import {formatUserExternalId} from '../../utils';
+import {Link} from 'react-router-dom';
 
-type Props = {};
+type Props = RouteComponentProps<{inbox_id?: string}> & {};
 type State = {
   accountId: string | null;
   account: Account | null;
+  inbox: Inbox | null;
   color: string;
   title: string;
   subtitle: string;
@@ -44,6 +49,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
   state: State = {
     accountId: null,
     account: null,
+    inbox: null,
     currentUser: null,
     color: colors.primary,
     title: 'Welcome!',
@@ -59,6 +65,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
   };
 
   async componentDidMount() {
+    const {inbox_id: inboxId} = this.props.match.params;
     const currentUser = await API.me();
     const account = await API.fetchAccountInfo();
     const {
@@ -66,6 +73,12 @@ class ChatWidgetSettings extends React.Component<Props, State> {
       company_name: company,
       widget_settings: widgetSettings,
     } = account;
+
+    if (inboxId) {
+      const inbox = await API.fetchInbox(inboxId);
+
+      this.setState({inbox});
+    }
 
     if (widgetSettings && widgetSettings.id) {
       const {
@@ -192,6 +205,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
   };
 
   updateWidgetSettings = async () => {
+    const {inbox_id: inboxId} = this.props.match.params;
     const {
       color,
       title,
@@ -206,7 +220,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
       iconVariant,
     } = this.state;
 
-    API.updateWidgetSettings({
+    return API.updateWidgetSettings({
       color,
       title,
       subtitle,
@@ -218,6 +232,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
       agent_unavailable_text: agentUnavailableText,
       require_email_upfront: requireEmailUpfront,
       icon_variant: iconVariant,
+      inbox_id: inboxId,
     })
       .then((res) => logger.debug('Updated widget settings:', res))
       .catch((err) => logger.error('Error updating widget settings:', err));
@@ -245,6 +260,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
 
   render() {
     const {
+      inbox,
       accountId,
       color,
       title,
@@ -264,9 +280,24 @@ class ChatWidgetSettings extends React.Component<Props, State> {
     }
 
     const customer = this.getUserMetadata();
+    const {inbox_id: inboxId = null} = this.props.match.params;
 
     return (
       <Box px={5} py={4} sx={{maxWidth: 720}}>
+        <Box mb={4}>
+          {inboxId ? (
+            <Link to={`/inboxes/${inboxId}`}>
+              <Button icon={<ArrowLeftOutlined />}>
+                Back to {inbox?.name || 'inbox'}
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/integrations">
+              <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
+            </Link>
+          )}
+        </Box>
+
         <Box mb={4}>
           <Title level={3}>Chat Widget Settings</Title>
           <Paragraph>
@@ -445,6 +476,9 @@ class ChatWidgetSettings extends React.Component<Props, State> {
           </Box>
 
           <ChatWidget
+            // inbox={inboxId}
+            // key={accountId}
+            accountId={accountId}
             title={title || 'Welcome!'}
             subtitle={subtitle}
             primaryColor={color}
@@ -455,7 +489,6 @@ class ChatWidgetSettings extends React.Component<Props, State> {
             agentUnavailableText={agentUnavailableText}
             requireEmailUpfront={requireEmailUpfront}
             newMessagePlaceholder={newMessagePlaceholder}
-            accountId={accountId}
             customer={customer}
             baseUrl={BASE_URL}
             iconVariant={iconVariant}
@@ -478,6 +511,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
 
         <CodeSnippet
           accountId={accountId}
+          inboxId={inboxId}
           title={title}
           subtitle={subtitle}
           color={color}
@@ -515,22 +549,25 @@ enum Languages {
   REACT = 'REACT',
 }
 
-const CodeSnippet: FunctionComponent<Pick<
-  State,
-  | 'accountId'
-  | 'title'
-  | 'subtitle'
-  | 'color'
-  | 'greeting'
-  | 'awayMessage'
-  | 'newMessagePlaceholder'
-  | 'showAgentAvailability'
-  | 'agentAvailableText'
-  | 'agentUnavailableText'
-  | 'requireEmailUpfront'
-  | 'iconVariant'
->> = ({
+type CodeSnippetProps = {
+  accountId: string | null;
+  inboxId: string | null;
+  title: string;
+  subtitle: string;
+  color: string;
+  greeting?: string;
+  awayMessage?: string;
+  newMessagePlaceholder?: string;
+  showAgentAvailability: boolean;
+  agentAvailableText?: string;
+  agentUnavailableText?: string;
+  requireEmailUpfront: boolean;
+  iconVariant: WidgetIconVariant;
+};
+
+const CodeSnippet: FunctionComponent<CodeSnippetProps> = ({
   accountId,
+  inboxId,
   title,
   subtitle,
   color,
@@ -564,7 +601,8 @@ const CodeSnippet: FunctionComponent<Pick<
 <script>
 window.Papercups = {
   config: {
-    accountId: "${accountId}",
+    token: "${accountId}",
+    inbox: "${inboxId}",
     title: "${title}",
     subtitle: "${subtitle}",
     primaryColor: "${color}",
@@ -638,7 +676,8 @@ const ExamplePage = () => {
         if you would like it to render on every page
       */}
       <ChatWidget
-        accountId="${accountId}"
+        token="${accountId}"
+        inbox="${inboxId}"
         title="${title}"
         subtitle="${subtitle}"
         primaryColor="${color}"
