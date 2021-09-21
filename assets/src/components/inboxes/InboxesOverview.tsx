@@ -6,6 +6,7 @@ import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import {Inbox} from '../../types';
 import logger from '../../logger';
+import {NewInboxModalButton} from './NewInboxModal';
 
 const InboxesTable = ({
   loading,
@@ -109,6 +110,14 @@ class InboxesOverview extends React.Component<Props, State> {
       <Container>
         <Flex sx={{justifyContent: 'space-between', alignItems: 'center'}}>
           <Title level={3}>Inboxes</Title>
+
+          <NewInboxModalButton
+            type="primary"
+            icon={<PlusOutlined />}
+            onSuccess={this.handleNewInboxCreated}
+          >
+            New inbox
+          </NewInboxModalButton>
         </Flex>
 
         <Box mb={4}>
