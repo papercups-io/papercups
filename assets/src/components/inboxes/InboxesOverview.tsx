@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Badge, Button, Container, Paragraph, Table, Title} from '../common';
+import {Button, Container, Paragraph, Table, Title} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import {Inbox} from '../../types';

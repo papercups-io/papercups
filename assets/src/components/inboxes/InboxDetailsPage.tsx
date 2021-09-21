@@ -3,15 +3,7 @@ import {RouteComponentProps} from 'react-router';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 
-import {
-  Button,
-  Card,
-  Container,
-  Divider,
-  Paragraph,
-  Text,
-  Title,
-} from '../common';
+import {Button, Card, Container, Divider, Text, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';

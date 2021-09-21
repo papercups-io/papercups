@@ -4,7 +4,6 @@ import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 
 import {colors, Button, Table, Tag, Text, Title} from '../common';
-import Spinner from '../Spinner';
 import * as API from '../../api';
 import logger from '../../logger';
 import {IntegrationType} from '../integrations/support';
