@@ -3,7 +3,16 @@ import {RouteComponentProps} from 'react-router';
 import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 
-import {Button, Card, Container, Divider, Text, Title} from '../common';
+import {
+  Button,
+  Card,
+  colors,
+  Container,
+  Divider,
+  Tag,
+  Text,
+  Title,
+} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
 import logger from '../../logger';
@@ -12,6 +21,7 @@ import {Inbox} from '../../types';
 import {formatServerError} from '../../utils';
 import InboxIntegrations from './InboxIntegrations';
 import InboxForwardingAddresses from './InboxForwardingAddresses';
+import MailOutlined from '@ant-design/icons/MailOutlined';
 
 type Props = RouteComponentProps<{inbox_id: string}>;
 type State = {
@@ -62,7 +72,7 @@ class InboxDetailsPage extends React.Component<Props, State> {
       return null;
     }
 
-    const {name, description} = inbox;
+    const {id: inboxId, name, description, is_primary: isPrimary} = inbox;
 
     return (
       <Container sx={{maxWidth: 960}}>
@@ -74,9 +84,26 @@ class InboxDetailsPage extends React.Component<Props, State> {
 
         <Box mb={4}>
           <Card sx={{p: 3}}>
-            <Title level={3}>{name}</Title>
+            <Flex sx={{alignItems: 'center'}} mb={2}>
+              <Title level={3} style={{margin: 0}}>
+                {name}
+              </Title>
+              {isPrimary && (
+                <Box mx={3}>
+                  <Tag color={colors.primary}>Primary</Tag>
+                </Box>
+              )}
+            </Flex>
 
-            <Text>{description || 'No description.'}</Text>
+            <Flex
+              sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
+            >
+              <Text>{description || 'No description.'}</Text>
+
+              <Link to={`/inboxes/${inboxId}/conversations`}>
+                <Button icon={<MailOutlined />}>View conversations</Button>
+              </Link>
+            </Flex>
           </Card>
         </Box>
 

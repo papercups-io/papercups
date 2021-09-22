@@ -9,6 +9,7 @@ import * as API from '../../api';
 import {Account, Inbox, User, WidgetIconVariant} from '../../types';
 import {
   colors,
+  Alert,
   Button,
   Paragraph,
   Popover,
@@ -283,7 +284,7 @@ class ChatWidgetSettings extends React.Component<Props, State> {
     const {inbox_id: inboxId} = this.props.match.params;
 
     return (
-      <Box px={5} py={4} sx={{maxWidth: 720}}>
+      <Box px={5} py={4} sx={{maxWidth: 800}}>
         <Box mb={4}>
           {inboxId ? (
             <Link to={`/inboxes/${inboxId}`}>
@@ -647,6 +648,20 @@ window.Papercups = {
       <Tabs.TabPane tab="React" tabKey={Languages.REACT}>
         <Box mb={4}>
           <Title level={4}>Usage in React</Title>
+          <Box mb={3}>
+            <Alert
+              message={
+                <Text>
+                  If you've already installed a previous version of{' '}
+                  <Text code>@papercups-io/chat-widget</Text>, please upgrade to
+                  version <Text code>^1.2.0</Text> in order to receive inbox
+                  support.
+                </Text>
+              }
+              type="warning"
+              showIcon
+            />
+          </Box>
           <Paragraph>
             <Text>
               First, install the <Text code>@papercups-io/chat-widget</Text>{' '}
@@ -682,6 +697,10 @@ const ExamplePage = () => {
         if you would like it to render on every page
       */}
       <ChatWidget
+        // \`accountId\` is used instead of \`token\` in older versions
+        // of the @papercups-io/chat-widget package (before v1.2.x).
+        // You can delete this line if you are on the latest version.
+        // accountId="${accountId}"
         ${[
           `token="${accountId}"`,
           inboxId && `inbox="${inboxId}"`,

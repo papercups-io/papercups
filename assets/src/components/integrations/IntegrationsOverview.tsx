@@ -42,7 +42,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchSlackIntegration(),
         this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
-        this.fetchGoogleSheetsIntegration(),
+        // this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchGithubIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
@@ -73,7 +73,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchSlackIntegration(),
         this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
-        this.fetchGoogleSheetsIntegration(),
+        // this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchGithubIntegration(),
         this.fetchMicrosoftTeamsIntegration(),
@@ -384,7 +384,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
             </Text>
           </Paragraph>
 
-          <Box mt={3} mb={4}>
+          <Box my={3}>
             <IntegrationsTable
               loading={refreshing}
               integrations={integrations}
