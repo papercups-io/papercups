@@ -32,9 +32,14 @@ defmodule ChatApiWeb.GmailController do
 
   @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def send(conn, params) do
-    with %{account_id: account_id, email: email, id: user_id} <- conn.assigns.current_user,
-         %{refresh_token: refresh_token} <-
-           Google.get_support_gmail_authorization(account_id, user_id) do
+    with %{account_id: account_id, email: email} <- conn.assigns.current_user,
+         %GoogleAuthorization{refresh_token: refresh_token} <-
+           Google.get_authorization_by_account(account_id, %{
+             client: "gmail",
+             type: "support",
+             inbox_id:
+               params["inbox_id"] || ChatApi.Inboxes.get_account_primary_inbox_id(account_id)
+           }) do
       Google.Gmail.send_message(refresh_token, %{
         to: params["to"] || params["recipient"],
         from: params["from"] || email,
