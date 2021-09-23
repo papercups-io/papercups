@@ -153,7 +153,8 @@ defmodule ChatApi.Repo.Migrations.CreateInboxes do
         Inboxes.create_inbox(%{
           account_id: account.id,
           name: "Primary Inbox",
-          description: "Primary Papercups inbox for #{account.company_name}",
+          description:
+            "This is the primary Papercups inbox for #{account.company_name}. All messages will flow into here by default.",
           is_primary: true,
           is_private: false
         })

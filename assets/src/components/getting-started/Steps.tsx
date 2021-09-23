@@ -2,7 +2,7 @@ import React from 'react';
 import {Box} from 'theme-ui';
 import {Link} from 'react-router-dom';
 
-import type {OnboardingStatus} from '../../types';
+import type {Inbox, OnboardingStatus} from '../../types';
 import {colors, Button, Divider, Text} from '../common';
 import {CheckOutlined} from '../icons';
 
@@ -14,11 +14,15 @@ type StepMetadata = {
 };
 
 type StepsProps = {
-  onboardingStatus: Partial<OnboardingStatus>;
+  onboardingStatus: OnboardingStatus;
+  inbox: Inbox;
 };
 
-const Steps = ({onboardingStatus}: StepsProps) => {
-  const stepsMetadata: Array<StepMetadata> = getStepsMetadata(onboardingStatus);
+const Steps = ({onboardingStatus, inbox}: StepsProps) => {
+  const stepsMetadata: Array<StepMetadata> = getStepsMetadata(
+    onboardingStatus,
+    inbox
+  );
 
   return (
     <>
@@ -30,12 +34,15 @@ const Steps = ({onboardingStatus}: StepsProps) => {
 };
 
 const getStepsMetadata = (
-  onboardingStatus: Partial<OnboardingStatus>
+  onboardingStatus: OnboardingStatus,
+  inbox: Inbox
 ): Array<StepMetadata> => {
+  const {id: inboxId} = inbox;
+
   return [
     {
       completed: onboardingStatus.is_chat_widget_installed,
-      ctaHref: '/settings/chat-widget',
+      ctaHref: `/inboxes/${inboxId}/chat-widget`,
       ctaText: 'Configure chat widget',
       text: (
         <>
@@ -46,7 +53,7 @@ const getStepsMetadata = (
     },
     {
       completed: onboardingStatus.has_email_forwarding,
-      ctaHref: '/settings/email-forwarding',
+      ctaHref: `/inboxes/${inboxId}/email-forwarding`,
       ctaText: 'Set up email forwarding',
       text: (
         <>

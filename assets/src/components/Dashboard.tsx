@@ -93,6 +93,7 @@ import CannedResponsesOverview from './canned-responses/CannedResponsesOverview'
 import ForwardingAddressSettings from './settings/ForwardingAddressSettings';
 import InboxesDashboard from './inboxes/InboxesDashboard';
 import InboxDetailsPage from './inboxes/InboxDetailsPage';
+import InboxEmailForwardingPage from './inboxes/InboxEmailForwardingPage';
 import InboxesOverview from './inboxes/InboxesOverview';
 
 const {
@@ -405,12 +406,6 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="inboxes" title="Inboxes">
                   <Link to="/inboxes">Inboxes</Link>
                 </Menu.Item>
-                <Menu.Item key="chat-widget">
-                  <Link to="/settings/chat-widget">Chat widget</Link>
-                </Menu.Item>
-                <Menu.Item key="email-forwarding">
-                  <Link to="/settings/email-forwarding">Email forwarding</Link>
-                </Menu.Item>
                 <Menu.Item key="saved-replies">
                   <Link to="/settings/saved-replies">Saved replies</Link>
                 </Menu.Item>
@@ -599,6 +594,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route
             path="/inboxes/:inbox_id/integrations/github"
             component={GithubIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/email-forwarding"
+            component={InboxEmailForwardingPage}
           />
           <Route path="/inboxes/:inbox_id" component={InboxDetailsPage} />
           <Route path="/inboxes" component={InboxesOverview} />

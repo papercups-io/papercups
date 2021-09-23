@@ -23,23 +23,6 @@ const EmptyMessagesPlaceholder = () => {
   );
 };
 
-const GettingStartedRedirect = () => {
-  return (
-    <Box my={4}>
-      <Result
-        icon={<SmileOutlined />}
-        title="No messages"
-        subTitle="It looks like your widget hasn't been set up yet!"
-        extra={
-          <Link to="/getting-started">
-            <Button type="primary">Get Started</Button>
-          </Link>
-        }
-      />
-    </Box>
-  );
-};
-
 const ConversationMessages = ({
   conversationId,
   messages,
@@ -47,7 +30,6 @@ const ConversationMessages = ({
   currentUser,
   loading,
   isClosing,
-  showGetStarted,
   isLoadingPreviousConversation,
   hasPreviousConversations,
   history = [],
@@ -62,7 +44,6 @@ const ConversationMessages = ({
   currentUser?: User | null;
   loading?: boolean;
   isClosing?: boolean;
-  showGetStarted?: boolean;
   isLoadingPreviousConversation?: boolean;
   hasPreviousConversations?: boolean;
   history?: Array<Conversation>;
@@ -236,8 +217,6 @@ const ConversationMessages = ({
                 />
               );
             })
-          ) : showGetStarted ? (
-            <GettingStartedRedirect />
           ) : (
             <EmptyMessagesPlaceholder />
           )}

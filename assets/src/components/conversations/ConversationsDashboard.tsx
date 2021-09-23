@@ -67,7 +67,24 @@ const GettingStartedRedirect = () => {
   );
 };
 
-// TODO: DRY up with InboxConversations component
+const EmptyState = ({
+  loading,
+  isNewUser,
+}: {
+  loading?: boolean;
+  isNewUser?: boolean;
+}) => {
+  if (loading) {
+    return null;
+  }
+
+  if (isNewUser) {
+    return <GettingStartedRedirect />;
+  } else {
+    return <EmptyMessagesPlaceholder />;
+  }
+};
+
 export const ConversationsDashboard = ({
   title,
   account,
@@ -592,10 +609,8 @@ export const ConversationsDashboard = ({
             setScrollRef={setScrollRef}
             onSendMessage={handleSendNewMessage}
           />
-        ) : isNewUser ? (
-          <GettingStartedRedirect />
         ) : (
-          <EmptyMessagesPlaceholder />
+          <EmptyState loading={status === 'loading'} isNewUser={isNewUser} />
         )}
       </Layout>
     </Layout>

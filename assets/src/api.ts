@@ -2061,7 +2061,9 @@ export const sendAdminNotification = async (
     .then((res) => res.body.data);
 };
 
-export const fetchInboxes = async (token = getAccessToken()) => {
+export const fetchInboxes = async (
+  token = getAccessToken()
+): Promise<Array<Inbox>> => {
   if (!token) {
     throw new Error('Invalid token!');
   }
@@ -2072,7 +2074,10 @@ export const fetchInboxes = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
-export const fetchInbox = async (id: string, token = getAccessToken()) => {
+export const fetchInbox = async (
+  id: string,
+  token = getAccessToken()
+): Promise<Inbox> => {
   if (!token) {
     throw new Error('Invalid token!');
   }

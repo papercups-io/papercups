@@ -108,8 +108,6 @@ const SelectedConversationContainer = ({
         isClosing={isClosing}
         isLoadingPreviousConversation={isLoadingPreviousConversation}
         hasPreviousConversations={hasPreviousConversations}
-        // TODO: move "Getting started" UI out of this component
-        showGetStarted={false}
         setScrollRef={setScrollRef}
         onLoadPreviousConversation={fetchPreviousConversation}
       />
