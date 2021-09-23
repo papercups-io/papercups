@@ -78,6 +78,7 @@ const NewInboxModal = ({
           <Input
             id="inbox_name"
             type="text"
+            autoFocus
             value={name}
             onChange={handleChangeName}
           />
