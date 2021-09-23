@@ -514,7 +514,7 @@ export const ConversationsDashboard = ({
               {title}
             </Title>
           </Box>
-          <Box mt={3} px="1px">
+          <Box px="1px">
             <Input.Search
               className="ConversationsSearchInput"
               placeholder="Search messages..."
