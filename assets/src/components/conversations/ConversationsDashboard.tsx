@@ -210,30 +210,12 @@ export const ConversationsDashboard = ({
   }
 
   function handleNewMessage(message: Message) {
-    const {conversation_id: conversationId, customer_id: customerId} = message;
+    const {conversation_id: conversationId} = message;
 
     if (isWindowHidden(document || window.document)) {
       throttledNotificationSound();
     } else if (selectedConversationId === conversationId) {
       handleConversationSeen(conversationId);
-    } else if (!!customerId) {
-      const conversation = getConversationById(conversationId);
-      const isClosed = conversation?.status === 'closed';
-
-      if (isClosed) {
-        return;
-      }
-
-      const inboxId = conversation?.inbox_id ?? null;
-      const url = inboxId
-        ? `/inboxes/${inboxId}/conversations/${conversationId}`
-        : `/conversations/all/${conversationId}`;
-
-      notification.open({
-        key: conversationId,
-        message: 'New message',
-        description: <a href={url}>{message.body}</a>,
-      });
     }
   }
 

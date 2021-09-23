@@ -3,6 +3,7 @@ import React, {useContext} from 'react';
 import * as API from '../../api';
 import {Conversation, Message} from '../../types';
 import {mapConversationsById, mapMessagesByConversationId} from './support';
+import {notification} from '../common';
 import logger from '../../logger';
 
 const defaultFilterCallback = () => true;
@@ -381,7 +382,32 @@ export class ConversationsProvider extends React.Component<Props, State> {
       },
     });
 
+    this.handleNewMessageNotification(message);
     this.updateUnreadNotifications();
+  };
+
+  handleNewMessageNotification = (message: Message) => {
+    const {conversation_id: conversationId, customer_id: customerId} = message;
+    const conversation = this.getConversationById(conversationId);
+    const isClosed = conversation?.status === 'closed';
+    const pathname = window.location.pathname || '';
+    const isViewing =
+      pathname.includes('conversations') && pathname.includes(conversationId);
+
+    if (isViewing || !customerId || isClosed) {
+      return;
+    }
+
+    const inboxId = conversation?.inbox_id ?? null;
+    const url = inboxId
+      ? `/inboxes/${inboxId}/conversations/${conversationId}`
+      : `/conversations/all/${conversationId}`;
+
+    notification.open({
+      key: conversationId,
+      message: 'New message',
+      description: <a href={url}>{message.body}</a>,
+    });
   };
 
   updateUnreadNotifications = async () => {

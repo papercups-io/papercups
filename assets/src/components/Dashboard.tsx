@@ -116,7 +116,7 @@ const getSectionKey = (pathname: string) => {
     return ['customers', 'notes'];
   } else if (pathname.startsWith('/functions')) {
     return ['developers', 'functions'];
-  } else if (pathname.startsWith('/channels')) {
+  } else if (pathname.startsWith('/inboxes')) {
     return ['conversations', ...pathname.split('/').slice(2)];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
@@ -255,6 +255,8 @@ const Dashboard = (props: RouteComponentProps) => {
   const [section, key] = getSectionKey(pathname);
   const totalNumUnread = unread.conversations.open || 0;
   const shouldDisplayBilling = hasValidStripeKey();
+  const shouldHighlightInbox =
+    totalNumUnread > 0 && section !== 'conversations';
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
 
@@ -309,11 +311,12 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Link to="/getting-started">Getting started</Link>
               </Menu.Item>
               <Menu.Item
+                danger={shouldHighlightInbox}
                 key="conversations"
                 icon={<MailOutlined />}
-                title="Inbox"
+                title={`Inbox (${totalNumUnread})`}
               >
-                <Link to="/conversations/all">Inbox</Link>
+                <Link to="/conversations/all">Inbox ({totalNumUnread})</Link>
               </Menu.Item>
 
               <Menu.Item
