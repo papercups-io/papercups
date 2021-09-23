@@ -1,11 +1,12 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router';
+import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 
 import * as API from '../../api';
 import {Account, Conversation, Message, User} from '../../types';
 import {
   colors,
+  Button,
   Input,
   Layout,
   notification,
@@ -38,6 +39,34 @@ import {useAuth} from '../auth/AuthProvider';
 
 const defaultConversationFilter = () => true;
 
+const EmptyMessagesPlaceholder = () => {
+  return (
+    <Box my={4}>
+      <Result
+        status="success"
+        title="No messages"
+        subTitle="Nothing to show here! Take a well-earned break 😊"
+      />
+    </Box>
+  );
+};
+
+const GettingStartedRedirect = () => {
+  return (
+    <Box my={4}>
+      <Result
+        title="No messages"
+        subTitle="It looks like no channels have been set up yet!"
+        extra={
+          <Link to="/getting-started">
+            <Button type="primary">Get started</Button>
+          </Link>
+        }
+      />
+    </Box>
+  );
+};
+
 // TODO: DRY up with InboxConversations component
 export const ConversationsDashboard = ({
   title,
@@ -61,6 +90,7 @@ export const ConversationsDashboard = ({
     'loading' | 'searching' | 'success' | 'error'
   >('loading');
   const [error, setErrorMessage] = React.useState<string | null>(null);
+  const [isNewUser, setNewUser] = React.useState<boolean>(false);
   // TODO: maybe we don't even need to track these here?
   const [conversationIds, setConversationIds] = React.useState<Array<string>>(
     []
@@ -136,8 +166,12 @@ export const ConversationsDashboard = ({
   React.useEffect(() => {
     setStatus('loading');
 
-    Promise.all([fetchFilteredConversations(), fetchInitialConversation()])
-      .then(([result, initialSelectedConversation]) => {
+    Promise.all([
+      fetchFilteredConversations(),
+      fetchInitialConversation(),
+      checkForNewUser(),
+    ])
+      .then(([result, initialSelectedConversation, shouldMarkNewUser]) => {
         const {data: conversations, ...pagination} = result;
         // TODO: clean this up
         const conversationIds = [
@@ -156,6 +190,7 @@ export const ConversationsDashboard = ({
         setConversationIds(conversationIds);
         setPaginationOptions(pagination);
         handleSelectConversation(selected || null);
+        setNewUser(shouldMarkNewUser);
       })
       .then(() => setStatus('success'))
       .catch((error) => {
@@ -186,6 +221,12 @@ export const ConversationsDashboard = ({
   function setScrollRef(el: any) {
     scrollToEl.current = el || null;
     scrollToEl.current?.scrollIntoView();
+  }
+
+  async function checkForNewUser() {
+    const {count} = await API.countMessages();
+
+    return count === 0;
   }
 
   async function fetchDefaultConversations() {
@@ -551,7 +592,11 @@ export const ConversationsDashboard = ({
             setScrollRef={setScrollRef}
             onSendMessage={handleSendNewMessage}
           />
-        ) : null}
+        ) : isNewUser ? (
+          <GettingStartedRedirect />
+        ) : (
+          <EmptyMessagesPlaceholder />
+        )}
       </Layout>
     </Layout>
   );
