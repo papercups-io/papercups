@@ -1,8 +1,7 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {colors, Button, Divider, Result} from '../common';
-import {SmileOutlined, UpOutlined} from '../icons';
+import {UpOutlined} from '../icons';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
 import {Account, Conversation, Message, User} from '../../types';
