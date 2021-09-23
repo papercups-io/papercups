@@ -101,6 +101,7 @@ defmodule ChatApi.Inboxes do
   def list_inbox_members(inbox_id) do
     InboxMember
     |> where(inbox_id: ^inbox_id)
+    |> preload([:user, :inbox])
     |> Repo.all()
   end
 
@@ -118,6 +119,15 @@ defmodule ChatApi.Inboxes do
 
   @spec get_inbox_member!(binary()) :: InboxMember.t()
   def get_inbox_member!(id), do: Repo.get!(InboxMember, id)
+
+  @spec get_inbox_member(binary(), integer()) :: InboxMember.t() | nil
+  def get_inbox_member(inbox_id, user_id) do
+    InboxMember
+    |> where(inbox_id: ^inbox_id)
+    |> where(user_id: ^user_id)
+    |> preload([:user, :inbox])
+    |> Repo.one()
+  end
 
   @spec create_inbox_member(map()) ::
           {:ok, InboxMember.t()} | {:error, Ecto.Changeset.t()}
