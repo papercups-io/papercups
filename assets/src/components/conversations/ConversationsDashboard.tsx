@@ -4,7 +4,15 @@ import {Box, Flex} from 'theme-ui';
 
 import * as API from '../../api';
 import {Account, Conversation, Message, User} from '../../types';
-import {colors, Layout, notification, Result, Sider, Title} from '../common';
+import {
+  colors,
+  Input,
+  Layout,
+  notification,
+  Result,
+  Sider,
+  Title,
+} from '../common';
 import {
   CONVERSATIONS_DASHBOARD_OFFSET,
   CONVERSATIONS_DASHBOARD_SIDER_OFFSET,
@@ -18,49 +26,17 @@ import ConversationsPreviewList from './ConversationsPreviewList';
 import SelectedConversationContainer from './SelectedConversationContainer';
 import ConversationHeader from './ConversationHeader';
 import {useConversations} from './ConversationsProvider';
-import {isUnreadConversation, throttledNotificationSound} from './support';
+import {
+  getNextConversationId,
+  getPreviousConversationId,
+  getNextSelectedConversationId,
+  isUnreadConversation,
+  throttledNotificationSound,
+} from './support';
 import {useNotifications} from './NotificationsProvider';
 import {useAuth} from '../auth/AuthProvider';
 
 const defaultConversationFilter = () => true;
-
-const getNextSelectedConversationId = (
-  selectedConversationId: string | null,
-  validConversationIds: Array<string>
-) => {
-  if (!validConversationIds || !validConversationIds.length) {
-    return null;
-  }
-
-  const [first] = validConversationIds;
-
-  if (!selectedConversationId) {
-    return first;
-  }
-
-  const index = validConversationIds.indexOf(selectedConversationId);
-
-  if (index === -1) {
-    return first;
-  }
-
-  const min = 0;
-  const max = validConversationIds.length - 1;
-  const next = validConversationIds[Math.min(index + 1, max)];
-  const previous = validConversationIds[Math.max(index - 1, min)];
-
-  if (index === min) {
-    return next;
-  } else if (index === max) {
-    return previous;
-  } else {
-    const [selected = null] = [next, previous, first].filter(
-      (opt) => !!opt && opt !== selectedConversationId
-    );
-
-    return selected;
-  }
-};
 
 // TODO: DRY up with InboxConversations component
 export const ConversationsDashboard = ({
@@ -81,9 +57,9 @@ export const ConversationsDashboard = ({
   isValidConversation: (conversation: Conversation) => boolean;
 }) => {
   const scrollToEl = React.useRef<any>(null);
-  const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>(
-    'loading'
-  );
+  const [status, setStatus] = React.useState<
+    'loading' | 'searching' | 'success' | 'error'
+  >('loading');
   const [error, setErrorMessage] = React.useState<string | null>(null);
   // TODO: maybe we don't even need to track these here?
   const [conversationIds, setConversationIds] = React.useState<Array<string>>(
@@ -97,12 +73,10 @@ export const ConversationsDashboard = ({
   >(initialSelectedConversationId);
   const [closing, setClosingConversations] = React.useState<Array<string>>([]);
 
-  // TODO: set up keyboard shortcuts as well
-
   const {
     fetchConversations,
     fetchConversationById,
-    getValidConversations,
+    getValidConversationsByIds,
     getConversationById,
     getMessagesByConversationId,
     updateConversationById,
@@ -144,33 +118,12 @@ export const ConversationsDashboard = ({
     onConversationCreated,
   ]);
 
-  function handleNewMessage(message: Message) {
-    const {conversation_id: conversationId} = message;
-
-    if (isWindowHidden(document || window.document)) {
-      console.log('Playing notification sound!', message);
-      throttledNotificationSound();
-    } else if (selectedConversationId === conversationId) {
-      console.log('Marking as seen!', message);
-      handleConversationSeen(conversationId);
-    }
-  }
-
-  function handleNewConversation(conversationId: string) {
-    // TODO: is there anything we need to do on new conversation events?
-  }
-
-  function fetchInitialConversation() {
-    if (!initialSelectedConversationId) {
-      return null;
-    }
-
-    return fetchConversationById(initialSelectedConversationId);
-  }
-
   const {users = []} = account;
   // TODO: is there a more efficient way to do this?
-  const conversations = getValidConversations(isValidConversation);
+  const conversations = getValidConversationsByIds(
+    conversationIds,
+    isValidConversation
+  );
   const hasMoreConversations =
     !!pagination.next &&
     !!pagination.total &&
@@ -214,6 +167,18 @@ export const ConversationsDashboard = ({
     // eslint-disable-next-line
   }, [title]);
 
+  // TODO: refactor into its own hook?
+  const handleKeyDown = React.useCallback(handleKeyboardShortcuts, [
+    selectedConversationId,
+    conversations.length,
+  ]);
+
+  React.useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
   React.useEffect(() => {
     scrollToEl.current?.scrollIntoView();
   }, [title, selectedConversationId, messages.length]);
@@ -221,6 +186,125 @@ export const ConversationsDashboard = ({
   function setScrollRef(el: any) {
     scrollToEl.current = el || null;
     scrollToEl.current?.scrollIntoView();
+  }
+
+  async function fetchDefaultConversations() {
+    setStatus('loading');
+
+    return fetchFilteredConversations()
+      .then((result) => {
+        const {data: conversations, ...pagination} = result;
+        const conversationIds = [...new Set(conversations.map((c) => c.id))];
+        const [first] = conversationIds;
+        // TODO: should we handle conversation IDs and pagination options here,
+        // or in the ConversationsProvider? (Might need to keep pagination here)
+        setConversationIds(conversationIds);
+        setPaginationOptions(pagination);
+        handleSelectConversation(first || null);
+      })
+      .then(() => setStatus('success'))
+      .catch((error) => {
+        setStatus('error');
+        setErrorMessage(formatServerError(error));
+      });
+  }
+
+  function handleNewMessage(message: Message) {
+    const {conversation_id: conversationId, customer_id: customerId} = message;
+
+    if (isWindowHidden(document || window.document)) {
+      throttledNotificationSound();
+    } else if (selectedConversationId === conversationId) {
+      handleConversationSeen(conversationId);
+    } else if (!!customerId) {
+      const conversation = getConversationById(conversationId);
+      const isClosed = conversation?.status === 'closed';
+
+      if (isClosed) {
+        return;
+      }
+
+      const inboxId = conversation?.inbox_id ?? null;
+      const url = inboxId
+        ? `/inboxes/${inboxId}/conversations/${conversationId}`
+        : `/conversations/all/${conversationId}`;
+
+      notification.open({
+        key: conversationId,
+        message: 'New message',
+        description: <a href={url}>{message.body}</a>,
+      });
+    }
+  }
+
+  function handleNewConversation(conversationId: string) {
+    // TODO: is there anything we need to do on new conversation events?
+  }
+
+  function fetchInitialConversation() {
+    if (!initialSelectedConversationId) {
+      return null;
+    }
+
+    return fetchConversationById(initialSelectedConversationId);
+  }
+
+  function handleKeyboardShortcuts(e: KeyboardEvent) {
+    // TODO: should we use something other than metaKey/cmd?
+    const {metaKey, key} = e;
+
+    if (!metaKey) {
+      return null;
+    }
+
+    const validConversationIds = conversations.map((c) => c.id);
+
+    // TODO: clean up a bit
+    switch (key) {
+      case 'ArrowDown':
+        e.preventDefault();
+
+        return handleSelectConversation(
+          getNextConversationId(selectedConversationId, validConversationIds)
+        );
+      case 'ArrowUp':
+        e.preventDefault();
+
+        return handleSelectConversation(
+          getPreviousConversationId(
+            selectedConversationId,
+            validConversationIds
+          )
+        );
+      case 'd':
+        e.preventDefault();
+
+        return (
+          selectedConversationId &&
+          handleCloseConversation(selectedConversationId)
+        );
+      case 'p':
+        e.preventDefault();
+
+        return (
+          selectedConversationId && handleMarkPriority(selectedConversationId)
+        );
+      case 'u':
+        e.preventDefault();
+
+        return (
+          selectedConversationId && handleRemovePriority(selectedConversationId)
+        );
+      case 'o':
+        e.preventDefault();
+
+        return (
+          selectedConversationId &&
+          handleReopenConversation(selectedConversationId)
+        );
+      default:
+        return null;
+    }
   }
 
   function fetchFilteredConversations(params = {}) {
@@ -244,7 +328,10 @@ export const ConversationsDashboard = ({
   }
 
   async function handleLoadMoreConversations() {
-    const {data = [], ...nextPaginationOptions} = await fetchConversations({
+    const {
+      data = [],
+      ...nextPaginationOptions
+    } = await fetchFilteredConversations({
       after: pagination.next,
     });
 
@@ -274,6 +361,12 @@ export const ConversationsDashboard = ({
   }
 
   async function handleCloseConversation(conversationId: string) {
+    const conversation = getConversationById(conversationId);
+
+    if (!conversation || conversation.status === 'closed') {
+      return;
+    }
+
     setClosingConversations([...closing, conversationId]);
 
     const validConversationIds = conversations.map((c) => c.id);
@@ -282,22 +375,34 @@ export const ConversationsDashboard = ({
       validConversationIds
     );
 
+    // Optimistic update
+    handleSelectConversation(nextSelectedConversationId);
+
     // TODO: figure out the best way to handle this when closing multiple
     // conversations in a row very quickly
     await sleep(400);
     await updateConversationById(conversationId, {status: 'closed'});
 
-    handleSelectConversation(nextSelectedConversationId);
     setConversationIds(validConversationIds);
     setClosingConversations(closing.filter((id) => id !== conversationId));
   }
 
   async function handleReopenConversation(conversationId: string) {
+    const conversation = getConversationById(conversationId);
+
+    if (!conversation || conversation.status === 'open') {
+      return;
+    }
+
     const validConversationIds = conversations.map((c) => c.id);
     const nextSelectedConversationId = getNextSelectedConversationId(
       selectedConversationId,
       validConversationIds
     );
+
+    // Optimistic update
+    handleSelectConversation(nextSelectedConversationId);
+    setConversationIds(validConversationIds);
 
     await updateConversationById(conversationId, {status: 'open'});
 
@@ -311,11 +416,6 @@ export const ConversationsDashboard = ({
         </Box>
       ),
     });
-
-    await sleep(400);
-
-    handleSelectConversation(nextSelectedConversationId);
-    setConversationIds(validConversationIds);
   }
 
   async function handleDeleteConversation(conversationId: string) {
@@ -355,6 +455,27 @@ export const ConversationsDashboard = ({
     });
   }
 
+  // TODO: test this out more!
+  async function handleSearchConversations(query: string) {
+    if (!query || !query.trim().length) {
+      return await fetchDefaultConversations();
+    }
+
+    setStatus('searching');
+
+    const {data = [], ...pagination} = await fetchFilteredConversations({
+      q: query,
+    });
+    const conversationIds = [...new Set(data.map((c) => c.id))];
+    const [first] = conversationIds;
+
+    setConversationIds(conversationIds);
+    setPaginationOptions(pagination);
+    handleSelectConversation(first || null);
+
+    setStatus('success');
+  }
+
   if (error) {
     return (
       <Flex
@@ -392,6 +513,17 @@ export const ConversationsDashboard = ({
             <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
               {title}
             </Title>
+          </Box>
+          <Box mt={3} px="1px">
+            <Input.Search
+              className="ConversationsSearchInput"
+              placeholder="Search messages..."
+              disabled={status === 'loading'}
+              loading={status === 'searching'}
+              allowClear
+              addonAfter={null}
+              onSearch={handleSearchConversations}
+            />
           </Box>
         </Box>
 

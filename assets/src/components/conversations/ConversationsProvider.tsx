@@ -28,6 +28,10 @@ export const ConversationsContext = React.createContext<{
   getValidConversations: (
     filter?: (conversation: Conversation) => boolean
   ) => Array<Conversation>;
+  getValidConversationsByIds: (
+    conversationIds: Array<string>,
+    filter?: (conversation: Conversation) => boolean
+  ) => Array<Conversation>;
   fetchConversations: (
     query?: Record<string, any>
   ) => Promise<API.ConversationsListResponse>;
@@ -36,6 +40,14 @@ export const ConversationsContext = React.createContext<{
     id: string,
     updates: Record<any, any>
   ) => Promise<Conversation | null>;
+  updateConversationAssignee: (
+    id: string,
+    userId: string | null
+  ) => Promise<Conversation | null>;
+  markConversationPriority: (id: string) => Promise<Conversation | null>;
+  removeConversationPriority: (id: string) => Promise<Conversation | null>;
+  closeConversation: (id: string) => Promise<Conversation | null>;
+  reopenConversation: (id: string) => Promise<Conversation | null>;
   archiveConversationById: (id: string) => Promise<void>;
   getConversationById: (id: string | null) => Conversation | null;
   getMessagesByConversationId: (id: string | null) => Array<Message>;
@@ -60,6 +72,7 @@ export const ConversationsContext = React.createContext<{
     inboxes: {},
   },
   getValidConversations: () => [],
+  getValidConversationsByIds: () => [],
   fetchConversations: () =>
     Promise.resolve({
       data: [],
@@ -70,6 +83,11 @@ export const ConversationsContext = React.createContext<{
     }),
   fetchConversationById: () => Promise.resolve(null),
   updateConversationById: () => Promise.resolve(null),
+  updateConversationAssignee: () => Promise.resolve(null),
+  markConversationPriority: () => Promise.resolve(null),
+  removeConversationPriority: () => Promise.resolve(null),
+  closeConversation: () => Promise.resolve(null),
+  reopenConversation: () => Promise.resolve(null),
   archiveConversationById: () => Promise.resolve(),
   getConversationById: () => null,
   getMessagesByConversationId: () => [],
@@ -228,6 +246,23 @@ export class ConversationsProvider extends React.Component<Props, State> {
     }
   };
 
+  updateConversationAssignee = async (
+    conversationId: string,
+    userId: string | null
+  ) => this.updateConversationById(conversationId, {assignee_id: userId});
+
+  markConversationPriority = async (conversationId: string) =>
+    this.updateConversationById(conversationId, {priority: 'priority'});
+
+  removeConversationPriority = async (conversationId: string) =>
+    this.updateConversationById(conversationId, {priority: 'not_priority'});
+
+  closeConversation = async (conversationId: string) =>
+    this.updateConversationById(conversationId, {status: 'closed'});
+
+  reopenConversation = async (conversationId: string) =>
+    this.updateConversationById(conversationId, {status: 'open'});
+
   archiveConversationById = async (conversationId: string) => {
     try {
       await API.archiveConversation(conversationId);
@@ -264,28 +299,40 @@ export class ConversationsProvider extends React.Component<Props, State> {
     return {...conversation, messages};
   };
 
+  getValidConversationsByIds = (
+    conversationIds: Array<string>,
+    filter: (conversation: Conversation) => boolean = defaultFilterCallback
+  ) => {
+    return (
+      conversationIds
+        .map((id) => this.getConversationById(id))
+        .filter(
+          (conversation: Conversation | null): conversation is Conversation =>
+            !!conversation
+        )
+        .map((conversation: Conversation) => {
+          const messages = this.getMessagesByConversationId(conversation.id);
+
+          return {...conversation, messages};
+        })
+        // TODO: figure out why some conversations get created without messages
+        // .filter(({messages = []}) => messages && messages.length > 0)
+        .sort((a: Conversation, b: Conversation) => {
+          const x = a.last_activity_at || a.updated_at;
+          const y = b.last_activity_at || b.updated_at;
+
+          return +new Date(y) - +new Date(x);
+        })
+        .filter((conversation: Conversation) => filter(conversation))
+    );
+  };
+
   getValidConversations = (
     filter: (conversation: Conversation) => boolean = defaultFilterCallback
   ): Array<Conversation> => {
-    return this.state.conversationIds
-      .map((id) => this.getConversationById(id))
-      .filter(
-        (conversation: Conversation | null): conversation is Conversation =>
-          !!conversation
-      )
-      .map((conversation: Conversation) => {
-        const messages = this.getMessagesByConversationId(conversation.id);
+    const {conversationIds = []} = this.state;
 
-        return {...conversation, messages};
-      })
-      .filter(({messages = []}) => messages && messages.length > 0)
-      .sort((a: Conversation, b: Conversation) => {
-        const x = a.last_activity_at || a.updated_at;
-        const y = b.last_activity_at || b.updated_at;
-
-        return +new Date(y) - +new Date(x);
-      })
-      .filter((conversation: Conversation) => filter(conversation));
+    return this.getValidConversationsByIds(conversationIds, filter);
   };
 
   getMessagesByConversationId = (conversationId: string | null) => {
@@ -395,9 +442,15 @@ export class ConversationsProvider extends React.Component<Props, State> {
           loading,
           unread,
           getValidConversations: this.getValidConversations,
+          getValidConversationsByIds: this.getValidConversationsByIds,
           fetchConversations: this.fetchConversations,
           fetchConversationById: this.fetchConversationById,
           updateConversationById: this.updateConversationById,
+          updateConversationAssignee: this.updateConversationAssignee,
+          markConversationPriority: this.markConversationPriority,
+          removeConversationPriority: this.removeConversationPriority,
+          closeConversation: this.closeConversation,
+          reopenConversation: this.reopenConversation,
           archiveConversationById: this.archiveConversationById,
           getConversationById: this.getConversationById,
           getMessagesByConversationId: this.getMessagesByConversationId,

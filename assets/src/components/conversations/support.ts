@@ -120,3 +120,93 @@ export const throttledNotificationSound = throttle(
   10 * 1000, // throttle every 10 secs so we don't get spammed with sounds
   {trailing: false}
 );
+
+export const getNextConversationId = (
+  selectedConversationId: string | null,
+  validConversationIds: Array<string>
+) => {
+  if (!validConversationIds || !validConversationIds.length) {
+    return null;
+  }
+
+  const [first] = validConversationIds;
+
+  if (!selectedConversationId) {
+    return first;
+  }
+
+  const index = validConversationIds.indexOf(selectedConversationId);
+
+  if (index === -1) {
+    return first;
+  }
+
+  const max = validConversationIds.length - 1;
+  const next = validConversationIds[Math.min(index + 1, max)];
+
+  return next;
+};
+
+export const getPreviousConversationId = (
+  selectedConversationId: string | null,
+  validConversationIds: Array<string>
+) => {
+  if (!validConversationIds || !validConversationIds.length) {
+    return null;
+  }
+
+  const [first] = validConversationIds;
+
+  if (!selectedConversationId) {
+    return first;
+  }
+
+  const index = validConversationIds.indexOf(selectedConversationId);
+
+  if (index === -1) {
+    return first;
+  }
+
+  const min = 0;
+  const previous = validConversationIds[Math.max(index - 1, min)];
+
+  return previous;
+};
+
+export const getNextSelectedConversationId = (
+  selectedConversationId: string | null,
+  validConversationIds: Array<string>
+) => {
+  if (!validConversationIds || !validConversationIds.length) {
+    return null;
+  }
+
+  const [first] = validConversationIds;
+
+  if (!selectedConversationId) {
+    return first;
+  }
+
+  const index = validConversationIds.indexOf(selectedConversationId);
+
+  if (index === -1) {
+    return first;
+  }
+
+  const min = 0;
+  const max = validConversationIds.length - 1;
+  const next = validConversationIds[Math.min(index + 1, max)];
+  const previous = validConversationIds[Math.max(index - 1, min)];
+
+  if (index === min) {
+    return next;
+  } else if (index === max) {
+    return previous;
+  } else {
+    const [selected = null] = [next, previous, first].filter(
+      (opt) => !!opt && opt !== selectedConversationId
+    );
+
+    return selected;
+  }
+};

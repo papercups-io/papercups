@@ -614,7 +614,7 @@ defmodule ChatApi.Conversations do
       :left_lateral,
       [c],
       f in fragment(
-        "SELECT body FROM messages WHERE conversation_id = ? AND body LIKE ? LIMIT 1",
+        "SELECT body FROM messages WHERE conversation_id = ? AND body ILIKE ? LIMIT 1",
         c.id,
         ^body
       ),
