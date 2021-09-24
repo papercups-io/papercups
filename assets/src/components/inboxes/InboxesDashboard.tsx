@@ -12,28 +12,28 @@ import {MenuItemProps} from 'antd/lib/menu/MenuItem';
 
 import {colors, Badge, Layout, Menu, Sider} from '../common';
 import {PlusOutlined, SettingOutlined} from '../icons';
-import {
-  DASHBOARD_COLLAPSED_SIDER_WIDTH,
-  INBOXES_DASHBOARD_SIDER_WIDTH,
-} from '../../utils';
+import {INBOXES_DASHBOARD_SIDER_WIDTH} from '../../utils';
 import * as API from '../../api';
 import {Inbox} from '../../types';
 import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationsDashboard from '../conversations/ConversationsDashboard';
+import ChatWidgetSettings from '../settings/ChatWidgetSettings';
+import SlackReplyIntegrationDetails from '../integrations/SlackReplyIntegrationDetails';
+import SlackSyncIntegrationDetails from '../integrations/SlackSyncIntegrationDetails';
+import SlackIntegrationDetails from '../integrations/SlackIntegrationDetails';
+import GmailIntegrationDetails from '../integrations/GmailIntegrationDetails';
+import GoogleIntegrationDetails from '../integrations/GoogleIntegrationDetails';
+import MattermostIntegrationDetails from '../integrations/MattermostIntegrationDetails';
+import TwilioIntegrationDetails from '../integrations/TwilioIntegrationDetails';
+import InboxEmailForwardingPage from './InboxEmailForwardingPage';
+import InboxDetailsPage from './InboxDetailsPage';
+import InboxesOverview from './InboxesOverview';
 import InboxConversations from './InboxConversations';
 import NewInboxModal from './NewInboxModal';
 
 const getSectionKey = (pathname: string) => {
-  if (pathname.startsWith('/companies')) {
-    return ['customers', 'companies'];
-  } else if (pathname.startsWith('/customers')) {
-    return ['customers', 'people'];
-  } else if (pathname.startsWith('/tags')) {
-    return ['customers', 'tags'];
-  } else if (pathname.startsWith('/notes')) {
-    return ['customers', 'notes'];
-  } else if (pathname.startsWith('/functions')) {
-    return ['developers', 'functions'];
+  if (pathname === '/inboxes') {
+    return ['inbox-settings'];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
@@ -78,6 +78,12 @@ const InboxesDashboard = (props: RouteComponentProps) => {
     API.fetchInboxes().then((inboxes) => setCustomInboxes(inboxes));
   }, []);
 
+  const handleInboxCreated = async (inbox: Inbox) => {
+    setCustomInboxes([...inboxes, inbox]);
+
+    props.history.push(`/inboxes/${inbox.id}`);
+  };
+
   return (
     <Layout style={{background: colors.white}}>
       <Sider
@@ -87,7 +93,6 @@ const InboxesDashboard = (props: RouteComponentProps) => {
           overflow: 'auto',
           height: '100vh',
           position: 'fixed',
-          left: DASHBOARD_COLLAPSED_SIDER_WIDTH,
           color: colors.white,
         }}
       >
@@ -231,9 +236,7 @@ const InboxesDashboard = (props: RouteComponentProps) => {
                 key="add-inbox"
                 icon={<PlusOutlined />}
                 title="Add inbox"
-                onSuccess={(inbox) =>
-                  props.history.push(`/inboxes/${inbox.id}`)
-                }
+                onSuccess={handleInboxCreated}
               >
                 Add inbox
               </NewInboxModalMenuItem>
@@ -250,25 +253,74 @@ const InboxesDashboard = (props: RouteComponentProps) => {
         </Flex>
       </Sider>
 
-      <Switch>
-        <Route
-          path="/conversations/:bucket/:conversation_id"
-          component={ConversationsDashboard}
-        />
-        <Route
-          path="/conversations/:bucket"
-          component={ConversationsDashboard}
-        />
-        <Route
-          path="/inboxes/:inbox_id/conversations/:conversation_id"
-          component={InboxConversations}
-        />
-        <Route
-          path="/inboxes/:inbox_id/conversations"
-          component={InboxConversations}
-        />
-        <Route path="*" render={() => <Redirect to="/conversations/all" />} />
-      </Switch>
+      <Layout
+        style={{
+          background: colors.white,
+          marginLeft: INBOXES_DASHBOARD_SIDER_WIDTH,
+        }}
+      >
+        <Switch>
+          <Route
+            path="/conversations/:bucket/:conversation_id"
+            component={ConversationsDashboard}
+          />
+          <Route
+            path="/conversations/:bucket"
+            component={ConversationsDashboard}
+          />
+          <Route
+            path="/inboxes/:inbox_id/conversations/:conversation_id"
+            component={InboxConversations}
+          />
+          <Route
+            path="/inboxes/:inbox_id/conversations"
+            component={InboxConversations}
+          />
+          <Route
+            path="/inboxes/:inbox_id/conversations"
+            component={InboxesDashboard}
+          />
+          <Route
+            path="/inboxes/:inbox_id/chat-widget"
+            component={ChatWidgetSettings}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/slack/reply"
+            component={SlackReplyIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/slack/support"
+            component={SlackSyncIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/slack"
+            component={SlackIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/google/gmail"
+            component={GmailIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/google"
+            component={GoogleIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/mattermost"
+            component={MattermostIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/twilio"
+            component={TwilioIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/email-forwarding"
+            component={InboxEmailForwardingPage}
+          />
+          <Route path="/inboxes/:inbox_id" component={InboxDetailsPage} />
+          <Route path="/inboxes" component={InboxesOverview} />
+          <Route path="*" render={() => <Redirect to="/conversations/all" />} />
+        </Switch>
+      </Layout>
     </Layout>
   );
 };

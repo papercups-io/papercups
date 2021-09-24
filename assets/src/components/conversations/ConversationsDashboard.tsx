@@ -17,8 +17,6 @@ import {
 } from '../common';
 import {SettingOutlined} from '../icons';
 import {
-  CONVERSATIONS_DASHBOARD_OFFSET,
-  CONVERSATIONS_DASHBOARD_SIDER_OFFSET,
   CONVERSATIONS_DASHBOARD_SIDER_WIDTH,
   formatServerError,
   isWindowHidden,
@@ -559,7 +557,6 @@ export const ConversationsDashboard = ({
           overflow: 'auto',
           height: '100vh',
           position: 'fixed',
-          left: CONVERSATIONS_DASHBOARD_SIDER_OFFSET,
         }}
       >
         <Box sx={{position: 'relative', borderBottom: '1px solid #f0f0f0'}}>
@@ -611,7 +608,7 @@ export const ConversationsDashboard = ({
 
       <Layout
         style={{
-          marginLeft: CONVERSATIONS_DASHBOARD_OFFSET,
+          marginLeft: CONVERSATIONS_DASHBOARD_SIDER_WIDTH,
           background: colors.white,
         }}
       >

@@ -92,9 +92,6 @@ import LambdasOverview from './lambdas/LambdasOverview';
 import CannedResponsesOverview from './canned-responses/CannedResponsesOverview';
 import ForwardingAddressSettings from './settings/ForwardingAddressSettings';
 import InboxesDashboard from './inboxes/InboxesDashboard';
-import InboxDetailsPage from './inboxes/InboxDetailsPage';
-import InboxEmailForwardingPage from './inboxes/InboxEmailForwardingPage';
-import InboxesOverview from './inboxes/InboxesOverview';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -550,57 +547,8 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/issues/:id" component={IssueDetailsPage} />
           <Route path="/issues" component={IssuesOverview} />
           <Route path="/notes" component={NotesOverview} />
-          <Route path="/conversations/:bucket" component={InboxesDashboard} />
-          <Route
-            path="/inboxes/:inbox_id/conversations"
-            component={InboxesDashboard}
-          />
-          <Route
-            path="/inboxes/:inbox_id/chat-widget"
-            component={ChatWidgetSettings}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/slack/reply"
-            component={SlackReplyIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/slack/support"
-            component={SlackSyncIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/slack"
-            component={SlackIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/google/gmail"
-            component={GmailIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/google/sheets"
-            component={GoogleSheetsIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/google"
-            component={GoogleIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/mattermost"
-            component={MattermostIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/twilio"
-            component={TwilioIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/integrations/github"
-            component={GithubIntegrationDetails}
-          />
-          <Route
-            path="/inboxes/:inbox_id/email-forwarding"
-            component={InboxEmailForwardingPage}
-          />
-          <Route path="/inboxes/:inbox_id" component={InboxDetailsPage} />
-          <Route path="/inboxes" component={InboxesOverview} />
+          <Route path="/conversations*" component={InboxesDashboard} />
+          <Route path="/inboxes*" component={InboxesDashboard} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
