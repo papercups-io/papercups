@@ -41,24 +41,23 @@ const getStepsMetadata = (
 
   return [
     {
-      completed: onboardingStatus.is_chat_widget_installed,
-      ctaHref: `/inboxes/${inboxId}/chat-widget`,
-      ctaText: 'Configure chat widget',
+      completed: onboardingStatus.has_configured_inbox,
+      ctaHref: `/inboxes/${inboxId}`,
+      ctaText: 'Configure your inbox',
       text: (
         <>
-          <Text strong>Configure and install the chat widget</Text> to start
-          receiving messages.
+          <Text strong>Configure your inbox</Text> to start receiving messages.
         </>
       ),
     },
     {
-      completed: onboardingStatus.has_email_forwarding,
-      ctaHref: `/inboxes/${inboxId}/email-forwarding`,
-      ctaText: 'Set up email forwarding',
+      completed: onboardingStatus.has_configured_profile,
+      ctaHref: '/settings/profile',
+      ctaText: 'Set up profile',
       text: (
         <>
-          <Text strong>Set up email forwarding</Text> to start syncing email
-          messages.
+          <Text strong>Set up your profile</Text> so your customers know who
+          they're talking to.
         </>
       ),
     },
@@ -73,38 +72,6 @@ const getStepsMetadata = (
         </>
       ),
     },
-    {
-      completed: onboardingStatus.has_configured_profile,
-      ctaHref: '/settings/profile',
-      ctaText: 'Configure profile',
-      text: (
-        <>
-          <Text strong>Configure your profile</Text> so your customers know who
-          they're talking to.
-        </>
-      ),
-    },
-    {
-      completed: onboardingStatus.has_integrations,
-      ctaHref: '/integrations',
-      ctaText: 'Set up integrations',
-      text: (
-        <>
-          <Text strong>Set up integrations</Text> like Slack, Gmail, and SMS.
-        </>
-      ),
-    },
-    // {
-    //   completed: onboardingStatus.has_configured_storytime,
-    //   ctaHref: '/sessions/setup',
-    //   ctaText: 'Set up Storytime',
-    //   text: (
-    //     <>
-    //       <Text strong>Set up Storytime</Text> to view how customers are using
-    //       your website.
-    //     </>
-    //   ),
-    // },
     {
       completed: onboardingStatus.has_upgraded_subscription,
       ctaHref: '/settings/billing',
