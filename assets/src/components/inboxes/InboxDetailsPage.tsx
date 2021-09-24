@@ -77,7 +77,7 @@ class InboxDetailsPage extends React.Component<Props, State> {
       <Container sx={{maxWidth: 960}}>
         <Flex mb={4} sx={{justifyContent: 'space-between'}}>
           <Link to="/inboxes">
-            <Button icon={<ArrowLeftOutlined />}>All inboxes</Button>
+            <Button icon={<ArrowLeftOutlined />}>Configure inboxes</Button>
           </Link>
 
           <Link to={`/inboxes/${inboxId}/conversations`}>

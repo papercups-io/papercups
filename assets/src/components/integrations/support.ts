@@ -14,6 +14,10 @@ export type IntegrationType = {
     | 'github'
     | 'microsoft-teams'
     | 'whatsapp'
+    | 'hubspot'
+    | 'salesforce'
+    | 'jira'
+    | 'zendesk'
     | 'twilio';
   integration: string;
   status: 'connected' | 'not_connected';

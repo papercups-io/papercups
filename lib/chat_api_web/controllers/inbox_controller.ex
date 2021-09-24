@@ -44,6 +44,14 @@ defmodule ChatApiWeb.InboxController do
     end
   end
 
+  @spec primary(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def primary(conn, _params) do
+    account_id = conn.assigns.current_user.account_id
+    inbox = Inboxes.get_account_primary_inbox(account_id)
+
+    render(conn, "show.json", inbox: inbox)
+  end
+
   @spec show(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def show(conn, %{"id" => _id}) do
     render(conn, "show.json", inbox: conn.assigns.current_inbox)

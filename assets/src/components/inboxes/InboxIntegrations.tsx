@@ -8,7 +8,7 @@ import * as API from '../../api';
 import logger from '../../logger';
 import {IntegrationType} from '../integrations/support';
 import {isEuEdition} from '../../config';
-import {SettingOutlined} from '../icons';
+import {PlusOutlined, SettingOutlined} from '../icons';
 import {Inbox} from '../../types';
 
 const getDefaultConfigurationUrl = (key: string, inboxId: string) => {
@@ -95,7 +95,8 @@ const InboxIntegrationsTable = ({
       dataIndex: 'configurationUrl',
       key: 'configurationUrl',
       render: (configurationUrl: string | null, record: IntegrationType) => {
-        const {key} = record;
+        const {key, status} = record;
+        const isConnected = status === 'connected';
         const url =
           configurationUrl || getDefaultConfigurationUrl(key, inboxId);
 
@@ -105,7 +106,11 @@ const InboxIntegrationsTable = ({
 
         return (
           <Link to={url}>
-            <Button icon={<SettingOutlined />}>Configure</Button>
+            {isConnected ? (
+              <Button icon={<SettingOutlined />}>Configure</Button>
+            ) : (
+              <Button icon={<PlusOutlined />}>Add</Button>
+            )}
           </Link>
         );
       },

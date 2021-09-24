@@ -2074,6 +2074,19 @@ export const fetchInboxes = async (
     .then((res) => res.body.data);
 };
 
+export const fetchPrimaryInbox = async (
+  token = getAccessToken()
+): Promise<Inbox> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/inboxes/primary`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchInbox = async (
   id: string,
   token = getAccessToken()
