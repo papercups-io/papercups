@@ -3,7 +3,7 @@ import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 
 import * as API from '../../api';
-import {Account, Conversation, Message, User} from '../../types';
+import {Account, Conversation, Inbox, Message, User} from '../../types';
 import {
   colors,
   Button,
@@ -13,7 +13,9 @@ import {
   Result,
   Sider,
   Title,
+  Tooltip,
 } from '../common';
+import {SettingOutlined} from '../icons';
 import {
   CONVERSATIONS_DASHBOARD_OFFSET,
   CONVERSATIONS_DASHBOARD_SIDER_OFFSET,
@@ -51,17 +53,24 @@ const EmptyMessagesPlaceholder = () => {
   );
 };
 
-const GettingStartedRedirect = () => {
+const GettingStartedRedirect = ({inbox}: {inbox?: Inbox | null}) => {
+  const extra =
+    inbox && inbox.id ? (
+      <Link to={`/inboxes/${inbox.id}`}>
+        <Button type="primary">Configure inbox</Button>
+      </Link>
+    ) : (
+      <Link to="/getting-started">
+        <Button type="primary">Get started</Button>
+      </Link>
+    );
+
   return (
     <Box my={4}>
       <Result
         title="No messages"
         subTitle="It looks like no channels have been set up yet!"
-        extra={
-          <Link to="/getting-started">
-            <Button type="primary">Get started</Button>
-          </Link>
-        }
+        extra={extra}
       />
     </Box>
   );
@@ -70,16 +79,18 @@ const GettingStartedRedirect = () => {
 const EmptyState = ({
   loading,
   isNewUser,
+  inbox,
 }: {
   loading?: boolean;
   isNewUser?: boolean;
+  inbox?: Inbox | null;
 }) => {
   if (loading) {
     return null;
   }
 
   if (isNewUser) {
-    return <GettingStartedRedirect />;
+    return <GettingStartedRedirect inbox={inbox} />;
   } else {
     return <EmptyMessagesPlaceholder />;
   }
@@ -90,6 +101,7 @@ export const ConversationsDashboard = ({
   account,
   currentUser,
   initialSelectedConversationId,
+  inbox,
   filter = {},
   onSelectConversation = noop,
   isValidConversation = defaultConversationFilter,
@@ -98,6 +110,7 @@ export const ConversationsDashboard = ({
   account: Account;
   currentUser: User;
   initialSelectedConversationId: string | null;
+  inbox?: Inbox | null;
   filter: Record<string, any>;
   onSelectConversation: (conversationId: string) => void;
   isValidConversation: (conversation: Conversation) => boolean;
@@ -108,7 +121,7 @@ export const ConversationsDashboard = ({
   >('loading');
   const [error, setErrorMessage] = React.useState<string | null>(null);
   const [isNewUser, setNewUser] = React.useState<boolean>(false);
-  // TODO: maybe we don't even need to track these here?
+  // TODO: can we rely on these, or should we use the cached ids in ConversationsProvider?
   const [conversationIds, setConversationIds] = React.useState<Array<string>>(
     []
   );
@@ -241,7 +254,8 @@ export const ConversationsDashboard = ({
   }
 
   async function checkForNewUser() {
-    const {count} = await API.countMessages();
+    const filters = inbox && inbox.id ? {inbox_id: inbox.id} : {};
+    const {count = 0} = await API.countAllConversations(filters);
 
     return count === 0;
   }
@@ -548,7 +562,22 @@ export const ConversationsDashboard = ({
           left: CONVERSATIONS_DASHBOARD_SIDER_OFFSET,
         }}
       >
-        <Box sx={{borderBottom: '1px solid #f0f0f0'}}>
+        <Box sx={{position: 'relative', borderBottom: '1px solid #f0f0f0'}}>
+          {!!inbox?.id && (
+            <Box sx={{position: 'absolute', top: '6px', right: '6px'}}>
+              <Tooltip title="Configure inbox">
+                <Link to={`/inboxes/${inbox.id}`}>
+                  <Button
+                    className="Button--faded"
+                    type="text"
+                    size="small"
+                    shape="circle"
+                    icon={<SettingOutlined />}
+                  />
+                </Link>
+              </Tooltip>
+            </Box>
+          )}
           <Box px={3} py={3}>
             <Title level={3} style={{marginBottom: 0, marginTop: 8}}>
               {title}
@@ -610,7 +639,11 @@ export const ConversationsDashboard = ({
             onSendMessage={handleSendNewMessage}
           />
         ) : (
-          <EmptyState loading={status === 'loading'} isNewUser={isNewUser} />
+          <EmptyState
+            loading={status === 'loading'}
+            isNewUser={isNewUser}
+            inbox={inbox}
+          />
         )}
       </Layout>
     </Layout>

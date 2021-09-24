@@ -94,6 +94,12 @@ const IntegrationsTable = ({
                 <Button icon={<SettingOutlined />}>Configure</Button>
               </Link>
             );
+          case 'ses':
+            return (
+              <Link to="/settings/email-forwarding">
+                <Button icon={<SettingOutlined />}>Configure</Button>
+              </Link>
+            );
           case 'sheets':
             return (
               <Link to="/integrations/google/sheets">

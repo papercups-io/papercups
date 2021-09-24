@@ -69,6 +69,7 @@ const Wrapper = (
     <ConversationsDashboard
       title={inbox.name}
       account={account}
+      inbox={inbox}
       currentUser={currentUser}
       initialSelectedConversationId={conversationId}
       filter={{inbox_id: inboxId, status: 'open'}}

@@ -3,13 +3,34 @@ import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 
-import {colors, Button, Table, Tag, Text, Title} from '../common';
+import {colors, Button, Divider, Table, Tag, Text, Title} from '../common';
 import * as API from '../../api';
 import logger from '../../logger';
 import {IntegrationType} from '../integrations/support';
 import {isEuEdition} from '../../config';
 import {SettingOutlined} from '../icons';
 import {Inbox} from '../../types';
+
+const getDefaultConfigurationUrl = (key: string, inboxId: string) => {
+  switch (key) {
+    case 'chat':
+      return `/inboxes/${inboxId}/chat-widget`;
+    case 'slack':
+      return `/inboxes/${inboxId}/integrations/slack/reply`;
+    case 'mattermost':
+      return `/inboxes/${inboxId}/integrations/mattermost`;
+    case 'gmail':
+      return `/inboxes/${inboxId}/integrations/google/gmail`;
+    case 'ses':
+      return `/inboxes/${inboxId}/email-forwarding`;
+    case 'twilio':
+      return `/inboxes/${inboxId}/integrations/twilio`;
+    case 'slack:sync':
+      return `/inboxes/${inboxId}/integrations/slack/support`;
+    default:
+      return null;
+  }
+};
 
 const InboxIntegrationsTable = ({
   loading,
@@ -71,52 +92,22 @@ const InboxIntegrationsTable = ({
     },
     {
       title: '',
-      dataIndex: 'action',
-      key: 'action',
-      render: (action: any, record: IntegrationType) => {
+      dataIndex: 'configurationUrl',
+      key: 'configurationUrl',
+      render: (configurationUrl: string | null, record: IntegrationType) => {
         const {key} = record;
+        const url =
+          configurationUrl || getDefaultConfigurationUrl(key, inboxId);
 
-        switch (key) {
-          case 'chat':
-            return (
-              // TODO: update path
-              <Link to={`/inboxes/${inboxId}/chat-widget`}>
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
-          case 'slack':
-            return (
-              <Link to={`/inboxes/${inboxId}/integrations/slack/reply`}>
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
-          case 'mattermost':
-            return (
-              <Link to={`/inboxes/${inboxId}/integrations/mattermost`}>
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
-          case 'gmail':
-            return (
-              <Link to={`/inboxes/${inboxId}/integrations/google/gmail`}>
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
-          case 'twilio':
-            return (
-              <Link to={`/inboxes/${inboxId}/integrations/twilio`}>
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
-          case 'slack:sync':
-            return (
-              <Link to={`/inboxes/${inboxId}/integrations/slack/support`}>
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
-          default:
-            return <Button disabled>Coming soon!</Button>;
+        if (!url) {
+          return null;
         }
+
+        return (
+          <Link to={url}>
+            <Button icon={<SettingOutlined />}>Configure</Button>
+          </Link>
+        );
       },
     },
   ];
@@ -136,6 +127,7 @@ type State = {
   loading: boolean;
   refreshing: boolean;
   integrations: Array<IntegrationType>;
+  integrationsByKey: {[key: string]: IntegrationType};
 };
 
 class InboxIntegrations extends React.Component<Props, State> {
@@ -143,6 +135,7 @@ class InboxIntegrations extends React.Component<Props, State> {
     loading: true,
     refreshing: false,
     integrations: [],
+    integrationsByKey: {},
   };
 
   async componentDidMount() {
@@ -150,12 +143,10 @@ class InboxIntegrations extends React.Component<Props, State> {
       const integrations = await Promise.all([
         this.fetchChatIntegration(),
         this.fetchSlackIntegration(),
+        this.fetchEmailForwardingIntegration(),
         this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
         this.fetchTwilioIntegration(),
-        this.fetchMicrosoftTeamsIntegration(),
-        this.fetchWhatsAppIntegration(),
-        // TODO: deprecate
         this.fetchSlackSupportIntegration(),
       ]);
 
@@ -164,6 +155,9 @@ class InboxIntegrations extends React.Component<Props, State> {
         integrations: integrations.filter(({key}) =>
           isEuEdition ? !key.startsWith('slack') : true
         ),
+        integrationsByKey: integrations.reduce((acc, integration) => {
+          return {...acc, [integration.key]: integration};
+        }, {}),
       });
     } catch (err) {
       logger.error('Error loading integrations:', err);
@@ -179,12 +173,10 @@ class InboxIntegrations extends React.Component<Props, State> {
       const integrations = await Promise.all([
         this.fetchChatIntegration(),
         this.fetchSlackIntegration(),
+        this.fetchEmailForwardingIntegration(),
         this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
         this.fetchTwilioIntegration(),
-        this.fetchMicrosoftTeamsIntegration(),
-        this.fetchWhatsAppIntegration(),
-        // TODO: deprecate
         this.fetchSlackSupportIntegration(),
       ]);
 
@@ -192,6 +184,9 @@ class InboxIntegrations extends React.Component<Props, State> {
         integrations: integrations.filter(({key}) =>
           isEuEdition ? !key.startsWith('slack') : true
         ),
+        integrationsByKey: integrations.reduce((acc, integration) => {
+          return {...acc, [integration.key]: integration};
+        }, {}),
         refreshing: false,
       });
     } catch (err) {
@@ -219,6 +214,7 @@ class InboxIntegrations extends React.Component<Props, State> {
       created_at: isConnected ? createdAt : null,
       icon: '/logo.svg',
       description,
+      configurationUrl: `/inboxes/${inboxId}/chat-widget`,
       // TODO: deprecate?
       authorization_id: widgetSettingsId || null,
     };
@@ -242,6 +238,7 @@ class InboxIntegrations extends React.Component<Props, State> {
       authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
       description,
+      configurationUrl: `/inboxes/${inboxId}/integrations/slack/reply`,
     };
   };
 
@@ -263,6 +260,7 @@ class InboxIntegrations extends React.Component<Props, State> {
       authorization_id: auth ? auth.id : null,
       icon: '/mattermost.svg',
       description,
+      configurationUrl: `/inboxes/${inboxId}/integrations/mattermost`,
     };
   };
 
@@ -284,6 +282,7 @@ class InboxIntegrations extends React.Component<Props, State> {
       authorization_id: auth ? auth.id : null,
       icon: '/slack.svg',
       description,
+      configurationUrl: `/inboxes/${inboxId}/integrations/slack/support`,
     };
   };
 
@@ -303,6 +302,24 @@ class InboxIntegrations extends React.Component<Props, State> {
       authorization_id: auth ? auth.id : null,
       icon: '/gmail.svg',
       description: 'Sync messages from your Gmail inbox with Papercups.',
+      configurationUrl: `/inboxes/${inboxId}/integrations/google/gmail`,
+    };
+  };
+
+  fetchEmailForwardingIntegration = async (): Promise<IntegrationType> => {
+    const {id: inboxId} = this.props.inbox;
+    const addresses = await API.fetchForwardingAddresses({inbox_id: inboxId});
+    const [first] = addresses;
+
+    return {
+      key: 'ses',
+      integration: 'Email forwarding',
+      status: first ? 'connected' : 'not_connected',
+      created_at: first ? first.created_at : null,
+      authorization_id: first ? first.id : null,
+      icon: '/ses.svg',
+      description: 'Set up email forwarding into Papercups.',
+      configurationUrl: `/inboxes/${inboxId}/email-forwarding`,
     };
   };
 
@@ -329,6 +346,7 @@ class InboxIntegrations extends React.Component<Props, State> {
       authorization_id: auth ? auth.id : null,
       icon: '/twilio.svg',
       description: 'Receive and reply to messages over SMS.',
+      configurationUrl: `/inboxes/${inboxId}/integrations/twilio`,
     };
   };
 
@@ -345,18 +363,46 @@ class InboxIntegrations extends React.Component<Props, State> {
 
   render() {
     const {id: inboxId} = this.props.inbox;
-    const {loading, refreshing, integrations = []} = this.state;
+    const {
+      loading,
+      refreshing,
+      // integrations = [],
+      integrationsByKey = {},
+    } = this.state;
+    const sources = ['chat', 'ses', 'gmail', 'twilio', 'slack:sync']
+      .map((key) => {
+        return integrationsByKey[key] || null;
+      })
+      .filter(Boolean);
+    const replies = ['slack', 'mattermost']
+      .map((key) => {
+        return integrationsByKey[key] || null;
+      })
+      .filter(Boolean);
 
     return (
       <Box>
         <Box px={3} mb={3}>
-          <Title level={4}>Integrations</Title>
+          <Title level={4}>Source channels</Title>
         </Box>
-        <Box my={3}>
+        <Box mb={4}>
           <InboxIntegrationsTable
             loading={loading || refreshing}
             inboxId={inboxId}
-            integrations={integrations}
+            integrations={sources}
+          />
+        </Box>
+
+        <Divider />
+
+        <Box px={3} mb={3}>
+          <Title level={4}>Reply channels</Title>
+        </Box>
+        <Box mb={4}>
+          <InboxIntegrationsTable
+            loading={loading || refreshing}
+            inboxId={inboxId}
+            integrations={replies}
           />
         </Box>
       </Box>

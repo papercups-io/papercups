@@ -20,7 +20,6 @@ import Spinner from '../Spinner';
 import {Inbox} from '../../types';
 import {formatServerError} from '../../utils';
 import InboxIntegrations from './InboxIntegrations';
-import InboxForwardingAddresses from './InboxForwardingAddresses';
 import MailOutlined from '@ant-design/icons/MailOutlined';
 
 type Props = RouteComponentProps<{inbox_id: string}>;
@@ -76,11 +75,17 @@ class InboxDetailsPage extends React.Component<Props, State> {
 
     return (
       <Container sx={{maxWidth: 960}}>
-        <Box mb={4}>
+        <Flex mb={4} sx={{justifyContent: 'space-between'}}>
           <Link to="/inboxes">
-            <Button icon={<ArrowLeftOutlined />}>Back to inboxes</Button>
+            <Button icon={<ArrowLeftOutlined />}>All inboxes</Button>
           </Link>
-        </Box>
+
+          <Link to={`/inboxes/${inboxId}/conversations`}>
+            <Button type="primary" icon={<MailOutlined />}>
+              View conversations
+            </Button>
+          </Link>
+        </Flex>
 
         <Box mb={4}>
           <Card sx={{p: 3}}>
@@ -95,15 +100,7 @@ class InboxDetailsPage extends React.Component<Props, State> {
               )}
             </Flex>
 
-            <Flex
-              sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
-            >
-              <Text>{description || 'No description.'}</Text>
-
-              <Link to={`/inboxes/${inboxId}/conversations`}>
-                <Button icon={<MailOutlined />}>View conversations</Button>
-              </Link>
-            </Flex>
+            <Text>{description || 'No description.'}</Text>
           </Card>
         </Box>
 
@@ -111,12 +108,6 @@ class InboxDetailsPage extends React.Component<Props, State> {
 
         <Box mb={4}>
           <InboxIntegrations inbox={inbox} />
-        </Box>
-
-        <Divider />
-
-        <Box mb={4}>
-          <InboxForwardingAddresses inbox={inbox} />
         </Box>
       </Container>
     );

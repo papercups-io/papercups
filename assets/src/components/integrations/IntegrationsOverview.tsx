@@ -42,11 +42,12 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchSlackIntegration(),
         this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
+        this.fetchEmailForwardingIntegration(),
         // this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchGithubIntegration(),
-        this.fetchMicrosoftTeamsIntegration(),
-        this.fetchWhatsAppIntegration(),
+        // this.fetchMicrosoftTeamsIntegration(),
+        // this.fetchWhatsAppIntegration(),
         // TODO: deprecate
         this.fetchSlackSupportIntegration(),
       ]);
@@ -73,11 +74,12 @@ class IntegrationsOverview extends React.Component<Props, State> {
         this.fetchSlackIntegration(),
         this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
+        this.fetchEmailForwardingIntegration(),
         // this.fetchGoogleSheetsIntegration(),
         this.fetchTwilioIntegration(),
         this.fetchGithubIntegration(),
-        this.fetchMicrosoftTeamsIntegration(),
-        this.fetchWhatsAppIntegration(),
+        // this.fetchMicrosoftTeamsIntegration(),
+        // this.fetchWhatsAppIntegration(),
         // TODO: deprecate
         this.fetchSlackSupportIntegration(),
       ]);
@@ -201,6 +203,21 @@ class IntegrationsOverview extends React.Component<Props, State> {
       authorization_id: auth ? auth.id : null,
       icon: '/sheets.svg',
       description: 'Sync customer data to a Google spreadsheet.',
+    };
+  };
+
+  fetchEmailForwardingIntegration = async (): Promise<IntegrationType> => {
+    const addresses = await API.fetchForwardingAddresses();
+    const [first] = addresses;
+
+    return {
+      key: 'ses',
+      integration: 'Email forwarding',
+      status: first ? 'connected' : 'not_connected',
+      created_at: first ? first.created_at : null,
+      authorization_id: first ? first.id : null,
+      icon: '/ses.svg',
+      description: 'Set up email forwarding into Papercups.',
     };
   };
 

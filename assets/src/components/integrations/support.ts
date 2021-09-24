@@ -9,6 +9,7 @@ export type IntegrationType = {
     | 'slack:sync'
     | 'mattermost'
     | 'gmail'
+    | 'ses'
     | 'sheets'
     | 'github'
     | 'microsoft-teams'
@@ -17,9 +18,10 @@ export type IntegrationType = {
   integration: string;
   status: 'connected' | 'not_connected';
   created_at?: string | null;
-  authorization_id: string | null;
+  authorization_id?: string | null;
   icon: string;
   description?: string;
+  configurationUrl?: string;
 };
 
 export const getSlackRedirectUrl = () => {

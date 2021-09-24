@@ -8,9 +8,10 @@ import {
   RouteComponentProps,
 } from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+import {MenuItemProps} from 'antd/lib/menu/MenuItem';
 
 import {colors, Badge, Layout, Menu, Sider} from '../common';
-import {SettingOutlined} from '../icons';
+import {PlusOutlined, SettingOutlined} from '../icons';
 import {
   DASHBOARD_COLLAPSED_SIDER_WIDTH,
   INBOXES_DASHBOARD_SIDER_WIDTH,
@@ -20,6 +21,7 @@ import {Inbox} from '../../types';
 import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationsDashboard from '../conversations/ConversationsDashboard';
 import InboxConversations from './InboxConversations';
+import NewInboxModal from './NewInboxModal';
 
 const getSectionKey = (pathname: string) => {
   if (pathname.startsWith('/companies')) {
@@ -35,6 +37,33 @@ const getSectionKey = (pathname: string) => {
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
+};
+
+export const NewInboxModalMenuItem = ({
+  onSuccess,
+  ...props
+}: {
+  onSuccess: (inbox: Inbox) => void;
+} & MenuItemProps) => {
+  const [isModalOpen, setModalOpen] = React.useState(false);
+
+  const handleOpenModal = () => setModalOpen(true);
+  const handleCloseModal = () => setModalOpen(false);
+  const handleSuccess = (inbox: Inbox) => {
+    handleCloseModal();
+    onSuccess(inbox);
+  };
+
+  return (
+    <>
+      <Menu.Item {...props} onClick={handleOpenModal} />
+      <NewInboxModal
+        visible={isModalOpen}
+        onCancel={handleCloseModal}
+        onSuccess={handleSuccess}
+      />
+    </>
+  );
 };
 
 const InboxesDashboard = (props: RouteComponentProps) => {
@@ -198,12 +227,23 @@ const InboxesDashboard = (props: RouteComponentProps) => {
                 })}
               </Menu.SubMenu>
 
+              <NewInboxModalMenuItem
+                key="add-inbox"
+                icon={<PlusOutlined />}
+                title="Add inbox"
+                onSuccess={(inbox) =>
+                  props.history.push(`/inboxes/${inbox.id}`)
+                }
+              >
+                Add inbox
+              </NewInboxModalMenuItem>
+
               <Menu.Item
-                key="settings"
+                key="inbox-settings"
                 icon={<SettingOutlined />}
                 title="Inbox settings"
               >
-                <Link to="/inboxes">Settings</Link>
+                <Link to="/inboxes">Configure inboxes</Link>
               </Menu.Item>
             </Menu>
           </Box>
