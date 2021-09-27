@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import {colors, Button, Table, Tag, Text} from '../common';
-import {SettingOutlined} from '../icons';
+import {PlusOutlined, SettingOutlined} from '../icons';
 import {IntegrationType} from './support';
 import {Papercups} from '@papercups-io/chat-widget';
 
@@ -75,20 +75,29 @@ const IntegrationsTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (action: any, record: IntegrationType) => {
-        const {key} = record;
+        const {key, status} = record;
+        const isConnected = status === 'connected';
 
         switch (key) {
           case 'sheets':
             return (
               <Link to="/integrations/google/sheets">
-                <Button icon={<SettingOutlined />}>Configure</Button>
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
               </Link>
             );
 
           case 'github':
             return (
               <Link to="/integrations/github">
-                <Button icon={<SettingOutlined />}>Configure</Button>
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
               </Link>
             );
 

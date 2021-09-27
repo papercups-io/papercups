@@ -1,7 +1,16 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {Button, Container, Paragraph, Table, Text, Title} from '../common';
+import {
+  colors,
+  Button,
+  Container,
+  Paragraph,
+  Table,
+  Tag,
+  Text,
+  Title,
+} from '../common';
 import {PlusOutlined} from '../icons';
 import * as API from '../../api';
 import {Inbox} from '../../types';
@@ -28,8 +37,21 @@ const InboxesTable = ({
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (value: string) => {
-        return <Text strong>{value}</Text>;
+      render: (value: string, record: Inbox) => {
+        const isPrimary = !!record.is_primary;
+
+        if (isPrimary) {
+          return (
+            <Flex sx={{alignItems: 'center'}}>
+              <Text strong>{value}</Text>
+              <Box ml={3}>
+                <Tag color={colors.primary}>Primary</Tag>
+              </Box>
+            </Flex>
+          );
+        } else {
+          return <Text strong>{value}</Text>;
+        }
       },
     },
     {
@@ -44,7 +66,7 @@ const InboxesTable = ({
       title: '',
       dataIndex: 'action',
       key: 'action',
-      render: (value: string, record: any) => {
+      render: (value: string, record: Inbox) => {
         const {id: inboxId} = record;
 
         return (

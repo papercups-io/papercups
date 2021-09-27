@@ -32,7 +32,12 @@ import InboxConversations from './InboxConversations';
 import NewInboxModal from './NewInboxModal';
 
 const getSectionKey = (pathname: string) => {
-  if (pathname === '/inboxes') {
+  const isInboxSettings =
+    pathname === '/inboxes' ||
+    (pathname.startsWith('/inboxes') &&
+      pathname.indexOf('conversations') === -1);
+
+  if (isInboxSettings) {
     return ['inbox-settings'];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
