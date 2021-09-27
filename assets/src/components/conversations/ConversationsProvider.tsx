@@ -370,17 +370,19 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   handleNewMessage = (message: Message) => {
-    const {conversation_id: conversationId} = message;
+    const {id: messageId, conversation_id: conversationId} = message;
+    const messages = this.getMessagesByConversationId(conversationId);
+    // This may happen for the first message of a new conversation
+    const isAlreadyCached = messages.some((msg) => msg.id === messageId);
 
-    this.setState({
-      messagesByConversationId: {
-        ...this.state.messagesByConversationId,
-        [conversationId]: [
-          ...this.getMessagesByConversationId(conversationId),
-          message,
-        ],
-      },
-    });
+    if (!isAlreadyCached) {
+      this.setState({
+        messagesByConversationId: {
+          ...this.state.messagesByConversationId,
+          [conversationId]: [...messages, message],
+        },
+      });
+    }
 
     this.handleNewMessageNotification(message);
     this.updateUnreadNotifications();

@@ -153,7 +153,9 @@ export const ConversationsDashboard = ({
   const onMessageCreated = React.useCallback(onNewMessage, [
     selectedConversationId,
   ]);
-  const onConversationCreated = React.useCallback(onNewConversation, []);
+  const onConversationCreated = React.useCallback(onNewConversation, [
+    conversationIds.length,
+  ]);
 
   React.useEffect(() => {
     if (!channel) {
@@ -172,6 +174,7 @@ export const ConversationsDashboard = ({
   }, [
     channel,
     selectedConversationId,
+    conversationIds.length,
     onMessageCreated,
     onConversationCreated,
   ]);
@@ -290,7 +293,7 @@ export const ConversationsDashboard = ({
   }
 
   function handleNewConversation(conversationId: string) {
-    // TODO: is there anything we need to do on new conversation events?
+    setConversationIds([conversationId, ...conversationIds]);
   }
 
   function fetchInitialConversation() {
