@@ -75,7 +75,7 @@ class SharedConversationContainer extends React.Component<Props, State> {
             sx={{p: 3}}
             loading={loading}
             messages={messages}
-            setScrollRef={(el) => (this.scrollToEl = el)}
+            setScrollRef={(el: any) => (this.scrollToEl = el)}
           />
         </Box>
       </Flex>

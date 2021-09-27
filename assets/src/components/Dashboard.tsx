@@ -43,6 +43,7 @@ import {
   isWindowHidden,
 } from '../utils';
 import {Account, User} from '../types';
+import * as API from '../api';
 import {useAuth} from './auth/AuthProvider';
 import {SocketProvider, SocketContext} from './auth/SocketProvider';
 import AccountOverview from './settings/AccountOverview';
@@ -50,9 +51,11 @@ import TeamOverview from './settings/TeamOverview';
 import UserProfile from './settings/UserProfile';
 import ChatWidgetSettings from './settings/ChatWidgetSettings';
 import {
+  ConversationsContext,
   ConversationsProvider,
   useConversations,
 } from './conversations/ConversationsProvider';
+import NotificationsProvider from './conversations/NotificationsProvider';
 import IntegrationsOverview from './integrations/IntegrationsOverview';
 import SlackReplyIntegrationDetails from './integrations/SlackReplyIntegrationDetails';
 import SlackSyncIntegrationDetails from './integrations/SlackSyncIntegrationDetails';
@@ -111,7 +114,7 @@ const getSectionKey = (pathname: string) => {
     return ['customers', 'notes'];
   } else if (pathname.startsWith('/functions')) {
     return ['developers', 'functions'];
-  } else if (pathname.startsWith('/channels')) {
+  } else if (pathname.startsWith('/inboxes')) {
     return ['conversations', ...pathname.split('/').slice(2)];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
@@ -148,11 +151,12 @@ const ChatWithUs = ({
   if (isEuEdition) {
     return (
       <ChatWidget
+        token={REACT_APP_ADMIN_ACCOUNT_ID}
+        accountId={REACT_APP_ADMIN_ACCOUNT_ID}
         title="Need help with anything?"
         subtitle="Ask us in the chat window below 😊"
         greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
         primaryColor="#1890ff"
-        accountId={REACT_APP_ADMIN_ACCOUNT_ID}
         hideToggleButton
         baseUrl="https://app.papercups-eu.io"
         customer={{
@@ -170,11 +174,12 @@ const ChatWithUs = ({
 
   return (
     <ChatWidget
+      token={REACT_APP_ADMIN_ACCOUNT_ID}
+      accountId={REACT_APP_ADMIN_ACCOUNT_ID}
       title="Need help with anything?"
       subtitle="Ask us in the chat window below 😊"
       greeting="Hi there! Send us a message and we'll get back to you as soon as we can."
       primaryColor="#1890ff"
-      accountId={REACT_APP_ADMIN_ACCOUNT_ID}
       hideToggleButton
       customer={{
         external_id: formatUserExternalId(currentUser),
@@ -236,11 +241,20 @@ const DashboardHtmlHead = ({totalNumUnread}: {totalNumUnread: number}) => {
 const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
-  const {account, currentUser, inboxes, getUnreadCount} = useConversations();
+  const {unread} = useConversations();
+  const [account, setAccount] = React.useState<Account | null>(null);
+  const {currentUser} = auth;
+
+  React.useEffect(() => {
+    // TODO: figure out a better way to handle this
+    API.fetchAccountInfo().then((account) => setAccount(account));
+  }, []);
 
   const [section, key] = getSectionKey(pathname);
-  const totalNumUnread = getUnreadCount('open', inboxes.all.open);
+  const totalNumUnread = unread.conversations.open || 0;
   const shouldDisplayBilling = hasValidStripeKey();
+  const shouldHighlightInbox =
+    totalNumUnread > 0 && section !== 'conversations';
 
   const logout = () => auth.logout().then(() => props.history.push('/login'));
 
@@ -295,11 +309,12 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Link to="/getting-started">Getting started</Link>
               </Menu.Item>
               <Menu.Item
+                danger={shouldHighlightInbox}
                 key="conversations"
                 icon={<MailOutlined />}
-                title="Inbox"
+                title={`Inbox (${totalNumUnread})`}
               >
-                <Link to="/conversations/all">Inbox</Link>
+                <Link to="/conversations/all">Inbox ({totalNumUnread})</Link>
               </Menu.Item>
 
               <Menu.Item
@@ -385,11 +400,8 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Menu.Item key="profile">
                   <Link to="/settings/profile">My profile</Link>
                 </Menu.Item>
-                <Menu.Item key="chat-widget">
-                  <Link to="/settings/chat-widget">Chat widget</Link>
-                </Menu.Item>
-                <Menu.Item key="email-forwarding">
-                  <Link to="/settings/email-forwarding">Email forwarding</Link>
+                <Menu.Item key="inboxes" title="Inboxes">
+                  <Link to="/inboxes">Inboxes</Link>
                 </Menu.Item>
                 <Menu.Item key="saved-replies">
                   <Link to="/settings/saved-replies">Saved replies</Link>
@@ -536,7 +548,7 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/issues" component={IssuesOverview} />
           <Route path="/notes" component={NotesOverview} />
           <Route path="/conversations*" component={InboxesDashboard} />
-          <Route path="/channels*" component={InboxesDashboard} />
+          <Route path="/inboxes*" component={InboxesDashboard} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
       </Layout>
@@ -556,8 +568,21 @@ const DashboardWrapper = (props: RouteComponentProps) => {
       <SocketContext.Consumer>
         {({socket}) => {
           return (
-            <ConversationsProvider socket={socket}>
-              <Dashboard {...props} />
+            <ConversationsProvider>
+              <ConversationsContext.Consumer>
+                {({onNewMessage, onNewConversation, onConversationUpdated}) => {
+                  return (
+                    <NotificationsProvider
+                      socket={socket}
+                      onNewMessage={onNewMessage}
+                      onNewConversation={onNewConversation}
+                      onConversationUpdated={onConversationUpdated}
+                    >
+                      <Dashboard {...props} />
+                    </NotificationsProvider>
+                  );
+                }}
+              </ConversationsContext.Consumer>
             </ConversationsProvider>
           );
         }}

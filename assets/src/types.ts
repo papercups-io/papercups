@@ -5,7 +5,7 @@ export type Account = {
   time_zone?: string;
   subscription_plan?: string;
   users?: Array<User>;
-  widget_settings: WidgetSettings;
+  widget_settings: Array<WidgetSettings>;
   working_hours: Array<any>;
   settings?: AccountSettings | null;
 };
@@ -133,6 +133,7 @@ export type ForwardingAddress = {
   created_at: string;
   updated_at: string;
   account_id: string;
+  inbox_id?: string | null;
 };
 
 // Alias
@@ -147,7 +148,10 @@ export type Conversation = {
   account_id: string;
   customer_id: string;
   customer: Customer;
-  created_at?: string;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string | null;
+  archived_at?: string | null;
   last_activity_at?: string;
   date: string;
   preview: string;
@@ -156,6 +160,7 @@ export type Conversation = {
   read?: boolean;
   status?: string;
   assignee_id?: number;
+  inbox_id?: string;
   tags?: Array<Tag>;
   mentions?: Array<any>;
 };
@@ -176,6 +181,19 @@ export type Tag = {
   name: string;
   description?: string;
   color?: string;
+  updated_at: string;
+};
+
+export type Inbox = {
+  id: string;
+  object: 'inbox';
+  name: string;
+  description?: string | null;
+  slug?: string | null;
+  account_id: string;
+  is_primary?: boolean;
+  is_private?: boolean;
+  created_at: string;
   updated_at: string;
 };
 
@@ -270,7 +288,9 @@ export type TwilioAuthorization = {
 export type WidgetIconVariant = 'outlined' | 'filled';
 
 export type WidgetSettings = {
-  id?: string;
+  id: string | null;
+  inbox_id?: string | null;
+  acccount_id?: string | null;
   title?: string;
   subtitle?: string;
   color?: string;
@@ -292,7 +312,7 @@ export type WidgetSettings = {
   pathname?: string;
   last_seen_at: string | null;
   account_id: string;
-  inserted_at: string | null;
+  created_at: string | null;
   updated_at: string | null;
 };
 
@@ -314,12 +334,14 @@ export type GoogleIntegrationType = 'personal' | 'support';
 export type GoogleIntegrationParams = {
   client: GoogleIntegrationClient;
   type?: GoogleIntegrationType;
+  inbox_id?: string | null;
 };
 
 export type GoogleAuthParams = {
   code: string;
   state?: string | null;
   scope?: string | null;
+  inbox_id?: string | null;
 };
 
 export type SlackAuthorizationSettings = {
@@ -341,11 +363,12 @@ export type SlackAuthorization = {
 };
 
 export type OnboardingStatus = {
-  has_configured_profile: boolean;
-  has_configured_storytime: boolean;
-  has_email_forwarding: boolean;
-  has_integrations: boolean;
-  is_chat_widget_installed: boolean;
-  has_invited_teammates: boolean;
-  has_upgraded_subscription: boolean;
+  has_configured_inbox?: boolean;
+  has_configured_profile?: boolean;
+  has_configured_storytime?: boolean;
+  has_email_forwarding?: boolean;
+  has_integrations?: boolean;
+  is_chat_widget_installed?: boolean;
+  has_invited_teammates?: boolean;
+  has_upgraded_subscription?: boolean;
 };

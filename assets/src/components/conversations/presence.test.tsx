@@ -1,7 +1,7 @@
 import {
   updatePresenceWithJoiners,
   updatePresenceWithExiters,
-} from './ConversationsProvider';
+} from '../../presence';
 
 const getTestPresenceState = () => {
   return {

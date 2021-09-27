@@ -84,6 +84,7 @@ defmodule ChatApiWeb.Router do
 
     get("/me", SessionController, :me)
     get("/accounts/me", AccountController, :me)
+    get("/conversations/count", ConversationController, :count)
     get("/messages/count", MessageController, :count)
     get("/billing", BillingController, :show)
     post("/billing", BillingController, :create)
@@ -131,6 +132,7 @@ defmodule ChatApiWeb.Router do
     get("/payment_methods", PaymentMethodController, :show)
     get("/browser_sessions/count", BrowserSessionController, :count)
     get("/conversations/unread", ConversationController, :unread)
+    get("/inboxes/primary", InboxController, :primary)
 
     resources("/users", UserController, only: [:index, :show, :delete])
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
@@ -149,6 +151,7 @@ defmodule ChatApiWeb.Router do
     resources("/canned_responses", CannedResponseController, except: [:new, :edit])
     resources("/lambdas", LambdaController, except: [:new, :edit])
     resources("/forwarding_addresses", ForwardingAddressController, except: [:new, :edit])
+    resources("/inboxes", InboxController, except: [:new, :edit])
 
     post("/lambdas/:id/deploy", LambdaController, :deploy)
     post("/lambdas/:id/invoke", LambdaController, :invoke)

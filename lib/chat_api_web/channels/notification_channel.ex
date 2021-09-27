@@ -38,6 +38,7 @@ defmodule ChatApiWeb.NotificationChannel do
         {_, nil} = Conversations.mark_mentions_seen(id, socket.assigns.current_user.id)
 
         conversation
+        |> Conversations.Notification.broadcast_conversation_update_to_admin!()
         |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
         |> Conversations.Notification.notify(:mobile_badge_count)
 

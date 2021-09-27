@@ -31,7 +31,7 @@ export const updatePresenceWithDiff = (
   return latest;
 };
 
-const updatePresenceWithJoiners = (
+export const updatePresenceWithJoiners = (
   joiners: PhoenixPresence,
   currentState: PhoenixPresence
 ): PhoenixPresence => {
@@ -60,7 +60,7 @@ const updatePresenceWithJoiners = (
   return result;
 };
 
-const updatePresenceWithExiters = (
+export const updatePresenceWithExiters = (
   exiters: PhoenixPresence,
   currentState: PhoenixPresence
 ): PhoenixPresence => {

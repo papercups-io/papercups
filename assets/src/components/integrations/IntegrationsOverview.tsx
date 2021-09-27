@@ -1,20 +1,29 @@
 import React from 'react';
-import {RouteComponentProps} from 'react-router-dom';
+import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import qs from 'query-string';
 
-import {notification, Container, Paragraph, Text, Title} from '../common';
+import {
+  notification,
+  Alert,
+  Container,
+  Paragraph,
+  Text,
+  Title,
+} from '../common';
 import Spinner from '../Spinner';
 import * as API from '../../api';
 import logger from '../../logger';
 import {IntegrationType, getSlackRedirectUrl} from './support';
 import IntegrationsTable from './IntegrationsTable';
 import {isEuEdition} from '../../config';
+import {Inbox} from '../../types';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
   loading: boolean;
   refreshing: boolean;
+  inbox: Inbox | null;
   integrations: Array<IntegrationType>;
 };
 
@@ -22,6 +31,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
   state: State = {
     loading: true,
     refreshing: false,
+    inbox: null,
     integrations: [],
   };
 
@@ -38,20 +48,17 @@ class IntegrationsOverview extends React.Component<Props, State> {
       }
 
       const integrations = await Promise.all([
-        this.fetchSlackIntegration(),
-        this.fetchMattermostIntegration(),
-        this.fetchGmailIntegration(),
-        this.fetchGoogleSheetsIntegration(),
-        this.fetchTwilioIntegration(),
         this.fetchGithubIntegration(),
-        this.fetchMicrosoftTeamsIntegration(),
-        this.fetchWhatsAppIntegration(),
-        // TODO: deprecate
-        this.fetchSlackSupportIntegration(),
+        // this.fetchGoogleSheetsIntegration(),
+        this.fetchHubSpotIntegration(),
+        this.fetchSalesforceIntegration(),
+        this.fetchZendeskIntegration(),
+        this.fetchJiraIntegration(),
       ]);
 
       this.setState({
         loading: false,
+        inbox: await API.fetchPrimaryInbox(),
         integrations: integrations.filter(({key}) =>
           isEuEdition ? !key.startsWith('slack') : true
         ),
@@ -68,16 +75,12 @@ class IntegrationsOverview extends React.Component<Props, State> {
       this.setState({refreshing: true});
 
       const integrations = await Promise.all([
-        this.fetchSlackIntegration(),
-        this.fetchMattermostIntegration(),
-        this.fetchGmailIntegration(),
-        this.fetchGoogleSheetsIntegration(),
-        this.fetchTwilioIntegration(),
         this.fetchGithubIntegration(),
-        this.fetchMicrosoftTeamsIntegration(),
-        this.fetchWhatsAppIntegration(),
-        // TODO: deprecate
-        this.fetchSlackSupportIntegration(),
+        // this.fetchGoogleSheetsIntegration(),
+        this.fetchHubSpotIntegration(),
+        this.fetchSalesforceIntegration(),
+        this.fetchZendeskIntegration(),
+        this.fetchJiraIntegration(),
       ]);
 
       this.setState({
@@ -93,76 +96,17 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
   };
 
-  fetchSlackIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchSlackAuthorization('reply');
-    const description =
-      auth && auth.channel && auth.team_name
-        ? `Connected to ${auth.channel} in ${auth.team_name}.`
-        : 'Reply to messages from your customers directly through Slack.';
+  fetchGithubIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchGithubAuthorization();
 
     return {
-      key: 'slack',
-      integration: 'Reply from Slack',
+      key: 'github',
+      integration: 'GitHub',
       status: auth ? 'connected' : 'not_connected',
       created_at: auth ? auth.created_at : null,
       authorization_id: auth ? auth.id : null,
-      icon: '/slack.svg',
-      description,
-    };
-  };
-
-  fetchMattermostIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchMattermostAuthorization();
-    const isConnected =
-      auth && auth.channel && auth.access_token && auth.verification_token;
-    const description =
-      auth && auth.channel && auth.team_name
-        ? `Connected to ${auth.channel} in ${auth.team_name}.`
-        : 'Reply to messages from your customers directly from Mattermost.';
-
-    return {
-      key: 'mattermost',
-      integration: 'Reply from Mattermost',
-      status: isConnected ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
-      icon: '/mattermost.svg',
-      description,
-    };
-  };
-
-  fetchSlackSupportIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchSlackAuthorization('support');
-    const description =
-      auth && auth.channel && auth.team_name
-        ? `Connected to ${auth.channel} in ${auth.team_name}.`
-        : 'Sync messages from your Slack channels with Papercups.';
-
-    return {
-      key: 'slack:sync',
-      integration: 'Sync with Slack (beta)',
-      status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
-      icon: '/slack.svg',
-      description,
-    };
-  };
-
-  fetchGmailIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchGoogleAuthorization({
-      client: 'gmail',
-      type: 'support',
-    });
-
-    return {
-      key: 'gmail',
-      integration: 'Gmail (beta)',
-      status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
-      icon: '/gmail.svg',
-      description: 'Sync messages from your Gmail inbox with Papercups.',
+      icon: '/github.svg',
+      description: 'Sync and track feature requests and bugs with GitHub.',
     };
   };
 
@@ -180,6 +124,50 @@ class IntegrationsOverview extends React.Component<Props, State> {
     };
   };
 
+  fetchHubSpotIntegration = async (): Promise<IntegrationType> => {
+    return {
+      key: 'hubspot',
+      integration: 'HubSpot',
+      status: 'not_connected',
+      created_at: null,
+      authorization_id: null,
+      icon: '/hubspot.svg',
+    };
+  };
+
+  fetchSalesforceIntegration = async (): Promise<IntegrationType> => {
+    return {
+      key: 'salesforce',
+      integration: 'Salesforce',
+      status: 'not_connected',
+      created_at: null,
+      authorization_id: null,
+      icon: '/salesforce.svg',
+    };
+  };
+
+  fetchJiraIntegration = async (): Promise<IntegrationType> => {
+    return {
+      key: 'jira',
+      integration: 'Jira',
+      status: 'not_connected',
+      created_at: null,
+      authorization_id: null,
+      icon: '/jira.svg',
+    };
+  };
+
+  fetchZendeskIntegration = async (): Promise<IntegrationType> => {
+    return {
+      key: 'zendesk',
+      integration: 'Zendesk',
+      status: 'not_connected',
+      created_at: null,
+      authorization_id: null,
+      icon: '/zendesk.svg',
+    };
+  };
+
   fetchMicrosoftTeamsIntegration = async (): Promise<IntegrationType> => {
     return {
       key: 'microsoft-teams',
@@ -188,34 +176,6 @@ class IntegrationsOverview extends React.Component<Props, State> {
       created_at: null,
       authorization_id: null,
       icon: '/microsoft-teams.svg',
-    };
-  };
-
-  fetchTwilioIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchTwilioAuthorization();
-
-    return {
-      key: 'twilio',
-      integration: 'Twilio',
-      status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
-      icon: '/twilio.svg',
-      description: 'Receive and reply to messages over SMS.',
-    };
-  };
-
-  fetchGithubIntegration = async (): Promise<IntegrationType> => {
-    const auth = await API.fetchGithubAuthorization();
-
-    return {
-      key: 'github',
-      integration: 'GitHub',
-      status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
-      icon: '/github.svg',
-      description: 'Sync and track feature requests and bugs with GitHub.',
     };
   };
 
@@ -329,7 +289,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, refreshing, integrations = []} = this.state;
+    const {loading, refreshing, inbox, integrations = []} = this.state;
 
     if (loading) {
       return (
@@ -347,8 +307,26 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
 
     return (
-      <Container>
+      <Container sx={{maxWidth: 960}}>
         <Box mb={5}>
+          <Box mb={4}>
+            <Alert
+              message={
+                <Text>
+                  Most integration channels are now handled at the inbox level.{' '}
+                  <Link
+                    to={inbox && inbox.id ? `/inboxes/${inbox.id}` : '/inboxes'}
+                  >
+                    Click here
+                  </Link>{' '}
+                  to configure your inbox integrations.
+                </Text>
+              }
+              type="info"
+              showIcon
+            />
+          </Box>
+
           <Title level={3}>Integrations</Title>
 
           <Paragraph>
@@ -360,7 +338,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
             </Text>
           </Paragraph>
 
-          <Box mt={3} mb={4}>
+          <Box my={3}>
             <IntegrationsTable
               loading={refreshing}
               integrations={integrations}

@@ -80,9 +80,12 @@ defmodule ChatApi.Slack.Event do
     Logger.debug("Handling Slack message reply event: #{inspect(event)}")
 
     with {:ok, conversation} <- find_thread_conversation(thread_ts, slack_channel_id),
-         %{account_id: account_id, id: conversation_id} <- conversation,
+         %{account_id: account_id, id: conversation_id, inbox_id: inbox_id} <- conversation,
          primary_reply_authorization <-
-           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}),
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: "reply",
+             inbox_id: inbox_id
+           }),
          files <- Map.get(event, "files", []) do
       if Slack.Helpers.is_primary_channel?(primary_reply_authorization, slack_channel_id) do
         text
@@ -115,6 +118,7 @@ defmodule ChatApi.Slack.Event do
       else
         case SlackAuthorizations.get_authorization_by_account(account_id, %{
                team_id: team,
+               inbox_id: inbox_id,
                type: "support"
              }) do
           nil ->
@@ -384,6 +388,7 @@ defmodule ChatApi.Slack.Event do
         } = event,
         %SlackAuthorization{
           account_id: account_id,
+          inbox_id: inbox_id,
           team_id: slack_team_id
         } = authorization
       ) do
@@ -397,6 +402,7 @@ defmodule ChatApi.Slack.Event do
          {:ok, conversation} <-
            Conversations.create_conversation(%{
              account_id: account_id,
+             inbox_id: inbox_id,
              customer_id: customer.id,
              source: "slack"
            }),

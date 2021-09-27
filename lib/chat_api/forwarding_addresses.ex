@@ -113,16 +113,23 @@ defmodule ChatApi.ForwardingAddresses do
 
   defp filter_where(params) do
     Enum.reduce(params, dynamic(true), fn
-      {:account_id, value}, dynamic ->
+      {"account_id", value}, dynamic ->
         dynamic([r], ^dynamic and r.account_id == ^value)
 
-      {:forwarding_email_address, value}, dynamic ->
+      # TODO: should inbox_id be a required field?
+      {"inbox_id", nil}, dynamic ->
+        dynamic([r], ^dynamic and is_nil(r.inbox_id))
+
+      {"inbox_id", value}, dynamic ->
+        dynamic([r], ^dynamic and r.inbox_id == ^value)
+
+      {"forwarding_email_address", value}, dynamic ->
         dynamic([r], ^dynamic and r.forwarding_email_address == ^value)
 
-      {:source_email_address, value}, dynamic ->
+      {"source_email_address", value}, dynamic ->
         dynamic([r], ^dynamic and r.source_email_address == ^value)
 
-      {:state, value}, dynamic ->
+      {"state", value}, dynamic ->
         dynamic([r], ^dynamic and r.state == ^value)
 
       {_, _}, dynamic ->

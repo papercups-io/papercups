@@ -2,7 +2,7 @@ defmodule ChatApiWeb.ConversationController do
   use ChatApiWeb, :controller
   use PhoenixSwagger
 
-  alias ChatApi.{Conversations, Messages}
+  alias ChatApi.{Conversations, Inboxes, Messages}
   alias ChatApi.Conversations.{Conversation, Helpers}
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -86,78 +86,90 @@ defmodule ChatApiWeb.ConversationController do
     end
   end
 
+  @spec count(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def count(conn, filters) do
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      count = Conversations.count_conversations_where(account_id, filters)
+
+      json(conn, %{data: %{count: count}})
+    end
+  end
+
   @spec unread(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def unread(conn, _params) do
     with %{id: user_id, account_id: account_id} <- conn.assigns.current_user do
+      inboxes = Inboxes.list_inboxes(account_id)
+
+      unread_by_inbox =
+        Map.new(inboxes, fn inbox ->
+          {inbox.id,
+           Conversations.count_conversations_where(account_id, %{
+             "status" => "open",
+             "read" => false,
+             "inbox_id" => inbox.id
+           })}
+        end)
+
+      unread_conversations = %{
+        open:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false
+          }),
+        assigned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false,
+            "assignee_id" => user_id
+          }),
+        priority:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false,
+            "priority" => "priority"
+          }),
+        unread:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false
+          }),
+        unassigned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "assignee_id" => nil,
+            "read" => false
+          }),
+        closed:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "closed",
+            "read" => false
+          }),
+        mentioned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "has_seen_mention" => false,
+            "mentioning" => user_id
+          })
+      }
+
       json(conn, %{
-        data: %{
-          open:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false
-            }),
-          assigned:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false,
-              "assignee_id" => user_id
-            }),
-          priority:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false,
-              "priority" => "priority"
-            }),
-          unread:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "read" => false
-            }),
-          unassigned:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "assignee_id" => nil,
-              "read" => false
-            }),
-          closed:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "closed",
-              "read" => false
-            }),
-          mentioned:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "has_seen_mention" => false,
-              "mentioning" => user_id
-            }),
-          # By channel
-          chat:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "source" => "chat",
-              "read" => false
-            }),
-          slack:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "source" => "slack",
-              "read" => false
-            }),
-          email:
-            Conversations.count_conversations_where(account_id, %{
-              "status" => "open",
-              "source" => "email",
-              "read" => false
-            })
-        }
+        data:
+          %{
+            conversations: unread_conversations,
+            inboxes: unread_by_inbox
+          }
+          # TODO: deprecate
+          |> Map.merge(unread_conversations)
+          |> Map.merge(unread_by_inbox)
       })
     end
   end
 
   # TODO: figure out a better way to handle this
   @spec find_by_customer(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def find_by_customer(conn, %{"customer_id" => customer_id, "account_id" => account_id}) do
-    conversations = Conversations.find_by_customer(customer_id, account_id)
+  def find_by_customer(conn, %{"customer_id" => customer_id, "account_id" => account_id} = params) do
+    filters = Map.drop(params, ["account_id", "customer_id"])
+    conversations = Conversations.find_by_customer(customer_id, account_id, filters)
 
     render(conn, "index.json", conversations: conversations)
   end
@@ -233,6 +245,7 @@ defmodule ChatApiWeb.ConversationController do
     with {:ok, %Conversation{} = conversation} <-
            params
            |> Map.merge(%{"account_id" => account_id})
+           |> maybe_set_default_inbox(account_id)
            |> Conversations.create_conversation(),
          :ok <- maybe_create_message(conn, conversation, params) do
       conversation
@@ -250,7 +263,7 @@ defmodule ChatApiWeb.ConversationController do
   def create(conn, %{"conversation" => conversation_params}) do
     # TODO: add support for creating a conversation with an initial message here as well?
     with {:ok, %Conversation{} = conversation} <-
-           Conversations.create_conversation(conversation_params) do
+           conversation_params |> maybe_set_default_inbox() |> Conversations.create_conversation() do
       conversation
       |> Conversations.Notification.broadcast_new_conversation_to_admin!()
       |> Conversations.Notification.broadcast_new_conversation_to_customer!()
@@ -348,6 +361,30 @@ defmodule ChatApiWeb.ConversationController do
       json(conn, %{data: %{ok: true}})
     end
   end
+
+  @spec maybe_set_default_inbox(map(), binary()) :: map()
+  defp maybe_set_default_inbox(params, account_id) do
+    case params do
+      %{"inbox_id" => inbox_id} when is_binary(inbox_id) ->
+        params
+
+      _ ->
+        Map.merge(params, %{"inbox_id" => Inboxes.get_account_primary_inbox_id(account_id)})
+    end
+  end
+
+  @spec maybe_set_default_inbox(map()) :: map()
+  defp maybe_set_default_inbox(%{"account_id" => account_id} = params) do
+    case params do
+      %{"inbox_id" => inbox_id} when is_binary(inbox_id) ->
+        params
+
+      _ ->
+        Map.merge(params, %{"inbox_id" => Inboxes.get_account_primary_inbox_id(account_id)})
+    end
+  end
+
+  defp maybe_set_default_inbox(params), do: params
 
   @spec maybe_create_message(Plug.Conn.t(), Conversation.t(), map()) :: any()
   defp maybe_create_message(

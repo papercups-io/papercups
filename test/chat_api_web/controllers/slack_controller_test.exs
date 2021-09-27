@@ -15,8 +15,9 @@ defmodule ChatApiWeb.SlackControllerTest do
     account = insert(:account)
     user = insert(:user, account: account, role: "admin")
     customer = insert(:customer, account: account, email: @email)
-    conversation = insert(:conversation, account: account, customer: customer)
-    auth = insert(:slack_authorization, account: account, channel: @slack_channel)
+    inbox = insert(:inbox, account: account, is_primary: true)
+    conversation = insert(:conversation, account: account, customer: customer, inbox: inbox)
+    auth = insert(:slack_authorization, account: account, inbox: inbox, channel: @slack_channel)
 
     thread =
       insert(:slack_conversation_thread,
@@ -34,6 +35,7 @@ defmodule ChatApiWeb.SlackControllerTest do
      thread: thread,
      auth: auth,
      account: account,
+     inbox: inbox,
      conversation: conversation,
      customer: customer,
      user: user}
@@ -233,6 +235,7 @@ defmodule ChatApiWeb.SlackControllerTest do
          %{
            conn: conn,
            account: account,
+           inbox: inbox,
            conversation: conversation,
            customer: customer
          } do
@@ -242,6 +245,7 @@ defmodule ChatApiWeb.SlackControllerTest do
       auth =
         insert(:slack_authorization,
           account: account,
+          inbox: inbox,
           channel: slack_channel,
           team_id: slack_team_id,
           type: "support"

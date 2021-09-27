@@ -10,6 +10,7 @@ import {
   OnboardingStatus,
   GoogleAuthParams,
   GoogleIntegrationParams,
+  Inbox,
   Issue,
   Lambda,
   Tag,
@@ -450,6 +451,14 @@ export const fetchConversations = async (
     .then((res) => res.body);
 };
 
+export const fetchConversationsByInbox = async (
+  inboxId: string,
+  query = {},
+  token = getAccessToken()
+): Promise<ConversationsListResponse> => {
+  return fetchConversations({...query, inbox_id: inboxId}, token);
+};
+
 export const fetchAllConversations = async (
   query = {},
   token = getAccessToken()
@@ -691,6 +700,21 @@ export const countMessages = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const countAllConversations = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/conversations/count`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const fetchCustomerConversations = async (
   customerId: string,
   accountId: string
@@ -765,6 +789,7 @@ export const fetchSlackAuthorization = async (
 
 export const listSlackAuthorizations = async (
   type = 'support',
+  query = {},
   token = getAccessToken()
 ): Promise<Array<SlackAuthorization>> => {
   if (!token) {
@@ -773,7 +798,7 @@ export const listSlackAuthorizations = async (
 
   return request
     .get(`/api/slack/authorizations`)
-    .query({type})
+    .query({type, ...query})
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -853,6 +878,7 @@ export const createMattermostAuthorization = async (
 };
 
 export const fetchMattermostAuthorization = async (
+  query = {},
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -861,6 +887,7 @@ export const fetchMattermostAuthorization = async (
 
   return request
     .get(`/api/mattermost/authorization`)
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -893,13 +920,17 @@ export const createTwilioAuthorization = async (
     .then((res) => res.body.data);
 };
 
-export const fetchTwilioAuthorization = async (token = getAccessToken()) => {
+export const fetchTwilioAuthorization = async (
+  query = {},
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/twilio/authorization`)
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -1014,13 +1045,17 @@ export const findGithubIssues = async (
     .then((res) => res.body.data);
 };
 
-export const fetchGmailProfile = async (token = getAccessToken()) => {
+export const fetchGmailProfile = async (
+  query = {},
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/gmail/profile`)
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -1120,13 +1155,17 @@ export const deleteEventSubscription = async (
     .set('Authorization', token);
 };
 
-export const fetchForwardingAddresses = async (token = getAccessToken()) => {
+export const fetchForwardingAddresses = async (
+  query = {},
+  token = getAccessToken()
+) => {
   if (!token) {
     throw new Error('Invalid token!');
   }
 
   return request
     .get(`/api/forwarding_addresses`)
+    .query(query)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };
@@ -1182,6 +1221,7 @@ export const deleteForwardingAddress = async (
 type SlackAuthorizationParams = {
   code: string;
   type: string;
+  inbox_id?: string;
   redirect_url?: string;
 };
 
@@ -1243,6 +1283,24 @@ export const authorizeGithubIntegration = async (
     .query(query)
     .set('Authorization', token)
     .then((res) => res.body);
+};
+
+export const fetchWidgetSettings = async (
+  query: {
+    account_id?: string;
+    inbox_id?: string;
+  } = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/widget_settings`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
 };
 
 export const updateWidgetSettings = async (
@@ -2001,4 +2059,86 @@ export const sendAdminNotification = async (
     .send(params)
     .set('Authorization', token)
     .then((res) => res.body.data);
+};
+
+export const fetchInboxes = async (
+  token = getAccessToken()
+): Promise<Array<Inbox>> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/inboxes`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchPrimaryInbox = async (
+  token = getAccessToken()
+): Promise<Inbox> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/inboxes/primary`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchInbox = async (
+  id: string,
+  token = getAccessToken()
+): Promise<Inbox> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/inboxes/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createInbox = async (
+  params: Partial<Inbox>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/inboxes`)
+    .send({inbox: params})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const updateInbox = async (
+  id: string,
+  updates: Partial<Inbox>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .put(`/api/inboxes/${id}`)
+    .send({inbox: updates})
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteInbox = async (id: string, token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/inboxes/${id}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
 };

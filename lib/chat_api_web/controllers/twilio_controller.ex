@@ -39,14 +39,12 @@ defmodule ChatApiWeb.TwilioController do
   end
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def authorization(conn, _payload) do
-    authorization =
-      conn
-      |> Pow.Plug.current_user()
-      |> Map.get(:account_id)
-      |> Twilio.get_authorization_by_account()
+  def authorization(conn, params) do
+    current_user = Pow.Plug.current_user(conn)
+    account_id = current_user.account_id
+    filters = Map.new(params, fn {key, value} -> {String.to_atom(key), value} end)
 
-    case authorization do
+    case Twilio.get_authorization_by_account(account_id, filters) do
       nil ->
         json(conn, %{data: nil})
 
@@ -55,6 +53,8 @@ defmodule ChatApiWeb.TwilioController do
           data: %{
             id: auth.id,
             created_at: auth.inserted_at,
+            account_id: auth.account_id,
+            inbox_id: auth.inbox_id,
             from_phone_number: auth.from_phone_number,
             twilio_account_sid: auth.twilio_account_sid,
             twilio_auth_token: auth.twilio_auth_token

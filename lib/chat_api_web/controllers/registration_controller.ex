@@ -122,6 +122,24 @@ defmodule ChatApiWeb.RegistrationController do
           {:error, reason}
       end
     end)
+    |> Ecto.Multi.run(:inbox, fn _repo, %{account: account} ->
+      ChatApi.Inboxes.create_inbox(%{
+        account_id: account.id,
+        name: "Primary Inbox",
+        description:
+          "This is the primary Papercups inbox for #{account.company_name}. All messages will flow into here by default.",
+        is_primary: true,
+        is_private: false
+      })
+    end)
+    |> Ecto.Multi.run(:inbox_members, fn _repo, %{account: account, inbox: inbox, conn: conn} ->
+      ChatApi.Inboxes.create_inbox_member(%{
+        inbox_id: inbox.id,
+        account_id: account.id,
+        user_id: conn.assigns.current_user.id,
+        role: conn.assigns.current_user.role
+      })
+    end)
   end
 
   @spec default_subscription_plan() :: String.t()

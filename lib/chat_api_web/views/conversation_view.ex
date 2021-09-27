@@ -50,6 +50,7 @@ defmodule ChatApiWeb.ConversationView do
       account_id: conversation.account_id,
       customer_id: conversation.customer_id,
       assignee_id: conversation.assignee_id,
+      inbox_id: conversation.inbox_id,
       metadata: conversation.metadata
     }
   end
@@ -69,6 +70,7 @@ defmodule ChatApiWeb.ConversationView do
       account_id: conversation.account_id,
       customer_id: conversation.customer_id,
       assignee_id: conversation.assignee_id,
+      inbox_id: conversation.inbox_id,
       metadata: conversation.metadata,
       customer: render_one(conversation.customer, CustomerView, "customer.json"),
       messages: render_many(conversation.messages, MessageView, "expanded.json"),

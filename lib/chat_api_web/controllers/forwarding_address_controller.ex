@@ -21,9 +21,9 @@ defmodule ChatApiWeb.ForwardingAddressController do
   end
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def index(conn, _params) do
+  def index(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      forwarding_addresses = ForwardingAddresses.list_forwarding_addresses(account_id)
+      forwarding_addresses = ForwardingAddresses.list_forwarding_addresses(account_id, params)
       render(conn, "index.json", forwarding_addresses: forwarding_addresses)
     end
   end

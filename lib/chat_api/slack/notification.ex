@@ -61,10 +61,13 @@ defmodule ChatApi.Slack.Notification do
       ) do
     Logger.info("Calling ChatApi.Slack.Notification.notify_primary_channel")
     # TODO: handle getting all these fields in a separate function?
-    with %SlackAuthorization{channel_id: channel_id} = authorization <-
-           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}),
-         %Conversation{} = conversation <-
-           Conversations.get_conversation_with!(conversation_id, :customer) do
+    with %Conversation{inbox_id: inbox_id} = conversation <-
+           Conversations.get_conversation_with!(conversation_id, :customer),
+         %SlackAuthorization{channel_id: channel_id} = authorization <-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: "reply",
+             inbox_id: inbox_id
+           }) do
       is_first_message = Conversations.is_first_message?(conversation_id, message_id)
       thread = SlackConversationThreads.get_thread_by_conversation_id(conversation_id, channel_id)
 
@@ -250,13 +253,20 @@ defmodule ChatApi.Slack.Notification do
   end
 
   @spec notify_slack_channel(binary(), Message.t()) :: :ok
-  def notify_slack_channel(channel_id, %Message{account_id: account_id} = message) do
-    case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
-      %{access_token: access_token} ->
-        notify_slack_channel(access_token, channel_id, message)
-
-      _ ->
-        nil
+  def notify_slack_channel(
+        channel_id,
+        %Message{
+          account_id: account_id,
+          conversation_id: conversation_id
+        } = message
+      ) do
+    with %Conversation{inbox_id: inbox_id} <- Conversations.get_conversation(conversation_id),
+         %SlackAuthorization{access_token: access_token} <-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: "support",
+             inbox_id: inbox_id
+           }) do
+      notify_slack_channel(access_token, channel_id, message)
     end
   end
 
@@ -331,6 +341,8 @@ defmodule ChatApi.Slack.Notification do
         default_app_name()
     end
   end
+
+  def format_user_name(nil), do: default_app_name()
 
   @spec format_customer_name(Customer.t()) :: binary()
   def format_customer_name(%Customer{email: email, name: name}) do

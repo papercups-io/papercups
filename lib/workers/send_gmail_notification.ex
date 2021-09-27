@@ -5,6 +5,8 @@ defmodule ChatApi.Workers.SendGmailNotification do
   import Ecto.Query, warn: false
   require Logger
   alias ChatApi.{Conversations, Google, Messages}
+  alias ChatApi.Conversations.Conversation
+  alias ChatApi.Google.{GoogleAuthorization, GmailConversationThread}
 
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
@@ -21,9 +23,17 @@ defmodule ChatApi.Workers.SendGmailNotification do
         }
       }) do
     # TODO: clean this up a bit, move some logic into smaller functions
-    with %{refresh_token: refresh_token} = authorization <-
-           Google.get_support_gmail_authorization(account_id, user_id),
-         %{gmail_initial_subject: gmail_initial_subject, gmail_thread_id: gmail_thread_id} <-
+    with %Conversation{inbox_id: inbox_id} <- Conversations.get_conversation(conversation_id),
+         %GoogleAuthorization{refresh_token: refresh_token} = authorization <-
+           Google.get_authorization_by_account(account_id, %{
+             inbox_id: inbox_id,
+             client: "gmail",
+             type: "support"
+           }),
+         %GmailConversationThread{
+           gmail_initial_subject: gmail_initial_subject,
+           gmail_thread_id: gmail_thread_id
+         } <-
            Google.get_thread_by_conversation_id(conversation_id),
          %{
            "gmail_message_id" => gmail_message_id,
@@ -87,8 +97,11 @@ defmodule ChatApi.Workers.SendGmailNotification do
             metadata: format_message_metadata(refresh_token, gmail_message_id)
           })
 
+        {:error, error} ->
+          Logger.error("Failed to send Gmail message: #{inspect(error)}")
+
         error ->
-          Logger.error("Failed to send Gmail message: #{error}")
+          Logger.error("Unexpected response from Gmail.send_message: #{inspect(error)}")
       end
     else
       error -> Logger.info("Skipped sending Gmail notification: #{inspect(error)}")

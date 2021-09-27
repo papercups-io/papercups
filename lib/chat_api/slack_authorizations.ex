@@ -194,6 +194,13 @@ defmodule ChatApi.SlackAuthorizations do
       {:account_id, value}, dynamic ->
         dynamic([r], ^dynamic and r.account_id == ^value)
 
+      # TODO: should inbox_id be a required field?
+      {:inbox_id, nil}, dynamic ->
+        dynamic([r], ^dynamic and is_nil(r.inbox_id))
+
+      {:inbox_id, value}, dynamic ->
+        dynamic([r], ^dynamic and r.inbox_id == ^value)
+
       {:channel_id, value}, dynamic ->
         dynamic([r], ^dynamic and r.channel_id == ^value)
 

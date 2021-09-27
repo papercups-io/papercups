@@ -8,47 +8,89 @@ import {
   RouteComponentProps,
 } from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
+import {MenuItemProps} from 'antd/lib/menu/MenuItem';
 
 import {colors, Badge, Layout, Menu, Sider} from '../common';
+import {PlusOutlined, SettingOutlined} from '../icons';
+import {INBOXES_DASHBOARD_SIDER_WIDTH} from '../../utils';
+import * as API from '../../api';
+import {Inbox} from '../../types';
 import {useConversations} from '../conversations/ConversationsProvider';
-import AllConversations from '../conversations/AllConversations';
-import MyConversations from '../conversations/MyConversations';
-import MentionedConversations from '../conversations/MentionedConversations';
-import PriorityConversations from '../conversations/PriorityConversations';
-import UnreadConversations from '../conversations/UnreadConversations';
-import UnassignedConversations from '../conversations/UnassignedConversations';
-import ClosedConversations from '../conversations/ClosedConversations';
-import ConversationsBySource from '../conversations/ConversationsBySource';
-import {
-  DASHBOARD_COLLAPSED_SIDER_WIDTH,
-  INBOXES_DASHBOARD_SIDER_WIDTH,
-} from '../../utils';
+import ConversationsDashboard from '../conversations/ConversationsDashboard';
+import ChatWidgetSettings from '../settings/ChatWidgetSettings';
+import SlackReplyIntegrationDetails from '../integrations/SlackReplyIntegrationDetails';
+import SlackSyncIntegrationDetails from '../integrations/SlackSyncIntegrationDetails';
+import SlackIntegrationDetails from '../integrations/SlackIntegrationDetails';
+import GmailIntegrationDetails from '../integrations/GmailIntegrationDetails';
+import GoogleIntegrationDetails from '../integrations/GoogleIntegrationDetails';
+import MattermostIntegrationDetails from '../integrations/MattermostIntegrationDetails';
+import TwilioIntegrationDetails from '../integrations/TwilioIntegrationDetails';
+import InboxEmailForwardingPage from './InboxEmailForwardingPage';
+import InboxDetailsPage from './InboxDetailsPage';
+import InboxesOverview from './InboxesOverview';
+import InboxConversations from './InboxConversations';
+import NewInboxModal from './NewInboxModal';
 
 const getSectionKey = (pathname: string) => {
-  if (pathname.startsWith('/companies')) {
-    return ['customers', 'companies'];
-  } else if (pathname.startsWith('/customers')) {
-    return ['customers', 'people'];
-  } else if (pathname.startsWith('/tags')) {
-    return ['customers', 'tags'];
-  } else if (pathname.startsWith('/notes')) {
-    return ['customers', 'notes'];
-  } else if (pathname.startsWith('/functions')) {
-    return ['developers', 'functions'];
+  const isInboxSettings =
+    pathname === '/inboxes' ||
+    (pathname.startsWith('/inboxes') &&
+      pathname.indexOf('conversations') === -1);
+
+  if (isInboxSettings) {
+    return ['inbox-settings'];
   } else {
     return pathname.split('/').slice(1); // Slice off initial slash
   }
 };
 
-const InboxesDashboard = (props: RouteComponentProps) => {
-  const {pathname} = useLocation();
-  const {inboxes, getUnreadCount} = useConversations();
+export const NewInboxModalMenuItem = ({
+  onSuccess,
+  ...props
+}: {
+  onSuccess: (inbox: Inbox) => void;
+} & MenuItemProps) => {
+  const [isModalOpen, setModalOpen] = React.useState(false);
 
-  const [section, key] = getSectionKey(pathname);
-  const totalNumUnread = getUnreadCount('open', inboxes.all.open);
+  const handleOpenModal = () => setModalOpen(true);
+  const handleCloseModal = () => setModalOpen(false);
+  const handleSuccess = (inbox: Inbox) => {
+    handleCloseModal();
+    onSuccess(inbox);
+  };
 
   return (
-    <Layout>
+    <>
+      <Menu.Item {...props} onClick={handleOpenModal} />
+      <NewInboxModal
+        visible={isModalOpen}
+        onCancel={handleCloseModal}
+        onSuccess={handleSuccess}
+      />
+    </>
+  );
+};
+
+const InboxesDashboard = (props: RouteComponentProps) => {
+  const {pathname} = useLocation();
+  const {unread} = useConversations();
+  const [inboxes, setCustomInboxes] = React.useState<Array<Inbox>>([]);
+
+  const [section, key] = getSectionKey(pathname);
+  const totalNumUnread = unread.conversations.open || 0;
+
+  React.useEffect(() => {
+    API.fetchInboxes().then((inboxes) => setCustomInboxes(inboxes));
+  }, []);
+
+  const handleInboxCreated = async (inbox: Inbox) => {
+    setCustomInboxes([...inboxes, inbox]);
+
+    props.history.push(`/inboxes/${inbox.id}`);
+  };
+
+  return (
+    <Layout style={{background: colors.white}}>
       <Sider
         className="Dashboard-Sider"
         width={INBOXES_DASHBOARD_SIDER_WIDTH}
@@ -56,7 +98,6 @@ const InboxesDashboard = (props: RouteComponentProps) => {
           overflow: 'auto',
           height: '100vh',
           position: 'fixed',
-          left: DASHBOARD_COLLAPSED_SIDER_WIDTH,
           color: colors.white,
         }}
       >
@@ -65,11 +106,11 @@ const InboxesDashboard = (props: RouteComponentProps) => {
             {/* TODO: eventually we should design our own sidebar menu so we have more control over the UX */}
             <Menu
               selectedKeys={[section, key]}
-              defaultOpenKeys={['conversations', 'channels']}
+              defaultOpenKeys={['conversations', 'channels', 'inboxes']}
               mode="inline"
               theme="dark"
             >
-              <Menu.SubMenu key="conversations" title="Primary Inbox">
+              <Menu.SubMenu key="conversations" title="Conversations">
                 <Menu.Item key="all">
                   <Link to="/conversations/all">
                     <Flex
@@ -78,63 +119,9 @@ const InboxesDashboard = (props: RouteComponentProps) => {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Box mr={2}>All conversations</Box>
+                      <Box mr={2}>All</Box>
                       <Badge
                         count={totalNumUnread}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="unread">
-                  <Link to="/conversations/unread">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>All unread</Box>
-                      <Badge
-                        count={getUnreadCount('unread', inboxes.all.unread)}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="unassigned">
-                  <Link to="/conversations/unassigned">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Unassigned</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'unassigned',
-                          inboxes.all.unassigned
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="mentions">
-                  <Link to="/conversations/mentions">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Mentions</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'mentioned',
-                          inboxes.all.mentioned
-                        )}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -150,7 +137,55 @@ const InboxesDashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Assigned to me</Box>
                       <Badge
-                        count={getUnreadCount('assigned', inboxes.all.assigned)}
+                        count={unread.conversations.assigned || 0}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="mentions">
+                  <Link to="/conversations/mentions">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Mentions</Box>
+                      <Badge
+                        count={unread.conversations.mentioned || 0}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="unread">
+                  <Link to="/conversations/unread">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Unread</Box>
+                      <Badge
+                        count={unread.conversations.unread || 0}
+                        style={{borderColor: '#FF4D4F'}}
+                      />
+                    </Flex>
+                  </Link>
+                </Menu.Item>
+                <Menu.Item key="unassigned">
+                  <Link to="/conversations/unassigned">
+                    <Flex
+                      sx={{
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box mr={2}>Unassigned</Box>
+                      <Badge
+                        count={unread.conversations.unassigned}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -166,7 +201,7 @@ const InboxesDashboard = (props: RouteComponentProps) => {
                     >
                       <Box mr={2}>Prioritized</Box>
                       <Badge
-                        count={getUnreadCount('priority', inboxes.all.priority)}
+                        count={unread.conversations.priority}
                         style={{borderColor: '#FF4D4F'}}
                       />
                     </Flex>
@@ -176,107 +211,121 @@ const InboxesDashboard = (props: RouteComponentProps) => {
                   <Link to="/conversations/closed">Closed</Link>
                 </Menu.Item>
               </Menu.SubMenu>
-              <Menu.SubMenu key="channels" title="Channels">
-                <Menu.Item key="live-chat">
-                  <Link to="/channels/live-chat">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Live chat</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'chat',
-                          inboxes.bySource['chat'] ?? []
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="email">
-                  <Link to="/channels/email">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Email</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'email',
-                          inboxes.bySource['email'] ?? []
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="slack">
-                  <Link to="/channels/slack">
-                    <Flex
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Box mr={2}>Slack</Box>
-                      <Badge
-                        count={getUnreadCount(
-                          'slack',
-                          inboxes.bySource['slack'] ?? []
-                        )}
-                        style={{borderColor: '#FF4D4F'}}
-                      />
-                    </Flex>
-                  </Link>
-                </Menu.Item>
+
+              <Menu.SubMenu key="inboxes" title="Inboxes">
+                {inboxes.map((inbox) => {
+                  const {id, name} = inbox;
+
+                  return (
+                    <Menu.Item key={id}>
+                      <Link to={`/inboxes/${id}/conversations`}>
+                        <Flex
+                          sx={{
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <Box mr={2}>{name}</Box>
+                          <Badge
+                            count={unread.inboxes[id] || 0}
+                            style={{borderColor: '#FF4D4F'}}
+                          />
+                        </Flex>
+                      </Link>
+                    </Menu.Item>
+                  );
+                })}
               </Menu.SubMenu>
+
+              <NewInboxModalMenuItem
+                key="add-inbox"
+                icon={<PlusOutlined />}
+                title="Add inbox"
+                onSuccess={handleInboxCreated}
+              >
+                Add inbox
+              </NewInboxModalMenuItem>
+
+              <Menu.Item
+                key="inbox-settings"
+                icon={<SettingOutlined />}
+                title="Inbox settings"
+              >
+                <Link to="/inboxes">Configure inboxes</Link>
+              </Menu.Item>
             </Menu>
           </Box>
         </Flex>
       </Sider>
 
-      <Switch>
-        <Route path="/conversations/all" component={AllConversations} />
-        <Route path="/conversations/unread" component={UnreadConversations} />
-        <Route
-          path="/conversations/unassigned"
-          component={UnassignedConversations}
-        />
-        <Route
-          path="/conversations/mentions"
-          component={MentionedConversations}
-        />
-        <Route path="/conversations/me" component={MyConversations} />
-        <Route
-          path="/conversations/priority"
-          component={PriorityConversations}
-        />
-        <Route path="/conversations/closed" component={ClosedConversations} />
-        <Route
-          path="/conversations/:id"
-          render={(props: RouteComponentProps<{id: string}>) => {
-            const {id: conversationId} = props.match.params;
-
-            return <Redirect to={`/conversations/all?cid=${conversationId}`} />;
-          }}
-        />
-        <Route path="/channels/live-chat" key="chat">
-          <ConversationsBySource title="Live chat" source="chat" />
-        </Route>
-        <Route path="/channels/email" key="email">
-          <ConversationsBySource title="Email" source="email" />
-        </Route>
-        <Route path="/channels/slack" key="slack">
-          <ConversationsBySource title="Slack" source="slack" />
-        </Route>
-
-        <Route path="*" render={() => <Redirect to="/conversations/all" />} />
-      </Switch>
+      <Layout
+        style={{
+          background: colors.white,
+          marginLeft: INBOXES_DASHBOARD_SIDER_WIDTH,
+        }}
+      >
+        <Switch>
+          <Route
+            path="/conversations/:bucket/:conversation_id"
+            component={ConversationsDashboard}
+          />
+          <Route
+            path="/conversations/:bucket"
+            component={ConversationsDashboard}
+          />
+          <Route
+            path="/inboxes/:inbox_id/conversations/:conversation_id"
+            component={InboxConversations}
+          />
+          <Route
+            path="/inboxes/:inbox_id/conversations"
+            component={InboxConversations}
+          />
+          <Route
+            path="/inboxes/:inbox_id/conversations"
+            component={InboxesDashboard}
+          />
+          <Route
+            path="/inboxes/:inbox_id/chat-widget"
+            component={ChatWidgetSettings}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/slack/reply"
+            component={SlackReplyIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/slack/support"
+            component={SlackSyncIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/slack"
+            component={SlackIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/google/gmail"
+            component={GmailIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/google"
+            component={GoogleIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/mattermost"
+            component={MattermostIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/twilio"
+            component={TwilioIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/email-forwarding"
+            component={InboxEmailForwardingPage}
+          />
+          <Route path="/inboxes/:inbox_id" component={InboxDetailsPage} />
+          <Route path="/inboxes" component={InboxesOverview} />
+          <Route path="*" render={() => <Redirect to="/conversations/all" />} />
+        </Switch>
+      </Layout>
     </Layout>
   );
 };

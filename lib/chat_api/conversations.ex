@@ -195,8 +195,8 @@ defmodule ChatApi.Conversations do
   @customer_conversations_limit 3
 
   # Used externally in chat widget
-  @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
-  def find_by_customer(customer_id, account_id) do
+  @spec find_by_customer(binary(), binary(), map()) :: [Conversation.t()]
+  def find_by_customer(customer_id, account_id, filters \\ %{}) do
     # NB: this is the method used to fetch conversations for a customer in the widget,
     # so we need to make sure that private messages are excluded from the query.
     messages =
@@ -209,6 +209,7 @@ defmodule ChatApi.Conversations do
     Conversation
     |> where(customer_id: ^customer_id)
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
     |> where(source: "chat")
     |> where(status: "open")
     |> where([c], is_nil(c.archived_at))
@@ -613,7 +614,7 @@ defmodule ChatApi.Conversations do
       :left_lateral,
       [c],
       f in fragment(
-        "SELECT body FROM messages WHERE conversation_id = ? AND body LIKE ? LIMIT 1",
+        "SELECT body FROM messages WHERE conversation_id = ? AND body ILIKE ? LIMIT 1",
         c.id,
         ^body
       ),
@@ -679,6 +680,13 @@ defmodule ChatApi.Conversations do
 
       {"account_id", value}, dynamic ->
         dynamic([c], ^dynamic and c.account_id == ^value)
+
+      # TODO: should inbox_id be a required field?
+      {"inbox_id", nil}, dynamic ->
+        dynamic([c], ^dynamic and is_nil(c.inbox_id))
+
+      {"inbox_id", value}, dynamic ->
+        dynamic([c], ^dynamic and c.inbox_id == ^value)
 
       {"source", value}, dynamic ->
         dynamic([c], ^dynamic and c.source == ^value)

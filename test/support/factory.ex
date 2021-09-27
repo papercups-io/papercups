@@ -53,6 +53,7 @@ defmodule ChatApi.Factory do
     %ChatApi.Conversations.Conversation{
       account: build(:account),
       customer: build(:customer),
+      inbox: build(:inbox),
       status: "open",
       source: "chat"
     }
@@ -117,6 +118,16 @@ defmodule ChatApi.Factory do
       refresh_token: "some long refresh token",
       account: build(:account),
       user: build(:user)
+    }
+  end
+
+  def inbox_factory do
+    %ChatApi.Inboxes.Inbox{
+      account: build(:account),
+      name: "some inbox name",
+      description: "some description",
+      is_primary: false,
+      is_private: false
     }
   end
 

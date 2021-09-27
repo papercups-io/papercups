@@ -303,7 +303,7 @@ class TeamOverview extends React.Component<Props, State> {
     const isAdmin = this.hasAdminRole();
 
     return (
-      <Container>
+      <Container sx={{maxWidth: 960}}>
         <Box mb={4}>
           <Title level={3}>My Team</Title>
         </Box>

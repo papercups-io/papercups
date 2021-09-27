@@ -119,6 +119,16 @@ defmodule ChatApi.Google do
       {:type, value}, dynamic ->
         dynamic([g], ^dynamic and g.type == ^value)
 
+      {:account_id, value}, dynamic ->
+        dynamic([g], ^dynamic and g.account_id == ^value)
+
+      # TODO: should inbox_id be a required field?
+      {:inbox_id, nil}, dynamic ->
+        dynamic([g], ^dynamic and is_nil(g.inbox_id))
+
+      {:inbox_id, value}, dynamic ->
+        dynamic([g], ^dynamic and g.inbox_id == ^value)
+
       {_, _}, dynamic ->
         # Not a where parameter
         dynamic

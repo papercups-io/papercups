@@ -3,8 +3,9 @@ import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
 import {colors, Button, Table, Tag, Text} from '../common';
-import {SettingOutlined} from '../icons';
+import {PlusOutlined, SettingOutlined} from '../icons';
 import {IntegrationType} from './support';
+import {Papercups} from '@papercups-io/chat-widget';
 
 const IntegrationsTable = ({
   loading,
@@ -13,6 +14,9 @@ const IntegrationsTable = ({
   loading?: boolean;
   integrations: Array<IntegrationType>;
 }) => {
+  const isChatAvailable = !!document.querySelector(
+    '.Papercups-chatWindowContainer'
+  );
   const columns = [
     {
       title: 'Integration',
@@ -24,7 +28,11 @@ const IntegrationsTable = ({
         return (
           <Box>
             <Flex sx={{alignItems: 'center'}}>
-              <img src={icon} alt={value} style={{height: 20}} />
+              <img
+                src={icon}
+                alt={value}
+                style={{maxHeight: 20, maxWidth: 20}}
+              />
               <Text strong style={{marginLeft: 8}}>
                 {value}
               </Text>
@@ -67,53 +75,38 @@ const IntegrationsTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (action: any, record: IntegrationType) => {
-        const {key} = record;
+        const {key, status} = record;
+        const isConnected = status === 'connected';
 
         switch (key) {
-          case 'slack':
-            return (
-              <Link to="/integrations/slack/reply">
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
-          case 'mattermost':
-            return (
-              <Link to="/integrations/mattermost">
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
-          case 'gmail':
-            return (
-              <Link to="/integrations/google/gmail">
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
           case 'sheets':
             return (
               <Link to="/integrations/google/sheets">
-                <Button icon={<SettingOutlined />}>Configure</Button>
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
               </Link>
             );
-          case 'twilio':
-            return (
-              <Link to="/integrations/twilio">
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
+
           case 'github':
             return (
               <Link to="/integrations/github">
-                <Button icon={<SettingOutlined />}>Configure</Button>
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
               </Link>
             );
-          case 'slack:sync':
-            return (
-              <Link to="/integrations/slack/support">
-                <Button icon={<SettingOutlined />}>Configure</Button>
-              </Link>
-            );
+
           default:
-            return <Button disabled>Coming soon!</Button>;
+            return isChatAvailable ? (
+              <Button onClick={Papercups.toggle}>Chat with us!</Button>
+            ) : (
+              <Button disabled>Coming soon!</Button>
+            );
         }
       },
     },

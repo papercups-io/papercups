@@ -25,6 +25,7 @@ defmodule ChatApiWeb.SlackAuthorizationView do
       id: slack_authorization.id,
       object: "slack_authorization",
       account_id: slack_authorization.account_id,
+      inbox_id: slack_authorization.inbox_id,
       channel: slack_authorization.channel,
       channel_id: slack_authorization.channel_id,
       configuration_url: slack_authorization.configuration_url,

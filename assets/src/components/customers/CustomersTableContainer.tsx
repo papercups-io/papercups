@@ -115,7 +115,7 @@ class CustomersTableContainer extends React.Component<Props, State> {
 
   render() {
     const {
-      currentlyOnline,
+      // currentlyOnline,
       includeSearchInput = true,
       includeTagFilterInput = false,
       includeAnonymousUserFilter = true,
@@ -169,7 +169,7 @@ class CustomersTableContainer extends React.Component<Props, State> {
         <CustomersTable
           loading={loading}
           customers={customers}
-          currentlyOnline={currentlyOnline}
+          // currentlyOnline={currentlyOnline}
           shouldIncludeAnonymous
           pagination={{
             total: pagination.total_entries,

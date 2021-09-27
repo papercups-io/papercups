@@ -17,11 +17,13 @@ import {formatServerError} from '../../utils';
 
 const MattermostAuthorizationModal = ({
   visible,
+  inboxId,
   authorizationId,
   onSuccess,
   onCancel,
 }: {
   visible: boolean;
+  inboxId?: string | null;
   authorizationId?: string | null;
   onSuccess: (authorization: MattermostAuthorization) => void;
   onCancel: () => void;
@@ -36,14 +38,14 @@ const MattermostAuthorizationModal = ({
   const [error, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    API.fetchMattermostAuthorization().then((auth) => {
+    API.fetchMattermostAuthorization({inbox_id: inboxId}).then((auth) => {
       if (!auth) {
         return;
       }
 
       setAuthorization(auth);
     });
-  }, [visible, authorizationId]);
+  }, [visible, inboxId, authorizationId]);
 
   // TODO: debounce this
   const handleRefreshChannels = async (query: MattermostAuthorization) => {
@@ -68,8 +70,8 @@ const MattermostAuthorizationModal = ({
 
     try {
       const params = authorizationId
-        ? {...authorization, id: authorizationId}
-        : authorization;
+        ? {...authorization, id: authorizationId, inbox_id: inboxId}
+        : {...authorization, inbox_id: inboxId};
       const result = await API.createMattermostAuthorization(params);
       setErrorMessage(null);
 
@@ -262,11 +264,13 @@ const MattermostAuthorizationModal = ({
 
 export const MattermostAuthorizationButton = ({
   isConnected,
+  inboxId,
   authorizationId,
   onUpdate,
   onDisconnect,
 }: {
   isConnected?: boolean;
+  inboxId?: string | null;
   authorizationId?: string | null;
   onUpdate: () => void;
   onDisconnect: (id: string) => void;
@@ -288,6 +292,7 @@ export const MattermostAuthorizationButton = ({
           <Button onClick={handleOpenModal}>Update</Button>
           <MattermostAuthorizationModal
             visible={isOpen}
+            inboxId={inboxId}
             authorizationId={authorizationId}
             onCancel={handleCloseModal}
             onSuccess={handleSuccess}
@@ -315,6 +320,7 @@ export const MattermostAuthorizationButton = ({
       </Button>
       <MattermostAuthorizationModal
         visible={isOpen}
+        inboxId={inboxId}
         authorizationId={authorizationId}
         onCancel={handleCloseModal}
         onSuccess={handleSuccess}

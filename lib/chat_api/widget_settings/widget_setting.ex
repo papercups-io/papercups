@@ -3,6 +3,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
   import Ecto.Changeset
 
   alias ChatApi.Accounts.Account
+  alias ChatApi.Inboxes.Inbox
 
   @type t :: %__MODULE__{
           title: String.t() | nil,
@@ -28,6 +29,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
           away_message: String.t() | nil,
           # Foreign keys
           account_id: Ecto.UUID.t(),
+          inbox_id: Ecto.UUID.t(),
           # Timestamps
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()
@@ -60,6 +62,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
     field(:last_seen_at, :utc_datetime)
 
     belongs_to(:account, Account)
+    belongs_to(:inbox, Inbox)
 
     timestamps()
   end
@@ -86,6 +89,7 @@ defmodule ChatApi.WidgetSettings.WidgetSetting do
       :new_messages_notification_text,
       :base_url,
       :account_id,
+      :inbox_id,
       :host,
       :pathname,
       :last_seen_at,

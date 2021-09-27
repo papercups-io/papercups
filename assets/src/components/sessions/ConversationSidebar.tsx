@@ -1,10 +1,12 @@
 import React from 'react';
 import {Flex} from 'theme-ui';
 import {colors} from '../common';
-import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
+import {useConversations} from '../conversations/ConversationsProvider';
+import {useNotifications} from '../conversations/NotificationsProvider';
+import {useAuth} from '../auth/AuthProvider';
 
 type Props = {
   conversation: Conversation;
@@ -68,7 +70,7 @@ class ConversationSidebar extends React.Component<Props, any> {
           sx={{p: 3}}
           messages={messages}
           currentUser={currentUser}
-          setScrollRef={(el) => (this.scrollToEl = el)}
+          setScrollRef={(el: any) => (this.scrollToEl = el)}
         />
 
         <ConversationFooter
@@ -85,20 +87,17 @@ const ConversationSidebarWrapper = ({
 }: {
   conversationId: string;
 }) => {
+  const {currentUser} = useAuth();
   const {
     loading,
-    currentUser,
-    conversationsById = {},
-    messagesByConversation = {},
     fetchConversationById,
-    onSendMessage,
-    onSelectConversation,
+    getConversationById,
   } = useConversations();
+  const {handleSendMessage} = useNotifications();
 
   React.useEffect(() => {
-    fetchConversationById(conversationId).then(() =>
-      onSelectConversation(conversationId)
-    );
+    Promise.all([fetchConversationById(conversationId)]);
+
     // eslint-disable-next-line
   }, [conversationId]);
 
@@ -106,20 +105,20 @@ const ConversationSidebarWrapper = ({
     return null;
   }
 
-  // TODO: fix case where conversation is closed!
-  const conversation = conversationsById[conversationId] || null;
-  const messages = messagesByConversation[conversationId] || null;
+  const conversation = getConversationById(conversationId);
 
-  if (!conversation || !messages) {
+  if (!conversation) {
     return null;
   }
+
+  const {messages = []} = conversation;
 
   return (
     <ConversationSidebar
       conversation={conversation}
       messages={messages}
       currentUser={currentUser}
-      onSendMessage={onSendMessage}
+      onSendMessage={handleSendMessage}
     />
   );
 };

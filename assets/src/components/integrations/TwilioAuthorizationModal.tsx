@@ -15,11 +15,13 @@ import logger from '../../logger';
 
 const TwilioAuthorizationModal = ({
   visible,
+  inboxId,
   authorizationId,
   onSuccess,
   onCancel,
 }: {
   visible: boolean;
+  inboxId?: string | null;
   authorizationId?: string | null;
   onSuccess: (authorization: TwilioAuthorization) => void;
   onCancel: () => void;
@@ -31,22 +33,22 @@ const TwilioAuthorizationModal = ({
   const [error, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    API.fetchTwilioAuthorization().then((auth) => {
+    API.fetchTwilioAuthorization({inbox_id: inboxId}).then((auth) => {
       if (!auth) {
         return;
       }
 
       setAuthorization(auth);
     });
-  }, [visible, authorizationId]);
+  }, [visible, inboxId, authorizationId]);
 
   const handleSetAuthorization = async () => {
     setSaving(true);
 
     try {
       const params = authorizationId
-        ? {...authorization, id: authorizationId}
-        : authorization;
+        ? {...authorization, id: authorizationId, inbox_id: inboxId}
+        : {...authorization, inbox_id: inboxId};
       const result = await API.createTwilioAuthorization(params);
 
       if (result.ok) {
@@ -181,11 +183,13 @@ const TwilioAuthorizationModal = ({
 export const TwilioAuthorizationButton = ({
   isConnected,
   authorizationId,
+  inboxId,
   onUpdate,
   onDisconnect,
 }: {
   isConnected?: boolean;
   authorizationId?: string | null;
+  inboxId?: string | null;
   onUpdate: () => void;
   onDisconnect: (id: string) => void;
 }) => {
@@ -206,6 +210,7 @@ export const TwilioAuthorizationButton = ({
           <Button onClick={handleOpenModal}>Update</Button>
           <TwilioAuthorizationModal
             visible={isOpen}
+            inboxId={inboxId}
             authorizationId={authorizationId}
             onCancel={handleCloseModal}
             onSuccess={handleSuccess}
@@ -233,6 +238,7 @@ export const TwilioAuthorizationButton = ({
       </Button>
       <TwilioAuthorizationModal
         visible={isOpen}
+        inboxId={inboxId}
         authorizationId={authorizationId}
         onCancel={handleCloseModal}
         onSuccess={handleSuccess}

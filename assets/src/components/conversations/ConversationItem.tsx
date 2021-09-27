@@ -6,8 +6,8 @@ import {colors, Badge, Text} from '../common';
 import {SmileTwoTone, StarFilled} from '../icons';
 import {formatRelativeTime} from '../../utils';
 import {Conversation, Message} from '../../types';
-import {useConversations} from './ConversationsProvider';
 import {isUnreadConversation} from './support';
+import {useAuth} from '../auth/AuthProvider';
 
 dayjs.extend(utc);
 
@@ -43,7 +43,7 @@ const ConversationItem = ({
   isCustomerOnline?: boolean;
   onSelectConversation: (id: string) => void;
 }) => {
-  const {currentUser} = useConversations();
+  const {currentUser} = useAuth();
   const formatted = formatConversation(conversation, messages);
   const {id, priority, status, customer, date, preview} = formatted;
   const {name, email} = customer;

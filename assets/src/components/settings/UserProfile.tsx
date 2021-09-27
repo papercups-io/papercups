@@ -62,7 +62,7 @@ class UserProfile extends React.Component<Props, State> {
 
     await this.fetchLatestProfile();
     await this.fetchLatestSettings();
-    await this.fetchGmailAuthorization();
+    // await this.fetchGmailAuthorization();
 
     this.setState({isLoading: false});
   }
@@ -376,24 +376,29 @@ class UserProfile extends React.Component<Props, State> {
           </Checkbox>
         </Box>
 
-        <Divider />
+        {/* TODO: figure out how to handle personal Gmail accounts better */}
+        {false && (
+          <Box>
+            <Divider />
 
-        <Title level={3}>Link Gmail Account</Title>
+            <Title level={3}>Link Gmail Account</Title>
 
-        <Box mb={3} sx={{maxWidth: 480}}>
-          <Paragraph>
-            By linking your Gmail account, you can send emails directly from
-            Papercups.
-          </Paragraph>
-        </Box>
+            <Box mb={3} sx={{maxWidth: 480}}>
+              <Paragraph>
+                By linking your Gmail account, you can send emails directly from
+                Papercups.
+              </Paragraph>
+            </Box>
 
-        <Box mb={3}>
-          <PersonalGmailAuthorizationButton
-            isConnected={hasGmailConnection}
-            authorizationId={gmailAuthorizationId}
-            onDisconnectGmail={this.handleDisconnectGmail}
-          />
-        </Box>
+            <Box mb={3}>
+              <PersonalGmailAuthorizationButton
+                isConnected={hasGmailConnection}
+                authorizationId={gmailAuthorizationId}
+                onDisconnectGmail={this.handleDisconnectGmail}
+              />
+            </Box>
+          </Box>
+        )}
       </Container>
     );
   }

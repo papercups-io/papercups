@@ -238,6 +238,15 @@ defmodule ChatApi.Aws do
         %Mail.Message{multipart: true, parts: embedded_parts} ->
           format_message_parts(acc, embedded_parts)
 
+        %Mail.Message{body: text, headers: %{"content-type" => "text/plain"}} ->
+          Map.merge(acc, %{
+            text: text,
+            formatted_text: ChatApi.Google.Gmail.remove_original_email(text)
+          })
+
+        %Mail.Message{body: html, headers: %{"content-type" => "text/html"}} ->
+          Map.merge(acc, %{html: html})
+
         %Mail.Message{body: text, headers: %{"content-type" => ["text/plain", _]}} ->
           Map.merge(acc, %{
             text: text,

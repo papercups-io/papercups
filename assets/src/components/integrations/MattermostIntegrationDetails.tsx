@@ -18,12 +18,13 @@ import * as API from '../../api';
 import logger from '../../logger';
 import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
 import Spinner from '../Spinner';
-import {Account} from '../../types';
+import {Account, Inbox} from '../../types';
 
-type Props = RouteComponentProps<{}>;
+type Props = RouteComponentProps<{inbox_id?: string}>;
 type State = {
   status: 'loading' | 'success' | 'error';
   account: Account | null;
+  inbox: Inbox | null;
   authorization: any | null;
   error: any;
 };
@@ -32,12 +33,21 @@ class MattermostIntegrationDetails extends React.Component<Props, State> {
   state: State = {
     status: 'loading',
     account: null,
+    inbox: null,
     authorization: null,
     error: null,
   };
 
   async componentDidMount() {
     try {
+      const {inbox_id: inboxId} = this.props.match.params;
+
+      if (inboxId) {
+        const inbox = await API.fetchInbox(inboxId);
+
+        this.setState({inbox});
+      }
+
       this.fetchMattermostAuthorization();
     } catch (error) {
       logger.error(error);
@@ -48,8 +58,9 @@ class MattermostIntegrationDetails extends React.Component<Props, State> {
 
   fetchMattermostAuthorization = async () => {
     try {
+      const {inbox_id: inboxId} = this.props.match.params;
       const account = await API.fetchAccountInfo();
-      const auth = await API.fetchMattermostAuthorization();
+      const auth = await API.fetchMattermostAuthorization({inbox_id: inboxId});
 
       this.setState({
         account,
@@ -97,7 +108,8 @@ class MattermostIntegrationDetails extends React.Component<Props, State> {
   };
 
   render() {
-    const {authorization, status} = this.state;
+    const {inbox_id: inboxId} = this.props.match.params;
+    const {authorization, inbox, status} = this.state;
 
     if (status === 'loading') {
       return (
@@ -119,9 +131,17 @@ class MattermostIntegrationDetails extends React.Component<Props, State> {
     return (
       <Container sx={{maxWidth: 720}}>
         <Box mb={4}>
-          <Link to="/integrations">
-            <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
-          </Link>
+          {inboxId ? (
+            <Link to={`/inboxes/${inboxId}`}>
+              <Button icon={<ArrowLeftOutlined />}>
+                Back to {inbox?.name || 'inbox'}
+              </Button>
+            </Link>
+          ) : (
+            <Link to="/integrations">
+              <Button icon={<ArrowLeftOutlined />}>Back to integrations</Button>
+            </Link>
+          )}
         </Box>
 
         <Box mb={4}>
@@ -181,6 +201,7 @@ class MattermostIntegrationDetails extends React.Component<Props, State> {
 
               <MattermostAuthorizationButton
                 authorizationId={authorization?.id}
+                inboxId={inboxId}
                 isConnected={hasAuthorization}
                 onUpdate={this.fetchMattermostAuthorization}
                 onDisconnect={this.disconnect}

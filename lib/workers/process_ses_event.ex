@@ -12,9 +12,9 @@ defmodule ChatApi.Workers.ProcessSesEvent do
     Messages
   }
 
-  alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
+  alias ChatApi.ForwardingAddresses.ForwardingAddress
   alias ChatApi.Messages.Message
 
   @impl Oban.Worker
@@ -65,10 +65,10 @@ defmodule ChatApi.Workers.ProcessSesEvent do
           from_address: from_address
         })
 
-      %Account{} = account ->
-        IO.inspect(account, label: "Found account!")
+      %ForwardingAddress{} = forwarding_address ->
+        IO.inspect(forwarding_address, label: "Found forwarding address!")
 
-        handle_new_thread(account, %{
+        handle_new_thread(forwarding_address, %{
           ses_message_id: ses_message_id,
           from_address: from_address
         })
@@ -78,8 +78,8 @@ defmodule ChatApi.Workers.ProcessSesEvent do
     end
   end
 
-  @spec handle_new_thread(Account.t(), map()) :: {:ok, Message.t()} | {:error, any()}
-  def handle_new_thread(%Account{id: account_id}, %{
+  @spec handle_new_thread(ForwardingAddress.t(), map()) :: {:ok, Message.t()} | {:error, any()}
+  def handle_new_thread(%ForwardingAddress{account_id: account_id, inbox_id: inbox_id}, %{
         ses_message_id: ses_message_id,
         from_address: from_address
       }) do
@@ -91,6 +91,7 @@ defmodule ChatApi.Workers.ProcessSesEvent do
          {:ok, conversation} <-
            create_and_broadcast_conversation(%{
              account_id: account_id,
+             inbox_id: inbox_id,
              customer_id: customer.id,
              subject: email.subject,
              # TODO: distinguish between gmail and SES?
@@ -224,12 +225,12 @@ defmodule ChatApi.Workers.ProcessSesEvent do
 
   def process_email_attachments(_, _), do: :ok
 
-  @spec find_account_by_address(binary()) :: Account.t() | nil
-  def find_account_by_address(email) do
+  @spec find_forwarding_address(binary()) :: ForwardingAddress.t() | nil
+  def find_forwarding_address(email) do
     domain = Application.get_env(:chat_api, :ses_forwarding_domain, "chat.papercups.io")
 
     if String.contains?(email, domain) do
-      ForwardingAddresses.find_account_by_forwarding_address(email)
+      ForwardingAddresses.find_by_forwarding_email(email)
     else
       nil
     end
@@ -256,7 +257,8 @@ defmodule ChatApi.Workers.ProcessSesEvent do
     end
   end
 
-  @spec get_message_resource([binary()], binary() | nil) :: Conversation.t() | Account.t() | nil
+  @spec get_message_resource([binary()], binary() | nil) ::
+          Conversation.t() | ForwardingAddress.t() | nil
   def get_message_resource(email_addresses, nil),
     do: get_message_resource(email_addresses)
 
@@ -266,7 +268,7 @@ defmodule ChatApi.Workers.ProcessSesEvent do
     get_message_resource([forwarded_to_address | email_addresses])
   end
 
-  @spec get_message_resource([binary()]) :: Conversation.t() | Account.t() | nil
+  @spec get_message_resource([binary()]) :: Conversation.t() | ForwardingAddress.t() | nil
   def get_message_resource(email_addresses) do
     email_addresses
     |> Enum.reject(&is_nil/1)
@@ -275,10 +277,10 @@ defmodule ChatApi.Workers.ProcessSesEvent do
         if is_reply_address?(email) do
           {:cont, find_conversation_by_address(email)}
         else
-          {:cont, find_account_by_address(email)}
+          {:cont, find_forwarding_address(email)}
         end
 
-      _, %Account{} = acc ->
+      _, %ForwardingAddress{} = acc ->
         {:halt, acc}
 
       _, %Conversation{} = acc ->
