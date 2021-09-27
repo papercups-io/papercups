@@ -342,6 +342,8 @@ defmodule ChatApi.Slack.Notification do
     end
   end
 
+  def format_user_name(nil), do: default_app_name()
+
   @spec format_customer_name(Customer.t()) :: binary()
   def format_customer_name(%Customer{email: email, name: name}) do
     case [name, email] do
