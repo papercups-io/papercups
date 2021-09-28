@@ -19,7 +19,7 @@ const IntegrationsTable = ({
   );
   const columns = [
     {
-      title: 'Integration',
+      title: 'Name',
       dataIndex: 'integration',
       key: 'integration',
       render: (value: string, record: IntegrationType) => {
@@ -67,7 +67,7 @@ const IntegrationsTable = ({
           return '--';
         }
 
-        return dayjs(value).format('MMMM DD, YYYY');
+        return dayjs(value).format('MMM DD, YYYY');
       },
     },
     {

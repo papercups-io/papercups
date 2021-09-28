@@ -32,7 +32,7 @@ const getDefaultConfigurationUrl = (key: string, inboxId: string) => {
   }
 };
 
-const InboxIntegrationsTable = ({
+export const InboxIntegrationsTable = ({
   loading,
   inboxId,
   integrations,
@@ -88,7 +88,7 @@ const InboxIntegrationsTable = ({
           return '--';
         }
 
-        return dayjs(value).format('MMMM DD, YYYY');
+        return dayjs(value).format('MMM D, YYYY');
       },
     },
     {
@@ -171,36 +171,6 @@ class InboxIntegrations extends React.Component<Props, State> {
       this.setState({loading: false});
     }
   }
-
-  refreshAllIntegrations = async () => {
-    try {
-      this.setState({refreshing: true});
-
-      const integrations = await Promise.all([
-        this.fetchChatIntegration(),
-        this.fetchSlackIntegration(),
-        this.fetchEmailForwardingIntegration(),
-        this.fetchMattermostIntegration(),
-        this.fetchGmailIntegration(),
-        this.fetchTwilioIntegration(),
-        this.fetchSlackSupportIntegration(),
-      ]);
-
-      this.setState({
-        integrations: integrations.filter(({key}) =>
-          isEuEdition ? !key.startsWith('slack') : true
-        ),
-        integrationsByKey: integrations.reduce((acc, integration) => {
-          return {...acc, [integration.key]: integration};
-        }, {}),
-        refreshing: false,
-      });
-    } catch (err) {
-      logger.error('Error refreshing integrations:', err);
-
-      this.setState({refreshing: false});
-    }
-  };
 
   fetchChatIntegration = async (): Promise<IntegrationType> => {
     const {id: inboxId, account_id: accountId} = this.props.inbox;
@@ -370,24 +340,31 @@ class InboxIntegrations extends React.Component<Props, State> {
     };
   };
 
+  getIntegrationsByKeys = (keys: Array<string>) => {
+    const {integrationsByKey = {}} = this.state;
+
+    return keys.map((key) => integrationsByKey[key] || null).filter(Boolean);
+  };
+
+  getInboxSourceChannels = () => {
+    return this.getIntegrationsByKeys([
+      'chat',
+      'ses',
+      'gmail',
+      'twilio',
+      'slack:sync',
+    ]);
+  };
+
+  getInboxReplyChannels = () => {
+    return this.getIntegrationsByKeys(['slack', 'mattermost']);
+  };
+
   render() {
     const {id: inboxId} = this.props.inbox;
-    const {
-      loading,
-      refreshing,
-      // integrations = [],
-      integrationsByKey = {},
-    } = this.state;
-    const sources = ['chat', 'ses', 'gmail', 'twilio', 'slack:sync']
-      .map((key) => {
-        return integrationsByKey[key] || null;
-      })
-      .filter(Boolean);
-    const replies = ['slack', 'mattermost']
-      .map((key) => {
-        return integrationsByKey[key] || null;
-      })
-      .filter(Boolean);
+    const {loading, refreshing} = this.state;
+    const sources = this.getInboxSourceChannels();
+    const replies = this.getInboxReplyChannels();
 
     return (
       <Box>

@@ -28,10 +28,10 @@ defmodule ChatApiWeb.OnboardingStatusController do
         has_configured_inbox: has_configured_inbox?(account_id),
         has_configured_profile: has_configured_profile?(user_id),
         has_invited_teammates: has_invited_teammates?(account_id),
+        has_integrations: has_integrations?(account_id),
         has_upgraded_subscription: has_upgraded_subscription?(account)
         # is_chat_widget_installed: is_chat_widget_installed?(account),
         # has_email_forwarding: ForwardingAddresses.has_forwarding_addresses?(account_id),
-        # has_integrations: has_integrations?(account_id),
         # has_configured_storytime: has_configured_storytime?(account_id),
       })
     end
