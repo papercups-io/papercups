@@ -103,8 +103,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'github',
       integration: 'GitHub',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/github.svg',
       description: 'Sync and track feature requests and bugs with GitHub.',
     };
@@ -117,8 +117,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'sheets',
       integration: 'Google Sheets (alpha)',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/sheets.svg',
       description: 'Sync customer data to a Google spreadsheet.',
     };
@@ -129,8 +129,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'hubspot',
       integration: 'HubSpot',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/hubspot.svg',
     };
   };
@@ -140,8 +140,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'salesforce',
       integration: 'Salesforce',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/salesforce.svg',
     };
   };
@@ -151,8 +151,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'jira',
       integration: 'Jira',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/jira.svg',
     };
   };
@@ -162,8 +162,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'zendesk',
       integration: 'Zendesk',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/zendesk.svg',
     };
   };
@@ -173,8 +173,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'microsoft-teams',
       integration: 'Microsoft Teams',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/microsoft-teams.svg',
     };
   };
@@ -184,8 +184,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'whatsapp',
       integration: 'WhatsApp',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/whatsapp.svg',
     };
   };

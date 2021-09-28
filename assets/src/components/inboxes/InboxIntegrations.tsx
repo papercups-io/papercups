@@ -47,15 +47,16 @@ const InboxIntegrationsTable = ({
       dataIndex: 'integration',
       key: 'integration',
       render: (value: string, record: IntegrationType) => {
-        const {icon, description} = record;
+        const {icon, description, isPopular} = record;
 
         return (
           <Box>
             <Flex sx={{alignItems: 'center'}}>
               <img src={icon} alt={value} style={{height: 20}} />
-              <Text strong style={{marginLeft: 8}}>
+              <Text strong style={{marginLeft: 8, marginRight: 8}}>
                 {value}
               </Text>
+              {isPopular && <Tag color="blue">Popular</Tag>}
             </Flex>
             {description && (
               <Box mt={2} sx={{maxWidth: 480}}>
@@ -80,8 +81,8 @@ const InboxIntegrationsTable = ({
     },
     {
       title: 'Connected since',
-      dataIndex: 'created_at',
-      key: 'created_at',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       render: (value: string) => {
         if (!value) {
           return '--';
@@ -216,12 +217,13 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'chat',
       integration: 'Live chat',
       status: isConnected ? 'connected' : 'not_connected',
-      created_at: isConnected ? createdAt : null,
+      createdAt: isConnected ? createdAt : null,
       icon: '/logo.svg',
+      isPopular: true,
       description,
       configurationUrl: `/inboxes/${inboxId}/chat-widget`,
       // TODO: deprecate?
-      authorization_id: widgetSettingsId || null,
+      authorizationId: widgetSettingsId || null,
     };
   };
 
@@ -239,9 +241,10 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'slack',
       integration: 'Reply from Slack',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/slack.svg',
+      isPopular: true,
       description,
       configurationUrl: `/inboxes/${inboxId}/integrations/slack/reply`,
     };
@@ -261,8 +264,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'mattermost',
       integration: 'Reply from Mattermost',
       status: isConnected ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/mattermost.svg',
       description,
       configurationUrl: `/inboxes/${inboxId}/integrations/mattermost`,
@@ -283,8 +286,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'slack:sync',
       integration: 'Sync with Slack (beta)',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/slack.svg',
       description,
       configurationUrl: `/inboxes/${inboxId}/integrations/slack/support`,
@@ -303,8 +306,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'gmail',
       integration: 'Gmail (beta)',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/gmail.svg',
       description: 'Sync messages from your Gmail inbox with Papercups.',
       configurationUrl: `/inboxes/${inboxId}/integrations/google/gmail`,
@@ -320,9 +323,10 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'ses',
       integration: 'Email forwarding',
       status: first ? 'connected' : 'not_connected',
-      created_at: first ? first.created_at : null,
-      authorization_id: first ? first.id : null,
+      createdAt: first ? first.created_at : null,
+      authorizationId: first ? first.id : null,
       icon: '/ses.svg',
+      isPopular: true,
       description: 'Set up email forwarding into Papercups.',
       configurationUrl: `/inboxes/${inboxId}/email-forwarding`,
     };
@@ -333,8 +337,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'microsoft-teams',
       integration: 'Microsoft Teams',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/microsoft-teams.svg',
     };
   };
@@ -347,8 +351,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'twilio',
       integration: 'Twilio',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/twilio.svg',
       description: 'Receive and reply to messages over SMS.',
       configurationUrl: `/inboxes/${inboxId}/integrations/twilio`,
@@ -360,8 +364,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'whatsapp',
       integration: 'WhatsApp',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/whatsapp.svg',
     };
   };
