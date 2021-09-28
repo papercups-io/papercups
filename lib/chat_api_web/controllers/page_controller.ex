@@ -33,6 +33,8 @@ defmodule ChatApiWeb.PageController do
       REACT_APP_STORYTIME_ENABLED: System.get_env("REACT_APP_STORYTIME_ENABLED"),
       REACT_APP_ADMIN_ACCOUNT_ID:
         System.get_env("REACT_APP_ADMIN_ACCOUNT_ID", "eb504736-0f20-4978-98ff-1a82ae60b266"),
+      REACT_APP_ADMIN_INBOX_ID:
+        System.get_env("REACT_APP_ADMIN_INBOX_ID", "1c792b5e-4be9-4e51-98a9-5648311eb398"),
       REACT_APP_GITHUB_APP_NAME: System.get_env("REACT_APP_GITHUB_APP_NAME", "papercups-io"),
 
       # Shared with backend (none of these should include API keys/secrets!)
