@@ -15,6 +15,7 @@ import {PlusOutlined, SettingOutlined} from '../icons';
 import {INBOXES_DASHBOARD_SIDER_WIDTH} from '../../utils';
 import * as API from '../../api';
 import {Inbox} from '../../types';
+import {useAuth} from '../auth/AuthProvider';
 import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationsDashboard from '../conversations/ConversationsDashboard';
 import ChatWidgetSettings from '../settings/ChatWidgetSettings';
@@ -73,11 +74,13 @@ export const NewInboxModalMenuItem = ({
 
 const InboxesDashboard = (props: RouteComponentProps) => {
   const {pathname} = useLocation();
+  const {currentUser} = useAuth();
   const {unread} = useConversations();
   const [inboxes, setCustomInboxes] = React.useState<Array<Inbox>>([]);
 
   const [section, key] = getSectionKey(pathname);
   const totalNumUnread = unread.conversations.open || 0;
+  const isAdminUser = currentUser?.role === 'admin';
 
   React.useEffect(() => {
     API.fetchInboxes().then((inboxes) => setCustomInboxes(inboxes));
@@ -237,22 +240,26 @@ const InboxesDashboard = (props: RouteComponentProps) => {
                 })}
               </Menu.SubMenu>
 
-              <NewInboxModalMenuItem
-                key="add-inbox"
-                icon={<PlusOutlined />}
-                title="Add inbox"
-                onSuccess={handleInboxCreated}
-              >
-                Add inbox
-              </NewInboxModalMenuItem>
+              {isAdminUser && (
+                <NewInboxModalMenuItem
+                  key="add-inbox"
+                  icon={<PlusOutlined />}
+                  title="Add inbox"
+                  onSuccess={handleInboxCreated}
+                >
+                  Add inbox
+                </NewInboxModalMenuItem>
+              )}
 
-              <Menu.Item
-                key="inbox-settings"
-                icon={<SettingOutlined />}
-                title="Inbox settings"
-              >
-                <Link to="/inboxes">Configure inboxes</Link>
-              </Menu.Item>
+              {isAdminUser && (
+                <Menu.Item
+                  key="inbox-settings"
+                  icon={<SettingOutlined />}
+                  title="Inbox settings"
+                >
+                  <Link to="/inboxes">Configure inboxes</Link>
+                </Menu.Item>
+              )}
             </Menu>
           </Box>
         </Flex>

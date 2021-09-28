@@ -244,6 +244,7 @@ const Dashboard = (props: RouteComponentProps) => {
   const {unread} = useConversations();
   const [account, setAccount] = React.useState<Account | null>(null);
   const {currentUser} = auth;
+  const isAdminUser = currentUser?.role === 'admin';
 
   React.useEffect(() => {
     // TODO: figure out a better way to handle this
@@ -301,13 +302,16 @@ const Dashboard = (props: RouteComponentProps) => {
         <Flex sx={{flexDirection: 'column', height: '100%'}}>
           <Box py={3} sx={{flex: 1}}>
             <Menu selectedKeys={[section, key]} mode="inline" theme="dark">
-              <Menu.Item
-                key="getting-started"
-                icon={<GlobalOutlined />}
-                title="Getting started"
-              >
-                <Link to="/getting-started">Getting started</Link>
-              </Menu.Item>
+              {isAdminUser && (
+                <Menu.Item
+                  key="getting-started"
+                  icon={<GlobalOutlined />}
+                  title="Getting started"
+                >
+                  <Link to="/getting-started">Getting started</Link>
+                </Menu.Item>
+              )}
+
               <Menu.Item
                 danger={shouldHighlightInbox}
                 key="conversations"
@@ -317,13 +321,15 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Link to="/conversations/all">Inbox ({totalNumUnread})</Link>
               </Menu.Item>
 
-              <Menu.Item
-                title="Integrations"
-                icon={<ApiOutlined />}
-                key="integrations"
-              >
-                <Link to="/integrations">Integrations</Link>
-              </Menu.Item>
+              {isAdminUser && (
+                <Menu.Item
+                  title="Integrations"
+                  icon={<ApiOutlined />}
+                  key="integrations"
+                >
+                  <Link to="/integrations">Integrations</Link>
+                </Menu.Item>
+              )}
 
               <Menu.SubMenu
                 key="customers"
@@ -355,63 +361,82 @@ const Dashboard = (props: RouteComponentProps) => {
                 <Link to="/reporting">Reporting</Link>
               </Menu.Item>
 
-              <Menu.SubMenu
-                key="developers"
-                icon={<CodeOutlined />}
-                title="Developers"
-              >
-                <Menu.Item key="personal-api-keys">
-                  <Link to="/developers/personal-api-keys">API keys</Link>
-                </Menu.Item>
-                <Menu.Item key="event-subscriptions">
-                  <Link to="/developers/event-subscriptions">
-                    Event subscriptions
-                  </Link>
-                </Menu.Item>
-                <Menu.Item key="functions">
-                  <Link to="/functions">Functions</Link>
-                </Menu.Item>
-              </Menu.SubMenu>
-
-              <Menu.SubMenu
-                key="sessions"
-                icon={<VideoCameraOutlined />}
-                title="Sessions"
-              >
-                <Menu.Item key="list">
-                  <Link to="/sessions/list">Live sessions</Link>
-                </Menu.Item>
-                <Menu.Item key="setup">
-                  <Link to="/sessions/setup">Set up Storytime</Link>
-                </Menu.Item>
-              </Menu.SubMenu>
-
-              <Menu.SubMenu
-                key="settings"
-                icon={<SettingOutlined />}
-                title="Settings"
-              >
-                <Menu.Item key="account">
-                  <Link to="/settings/account">Account</Link>
-                </Menu.Item>
-                <Menu.Item key="team">
-                  <Link to="/settings/team">My team</Link>
-                </Menu.Item>
-                <Menu.Item key="profile">
-                  <Link to="/settings/profile">My profile</Link>
-                </Menu.Item>
-                <Menu.Item key="inboxes" title="Inboxes">
-                  <Link to="/inboxes">Inboxes</Link>
-                </Menu.Item>
-                <Menu.Item key="saved-replies">
-                  <Link to="/settings/saved-replies">Saved replies</Link>
-                </Menu.Item>
-                {shouldDisplayBilling && (
-                  <Menu.Item key="billing">
-                    <Link to="/settings/billing">Billing</Link>
+              {isAdminUser && (
+                <Menu.SubMenu
+                  key="developers"
+                  icon={<CodeOutlined />}
+                  title="Developers"
+                >
+                  <Menu.Item key="personal-api-keys">
+                    <Link to="/developers/personal-api-keys">API keys</Link>
                   </Menu.Item>
-                )}
-              </Menu.SubMenu>
+                  <Menu.Item key="event-subscriptions">
+                    <Link to="/developers/event-subscriptions">
+                      Event subscriptions
+                    </Link>
+                  </Menu.Item>
+                  <Menu.Item key="functions">
+                    <Link to="/functions">Functions</Link>
+                  </Menu.Item>
+                </Menu.SubMenu>
+              )}
+
+              {isAdminUser && (
+                <Menu.SubMenu
+                  key="sessions"
+                  icon={<VideoCameraOutlined />}
+                  title="Sessions"
+                >
+                  <Menu.Item key="list">
+                    <Link to="/sessions/list">Live sessions</Link>
+                  </Menu.Item>
+                  <Menu.Item key="setup">
+                    <Link to="/sessions/setup">Set up Storytime</Link>
+                  </Menu.Item>
+                </Menu.SubMenu>
+              )}
+
+              {isAdminUser ? (
+                <Menu.SubMenu
+                  key="settings"
+                  icon={<SettingOutlined />}
+                  title="Settings"
+                >
+                  <Menu.Item key="account">
+                    <Link to="/settings/account">Account</Link>
+                  </Menu.Item>
+                  <Menu.Item key="team">
+                    <Link to="/settings/team">My team</Link>
+                  </Menu.Item>
+                  <Menu.Item key="profile">
+                    <Link to="/settings/profile">My profile</Link>
+                  </Menu.Item>
+                  <Menu.Item key="inboxes" title="Inboxes">
+                    <Link to="/inboxes">Inboxes</Link>
+                  </Menu.Item>
+                  <Menu.Item key="saved-replies">
+                    <Link to="/settings/saved-replies">Saved replies</Link>
+                  </Menu.Item>
+                  {shouldDisplayBilling && (
+                    <Menu.Item key="billing">
+                      <Link to="/settings/billing">Billing</Link>
+                    </Menu.Item>
+                  )}
+                </Menu.SubMenu>
+              ) : (
+                <Menu.SubMenu
+                  key="settings"
+                  icon={<SettingOutlined />}
+                  title="Settings"
+                >
+                  <Menu.Item key="profile">
+                    <Link to="/settings/profile">My profile</Link>
+                  </Menu.Item>
+                  <Menu.Item key="saved-replies">
+                    <Link to="/settings/saved-replies">Saved replies</Link>
+                  </Menu.Item>
+                </Menu.SubMenu>
+              )}
             </Menu>
           </Box>
 
