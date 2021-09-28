@@ -32,7 +32,7 @@ const getDefaultConfigurationUrl = (key: string, inboxId: string) => {
   }
 };
 
-const InboxIntegrationsTable = ({
+export const InboxIntegrationsTable = ({
   loading,
   inboxId,
   integrations,
@@ -47,15 +47,16 @@ const InboxIntegrationsTable = ({
       dataIndex: 'integration',
       key: 'integration',
       render: (value: string, record: IntegrationType) => {
-        const {icon, description} = record;
+        const {icon, description, isPopular} = record;
 
         return (
           <Box>
             <Flex sx={{alignItems: 'center'}}>
               <img src={icon} alt={value} style={{height: 20}} />
-              <Text strong style={{marginLeft: 8}}>
+              <Text strong style={{marginLeft: 8, marginRight: 8}}>
                 {value}
               </Text>
+              {isPopular && <Tag color="blue">Popular</Tag>}
             </Flex>
             {description && (
               <Box mt={2} sx={{maxWidth: 480}}>
@@ -80,14 +81,14 @@ const InboxIntegrationsTable = ({
     },
     {
       title: 'Connected since',
-      dataIndex: 'created_at',
-      key: 'created_at',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       render: (value: string) => {
         if (!value) {
           return '--';
         }
 
-        return dayjs(value).format('MMMM DD, YYYY');
+        return dayjs(value).format('MMM D, YYYY');
       },
     },
     {
@@ -171,36 +172,6 @@ class InboxIntegrations extends React.Component<Props, State> {
     }
   }
 
-  refreshAllIntegrations = async () => {
-    try {
-      this.setState({refreshing: true});
-
-      const integrations = await Promise.all([
-        this.fetchChatIntegration(),
-        this.fetchSlackIntegration(),
-        this.fetchEmailForwardingIntegration(),
-        this.fetchMattermostIntegration(),
-        this.fetchGmailIntegration(),
-        this.fetchTwilioIntegration(),
-        this.fetchSlackSupportIntegration(),
-      ]);
-
-      this.setState({
-        integrations: integrations.filter(({key}) =>
-          isEuEdition ? !key.startsWith('slack') : true
-        ),
-        integrationsByKey: integrations.reduce((acc, integration) => {
-          return {...acc, [integration.key]: integration};
-        }, {}),
-        refreshing: false,
-      });
-    } catch (err) {
-      logger.error('Error refreshing integrations:', err);
-
-      this.setState({refreshing: false});
-    }
-  };
-
   fetchChatIntegration = async (): Promise<IntegrationType> => {
     const {id: inboxId, account_id: accountId} = this.props.inbox;
     const widgetSettings = await API.fetchWidgetSettings({
@@ -216,12 +187,13 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'chat',
       integration: 'Live chat',
       status: isConnected ? 'connected' : 'not_connected',
-      created_at: isConnected ? createdAt : null,
+      createdAt: isConnected ? createdAt : null,
       icon: '/logo.svg',
+      isPopular: true,
       description,
       configurationUrl: `/inboxes/${inboxId}/chat-widget`,
       // TODO: deprecate?
-      authorization_id: widgetSettingsId || null,
+      authorizationId: widgetSettingsId || null,
     };
   };
 
@@ -239,9 +211,10 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'slack',
       integration: 'Reply from Slack',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/slack.svg',
+      isPopular: true,
       description,
       configurationUrl: `/inboxes/${inboxId}/integrations/slack/reply`,
     };
@@ -261,8 +234,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'mattermost',
       integration: 'Reply from Mattermost',
       status: isConnected ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/mattermost.svg',
       description,
       configurationUrl: `/inboxes/${inboxId}/integrations/mattermost`,
@@ -283,8 +256,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'slack:sync',
       integration: 'Sync with Slack (beta)',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/slack.svg',
       description,
       configurationUrl: `/inboxes/${inboxId}/integrations/slack/support`,
@@ -303,8 +276,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'gmail',
       integration: 'Gmail (beta)',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/gmail.svg',
       description: 'Sync messages from your Gmail inbox with Papercups.',
       configurationUrl: `/inboxes/${inboxId}/integrations/google/gmail`,
@@ -320,9 +293,10 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'ses',
       integration: 'Email forwarding',
       status: first ? 'connected' : 'not_connected',
-      created_at: first ? first.created_at : null,
-      authorization_id: first ? first.id : null,
+      createdAt: first ? first.created_at : null,
+      authorizationId: first ? first.id : null,
       icon: '/ses.svg',
+      isPopular: true,
       description: 'Set up email forwarding into Papercups.',
       configurationUrl: `/inboxes/${inboxId}/email-forwarding`,
     };
@@ -333,8 +307,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'microsoft-teams',
       integration: 'Microsoft Teams',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/microsoft-teams.svg',
     };
   };
@@ -347,8 +321,8 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'twilio',
       integration: 'Twilio',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/twilio.svg',
       description: 'Receive and reply to messages over SMS.',
       configurationUrl: `/inboxes/${inboxId}/integrations/twilio`,
@@ -360,30 +334,37 @@ class InboxIntegrations extends React.Component<Props, State> {
       key: 'whatsapp',
       integration: 'WhatsApp',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/whatsapp.svg',
     };
   };
 
+  getIntegrationsByKeys = (keys: Array<string>) => {
+    const {integrationsByKey = {}} = this.state;
+
+    return keys.map((key) => integrationsByKey[key] || null).filter(Boolean);
+  };
+
+  getInboxSourceChannels = () => {
+    return this.getIntegrationsByKeys([
+      'chat',
+      'ses',
+      'gmail',
+      'twilio',
+      'slack:sync',
+    ]);
+  };
+
+  getInboxReplyChannels = () => {
+    return this.getIntegrationsByKeys(['slack', 'mattermost']);
+  };
+
   render() {
     const {id: inboxId} = this.props.inbox;
-    const {
-      loading,
-      refreshing,
-      // integrations = [],
-      integrationsByKey = {},
-    } = this.state;
-    const sources = ['chat', 'ses', 'gmail', 'twilio', 'slack:sync']
-      .map((key) => {
-        return integrationsByKey[key] || null;
-      })
-      .filter(Boolean);
-    const replies = ['slack', 'mattermost']
-      .map((key) => {
-        return integrationsByKey[key] || null;
-      })
-      .filter(Boolean);
+    const {loading, refreshing} = this.state;
+    const sources = this.getInboxSourceChannels();
+    const replies = this.getInboxReplyChannels();
 
     return (
       <Box>

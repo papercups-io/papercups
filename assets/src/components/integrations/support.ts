@@ -21,11 +21,12 @@ export type IntegrationType = {
     | 'twilio';
   integration: string;
   status: 'connected' | 'not_connected';
-  created_at?: string | null;
-  authorization_id?: string | null;
+  createdAt?: string | null;
+  authorizationId?: string | null;
   icon: string;
   description?: string;
   configurationUrl?: string;
+  isPopular?: boolean;
 };
 
 export const getSlackRedirectUrl = () => {

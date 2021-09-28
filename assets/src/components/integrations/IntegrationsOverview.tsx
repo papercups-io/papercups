@@ -10,6 +10,7 @@ import {
   Paragraph,
   Text,
   Title,
+  Card,
 } from '../common';
 import Spinner from '../Spinner';
 import * as API from '../../api';
@@ -18,6 +19,7 @@ import {IntegrationType, getSlackRedirectUrl} from './support';
 import IntegrationsTable from './IntegrationsTable';
 import {isEuEdition} from '../../config';
 import {Inbox} from '../../types';
+import {InboxIntegrationsTable} from '../inboxes/InboxIntegrations';
 
 type Props = RouteComponentProps<{type?: string}> & {};
 type State = {
@@ -25,6 +27,7 @@ type State = {
   refreshing: boolean;
   inbox: Inbox | null;
   integrations: Array<IntegrationType>;
+  integrationsByKey: {[key: string]: IntegrationType};
 };
 
 class IntegrationsOverview extends React.Component<Props, State> {
@@ -33,6 +36,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
     refreshing: false,
     inbox: null,
     integrations: [],
+    integrationsByKey: {},
   };
 
   async componentDidMount() {
@@ -47,21 +51,36 @@ class IntegrationsOverview extends React.Component<Props, State> {
         history.push('/integrations');
       }
 
+      const inboxes = await API.fetchInboxes();
+      const [first] = inboxes;
+      const primary = inboxes.find((inbox) => inbox.is_primary);
+      const inbox = primary || first;
       const integrations = await Promise.all([
+        this.fetchChatIntegration(inbox),
+        this.fetchSlackIntegration(inbox),
+        this.fetchEmailForwardingIntegration(inbox),
+        this.fetchMattermostIntegration(inbox),
+        this.fetchGmailIntegration(inbox),
+        this.fetchTwilioIntegration(inbox),
+        this.fetchSlackSupportIntegration(inbox),
+        // Account level only
         this.fetchGithubIntegration(),
-        // this.fetchGoogleSheetsIntegration(),
         this.fetchHubSpotIntegration(),
         this.fetchSalesforceIntegration(),
         this.fetchZendeskIntegration(),
         this.fetchJiraIntegration(),
+        this.fetchGoogleSheetsIntegration(),
       ]);
 
       this.setState({
         loading: false,
-        inbox: await API.fetchPrimaryInbox(),
+        inbox: inbox,
         integrations: integrations.filter(({key}) =>
           isEuEdition ? !key.startsWith('slack') : true
         ),
+        integrationsByKey: integrations.reduce((acc, integration) => {
+          return {...acc, [integration.key]: integration};
+        }, {}),
       });
     } catch (err) {
       logger.error('Error loading integrations:', err);
@@ -70,30 +89,156 @@ class IntegrationsOverview extends React.Component<Props, State> {
     }
   }
 
-  refreshAllIntegrations = async () => {
-    try {
-      this.setState({refreshing: true});
+  fetchChatIntegration = async (inbox: Inbox): Promise<IntegrationType> => {
+    const {id: inboxId, account_id: accountId} = inbox;
+    const widgetSettings = await API.fetchWidgetSettings({
+      account_id: accountId,
+      inbox_id: inboxId,
+    });
+    const {count = 0} = await API.countAllConversations({inbox_id: inboxId});
+    const {id: widgetSettingsId, created_at: createdAt} = widgetSettings;
+    const description = 'Chat with users on your website via Papercups.';
+    const isConnected = count > 0;
 
-      const integrations = await Promise.all([
-        this.fetchGithubIntegration(),
-        // this.fetchGoogleSheetsIntegration(),
-        this.fetchHubSpotIntegration(),
-        this.fetchSalesforceIntegration(),
-        this.fetchZendeskIntegration(),
-        this.fetchJiraIntegration(),
-      ]);
+    return {
+      key: 'chat',
+      integration: 'Live chat',
+      status: isConnected ? 'connected' : 'not_connected',
+      createdAt: isConnected ? createdAt : null,
+      icon: '/logo.svg',
+      isPopular: true,
+      description,
+      configurationUrl: `/inboxes/${inboxId}/chat-widget`,
+      // TODO: deprecate?
+      authorizationId: widgetSettingsId || null,
+    };
+  };
 
-      this.setState({
-        integrations: integrations.filter(({key}) =>
-          isEuEdition ? !key.startsWith('slack') : true
-        ),
-        refreshing: false,
-      });
-    } catch (err) {
-      logger.error('Error refreshing integrations:', err);
+  fetchSlackIntegration = async (inbox: Inbox): Promise<IntegrationType> => {
+    const {id: inboxId} = inbox;
+    const auth = await API.fetchSlackAuthorization('reply', {
+      inbox_id: inboxId,
+    });
+    const description =
+      auth && auth.channel && auth.team_name
+        ? `Connected to ${auth.channel} in ${auth.team_name}.`
+        : 'Reply to messages from your customers directly through Slack.';
 
-      this.setState({refreshing: false});
-    }
+    return {
+      key: 'slack',
+      integration: 'Reply from Slack',
+      status: auth ? 'connected' : 'not_connected',
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
+      icon: '/slack.svg',
+      isPopular: true,
+      description,
+      configurationUrl: `/inboxes/${inboxId}/integrations/slack/reply`,
+    };
+  };
+
+  fetchMattermostIntegration = async (
+    inbox: Inbox
+  ): Promise<IntegrationType> => {
+    const {id: inboxId} = inbox;
+    const auth = await API.fetchMattermostAuthorization({inbox_id: inboxId});
+    const isConnected =
+      auth && auth.channel && auth.access_token && auth.verification_token;
+    const description =
+      auth && auth.channel && auth.team_name
+        ? `Connected to ${auth.channel} in ${auth.team_name}.`
+        : 'Reply to messages from your customers directly from Mattermost.';
+
+    return {
+      key: 'mattermost',
+      integration: 'Reply from Mattermost',
+      status: isConnected ? 'connected' : 'not_connected',
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
+      icon: '/mattermost.svg',
+      description,
+      configurationUrl: `/inboxes/${inboxId}/integrations/mattermost`,
+    };
+  };
+
+  fetchSlackSupportIntegration = async (
+    inbox: Inbox
+  ): Promise<IntegrationType> => {
+    const {id: inboxId} = inbox;
+    const auth = await API.fetchSlackAuthorization('support', {
+      inbox_id: inboxId,
+    });
+    const description =
+      auth && auth.channel && auth.team_name
+        ? `Connected to ${auth.channel} in ${auth.team_name}.`
+        : 'Sync messages from your Slack channels with Papercups.';
+
+    return {
+      key: 'slack:sync',
+      integration: 'Sync with Slack (beta)',
+      status: auth ? 'connected' : 'not_connected',
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
+      icon: '/slack.svg',
+      description,
+      configurationUrl: `/inboxes/${inboxId}/integrations/slack/support`,
+    };
+  };
+
+  fetchGmailIntegration = async (inbox: Inbox): Promise<IntegrationType> => {
+    const {id: inboxId} = inbox;
+    const auth = await API.fetchGoogleAuthorization({
+      client: 'gmail',
+      type: 'support',
+      inbox_id: inboxId,
+    });
+
+    return {
+      key: 'gmail',
+      integration: 'Gmail (beta)',
+      status: auth ? 'connected' : 'not_connected',
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
+      icon: '/gmail.svg',
+      description: 'Sync messages from your Gmail inbox with Papercups.',
+      configurationUrl: `/inboxes/${inboxId}/integrations/google/gmail`,
+    };
+  };
+
+  fetchEmailForwardingIntegration = async (
+    inbox: Inbox
+  ): Promise<IntegrationType> => {
+    const {id: inboxId} = inbox;
+    const addresses = await API.fetchForwardingAddresses({inbox_id: inboxId});
+    const [first] = addresses;
+
+    return {
+      key: 'ses',
+      integration: 'Email forwarding',
+      status: first ? 'connected' : 'not_connected',
+      createdAt: first ? first.created_at : null,
+      authorizationId: first ? first.id : null,
+      icon: '/ses.svg',
+      isPopular: true,
+      description: 'Set up email forwarding into Papercups.',
+      configurationUrl: `/inboxes/${inboxId}/email-forwarding`,
+    };
+  };
+
+  fetchTwilioIntegration = async (inbox: Inbox): Promise<IntegrationType> => {
+    const {id: inboxId} = inbox;
+    const auth = await API.fetchTwilioAuthorization({inbox_id: inboxId});
+
+    return {
+      key: 'twilio',
+      integration: 'Twilio',
+      status: auth ? 'connected' : 'not_connected',
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
+      icon: '/twilio.svg',
+      description: 'Receive and reply to messages over SMS.',
+      configurationUrl: `/inboxes/${inboxId}/integrations/twilio`,
+    };
   };
 
   fetchGithubIntegration = async (): Promise<IntegrationType> => {
@@ -103,8 +248,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'github',
       integration: 'GitHub',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/github.svg',
       description: 'Sync and track feature requests and bugs with GitHub.',
     };
@@ -117,8 +262,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'sheets',
       integration: 'Google Sheets (alpha)',
       status: auth ? 'connected' : 'not_connected',
-      created_at: auth ? auth.created_at : null,
-      authorization_id: auth ? auth.id : null,
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/sheets.svg',
       description: 'Sync customer data to a Google spreadsheet.',
     };
@@ -129,8 +274,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'hubspot',
       integration: 'HubSpot',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/hubspot.svg',
     };
   };
@@ -140,8 +285,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'salesforce',
       integration: 'Salesforce',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/salesforce.svg',
     };
   };
@@ -151,8 +296,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'jira',
       integration: 'Jira',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/jira.svg',
     };
   };
@@ -162,8 +307,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'zendesk',
       integration: 'Zendesk',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/zendesk.svg',
     };
   };
@@ -173,8 +318,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'microsoft-teams',
       integration: 'Microsoft Teams',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/microsoft-teams.svg',
     };
   };
@@ -184,8 +329,8 @@ class IntegrationsOverview extends React.Component<Props, State> {
       key: 'whatsapp',
       integration: 'WhatsApp',
       status: 'not_connected',
-      created_at: null,
-      authorization_id: null,
+      createdAt: null,
+      authorizationId: null,
       icon: '/whatsapp.svg',
     };
   };
@@ -288,8 +433,39 @@ class IntegrationsOverview extends React.Component<Props, State> {
       });
   };
 
+  getIntegrationsByKeys = (keys: Array<string>) => {
+    const {integrationsByKey = {}} = this.state;
+
+    return keys.map((key) => integrationsByKey[key] || null).filter(Boolean);
+  };
+
+  getInboxSourceChannels = () => {
+    return this.getIntegrationsByKeys([
+      'chat',
+      'ses',
+      'gmail',
+      'twilio',
+      'slack:sync',
+    ]);
+  };
+
+  getInboxReplyChannels = () => {
+    return this.getIntegrationsByKeys(['slack', 'mattermost']);
+  };
+
+  getAccountLevelIntegrations = () => {
+    return this.getIntegrationsByKeys([
+      'github',
+      'sheets',
+      'hubspot',
+      'salesforce',
+      'zendesk',
+      'jira',
+    ]);
+  };
+
   render() {
-    const {loading, refreshing, inbox, integrations = []} = this.state;
+    const {loading, refreshing, inbox} = this.state;
 
     if (loading) {
       return (
@@ -309,40 +485,71 @@ class IntegrationsOverview extends React.Component<Props, State> {
     return (
       <Container sx={{maxWidth: 960}}>
         <Box mb={5}>
-          <Box mb={4}>
-            <Alert
-              message={
-                <Text>
-                  Most integration channels are now handled at the inbox level.{' '}
-                  <Link
-                    to={inbox && inbox.id ? `/inboxes/${inbox.id}` : '/inboxes'}
-                  >
-                    Click here
-                  </Link>{' '}
-                  to configure your inbox integrations.
-                </Text>
-              }
-              type="info"
-              showIcon
-            />
-          </Box>
-
           <Title level={3}>Integrations</Title>
 
           <Paragraph>
             <Text>
-              Connect with your favorite apps{' '}
+              Connect Papercups with your favorite apps{' '}
               <span role="img" aria-label="apps">
                 🚀
               </span>
             </Text>
           </Paragraph>
 
-          <Box my={3}>
-            <IntegrationsTable
-              loading={refreshing}
-              integrations={integrations}
-            />
+          {inbox && inbox.id && (
+            <Box my={4}>
+              <Card sx={{p: 3}}>
+                <Box mb={4}>
+                  <Alert
+                    message={
+                      <Text>
+                        Most integration channels are now handled at the inbox
+                        level. <Link to="/inboxes">Click here</Link> to
+                        configure your inboxes.
+                      </Text>
+                    }
+                    type="info"
+                    showIcon
+                  />
+                </Box>
+
+                <Box px={3} mb={3}>
+                  <Title level={4}>Inbox source channels</Title>
+                </Box>
+                <Box mb={4}>
+                  <InboxIntegrationsTable
+                    loading={refreshing}
+                    inboxId={inbox.id}
+                    integrations={this.getInboxSourceChannels()}
+                  />
+                </Box>
+
+                <Box px={3} mb={3}>
+                  <Title level={4}>Inbox reply channels</Title>
+                </Box>
+                <Box mb={4}>
+                  <InboxIntegrationsTable
+                    loading={refreshing}
+                    inboxId={inbox.id}
+                    integrations={this.getInboxReplyChannels()}
+                  />
+                </Box>
+              </Card>
+            </Box>
+          )}
+
+          <Box my={4}>
+            <Card sx={{p: 3}}>
+              <Box px={3} mb={3}>
+                <Title level={4}>Account-level integrations</Title>
+              </Box>
+              <Box mb={4}>
+                <IntegrationsTable
+                  loading={refreshing}
+                  integrations={this.getAccountLevelIntegrations()}
+                />
+              </Box>
+            </Card>
           </Box>
         </Box>
       </Container>

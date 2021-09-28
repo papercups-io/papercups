@@ -46,7 +46,9 @@ const getStepsMetadata = (
       ctaText: 'Configure your inbox',
       text: (
         <>
-          <Text strong>Configure your inbox</Text> to start receiving messages.
+          <Text strong>Configure your inbox</Text> to start receiving messages
+          via <Link to={`/inboxes/${inboxId}/chat-widget`}>live chat</Link> and
+          many other channels.
         </>
       ),
     },
@@ -56,8 +58,8 @@ const getStepsMetadata = (
       ctaText: 'Set up profile',
       text: (
         <>
-          <Text strong>Set up your profile</Text> so your customers know who
-          they're talking to.
+          <Text strong>Set up your profile</Text> to personalize the experience
+          with your customers.
         </>
       ),
     },
@@ -68,7 +70,18 @@ const getStepsMetadata = (
       text: (
         <>
           <Text strong>Invite your teammates</Text> to join you in connecting
-          with your customers.
+          with and supporting your customers.
+        </>
+      ),
+    },
+    {
+      completed: onboardingStatus.has_integrations,
+      ctaHref: '/integrations',
+      ctaText: 'Add integrations',
+      text: (
+        <>
+          <Text strong>Connect more integrations</Text> to make the most of
+          Papercups.
         </>
       ),
     },
@@ -95,7 +108,7 @@ type StepProps = {
 };
 
 const Step = ({completed, ctaHref, ctaText, text, value}: StepProps) => {
-  const opacity = completed ? 0.5 : 1;
+  const opacity = completed ? 0.6 : 1;
 
   return (
     <>
@@ -108,7 +121,6 @@ const Step = ({completed, ctaHref, ctaText, text, value}: StepProps) => {
           to={ctaHref}
           style={{
             alignContent: 'flex-end',
-            opacity,
           }}
         >
           <Button type="default">{ctaText}</Button>
