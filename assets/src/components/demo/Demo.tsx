@@ -24,6 +24,7 @@ import {formatUserExternalId} from '../../utils';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
+  REACT_APP_ADMIN_INBOX_ID = '1c792b5e-4be9-4e51-98a9-5648311eb398',
 } = env;
 
 type Props = RouteComponentProps & {};
@@ -32,6 +33,7 @@ type State = {
   title: string;
   subtitle: string;
   accountId: string;
+  inboxId: string;
   currentUser?: any;
 };
 
@@ -51,6 +53,7 @@ class Demo extends React.Component<Props, State> {
       title: defaultTitle || 'Welcome to Papercups!',
       subtitle: defaultSubtitle || 'Ask us anything using the chat window 💭',
       accountId: REACT_APP_ADMIN_ACCOUNT_ID,
+      inboxId: REACT_APP_ADMIN_INBOX_ID,
       currentUser: null,
     };
   }
@@ -113,7 +116,7 @@ class Demo extends React.Component<Props, State> {
   };
 
   render() {
-    const {color, title, subtitle, accountId} = this.state;
+    const {color, title, subtitle, accountId, inboxId} = this.state;
     const customer = this.getCustomerMetadata();
     const defaultColors = [
       colors.primary,
@@ -189,6 +192,7 @@ class Demo extends React.Component<Props, State> {
         <ChatWidget
           token={accountId}
           accountId={accountId}
+          inbox={inboxId}
           title={title || 'Welcome!'}
           subtitle={subtitle}
           primaryColor={color}
