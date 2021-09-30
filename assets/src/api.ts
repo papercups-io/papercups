@@ -1092,6 +1092,45 @@ export const fetchHubspotAuthorization = async (token = getAccessToken()) => {
     .then((res) => res.body.data);
 };
 
+export const createHubspotContact = async (
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/hubspot/contacts`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchHubspotContacts = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/hubspot/contacts`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchHubspotContactByEmail = async (
+  email: string,
+  token = getAccessToken()
+) => {
+  return fetchHubspotContacts({email}, token).then(
+    ([result]) => result || null
+  );
+};
+
 export const deleteHubspotAuthorization = async (
   authorizationId: string,
   token = getAccessToken()

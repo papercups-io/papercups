@@ -44,8 +44,8 @@ const RelatedConversationItem = ({
   const color = customerId ? getColorByUuid(customerId) : colors.gray[0];
   const isOpen = status === 'open';
   const url = isOpen
-    ? `/conversations/all?cid=${id}`
-    : `/conversations/closed?cid=${id}`;
+    ? `/conversations/all/${id}`
+    : `/conversations/closed/${id}`;
 
   return (
     <a key={id} className="RelatedCustomerConversation--link" href={url}>

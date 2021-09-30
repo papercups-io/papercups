@@ -709,7 +709,7 @@ defmodule ChatApi.Slack.Helpers do
         "https://" <> url
       end
 
-    "#{base}/conversations/all?cid=#{conversation_id}"
+    "#{base}/conversations/all/#{conversation_id}"
   end
 
   @spec format_message_body(Message.t()) :: binary()

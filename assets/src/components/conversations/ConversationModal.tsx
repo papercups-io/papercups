@@ -65,8 +65,8 @@ class ConversationModal extends React.Component<Props> {
     const title = `Conversation with ${identifer}`;
     const href =
       status === 'closed'
-        ? `/conversations/closed?cid=${id}`
-        : `/conversations/all?cid=${id}`;
+        ? `/conversations/closed/${id}`
+        : `/conversations/all/${id}`;
 
     return (
       <Modal

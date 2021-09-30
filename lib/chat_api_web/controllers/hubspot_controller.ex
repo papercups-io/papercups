@@ -82,6 +82,37 @@ defmodule ChatApiWeb.HubspotController do
     end
   end
 
+  @spec list_contacts(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def list_contacts(conn, params) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %HubspotAuthorization{access_token: access_token} = authorization <-
+           Hubspot.get_authorization_by_account(account_id),
+         {:ok, %{body: %{"results" => results}}} <- list_hubspot_contacts(access_token, params) do
+      json(conn, %{
+        data: Enum.map(results, &format_hubspot_contact(&1, authorization))
+      })
+    else
+      nil -> {:error, :forbidden, "Missing HubSpot authorization!"}
+      error -> IO.inspect(error, label: "Failed to retrieve HubSpot contacts!")
+    end
+  end
+
+  @spec create_contact(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def create_contact(conn, params) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %HubspotAuthorization{access_token: access_token} = authorization <-
+           Hubspot.get_authorization_by_account(account_id),
+         {:ok, %{body: contact}} <-
+           Hubspot.Client.create_contact(access_token, params) do
+      json(conn, %{
+        data: format_hubspot_contact(contact, authorization)
+      })
+    else
+      nil -> {:error, :forbidden, "Missing HubSpot authorization!"}
+      error -> IO.inspect(error, label: "Failed to create HubSpot contact!")
+    end
+  end
+
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"id" => id}) do
     with %{account_id: _account_id} <- conn.assigns.current_user,
@@ -89,6 +120,34 @@ defmodule ChatApiWeb.HubspotController do
            Hubspot.get_hubspot_authorization!(id),
          {:ok, %HubspotAuthorization{}} <- Hubspot.delete_hubspot_authorization(auth) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  defp list_hubspot_contacts(access_token, params) do
+    case params do
+      %{"email" => email} ->
+        Hubspot.Client.find_contact_by_email(access_token, email)
+
+      %{"filters" => filters} ->
+        Hubspot.Client.search_contacts(access_token, filters)
+
+      _ ->
+        Hubspot.Client.list_contacts(access_token)
+    end
+  end
+
+  defp format_hubspot_contact(contact, %HubspotAuthorization{} = authorization) do
+    case authorization do
+      %HubspotAuthorization{hubspot_portal_id: nil} ->
+        contact
+
+      %HubspotAuthorization{hubspot_portal_id: hubspot_portal_id} ->
+        contact_id = contact["id"] || get_in(contact, ["properties", "hs_object_id"])
+
+        Map.merge(contact, %{
+          "hubspot_profile_url" =>
+            "https://app.hubspot.com/contacts/#{hubspot_portal_id}/contact/#{contact_id}"
+        })
     end
   end
 end
