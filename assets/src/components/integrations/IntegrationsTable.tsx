@@ -101,6 +101,17 @@ const IntegrationsTable = ({
               </Link>
             );
 
+          case 'hubspot':
+            return (
+              <Link to="/integrations/hubspot">
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
+              </Link>
+            );
+
           default:
             return isChatAvailable ? (
               <Button onClick={Papercups.toggle}>Chat with us!</Button>

@@ -1081,6 +1081,30 @@ export const sendGmailNotification = async (
     .then((res) => res.body.data);
 };
 
+export const fetchHubspotAuthorization = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/hubspot/authorization`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteHubspotAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/hubspot/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
 export const fetchEventSubscriptions = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
@@ -1280,6 +1304,21 @@ export const authorizeGithubIntegration = async (
 
   return request
     .get(`/api/github/oauth`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
+export const authorizeHubspotIntegration = async (
+  query: Record<string, any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/hubspot/oauth`)
     .query(query)
     .set('Authorization', token)
     .then((res) => res.body);

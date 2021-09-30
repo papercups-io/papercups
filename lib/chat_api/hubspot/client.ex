@@ -17,6 +17,7 @@ defmodule ChatApi.Hubspot.Client do
   plug(Tesla.Middleware.Logger)
 
   # TODO: determine whether v1 or v3 API is more reliable/feature-rich
+  # (May need to use a combination of the two until v3 has everything we need)
 
   @spec list_contacts_v1(binary(), keyword()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def list_contacts_v1(access_token, query \\ [count: 100]) do
@@ -38,7 +39,17 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
-  @spec retrieve_contact(binary, any, any) :: {:error, any()} | {:ok, Tesla.Env.t()}
+  @spec list_companies(binary(), keyword()) :: {:error, any()} | {:ok, Tesla.Env.t()}
+  def list_companies(access_token, query \\ [limit: 100]) do
+    get("/crm/v3/objects/companies",
+      query: query,
+      headers: [
+        {"Authorization", "Bearer " <> access_token}
+      ]
+    )
+  end
+
+  @spec retrieve_contact(binary(), any, any()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def retrieve_contact(access_token, contact_id, query \\ []) do
     get("/crm/v3/objects/contacts/#{contact_id}",
       query: query,
@@ -91,6 +102,16 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
+  @spec retrieve_account_details(binary()) :: {:error, any()} | {:ok, Tesla.Env.t()}
+  def retrieve_account_details(access_token) do
+    get("/integrations/v1/me",
+      query: [access_token: access_token],
+      headers: [
+        {"Authorization", "Bearer " <> access_token}
+      ]
+    )
+  end
+
   @spec refresh_auth_tokens(binary()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def refresh_auth_tokens(refresh_token) do
     create_auth_tokens(%{
@@ -129,6 +150,15 @@ defmodule ChatApi.Hubspot.Client do
         "client_id" => client_id,
         "client_secret" => client_secret
       })
+    )
+  end
+
+  @spec retrieve_token_info(binary()) :: {:error, any()} | {:ok, Tesla.Env.t()}
+  def retrieve_token_info(access_token) do
+    get("/oauth/v1/access-tokens/#{access_token}",
+      headers: [
+        {"Authorization", "Bearer " <> access_token}
+      ]
     )
   end
 end
