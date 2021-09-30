@@ -8,6 +8,8 @@ defmodule ChatApi.Repo.Migrations.CreateHubspotAuthorizations do
       add(:refresh_token, :string, null: false)
       add(:expires_at, :utc_datetime)
       add(:token_type, :string)
+      add(:hubspot_app_id, :integer)
+      add(:hubspot_portal_id, :integer)
       add(:scope, :string)
       add(:metadata, :map)
 

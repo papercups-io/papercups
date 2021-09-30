@@ -24,14 +24,26 @@ defmodule ChatApiWeb.HubspotController do
             }
           }} <-
            Hubspot.Client.generate_auth_tokens(code),
+         {:ok,
+          %{
+            status: 200,
+            body: %{
+              "app_id" => hubspot_app_id,
+              "hub_id" => hubspot_portal_id,
+              "scopes" => scopes
+            }
+          }} <- Hubspot.Client.retrieve_token_info(access_token),
          {:ok, authorization} <-
            Hubspot.create_or_update_authorization(%{
              account_id: account_id,
              user_id: user_id,
              access_token: access_token,
              refresh_token: refresh_token,
+             hubspot_app_id: hubspot_app_id,
+             hubspot_portal_id: hubspot_portal_id,
              token_type: token_type,
-             expires_at: DateTime.utc_now() |> DateTime.add(expires_in)
+             expires_at: DateTime.utc_now() |> DateTime.add(expires_in),
+             scope: Enum.join(scopes, ",")
            }) do
       json(conn, %{data: %{ok: true, id: authorization.id}})
     else

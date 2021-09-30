@@ -10,6 +10,8 @@ defmodule ChatApi.Hubspot.HubspotAuthorization do
           refresh_token: String.t() | nil,
           expires_at: DateTime.t() | nil,
           token_type: String.t() | nil,
+          hubspot_app_id: integer() | nil,
+          hubspot_portal_id: integer() | nil,
           scope: String.t() | nil,
           metadata: any(),
           # Foreign keys
@@ -27,6 +29,8 @@ defmodule ChatApi.Hubspot.HubspotAuthorization do
     field(:refresh_token, :string)
     field(:expires_at, :utc_datetime)
     field(:token_type, :string)
+    field(:hubspot_app_id, :integer)
+    field(:hubspot_portal_id, :integer)
     field(:scope, :string)
     field(:metadata, :map)
 
@@ -46,6 +50,8 @@ defmodule ChatApi.Hubspot.HubspotAuthorization do
       :refresh_token,
       :expires_at,
       :token_type,
+      :hubspot_app_id,
+      :hubspot_portal_id,
       :scope,
       :metadata
     ])
