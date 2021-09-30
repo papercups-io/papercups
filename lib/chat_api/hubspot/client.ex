@@ -49,7 +49,7 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
-  @spec retrieve_contact(binary(), any, any()) :: {:error, any()} | {:ok, Tesla.Env.t()}
+  @spec retrieve_contact(binary(), binary(), any()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def retrieve_contact(access_token, contact_id, query \\ []) do
     get("/crm/v3/objects/contacts/#{contact_id}",
       query: query,
