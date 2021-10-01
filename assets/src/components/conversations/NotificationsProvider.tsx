@@ -40,12 +40,9 @@ export const useNotifications = () => useContext(NotificationsContext);
 
 type Props = {
   socket: Socket;
-  // TODO: get ridof these?
   onNewMessage?: (message: Message) => void;
   onNewConversation?: (id: string) => void;
   onConversationUpdated?: (id: string, updates: Partial<Conversation>) => void;
-  // onPresenceInit?: (presence: PhoenixPresence) => void;
-  // onPresenceDiff?: (diff: PresenceDiff) => void;
 } & React.PropsWithChildren<{}>;
 type State = {
   presence: PhoenixPresence | null;
