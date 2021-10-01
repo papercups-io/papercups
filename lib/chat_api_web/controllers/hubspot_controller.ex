@@ -85,9 +85,9 @@ defmodule ChatApiWeb.HubspotController do
   @spec list_contacts(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def list_contacts(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user,
-         %HubspotAuthorization{access_token: access_token} = authorization <-
+         %HubspotAuthorization{} = authorization <-
            Hubspot.get_authorization_by_account(account_id),
-         {:ok, %{body: %{"results" => results}}} <- list_hubspot_contacts(access_token, params) do
+         {:ok, %{body: %{"results" => results}}} <- list_hubspot_contacts(authorization, params) do
       json(conn, %{
         data: Enum.map(results, &format_hubspot_contact(&1, authorization))
       })
@@ -100,10 +100,10 @@ defmodule ChatApiWeb.HubspotController do
   @spec create_contact(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create_contact(conn, params) do
     with %{account_id: account_id} <- conn.assigns.current_user,
-         %HubspotAuthorization{access_token: access_token} = authorization <-
+         %HubspotAuthorization{} = authorization <-
            Hubspot.get_authorization_by_account(account_id),
          {:ok, %{body: contact}} <-
-           Hubspot.Client.create_contact(access_token, params) do
+           Hubspot.Client.create_contact(authorization, params) do
       json(conn, %{
         data: format_hubspot_contact(contact, authorization)
       })
@@ -123,16 +123,16 @@ defmodule ChatApiWeb.HubspotController do
     end
   end
 
-  defp list_hubspot_contacts(access_token, params) do
+  defp list_hubspot_contacts(%HubspotAuthorization{} = authorization, params) do
     case params do
       %{"email" => email} ->
-        Hubspot.Client.find_contact_by_email(access_token, email)
+        Hubspot.Client.find_contact_by_email(authorization, email)
 
       %{"filters" => filters} ->
-        Hubspot.Client.search_contacts(access_token, filters)
+        Hubspot.Client.search_contacts(authorization, filters)
 
       _ ->
-        Hubspot.Client.list_contacts(access_token)
+        Hubspot.Client.list_contacts(authorization)
     end
   end
 

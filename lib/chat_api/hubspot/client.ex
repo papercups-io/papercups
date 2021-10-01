@@ -7,6 +7,9 @@ defmodule ChatApi.Hubspot.Client do
 
   use Tesla
 
+  alias ChatApi.Hubspot
+  alias ChatApi.Hubspot.HubspotAuthorization
+
   plug(Tesla.Middleware.BaseUrl, "https://api.hubapi.com")
 
   plug(Tesla.Middleware.Headers, [
@@ -19,8 +22,15 @@ defmodule ChatApi.Hubspot.Client do
   # TODO: determine whether v1 or v3 API is more reliable/feature-rich
   # (May need to use a combination of the two until v3 has everything we need)
 
-  @spec list_contacts_v1(binary(), keyword()) :: {:error, any()} | {:ok, Tesla.Env.t()}
-  def list_contacts_v1(access_token, query \\ [count: 100]) do
+  @spec list_contacts_v1(binary() | HubspotAuthorization.t(), keyword()) ::
+          {:error, any()} | {:ok, Tesla.Env.t()}
+  def list_contacts_v1(authorization, query \\ [count: 100])
+
+  def list_contacts_v1(%HubspotAuthorization{} = authorization, query) do
+    authorization |> get_authorization_token() |> list_contacts_v1(query)
+  end
+
+  def list_contacts_v1(access_token, query) when is_binary(access_token) do
     get("/contacts/v1/lists/all/contacts/all",
       query: query,
       headers: [
@@ -29,8 +39,15 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
-  @spec list_contacts(binary(), keyword()) :: {:error, any()} | {:ok, Tesla.Env.t()}
-  def list_contacts(access_token, query \\ [limit: 100]) do
+  @spec list_contacts(binary() | HubspotAuthorization.t(), keyword()) ::
+          {:error, any()} | {:ok, Tesla.Env.t()}
+  def list_contacts(authorization, query \\ [limit: 100])
+
+  def list_contacts(%HubspotAuthorization{} = authorization, query) do
+    authorization |> get_authorization_token() |> list_contacts(query)
+  end
+
+  def list_contacts(access_token, query) do
     get("/crm/v3/objects/contacts",
       query: query,
       headers: [
@@ -39,8 +56,15 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
-  @spec list_companies(binary(), keyword()) :: {:error, any()} | {:ok, Tesla.Env.t()}
-  def list_companies(access_token, query \\ [limit: 100]) do
+  @spec list_companies(binary() | HubspotAuthorization.t(), keyword()) ::
+          {:error, any()} | {:ok, Tesla.Env.t()}
+  def list_companies(authorization, query \\ [limit: 100])
+
+  def list_companies(%HubspotAuthorization{} = authorization, query) do
+    authorization |> get_authorization_token() |> list_companies(query)
+  end
+
+  def list_companies(access_token, query) when is_binary(access_token) do
     get("/crm/v3/objects/companies",
       query: query,
       headers: [
@@ -49,8 +73,15 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
-  @spec retrieve_contact(binary(), binary(), any()) :: {:error, any()} | {:ok, Tesla.Env.t()}
-  def retrieve_contact(access_token, contact_id, query \\ []) do
+  @spec retrieve_contact(binary() | HubspotAuthorization.t(), binary(), any()) ::
+          {:error, any()} | {:ok, Tesla.Env.t()}
+  def retrieve_contact(authorization, contact_id, query \\ [])
+
+  def retrieve_contact(%HubspotAuthorization{} = authorization, contact_id, query) do
+    authorization |> get_authorization_token() |> retrieve_contact(contact_id, query)
+  end
+
+  def retrieve_contact(access_token, contact_id, query) when is_binary(access_token) do
     get("/crm/v3/objects/contacts/#{contact_id}",
       query: query,
       headers: [
@@ -59,8 +90,15 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
-  @spec create_contact(binary(), map()) :: {:error, any()} | {:ok, Tesla.Env.t()}
-  def create_contact(access_token, properties \\ %{}) do
+  @spec create_contact(binary() | HubspotAuthorization.t(), map()) ::
+          {:error, any()} | {:ok, Tesla.Env.t()}
+  def create_contact(authorization, properties \\ %{})
+
+  def create_contact(%HubspotAuthorization{} = authorization, properties) do
+    authorization |> get_authorization_token() |> create_contact(properties)
+  end
+
+  def create_contact(access_token, properties) when is_binary(access_token) do
     post(
       "/crm/v3/objects/contacts",
       %{
@@ -79,8 +117,15 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
-  @spec search_contacts(binary(), list()) :: {:error, any()} | {:ok, Tesla.Env.t()}
-  def search_contacts(access_token, filters \\ []) do
+  @spec search_contacts(binary() | HubspotAuthorization.t(), list()) ::
+          {:error, any()} | {:ok, Tesla.Env.t()}
+  def search_contacts(authorization, filters \\ [])
+
+  def search_contacts(%HubspotAuthorization{} = authorization, filters) do
+    authorization |> get_authorization_token() |> search_contacts(filters)
+  end
+
+  def search_contacts(access_token, filters) when is_binary(access_token) do
     post("/crm/v3/objects/contacts/search", %{"filters" => filters},
       headers: [
         {"Authorization", "Bearer " <> access_token}
@@ -88,8 +133,13 @@ defmodule ChatApi.Hubspot.Client do
     )
   end
 
-  @spec find_contact_by_email(binary(), String.t()) :: {:error, any()} | {:ok, Tesla.Env.t()}
-  def find_contact_by_email(access_token, email) do
+  @spec find_contact_by_email(binary() | HubspotAuthorization.t(), String.t()) ::
+          {:error, any()} | {:ok, Tesla.Env.t()}
+  def find_contact_by_email(%HubspotAuthorization{} = authorization, email) do
+    authorization |> get_authorization_token() |> find_contact_by_email(email)
+  end
+
+  def find_contact_by_email(access_token, email) when is_binary(access_token) do
     search_contacts(
       access_token,
       [
@@ -160,5 +210,20 @@ defmodule ChatApi.Hubspot.Client do
         {"Authorization", "Bearer " <> access_token}
       ]
     )
+  end
+
+  @spec get_authorization_token(HubspotAuthorization.t()) :: binary() | nil
+  def get_authorization_token(%HubspotAuthorization{} = authorization) do
+    with true <- Hubspot.is_authorization_expired?(authorization),
+         {:ok, refreshed} <- Hubspot.refresh_authorization(authorization) do
+      IO.inspect(refreshed, label: "Successfully refreshed HubSpot authorization!")
+
+      refreshed.access_token
+    else
+      _ ->
+        IO.inspect(authorization, label: "Using existing HubSpot authorization")
+
+        authorization.access_token
+    end
   end
 end
