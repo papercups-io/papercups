@@ -216,13 +216,9 @@ defmodule ChatApi.Hubspot.Client do
   def get_authorization_token(%HubspotAuthorization{} = authorization) do
     with true <- Hubspot.is_authorization_expired?(authorization),
          {:ok, refreshed} <- Hubspot.refresh_authorization(authorization) do
-      IO.inspect(refreshed, label: "Successfully refreshed HubSpot authorization!")
-
       refreshed.access_token
     else
       _ ->
-        IO.inspect(authorization, label: "Using existing HubSpot authorization")
-
         authorization.access_token
     end
   end
