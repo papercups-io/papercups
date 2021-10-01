@@ -14,25 +14,28 @@ defmodule ChatApiWeb.TwilioControllerTest do
   setup %{conn: conn} do
     account = insert(:account)
     user = insert(:user, account: account)
+    inbox = insert(:inbox, account: account)
     conn = put_req_header(conn, "accept", "application/json")
     authed_conn = Pow.Plug.assign_current_user(conn, user, [])
 
-    {:ok, conn: conn, authed_conn: authed_conn, account: account}
+    {:ok, conn: conn, authed_conn: authed_conn, account: account, inbox: inbox}
   end
 
   describe "webhook" do
     test "returns 200 when message is successfully created", %{
       authed_conn: authed_conn,
-      account: account
+      account: account,
+      inbox: inbox
     } do
       _authorization =
         insert(:twilio_authorization,
           account: account,
+          inbox: inbox,
           twilio_account_sid: @valid_account_sid,
           from_phone_number: @twilio_phone_number
         )
 
-      _customer = insert(:customer, account: account, phone: @customer_phone_number)
+      customer = insert(:customer, account: account, phone: @customer_phone_number)
 
       with_mock ChatApi.Messages.Notification,
         notify: fn msg, _ -> msg end,
@@ -43,18 +46,28 @@ defmodule ChatApiWeb.TwilioControllerTest do
             "AccountSid" => @valid_account_sid,
             "To" => @twilio_phone_number,
             "From" => @customer_phone_number,
-            "Body" => "Test message"
+            "Body" => "Test SMS message"
           })
 
         assert response(conn, 200)
+
+        assert [message] =
+                 ChatApi.Messages.list_messages(account.id, %{
+                   "customer_id" => customer.id,
+                   "body" => "Test SMS message",
+                   "source" => "sms"
+                 })
+
+        assert message.conversation.inbox_id == inbox.id
       end
     end
 
     test "returns 200 when Twilio account is not found",
-         %{authed_conn: authed_conn, account: account} do
+         %{authed_conn: authed_conn, account: account, inbox: inbox} do
       _authorization =
         insert(:twilio_authorization,
           account: account,
+          inbox: inbox,
           twilio_account_sid: @invalid_account_sid,
           from_phone_number: @twilio_phone_number
         )
@@ -75,16 +88,17 @@ defmodule ChatApiWeb.TwilioControllerTest do
     end
 
     test "returns 500 when an unexpected error occurs",
-         %{authed_conn: authed_conn, account: account} do
+         %{authed_conn: authed_conn, account: account, inbox: inbox} do
       _authorization =
         insert(:twilio_authorization,
           account: account,
+          inbox: inbox,
           twilio_account_sid: @valid_account_sid,
           from_phone_number: @twilio_phone_number
         )
 
       with_mock ChatApi.Conversations,
-        find_or_create_by_customer: fn _, _, _ ->
+        find_or_create_by_customer: fn _ ->
           {:error, %Ecto.Changeset{}}
         end do
         assert capture_log(fn ->

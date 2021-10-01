@@ -635,16 +635,24 @@ defmodule ChatApi.Conversations do
     |> Repo.update()
   end
 
-  @spec find_or_create_by_customer(String.t(), String.t(), map()) ::
+  @spec find_or_create_by_customer(map()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
-  def find_or_create_by_customer(account_id, customer_id, attrs \\ %{}) do
-    params = Map.merge(attrs, %{"customer_id" => customer_id, "account_id" => account_id})
-
+  def find_or_create_by_customer(
+        %{
+          "account_id" => account_id,
+          "customer_id" => _,
+          "inbox_id" => _
+        } = params
+      ) do
     case find_latest_conversation(account_id, params) do
       nil -> create_conversation(params)
       conversation -> {:ok, conversation}
     end
   end
+
+  # Just return the changeset if required params are missing
+  def find_or_create_by_customer(params),
+    do: {:error, change_conversation(%Conversation{}, params)}
 
   #####################
   # Private methods
