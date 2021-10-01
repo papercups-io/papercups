@@ -1,5 +1,6 @@
 import React from 'react';
 import {Box} from 'theme-ui';
+import * as Sentry from '@sentry/react';
 import qs from 'query-string';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import {atomOneLight} from 'react-syntax-highlighter/dist/esm/styles/hljs';
@@ -64,9 +65,20 @@ export class Logger {
   }
 
   error(...args: any) {
-    // TODO: capture these errors in Sentry?
     console.error(...args);
     this.callback('error', ...args);
+
+    const [msg, err] = args;
+
+    if (msg && typeof msg === 'string') {
+      Sentry.captureMessage(msg);
+    }
+
+    const error = msg || err;
+
+    if (error instanceof Error || typeof error === 'object') {
+      Sentry.captureException(error);
+    }
   }
 
   listen() {
