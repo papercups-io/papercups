@@ -80,14 +80,19 @@ defmodule ChatApiWeb.TwilioController do
       ) do
     Logger.info("Payload from Twilio webhook: #{inspect(payload)}")
 
-    with %TwilioAuthorization{account_id: account_id} <-
+    with %TwilioAuthorization{account_id: account_id, inbox_id: inbox_id} <-
            Twilio.find_twilio_authorization(%{
              twilio_account_sid: account_sid,
              from_phone_number: to
            }),
          {:ok, customer} <- Customers.find_or_create_by_phone(from, account_id),
          {:ok, conversation} <-
-           Conversations.find_or_create_by_customer(account_id, customer.id, %{"source" => "sms"}) do
+           Conversations.find_or_create_by_customer(%{
+             "account_id" => account_id,
+             "customer_id" => customer.id,
+             "inbox_id" => inbox_id,
+             "source" => "sms"
+           }) do
       %{
         body: body,
         account_id: account_id,
