@@ -215,7 +215,7 @@ defmodule ChatApi.Emails.Email do
   # TODO: figure out a better way to create templates for these
   defp mention_notification_text(messages, from: from, to: _user, company: company) do
     conversation_id = messages |> List.first() |> Map.get(:conversation_id)
-    dashboard_link = "#{get_app_domain()}/conversations/mentions?cid=#{conversation_id}"
+    dashboard_link = "#{get_app_domain()}/conversations/mentions/#{conversation_id}"
 
     """
     Hi there!
@@ -237,7 +237,7 @@ defmodule ChatApi.Emails.Email do
 
   defp mention_notification_html(messages, from: from, to: _user, company: company) do
     conversation_id = messages |> List.first() |> Map.get(:conversation_id)
-    dashboard_link = "#{get_app_domain()}/conversations/mentions?cid=#{conversation_id}"
+    dashboard_link = "#{get_app_domain()}/conversations/mentions/#{conversation_id}"
 
     """
     <p>Hi there!</p>

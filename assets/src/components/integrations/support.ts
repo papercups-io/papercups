@@ -1,5 +1,5 @@
 import qs from 'query-string';
-import {SLACK_CLIENT_ID, isDev} from '../../config';
+import {SLACK_CLIENT_ID, HUBSPOT_CLIENT_ID, isDev} from '../../config';
 import {GoogleIntegrationParams} from '../../types';
 
 export type IntegrationType = {
@@ -97,3 +97,15 @@ export const getGoogleAuthUrl = ({
 
 // Both Google and Slack auth states are handled the same for now
 export const parseGoogleAuthState = parseSlackAuthState;
+
+export const getHubspotRedirectUrl = () => {
+  const origin = window.location.origin;
+
+  return `${origin}/integrations/hubspot`;
+};
+
+export const getHubspotAuthUrl = () => {
+  const redirect = getHubspotRedirectUrl();
+
+  return `https://app.hubspot.com/oauth/authorize?client_id=${HUBSPOT_CLIENT_ID}&redirect_uri=${redirect}&scope=contacts%20content`;
+};

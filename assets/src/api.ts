@@ -1081,6 +1081,69 @@ export const sendGmailNotification = async (
     .then((res) => res.body.data);
 };
 
+export const fetchHubspotAuthorization = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/hubspot/authorization`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createHubspotContact = async (
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/hubspot/contacts`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchHubspotContacts = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/hubspot/contacts`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchHubspotContactByEmail = async (
+  email: string,
+  token = getAccessToken()
+) => {
+  return fetchHubspotContacts({email}, token).then(
+    ([result]) => result || null
+  );
+};
+
+export const deleteHubspotAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/hubspot/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
 export const fetchEventSubscriptions = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
@@ -1280,6 +1343,21 @@ export const authorizeGithubIntegration = async (
 
   return request
     .get(`/api/github/oauth`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
+export const authorizeHubspotIntegration = async (
+  query: Record<string, any>,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/hubspot/oauth`)
     .query(query)
     .set('Authorization', token)
     .then((res) => res.body);

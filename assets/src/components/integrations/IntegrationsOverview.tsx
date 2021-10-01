@@ -270,13 +270,16 @@ class IntegrationsOverview extends React.Component<Props, State> {
   };
 
   fetchHubSpotIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchHubspotAuthorization();
+
     return {
       key: 'hubspot',
       integration: 'HubSpot',
-      status: 'not_connected',
-      createdAt: null,
-      authorizationId: null,
+      status: auth ? 'connected' : 'not_connected',
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
       icon: '/hubspot.svg',
+      description: 'View and sync customer data from HubSpot',
     };
   };
 

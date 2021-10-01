@@ -41,9 +41,7 @@ const CustomerActionsDropdown = ({customer}: {customer: Customer}) => {
                 description: (
                   <Text>
                     Click{' '}
-                    <a href={`/conversations/all?cid=${conversation.id}`}>
-                      here
-                    </a>{' '}
+                    <a href={`/conversations/all/${conversation.id}`}>here</a>{' '}
                     to view the conversation.
                   </Text>
                 ),

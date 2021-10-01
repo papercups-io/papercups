@@ -121,6 +121,17 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def hubspot_authorization_factory do
+    %ChatApi.Hubspot.HubspotAuthorization{
+      access_token: "some access_token",
+      refresh_token: "some refresh_token",
+      token_type: "some token_type",
+      scope: "some scope",
+      account: build(:account),
+      user: build(:user)
+    }
+  end
+
   def inbox_factory do
     %ChatApi.Inboxes.Inbox{
       account: build(:account),

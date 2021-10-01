@@ -72,8 +72,6 @@ defmodule ChatApiWeb.Router do
     post("/twilio/webhook", TwilioController, :webhook)
     post("/github/webhook", GithubController, :webhook)
     post("/ses/webhook", SesController, :webhook)
-    # TODO: move to protected route after testing?
-    get("/hubspot/oauth", HubspotController, :oauth)
 
     post("/newsletters/:newsletter/subscribe", NewsletterController, :subscribe)
   end
@@ -119,6 +117,11 @@ defmodule ChatApiWeb.Router do
     delete("/google/authorizations/:id", GoogleController, :delete)
     get("/gmail/profile", GmailController, :profile)
     post("/gmail/send", GmailController, :send)
+    get("/hubspot/oauth", HubspotController, :oauth)
+    get("/hubspot/authorization", HubspotController, :authorization)
+    get("/hubspot/contacts", HubspotController, :list_contacts)
+    post("/hubspot/contacts", HubspotController, :create_contact)
+    delete("/hubspot/authorizations/:id", HubspotController, :delete)
     put("/widget_settings", WidgetSettingsController, :update)
     get("/profile", UserProfileController, :show)
     put("/profile", UserProfileController, :update)

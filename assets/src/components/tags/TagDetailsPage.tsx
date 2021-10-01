@@ -120,8 +120,8 @@ class TagDetailsPage extends React.Component<Props, State> {
     );
     const isClosed = conversation && conversation.status === 'closed';
     const url = isClosed
-      ? `/conversations/closed?cid=${conversationId}`
-      : `/conversations/all?cid=${conversationId}`;
+      ? `/conversations/closed/${conversationId}`
+      : `/conversations/all/${conversationId}`;
 
     this.props.history.push(url);
   };
