@@ -261,6 +261,31 @@ defmodule ChatApiWeb.CustomerControllerTest do
              } = json_response(resp, 200)["data"]
     end
 
+    test "errors when external_id is null or undefined", %{conn: conn, account: account} do
+      email = "customer@test.com"
+      host = "app.test.com"
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account.id,
+          external_id: "null",
+          email: email,
+          host: host
+        )
+
+      assert json_response(resp, 422)["error"]
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account.id,
+          external_id: "undefined",
+          email: email,
+          host: host
+        )
+
+      assert json_response(resp, 422)["error"]
+    end
+
     test "ignoring nil/null filters", %{conn: conn, account: account} do
       external_id = "cus_123"
       email = "customer@test.com"

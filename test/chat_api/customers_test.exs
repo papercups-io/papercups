@@ -242,6 +242,21 @@ defmodule ChatApi.CustomersTest do
       assert %{"external_id" => "123"} = Customers.sanitize_metadata(%{"external_id" => 123})
     end
 
+    test "sanitize_metadata/1 omits strings of null or undefined" do
+      assert %{"email" => nil} = Customers.sanitize_metadata(%{"email" => "null"})
+      assert %{"email" => nil} = Customers.sanitize_metadata(%{"email" => "undefined"})
+
+      assert %{"email" => "test@test.com"} =
+               Customers.sanitize_metadata(%{"email" => "test@test.com"})
+
+      assert %{"external_id" => nil} = Customers.sanitize_metadata(%{"external_id" => "null"})
+
+      assert %{"external_id" => nil} =
+               Customers.sanitize_metadata(%{"external_id" => "undefined"})
+
+      assert %{"external_id" => "123"} = Customers.sanitize_metadata(%{"external_id" => "123"})
+    end
+
     test "sanitize_metadata/1 truncates the current_url if it is too long" do
       current_url =
         "http://example.com/login?next=/insights%3Finsight%3DTRENDS%26interval%3Dday%26events%3D%255B%257B%2522id%2522%253A%2522%2524pageview%2522%252C%2522name%2522%253A%2522%2524pageview%2522%252C%2522type%2522%253A%2522events%2522%252C%2522order%2522%253A0%252C%2522math%2522%253A%2522total%2522%257D%255D%26display%3DActionsTable%26actions%3D%255B%255D%26new_entity%3D%255B%255D%26breakdown%3D%2524browser%26breakdown_type%3Devent%26properties%3D%255B%255D"

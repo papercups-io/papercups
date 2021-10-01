@@ -99,19 +99,19 @@ export class NotificationsProvider extends React.Component<Props, State> {
     this.channel
       .join()
       .receive('ok', (data) => {
-        console.debug('Joined channel successfully:', data);
+        logger.debug('Joined channel successfully:', data);
 
         clearTimeout(this.timeout);
       })
       .receive('error', (err) => {
         logger.error('Unable to join channel:', err);
-        logger.error('Attempting reconnect after 1s...');
+        logger.info('Attempting reconnect after 1s...');
         // TODO: double check that this works (retries after 1s)
         this.timeout = setTimeout(() => this.connect(channel), 1000);
       })
       .receive('timeout', (data) => {
         logger.error('Connection to channel timed out:', data);
-        logger.error('Attempting reconnect after 1s...');
+        logger.info('Attempting reconnect after 1s...');
         // TODO: double check that this works (retries after 1s)
         this.timeout = setTimeout(() => this.connect(channel), 1000);
       });
