@@ -74,7 +74,8 @@ defmodule ChatApiWeb.CustomerController do
           "account_id" => account_id
         } = params
       )
-      when not is_nil(external_id) and not is_nil(account_id) do
+      when not is_nil(external_id) and not is_nil(account_id) and
+             external_id not in ["null", "undefined"] do
     # TODO: support whitelisting urls for an account so we only enable this and
     # other chat widget-related APIs for incoming requests from supported urls?
     if Accounts.exists?(account_id) do

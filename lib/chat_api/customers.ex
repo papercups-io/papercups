@@ -283,15 +283,29 @@ defmodule ChatApi.Customers do
   @spec sanitize_metadata(map()) :: map()
   def sanitize_metadata(metadata) do
     metadata
+    |> sanitize_metadata_email()
     |> sanitize_metadata_external_id()
     |> sanitize_metadata_current_url()
     |> sanitize_ad_hoc_metadata()
   end
 
+  @spec sanitize_metadata_email(map()) :: map()
+  def sanitize_metadata_email(%{"email" => email} = metadata)
+      when email in ["null", "undefined"] do
+    Map.merge(metadata, %{"email" => nil})
+  end
+
+  def sanitize_metadata_email(metadata), do: metadata
+
   @spec sanitize_metadata_external_id(map()) :: map()
   def sanitize_metadata_external_id(%{"external_id" => external_id} = metadata)
       when is_integer(external_id) do
     Map.merge(metadata, %{"external_id" => to_string(external_id)})
+  end
+
+  def sanitize_metadata_external_id(%{"external_id" => external_id} = metadata)
+      when external_id in ["null", "undefined"] do
+    Map.merge(metadata, %{"external_id" => nil})
   end
 
   def sanitize_metadata_external_id(metadata), do: metadata
