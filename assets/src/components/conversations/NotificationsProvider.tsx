@@ -88,17 +88,32 @@ export class NotificationsProvider extends React.Component<Props, State> {
     this.channel.on('presence_state', this.handlePresenceInit);
     this.channel.on('presence_diff', this.handlePresenceDiff);
 
+    this.channel.onError(() => {
+      logger.error(
+        'Error connecting to notification channel. Attempting reconnect after 1s...'
+      );
+
+      this.timeout = setTimeout(() => this.connect(channel), 1000);
+    });
+
     this.channel
       .join()
-      .receive('ok', (res) => {
-        logger.debug(`Successfully joined channel ${channel}:`, res);
+      .receive('ok', (data) => {
+        console.debug('Joined channel successfully:', data);
 
         clearTimeout(this.timeout);
       })
       .receive('error', (err) => {
-        logger.error(`Unable to join channel ${channel}:`, err);
-        // TODO: double check that this works (retries after 10s)
-        this.timeout = setTimeout(() => this.connect(channel), 10000);
+        logger.error('Unable to join channel:', err);
+        logger.error('Attempting reconnect after 1s...');
+        // TODO: double check that this works (retries after 1s)
+        this.timeout = setTimeout(() => this.connect(channel), 1000);
+      })
+      .receive('timeout', (data) => {
+        logger.error('Connection to channel timed out:', data);
+        logger.error('Attempting reconnect after 1s...');
+        // TODO: double check that this works (retries after 1s)
+        this.timeout = setTimeout(() => this.connect(channel), 1000);
       });
   };
 
