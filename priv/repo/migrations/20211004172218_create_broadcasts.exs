@@ -45,5 +45,9 @@ defmodule ChatApi.Repo.Migrations.CreateBroadcasts do
     create index(:broadcast_customers, [:broadcast_id])
     create index(:broadcast_customers, [:customer_id])
     create(unique_index(:broadcast_customers, [:account_id, :broadcast_id, :customer_id]))
+
+    alter table(:customers) do
+      add(:unsubscribed_at, :utc_datetime)
+    end
   end
 end
