@@ -1144,6 +1144,69 @@ export const deleteHubspotAuthorization = async (
     .set('Authorization', token);
 };
 
+export const fetchIntercomAuthorization = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/intercom/authorization`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const createIntercomContact = async (
+  params = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/intercom/contacts`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchIntercomContacts = async (
+  query = {},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/intercom/contacts`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const fetchIntercomContactByEmail = async (
+  email: string,
+  token = getAccessToken()
+) => {
+  return fetchIntercomContacts({email}, token).then(
+    ([result]) => result || null
+  );
+};
+
+export const deleteIntercomAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/intercom/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
 export const fetchEventSubscriptions = async (token = getAccessToken()) => {
   if (!token) {
     throw new Error('Invalid token!');
@@ -1358,6 +1421,21 @@ export const authorizeHubspotIntegration = async (
 
   return request
     .get(`/api/hubspot/oauth`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
+export const authorizeIntercomIntegration = async (
+  query: {code: string},
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/intercom/callback`)
     .query(query)
     .set('Authorization', token)
     .then((res) => res.body);

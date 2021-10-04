@@ -1,6 +1,5 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
-import {Image} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
@@ -22,12 +21,9 @@ import {
   CalendarOutlined,
   GlobalOutlined,
   InfoCircleOutlined,
-  LinkOutlined,
   MailOutlined,
   PhoneOutlined,
-  TeamOutlined,
   UserOutlined,
-  VideoCameraOutlined,
 } from '../icons';
 import {
   SidebarCustomerTags,
@@ -37,216 +33,20 @@ import SidebarCustomerNotes from './SidebarCustomerNotes';
 import SidebarCustomerIssues from './SidebarCustomerIssues';
 import RelatedCustomerConversations from './RelatedCustomerConversations';
 import SlackConversationThreads from './SlackConversationThreads';
+import CustomerActiveSessions from '../customers/CustomerActiveSessions';
+import CustomerHubspotInfo from '../customers/CustomerHubspotInfo';
+import CustomerIntercomInfo from '../customers/CustomerIntercomInfo';
+import CustomerCompanyDetails from '../customers/CustomerCompanyDetails';
 import * as API from '../../api';
-import {Company, Conversation, Customer} from '../../types';
+import {Conversation, Customer} from '../../types';
 import {download} from '../../utils';
 import logger from '../../logger';
-import {generateSlackChannelUrl} from '../companies/support';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
-const DetailsSectionCard = ({children}: {children: any}) => {
+export const DetailsSectionCard = ({children}: {children: any}) => {
   return <Card sx={{p: 2, my: 2}}>{children}</Card>;
-};
-
-const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
-  const [loading, setLoading] = React.useState(false);
-  const [session, setLiveSession] = React.useState<any>();
-
-  React.useEffect(() => {
-    setLoading(true);
-
-    API.fetchBrowserSessions({customerId, isActive: true, limit: 5})
-      .then(([session]) => setLiveSession(session))
-      .catch((err) => logger.error('Error retrieving sessions:', err))
-      .then(() => setLoading(false));
-  }, [customerId]);
-
-  const sessionId = session && session.id;
-
-  return (
-    <Link to={sessionId ? `/sessions/live/${sessionId}` : '/sessions'}>
-      <Button
-        type="primary"
-        icon={<VideoCameraOutlined />}
-        block
-        ghost
-        loading={loading}
-      >
-        View live
-      </Button>
-    </Link>
-  );
-};
-
-const CustomerHubspotInfo = ({customer}: {customer: Customer}) => {
-  const [status, setStatus] = React.useState<
-    'loading' | 'adding' | 'success' | 'error'
-  >('loading');
-  const [authorization, setHubspotAuthorization] = React.useState<any>(null);
-  const [hubspotContactInfo, setHubspotContactInfo] = React.useState<any>(null);
-  const {email} = customer;
-
-  React.useEffect(() => {
-    if (!email) {
-      return;
-    }
-
-    setStatus('loading');
-
-    API.fetchHubspotAuthorization()
-      .then((auth) => {
-        setHubspotAuthorization(auth);
-
-        if (auth) {
-          return API.fetchHubspotContactByEmail(email);
-        } else {
-          return null;
-        }
-      })
-      .then((contact) => setHubspotContactInfo(contact))
-      .catch((err) => logger.error('Error retrieving HubSpot contact:', err))
-      .then(() => setStatus('success'));
-  }, [email]);
-
-  function handleCreateHubspotContact() {
-    const {name, email, phone} = customer;
-
-    if (!email) {
-      return;
-    }
-
-    setStatus('adding');
-
-    const [firstName, lastName] = (name || '').split(' ');
-    const payload = {
-      email,
-      phone,
-      first_name: firstName,
-      last_name: lastName,
-    };
-
-    return API.createHubspotContact(payload)
-      .then((contact) => {
-        setHubspotContactInfo(contact);
-
-        const url = contact?.hubspot_profile_url;
-
-        notification.success({
-          message: `Successfully added to HubSpot.`,
-          description: url ? (
-            <Text>
-              Click{' '}
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                here
-              </a>{' '}
-              to view in HubSpot.
-            </Text>
-          ) : null,
-        });
-      })
-
-      .catch((err) =>
-        logger.error('Error creating/retrieving HubSpot contact:', err)
-      )
-      .then(() => setStatus('success'));
-  }
-
-  if (!email) {
-    return null;
-  }
-
-  const url = hubspotContactInfo?.hubspot_profile_url;
-
-  if (!url && !authorization) {
-    return null;
-  }
-
-  return (
-    <DetailsSectionCard>
-      <Flex mb={2} sx={{}}>
-        <img
-          src="/hubspot.svg"
-          alt="HubSpot"
-          style={{maxHeight: 20, maxWidth: 20, marginRight: 4}}
-        />
-
-        <Text strong>HubSpot</Text>
-      </Flex>
-      {url ? (
-        <a href={url} target="_blank" rel="noopener noreferrer">
-          <Button block>View HubSpot profile</Button>
-        </a>
-      ) : (
-        <Button
-          block
-          disabled={status === 'loading'}
-          loading={status === 'adding'}
-          onClick={handleCreateHubspotContact}
-        >
-          {status === 'loading' ? 'Loading...' : 'Add to HubSpot'}
-        </Button>
-      )}
-    </DetailsSectionCard>
-  );
-};
-
-const CustomerCompanyDetails = ({customerId}: {customerId: string}) => {
-  const [loading, setLoading] = React.useState(false);
-  const [company, setCompany] = React.useState<Company | null>(null);
-
-  React.useEffect(() => {
-    setLoading(true);
-
-    API.fetchCustomer(customerId, {expand: ['company']})
-      .then((customer) => {
-        const {company} = customer;
-
-        setCompany(company);
-      })
-      .catch((err) => logger.error('Error retrieving company:', err))
-      .then(() => setLoading(false));
-  }, [customerId]);
-
-  if (loading || !company) {
-    return null;
-  }
-
-  const {
-    id: companyId,
-    name = 'Unknown',
-    website_url: websiteUrl,
-    slack_channel_name: slackChannelName,
-  } = company;
-  const slackChannelUrl = generateSlackChannelUrl(company);
-
-  return (
-    <DetailsSectionCard>
-      <Flex mb={2} sx={{alignItems: 'center', justifyContent: 'space-between'}}>
-        <Text strong>Company</Text>
-        <Link to={`/companies/${companyId}`}>
-          <Button size="small">View</Button>
-        </Link>
-      </Flex>
-      <Box mb={1}>
-        <TeamOutlined /> {name}
-      </Box>
-      {websiteUrl && (
-        <Box mb={1}>
-          <LinkOutlined /> {websiteUrl || 'Unknown'}
-        </Box>
-      )}
-      {slackChannelUrl && slackChannelName && (
-        <Box mb={1}>
-          <Image src="/slack.svg" alt="Slack" sx={{height: 16, mr: 1}} />
-          <a href={slackChannelUrl} target="_blank" rel="noopener noreferrer">
-            {slackChannelName}
-          </a>
-        </Box>
-      )}
-    </DetailsSectionCard>
-  );
 };
 
 export const CustomerDetails = ({
@@ -453,8 +253,8 @@ export const CustomerDetails = ({
       </DetailsSectionCard>
 
       <CustomerCompanyDetails customerId={customerId} />
-
       <CustomerHubspotInfo customer={customer} />
+      <CustomerIntercomInfo customer={customer} />
 
       <DetailsSectionCard>
         <Box mb={2}>
@@ -495,9 +295,7 @@ export const CustomerDetailsSection = ({
   return (
     <Box px={2} py={3}>
       <Box px={2} mb={3}>
-        <Link to={`/customers/${customer.id}`}>
-          <Text strong>Customer details</Text>
-        </Link>
+        <Text strong>Customer details</Text>
       </Box>
 
       <CustomerDetails customer={customer} isOnline={isOnline} />

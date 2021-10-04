@@ -142,6 +142,16 @@ defmodule ChatApi.Factory do
     }
   end
 
+  def intercom_authorization_factory do
+    %ChatApi.Intercom.IntercomAuthorization{
+      access_token: "some access_token",
+      token_type: "some token_type",
+      scope: "some scope",
+      account: build(:account),
+      user: build(:user)
+    }
+  end
+
   def mattermost_authorization_factory do
     %ChatApi.Mattermost.MattermostAuthorization{
       access_token: "some access_token",
