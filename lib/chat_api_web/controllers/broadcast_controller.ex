@@ -3,6 +3,7 @@ defmodule ChatApiWeb.BroadcastController do
 
   alias ChatApi.{Broadcasts, MessageTemplates}
   alias ChatApi.Broadcasts.Broadcast
+  alias ChatApi.Google.GoogleAuthorization
   alias ChatApi.MessageTemplates.MessageTemplate
 
   action_fallback(ChatApiWeb.FallbackController)
@@ -13,7 +14,7 @@ defmodule ChatApiWeb.BroadcastController do
     id = conn.path_params["id"]
 
     with %{account_id: account_id} <- conn.assigns.current_user,
-         broadcast = %{account_id: ^account_id} <- Broadcasts.get_broadcast!(id) do
+         broadcast = %Broadcast{account_id: ^account_id} <- Broadcasts.get_broadcast!(id) do
       assign(conn, :current_broadcast, broadcast)
     else
       _ -> ChatApiWeb.FallbackController.call(conn, {:error, :not_found}) |> halt()
@@ -74,11 +75,16 @@ defmodule ChatApiWeb.BroadcastController do
     # TODO: move more of this logic out of the controller into the Broadcasts context
     with %{current_user: current_user, current_broadcast: broadcast} <- conn.assigns,
          %{account_id: account_id, email: email} <- current_user,
-         %{message_template_id: template_id} <- broadcast,
+         %Broadcast{message_template_id: template_id, subject: subject} <- broadcast,
          # TODO: add better error handling if no gmail authorization is available
-         %{refresh_token: refresh_token} <-
+         %GoogleAuthorization{refresh_token: refresh_token} <-
            ChatApi.Google.get_support_gmail_authorization(account_id),
-         %MessageTemplate{raw_html: raw_html, plain_text: plain_text, type: type} <-
+         %MessageTemplate{
+           raw_html: raw_html,
+           plain_text: plain_text,
+           type: type,
+           default_subject: default_subject
+         } <-
            MessageTemplates.get_message_template!(template_id) do
       {:ok, broadcast} =
         Broadcasts.update_broadcast(broadcast, %{
@@ -101,7 +107,7 @@ defmodule ChatApiWeb.BroadcastController do
           to: customer.email,
           from: email,
           # TODO: should this be set at the broadcast level or message_template level?
-          subject: "Test Papercups template",
+          subject: subject || default_subject || "Latest updates",
           text: text,
           html:
             case type do

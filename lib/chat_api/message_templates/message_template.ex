@@ -13,6 +13,7 @@ defmodule ChatApi.MessageTemplates.MessageTemplate do
           react_js: String.t() | nil,
           react_markdown: String.t() | nil,
           slack_markdown: String.t() | nil,
+          default_subject: String.t() | nil,
           default_variable_values: map(),
           # Relations
           account_id: binary(),
@@ -34,6 +35,7 @@ defmodule ChatApi.MessageTemplates.MessageTemplate do
     field(:react_js, :string)
     field(:react_markdown, :string)
     field(:slack_markdown, :string)
+    field(:default_subject, :string)
     field(:default_variable_values, :map)
 
     belongs_to(:account, Account)
@@ -55,6 +57,7 @@ defmodule ChatApi.MessageTemplates.MessageTemplate do
       :react_js,
       :react_markdown,
       :slack_markdown,
+      :default_subject,
       :default_variable_values
     ])
     |> validate_required([

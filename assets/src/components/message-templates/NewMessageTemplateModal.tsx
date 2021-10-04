@@ -38,7 +38,7 @@ const NewMessageTemplateModal = ({
   const handleCreateMessageTemplate = async () => {
     setIsSaving(true);
 
-    return API.createMessageTemplate({name, description})
+    return API.createMessageTemplate({name, description, type: 'markdown'})
       .then((result) => {
         onSuccess(result);
         resetInputFields();

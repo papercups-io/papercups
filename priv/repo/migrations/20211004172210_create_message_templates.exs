@@ -13,6 +13,7 @@ defmodule ChatApi.Repo.Migrations.CreateMessageTemplates do
       add(:react_js, :text)
       add(:react_markdown, :text)
       add(:slack_markdown, :text)
+      add(:default_subject, :string)
       add(:default_variable_values, :map)
 
       add(:account_id, references(:accounts, null: false, type: :uuid, on_delete: :delete_all))

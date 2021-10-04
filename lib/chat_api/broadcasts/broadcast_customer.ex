@@ -25,6 +25,12 @@ defmodule ChatApi.Broadcasts.BroadcastCustomer do
   schema "broadcast_customers" do
     field(:state, :string, default: "unsent")
     field(:sent_at, :utc_datetime)
+    field(:delivered_at, :utc_datetime)
+    field(:seen_at, :utc_datetime)
+    field(:bounced_at, :utc_datetime)
+    field(:failed_at, :utc_datetime)
+    field(:unsubscribed_at, :utc_datetime)
+    field(:metadata, :map)
 
     belongs_to(:account, Account)
     belongs_to(:broadcast, Broadcast)

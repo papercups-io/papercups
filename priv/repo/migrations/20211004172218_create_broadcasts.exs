@@ -6,6 +6,7 @@ defmodule ChatApi.Repo.Migrations.CreateBroadcasts do
       add(:id, :binary_id, primary_key: true)
       add(:name, :string, null: false)
       add(:description, :string)
+      add(:subject, :string)
       add(:state, :string, null: false, default: "unstarted")
       add(:started_at, :utc_datetime)
       add(:finished_at, :utc_datetime)
@@ -24,6 +25,12 @@ defmodule ChatApi.Repo.Migrations.CreateBroadcasts do
       add(:id, :binary_id, primary_key: true)
       add(:state, :string, null: false, default: "unsent")
       add(:sent_at, :utc_datetime)
+      add(:delivered_at, :utc_datetime)
+      add(:seen_at, :utc_datetime)
+      add(:bounced_at, :utc_datetime)
+      add(:failed_at, :utc_datetime)
+      add(:unsubscribed_at, :utc_datetime)
+      add(:metadata, :map)
 
       add(:account_id, references(:accounts, type: :uuid, on_delete: :delete_all), null: false)
 

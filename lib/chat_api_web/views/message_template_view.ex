@@ -26,6 +26,7 @@ defmodule ChatApiWeb.MessageTemplateView do
       react_js: message_template.react_js,
       react_markdown: message_template.react_markdown,
       slack_markdown: message_template.slack_markdown,
+      default_subject: message_template.default_subject,
       default_variable_values: message_template.default_variable_values
     }
   end

@@ -146,6 +146,7 @@ export type MessageTemplate = {
   react_js?: string | null;
   react_markdown?: string | null;
   slack_markdown?: string | null;
+  default_subject?: string | null;
 };
 
 export type FileUpload = {

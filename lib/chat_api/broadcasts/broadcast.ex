@@ -9,6 +9,7 @@ defmodule ChatApi.Broadcasts.Broadcast do
           name: String.t(),
           description: String.t() | nil,
           state: String.t() | nil,
+          subject: String.t() | nil,
           started_at: DateTime.t() | nil,
           finished_at: DateTime.t() | nil,
           # Relations
@@ -27,6 +28,7 @@ defmodule ChatApi.Broadcasts.Broadcast do
     field(:name, :string)
     field(:description, :string)
     field(:state, :string, default: "unstarted")
+    field(:subject, :string)
     field(:started_at, :utc_datetime)
     field(:finished_at, :utc_datetime)
 

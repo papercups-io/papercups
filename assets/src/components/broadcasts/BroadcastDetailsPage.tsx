@@ -240,7 +240,7 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
                   <Text style={{fontSize: 16}}>--</Text>
                 </Box>
                 <Text type="secondary" style={{fontSize: 12}}>
-                  Bounced
+                  Opened
                 </Text>
               </Box>
               <Box mx={2}>
@@ -305,7 +305,9 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
             >
               <Box>
                 <Title level={4} style={{margin: 0}}>
-                  {template?.name || 'Message template'}
+                  {template?.default_subject ||
+                    template?.name ||
+                    'Message template'}
                 </Title>
               </Box>
               {isUnstarted &&

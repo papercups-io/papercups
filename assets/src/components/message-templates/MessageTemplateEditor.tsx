@@ -6,7 +6,7 @@ import qs from 'query-string';
 // @ts-ignore
 import {generateElement} from 'react-live';
 
-import {Button, MarkdownRenderer, Select, Title} from '../common';
+import {Button, Input, MarkdownRenderer, Select, Title} from '../common';
 import MonacoEditor from '../developers/MonacoEditor';
 import {getIframeContents} from '../developers/email/html';
 import {
@@ -83,6 +83,7 @@ type State = {
   isSaving: boolean;
   broadcastId: string | null;
   template: MessageTemplate | null;
+  subject: string;
   mode: TemplateMode;
   text: string;
   react: string;
@@ -100,6 +101,7 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
     isSaving: false,
     broadcastId: null,
     template: null,
+    subject: '',
     mode: 'react',
     text: '',
     react: '',
@@ -117,6 +119,7 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
       raw_html: html,
       react_js: react,
       plain_text: text,
+      default_subject: subject,
       markdown,
       type,
     } = template;
@@ -126,6 +129,7 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
       template,
       html,
       text,
+      subject,
       mode: type,
       react: react || DEFAULT_CODE_VALUE,
       markdown: markdown || DEFAULT_MARKDOWN_VALUE,
@@ -319,12 +323,24 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
     }
   };
 
+  handleChangeSubject = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({subject: e.target.value});
+  };
+
   handleSaveTemplate = async () => {
     try {
       this.setState({isSaving: true});
 
       const {id: templateId} = this.props.match.params;
-      const {mode, react, markdown, text, html, broadcastId} = this.state;
+      const {
+        mode,
+        react,
+        markdown,
+        text,
+        html,
+        subject,
+        broadcastId,
+      } = this.state;
 
       const template = await API.updateMessageTemplate(templateId, {
         plain_text: text,
@@ -332,6 +348,7 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
         react_js: react,
         markdown: markdown,
         type: mode,
+        default_subject: subject,
       });
 
       this.setState({template});
@@ -349,7 +366,15 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
   };
 
   render() {
-    const {mode, template, react, markdown, isLoading, isSaving} = this.state;
+    const {
+      mode,
+      template,
+      react,
+      markdown,
+      subject,
+      isLoading,
+      isSaving,
+    } = this.state;
 
     if (isLoading || !template) {
       return null;
@@ -454,6 +479,15 @@ export class MessageTemplateEditor extends React.Component<Props, State> {
           </Flex>
 
           <Flex sx={{flex: 1.2, flexDirection: 'column'}}>
+            <Box py={3} px={4}>
+              <Input
+                id="subject"
+                type="text"
+                placeholder="Subject line"
+                value={subject}
+                onChange={this.handleChangeSubject}
+              />
+            </Box>
             <Box sx={{flex: 1}}>
               <iframe
                 title="email"
