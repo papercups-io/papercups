@@ -45,9 +45,11 @@ defmodule ChatApiWeb.PingController do
     data = Map.get(params, "data", [])
     db_opts = parse_postgres_credentials(credentials)
 
-    # TODO: close postgres connection after finished!
     with {:ok, pid} <- Postgrex.start_link(db_opts),
-         {:ok, %Postgrex.Result{columns: columns, rows: rows}} <- Postgrex.query(pid, query, data) do
+         {:ok, %Postgrex.Result{columns: columns, rows: rows}} <-
+           Postgrex.query(pid, query, data),
+         # TODO: not sure if this is the best way to close the connection
+         :ok <- GenServer.stop(pid) do
       json(conn, %{
         data: format_sql_results(columns, rows)
       })
@@ -59,6 +61,17 @@ defmodule ChatApiWeb.PingController do
           error: %{
             status: 400,
             message: e.message
+          }
+        })
+
+      {:error, %Postgrex.Error{postgres: details} = e} ->
+        conn
+        |> put_status(400)
+        |> json(%{
+          error: %{
+            status: 400,
+            message: e.message || details.message,
+            details: details
           }
         })
 
