@@ -15,6 +15,7 @@ import {Message, MessageType, User} from '../../types';
 import {InfoCircleOutlined, PaperClipOutlined} from '../icons';
 import {env} from '../../config';
 import * as API from '../../api';
+import * as Storage from '../../storage';
 import {DashboardShortcutsRenderer} from './DashboardShortcutsModal';
 
 const {REACT_APP_FILE_UPLOADS_ENABLED} = env;
@@ -63,15 +64,19 @@ const AttachFileButton = ({
 
 const ConversationFooter = ({
   sx = {},
-  onSendMessage,
   currentUser,
+  conversationId,
+  onSendMessage,
 }: {
   sx?: any;
-  onSendMessage: (message: Partial<Message>) => void;
   currentUser?: User | null;
+  conversationId: string;
+  onSendMessage: (message: Partial<Message>) => void;
 }) => {
   const textAreaEl = React.useRef<any>(null);
-  const [message, setMessage] = React.useState<string>('');
+  const [message, setMessage] = React.useState<string>(
+    Storage.getMessageDraft(conversationId) || ''
+  );
   const [fileList, setFileList] = React.useState<Array<UploadFile>>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
   const [cannedResponses, setCannedResponses] = React.useState<Array<any>>([]);
@@ -96,6 +101,11 @@ const ConversationFooter = ({
   const shouldDisplayUploadButton = fileUploadsEnabled(accountId);
 
   const handleSetMessageType = ({key}: any) => setMessageType(key);
+
+  const handleChangeMessage = (text: string) => {
+    setMessage(text);
+    Storage.setMessageDraft(conversationId, text);
+  };
 
   const getPrefixIndex = (index: number) => {
     for (let i = index; i >= 0; i--) {
@@ -175,6 +185,7 @@ const ConversationFooter = ({
       body: formattedMessageBody,
       type: messageType,
       private: isPrivateNote,
+      conversation_id: conversationId,
       file_ids: fileList.map((f) => f.response?.data?.id),
       mentioned_user_ids: mentionedUsers.map((user) => user.id),
       metadata: {
@@ -184,6 +195,7 @@ const ConversationFooter = ({
 
     setFileList([]);
     setMessage('');
+    Storage.removeMessageDraft(conversationId);
   };
 
   const onUpdateFileList = ({file, fileList, event}: UploadChangeParam) => {
@@ -338,7 +350,7 @@ const ConversationFooter = ({
                   </Box>
                 }
                 onPressEnter={handleKeyDown}
-                onChange={setMessage}
+                onChange={handleChangeMessage}
                 onSelect={handleSelectMentionOption}
                 onSearch={handleSearchMentions}
               >

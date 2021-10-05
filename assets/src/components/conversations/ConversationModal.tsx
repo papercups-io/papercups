@@ -99,6 +99,7 @@ class ConversationModal extends React.Component<Props> {
 
           <ConversationFooter
             sx={{px: 3, pb: 3}}
+            conversationId={conversation.id}
             onSendMessage={this.handleSendMessage}
           />
         </Flex>

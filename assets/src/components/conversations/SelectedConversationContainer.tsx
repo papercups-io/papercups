@@ -117,6 +117,7 @@ const SelectedConversationContainer = ({
         // any text from the last conversation and trigger autofocus
         <ConversationFooter
           key={conversation.id}
+          conversationId={conversation.id}
           onSendMessage={onSendMessage}
           currentUser={currentUser}
         />

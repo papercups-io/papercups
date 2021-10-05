@@ -51,7 +51,7 @@ class ConversationSidebar extends React.Component<Props, any> {
   };
 
   render() {
-    const {currentUser, messages = []} = this.props;
+    const {currentUser, conversation, messages = []} = this.props;
 
     return (
       <Flex
@@ -75,6 +75,7 @@ class ConversationSidebar extends React.Component<Props, any> {
 
         <ConversationFooter
           sx={{px: 3, pb: 3}}
+          conversationId={conversation.id}
           onSendMessage={this.handleSendMessage}
         />
       </Flex>
