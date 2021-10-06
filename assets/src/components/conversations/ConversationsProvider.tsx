@@ -413,6 +413,7 @@ export class ConversationsProvider extends React.Component<Props, State> {
   };
 
   updateUnreadNotifications = async () => {
+    // TODO: don't invoke this as aggressively
     const unread = await API.countUnreadConversations();
 
     this.setState({unread});
