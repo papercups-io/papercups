@@ -5,14 +5,12 @@ import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
 import {useConversations} from '../conversations/ConversationsProvider';
-import {useNotifications} from '../conversations/NotificationsProvider';
 import {useAuth} from '../auth/AuthProvider';
 
 type Props = {
   conversation: Conversation;
   currentUser: User | null;
   messages: Array<Message>;
-  onSendMessage: (message: Partial<Message>, cb: () => void) => void;
 };
 
 class ConversationSidebar extends React.Component<Props, any> {
@@ -35,23 +33,8 @@ class ConversationSidebar extends React.Component<Props, any> {
     this.scrollToEl && this.scrollToEl.scrollIntoView();
   };
 
-  handleSendMessage = (message: Partial<Message>) => {
-    const {id: conversationId} = this.props.conversation;
-
-    if (!conversationId) {
-      return null;
-    }
-
-    this.props.onSendMessage(
-      {...message, conversation_id: conversationId},
-      () => {
-        this.scrollIntoView();
-      }
-    );
-  };
-
   render() {
-    const {currentUser, messages = []} = this.props;
+    const {currentUser, conversation, messages = []} = this.props;
 
     return (
       <Flex
@@ -75,7 +58,8 @@ class ConversationSidebar extends React.Component<Props, any> {
 
         <ConversationFooter
           sx={{px: 3, pb: 3}}
-          onSendMessage={this.handleSendMessage}
+          conversationId={conversation.id}
+          onSendMessage={this.scrollIntoView}
         />
       </Flex>
     );
@@ -93,11 +77,9 @@ const ConversationSidebarWrapper = ({
     fetchConversationById,
     getConversationById,
   } = useConversations();
-  const {handleSendMessage} = useNotifications();
 
   React.useEffect(() => {
     Promise.all([fetchConversationById(conversationId)]);
-
     // eslint-disable-next-line
   }, [conversationId]);
 
@@ -118,7 +100,6 @@ const ConversationSidebarWrapper = ({
       conversation={conversation}
       messages={messages}
       currentUser={currentUser}
-      onSendMessage={handleSendMessage}
     />
   );
 };

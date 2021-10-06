@@ -31,13 +31,19 @@ defmodule ChatApi.Messages.Helpers do
   def handle_post_creation_conversation_updates(%Message{} = message, updates \\ %{}) do
     conversation = Conversations.get_conversation!(message.conversation_id)
 
-    updates
-    |> Map.merge(%{metadata: Map.get(conversation, :metadata, %{})})
-    |> build_conversation_updates(message)
-    |> update_message_conversation(conversation)
-    |> Conversations.Notification.broadcast_conversation_update_to_admin!()
-    |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
-    |> Conversations.Notification.notify(:slack)
+    params =
+      updates
+      |> Map.merge(%{metadata: Map.get(conversation, :metadata, %{})})
+      |> build_conversation_updates(message)
+
+    if Conversations.should_update?(conversation, params) do
+      {:ok, conversation} = Conversations.update_conversation(conversation, params)
+
+      conversation
+      |> Conversations.Notification.broadcast_conversation_update_to_admin!()
+      |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
+      |> Conversations.Notification.notify(:slack)
+    end
 
     message
   end

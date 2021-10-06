@@ -14,7 +14,7 @@ export const NotificationsContext = React.createContext<{
   channel: Channel | null;
   presence: PhoenixPresence | null;
   isCustomerOnline: (customerId: string) => boolean;
-  handleSendMessage: (message: Partial<Message>, callback?: () => void) => void;
+  handleSendMessage: (message: Partial<Message>) => Promise<any>;
   handleConversationSeen: (
     conversationId: string,
     onSuccess?: (result: any) => void
@@ -29,7 +29,7 @@ export const NotificationsContext = React.createContext<{
   channel: null,
   presence: null,
   isCustomerOnline: () => false,
-  handleSendMessage: () => {},
+  handleSendMessage: () => Promise.resolve({}),
   handleConversationSeen: () => {},
   onNewMessage: () => () => {},
   onNewConversation: () => () => {},
@@ -205,8 +205,7 @@ export class NotificationsProvider extends React.Component<Props, State> {
       .receive('ok', onSuccess);
   };
 
-  // TODO: maybe we should use the API endpoint instead of the channel?
-  handleSendMessage = (message: Partial<Message>, callback?: () => void) => {
+  handleSendMessage = async (message: Partial<Message>) => {
     if (!message || !message.conversation_id) {
       throw new Error(
         `Invalid message ${message} - a \`conversation_id\` is required.`
@@ -217,18 +216,13 @@ export class NotificationsProvider extends React.Component<Props, State> {
     const hasEmptyBody = !body || body.trim().length === 0;
     const hasNoAttachments = !file_ids || file_ids.length === 0;
 
-    if (!this.channel || (hasEmptyBody && hasNoAttachments)) {
-      return;
+    if (hasEmptyBody && hasNoAttachments) {
+      logger.debug('Skipped sending invalid message:', message);
+
+      return null;
     }
 
-    this.channel.push('shout', {
-      ...message,
-      sent_at: new Date().toISOString(),
-    });
-
-    if (callback && typeof callback === 'function') {
-      callback();
-    }
+    return API.createNewMessage(message);
   };
 
   render() {

@@ -94,7 +94,8 @@ defmodule ChatApiWeb.MessageController do
   def create(conn, %{"message" => message_params}) do
     with {:ok, params} <- sanitize_new_message_params(conn, message_params),
          {:ok, %Message{} = msg} <- Messages.create_message(params),
-         message <- Messages.get_message!(msg.id) do
+         {_, nil} <- handle_message_attachments(msg, params) do
+      message = Messages.get_message!(msg.id)
       broadcast_new_message(message)
 
       conn
@@ -177,6 +178,11 @@ defmodule ChatApiWeb.MessageController do
     end
   end
 
+  defp handle_message_attachments(message, %{"file_ids" => [_ | _] = file_ids}),
+    do: Messages.create_attachments(message, file_ids)
+
+  defp handle_message_attachments(_, _), do: {0, nil}
+
   defp broadcast_new_message(message) do
     message
     |> Messages.Notification.broadcast_to_customer!()
@@ -187,9 +193,11 @@ defmodule ChatApiWeb.MessageController do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
     |> Messages.Notification.notify(:push)
+    |> Messages.Notification.notify(:new_message_email)
     |> Messages.Notification.notify(:conversation_reply_email)
     |> Messages.Notification.notify(:gmail)
     |> Messages.Notification.notify(:sms)
     |> Messages.Notification.notify(:ses)
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 end

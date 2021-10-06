@@ -1,6 +1,6 @@
 const PREFIX = '__PAPERCUPS__';
 
-const get = (key: string) => {
+export const get = (key: string) => {
   const result = localStorage.getItem(`${PREFIX}${key}`);
 
   if (!result) {
@@ -14,11 +14,11 @@ const get = (key: string) => {
   }
 };
 
-const set = (key: string, value: any) => {
+export const set = (key: string, value: any) => {
   localStorage.setItem(`${PREFIX}${key}`, JSON.stringify(value));
 };
 
-const remove = (key: string) => {
+export const remove = (key: string) => {
   localStorage.removeItem(`${PREFIX}${key}`);
 };
 
@@ -50,3 +50,12 @@ export const setRunKitCode = (prefix: string, code: any) =>
 
 export const removeRunKitCode = (prefix: string) =>
   remove(`:__RUNKIT_SOURCE_CODE__:${prefix}`);
+
+export const getMessageDraft = (conversationId: string) =>
+  get(`:__MESSAGE_DRAFT__:${conversationId}`);
+
+export const setMessageDraft = (conversationId: string, message: string) =>
+  set(`:__MESSAGE_DRAFT__:${conversationId}`, message);
+
+export const removeMessageDraft = (conversationId: string) =>
+  remove(`:__MESSAGE_DRAFT__:${conversationId}`);

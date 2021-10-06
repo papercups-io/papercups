@@ -13,6 +13,7 @@ import {
   Inbox,
   Issue,
   Lambda,
+  Message,
   Tag,
   User,
   WidgetSettings,
@@ -668,8 +669,7 @@ export const archiveConversation = async (
 };
 
 export const createNewMessage = async (
-  conversationId: string,
-  message: any,
+  message: Partial<Message>,
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -681,7 +681,6 @@ export const createNewMessage = async (
     .set('Authorization', token)
     .send({
       message: {
-        conversation_id: conversationId,
         sent_at: new Date().toISOString(),
         ...message,
       },

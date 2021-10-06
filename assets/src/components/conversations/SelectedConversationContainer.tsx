@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Account, Conversation, Message, User} from '../../types';
+import {Account, Conversation, User} from '../../types';
 import * as API from '../../api';
 import ConversationMessages from './ConversationMessages';
 import ConversationFooter from './ConversationFooter';
@@ -15,7 +15,6 @@ const SelectedConversationContainer = ({
   conversation,
   isClosing,
   setScrollRef,
-  onSendMessage,
 }: {
   loading: boolean;
   account: Account;
@@ -24,7 +23,6 @@ const SelectedConversationContainer = ({
   isClosing: boolean;
   // TODO: handle scrolling within this component?
   setScrollRef: any; // (el: any) => void;
-  onSendMessage: (message: Partial<Message>) => void;
 }) => {
   const {isCustomerOnline} = useNotifications();
   const [history, setConversationHistory] = React.useState<Array<Conversation>>(
@@ -116,8 +114,8 @@ const SelectedConversationContainer = ({
         // NB: the `key` forces a rerender so the input can clear
         // any text from the last conversation and trigger autofocus
         <ConversationFooter
-          key={conversation.id}
-          onSendMessage={onSendMessage}
+          key={selectedConversationId}
+          conversationId={selectedConversationId}
           currentUser={currentUser}
         />
       )}

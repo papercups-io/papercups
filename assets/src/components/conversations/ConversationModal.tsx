@@ -6,7 +6,6 @@ import {useConversations} from './ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
-import {useNotifications} from './NotificationsProvider';
 import {useAuth} from '../auth/AuthProvider';
 
 type Props = {
@@ -14,7 +13,6 @@ type Props = {
   conversation: Conversation;
   currentUser: User | null;
   messages: Array<Message>;
-  onSendMessage: (message: Partial<Message>, cb?: () => void) => void;
   onClose: () => void;
 };
 
@@ -40,16 +38,6 @@ class ConversationModal extends React.Component<Props> {
     if (el) {
       this.scrollIntoView();
     }
-  };
-
-  handleSendMessage = (message: Partial<Message>) => {
-    const {id: conversationId} = this.props.conversation;
-
-    if (!conversationId) {
-      return null;
-    }
-
-    this.props.onSendMessage({...message, conversation_id: conversationId});
   };
 
   render() {
@@ -99,7 +87,8 @@ class ConversationModal extends React.Component<Props> {
 
           <ConversationFooter
             sx={{px: 3, pb: 3}}
-            onSendMessage={this.handleSendMessage}
+            conversationId={conversation.id}
+            onSendMessage={this.scrollIntoView}
           />
         </Flex>
       </Modal>
@@ -122,7 +111,6 @@ const ConversationModalWrapper = ({
     fetchConversationById,
     getConversationById,
   } = useConversations();
-  const {handleSendMessage} = useNotifications();
 
   React.useEffect(() => {
     fetchConversationById(conversationId);
@@ -147,7 +135,6 @@ const ConversationModalWrapper = ({
       conversation={conversation}
       messages={messages}
       currentUser={currentUser}
-      onSendMessage={handleSendMessage}
       onClose={onClose}
     />
   );

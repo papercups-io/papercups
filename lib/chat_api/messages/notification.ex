@@ -5,6 +5,7 @@ defmodule ChatApi.Messages.Notification do
 
   alias ChatApi.{EventSubscriptions, Lambdas}
   alias ChatApi.Conversations.Conversation
+  alias ChatApi.Customers.Customer
   alias ChatApi.Messages.{Helpers, Message}
   alias ChatApi.Users.User
 
@@ -41,11 +42,7 @@ defmodule ChatApi.Messages.Notification do
   @spec notify(Message.t(), atom(), keyword()) :: Message.t()
   def notify(message, type, opts \\ [])
 
-  def notify(
-        %Message{body: _, conversation_id: _} = message,
-        :slack,
-        opts
-      ) do
+  def notify(%Message{body: _, conversation_id: _} = message, :slack, opts) do
     Logger.info("Sending message notification: :slack (message #{inspect(message.id)})")
 
     case opts do
@@ -116,7 +113,8 @@ defmodule ChatApi.Messages.Notification do
     message
   end
 
-  def notify(%Message{} = message, :new_message_email, opts) do
+  # TODO: make this a paid feature?
+  def notify(%Message{customer: %Customer{}, private: false} = message, :new_message_email, opts) do
     Logger.info(
       "Sending message notification: :new_message_email (message #{inspect(message.id)})"
     )
@@ -134,6 +132,8 @@ defmodule ChatApi.Messages.Notification do
 
     message
   end
+
+  def notify(%Message{} = message, :new_message_email, _opts), do: message
 
   def notify(%Message{} = message, :mattermost, opts) do
     Logger.info("Sending message notification: :mattermost (message #{inspect(message.id)})")
