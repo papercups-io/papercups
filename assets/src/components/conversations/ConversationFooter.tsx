@@ -88,6 +88,12 @@ const ConversationFooter = ({
   const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
 
   React.useEffect(() => {
+    const el = textAreaEl.current?.textarea;
+
+    if (el) {
+      el.selectionStart = message.length;
+    }
+
     Promise.all([API.fetchAccountUsers(), API.fetchCannedResponses()]).then(
       ([users, responses]) => {
         setMentionableUsers(users);
