@@ -17,6 +17,8 @@ import {env} from '../../config';
 import * as API from '../../api';
 import * as Storage from '../../storage';
 import {DashboardShortcutsRenderer} from './DashboardShortcutsModal';
+import {formatServerError} from '../../utils';
+import logger from '../../logger';
 
 const {REACT_APP_FILE_UPLOADS_ENABLED} = env;
 
@@ -71,7 +73,7 @@ const ConversationFooter = ({
   sx?: any;
   currentUser?: User | null;
   conversationId: string;
-  onSendMessage: (message: Partial<Message>) => void;
+  onSendMessage?: (message: Message) => void;
 }) => {
   const textAreaEl = React.useRef<any>(null);
   const [message, setMessage] = React.useState<string>(
@@ -86,12 +88,13 @@ const ConversationFooter = ({
   );
   const [prefix, setMentionPrefix] = React.useState<string>('@');
   const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
+  const [error, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const el = textAreaEl.current?.textarea;
 
-    if (el) {
-      el.selectionStart = message.length;
+    if (el && Storage.getMessageDraft(conversationId)) {
+      el.selectionStart = Storage.getMessageDraft(conversationId).length;
     }
 
     Promise.all([API.fetchAccountUsers(), API.fetchCannedResponses()]).then(
@@ -100,7 +103,7 @@ const ConversationFooter = ({
         setCannedResponses(responses);
       }
     );
-  }, []);
+  }, [conversationId]);
 
   const isPrivateNote = messageType === 'note';
   const accountId = currentUser?.account_id;
@@ -176,7 +179,7 @@ const ConversationFooter = ({
     });
   };
 
-  const handleSendMessage = (e?: any) => {
+  const handleSendMessage = async (e?: any) => {
     e && e.preventDefault();
 
     const formattedMessageBody = mentions.reduce((result, mention) => {
@@ -187,21 +190,40 @@ const ConversationFooter = ({
       .map((mention) => findUserByMentionValue(mention))
       .filter((user: User | undefined): user is User => !!user);
 
-    onSendMessage({
-      body: formattedMessageBody,
-      type: messageType,
-      private: isPrivateNote,
-      conversation_id: conversationId,
-      file_ids: fileList.map((f) => f.response?.data?.id),
-      mentioned_user_ids: mentionedUsers.map((user) => user.id),
-      metadata: {
-        mentions: mentionedUsers,
-      },
-    });
+    const fileIds = fileList
+      .map((f) => f.response?.data?.id)
+      .filter((id) => !!id);
+    const hasEmptyBody =
+      !formattedMessageBody || formattedMessageBody.trim().length === 0;
+    const hasNoAttachments = !fileIds || fileIds.length === 0;
 
-    setFileList([]);
-    setMessage('');
-    Storage.removeMessageDraft(conversationId);
+    if (hasEmptyBody && hasNoAttachments) {
+      return null;
+    }
+
+    try {
+      const message = await API.createNewMessage({
+        body: formattedMessageBody,
+        type: messageType,
+        private: isPrivateNote,
+        conversation_id: conversationId,
+        file_ids: fileIds,
+        mentioned_user_ids: mentionedUsers.map((user) => user.id),
+        metadata: {
+          mentions: mentionedUsers,
+        },
+      });
+
+      setFileList([]);
+      setMessage('');
+      setErrorMessage(null);
+      Storage.removeMessageDraft(conversationId);
+      onSendMessage && onSendMessage(message);
+    } catch (err) {
+      logger.error('Error sending message!', err);
+
+      setErrorMessage(formatServerError(err));
+    }
   };
 
   const onUpdateFileList = ({file, fileList, event}: UploadChangeParam) => {
@@ -377,13 +399,25 @@ const ConversationFooter = ({
                     onUpdateFileList={onUpdateFileList}
                   />
                 )}
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  disabled={isSendDisabled}
-                >
-                  Send
-                </Button>
+                <Flex sx={{alignItems: 'flex-end'}}>
+                  {error && (
+                    <Box mx={3}>
+                      <Text type="danger">
+                        {error.length < 60
+                          ? `Failed to send: ${error}`
+                          : 'Message failed to send. Try again?'}
+                      </Text>
+                    </Box>
+                  )}
+
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    disabled={isSendDisabled}
+                  >
+                    Send
+                  </Button>
+                </Flex>
               </Flex>
             ) : (
               <Flex sx={{justifyContent: 'flex-end'}}>

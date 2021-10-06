@@ -1,6 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
-import {Account, Conversation, Message, User} from '../../types';
+import {Account, Conversation, User} from '../../types';
 import * as API from '../../api';
 import ConversationMessages from './ConversationMessages';
 import ConversationFooter from './ConversationFooter';
@@ -15,7 +15,6 @@ const SelectedConversationContainer = ({
   conversation,
   isClosing,
   setScrollRef,
-  onSendMessage,
 }: {
   loading: boolean;
   account: Account;
@@ -24,7 +23,6 @@ const SelectedConversationContainer = ({
   isClosing: boolean;
   // TODO: handle scrolling within this component?
   setScrollRef: any; // (el: any) => void;
-  onSendMessage: (message: Partial<Message>) => void;
 }) => {
   const {isCustomerOnline} = useNotifications();
   const [history, setConversationHistory] = React.useState<Array<Conversation>>(
@@ -118,7 +116,6 @@ const SelectedConversationContainer = ({
         <ConversationFooter
           key={selectedConversationId}
           conversationId={selectedConversationId}
-          onSendMessage={onSendMessage}
           currentUser={currentUser}
         />
       )}

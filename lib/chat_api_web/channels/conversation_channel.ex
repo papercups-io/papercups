@@ -110,43 +110,12 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
-  @spec broadcast_conversation_update!(Message.t()) :: Message.t()
-  defp broadcast_conversation_update!(%Message{conversation_id: conversation_id} = message) do
-    # Mark as unread and ensure the conversation is open, since we want to
-    # reopen a conversation if it received a new message after being closed.
-    conversation = Conversations.get_conversation!(conversation_id)
-    updates = %{status: "open", read: false}
-
-    if Conversations.should_update?(conversation, updates) do
-      {:ok, conversation} =
-        Conversations.update_conversation(conversation, %{status: "open", read: false})
-
-      conversation
-      |> Conversations.Notification.broadcast_conversation_update_to_admin!()
-      |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
-    end
-
-    message
-  end
-
-  @spec broadcast_to_admin_channel!(Message.t()) :: Message.t()
-  defp broadcast_to_admin_channel!(%Message{account_id: account_id} = message) do
-    ChatApiWeb.Endpoint.broadcast!(
-      "notification:" <> account_id,
-      "shout",
-      Messages.Helpers.format(message)
-    )
-
-    message
-  end
-
   @spec broadcast_new_message(any(), Message.t()) :: Message.t()
   defp broadcast_new_message(socket, message) do
-    broadcast_conversation_update!(message)
     broadcast(socket, "shout", Messages.Helpers.format(message))
-    broadcast_to_admin_channel!(message)
 
     message
+    |> Messages.Notification.broadcast_to_admin!()
     |> Messages.Notification.notify(:slack)
     # TODO: check if :slack_support_channel and :slack_company_channel are relevant
     |> Messages.Notification.notify(:slack_support_channel)

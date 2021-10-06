@@ -143,7 +143,7 @@ export const ConversationsDashboard = ({
 
   const {
     channel,
-    handleSendMessage,
+
     handleConversationSeen,
     onNewMessage,
     onNewConversation,
@@ -499,17 +499,6 @@ export const ConversationsDashboard = ({
     setConversationIds(validConversationIds);
   }
 
-  function handleSendNewMessage(message: Partial<Message>) {
-    if (!selectedConversationId) {
-      return;
-    }
-
-    handleSendMessage({
-      conversation_id: selectedConversationId,
-      ...message,
-    });
-  }
-
   // TODO: test this out more!
   async function handleSearchConversations(query: string) {
     if (!query || !query.trim().length) {
@@ -636,7 +625,6 @@ export const ConversationsDashboard = ({
             conversation={conversation}
             isClosing={isClosingSelected}
             setScrollRef={setScrollRef}
-            onSendMessage={handleSendNewMessage}
           />
         ) : (
           <EmptyState
