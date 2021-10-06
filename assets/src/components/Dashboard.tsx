@@ -67,6 +67,7 @@ import MattermostIntegrationDetails from './integrations/MattermostIntegrationDe
 import TwilioIntegrationDetails from './integrations/TwilioIntegrationDetails';
 import GithubIntegrationDetails from './integrations/GithubIntegrationDetails';
 import HubspotIntegrationDetails from './integrations/HubspotIntegrationDetails';
+import IntercomIntegrationDetails from './integrations/IntercomIntegrationDetails';
 import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import CustomerDetailsPage from './customers/CustomerDetailsPage';
@@ -549,6 +550,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route
             path="/integrations/hubspot"
             component={HubspotIntegrationDetails}
+          />
+          <Route
+            path="/integrations/intercom"
+            component={IntercomIntegrationDetails}
           />
           <Route path="/integrations/:type" component={IntegrationsOverview} />
           <Route path="/integrations" component={IntegrationsOverview} />

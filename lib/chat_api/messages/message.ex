@@ -16,6 +16,7 @@ defmodule ChatApi.Messages.Message do
           seen_at: DateTime.t() | nil,
           source: String.t(),
           type: String.t(),
+          content_type: String.t(),
           private: boolean() | nil,
           metadata: map() | nil,
           # Foreign keys
@@ -40,6 +41,7 @@ defmodule ChatApi.Messages.Message do
     field(:seen_at, :utc_datetime)
     field(:source, :string, default: "chat")
     field(:type, :string, default: "reply")
+    field(:content_type, :string, default: "text")
     field(:subject, :string)
     field(:private, :boolean, default: false)
     field(:metadata, :map)
@@ -63,6 +65,7 @@ defmodule ChatApi.Messages.Message do
     |> cast(attrs, [
       :body,
       :type,
+      :content_type,
       :private,
       :conversation_id,
       :account_id,

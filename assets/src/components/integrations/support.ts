@@ -1,5 +1,10 @@
 import qs from 'query-string';
-import {SLACK_CLIENT_ID, HUBSPOT_CLIENT_ID, isDev} from '../../config';
+import {
+  SLACK_CLIENT_ID,
+  HUBSPOT_CLIENT_ID,
+  INTERCOM_CLIENT_ID,
+  isDev,
+} from '../../config';
 import {GoogleIntegrationParams} from '../../types';
 
 export type IntegrationType = {
@@ -15,6 +20,7 @@ export type IntegrationType = {
     | 'microsoft-teams'
     | 'whatsapp'
     | 'hubspot'
+    | 'intercom'
     | 'salesforce'
     | 'jira'
     | 'zendesk'
@@ -108,4 +114,8 @@ export const getHubspotAuthUrl = () => {
   const redirect = getHubspotRedirectUrl();
 
   return `https://app.hubspot.com/oauth/authorize?client_id=${HUBSPOT_CLIENT_ID}&redirect_uri=${redirect}&scope=contacts%20content`;
+};
+
+export const getIntercomAuthUrl = () => {
+  return `https://app.intercom.com/oauth?client_id=${INTERCOM_CLIENT_ID}`;
 };

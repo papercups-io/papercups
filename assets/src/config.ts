@@ -49,3 +49,7 @@ export const GITHUB_APP_NAME = env.REACT_APP_GITHUB_APP_NAME || 'papercups-io';
 // Defaults to Papercups client ID (it's ok for this value to be public)
 export const HUBSPOT_CLIENT_ID =
   env.REACT_APP_HUBSPOT_CLIENT_ID || '01ec4478-4828-43b5-b505-38f517856add';
+
+// Defaults to Papercups client ID (it's ok for this value to be public)
+export const INTERCOM_CLIENT_ID =
+  env.REACT_APP_INTERCOM_CLIENT_ID || '9d849ad9-d174-476f-aa1f-1d27370a937b';

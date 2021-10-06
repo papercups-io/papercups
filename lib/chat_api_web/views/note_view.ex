@@ -23,6 +23,7 @@ defmodule ChatApiWeb.NoteView do
       id: note.id,
       object: "note",
       body: note.body,
+      content_type: note.content_type,
       customer_id: note.customer_id,
       author_id: note.author_id,
       created_at: note.inserted_at,

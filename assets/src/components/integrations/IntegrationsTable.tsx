@@ -78,6 +78,7 @@ const IntegrationsTable = ({
         const {key, status} = record;
         const isConnected = status === 'connected';
 
+        // TODO: DRY this up!
         switch (key) {
           case 'sheets':
             return (
@@ -104,6 +105,17 @@ const IntegrationsTable = ({
           case 'hubspot':
             return (
               <Link to="/integrations/hubspot">
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
+              </Link>
+            );
+
+          case 'intercom':
+            return (
+              <Link to="/integrations/intercom">
                 {isConnected ? (
                   <Button icon={<SettingOutlined />}>Configure</Button>
                 ) : (

@@ -66,6 +66,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
         // Account level only
         this.fetchGithubIntegration(),
         this.fetchHubSpotIntegration(),
+        this.fetchIntercomIntegration(),
         this.fetchSalesforceIntegration(),
         this.fetchZendeskIntegration(),
         this.fetchJiraIntegration(),
@@ -283,6 +284,20 @@ class IntegrationsOverview extends React.Component<Props, State> {
     };
   };
 
+  fetchIntercomIntegration = async (): Promise<IntegrationType> => {
+    const auth = await API.fetchIntercomAuthorization();
+
+    return {
+      key: 'intercom',
+      integration: 'Intercom',
+      status: auth ? 'connected' : 'not_connected',
+      createdAt: auth ? auth.created_at : null,
+      authorizationId: auth ? auth.id : null,
+      icon: '/intercom.svg',
+      description: 'View and sync customer data from Intercom',
+    };
+  };
+
   fetchSalesforceIntegration = async (): Promise<IntegrationType> => {
     return {
       key: 'salesforce',
@@ -461,6 +476,7 @@ class IntegrationsOverview extends React.Component<Props, State> {
       'github',
       'sheets',
       'hubspot',
+      'intercom',
       'salesforce',
       'zendesk',
       'jira',
