@@ -12,6 +12,7 @@ export type IntegrationType = {
     | 'chat'
     | 'slack'
     | 'slack:sync'
+    | 'discord'
     | 'mattermost'
     | 'gmail'
     | 'ses'
@@ -118,4 +119,30 @@ export const getHubspotAuthUrl = () => {
 
 export const getIntercomAuthUrl = () => {
   return `https://app.intercom.com/oauth?client_id=${INTERCOM_CLIENT_ID}`;
+};
+
+export const getDiscordRedirectUrl = () => {
+  const origin = window.location.origin;
+
+  return `${origin}/integrations/discord`;
+};
+
+export const getDiscordAuthUrl = (inboxId?: string) => {
+  const DISCORD_CLIENT_ID = '758482135308435476'; // TODO: move to config
+  const redirect = getDiscordRedirectUrl();
+  const q = qs.stringify({
+    response_type: 'code',
+    permissions: '395137100816',
+    scope: 'bot',
+    prompt: 'consent',
+    redirect_uri: redirect,
+    client_id: DISCORD_CLIENT_ID,
+    state: inboxId,
+  });
+
+  return `https://discord.com/api/oauth2/authorize?${q}`;
+};
+
+export const parseDiscordAuthState = (state: string) => {
+  return state && state.length ? {inboxId: state} : {};
 };

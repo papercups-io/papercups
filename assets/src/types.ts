@@ -362,6 +362,15 @@ export type SlackAuthorization = {
   settings: SlackAuthorizationSettings | null;
 };
 
+export type DiscordAuthorization = {
+  id: string;
+  created_at: string;
+  channel_id: string;
+  channel_name: string;
+  guild_id: string;
+  guild_name: string;
+};
+
 export type OnboardingStatus = {
   has_configured_inbox?: boolean;
   has_configured_profile?: boolean;

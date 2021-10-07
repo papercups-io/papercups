@@ -28,6 +28,9 @@ config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
 
 config :tesla, adapter: Tesla.Adapter.Hackney
 
+config :nostrum,
+  token: System.get_env("PAPERCUPS_DISCORD_BOT_TOKEN")
+
 # Configure Swagger
 config :phoenix_swagger, json_library: Jason
 

@@ -22,6 +22,7 @@ import ChatWidgetSettings from '../settings/ChatWidgetSettings';
 import SlackReplyIntegrationDetails from '../integrations/SlackReplyIntegrationDetails';
 import SlackSyncIntegrationDetails from '../integrations/SlackSyncIntegrationDetails';
 import SlackIntegrationDetails from '../integrations/SlackIntegrationDetails';
+import DiscordIntegrationDetails from '../integrations/DiscordIntegrationDetails';
 import GmailIntegrationDetails from '../integrations/GmailIntegrationDetails';
 import GoogleIntegrationDetails from '../integrations/GoogleIntegrationDetails';
 import MattermostIntegrationDetails from '../integrations/MattermostIntegrationDetails';
@@ -307,6 +308,10 @@ const InboxesDashboard = (props: RouteComponentProps) => {
           <Route
             path="/inboxes/:inbox_id/integrations/slack"
             component={SlackIntegrationDetails}
+          />
+          <Route
+            path="/inboxes/:inbox_id/integrations/discord"
+            component={DiscordIntegrationDetails}
           />
           <Route
             path="/inboxes/:inbox_id/integrations/google/gmail"

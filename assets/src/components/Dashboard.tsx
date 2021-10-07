@@ -60,6 +60,7 @@ import IntegrationsOverview from './integrations/IntegrationsOverview';
 import SlackReplyIntegrationDetails from './integrations/SlackReplyIntegrationDetails';
 import SlackSyncIntegrationDetails from './integrations/SlackSyncIntegrationDetails';
 import SlackIntegrationDetails from './integrations/SlackIntegrationDetails';
+import DiscordIntegrationDetails from './integrations/DiscordIntegrationDetails';
 import GmailIntegrationDetails from './integrations/GmailIntegrationDetails';
 import GoogleSheetsIntegrationDetails from './integrations/GoogleSheetsIntegrationDetails';
 import GoogleIntegrationDetails from './integrations/GoogleIntegrationDetails';
@@ -522,6 +523,10 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route
             path="/integrations/slack"
             component={SlackIntegrationDetails}
+          />
+          <Route
+            path="/integrations/discord"
+            component={DiscordIntegrationDetails}
           />
           <Route
             path="/integrations/google/gmail"

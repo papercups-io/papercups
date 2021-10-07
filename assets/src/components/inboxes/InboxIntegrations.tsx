@@ -17,6 +17,8 @@ const getDefaultConfigurationUrl = (key: string, inboxId: string) => {
       return `/inboxes/${inboxId}/chat-widget`;
     case 'slack':
       return `/inboxes/${inboxId}/integrations/slack/reply`;
+    case 'discord':
+      return `/inboxes/${inboxId}/integrations/discord`;
     case 'mattermost':
       return `/inboxes/${inboxId}/integrations/mattermost`;
     case 'gmail':
@@ -149,6 +151,7 @@ class InboxIntegrations extends React.Component<Props, State> {
       const integrations = await Promise.all([
         this.fetchChatIntegration(),
         this.fetchSlackIntegration(),
+        this.fetchDiscordIntegration(),
         this.fetchEmailForwardingIntegration(),
         this.fetchMattermostIntegration(),
         this.fetchGmailIntegration(),
@@ -217,6 +220,22 @@ class InboxIntegrations extends React.Component<Props, State> {
       isPopular: true,
       description,
       configurationUrl: `/inboxes/${inboxId}/integrations/slack/reply`,
+    };
+  };
+
+  fetchDiscordIntegration = async (): Promise<IntegrationType> => {
+    const {id: inboxId} = this.props.inbox;
+
+    return {
+      key: 'discord',
+      integration: 'Reply from Discord',
+      status: 'not_connected',
+      createdAt: null,
+      authorizationId: null,
+      icon: '/discord.svg',
+      description:
+        'Reply to messages from your customers directly from Discord.',
+      configurationUrl: `/inboxes/${inboxId}/integrations/discord`,
     };
   };
 
@@ -357,7 +376,7 @@ class InboxIntegrations extends React.Component<Props, State> {
   };
 
   getInboxReplyChannels = () => {
-    return this.getIntegrationsByKeys(['slack', 'mattermost']);
+    return this.getIntegrationsByKeys(['slack', 'discord', 'mattermost']);
   };
 
   render() {

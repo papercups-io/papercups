@@ -47,6 +47,8 @@ defmodule ChatApi.Application do
       ChatApiWeb.Presence,
       # Start the Endpoint (http/https)
       ChatApiWeb.Endpoint,
+      # Start the Discord gateway consumer
+      ChatApi.Discord.Consumer,
       # Start Oban workers
       {Oban, oban_config()},
       # Automatically delete expired session records

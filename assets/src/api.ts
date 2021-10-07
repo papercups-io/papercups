@@ -21,6 +21,7 @@ import {
   SlackAuthorization,
   UserSettings,
   ForwardingAddress,
+  DiscordAuthorization,
 } from './types';
 
 // TODO: handle this on the server instead
@@ -846,6 +847,34 @@ export const fetchSlackChannels = async (
     .then((res) => res.body.data);
 };
 
+export const fetchDiscordAuthorization = async (
+  query = {},
+  token = getAccessToken()
+): Promise<DiscordAuthorization> => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/discord/authorization`)
+    .query(query)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const deleteDiscordAuthorization = async (
+  authorizationId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/discord/authorizations/${authorizationId}`)
+    .set('Authorization', token);
+};
+
 export const fetchMattermostChannels = async (
   query = {},
   token = getAccessToken()
@@ -1360,6 +1389,25 @@ export const authorizeSlackIntegration = async (
 
   return request
     .get(`/api/slack/oauth`)
+    .query(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
+export const authorizeDiscordIntegration = async (
+  params: {
+    code: string;
+    inbox_id?: string;
+    redirect_url?: string;
+  },
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .get(`/api/discord/oauth`)
     .query(params)
     .set('Authorization', token)
     .then((res) => res.body.data);
