@@ -194,15 +194,6 @@ defmodule ChatApi.Messages.Helpers do
     end
   end
 
-  @spec update_message_conversation(map(), Conversation.t()) :: Conversation.t()
-  defp update_message_conversation(updates, %Conversation{} = conversation) do
-    # TODO: don't perform update if conversation state already matches updates?
-    # TODO: DRY up this logic with other places we do conversation updates w/ broadcasting?
-    {:ok, conversation} = Conversations.update_conversation(conversation, updates)
-
-    conversation
-  end
-
   defp get_conversation_agent_id(%Conversation{account_id: account_id} = conversation) do
     agent_id =
       case conversation do
