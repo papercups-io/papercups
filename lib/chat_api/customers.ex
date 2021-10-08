@@ -278,6 +278,7 @@ defmodule ChatApi.Customers do
       %{
         # Defaults
         first_seen: DateTime.utc_now(),
+        first_seen_at: DateTime.utc_now(),
         last_seen_at: DateTime.utc_now()
       },
       overrides
@@ -430,6 +431,17 @@ defmodule ChatApi.Customers do
     |> get_issue(issue_id)
     |> Repo.delete()
   end
+
+  def unsubscribe(%Customer{} = customer),
+    do: update_customer(customer, %{unsubscribed_at: DateTime.utc_now()})
+
+  def resubscribe(%Customer{} = customer),
+    do: update_customer(customer, %{unsubscribed_at: nil})
+
+  def is_subscribed?(%Customer{unsubscribed_at: nil}), do: true
+  def is_subscribed?(_), do: false
+
+  def is_unsubscribed?(customer), do: !is_subscribed?(customer)
 
   # Pulled from https://hexdocs.pm/ecto/dynamic-queries.html#building-dynamic-queries
   @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}

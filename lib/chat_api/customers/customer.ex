@@ -14,12 +14,16 @@ defmodule ChatApi.Customers.Customer do
   }
 
   @type t :: %__MODULE__{
-          first_seen: any(),
           email: String.t() | nil,
           name: String.t() | nil,
           phone: String.t() | nil,
           external_id: String.t() | nil,
           profile_photo_url: String.t() | nil,
+          # TODO: deprecate in favor of `first_seen_at`
+          first_seen: any(),
+          # Email subscription
+          unsubscribed_at: DateTime.t() | nil,
+          has_valid_email: boolean() | nil,
           # Browser metadata
           browser: String.t() | nil,
           browser_version: String.t() | nil,
@@ -48,12 +52,17 @@ defmodule ChatApi.Customers.Customer do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "customers" do
-    field(:first_seen, :date)
     field(:email, :string)
     field(:name, :string)
     field(:phone, :string)
     field(:external_id, :string)
     field(:profile_photo_url, :string)
+    # TODO: deprecate in favor of `first_seen_at`
+    field(:first_seen, :date)
+
+    # Email subscription
+    field(:unsubscribed_at, :utc_datetime)
+    field(:has_valid_email, :boolean)
 
     # Metadata
     field(:browser, :string)
@@ -61,6 +70,7 @@ defmodule ChatApi.Customers.Customer do
     field(:browser_language, :string)
     field(:os, :string)
     field(:ip, :string)
+    field(:first_seen_at, :utc_datetime)
     field(:last_seen_at, :utc_datetime)
     field(:current_url, :string)
     field(:host, :string)
@@ -94,7 +104,6 @@ defmodule ChatApi.Customers.Customer do
   def changeset(customer, attrs) do
     customer
     |> cast(attrs, [
-      :first_seen,
       :account_id,
       :company_id,
       :email,
@@ -102,11 +111,16 @@ defmodule ChatApi.Customers.Customer do
       :phone,
       :external_id,
       :profile_photo_url,
+      # TODO: deprecate in favor of `first_seen_at`
+      :first_seen,
+      :unsubscribed_at,
+      :has_valid_email,
       :browser,
       :browser_version,
       :browser_language,
       :os,
       :ip,
+      :first_seen_at,
       :last_seen_at,
       :current_url,
       :host,
@@ -135,6 +149,7 @@ defmodule ChatApi.Customers.Customer do
       :browser_language,
       :os,
       :ip,
+      :first_seen_at,
       :last_seen_at,
       :current_url,
       :host,
