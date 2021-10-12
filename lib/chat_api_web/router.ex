@@ -76,6 +76,7 @@ defmodule ChatApiWeb.Router do
     post("/ses/webhook", SesController, :webhook)
 
     post("/newsletters/:newsletter/subscribe", NewsletterController, :subscribe)
+    post("/emails/send", EmailController, :send)
   end
 
   # Protected routes
