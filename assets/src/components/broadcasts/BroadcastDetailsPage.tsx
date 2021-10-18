@@ -2,30 +2,40 @@ import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 
-import {Button, Card, Empty, Table, Text, Title} from '../common';
+import {
+  Button,
+  Card,
+  Dropdown,
+  Empty,
+  Menu,
+  Table,
+  Text,
+  Title,
+} from '../common';
 import * as API from '../../api';
-import {Broadcast} from '../../types';
+import {Broadcast, Customer} from '../../types';
 import logger from '../../logger';
-import {ArrowLeftOutlined, SendOutlined} from '../icons';
+import {ArrowLeftOutlined, SendOutlined, SettingOutlined} from '../icons';
 import {formatBroadcastCustomers, formatDateTime} from './support';
+import {formatServerError} from '../../utils';
 
 // TODO: make it possible to select customer to preview in email template
 const BroadcastCustomersTable = ({
   loading,
   customers,
-  onSelectPreview,
+  onRemoveCustomer,
+  onPreviewCustomerEmail,
+  onSendEmailToCustomer,
 }: {
   loading?: boolean;
   customers: Array<any>;
-  onSelectPreview: (data: any) => void;
+  onRemoveCustomer: (customerId: string) => void;
+  onPreviewCustomerEmail: (customerId: string) => void;
+  onSendEmailToCustomer: (customerId: string) => void;
 }) => {
-  const data = customers
-    .map((customer) => {
-      return {key: customer.id, ...customer};
-    })
-    .sort((a, b) => {
-      return +new Date(b.updated_at) - +new Date(a.updated_at);
-    });
+  const data = customers.sort((a, b) => {
+    return +new Date(b.updated_at) - +new Date(a.updated_at);
+  });
 
   const columns = [
     {
@@ -58,42 +68,78 @@ const BroadcastCustomersTable = ({
         return value || '--';
       },
     },
+    {
+      title: '',
+      dataIndex: 'action',
+      key: 'action',
+      render: (value: string, record: any) => {
+        const {customer_id: customerId} = record;
+
+        const handleMenuClick = (data: any) => {
+          switch (data.key) {
+            case 'remove':
+              return onRemoveCustomer(customerId);
+            case 'preview':
+              return onPreviewCustomerEmail(customerId);
+            case 'send':
+              return onSendEmailToCustomer(customerId);
+            case 'profile':
+            default:
+              return null;
+          }
+        };
+
+        return (
+          <Dropdown
+            overlay={
+              <Menu onClick={handleMenuClick}>
+                <Menu.Item key="profile">
+                  <Link to={`/customers/${customerId}`}>View profile</Link>
+                </Menu.Item>
+                <Menu.Item key="remove">Remove from broadcast</Menu.Item>
+                <Menu.Item key="preview">Preview email</Menu.Item>
+                <Menu.Item key="send">Send email</Menu.Item>
+              </Menu>
+            }
+          >
+            <Button icon={<SettingOutlined />} />
+          </Dropdown>
+        );
+      },
+    },
   ];
 
-  return (
-    <Table
-      loading={loading}
-      dataSource={data}
-      columns={columns}
-      onRow={(record, idx) => {
-        return {
-          onClick: (event) => onSelectPreview(record), // click row
-          // onMouseEnter: (event) => onSelectPreview(record), // mouse enter row
-        };
-      }}
-    />
-  );
+  return <Table loading={loading} dataSource={data} columns={columns} />;
 };
 
 type Props = RouteComponentProps<{id: string}>;
 type State = {
   broadcast: Broadcast | null;
+  previewing: Customer | null;
   isSending: boolean;
 };
 
 export class BroadcastDetailsPage extends React.Component<Props, State> {
   iframe: any = null;
 
-  state: State = {broadcast: null, isSending: false};
+  state: State = {
+    broadcast: null,
+    previewing: null,
+    isSending: false,
+  };
 
   async componentDidMount() {
+    await this.handleRefreshBroadcast();
+  }
+
+  handleRefreshBroadcast = async () => {
     const {id: broadcastId} = this.props.match.params;
     const broadcast = await API.fetchBroadcast(broadcastId);
 
     this.setState({broadcast}, () => this.handleUpdateIframe());
-  }
+  };
 
-  handleUpdateIframe = (data?: any) => {
+  handleUpdateIframe = async (data?: Record<string, any>) => {
     if (!this.state.broadcast) {
       return;
     }
@@ -107,8 +153,51 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
     }
 
     doc.open();
-    doc.write(html);
+
+    if (data && Object.keys(data).length > 0) {
+      const rendered = await API.renderEmailTemplate({html, data});
+
+      doc.write(rendered);
+    } else {
+      doc.write(html);
+    }
+
     doc.close();
+  };
+
+  handlePreviewCustomerEmail = async (customerId: string) => {
+    const customer = await API.fetchCustomer(customerId);
+
+    await this.handleUpdateIframe(customer);
+    this.setState({previewing: customer});
+  };
+
+  handleRemoveFromBroadcast = async (customerId: string) => {
+    try {
+      const {id: broadcastId} = this.props.match.params;
+
+      await API.removeCustomerFromBroadcast(broadcastId, customerId);
+      await this.handleRefreshBroadcast();
+    } catch (err) {
+      logger.error(
+        'Error removing customer from broadcast:',
+        formatServerError(err)
+      );
+    }
+  };
+
+  handleSendToCustomer = async (customerId: string) => {
+    try {
+      const {id: broadcastId} = this.props.match.params;
+
+      await API.sendBroadcastEmail(broadcastId, {customer_id: customerId});
+      await this.handleRefreshBroadcast();
+    } catch (err) {
+      logger.error(
+        'Error sending broadcast email to customer:',
+        formatServerError(err)
+      );
+    }
   };
 
   handleSendBroadcast = async () => {
@@ -128,7 +217,7 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
   };
 
   render() {
-    const {broadcast, isSending} = this.state;
+    const {broadcast, previewing, isSending} = this.state;
 
     if (!broadcast) {
       return null;
@@ -143,8 +232,10 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
       state,
     } = broadcast;
     const customers = formatBroadcastCustomers(broadcast);
-    const isUnstarted = state === 'unstarted';
+    const isUnfinished = state !== 'finished';
     const numCustomersSent = customers.filter((c) => !!c.sent_at).length;
+
+    console.log('Currently previewing:', previewing);
 
     return (
       <Flex p={4} sx={{flex: 1, flexDirection: 'column'}}>
@@ -167,12 +258,12 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
               {name}
             </Title>
           </Flex>
-          {isUnstarted && (
+          {isUnfinished && (
             <Button
               type="primary"
               size="large"
               // TODO: disable this if the broadcast is not yet ready to send
-              // disabled={!isReadyToSend}
+              // disabled={true}
               icon={<SendOutlined />}
               loading={isSending}
               onClick={this.handleSendBroadcast}
@@ -270,7 +361,7 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
                 Contacts
               </Title>
 
-              {isUnstarted && customers.length > 0 && (
+              {isUnfinished && customers.length > 0 && (
                 <Link to={`/broadcasts/${broadcastId}/customers`}>
                   <Button>Update contacts</Button>
                 </Link>
@@ -280,7 +371,9 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
             {customers && customers.length ? (
               <BroadcastCustomersTable
                 customers={customers}
-                onSelectPreview={this.handleUpdateIframe}
+                onRemoveCustomer={this.handleRemoveFromBroadcast}
+                onPreviewCustomerEmail={this.handlePreviewCustomerEmail}
+                onSendEmailToCustomer={this.handleSendToCustomer}
               />
             ) : (
               <Box my={4}>
@@ -310,7 +403,7 @@ export class BroadcastDetailsPage extends React.Component<Props, State> {
                     'Message template'}
                 </Title>
               </Box>
-              {isUnstarted &&
+              {isUnfinished &&
                 (template ? (
                   <Link
                     to={`/message-templates/${template.id}?bid=${broadcastId}`}

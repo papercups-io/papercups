@@ -71,14 +71,14 @@ defmodule ChatApiWeb.BroadcastController do
   end
 
   @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def send(conn, %{"id" => _id}) do
+  def send(conn, %{"id" => _id} = payload) do
     # TODO: move more of this logic out of the controller into the Broadcasts context
     with %{current_user: current_user, current_broadcast: broadcast} <- conn.assigns,
          %{account_id: account_id, email: email} <- current_user,
          %Broadcast{message_template_id: template_id, subject: subject} <- broadcast,
          # TODO: add better error handling if no gmail authorization is available
-         %GoogleAuthorization{refresh_token: refresh_token} <-
-           ChatApi.Google.get_support_gmail_authorization(account_id),
+         {:ok, %GoogleAuthorization{refresh_token: refresh_token}} <-
+           get_gmail_authorization(account_id),
          %MessageTemplate{
            raw_html: raw_html,
            plain_text: plain_text,
@@ -86,25 +86,28 @@ defmodule ChatApiWeb.BroadcastController do
            default_subject: default_subject
          } <-
            MessageTemplates.get_message_template!(template_id) do
-      {:ok, broadcast} =
+      # If the broadcast hasn't started yet, mark that it has started
+      if Broadcasts.unstarted?(broadcast) do
         Broadcasts.update_broadcast(broadcast, %{
           state: "started",
           started_at: DateTime.utc_now()
         })
+      end
 
+      filters = payload |> atomize_keys() |> Map.merge(%{state: "unsent"})
+      # Get all the contacts for the broadcast and send them notifications using the template
       # TODO: move to worker?
       broadcast
-      |> Broadcasts.list_broadcast_customers()
+      |> Broadcasts.list_broadcast_customers(filters)
       |> Enum.map(fn customer ->
         data = Map.from_struct(customer)
 
         {:ok, text} = MessageTemplates.render(plain_text, data)
         {:ok, html} = MessageTemplates.render(raw_html, data)
 
-        # TODO: figure out the best way to handle errors here
-        # TODO: based on result, update broadcast_customer record state/sent_at fields
-        ChatApi.Google.Gmail.send_message(refresh_token, %{
+        payload = %{
           to: customer.email,
+          # TODO: make it possible to specify the name (e.g. from: {name, email})
           from: email,
           # TODO: should this be set at the broadcast level or message_template level?
           subject: subject || default_subject || "Latest updates",
@@ -114,7 +117,12 @@ defmodule ChatApiWeb.BroadcastController do
               "plain_text" -> nil
               _ -> html
             end
-        })
+        }
+
+        # TODO: figure out the best way to handle errors here
+        # TODO: based on result, update broadcast_customer record state/sent_at fields
+        IO.inspect(payload, label: "Sending payload")
+        ChatApi.Google.Gmail.send_message(refresh_token, payload) |> IO.inspect(label: "Sent!")
 
         Broadcasts.update_broadcast_customer(broadcast, customer, %{
           state: "sent",
@@ -122,11 +130,13 @@ defmodule ChatApiWeb.BroadcastController do
         })
       end)
 
-      {:ok, broadcast} =
+      # If all contacts have been notified, mark the broadcast as finished
+      if Broadcasts.finished?(broadcast) do
         Broadcasts.update_broadcast(broadcast, %{
           state: "finished",
           finished_at: DateTime.utc_now()
         })
+      end
 
       render(conn, "show.json",
         broadcast:
@@ -135,8 +145,25 @@ defmodule ChatApiWeb.BroadcastController do
             [broadcast_customers: :customer]
           ])
       )
-
-      # json(conn, %{ok: true, num_sent: length(results)})
     end
+  end
+
+  defp get_gmail_authorization(account_id) do
+    case ChatApi.Google.get_support_gmail_authorization(account_id) do
+      %GoogleAuthorization{refresh_token: _} = authorization -> {:ok, authorization}
+      _ -> {:error, :forbidden, "Missing Gmail authorization"}
+    end
+  end
+
+  defp atomize_keys(map) when is_map(map) do
+    Map.new(map, fn {k, v} ->
+      value =
+        case v do
+          m when is_map(m) -> atomize_keys(m)
+          v -> v
+        end
+
+      {String.to_atom(k), value}
+    end)
   end
 end

@@ -26,11 +26,22 @@ export const formatBroadcastCustomers = (
   const {broadcast_customers: broadcastCustomers = []} = broadcast;
 
   return broadcastCustomers.map((bc: any) => {
-    const {customer = {}, id: key, created_at, updated_at, sent_at, state} = bc;
+    const {
+      customer = {},
+      id: key,
+      customer_id,
+      broadcast_id,
+      created_at,
+      updated_at,
+      sent_at,
+      state,
+    } = bc;
     const {name, email, time_zone, metadata = {}} = customer;
 
     return {
       key,
+      customer_id,
+      broadcast_id,
       created_at,
       updated_at,
       state,

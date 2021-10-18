@@ -1,7 +1,16 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import MonacoEditor from '../developers/MonacoEditor';
-import {Button, Checkbox, Input, Select, Title, notification} from '../common';
+import {
+  Button,
+  Checkbox,
+  Divider,
+  Input,
+  Select,
+  Text,
+  Title,
+  notification,
+} from '../common';
 import * as API from '../../api';
 import DynamicTable from '../developers/DynamicTable';
 import logger from '../../logger';
@@ -9,17 +18,20 @@ import {Broadcast, Customer} from '../../types';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {formatServerError, sleep} from '../../utils';
 import {ArrowLeftOutlined} from '../icons';
+import Cache from '../../storage-v2';
 
 const DEFAULT_SQL_VALUE = `
--- select u.id, u.email, count(m.id) as num_messages
---   from users u
---   join messages m on m.user_id = u.id
---   group by u.id
---   order by num_messages desc;
+-- select u.email, p.display_name as name
+--   from users u join user_profiles p on u.id = p.user_id
+--   where u.id = 1;
 
-select u.email, p.display_name as name
-  from users u join user_profiles p on u.id = p.user_id
-  where u.id = 1;
+select u.id, p.display_name as name, p.full_name, u.email, count(m.id) as num_messages
+  from users u
+  join user_profiles p on u.id = p.user_id
+  join messages m on m.user_id = u.id
+  where m.inserted_at > (current_date - interval '30' day)
+  group by u.id, p.display_name, p.full_name
+  order by num_messages desc;
 `;
 
 type Props = RouteComponentProps<{id: string}>;
@@ -30,6 +42,7 @@ type State = {
   database: string;
   username: string;
   password: string;
+  databaseUri: string;
   isSslEnabled: boolean;
   isRunning: boolean;
   googleSheetId: string;
@@ -37,24 +50,42 @@ type State = {
   results: Array<any>;
 };
 
+const CACHE_KEY = 'BroadcastCustomersPage';
+
 export class BroadcastCustomersPage extends React.Component<Props, State> {
   monaco: any | null = null;
+  cache: Cache = new Cache({type: 'local'});
 
-  state: State = {
-    broadcast: null,
-    mode: 'sql',
-    // SQL
-    hostname: 'localhost',
-    database: 'chat_api_dev',
-    username: '',
-    password: '',
-    isSslEnabled: false,
-    isRunning: false,
-    // Google Sheets
-    googleSheetId: '1JNGAEAtgBoUDEvUbc3tzgtvUPVnp3kdC0i-MCDw6J20',
-    googleSheetUrl: '',
-    results: [],
-  };
+  constructor(props: Props) {
+    super(props);
+
+    const cachedDbState = this.cache.get(CACHE_KEY, {});
+    const {
+      hostname = 'localhost',
+      database = 'chat_api_dev',
+      username = '',
+      password = '',
+      databaseUri = 'ecto://postgres:postgres@localhost/chat_api_dev',
+      isSslEnabled = false,
+    } = cachedDbState;
+
+    this.state = {
+      broadcast: null,
+      mode: 'sql',
+      // SQL
+      hostname,
+      database,
+      username,
+      password,
+      databaseUri,
+      isSslEnabled,
+      isRunning: false,
+      // Google Sheets
+      googleSheetId: '1JNGAEAtgBoUDEvUbc3tzgtvUPVnp3kdC0i-MCDw6J20',
+      googleSheetUrl: '',
+      results: [],
+    };
+  }
 
   async componentDidMount() {
     const {id: broadcastId} = this.props.match.params;
@@ -66,6 +97,17 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
   handleEditorMounted = (editor: any) => {
     this.monaco = editor;
     this.handleRunSql();
+
+    this.monaco.addAction({
+      id: 'save',
+      label: 'Save',
+      keybindings: [2048 | 3], // [KeyMod.CtrlCmd | KeyCode.Enter]
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 2,
+      run: () => {
+        this.handleRunSql();
+      },
+    });
   };
 
   fetchCustomersFromGoogleSheet = async () => {
@@ -93,6 +135,26 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
     } finally {
       this.setState({isRunning: false});
     }
+  };
+
+  setStateWithCache = (updates: any) => {
+    const cached = this.cache.get(CACHE_KEY, {});
+
+    this.setState(updates, () =>
+      this.cache.set(CACHE_KEY, {...cached, ...updates})
+    );
+  };
+
+  getDefaultSql = (): string => {
+    const cached = this.cache.get(CACHE_KEY, {});
+
+    return cached?.sql ?? DEFAULT_SQL_VALUE;
+  };
+
+  cacheSqlCode = (sql: string) => {
+    const cached = this.cache.get(CACHE_KEY, {});
+
+    this.cache.set(CACHE_KEY, {...cached, sql});
   };
 
   handleImportCustomers = async () => {
@@ -129,7 +191,14 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
     try {
       this.setState({isRunning: true});
 
-      const {hostname, database, username, password, isSslEnabled} = this.state;
+      const {
+        hostname,
+        database,
+        username,
+        password,
+        databaseUri,
+        isSslEnabled,
+      } = this.state;
       const sql = this.monaco?.getValue();
 
       if (!sql) {
@@ -143,15 +212,21 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
           database,
           username,
           password,
+          uri: databaseUri,
           ssl: isSslEnabled,
         },
       });
 
       await sleep(1000);
 
-      this.setState({results});
+      this.setState({results}, () => this.cacheSqlCode(sql));
     } catch (err) {
-      logger.error('Failed to run query:', formatServerError(err));
+      const message = formatServerError(err);
+      logger.error('Failed to run query:', err);
+      notification.error({
+        message: 'Failed to run query!',
+        description: message,
+      });
     } finally {
       this.setState({isRunning: false});
     }
@@ -165,6 +240,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
       database,
       username,
       password,
+      databaseUri,
       googleSheetId,
       googleSheetUrl,
       isSslEnabled,
@@ -286,7 +362,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                       value={hostname}
                       placeholder="localhost"
                       onChange={(e) =>
-                        this.setState({hostname: e.target.value})
+                        this.setStateWithCache({hostname: e.target.value})
                       }
                     />
                   </Box>
@@ -298,7 +374,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                       value={database}
                       placeholder="papercups"
                       onChange={(e) =>
-                        this.setState({database: e.target.value})
+                        this.setStateWithCache({database: e.target.value})
                       }
                     />
                   </Box>
@@ -311,7 +387,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                       type="text"
                       value={username}
                       onChange={(e) =>
-                        this.setState({username: e.target.value})
+                        this.setStateWithCache({username: e.target.value})
                       }
                     />
                   </Box>
@@ -323,7 +399,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                       type="text"
                       value={password}
                       onChange={(e) =>
-                        this.setState({password: e.target.value})
+                        this.setStateWithCache({password: e.target.value})
                       }
                     />
                   </Box>
@@ -331,11 +407,35 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                     <Checkbox
                       checked={isSslEnabled}
                       onChange={(e) =>
-                        this.setState({isSslEnabled: e.target.checked})
+                        this.setStateWithCache({
+                          isSslEnabled: e.target.checked,
+                        })
                       }
                     >
                       SSL enabled
                     </Checkbox>
+                  </Box>
+                </Flex>
+
+                <Divider style={{marginTop: 16, marginBottom: 16}} />
+
+                <Flex mb={3}>
+                  <Box sx={{flex: 1}}>
+                    <label htmlFor="database_uri">
+                      <Text strong>
+                        Alternatively, enter the full database URI:
+                      </Text>
+                    </label>
+                    <Input
+                      id="database_uri"
+                      type="text"
+                      value={databaseUri}
+                      onChange={(e) =>
+                        this.setStateWithCache({
+                          databaseUri: e.target.value,
+                        })
+                      }
+                    />
                   </Box>
                 </Flex>
               </Box>
@@ -346,7 +446,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                   height="100%"
                   width="100%"
                   defaultLanguage="sql"
-                  defaultValue={DEFAULT_SQL_VALUE}
+                  defaultValue={this.getDefaultSql()}
                   onMount={this.handleEditorMounted}
                 />
 

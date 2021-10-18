@@ -261,16 +261,17 @@ defmodule ChatApiWeb.CustomerController do
     customers
     |> Enum.map(&atomize_keys/1)
     |> Enum.map(fn customer ->
-      IO.inspect(customer, label: "Creating or updating...")
-
       case customer do
         %{email: email, account_id: ^account_id} ->
+          IO.inspect(customer, label: "Creating or updating by email...")
           Customers.create_or_update_by_email(email, account_id, customer)
 
         %{external_id: external_id, account_id: ^account_id} ->
+          IO.inspect(customer, label: "Creating or updating by external ID...")
           Customers.create_or_update_by_external_id(external_id, account_id, customer)
 
         %{account_id: ^account_id} ->
+          IO.inspect(customer, label: "Creating new customer...")
           Customers.create_customer(customer)
 
         _ ->

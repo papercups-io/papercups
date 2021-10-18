@@ -2334,8 +2334,24 @@ export const addCustomersToBroadcast = async (
     .then((res) => res.body.data);
 };
 
+export const removeCustomerFromBroadcast = async (
+  broadcastId: string,
+  customerId: string,
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/broadcasts/${broadcastId}/customers/${customerId}`)
+    .set('Authorization', token)
+    .then((res) => res.body);
+};
+
 export const sendBroadcastEmail = async (
   id: string,
+  filters: Record<string, any> = {},
   token = getAccessToken()
 ) => {
   if (!token) {
@@ -2344,7 +2360,7 @@ export const sendBroadcastEmail = async (
 
   return request
     .post(`/api/broadcasts/${id}/send`)
-    .send({})
+    .send(filters)
     .set('Authorization', token)
     .then((res) => res.body.data);
 };

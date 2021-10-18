@@ -2,12 +2,12 @@ defmodule ChatApiWeb.BroadcastCustomerController do
   use ChatApiWeb, :controller
 
   alias ChatApi.Broadcasts
-  alias ChatApi.Customers.Customer
+  alias ChatApi.Broadcasts.BroadcastCustomer
   alias ChatApiWeb.CustomerView
 
   action_fallback(ChatApiWeb.FallbackController)
 
-  plug(:authorize when action in [:index, :create, :delete])
+  plug(:authorize when action in [:index, :create, :delete, :send])
 
   defp authorize(conn, _) do
     id = conn.path_params["broadcast_id"]
@@ -34,10 +34,12 @@ defmodule ChatApiWeb.BroadcastCustomerController do
   def create(conn, %{"customers" => customer_ids} = params) do
     broadcast = conn.assigns.current_broadcast
 
+    # TODO: how do we want to handle the default behavior here?
     {count, nil} =
       case Map.get(params, "action", "replace") do
         "add" -> Broadcasts.add_broadcast_customers(broadcast, customer_ids)
         "replace" -> Broadcasts.set_broadcast_customers(broadcast, customer_ids)
+        "upsert" -> Broadcasts.upsert_broadcast_customers(broadcast, customer_ids)
         _ -> Broadcasts.set_broadcast_customers(broadcast, customer_ids)
       end
 
@@ -47,9 +49,16 @@ defmodule ChatApiWeb.BroadcastCustomerController do
   @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def delete(conn, %{"customer_id" => customer_id}) do
     with %{current_broadcast: broadcast} <- conn.assigns,
-         {:ok, %Customer{}} <-
+         {:ok, %BroadcastCustomer{}} <-
            Broadcasts.remove_broadcast_customer(broadcast, customer_id) do
       send_resp(conn, :no_content, "")
     end
   end
+
+  # @spec send(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  # def send(conn, %{"customer_id" => customer_id}) do
+  #   with %{current_broadcast: broadcast} <- conn.assigns do
+  #     # TODO
+  #   end
+  # end
 end

@@ -8,16 +8,20 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
   def perform(%Oban.Job{} = job) do
-    Logger.debug("Syncing Gmail inboxes: #{inspect(job)}")
+    if enabled?() do
+      Logger.debug("Syncing Gmail inboxes: #{inspect(job)}")
 
-    authorizations =
-      ChatApi.Google.list_google_authorizations(%{
-        client: "gmail",
-        type: "support"
-      })
+      authorizations =
+        ChatApi.Google.list_google_authorizations(%{
+          client: "gmail",
+          type: "support"
+        })
 
-    cancel_pending_jobs(authorizations)
-    enqueue_new_jobs(authorizations)
+      cancel_pending_jobs(authorizations)
+      enqueue_new_jobs(authorizations)
+    else
+      Logger.debug("Gmail inbox sync disabled. Skipping: #{inspect(job)}")
+    end
 
     :ok
   end
@@ -54,5 +58,13 @@ defmodule ChatApi.Workers.SyncGmailInboxes do
     %{client: "gmail", type: "support"}
     |> ChatApi.Google.list_google_authorizations()
     |> Enum.map(& &1.account_id)
+  end
+
+  @spec enabled? :: boolean()
+  def enabled?() do
+    case System.get_env("PAPERCUPS_GMAIL_SYNC_DISABLED") do
+      x when x == "1" or x == "true" -> false
+      _ -> true
+    end
   end
 end
