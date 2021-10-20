@@ -12,7 +12,7 @@ import {
   notification,
 } from '../common';
 import * as API from '../../api';
-import DynamicTable from '../developers/DynamicTable';
+import DynamicSpreadsheet from '../developers/DynamicSpreadsheet';
 import logger from '../../logger';
 import {Broadcast, Customer} from '../../types';
 import {Link, RouteComponentProps} from 'react-router-dom';
@@ -32,6 +32,30 @@ select u.id, p.display_name as name, p.full_name, u.email, count(m.id) as num_me
   where m.inserted_at > (current_date - interval '30' day)
   group by u.id, p.display_name, p.full_name
   order by num_messages desc;
+`;
+
+const DEFAULT_JS_VALUE = `
+const process = (records) => {
+  return records
+    .filter(record => {
+      return record.num_messages > 10 && !record.full_name;
+    })
+    .map(record => {
+      const {full_name: fullName, email} = record;
+
+      if (fullName && fullName.length) {
+        return record;
+      } else {
+        const [name, domain] = email.split('@');
+        const guess = name
+          .split('.')
+          .map(str => str.slice(0, 1).toUpperCase().concat(str.slice(1)))
+          .join(' ');
+
+        return {...record, full_name: guess};
+      }
+    });
+};
 `;
 
 type Props = RouteComponentProps<{id: string}>;
@@ -81,7 +105,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
       isSslEnabled,
       isRunning: false,
       // Google Sheets
-      googleSheetId: '1JNGAEAtgBoUDEvUbc3tzgtvUPVnp3kdC0i-MCDw6J20',
+      googleSheetId: '1LbdDpXARNT5I3qOUsc7VW8kLU_LZt5zRSscBgJHR8ik',
       googleSheetUrl: '',
       results: [],
     };
@@ -96,18 +120,32 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
 
   handleEditorMounted = (editor: any) => {
     this.monaco = editor;
-    this.handleRunSql();
 
-    this.monaco.addAction({
-      id: 'save',
-      label: 'Save',
-      keybindings: [2048 | 3], // [KeyMod.CtrlCmd | KeyCode.Enter]
-      contextMenuGroupId: 'navigation',
-      contextMenuOrder: 2,
-      run: () => {
-        this.handleRunSql();
-      },
-    });
+    if (this.state.mode === 'sql') {
+      this.handleRunSql();
+
+      this.monaco.addAction({
+        id: 'save',
+        label: 'Save',
+        keybindings: [2048 | 3], // [KeyMod.CtrlCmd | KeyCode.Enter]
+        contextMenuGroupId: 'navigation',
+        contextMenuOrder: 2,
+        run: () => {
+          this.handleRunSql();
+        },
+      });
+    }
+  };
+
+  filterResultsByJs = (results: Array<any>) => {
+    try {
+      // TODO: support typescript?
+      const js = this.monaco?.getValue();
+      // Assumes the existence of a `process` function
+      return eval(js.concat('\nprocess(results)'));
+    } catch (e) {
+      return results;
+    }
   };
 
   fetchCustomersFromGoogleSheet = async () => {
@@ -120,13 +158,13 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
         return null;
       }
 
-      const filter = googleSheetId
-        ? {id: googleSheetId}
-        : {url: googleSheetUrl};
+      const filter = googleSheetUrl
+        ? {url: googleSheetUrl}
+        : {id: googleSheetId};
 
       const results = await API.fetchGoogleSheet(filter);
 
-      this.setState({results});
+      this.setState({results: this.filterResultsByJs(results)});
     } catch (err) {
       logger.error(
         'Failed to import data from Google Sheet:',
@@ -151,10 +189,18 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
     return cached?.sql ?? DEFAULT_SQL_VALUE;
   };
 
+  getDefaultJavascript = (): string => {
+    return DEFAULT_JS_VALUE;
+  };
+
   cacheSqlCode = (sql: string) => {
     const cached = this.cache.get(CACHE_KEY, {});
 
     this.cache.set(CACHE_KEY, {...cached, sql});
+  };
+
+  handleEditResults = (data: any, metadata: any) => {
+    this.setState({results: data});
   };
 
   handleImportCustomers = async () => {
@@ -245,6 +291,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
       googleSheetUrl,
       isSslEnabled,
       isRunning,
+      results = [],
     } = this.state;
 
     if (!broadcast) {
@@ -457,6 +504,18 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                 </Box>
               </Box>
             )}
+
+            {mode === 'sheets' && (
+              <Box sx={{flex: 1, position: 'relative', overflow: 'hidden'}}>
+                <MonacoEditor
+                  height="100%"
+                  width="100%"
+                  defaultLanguage="javascript"
+                  defaultValue={this.getDefaultJavascript()}
+                  onMount={this.handleEditorMounted}
+                />
+              </Box>
+            )}
           </Flex>
 
           <Box p={4} sx={{flex: 1.2}}>
@@ -466,7 +525,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
               style={{position: 'relative'}}
             >
               <Title level={4} style={{margin: 0}}>
-                Results
+                Results {results.length ? `(${results.length})` : null}
               </Title>
 
               <Button
@@ -478,7 +537,10 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
               </Button>
             </Flex>
 
-            <DynamicTable data={this.state.results} />
+            <DynamicSpreadsheet
+              data={results}
+              onUpdate={this.handleEditResults}
+            />
           </Box>
         </Flex>
       </Flex>

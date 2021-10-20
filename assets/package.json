@@ -31,6 +31,8 @@
     "@types/sanitize-html": "^2.3.2",
     "@types/superagent": "^4.1.8",
     "@types/theme-ui": "^0.3.4",
+    "ag-grid-community": "^26.1.0",
+    "ag-grid-react": "^26.1.0",
     "antd": "^4.3.5",
     "cpx": "^1.5.0",
     "dayjs": "^1.9.1",

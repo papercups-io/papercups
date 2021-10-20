@@ -1,6 +1,6 @@
 import React from 'react';
-import {Table, Text} from '../common';
 import {isObject} from 'lodash';
+import {Table, Text} from '../common';
 
 const DynamicTable = ({
   loading,
