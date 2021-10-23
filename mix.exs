@@ -83,6 +83,7 @@ defmodule ChatApi.MixProject do
       {:appsignal_phoenix, "~> 2.0.0"},
       {:earmark, "~> 1.4.15"},
       {:sweet_xml, "~> 0.7.1"},
+      {:csv, "~> 2.4"},
       # TODO: just copy code over?
       {:exponent_server_sdk, "~> 0.2.0"},
       {:mustache, "~> 0.3.0"},

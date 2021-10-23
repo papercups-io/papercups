@@ -71,7 +71,6 @@ import BillingOverview from './billing/BillingOverview';
 import CustomersPage from './customers/CustomersPage';
 import CustomerDetailsPage from './customers/CustomerDetailsPage';
 import CustomerDetailsPageV2 from './customers/CustomerDetailsPageV2';
-import CustomersSpreadsheet from './customers/CustomersSpreadsheet';
 import SessionsOverview from './sessions/SessionsOverview';
 import InstallingStorytime from './sessions/InstallingStorytime';
 import LiveSessionViewer from './sessions/LiveSessionViewer';
@@ -99,7 +98,7 @@ import BroadcastsOverview from './broadcasts/BroadcastsOverview';
 import BroadcastDetailsPage from './broadcasts/BroadcastDetailsPage';
 import MessageTemplatesOverview from './message-templates/MessageTemplatesOverview';
 import MessageTemplateEditor from './message-templates/MessageTemplateEditor';
-import BroadcastCustomersPage from './broadcasts/BroadcastCustomersPage';
+import BroadcastCustomersPage from './broadcasts/BroadcastCustomersPageV2';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -598,7 +597,6 @@ const Dashboard = (props: RouteComponentProps) => {
             path="/message-templates"
             component={MessageTemplatesOverview}
           />
-          <Route path="/beta/customers" component={CustomersSpreadsheet} />
           <Route path="/conversations*" component={InboxesDashboard} />
           <Route path="/inboxes*" component={InboxesDashboard} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />

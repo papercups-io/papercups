@@ -112,6 +112,10 @@ a.RelatedCustomerConversation--link:hover {
   margin-bottom: 4px;
 }
 
+.UploadCsvButton .ant-upload {
+  display: block;
+}
+
 .GettingStartedCode .ant-tabs-nav::before {
   border-bottom-color: #d9d9d9;
 }

@@ -1,24 +1,29 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
+
 import MonacoEditor from '../developers/MonacoEditor';
 import {
   Button,
   Checkbox,
   Divider,
   Input,
+  Paragraph,
   Select,
   Text,
   Title,
   notification,
+  TextArea,
+  Upload,
 } from '../common';
 import * as API from '../../api';
-import DynamicSpreadsheet from '../developers/DynamicSpreadsheet';
 import logger from '../../logger';
 import {Broadcast, Customer} from '../../types';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {formatServerError, sleep} from '../../utils';
 import {ArrowLeftOutlined} from '../icons';
 import Cache from '../../storage-v2';
+import DynamicTable from '../developers/DynamicTable';
+import DynamicSpreadsheet from '../developers/DynamicSpreadsheet';
 
 const DEFAULT_SQL_VALUE = `
 -- select u.email, p.display_name as name
@@ -38,7 +43,7 @@ const DEFAULT_JS_VALUE = `
 const process = (records) => {
   return records
     .filter(record => {
-      return record.num_messages > 10 && !record.full_name;
+      return record.num_messages > 10 && record.name && !record.full_name;
     })
     .map(record => {
       const {full_name: fullName, email} = record;
@@ -50,7 +55,8 @@ const process = (records) => {
         const guess = name
           .split('.')
           .map(str => str.slice(0, 1).toUpperCase().concat(str.slice(1)))
-          .join(' ');
+          .join(' ')
+          .replace(/[^A-Za-z]/g, '');
 
         return {...record, full_name: guess};
       }
@@ -71,13 +77,15 @@ type State = {
   isRunning: boolean;
   googleSheetId: string;
   googleSheetUrl: string;
+  csv: string;
+  data: Array<any>;
   results: Array<any>;
 };
 
-const CACHE_KEY = 'BroadcastCustomersPage';
+const CACHE_KEY = 'BroadcastCustomersPageV2';
 
-export class BroadcastCustomersPage extends React.Component<Props, State> {
-  monaco: any | null = null;
+export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
+  editors: {sql: any | null; js: any | null} = {sql: null, js: null};
   cache: Cache = new Cache({type: 'local'});
 
   constructor(props: Props) {
@@ -85,17 +93,21 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
 
     const cachedDbState = this.cache.get(CACHE_KEY, {});
     const {
+      mode = 'sql',
       hostname = 'localhost',
       database = 'chat_api_dev',
       username = '',
       password = '',
       databaseUri = 'ecto://postgres:postgres@localhost/chat_api_dev',
       isSslEnabled = false,
+      googleSheetId = '1LbdDpXARNT5I3qOUsc7VW8kLU_LZt5zRSscBgJHR8ik',
+      googleSheetUrl = '',
+      csv = '',
     } = cachedDbState;
 
     this.state = {
       broadcast: null,
-      mode: 'sql',
+      mode,
       // SQL
       hostname,
       database,
@@ -105,8 +117,10 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
       isSslEnabled,
       isRunning: false,
       // Google Sheets
-      googleSheetId: '1LbdDpXARNT5I3qOUsc7VW8kLU_LZt5zRSscBgJHR8ik',
-      googleSheetUrl: '',
+      googleSheetId,
+      googleSheetUrl,
+      csv,
+      data: [],
       results: [],
     };
   }
@@ -118,35 +132,43 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
     this.setState({broadcast});
   }
 
-  handleEditorMounted = (editor: any) => {
-    this.monaco = editor;
+  handleSqlEditorMounted = async (editor: any) => {
+    this.editors.sql = editor;
 
-    if (this.state.mode === 'sql') {
-      this.handleRunSql();
+    this.editors.sql.addAction({
+      id: 'save',
+      label: 'Save',
+      keybindings: [2048 | 3], // [KeyMod.CtrlCmd | KeyCode.Enter]
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 2,
+      run: () => {
+        this.handleRunSql();
+      },
+    });
 
-      this.monaco.addAction({
-        id: 'save',
-        label: 'Save',
-        keybindings: [2048 | 3], // [KeyMod.CtrlCmd | KeyCode.Enter]
-        contextMenuGroupId: 'navigation',
-        contextMenuOrder: 2,
-        run: () => {
-          this.handleRunSql();
-        },
-      });
-    }
+    return this.handleRunSql().then(() => this.handleApplyJsProcessing());
+  };
+
+  handleJsEditorMounted = (editor: any) => {
+    this.editors.js = editor;
   };
 
   filterResultsByJs = (results: Array<any>) => {
     try {
       // TODO: support typescript?
-      const js = this.monaco?.getValue();
+      const js = this.editors.js?.getValue();
       // Assumes the existence of a `process` function
       // eslint-disable-next-line
       return eval(js.concat('\nprocess(results)'));
     } catch (e) {
       return results;
     }
+  };
+
+  handleApplyJsProcessing = () => {
+    const {data = []} = this.state;
+
+    this.setState({results: this.filterResultsByJs(data)});
   };
 
   fetchCustomersFromGoogleSheet = async () => {
@@ -163,9 +185,9 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
         ? {url: googleSheetUrl}
         : {id: googleSheetId};
 
-      const results = await API.fetchGoogleSheet(filter);
+      const data = await API.fetchGoogleSheet(filter);
 
-      this.setState({results: this.filterResultsByJs(results)});
+      this.setState({data});
     } catch (err) {
       logger.error(
         'Failed to import data from Google Sheet:',
@@ -173,6 +195,19 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
       );
     } finally {
       this.setState({isRunning: false});
+    }
+  };
+
+  handleCsvUploadEvent = ({file = {}}: any) => {
+    if (!file || file?.status !== 'done') {
+      return;
+    }
+
+    const {response = {}} = file;
+    const {data = []} = response;
+
+    if (data && Array.isArray(data) && data.length > 0) {
+      this.setState({data, csv: response._csv || ''});
     }
   };
 
@@ -246,13 +281,13 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
         databaseUri,
         isSslEnabled,
       } = this.state;
-      const sql = this.monaco?.getValue();
+      const sql = this.editors.sql?.getValue();
 
       if (!sql) {
         return;
       }
 
-      const results = await API.runSqlQuery({
+      const data = await API.runSqlQuery({
         query: sql,
         credentials: {
           hostname,
@@ -266,7 +301,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
 
       await sleep(1000);
 
-      this.setState({results}, () => this.cacheSqlCode(sql));
+      this.setState({data}, () => this.cacheSqlCode(sql));
     } catch (err) {
       const message = formatServerError(err);
       logger.error('Failed to run query:', err);
@@ -290,8 +325,10 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
       databaseUri,
       googleSheetId,
       googleSheetUrl,
+      csv,
       isSslEnabled,
       isRunning,
+      data = [],
       results = [],
     } = this.state;
 
@@ -325,22 +362,38 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
           </Title>
         </Flex>
 
-        <Flex sx={{flex: 1}}>
+        <Flex
+          sx={{
+            flex: 1,
+            width: '100%',
+            // maxWidth: 720,
+            // mx: 'auto',
+          }}
+        >
           <Flex
             sx={{
               flexDirection: 'column',
               flex: 1,
-              bg: 'rgb(250, 250, 250)',
-              borderRight: '1px solid rgba(0,0,0,.06)',
+              // bg: 'rgb(250, 250, 250)',
+              // borderRight: '1px solid rgba(0,0,0,.06)',
             }}
           >
-            <Box p={3} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
+            <Box
+              p={3}
+              sx={{
+                borderBottom: '1px solid rgba(0,0,0,.06)',
+                width: '100%',
+                maxWidth: 720,
+                mx: 'auto',
+              }}
+            >
               <Select
                 style={{width: '100%'}}
                 placeholder="Select import method"
                 value={mode}
+                size="large"
                 onChange={(value: string) => {
-                  this.setState({mode: value});
+                  this.setStateWithCache({mode: value});
                 }}
                 options={[
                   {value: 'sql', display: 'Import via SQL'},
@@ -352,8 +405,55 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
               />
             </Box>
 
+            {mode === 'csv' && (
+              <Box
+                p={3}
+                sx={{
+                  borderBottom: '1px solid rgba(0,0,0,.06)',
+                  width: '100%',
+                  maxWidth: 720,
+                  mx: 'auto',
+                }}
+              >
+                <Box mb={3}>
+                  <label htmlFor="csv_content">CSV</label>
+                  <TextArea
+                    id="csv_content"
+                    disabled
+                    value={csv}
+                    placeholder={
+                      'name,email,company\nAlex,alex@papercups.io,Papercups'
+                    }
+                    autoSize={{minRows: 4, maxRows: 8}}
+                  />
+                </Box>
+
+                <Box mt={4} mb={3}>
+                  <Upload
+                    style={{width: '100%'}}
+                    className="UploadCsvButton"
+                    action={'/api/csv'}
+                    showUploadList={false}
+                    onChange={this.handleCsvUploadEvent}
+                  >
+                    <Button type="primary" block loading={isRunning}>
+                      {isRunning ? 'Uploading...' : 'Upload CSV'}
+                    </Button>
+                  </Upload>
+                </Box>
+              </Box>
+            )}
+
             {mode === 'sheets' && (
-              <Box p={3}>
+              <Box
+                p={3}
+                sx={{
+                  borderBottom: '1px solid rgba(0,0,0,.06)',
+                  width: '100%',
+                  maxWidth: 720,
+                  mx: 'auto',
+                }}
+              >
                 <Box>
                   <Title level={4}>Google Sheets</Title>
                 </Box>
@@ -365,7 +465,7 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                     value={googleSheetId}
                     placeholder="xxxxxx-x-xxxxxx-xxxxxxxxxxxx"
                     onChange={(e) =>
-                      this.setState({googleSheetId: e.target.value})
+                      this.setStateWithCache({googleSheetId: e.target.value})
                     }
                   />
                 </Box>
@@ -378,12 +478,12 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
                     value={googleSheetUrl}
                     placeholder="https://docs.google.com/spreadsheets/u/2/d/[GOOGLE_SHEET_ID]"
                     onChange={(e) =>
-                      this.setState({googleSheetUrl: e.target.value})
+                      this.setStateWithCache({googleSheetUrl: e.target.value})
                     }
                   />
                 </Box>
 
-                <Box my={4}>
+                <Box mt={4} mb={3}>
                   <Button
                     type="primary"
                     block
@@ -397,7 +497,15 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
             )}
 
             {mode === 'sql' && (
-              <Box p={3}>
+              <Box
+                p={3}
+                sx={{
+                  borderBottom: '1px solid rgba(0,0,0,.06)',
+                  width: '100%',
+                  maxWidth: 720,
+                  mx: 'auto',
+                }}
+              >
                 <Box>
                   <Title level={4}>Database credentials</Title>
                 </Box>
@@ -489,64 +597,149 @@ export class BroadcastCustomersPage extends React.Component<Props, State> {
               </Box>
             )}
             {mode === 'sql' && (
-              <Box sx={{flex: 1, position: 'relative', overflow: 'hidden'}}>
-                <MonacoEditor
-                  height="100%"
-                  width="100%"
-                  defaultLanguage="sql"
-                  defaultValue={this.getDefaultSql()}
-                  onMount={this.handleEditorMounted}
-                />
+              <Box sx={{width: '100%', maxWidth: 720, mx: 'auto'}}>
+                <Box
+                  sx={{
+                    height: 320,
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <MonacoEditor
+                    height="100%"
+                    width="100%"
+                    defaultLanguage="sql"
+                    defaultValue={this.getDefaultSql()}
+                    onMount={this.handleSqlEditorMounted}
+                  />
 
-                <Box px={2} style={{position: 'absolute', top: 12, right: 16}}>
-                  <Button loading={isRunning} onClick={this.handleRunSql}>
+                  <Box
+                    px={2}
+                    style={{position: 'absolute', top: 12, right: 16}}
+                  >
+                    <Button loading={isRunning} onClick={this.handleRunSql}>
+                      {isRunning ? 'Running...' : 'Run query'}
+                    </Button>
+                  </Box>
+                </Box>
+                <Box>
+                  <Button block loading={isRunning} onClick={this.handleRunSql}>
                     {isRunning ? 'Running...' : 'Run query'}
                   </Button>
                 </Box>
               </Box>
             )}
 
-            {mode === 'sheets' && (
-              <Box sx={{flex: 1, position: 'relative', overflow: 'hidden'}}>
+            <Box my={4}>
+              <Box
+                p={3}
+                sx={{
+                  width: '100%',
+                  maxWidth: 720,
+                  mx: 'auto',
+                }}
+              >
+                <Title level={4}>
+                  Initial results {data.length ? `(${data.length})` : null}
+                </Title>
+                <Paragraph>
+                  <Text type="secondary">
+                    The initial data set you'll be working with. You can apply
+                    filters, transformations, and manual edits below.
+                  </Text>
+                </Paragraph>
+              </Box>
+
+              <Box sx={{width: '100%', maxWidth: 960, mx: 'auto'}}>
+                <DynamicTable data={data} />
+              </Box>
+            </Box>
+
+            <Box sx={{width: '100%', maxWidth: 720, mx: 'auto'}}>
+              <Box p={3}>
+                <Title level={4}>
+                  Apply custom filters and transformations
+                </Title>
+                <Paragraph>
+                  <Text type="secondary">
+                    Use JavaScript to apply filters and transformations to your
+                    data set.
+                  </Text>
+                </Paragraph>
+              </Box>
+
+              <Box sx={{height: 400, position: 'relative', overflow: 'hidden'}}>
                 <MonacoEditor
                   height="100%"
                   width="100%"
                   defaultLanguage="javascript"
                   defaultValue={this.getDefaultJavascript()}
-                  onMount={this.handleEditorMounted}
+                  onMount={this.handleJsEditorMounted}
                 />
+
+                <Box px={2} style={{position: 'absolute', top: 12, right: 16}}>
+                  <Button
+                    disabled={isRunning}
+                    onClick={this.handleApplyJsProcessing}
+                  >
+                    Apply
+                  </Button>
+                </Box>
               </Box>
-            )}
-          </Flex>
+              <Box>
+                <Button
+                  block
+                  disabled={isRunning}
+                  onClick={this.handleApplyJsProcessing}
+                >
+                  Apply
+                </Button>
+              </Box>
+            </Box>
 
-          <Box p={4} sx={{flex: 1.2}}>
-            <Flex
-              mb={2}
-              sx={{justifyContent: 'space-between', alignItems: 'center'}}
-              style={{position: 'relative'}}
-            >
-              <Title level={4} style={{margin: 0}}>
-                Results {results.length ? `(${results.length})` : null}
-              </Title>
+            <Box my={4}>
+              <Box
+                p={3}
+                sx={{
+                  width: '100%',
+                  maxWidth: 720,
+                  mx: 'auto',
+                }}
+              >
+                <Title level={4}>
+                  Final results {results.length ? `(${results.length})` : null}
+                </Title>
+                <Paragraph>
+                  <Text type="secondary">
+                    Click on any cell below to perform any final edits your
+                    contact list.
+                  </Text>
+                </Paragraph>
+              </Box>
 
+              <Box sx={{width: '100%', maxWidth: 960, mx: 'auto'}}>
+                <DynamicSpreadsheet data={results} />
+              </Box>
+            </Box>
+
+            <Box mb={5} sx={{width: '100%', maxWidth: 720, mx: 'auto'}}>
               <Button
+                block
                 type="primary"
-                disabled={isRunning}
+                size="large"
+                disabled={isRunning || results.length === 0}
+                loading={isRunning}
                 onClick={this.handleImportCustomers}
               >
-                Select customer segment
+                Import {results.length}{' '}
+                {results.length === 1 ? 'customer' : 'customers'}
               </Button>
-            </Flex>
-
-            <DynamicSpreadsheet
-              data={results}
-              onUpdate={this.handleEditResults}
-            />
-          </Box>
+            </Box>
+          </Flex>
         </Flex>
       </Flex>
     );
   }
 }
 
-export default BroadcastCustomersPage;
+export default BroadcastCustomersPageV2;

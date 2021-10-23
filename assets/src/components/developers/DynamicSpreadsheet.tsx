@@ -9,6 +9,10 @@ import {
 } from 'ag-grid-community';
 import {AgGridColumn, AgGridReact} from 'ag-grid-react';
 
+import 'ag-grid-community/dist/styles/ag-grid.css';
+// import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
+import 'ag-grid-community/dist/styles/ag-theme-balham-dark.css';
+
 export const handleAutoSizeColumns = (api: ColumnApi) => {
   if (!api) {
     return;
@@ -78,7 +82,7 @@ const DynamicSpreadsheet = ({
   };
 
   return (
-    <Box className="ag-theme-alpine" sx={{flex: 1, height: 640}}>
+    <Box className="ag-theme-balham-dark" sx={{flex: 1, height: 640}}>
       <AgGridReact
         rowData={data}
         defaultColDef={{

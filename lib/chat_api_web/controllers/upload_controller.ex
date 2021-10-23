@@ -51,4 +51,39 @@ defmodule ChatApiWeb.UploadController do
         error
     end
   end
+
+  @spec csv(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def csv(
+        conn,
+        %{
+          "file" => %Plug.Upload{} = file
+        }
+      ) do
+    with {:ok, csv} <- File.read(file.path),
+         [header | rows] <- File.stream!(file.path) |> CSV.decode() |> Enum.to_list(),
+         {:ok, [_ | _] = columns} <- header do
+      # TODO: just use Enum.reduce instead?
+      data =
+        rows
+        |> Enum.filter(fn
+          {:ok, _} -> true
+          {:error, _} -> false
+        end)
+        |> Enum.map(fn {:ok, row} ->
+          columns |> Enum.zip(row) |> Map.new()
+        end)
+
+      json(conn, %{
+        _csv: csv,
+        data: data
+      })
+    else
+      error ->
+        conn
+        |> put_status(422)
+        |> json(%{
+          error: %{status: 422, message: "Invalid or malformed CSV: #{inspect(error)}"}
+        })
+    end
+  end
 end
