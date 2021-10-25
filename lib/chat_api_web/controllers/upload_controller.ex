@@ -53,26 +53,8 @@ defmodule ChatApiWeb.UploadController do
   end
 
   @spec csv(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def csv(
-        conn,
-        %{
-          "file" => %Plug.Upload{} = file
-        }
-      ) do
-    with {:ok, csv} <- File.read(file.path),
-         [header | rows] <- File.stream!(file.path) |> CSV.decode() |> Enum.to_list(),
-         {:ok, [_ | _] = columns} <- header do
-      # TODO: just use Enum.reduce instead?
-      data =
-        rows
-        |> Enum.filter(fn
-          {:ok, _} -> true
-          {:error, _} -> false
-        end)
-        |> Enum.map(fn {:ok, row} ->
-          columns |> Enum.zip(row) |> Map.new()
-        end)
-
+  def csv(conn, %{"csv" => csv}) do
+    with {:ok, data} <- csv_to_json(csv) do
       json(conn, %{
         _csv: csv,
         data: data
@@ -86,4 +68,58 @@ defmodule ChatApiWeb.UploadController do
         })
     end
   end
+
+  def csv(conn, %{"file" => %Plug.Upload{} = file}) do
+    with {:ok, csv} <- File.read(file.path),
+         list <- File.stream!(file.path) |> CSV.decode() |> Enum.to_list(),
+         {:ok, data} <- csv_to_json(list) do
+      json(conn, %{
+        _csv: csv,
+        data: data
+      })
+    else
+      error ->
+        conn
+        |> put_status(422)
+        |> json(%{
+          error: %{status: 422, message: "Invalid or malformed CSV: #{inspect(error)}"}
+        })
+    end
+  end
+
+  @spec csv_to_json(binary() | list()) :: {:ok, [map()]} | {:error, any()}
+  def csv_to_json(csv) when is_binary(csv) do
+    if is_valid_csv?(csv) do
+      csv |> String.split("\n") |> CSV.decode() |> Enum.to_list() |> csv_to_json()
+    else
+      {:error, :invalid_csv}
+    end
+  end
+
+  def csv_to_json([header | rows]) do
+    with {:ok, [_ | _] = columns} <- header do
+      # TODO: just use Enum.reduce instead?
+      {:ok,
+       rows
+       |> Enum.filter(fn
+         {:ok, _} -> true
+         {:error, _} -> false
+       end)
+       |> Enum.map(fn {:ok, row} ->
+         columns |> Enum.zip(row) |> Map.new()
+       end)}
+    end
+  end
+
+  defp is_valid_csv?(str) when is_binary(str) do
+    str
+    |> String.split("\n")
+    |> Enum.all?(fn row ->
+      l = row |> String.split(",") |> length()
+
+      l > 0
+    end)
+  end
+
+  defp is_valid_csv?(_), do: false
 end

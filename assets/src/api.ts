@@ -249,6 +249,23 @@ export const importCustomers = async (
     .then((res) => res.body);
 };
 
+export const importCsvFile = async (
+  params: {
+    csv: string;
+  },
+  token = getAccessToken()
+) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .post(`/api/csv`)
+    .send(params)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const createNewCompany = async (
   params: Record<string, any>,
   token = getAccessToken()

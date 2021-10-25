@@ -1,5 +1,6 @@
 import React from 'react';
 import {Box, Flex} from 'theme-ui';
+import * as ts from 'typescript';
 
 import MonacoEditor from '../developers/MonacoEditor';
 import {
@@ -40,7 +41,13 @@ select u.id, p.display_name as name, p.full_name, u.email, count(m.id) as num_me
 `;
 
 const DEFAULT_JS_VALUE = `
-const process = (records) => {
+// TODO: infer the type from the imported data above
+type Item = {
+  email: string;
+  [key: string]: any;
+}
+
+const process = (records: Array<Item>) => {
   return records
     .filter(record => {
       return record.num_messages > 10 && record.name && !record.full_name;
@@ -127,9 +134,20 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
 
   async componentDidMount() {
     const {id: broadcastId} = this.props.match.params;
+    const {mode} = this.state;
     const broadcast = await API.fetchBroadcast(broadcastId);
 
     this.setState({broadcast});
+
+    if (mode === 'sql') {
+      await this.handleRunSql();
+    } else if (mode === 'sheets') {
+      await this.fetchCustomersFromGoogleSheet();
+    } else if (mode === 'csv') {
+      await this.handleProcessCsv();
+    }
+
+    this.handleApplyJsProcessing();
   }
 
   handleSqlEditorMounted = async (editor: any) => {
@@ -142,21 +160,23 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
       contextMenuGroupId: 'navigation',
       contextMenuOrder: 2,
       run: () => {
-        this.handleRunSql();
+        return this.handleRunSql();
       },
     });
 
-    return this.handleRunSql().then(() => this.handleApplyJsProcessing());
+    await this.handleRunSql();
   };
 
   handleJsEditorMounted = (editor: any) => {
     this.editors.js = editor;
+    this.handleApplyJsProcessing();
   };
 
   filterResultsByJs = (results: Array<any>) => {
     try {
       // TODO: support typescript?
-      const js = this.editors.js?.getValue();
+      const code = this.editors.js?.getValue();
+      const js = ts.transpile(code);
       // Assumes the existence of a `process` function
       // eslint-disable-next-line
       return eval(js.concat('\nprocess(results)'));
@@ -187,7 +207,7 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
 
       const data = await API.fetchGoogleSheet(filter);
 
-      this.setState({data});
+      this.setState({data, results: this.filterResultsByJs(data)});
     } catch (err) {
       logger.error(
         'Failed to import data from Google Sheet:',
@@ -196,6 +216,24 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
     } finally {
       this.setState({isRunning: false});
     }
+  };
+
+  handleProcessCsv = async () => {
+    this.setState({isRunning: true});
+
+    const {csv} = this.state;
+
+    if (!csv || csv.length === 0) {
+      return;
+    }
+
+    const data = await API.importCsvFile({csv}).catch(() => []);
+
+    this.setState({
+      data,
+      results: this.filterResultsByJs(data),
+      isRunning: false,
+    });
   };
 
   handleCsvUploadEvent = ({file = {}}: any) => {
@@ -207,7 +245,12 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
     const {data = []} = response;
 
     if (data && Array.isArray(data) && data.length > 0) {
-      this.setState({data, csv: response._csv || ''});
+      this.setState({
+        data,
+        results: this.filterResultsByJs(data),
+      });
+
+      this.setStateWithCache({csv: response._csv || ''});
     }
   };
 
@@ -301,7 +344,13 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
 
       await sleep(1000);
 
-      this.setState({data}, () => this.cacheSqlCode(sql));
+      this.setState(
+        {
+          data,
+          results: this.filterResultsByJs(data),
+        },
+        () => this.cacheSqlCode(sql)
+      );
     } catch (err) {
       const message = formatServerError(err);
       logger.error('Failed to run query:', err);
@@ -393,7 +442,13 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
                 value={mode}
                 size="large"
                 onChange={(value: string) => {
-                  this.setStateWithCache({mode: value});
+                  this.setStateWithCache({
+                    mode: value,
+                    // Reset?
+                    data: [],
+                    results: [],
+                    csv: '',
+                  });
                 }}
                 options={[
                   {value: 'sql', display: 'Import via SQL'},
@@ -639,9 +694,19 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
                   mx: 'auto',
                 }}
               >
-                <Title level={4}>
-                  Initial results {data.length ? `(${data.length})` : null}
-                </Title>
+                <Flex
+                  sx={{justifyContent: 'space-between', alignItems: 'center'}}
+                >
+                  <Title level={4}>
+                    Initial results {data.length ? `(${data.length})` : null}
+                  </Title>
+                  <Button
+                    size="small"
+                    onClick={() => this.setState({data: [], results: []})}
+                  >
+                    Clear
+                  </Button>
+                </Flex>
                 <Paragraph>
                   <Text type="secondary">
                     The initial data set you'll be working with. You can apply
@@ -651,7 +716,7 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
               </Box>
 
               <Box sx={{width: '100%', maxWidth: 960, mx: 'auto'}}>
-                <DynamicTable data={data} />
+                <DynamicTable loading={isRunning} data={data} />
               </Box>
             </Box>
 
@@ -672,7 +737,7 @@ export class BroadcastCustomersPageV2 extends React.Component<Props, State> {
                 <MonacoEditor
                   height="100%"
                   width="100%"
-                  defaultLanguage="javascript"
+                  defaultLanguage="typescript"
                   defaultValue={this.getDefaultJavascript()}
                   onMount={this.handleJsEditorMounted}
                 />
