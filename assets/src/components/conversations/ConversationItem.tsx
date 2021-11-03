@@ -56,6 +56,7 @@ const ConversationItem = ({
   const isPriority = priority === 'priority';
   const isClosed = status === 'closed';
   const isRead = !isUnreadConversation(conversation, currentUser);
+  const agentAvatarPhotoUrl = agent ? getUserProfilePhoto(agent) : null;
 
   return (
     <Box
@@ -123,11 +124,11 @@ const ConversationItem = ({
       <Flex sx={{alignItems: 'center'}}>
         {!!agent && (
           <SenderAvatar
-            sx={{opacity: 0.4, bg: colors.gray[0]}}
+            sx={{opacity: agentAvatarPhotoUrl ? 0.8 : 0.4, bg: colors.gray[0]}}
             isAgent
             size={16}
             name={getUserIdentifier(agent)}
-            avatarPhotoUrl={getUserProfilePhoto(agent)}
+            avatarPhotoUrl={agentAvatarPhotoUrl}
             color={color}
           />
         )}
