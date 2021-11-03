@@ -3,11 +3,16 @@ import {Box, Flex} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {colors, Badge, Text} from '../common';
-import {SmileTwoTone, StarFilled} from '../icons';
-import {formatRelativeTime} from '../../utils';
+import {UserOutlined, StarFilled} from '../icons';
+import {formatShortRelativeTime} from '../../utils';
 import {Conversation, Message} from '../../types';
-import {isUnreadConversation} from './support';
+import {
+  getUserIdentifier,
+  getUserProfilePhoto,
+  isUnreadConversation,
+} from './support';
 import {useAuth} from '../auth/AuthProvider';
+import {SenderAvatar} from './ChatMessage';
 
 dayjs.extend(utc);
 
@@ -18,12 +23,13 @@ const formatConversation = (
   const recent = messages[messages.length - 1];
   const ts = recent ? recent.created_at : conversation.created_at;
   const created = dayjs.utc(ts);
-  const date = formatRelativeTime(created);
+  const date = formatShortRelativeTime(created);
 
   return {
     ...conversation,
-    date: date || '1d', // TODO
+    date: dayjs().diff(created, 'second') < 10 ? 'Just now' : date,
     preview: recent && recent.body ? recent.body : '...',
+    agent: recent && recent.user ? recent.user : null,
     messages: messages,
   };
 };
@@ -45,7 +51,7 @@ const ConversationItem = ({
 }) => {
   const {currentUser} = useAuth();
   const formatted = formatConversation(conversation, messages);
-  const {id, priority, status, customer, date, preview} = formatted;
+  const {id, priority, status, customer, date, preview, agent} = formatted;
   const {name, email} = customer;
   const isPriority = priority === 'priority';
   const isClosed = status === 'closed';
@@ -64,19 +70,36 @@ const ConversationItem = ({
       }}
       onClick={() => onSelectConversation(id)}
     >
-      <Flex mb={2} sx={{justifyContent: 'space-between'}}>
+      <Flex mb={3} sx={{justifyContent: 'space-between', alignItems: 'center'}}>
         <Flex sx={{alignItems: 'center'}}>
           <Box mr={2}>
-            {isPriority ? (
-              <StarFilled style={{fontSize: 16, color: colors.gold}} />
-            ) : (
-              <SmileTwoTone style={{fontSize: 16}} twoToneColor={color} />
-            )}
+            <Flex
+              sx={{
+                bg:
+                  isPriority && color === colors.gold
+                    ? 'rgb(245, 245, 245)'
+                    : color,
+                opacity: 0.6,
+                height: 24,
+                width: 24,
+                fontSize: 24,
+                borderRadius: '50%',
+                justifyContent: 'center',
+                alignItems: 'center',
+                color: '#fff',
+              }}
+            >
+              {isPriority ? (
+                <StarFilled style={{fontSize: 12, color: colors.gold}} />
+              ) : (
+                <UserOutlined style={{fontSize: 12, color: colors.white}} />
+              )}
+            </Flex>
           </Box>
           <Text
             strong
             style={{
-              maxWidth: 120,
+              maxWidth: date.length > 4 ? 156 : 164,
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -96,19 +119,33 @@ const ConversationItem = ({
           <Badge status="processing" />
         )}
       </Flex>
-      <Box
-        style={{
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-      >
-        {isRead ? (
-          <Text type="secondary">{preview}</Text>
-        ) : (
-          <Text strong>{preview}</Text>
+
+      <Flex sx={{alignItems: 'center'}}>
+        {!!agent && (
+          <SenderAvatar
+            sx={{opacity: 0.4, bg: colors.gray[0]}}
+            isAgent
+            size={16}
+            name={getUserIdentifier(agent)}
+            avatarPhotoUrl={getUserProfilePhoto(agent)}
+            color={color}
+          />
         )}
-      </Box>
+        <Box
+          sx={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '90%',
+          }}
+        >
+          {isRead ? (
+            <Text type="secondary">{preview}</Text>
+          ) : (
+            <Text strong>{preview}</Text>
+          )}
+        </Box>
+      </Flex>
     </Box>
   );
 };
