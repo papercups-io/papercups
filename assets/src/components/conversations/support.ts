@@ -61,6 +61,16 @@ export const isUnreadConversation = (
   });
 };
 
+export const getUserIdentifier = (user: User) => {
+  const {display_name, full_name, email} = user;
+
+  return display_name || full_name || email || 'Agent';
+};
+
+export const getUserProfilePhoto = (user: User) => {
+  return user.profile_photo_url || null;
+};
+
 export const getSenderIdentifier = (
   message: Message,
   account?: Account | null
