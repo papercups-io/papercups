@@ -149,6 +149,7 @@ const ChatMessage = ({
       <Flex sx={{justifyContent: 'flex-start', alignItems: 'flex-end'}}>
         {isLastInGroup ? (
           <SenderAvatar
+            sx={{mb: '2px'}}
             name={tooltip}
             avatarPhotoUrl={avatarPhotoUrl}
             isAgent={isAgent}
