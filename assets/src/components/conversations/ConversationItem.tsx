@@ -100,7 +100,7 @@ const ConversationItem = ({
           <Text
             strong
             style={{
-              maxWidth: date.length > 4 ? 156 : 164,
+              maxWidth: isCustomerOnline || date.length > 4 ? 156 : 164,
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
