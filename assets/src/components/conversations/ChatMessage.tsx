@@ -114,8 +114,6 @@ const ChatMessage = ({
   const color = getColorByUuid(customerId);
   const avatarPhotoUrl = getSenderProfilePhoto(message, account);
 
-  // TODO: might be nice to push the boolean logic related to color down to the ChatMessageBox
-  // Maybe have PrivateChatMessageBox, ChatMessageBox, OtherCustomerMessageBox
   if (isMe) {
     return (
       <Box pr={0} pl={4} pb={isLastInGroup ? 3 : 2}>
