@@ -912,11 +912,13 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
+  @spec format_customer_device(Customer.t()) :: binary()
   def format_customer_device(%Customer{browser: nil, os: nil}), do: "N/A"
 
   def format_customer_device(%Customer{browser: browser, os: os}),
     do: [os, browser] |> Enum.reject(&is_nil/1) |> Enum.join(" · ")
 
+  @spec format_message_source(Message.t()) :: binary()
   def format_message_source(%Message{source: "email", metadata: %{"gmail_subject" => subject}})
       when is_binary(subject),
       do: ":email: Email (#{subject})"
@@ -931,6 +933,11 @@ defmodule ChatApi.Slack.Helpers do
   def format_message_source(%Message{source: nil}), do: "N/A"
   def format_message_source(%Message{source: source}), do: source
 
+  @spec initial_message_fields(%{
+          conversation: Conversation.t(),
+          customer: Customer.t(),
+          message: Message.t()
+        }) :: list(map())
   def initial_message_fields(%{
         conversation: conversation,
         message: message,
