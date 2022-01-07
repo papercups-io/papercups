@@ -18,7 +18,8 @@ defmodule ChatApi.CustomersTest do
       current_url:
         "http://test.com/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe",
       pathname:
-        "/test/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe"
+        "/test/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe",
+      metadata: %{"foo" => "bar"}
     }
     @invalid_attrs %{
       first_seen: 3
@@ -231,6 +232,7 @@ defmodule ChatApi.CustomersTest do
       assert customer.name == @update_attrs.name
       assert customer.phone == @update_attrs.phone
       assert customer.time_zone == @update_attrs.time_zone
+      assert customer.metadata == @update_attrs.metadata
 
       # `account_id` should not be customizable through this API
       assert customer.account_id != new_account.id
@@ -265,6 +267,13 @@ defmodule ChatApi.CustomersTest do
                Customers.sanitize_metadata(%{"current_url" => current_url})
 
       assert String.length(truncated) <= 255
+    end
+
+    test "sanitize_metadata/1 supports ad hoc metadata" do
+      assert %{} = Customers.sanitize_metadata(%{"metadata" => nil})
+
+      assert %{"metadata" => %{"foo" => "bar"}} =
+               Customers.sanitize_metadata(%{"metadata" => %{"foo" => "bar"}})
     end
 
     test "update_customer/2 with invalid data returns error changeset", %{customer: customer} do
