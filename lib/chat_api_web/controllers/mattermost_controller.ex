@@ -26,8 +26,6 @@ defmodule ChatApiWeb.MattermostController do
     account_id = current_user.account_id
     filters = Map.new(params, fn {key, value} -> {String.to_atom(key), value} end)
 
-    IO.inspect(filters, label: "HUH???")
-
     case Mattermost.get_authorization_by_account(account_id, filters) do
       nil ->
         json(conn, %{data: nil})

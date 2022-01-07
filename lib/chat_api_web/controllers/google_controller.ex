@@ -145,8 +145,6 @@ defmodule ChatApiWeb.GoogleController do
   end
 
   defp get_auth_state(params) do
-    IO.inspect(params, label: "!!!")
-
     case params do
       %{"state" => state} ->
         state
