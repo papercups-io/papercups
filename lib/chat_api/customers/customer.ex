@@ -111,7 +111,8 @@ defmodule ChatApi.Customers.Customer do
       :screen_height,
       :screen_width,
       :lib,
-      :time_zone
+      :time_zone,
+      :metadata
     ])
     |> validate_required([:first_seen, :last_seen_at, :account_id])
     |> foreign_key_constraint(:account_id)
