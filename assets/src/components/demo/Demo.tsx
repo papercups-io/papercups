@@ -196,7 +196,7 @@ class Demo extends React.Component<Props, State> {
           title={title || 'Welcome!'}
           subtitle={subtitle}
           primaryColor={color}
-          greeting="Hello :) have any questions or feedback? Alex or Kam will reply as soon as they can! In the meantime, come join our community [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)."
+          greeting="Hi try chatting here and changing the colors on the chat widget!"
           customer={customer}
           baseUrl={BASE_URL}
           iconVariant="filled"

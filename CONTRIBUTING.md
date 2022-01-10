@@ -28,9 +28,3 @@ Spotted a bug? Has deployment gone wrong? Do you have user feedback? [Raise an i
 ## Feature requests
 
 [Raise an issue](https://github.com/papercups-io/papercups/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=) for these and make sure it's tagged as an Enhancement. We love every idea. Please give us as much context on the "why" as possible.
-
-## Questions?
-
-Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)! :wave:
-
-Or if you prefer, email us at founders@papercups.io — we're always happy to chat!
