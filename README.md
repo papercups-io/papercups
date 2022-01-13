@@ -1,6 +1,7 @@
-# Maintenance Mode
+**:warning: Maintenance Mode**
 
-Papercups is in maintenance mode. Meaning there won't be major new features in the near future. We will still accept pull requests and conduct major bug fixes. 
+> _Papercups is in maintenance mode. This means there won't be any major new features in the near future. We will still accept pull requests and conduct major bug fixes._
+
 
 # Papercups
 
@@ -22,8 +23,8 @@ The fastest way to get started is one click deploy on Heroku with:
 We wanted to make a self-hosted customer support tool like Zendesk and Intercom for companies that have privacy and security concerns about having customer data going to third party services.
 
 ## Features
-- **Reply from email** - Answer support tickets from email
-- **Reply from SMS** - Forward twillio conversations into Papercups and respond to SMS requests from Papercups
+- **Reply from email** - use Papercups to answer support tickets via email
+- **Reply from SMS** - forward Twilio conversations and respond to SMS requests from Papercups
 - **Custom chat widget** - a customizable chat widget you can embed on your website to talk to your customers
 - **React support** - embed the chat widget as a [React component](https://github.com/papercups-io/chat-widget#using-in-react), or a simple [HTML snippet](https://github.com/papercups-io/chat-widget#using-in-html)
 - **React Native support** - embed the chat widget in your [React Native](https://github.com/papercups-io/chat-widget-native#papercups-iochat-widget-native) app
