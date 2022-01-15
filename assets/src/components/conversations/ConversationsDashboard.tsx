@@ -672,51 +672,14 @@ const Wrapper = (
   props: RouteComponentProps<{bucket: string; conversation_id?: string}>
 ) => {
   const {bucket, conversation_id: conversationId = null} = props.match.params;
-  const [account, setAccount] = React.useState<Account | null>(null);
-  const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>(
-    'loading'
-  );
-  const [error, setErrorMessage] = React.useState<string | null>(null);
-  const {currentUser} = useAuth();
-
-  React.useEffect(() => {
-    setStatus('loading');
-
-    API.fetchAccountInfo()
-      .then((account) => setAccount(account))
-      .then(() => setStatus('success'))
-      .catch((error) => {
-        setStatus('error');
-        setErrorMessage(formatServerError(error));
-      });
-  }, [bucket]);
+  const {currentUser, account} = useAuth();
 
   if (!isValidBucket(bucket)) {
     // TODO: render error or redirect to default
     return null;
   }
 
-  if (error || status === 'error') {
-    // TODO: render better error state?
-    return (
-      <Flex
-        sx={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100%',
-        }}
-      >
-        <Result
-          status="error"
-          title="Error retrieving inbox"
-          subTitle={error || 'Unknown error'}
-        />
-      </Flex>
-    );
-  } else if (status === 'loading') {
-    return null;
-  } else if (!account || !currentUser) {
+  if (!account || !currentUser) {
     return null;
   }
 
