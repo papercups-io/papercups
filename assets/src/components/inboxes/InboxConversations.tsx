@@ -3,7 +3,7 @@ import {RouteComponentProps} from 'react-router';
 import {Flex} from 'theme-ui';
 
 import * as API from '../../api';
-import {Account, Conversation, Inbox} from '../../types';
+import {Conversation, Inbox} from '../../types';
 import {Result} from '../common';
 import {formatServerError} from '../../utils';
 import {useAuth} from '../auth/AuthProvider';
@@ -16,21 +16,18 @@ const Wrapper = (
     inbox_id: inboxId,
     conversation_id: conversationId = null,
   } = props.match.params;
-  const [account, setAccount] = React.useState<Account | null>(null);
   const [inbox, setSelectedInbox] = React.useState<Inbox | null>(null);
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>(
     'loading'
   );
   const [error, setErrorMessage] = React.useState<string | null>(null);
-  const {currentUser} = useAuth();
+  const {currentUser, account} = useAuth();
 
   React.useEffect(() => {
     setStatus('loading');
 
-    Promise.all([
-      API.fetchAccountInfo().then((account) => setAccount(account)),
-      API.fetchInbox(inboxId).then((result) => setSelectedInbox(result)),
-    ])
+    API.fetchInbox(inboxId)
+      .then((result) => setSelectedInbox(result))
       .then(() => setStatus('success'))
       .catch((error) => {
         setStatus('error');

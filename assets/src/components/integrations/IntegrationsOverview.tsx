@@ -457,6 +457,16 @@ class IntegrationsOverview extends React.Component<Props, State> {
     return keys.map((key) => integrationsByKey[key] || null).filter(Boolean);
   };
 
+  getPopularIntegrations = () => {
+    const {integrationsByKey = {}} = this.state;
+
+    return Object.keys(integrationsByKey)
+      .map((key) => integrationsByKey[key])
+      .filter((record) => {
+        return record && record.isPopular;
+      });
+  };
+
   getInboxSourceChannels = () => {
     return this.getIntegrationsByKeys([
       'chat',
@@ -529,6 +539,17 @@ class IntegrationsOverview extends React.Component<Props, State> {
                     }
                     type="info"
                     showIcon
+                  />
+                </Box>
+
+                <Box px={3} mb={3}>
+                  <Title level={4}>Popular</Title>
+                </Box>
+                <Box mb={4}>
+                  <InboxIntegrationsTable
+                    loading={refreshing}
+                    inboxId={inbox.id}
+                    integrations={this.getPopularIntegrations()}
                   />
                 </Box>
 

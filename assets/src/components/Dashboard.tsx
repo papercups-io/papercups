@@ -43,7 +43,6 @@ import {
   isWindowHidden,
 } from '../utils';
 import {Account, User} from '../types';
-import * as API from '../api';
 import {useAuth} from './auth/AuthProvider';
 import {SocketProvider, SocketContext} from './auth/SocketProvider';
 import AccountOverview from './settings/AccountOverview';
@@ -244,14 +243,9 @@ const Dashboard = (props: RouteComponentProps) => {
   const auth = useAuth();
   const {pathname} = useLocation();
   const {unread} = useConversations();
-  const [account, setAccount] = React.useState<Account | null>(null);
-  const {currentUser} = auth;
-  const isAdminUser = currentUser?.role === 'admin';
 
-  React.useEffect(() => {
-    // TODO: figure out a better way to handle this
-    API.fetchAccountInfo().then((account) => setAccount(account));
-  }, []);
+  const {currentUser, account} = auth;
+  const isAdminUser = currentUser?.role === 'admin';
 
   const [section, key] = getSectionKey(pathname);
   const totalNumUnread = unread.conversations.open || 0;
