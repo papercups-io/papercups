@@ -540,15 +540,27 @@ export const ConversationsDashboard = ({
   }
 
   return (
-    <Layout style={{background: colors.white}}>
+    <Flex
+      sx={{
+        position: 'relative',
+        flex: 'auto',
+        flexDirection: 'column',
+        minHeight: 0,
+        background: colors.white,
+      }}
+    >
       <Sider
         theme="light"
         width={CONVERSATIONS_DASHBOARD_SIDER_WIDTH}
         style={{
           borderRight: '1px solid #f0f0f0',
+
           overflow: 'auto',
-          height: '100vh',
-          position: 'fixed',
+          height: '100%',
+          position: 'absolute',
+
+          left: 0,
+          bottom: 0,
         }}
       >
         <Box sx={{position: 'relative', borderBottom: '1px solid #f0f0f0'}}>
@@ -634,7 +646,7 @@ export const ConversationsDashboard = ({
           />
         )}
       </Layout>
-    </Layout>
+    </Flex>
   );
 };
 

@@ -8,6 +8,24 @@ export type Account = {
   widget_settings: Array<WidgetSettings>;
   working_hours: Array<any>;
   settings?: AccountSettings | null;
+  features?: AccountFeatures;
+};
+
+export type AccountFeatures = {
+  effective_subscription_plan?: string;
+  has_valid_subscription?: boolean;
+  can_reply_via_slack?: boolean;
+  can_reply_via_dashboard?: boolean;
+  can_use_private_notes?: boolean;
+  can_use_webhooks?: boolean;
+  can_use_lambdas?: boolean;
+  can_contact_support?: boolean;
+  can_add_inboxes?: boolean;
+  can_use_storytime?: boolean;
+  is_in_free_trial?: boolean;
+  is_early_adopter?: boolean;
+  days_left_in_trial?: number;
+  max_account_users?: number;
 };
 
 export type AccountSettings = {

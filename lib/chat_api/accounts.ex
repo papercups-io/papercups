@@ -174,4 +174,117 @@ defmodule ChatApi.Accounts do
     # TODO: how should we handle accounts without a valid time zone?
     false
   end
+
+  # TODO: should these feature "flags" be handled in a different module?
+
+  def features(%Account{} = account) do
+    %{
+      effective_subscription_plan: account.subscription_plan,
+      has_valid_subscription: has_valid_subscription?(account),
+      can_reply_via_slack: can_reply_via_slack?(account),
+      can_reply_via_dashboard: can_reply_via_dashboard?(account),
+      can_use_private_notes: can_use_private_notes?(account),
+      can_use_webhooks: can_use_webhooks?(account),
+      can_use_lambdas: can_use_lambdas?(account),
+      can_contact_support: can_contact_support?(account),
+      can_add_inboxes: can_add_inboxes?(account),
+      can_use_storytime: can_use_storytime?(account),
+      is_in_free_trial: is_in_free_trial?(account),
+      is_early_adopter: is_early_adopter?(account),
+      days_left_in_trial: days_left_in_trial(account)
+    }
+  end
+
+  def has_valid_subscription?(account) do
+    case account do
+      %Account{
+        stripe_customer_id: "cus_" <> _,
+        stripe_default_payment_method_id: "pm_" <> _,
+        stripe_product_id: "prod_" <> _,
+        stripe_subscription_id: "sub_" <> _
+      } ->
+        true
+
+      _ ->
+        false
+    end
+  end
+
+  @spec has_plan_or_above?(Account.t(), binary()) :: boolean
+  def has_plan_or_above?(%Account{subscription_plan: plan}, "starter")
+      when plan in ["starter", "lite", "team"],
+      do: true
+
+  def has_plan_or_above?(%Account{subscription_plan: plan}, "lite")
+      when plan in ["lite", "team"],
+      do: true
+
+  def has_plan_or_above?(%Account{subscription_plan: "team"}, "team"),
+    do: true
+
+  def has_plan_or_above?(_, _), do: false
+
+  def can_access_plan_features?(%Account{} = account, plan) do
+    has_plan_or_above?(account, plan) || is_in_free_trial?(account) || is_early_adopter?(account)
+  end
+
+  def can_reply_via_slack?(%Account{} = account),
+    do: can_access_plan_features?(account, "lite")
+
+  def can_reply_via_dashboard?(%Account{} = account),
+    do: can_access_plan_features?(account, "starter")
+
+  def can_use_private_notes?(%Account{} = account),
+    do: can_access_plan_features?(account, "lite")
+
+  def can_use_webhooks?(%Account{} = account),
+    do: can_access_plan_features?(account, "team")
+
+  def can_use_lambdas?(%Account{} = account),
+    do: can_access_plan_features?(account, "team")
+
+  def can_contact_support?(%Account{} = account),
+    do: can_access_plan_features?(account, "team")
+
+  def can_add_inboxes?(%Account{} = account),
+    do: can_access_plan_features?(account, "team")
+
+  def can_use_storytime?(%Account{} = account),
+    do: can_access_plan_features?(account, "team")
+
+  @early_adopter_cutoff_date ~U[2021-03-01 00:00:00Z]
+  @days_in_trial 14
+  @trial_period_in_seconds 14 * 24 * 60 * 60
+
+  def is_in_free_trial?(%Account{inserted_at: inserted_at}) do
+    # Checks if account was created less than 14 days ago
+    inserted_at
+    |> DateTime.from_naive!("Etc/UTC")
+    |> DateTime.add(@trial_period_in_seconds, :second)
+    |> DateTime.compare(DateTime.utc_now())
+    |> case do
+      :gt -> true
+      _ -> false
+    end
+  end
+
+  def is_early_adopter?(%Account{inserted_at: inserted_at}) do
+    inserted_at
+    |> DateTime.from_naive!("Etc/UTC")
+    |> DateTime.compare(@early_adopter_cutoff_date)
+    |> case do
+      :lt -> true
+      _ -> false
+    end
+  end
+
+  def days_left_in_trial(%Account{inserted_at: inserted_at}) do
+    days_since_creation =
+      Date.diff(
+        Date.utc_today(),
+        NaiveDateTime.to_date(inserted_at)
+      )
+
+    max(@days_in_trial - days_since_creation, 0)
+  end
 end

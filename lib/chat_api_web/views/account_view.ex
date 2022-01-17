@@ -36,7 +36,8 @@ defmodule ChatApiWeb.AccountView do
       # TODO: not sure if this logic should be handled on the client instead, but this simplifies things for now
       is_outside_working_hours: Accounts.is_outside_working_hours?(account),
       current_minutes_since_midnight:
-        Utils.DateTimeUtils.current_minutes_since_midnight(account.time_zone)
+        Utils.DateTimeUtils.current_minutes_since_midnight(account.time_zone),
+      features: Accounts.features(account)
     }
   end
 
@@ -56,7 +57,8 @@ defmodule ChatApiWeb.AccountView do
       # TODO: not sure if this logic should be handled on the client instead, but this simplifies things for now
       is_outside_working_hours: Accounts.is_outside_working_hours?(account),
       current_minutes_since_midnight:
-        Utils.DateTimeUtils.current_minutes_since_midnight(account.time_zone)
+        Utils.DateTimeUtils.current_minutes_since_midnight(account.time_zone),
+      features: Accounts.features(account)
     }
   end
 end
