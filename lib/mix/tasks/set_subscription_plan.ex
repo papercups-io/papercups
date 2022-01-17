@@ -25,7 +25,7 @@ defmodule Mix.Tasks.SetSubscriptionPlan do
     Application.ensure_all_started(:chat_api)
 
     case args do
-      [account_id, plan] when plan in ["starter", "team"] ->
+      [account_id, plan] when plan in ["starter", "lite", "team"] ->
         account_id
         |> ChatApi.Accounts.get_account!()
         |> ChatApi.Accounts.update_billing_info(%{subscription_plan: plan})

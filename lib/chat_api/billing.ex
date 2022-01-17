@@ -152,4 +152,18 @@ defmodule ChatApi.Billing do
       error -> error
     end
   end
+
+  def cancel_subscription_plan(account) do
+    with {:ok, _} <-
+           Stripe.Subscription.delete(account.stripe_subscription_id) do
+      Accounts.update_billing_info(account, %{
+        stripe_subscription_id: nil,
+        stripe_product_id: nil,
+        # TODO: figure out a better way to handle this
+        subscription_plan: "starter"
+      })
+    else
+      error -> error
+    end
+  end
 end

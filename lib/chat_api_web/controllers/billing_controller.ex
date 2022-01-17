@@ -38,13 +38,27 @@ defmodule ChatApiWeb.BillingController do
     end
   end
 
-  @spec notify_slack(Plug.Conn.t(), binary()) :: Plug.Conn.t()
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def delete(conn, _params) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         account <- Accounts.get_account!(account_id),
+         {:ok, _account} <- Billing.cancel_subscription_plan(account) do
+      conn
+      |> notify_slack(nil)
+      |> json(%{data: %{ok: true}})
+    end
+  end
+
+  @spec notify_slack(Plug.Conn.t(), binary() | nil) :: Plug.Conn.t()
   defp notify_slack(conn, plan) do
     with %{email: email} <- conn.assigns.current_user do
       # Putting in an async Task for now, since we don't care if this succeeds
       # or fails (and we also don't want it to block anything)
       Task.start(fn ->
-        ChatApi.Slack.Notification.log("#{email} set subscription plan to #{plan}")
+        case plan do
+          nil -> ChatApi.Slack.Notification.log("#{email} canceled their subscription")
+          _ -> ChatApi.Slack.Notification.log("#{email} set subscription plan to #{plan}")
+        end
       end)
     end
 

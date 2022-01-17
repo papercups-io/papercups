@@ -2,13 +2,14 @@ import React, {useContext} from 'react';
 import {getAuthTokens, setAuthTokens, removeAuthTokens} from '../../storage';
 import * as API from '../../api';
 import logger from '../../logger';
-import {User} from '../../types';
+import {Account, User} from '../../types';
 
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
   tokens: any | null;
   loading: boolean;
   currentUser: User | null;
+  account: Account | null;
   register: (params: any) => Promise<void>;
   login: (params: any) => Promise<void>;
   logout: () => Promise<void>;
@@ -18,6 +19,7 @@ export const AuthContext = React.createContext<{
   tokens: null,
   loading: false,
   currentUser: null,
+  account: null,
   register: () => Promise.resolve(),
   login: () => Promise.resolve(),
   logout: () => Promise.resolve(),
@@ -34,6 +36,7 @@ type State = {
   loading: boolean;
   tokens: any;
   currentUser: User | null;
+  account: Account | null;
   isAuthenticated: boolean;
 };
 
@@ -49,6 +52,7 @@ export class AuthProvider extends React.Component<Props, State> {
       loading: true,
       isAuthenticated: false,
       currentUser: null,
+      account: null,
       tokens: cachedTokens,
     };
   }
@@ -65,9 +69,12 @@ export class AuthProvider extends React.Component<Props, State> {
 
     // Attempt refresh auth session on load
     await this.refresh(refreshToken);
-    const currentUser = await this.fetchCurrentUser();
+    const [currentUser, account] = await Promise.all([
+      this.fetchCurrentUser(),
+      this.fetchCurrentAccount(),
+    ]);
 
-    this.setState({currentUser, loading: false});
+    this.setState({currentUser, account, loading: false});
   }
 
   componentWillUnmount() {
@@ -79,10 +86,13 @@ export class AuthProvider extends React.Component<Props, State> {
   handleAuthSuccess = async (tokens: any) => {
     setAuthTokens(tokens);
 
-    const currentUser = await this.fetchCurrentUser();
+    const [currentUser, account] = await Promise.all([
+      this.fetchCurrentUser(),
+      this.fetchCurrentAccount(),
+    ]);
     const nextRefreshToken = tokens && tokens.renew_token;
 
-    this.setState({tokens, currentUser, isAuthenticated: true});
+    this.setState({tokens, currentUser, account, isAuthenticated: true});
 
     // Refresh the session every 20 mins to avoid the access token expiring
     // (By default, the session will expire after 30 mins)
@@ -98,8 +108,19 @@ export class AuthProvider extends React.Component<Props, State> {
     this.setState({
       tokens: null,
       currentUser: null,
+      account: null,
       isAuthenticated: false,
     });
+  };
+
+  fetchCurrentAccount = async () => {
+    return API.fetchAccountInfo()
+      .then((account) => account)
+      .catch((err) => {
+        logger.error('Could not retrieve current account:', err);
+
+        return null;
+      });
   };
 
   fetchCurrentUser = async () => {
@@ -151,7 +172,7 @@ export class AuthProvider extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, isAuthenticated, tokens, currentUser} = this.state;
+    const {loading, isAuthenticated, tokens, currentUser, account} = this.state;
 
     return (
       <AuthContext.Provider
@@ -160,6 +181,7 @@ export class AuthProvider extends React.Component<Props, State> {
           isAuthenticated,
           tokens,
           currentUser,
+          account,
 
           register: this.register,
           login: this.login,

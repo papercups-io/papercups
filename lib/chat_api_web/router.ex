@@ -87,6 +87,7 @@ defmodule ChatApiWeb.Router do
     get("/billing", BillingController, :show)
     post("/billing", BillingController, :create)
     put("/billing", BillingController, :update)
+    delete("/billing", BillingController, :delete)
     get("/reporting", ReportingController, :index)
     get("/onboarding_status", OnboardingStatusController, :index)
 
