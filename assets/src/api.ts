@@ -1525,6 +1525,17 @@ export const updateSubscriptionPlan = async (
     .then((res) => res.body.data);
 };
 
+export const cancelSubscriptionPlan = async (token = getAccessToken()) => {
+  if (!token) {
+    throw new Error('Invalid token!');
+  }
+
+  return request
+    .delete(`/api/billing`)
+    .set('Authorization', token)
+    .then((res) => res.body.data);
+};
+
 export const createPaymentMethod = async (
   paymentMethod: any,
   token = getAccessToken()
