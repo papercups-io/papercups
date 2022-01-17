@@ -1,6 +1,6 @@
 # Maintenance Mode
 
-Papercups is in maintenance mode. Meaning there won't be major new features in the near future. We will still accept pull requests and conduct major bug fixes. 
+Papercups is in maintenance mode. Meaning there won't be major new features in the near future. We will still accept pull requests and conduct major bug fixes. Read more [here](https://papercups.io/blog/papercups-maintenance)
 
 # Papercups
 
