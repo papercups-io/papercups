@@ -13,6 +13,7 @@ import {
   Container,
   Modal,
   Paragraph,
+  Popconfirm,
   Select,
   Table,
   Text,
@@ -163,7 +164,7 @@ class BillingOverview extends React.Component<Props, State> {
       subscription_plan: selectedSubscriptionPlan,
     } = await API.fetchBillingInfo();
 
-    logger.debug({
+    logger.debug('Billing info:', {
       subscription,
       product,
       numUsers,
@@ -257,6 +258,15 @@ class BillingOverview extends React.Component<Props, State> {
     });
   };
 
+  handleCancelSubscription = async () => {
+    try {
+      await API.cancelSubscriptionPlan();
+      await this.refreshBillingInfo();
+    } catch (err) {
+      logger.error('Error canceling subscription:', err);
+    }
+  };
+
   formatPaymentMethodInfo = (paymentMethod?: any) => {
     if (!paymentMethod) {
       return (
@@ -346,6 +356,21 @@ class BillingOverview extends React.Component<Props, State> {
             </Box>
           )}
 
+          {!subscription && (
+            <Box mb={3}>
+              <Alert
+                message={
+                  <Text>
+                    You are currently on a free trial of Papercups. Please
+                    select a subscription plan to continue using your account.
+                  </Text>
+                }
+                type="info"
+                showIcon
+              />
+            </Box>
+          )}
+
           <Box>
             <Flex sx={{alignItems: 'center'}}>
               <Box mr={3}>
@@ -354,12 +379,23 @@ class BillingOverview extends React.Component<Props, State> {
                 </Text>
               </Box>
 
-              <Button
-                icon={<RightCircleOutlined />}
-                onClick={this.handleOpenPricingModal}
-              >
-                Update subscription plan
-              </Button>
+              <Box mr={2}>
+                <Button type="primary" onClick={this.handleOpenPricingModal}>
+                  Update subscription
+                </Button>
+              </Box>
+
+              <Box>
+                <Popconfirm
+                  title="Are you sure you want to cancel your subscription?"
+                  okText="Yes"
+                  cancelText="No"
+                  placement="bottomLeft"
+                  onConfirm={this.handleCancelSubscription}
+                >
+                  <Button danger>Cancel subscription</Button>
+                </Popconfirm>
+              </Box>
             </Flex>
 
             <Modal
@@ -415,7 +451,8 @@ class BillingOverview extends React.Component<Props, State> {
           {trialEndDate && (
             <Box mb={3}>
               <Text type="secondary">
-                (Free trial ends <Text strong>{trialEndDate}</Text>)
+                (Free trial of Papercups ends <Text strong>{trialEndDate}</Text>
+                )
               </Text>
             </Box>
           )}
