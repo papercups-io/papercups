@@ -156,16 +156,8 @@ defmodule ChatApi.Messages.Notification do
       "Sending message notification: :conversation_reply_email (message #{inspect(message.id)})"
     )
 
-    # 20 minutes (TODO: make this configurable?)
-    schedule_in = 20 * 60
-    formatted = Helpers.format(message)
-
-    # TODO: not sure the best way to handle this, but basically we want to only
-    # enqueue the latest message to trigger an email if it remains unseen for 2 mins
-    ChatApi.Workers.SendConversationReplyEmail.cancel_pending_jobs(formatted)
-
-    %{message: formatted}
-    |> ChatApi.Workers.SendConversationReplyEmail.new(schedule_in: schedule_in)
+    %{message: Helpers.format(message)}
+    |> ChatApi.Workers.SendConversationReplyEmail.new()
     |> Oban.insert()
 
     message

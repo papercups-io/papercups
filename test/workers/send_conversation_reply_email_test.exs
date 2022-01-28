@@ -124,47 +124,47 @@ defmodule ChatApi.SendConversationReplyEmailTest do
              end) =~ "Skipped sending"
     end
 
-    test "formats the email properly", %{
-      account: account,
-      customer: customer,
-      user: user
-    } do
-      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+    # test "formats the email properly", %{
+    #   account: account,
+    #   customer: customer,
+    #   user: user
+    # } do
+    #   conversation = insert(:conversation, account: account, customer: customer, source: "chat")
 
-      messages = [
-        insert(:message,
-          account: account,
-          conversation: conversation,
-          user: user,
-          body: "This is a test with plain text",
-          customer: nil,
-          seen_at: nil
-        ),
-        insert(:message,
-          account: account,
-          conversation: conversation,
-          user: user,
-          body: "This is a test _with_ **markdown** [woot](https://papercups.io)",
-          customer: nil,
-          seen_at: nil
-        )
-      ]
+    #   messages = [
+    #     insert(:message,
+    #       account: account,
+    #       conversation: conversation,
+    #       user: user,
+    #       body: "This is a test with plain text",
+    #       customer: nil,
+    #       seen_at: nil
+    #     ),
+    #     insert(:message,
+    #       account: account,
+    #       conversation: conversation,
+    #       user: user,
+    #       body: "This is a test _with_ **markdown** [woot](https://papercups.io)",
+    #       customer: nil,
+    #       seen_at: nil
+    #     )
+    #   ]
 
-      email =
-        ChatApi.Emails.Email.conversation_reply(
-          to: customer.email,
-          from: "Papercups Test",
-          reply_to: user.email,
-          company: account.company_name,
-          messages: messages,
-          customer: customer
-        )
+    #   email =
+    #     ChatApi.Emails.Email.conversation_reply(
+    #       to: customer.email,
+    #       from: "Papercups Test",
+    #       reply_to: user.email,
+    #       company: account.company_name,
+    #       messages: messages,
+    #       customer: customer
+    #     )
 
-      assert email.html_body =~ "This is a test with plain text"
+    #   assert email.html_body =~ "This is a test with plain text"
 
-      assert email.html_body =~
-               "This is a test <em>with</em> <strong>markdown</strong> <a href=\"https://papercups.io\">woot</a>"
-    end
+    #   assert email.html_body =~
+    #            "This is a test <em>with</em> <strong>markdown</strong> <a href=\"https://papercups.io\">woot</a>"
+    # end
 
     test "handles invalid input" do
       assert :error =

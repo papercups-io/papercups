@@ -1,7 +1,9 @@
 defmodule ChatApiWeb.UserInvitationEmailController do
   use ChatApiWeb, :controller
 
-  alias ChatApi.{Accounts, UserInvitations}
+  require Logger
+
+  alias ChatApi.{Accounts, Users, UserInvitations}
   alias ChatApi.UserInvitations.UserInvitation
 
   plug ChatApiWeb.EnsureRolePlug, :admin when action in [:create]
@@ -28,12 +30,22 @@ defmodule ChatApiWeb.UserInvitationEmailController do
       {:ok, %UserInvitation{} = user_invitation} =
         UserInvitations.create_user_invitation(%{account_id: current_user.account_id})
 
-      enqueue_user_invitation_email(
-        current_user.id,
-        current_user.account_id,
-        to_address,
-        user_invitation.id
-      )
+      if send_user_invitation_email_enabled?() do
+        user = Users.get_user_info(current_user.account_id, current_user.id)
+        account = Accounts.get_account!(current_user.account_id)
+
+        Logger.info("Sending user invitation email to #{to_address}")
+
+        result =
+          ChatApi.Emails.send_user_invitation_email(
+            user,
+            account,
+            to_address,
+            user_invitation.id
+          )
+
+        IO.inspect(result, label: "Sent user invitation email")
+      end
 
       conn
       |> put_status(:created)
@@ -41,14 +53,11 @@ defmodule ChatApiWeb.UserInvitationEmailController do
     end
   end
 
-  def enqueue_user_invitation_email(user_id, account_id, to_address, invitation_token) do
-    %{
-      user_id: user_id,
-      account_id: account_id,
-      to_address: to_address,
-      invitation_token: invitation_token
-    }
-    |> ChatApi.Workers.SendUserInvitationEmail.new()
-    |> Oban.insert()
+  @spec send_user_invitation_email_enabled? :: boolean()
+  defp send_user_invitation_email_enabled?() do
+    case System.get_env("USER_INVITATION_EMAIL_ENABLED") do
+      x when x == "1" or x == "true" -> true
+      _ -> false
+    end
   end
 end
