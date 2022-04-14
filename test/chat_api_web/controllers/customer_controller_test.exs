@@ -123,7 +123,8 @@ defmodule ChatApiWeb.CustomerControllerTest do
         put(authed_conn, Routes.customer_path(authed_conn, :update, customer),
           customer: %{
             email: "updated@example.com",
-            name: "Updated Name"
+            name: "Updated Name",
+            metadata: %{"bar" => "baz"}
           }
         )
 
@@ -134,7 +135,8 @@ defmodule ChatApiWeb.CustomerControllerTest do
       assert %{
                "id" => _id,
                "email" => "updated@example.com",
-               "name" => "Updated Name"
+               "name" => "Updated Name",
+               "metadata" => %{"bar" => "baz"}
              } = json_response(resp, 200)["data"]
     end
 
