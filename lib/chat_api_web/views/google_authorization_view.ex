@@ -20,6 +20,7 @@ defmodule ChatApiWeb.GoogleAuthorizationView do
       id: google_authorization.id,
       client: google_authorization.client,
       created_at: google_authorization.inserted_at,
+      updated_at: google_authorization.updated_at,
       account_id: google_authorization.account_id,
       user_id: google_authorization.user_id,
       scope: google_authorization.scope

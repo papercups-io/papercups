@@ -9,8 +9,9 @@ defmodule ChatApi.Conversations do
   alias ChatApi.Accounts.Account
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Customers.Customer
+  alias ChatApi.Mentions.Mention
   alias ChatApi.Messages.Message
-  alias ChatApi.Tags.{Tag, ConversationTag}
+  alias ChatApi.Tags.ConversationTag
 
   @spec list_conversations_by_account(binary(), map()) :: [Conversation.t()]
   def list_conversations_by_account(account_id, filters \\ %{}) do
@@ -19,9 +20,28 @@ defmodule ChatApi.Conversations do
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
     |> filter_by_tag(filters)
+    |> filter_by_mention(filters)
+    |> filter_by_text(filters)
     |> order_by_most_recent_message()
-    |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
+    |> preload([
+      :customer,
+      mentions: [:user],
+      messages: [:attachments, :customer, user: :profile]
+    ])
     |> Repo.all()
+  end
+
+  @spec count_conversations_where(binary(), map()) :: integer()
+  def count_conversations_where(account_id, filters \\ %{}) do
+    Conversation
+    |> select([c], count(c.id, :distinct))
+    |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where([c], is_nil(c.archived_at))
+    |> filter_by_tag(filters)
+    |> filter_by_mention(filters)
+    |> filter_by_text(filters)
+    |> Repo.one()
   end
 
   @spec list_conversations_by_account_paginated(binary(), map(), Keyword.t()) ::
@@ -35,42 +55,24 @@ defmodule ChatApi.Conversations do
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
     |> where([c], is_nil(c.archived_at))
-    |> order_by(desc: :last_activity_at, desc: :id)
-    |> preload([:customer, messages: [:attachments, :customer, user: :profile]])
-    |> Repo.paginate_with_cursor(
-      Keyword.merge([cursor_fields: [last_activity_at: :desc, id: :desc]], pagination_options)
-    )
-  end
-
-  @spec list_conversations_by_account_v2(binary(), map()) :: [Conversation.t()]
-  def list_conversations_by_account_v2(account_id, filters \\ %{}) do
-    # TODO: eventually DRY this up with `list_recent_by_customer/3` below... but for now
-    # we're cool with some code duplication while we're still figuring out the shape of our APIs
-
-    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
-    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
-    ranking_query =
-      from m in Message,
-        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
-        windows: [
-          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
-        ]
-
-    # We just want to query the most recent message
-    messages_query =
-      from m in Message,
-        join: r in subquery(ranking_query),
-        on: m.id == r.id and r.row_number <= 1,
-        preload: [:attachments, :customer, user: :profile]
-
-    Conversation
-    |> where(account_id: ^account_id)
-    |> where(^filter_where(filters))
-    |> where([c], is_nil(c.archived_at))
     |> filter_by_tag(filters)
-    |> order_by_most_recent_message()
-    |> preload([:customer, messages: ^messages_query])
-    |> Repo.all()
+    |> filter_by_mention(filters)
+    |> filter_by_text(filters)
+    |> order_by(desc: :last_activity_at, desc: :id)
+    |> preload([
+      :customer,
+      mentions: [:user],
+      messages: [:attachments, :customer, user: :profile]
+    ])
+    |> Repo.paginate_with_cursor(
+      Keyword.merge(
+        [
+          include_total_count: true,
+          cursor_fields: [last_activity_at: :desc, id: :desc]
+        ],
+        pagination_options
+      )
+    )
   end
 
   @spec list_other_recent_conversations(Conversation.t(), integer(), map()) :: [Conversation.t()]
@@ -83,24 +85,12 @@ defmodule ChatApi.Conversations do
         limit \\ 5,
         filters \\ %{}
       ) do
-    # TODO: eventually DRY this up with `list_recent_by_customer/3` below... but for now
-    # we're cool with some code duplication while we're still figuring out the shape of our APIs
-
-    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
-    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
-    ranking_query =
-      from m in Message,
-        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
-        windows: [
-          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
-        ]
-
-    # We just want to query the most recent message
     messages_query =
-      from m in Message,
-        join: r in subquery(ranking_query),
-        on: m.id == r.id and r.row_number <= 1,
+      ChatApi.Messages.query_most_recent_message(
+        partition_by: :conversation_id,
+        order_by: [desc: :inserted_at],
         preload: [:customer, user: :profile]
+      )
 
     Conversation
     |> where(account_id: ^account_id)
@@ -165,22 +155,62 @@ defmodule ChatApi.Conversations do
     end
   end
 
+  @spec list_forgotten_conversations(binary(), integer()) :: [Conversation.t()]
+  def list_forgotten_conversations(account_id, hours \\ 24) do
+    ranking_query =
+      from(m in Message,
+        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
+        windows: [
+          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
+        ]
+      )
+
+    messages_query =
+      from(m in Message,
+        join: r in subquery(ranking_query),
+        on: m.id == r.id and r.row_number <= 1
+      )
+
+    query =
+      from(c in Conversation,
+        where: c.status == "open" and c.account_id == ^account_id and is_nil(c.archived_at),
+        join: most_recent_messages in subquery(messages_query),
+        on: most_recent_messages.conversation_id == c.id,
+        on:
+          not is_nil(most_recent_messages.customer_id) or
+            fragment(
+              """
+              (?."metadata"->>'is_reminder' = 'true')
+              """,
+              most_recent_messages
+            ),
+        on: most_recent_messages.inserted_at < ago(^hours, "hour")
+      )
+
+    query
+    |> preload([:customer, messages: ^messages_query])
+    |> Repo.all()
+  end
+
   @customer_conversations_limit 3
 
   # Used externally in chat widget
-  @spec find_by_customer(binary(), binary()) :: [Conversation.t()]
-  def find_by_customer(customer_id, account_id) do
+  @spec find_by_customer(binary(), binary(), map()) :: [Conversation.t()]
+  def find_by_customer(customer_id, account_id, filters \\ %{}) do
     # NB: this is the method used to fetch conversations for a customer in the widget,
     # so we need to make sure that private messages are excluded from the query.
     messages =
-      from m in Message,
+      from(m in Message,
         where: m.private == false,
         order_by: m.inserted_at,
         preload: [:attachments, user: :profile]
+      )
 
     Conversation
     |> where(customer_id: ^customer_id)
     |> where(account_id: ^account_id)
+    |> where(^filter_where(filters))
+    |> where(source: "chat")
     |> where(status: "open")
     |> where([c], is_nil(c.archived_at))
     |> order_by(desc: :inserted_at)
@@ -189,24 +219,26 @@ defmodule ChatApi.Conversations do
     |> Repo.all()
   end
 
+  @spec find_latest_conversation(binary(), map()) :: Conversation.t() | nil
+  def find_latest_conversation(account_id, filters) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> where(account_id: ^account_id)
+    |> where([c], is_nil(c.archived_at))
+    |> order_by(desc: :inserted_at)
+    |> first()
+    |> Repo.one()
+  end
+
   # Used internally in dashboard
   @spec list_recent_by_customer(binary(), binary(), integer()) :: [Conversation.t()]
   def list_recent_by_customer(customer_id, account_id, limit \\ 5) do
-    # For more info, see https://hexdocs.pm/ecto/Ecto.Query.html#preload/3-preload-queries
-    # and https://hexdocs.pm/ecto/Ecto.Query.html#windows/3-window-expressions
-    ranking_query =
-      from m in Message,
-        select: %{id: m.id, row_number: row_number() |> over(:messages_partition)},
-        windows: [
-          messages_partition: [partition_by: :conversation_id, order_by: [desc: :inserted_at]]
-        ]
-
-    # We just want to query the most recent message
     messages_query =
-      from m in Message,
-        join: r in subquery(ranking_query),
-        on: m.id == r.id and r.row_number <= 1,
+      ChatApi.Messages.query_most_recent_message(
+        partition_by: :conversation_id,
+        order_by: [desc: :inserted_at],
         preload: [:customer, user: :profile]
+      )
 
     Conversation
     |> where(account_id: ^account_id)
@@ -220,6 +252,7 @@ defmodule ChatApi.Conversations do
 
   @spec order_by_most_recent_message(Ecto.Query.t()) :: Ecto.Query.t()
   def order_by_most_recent_message(query) do
+    # TODO: replace with sorting by `last_activity_at`
     query
     |> join(
       :left_lateral,
@@ -227,9 +260,10 @@ defmodule ChatApi.Conversations do
       f in fragment(
         "SELECT inserted_at FROM messages WHERE conversation_id = ? ORDER BY inserted_at DESC LIMIT 1",
         c.id
-      )
+      ),
+      as: :last_message_created_at
     )
-    |> order_by([c, f], desc: f)
+    |> order_by([c, last_message_created_at: l], desc: l)
   end
 
   @spec get_conversation!(binary()) :: Conversation.t()
@@ -287,6 +321,14 @@ defmodule ChatApi.Conversations do
     |> Repo.update()
   end
 
+  @spec skip_update?(Conversation.t(), map()) :: boolean()
+  def skip_update?(%Conversation{} = conversation, updates),
+    do: Enum.all?(updates, fn {k, v} -> Map.get(conversation, k) == v end)
+
+  @spec should_update?(Conversation.t(), map()) :: boolean()
+  def should_update?(%Conversation{} = conversation, updates),
+    do: !skip_update?(conversation, updates)
+
   @spec mark_conversation_read(Conversation.t() | binary()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
   def mark_conversation_read(%Conversation{} = conversation) do
@@ -309,6 +351,13 @@ defmodule ChatApi.Conversations do
     conversation = get_conversation!(conversation_id)
 
     mark_conversation_unread(conversation)
+  end
+
+  def mark_mentions_seen(conversation_id, user_id) do
+    Mention
+    |> where(conversation_id: ^conversation_id, user_id: ^user_id)
+    |> where([m], is_nil(m.seen_at))
+    |> Repo.update_all(set: [seen_at: DateTime.utc_now()])
   end
 
   @spec get_unseen_agent_messages(binary()) :: [Message.t()]
@@ -361,17 +410,18 @@ defmodule ChatApi.Conversations do
   # TODO: I wonder if this should live somewhere else...
   @spec query_free_tier_conversations_inactive_for([{:days, number}]) :: Ecto.Query.t()
   def query_free_tier_conversations_inactive_for(days: days) do
-    from c in Conversation,
+    from(c in Conversation,
       join: a in Account,
       on: a.id == c.account_id,
       join:
         last_message in subquery(
-          from m in Message,
+          from(m in Message,
             group_by: m.conversation_id,
             select: %{
               conversation_id: m.conversation_id,
               most_recently_inserted_at: max(m.inserted_at)
             }
+          )
         ),
       on: last_message.conversation_id == c.id,
       where:
@@ -379,6 +429,7 @@ defmodule ChatApi.Conversations do
           a.subscription_plan == "starter" and c.priority == "not_priority" and
           c.inserted_at < ago(^days, "day") and
           last_message.most_recently_inserted_at < ago(^days, "day")
+    )
   end
 
   @spec query_conversations_closed_for([{:days, number}]) :: Ecto.Query.t()
@@ -387,6 +438,28 @@ defmodule ChatApi.Conversations do
     |> where([c], is_nil(c.archived_at))
     |> where(status: "closed")
     |> where([c], c.updated_at < ago(^days, "day"))
+  end
+
+  @spec query_most_recent_conversation(keyword()) :: Ecto.Query.t()
+  def query_most_recent_conversation(opts \\ []) do
+    partition_by = Keyword.get(opts, :partition_by, :account_id)
+    order_by = Keyword.get(opts, :order_by, desc: :last_activity_at)
+    preload = Keyword.get(opts, :preload, [])
+
+    ranking_query =
+      from(m in Conversation,
+        select: %{id: m.id, row_number: row_number() |> over(:conversations_partition)},
+        windows: [
+          conversations_partition: [partition_by: ^partition_by, order_by: ^order_by]
+        ]
+      )
+
+    # We just want to query the most recent conversation
+    from(c in Conversation,
+      join: r in subquery(ranking_query),
+      on: c.id == r.id and r.row_number <= 1,
+      preload: ^preload
+    )
   end
 
   @spec delete_conversation(Conversation.t()) ::
@@ -417,6 +490,26 @@ defmodule ChatApi.Conversations do
     end
   end
 
+  def is_first_message?(%Message{conversation_id: conversation_id, id: message_id}),
+    do: is_first_message?(conversation_id, message_id)
+
+  @spec get_previous_message(Message.t(), map()) :: Message.t() | nil
+  def get_previous_message(
+        %Message{
+          inserted_at: inserted_at,
+          conversation_id: conversation_id
+        },
+        filters \\ %{}
+      ) do
+    Message
+    |> where(conversation_id: ^conversation_id)
+    |> where([m], m.inserted_at < ^inserted_at)
+    |> where(^ChatApi.Messages.filter_where(filters))
+    |> order_by(desc: :inserted_at)
+    |> first()
+    |> Repo.one()
+  end
+
   @spec count_agent_replies(binary()) :: number()
   def count_agent_replies(conversation_id) do
     Message
@@ -429,17 +522,6 @@ defmodule ChatApi.Conversations do
   @spec has_agent_replied?(binary()) :: boolean()
   def has_agent_replied?(conversation_id) do
     count_agent_replies(conversation_id) > 0
-  end
-
-  @spec list_tags(binary()) :: [Tag.t()]
-  def list_tags(id) do
-    # TODO: optimize this query
-    Conversation
-    |> Repo.get(id)
-    |> case do
-      nil -> []
-      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
-    end
   end
 
   @spec get_tag(Conversation.t(), binary()) :: ConversationTag.t() | nil
@@ -478,11 +560,70 @@ defmodule ChatApi.Conversations do
   @spec filter_by_tag(Ecto.Query.t(), map()) :: Ecto.Query.t()
   def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
     query
-    |> join(:left, [c], t in assoc(c, :tags))
-    |> where([_c, t], t.id == ^tag_id)
+    |> join(:left, [c], t in assoc(c, :tags), as: :tags)
+    |> where([_c, tags: t], t.id == ^tag_id)
   end
 
   def filter_by_tag(query, _filters), do: query
+
+  @spec filter_by_mention(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_mention(query, %{"mentioning" => user_id, "has_seen_mention" => has_seen_mention})
+      when not is_nil(user_id) and has_seen_mention in ["true", true] do
+    query
+    |> filter_by_mention(%{"mentioning" => user_id})
+    |> where([_c, mentions: m], not is_nil(m.seen_at))
+  end
+
+  def filter_by_mention(query, %{"mentioning" => user_id, "has_seen_mention" => has_seen_mention})
+      when not is_nil(user_id) and has_seen_mention in ["false", false] do
+    query
+    |> filter_by_mention(%{"mentioning" => user_id})
+    |> where([_c, mentions: m], is_nil(m.seen_at))
+  end
+
+  def filter_by_mention(query, %{"mentioning" => user_id}) when is_binary(user_id) do
+    case Integer.parse(user_id) do
+      {parsed, _} -> filter_by_mention(query, %{"mentioning" => parsed})
+      :error -> query
+    end
+  end
+
+  def filter_by_mention(query, %{"mentioning" => user_id}) when is_integer(user_id) do
+    query
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT * FROM mentions WHERE conversation_id = ? AND user_id = ? LIMIT 1",
+        c.id,
+        ^user_id
+      ),
+      as: :mentions
+    )
+    |> where([c, mentions: m], m.user_id == ^user_id and m.conversation_id == c.id)
+  end
+
+  def filter_by_mention(query, _filters), do: query
+
+  @spec filter_by_text(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_text(query, %{"q" => text}) when not is_nil(text) do
+    body = "%#{text}%"
+
+    query
+    |> join(
+      :left_lateral,
+      [c],
+      f in fragment(
+        "SELECT body FROM messages WHERE conversation_id = ? AND body ILIKE ? LIMIT 1",
+        c.id,
+        ^body
+      ),
+      as: :messages
+    )
+    |> where([_c, messages: m], ilike(m.body, ^body))
+  end
+
+  def filter_by_text(query, _filters), do: query
 
   @spec mark_activity(String.t()) ::
           {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
@@ -494,6 +635,25 @@ defmodule ChatApi.Conversations do
     |> Repo.update()
   end
 
+  @spec find_or_create_by_customer(map()) ::
+          {:ok, Conversation.t()} | {:error, Ecto.Changeset.t()}
+  def find_or_create_by_customer(
+        %{
+          "account_id" => account_id,
+          "customer_id" => _,
+          "inbox_id" => _
+        } = params
+      ) do
+    case find_latest_conversation(account_id, params) do
+      nil -> create_conversation(params)
+      conversation -> {:ok, conversation}
+    end
+  end
+
+  # Just return the changeset if required params are missing
+  def find_or_create_by_customer(params),
+    do: {:error, change_conversation(%Conversation{}, params)}
+
   #####################
   # Private methods
   #####################
@@ -503,19 +663,41 @@ defmodule ChatApi.Conversations do
   defp filter_where(attrs) do
     Enum.reduce(attrs, dynamic(true), fn
       {"status", value}, dynamic ->
-        dynamic([p], ^dynamic and p.status == ^value)
+        dynamic([c], ^dynamic and c.status == ^value)
 
       {"priority", value}, dynamic ->
-        dynamic([p], ^dynamic and p.priority == ^value)
+        dynamic([c], ^dynamic and c.priority == ^value)
+
+      {"read", "true"}, dynamic ->
+        dynamic([c], ^dynamic and c.read == true)
+
+      {"read", "false"}, dynamic ->
+        dynamic([c], ^dynamic and c.read == false)
+
+      {"read", value}, dynamic ->
+        dynamic([p], ^dynamic and p.read == ^value)
+
+      {"assignee_id", missing}, dynamic when missing in [nil, ""] ->
+        dynamic([c], ^dynamic and is_nil(c.assignee_id))
 
       {"assignee_id", value}, dynamic ->
-        dynamic([p], ^dynamic and p.assignee_id == ^value)
+        dynamic([c], ^dynamic and c.assignee_id == ^value)
 
       {"customer_id", value}, dynamic ->
-        dynamic([p], ^dynamic and p.customer_id == ^value)
+        dynamic([c], ^dynamic and c.customer_id == ^value)
 
       {"account_id", value}, dynamic ->
-        dynamic([p], ^dynamic and p.account_id == ^value)
+        dynamic([c], ^dynamic and c.account_id == ^value)
+
+      # TODO: should inbox_id be a required field?
+      {"inbox_id", nil}, dynamic ->
+        dynamic([c], ^dynamic and is_nil(c.inbox_id))
+
+      {"inbox_id", value}, dynamic ->
+        dynamic([c], ^dynamic and c.inbox_id == ^value)
+
+      {"source", value}, dynamic ->
+        dynamic([c], ^dynamic and c.source == ^value)
 
       {_, _}, dynamic ->
         # Not a where parameter

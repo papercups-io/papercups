@@ -7,11 +7,18 @@ defmodule ChatApi.Reporting do
   require Integer
 
   alias ChatApi.{
+    Accounts.Account,
     Repo,
     Conversations.Conversation,
     Messages.Message,
     Users.User,
-    Customers.Customer
+    Customers.Customer,
+    Github.GithubAuthorization,
+    Google.GoogleAuthorization,
+    Mattermost.MattermostAuthorization,
+    SlackAuthorizations.SlackAuthorization,
+    Twilio.TwilioAuthorization,
+    WidgetSettings.WidgetSetting
   }
 
   @type aggregate_by_date() :: %{date: binary(), count: integer()}
@@ -429,5 +436,235 @@ defmodule ChatApi.Reporting do
     end)
   end
 
+  defp exclude_admin_account(query, field \\ :account_id) do
+    case System.get_env("PAPERCUPS_ADMIN_ACCOUNT_ID") do
+      nil ->
+        query
+
+      "" ->
+        query
+
+      account_id when is_binary(account_id) ->
+        query |> where([r], field(r, ^field) != ^account_id)
+    end
+  end
+
   defp weekdays, do: ~w(Monday Tuesday Wednesday Thursday Friday Saturday Sunday)
+
+  ####################################################################################
+  # Internal metrics
+  ####################################################################################
+
+  @spec count_new_accounts(map()) :: number()
+  def count_new_accounts(filters \\ %{}) do
+    Account
+    |> where(^filter_where(filters))
+    |> exclude_admin_account(:id)
+    |> select([a], count(a.id))
+    |> Repo.one()
+  end
+
+  @spec list_active_accounts(map()) :: list()
+  def list_active_accounts(filters \\ %{}) do
+    filters
+    # Result looks like [%{count: 1678, account: %{company_name: "Papercups", id: "a1b2c3"}}]
+    |> group_messages_by_account()
+    |> Enum.filter(fn r -> r.count > 0 end)
+    |> Enum.sort_by(fn r -> r.count end, :desc)
+  end
+
+  @spec count_new_users(map()) :: number()
+  def count_new_users(filters \\ %{}) do
+    User
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> select([u], count(u.id))
+    |> Repo.one()
+  end
+
+  @spec list_active_users(map()) :: list()
+  def list_active_users(filters \\ %{}) do
+    filters
+    # Result looks like [%{count: 1678, user: %{email: "alex@gmail.com", id: 1}}]
+    |> group_messages_by_user()
+    |> Enum.filter(fn r -> r.count > 0 end)
+    |> Enum.sort_by(fn r -> r.count end, :desc)
+  end
+
+  @spec count_widget_installations(map()) :: number()
+  def count_widget_installations(filters \\ %{}) do
+    WidgetSetting
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> where([w], not ilike(w.host, "papercups"))
+    |> where([w], not ilike(w.host, "localhost"))
+    |> select([w], count(w.id))
+    |> Repo.one()
+  end
+
+  @spec count_new_messages(map()) :: number()
+  def count_new_messages(filters \\ %{}) do
+    Message
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> select([m], count(m.id))
+    |> Repo.one()
+  end
+
+  @spec group_messages_by_account(map()) :: list()
+  def group_messages_by_account(filters \\ %{}) do
+    Message
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> join(:inner, [m], a in Account, on: m.account_id == a.id)
+    |> select([m, a], %{
+      account: %{id: a.id, company_name: a.company_name},
+      count: count(m.account_id)
+    })
+    |> group_by([m, a], [m.account_id, a.id])
+    |> order_by([m], desc: count(m.account_id))
+    |> Repo.all()
+  end
+
+  @spec group_messages_by_user(map()) :: list()
+  def group_messages_by_user(filters \\ %{}) do
+    Message
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> join(:inner, [m], u in User, on: m.user_id == u.id)
+    |> select([m, u], %{
+      user: %{id: u.id, email: u.email},
+      count: count(m.user_id)
+    })
+    |> group_by([m, u], [m.user_id, u.id])
+    |> order_by([m], desc: count(m.user_id))
+    |> Repo.all()
+  end
+
+  @spec group_messages_by_source(map()) :: list()
+  def group_messages_by_source(filters \\ %{}) do
+    Message
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> select([m], %{source: m.source, count: count(m.id)})
+    |> group_by([m], [m.source])
+    |> order_by([m], desc: count(m.id))
+    |> Repo.all()
+  end
+
+  @spec count_new_conversations(map()) :: number()
+  def count_new_conversations(filters \\ %{}) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> select([c], count(c.id))
+    |> Repo.one()
+  end
+
+  @spec group_conversations_by_account(map()) :: list()
+  def group_conversations_by_account(filters \\ %{}) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> join(:inner, [c], a in Account, on: c.account_id == a.id)
+    |> select([c, a], %{
+      account: %{id: a.id, company_name: a.company_name},
+      count: count(c.account_id)
+    })
+    |> group_by([c, a], [c.account_id, a.id])
+    |> order_by([c], desc: count(c.account_id))
+    |> Repo.all()
+  end
+
+  @spec group_conversations_by_source(map()) :: list()
+  def group_conversations_by_source(filters \\ %{}) do
+    Conversation
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> select([c], %{source: c.source, count: count(c.id)})
+    |> group_by([c], [c.source])
+    |> order_by([c], desc: count(c.id))
+    |> Repo.all()
+  end
+
+  def count_new_customers(filters \\ %{}) do
+    Customer
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> select([c], count(c.id))
+    |> Repo.one()
+  end
+
+  @spec group_customers_by_account(map()) :: list()
+  def group_customers_by_account(filters \\ %{}) do
+    Customer
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> join(:inner, [c], a in Account, on: c.account_id == a.id)
+    |> select([c, a], %{
+      account: %{id: a.id, company_name: a.company_name},
+      count: count(c.account_id)
+    })
+    |> group_by([c, a], [c.account_id, a.id])
+    |> order_by([c], desc: count(c.account_id))
+    |> Repo.all()
+  end
+
+  @spec group_customers_by_host(map()) :: list()
+  def group_customers_by_host(filters \\ %{}) do
+    Customer
+    |> where(^filter_where(filters))
+    |> exclude_admin_account()
+    |> select([c], %{host: c.host, count: count(c.id)})
+    |> group_by([c], [c.host])
+    |> order_by([c], desc: count(c.id))
+    |> Repo.all()
+  end
+
+  @spec count_new_integrations(map()) :: map()
+  def count_new_integrations(filters \\ %{}) do
+    github =
+      GithubAuthorization
+      |> where(^filter_where(filters))
+      |> exclude_admin_account()
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    google =
+      GoogleAuthorization
+      |> where(^filter_where(filters))
+      |> exclude_admin_account()
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    mattermost =
+      MattermostAuthorization
+      |> where(^filter_where(filters))
+      |> exclude_admin_account()
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    slack =
+      SlackAuthorization
+      |> where(^filter_where(filters))
+      |> exclude_admin_account()
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    twilio =
+      TwilioAuthorization
+      |> where(^filter_where(filters))
+      |> exclude_admin_account()
+      |> select([a], count(a.id))
+      |> Repo.one()
+
+    %{
+      github: github,
+      google: google,
+      mattermost: mattermost,
+      slack: slack,
+      twilio: twilio,
+      total: github + google + mattermost + slack + twilio
+    }
+  end
 end

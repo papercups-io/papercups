@@ -3,6 +3,7 @@ defmodule ChatApi.Mattermost.MattermostAuthorization do
   import Ecto.Changeset
 
   alias ChatApi.Accounts.Account
+  alias ChatApi.Inboxes.Inbox
   alias ChatApi.Users.User
 
   @type t :: %__MODULE__{
@@ -18,8 +19,10 @@ defmodule ChatApi.Mattermost.MattermostAuthorization do
           webhook_url: String.t() | nil,
           scope: String.t() | nil,
           metadata: any(),
+          settings: any(),
           # Foreign keys
           account_id: Ecto.UUID.t(),
+          inbox_id: Ecto.UUID.t(),
           user_id: integer(),
           # Timestamps
           inserted_at: DateTime.t(),
@@ -42,7 +45,12 @@ defmodule ChatApi.Mattermost.MattermostAuthorization do
     field(:scope, :string)
     field(:metadata, :map)
 
+    field(:settings, :map)
+    # TODO: update settings to embeds_one:
+    # embeds_one(:settings, Settings, on_replace: :delete)
+
     belongs_to(:account, Account)
+    belongs_to(:inbox, Inbox)
     belongs_to(:user, User, type: :integer)
 
     timestamps()
@@ -64,8 +72,10 @@ defmodule ChatApi.Mattermost.MattermostAuthorization do
       :webhook_url,
       :scope,
       :metadata,
+      :settings,
       :user_id,
-      :account_id
+      :account_id,
+      :inbox_id
     ])
     |> validate_required([:access_token, :user_id, :account_id])
   end

@@ -6,25 +6,22 @@ defmodule ChatApi.Customers do
   import Ecto.Query, warn: false
   alias ChatApi.Repo
 
+  alias ChatApi.Conversations
   alias ChatApi.Customers.Customer
-  alias ChatApi.Tags.{CustomerTag, Tag}
+  alias ChatApi.Issues.CustomerIssue
+  alias ChatApi.Tags.CustomerTag
 
   @spec list_customers(binary(), map()) :: [Customer.t()]
   def list_customers(account_id, filters \\ %{}) do
     Customer
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
+    |> filter_by_tags(filters)
     |> filter_by_tag(filters)
+    |> filter_by_issue(filters)
+    |> order_by(desc: :last_seen_at)
     |> Repo.all()
   end
-
-  def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
-    query
-    |> join(:left, [c], t in assoc(c, :tags))
-    |> where([_c, t], t.id == ^tag_id)
-  end
-
-  def filter_by_tag(query, _filters), do: query
 
   @spec list_customers(binary(), map(), map()) :: Scrivener.Page.t()
   @doc """
@@ -39,13 +36,63 @@ defmodule ChatApi.Customers do
 
   """
   def list_customers(account_id, filters, pagination_params) do
+    conversations_query = Conversations.query_most_recent_conversation(partition_by: :customer_id)
+
     Customer
     |> where(account_id: ^account_id)
     |> where(^filter_where(filters))
+    |> filter_by_tag(filters)
+    |> filter_by_tags(filters)
+    |> filter_by_issue(filters)
+    |> order_by(desc: :last_seen_at)
+    |> preload(conversations: ^conversations_query)
     |> Repo.paginate(pagination_params)
   end
 
-  @spec get_customer!(binary(), atom() | list(atom()) | keyword()) :: Customer.t() | nil
+  @spec filter_by_tag(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_tag(query, %{"tag_id" => tag_id}) when not is_nil(tag_id) do
+    query
+    |> join(:left, [c], t in assoc(c, :tags))
+    |> where([_c, t], t.id == ^tag_id)
+  end
+
+  def filter_by_tag(query, _filters), do: query
+
+  @spec filter_by_tags(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_tags(query, %{"tag_ids" => tag_ids}) when not is_nil(tag_ids) do
+    # We need to return a query that includes only the customers that are tagged with the passed in tag_ids.
+
+    # Here, we aggregate the number of tags each customer has, but we only count the ones included in tag_ids.
+    # Essentially, we're querying the number of tag_ids each customer has.
+    customer_tags_query =
+      from(ct in CustomerTag,
+        where: ct.tag_id in ^tag_ids,
+        group_by: ct.customer_id,
+        select: %{customer_id: ct.customer_id, tag_count: count(ct.tag_id)}
+      )
+
+    # Because tag_count represents the number of tag_ids each customer has,
+    # we're able to join the two query and filter only the customers that
+    # have exactly the same number of tag_ids.
+    from(c in query,
+      join: ct in subquery(customer_tags_query),
+      on: c.id == ct.customer_id,
+      where: ct.tag_count == ^length(tag_ids)
+    )
+  end
+
+  def filter_by_tags(query, _filters), do: query
+
+  @spec filter_by_issue(Ecto.Query.t(), map()) :: Ecto.Query.t()
+  def filter_by_issue(query, %{"issue_id" => issue_id}) when not is_nil(issue_id) do
+    query
+    |> join(:left, [c], t in assoc(c, :issues))
+    |> where([_c, t], t.id == ^issue_id)
+  end
+
+  def filter_by_issue(query, _filters), do: query
+
+  @spec get_customer!(binary(), atom() | list(atom()) | keyword()) :: Customer.t()
   def get_customer!(id, preloads \\ [:company, :tags]) do
     Customer
     |> Repo.get!(id)
@@ -55,7 +102,14 @@ defmodule ChatApi.Customers do
   @spec is_valid_association?(atom()) :: boolean()
   def is_valid_association?(field) do
     Enum.any?(
-      [:messages, :conversations, :notes, :tags, :company],
+      [
+        :messages,
+        :conversations,
+        :notes,
+        :tags,
+        :company,
+        :issues
+      ],
       fn association -> association == field end
     )
   end
@@ -88,6 +142,33 @@ defmodule ChatApi.Customers do
         get_default_params()
         |> Map.merge(attrs)
         |> Map.merge(%{external_id: external_id, account_id: account_id})
+        |> create_customer()
+
+      customer ->
+        {:ok, customer}
+    end
+  end
+
+  def find_by_phone(phone, account_id, filters \\ %{}) do
+    Customer
+    |> where(account_id: ^account_id, phone: ^phone)
+    |> where(^filter_where(filters))
+    |> order_by(desc: :updated_at)
+    |> first()
+    |> Repo.one()
+  end
+
+  @spec find_or_create_by_phone(binary() | nil, binary(), map()) ::
+          {:ok, Customer.t()} | {:error, Ecto.Changeset.t()} | {:error, atom()}
+  def find_or_create_by_phone(phone, account_id, attrs \\ %{})
+  def find_or_create_by_phone(nil, _account_id, _attrs), do: {:error, :phone_required}
+
+  def find_or_create_by_phone(phone, account_id, attrs) do
+    case find_by_phone(phone, account_id) do
+      nil ->
+        get_default_params()
+        |> Map.merge(attrs)
+        |> Map.merge(%{phone: phone, account_id: account_id})
         |> create_customer()
 
       customer ->
@@ -191,23 +272,10 @@ defmodule ChatApi.Customers do
       %{
         # Defaults
         first_seen: DateTime.utc_now(),
-        last_seen: DateTime.utc_now(),
-        # TODO: last_seen is stored as a date, while last_seen_at is stored as
-        # a datetime -- we should opt for datetime values whenever possible
         last_seen_at: DateTime.utc_now()
       },
       overrides
     )
-  end
-
-  # TODO: figure out if any of this can be done in the changeset, or if there's
-  # a better way to handle this in general
-  @spec sanitize_metadata(map()) :: map()
-  def sanitize_metadata(metadata) do
-    metadata
-    |> sanitize_metadata_external_id()
-    |> sanitize_metadata_current_url()
-    |> sanitize_ad_hoc_metadata()
   end
 
   @spec merge_custom_metadata(map()) :: map()
@@ -217,10 +285,34 @@ defmodule ChatApi.Customers do
 
   def merge_custom_metadata(metadata), do: metadata
 
+  # TODO: figure out if any of this can be done in the changeset, or if there's
+  # a better way to handle this in general
+  @spec sanitize_metadata(map()) :: map()
+  def sanitize_metadata(metadata) do
+    metadata
+    |> sanitize_metadata_email()
+    |> sanitize_metadata_external_id()
+    |> sanitize_metadata_current_url()
+    |> sanitize_ad_hoc_metadata()
+  end
+
+  @spec sanitize_metadata_email(map()) :: map()
+  def sanitize_metadata_email(%{"email" => email} = metadata)
+      when email in ["null", "undefined"] do
+    Map.merge(metadata, %{"email" => nil})
+  end
+
+  def sanitize_metadata_email(metadata), do: metadata
+
   @spec sanitize_metadata_external_id(map()) :: map()
   def sanitize_metadata_external_id(%{"external_id" => external_id} = metadata)
       when is_integer(external_id) do
     Map.merge(metadata, %{"external_id" => to_string(external_id)})
+  end
+
+  def sanitize_metadata_external_id(%{"external_id" => external_id} = metadata)
+      when external_id in ["null", "undefined"] do
+    Map.merge(metadata, %{"external_id" => nil})
   end
 
   def sanitize_metadata_external_id(metadata), do: metadata
@@ -267,23 +359,6 @@ defmodule ChatApi.Customers do
     count > 0
   end
 
-  @spec list_tags(nil | binary() | Customer.t()) :: nil | [Tag.t()]
-  def list_tags(nil), do: []
-
-  def list_tags(%Customer{} = customer) do
-    customer |> Repo.preload(:tags) |> Map.get(:tags)
-  end
-
-  def list_tags(id) do
-    # TODO: optimize this query
-    Customer
-    |> Repo.get(id)
-    |> case do
-      nil -> []
-      found -> found |> Repo.preload(:tags) |> Map.get(:tags)
-    end
-  end
-
   @spec get_tag(Customer.t(), binary()) :: nil | CustomerTag.t()
   def get_tag(%Customer{id: id, account_id: account_id} = _customer, tag_id) do
     CustomerTag
@@ -313,6 +388,39 @@ defmodule ChatApi.Customers do
   def remove_tag(%Customer{} = customer, tag_id) do
     customer
     |> get_tag(tag_id)
+    |> Repo.delete()
+  end
+
+  @spec get_issue(Customer.t(), binary()) :: nil | CustomerIssue.t()
+  def get_issue(%Customer{id: id, account_id: account_id} = _customer, issue_id) do
+    CustomerIssue
+    |> where(account_id: ^account_id, customer_id: ^id, issue_id: ^issue_id)
+    |> Repo.one()
+  end
+
+  @spec link_issue(Customer.t(), binary()) ::
+          {:ok, CustomerIssue.t()} | {:error, Ecto.Changeset.t()}
+  def link_issue(%Customer{id: id, account_id: account_id} = customer, issue_id) do
+    case get_issue(customer, issue_id) do
+      nil ->
+        %CustomerIssue{}
+        |> CustomerIssue.changeset(%{
+          customer_id: id,
+          issue_id: issue_id,
+          account_id: account_id
+        })
+        |> Repo.insert()
+
+      issue ->
+        {:ok, issue}
+    end
+  end
+
+  @spec unlink_issue(Customer.t(), binary()) ::
+          {:ok, CustomerIssue.t()} | {:error, Ecto.Changeset.t()}
+  def unlink_issue(%Customer{} = customer, issue_id) do
+    customer
+    |> get_issue(issue_id)
     |> Repo.delete()
   end
 
@@ -362,9 +470,35 @@ defmodule ChatApi.Customers do
       {"time_zone", value}, dynamic ->
         dynamic([r], ^dynamic and ilike(r.time_zone, ^value))
 
+      {"include_anonymous", "false"}, dynamic ->
+        dynamic([r], ^dynamic and not is_nil(r.email))
+
+      {"q", ""}, dynamic ->
+        dynamic
+
+      {"q", query}, dynamic ->
+        dynamic([r], ^dynamic and ^filter_by_query(query))
+
       {_, _}, dynamic ->
         # Not a where parameter
         dynamic
+    end)
+  end
+
+  defp filter_by_query(query) do
+    query
+    |> String.split(" ")
+    |> Enum.reduce(dynamic(true), fn
+      word, dynamic ->
+        case String.split(word, ":") do
+          [key, value] ->
+            dynamic([r], ^dynamic and fragment("(metadata->>? = ?)", ^key, ^value))
+
+          [word] ->
+            value = "%" <> word <> "%"
+
+            dynamic([r], ^dynamic and (ilike(r.email, ^value) or ilike(r.name, ^value)))
+        end
     end)
   end
 end

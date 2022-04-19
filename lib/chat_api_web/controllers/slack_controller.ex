@@ -2,11 +2,33 @@ defmodule ChatApiWeb.SlackController do
   use ChatApiWeb, :controller
 
   require Logger
-
+  alias ChatApiWeb.SlackAuthorizationView
   alias ChatApi.{Conversations, Slack, SlackAuthorizations}
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   action_fallback(ChatApiWeb.FallbackController)
+
+  @spec notify(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def notify(conn, %{"text" => text} = params) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %SlackAuthorization{access_token: access_token, channel: channel} <-
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: Map.get(params, "type", "reply"),
+             inbox_id: ChatApi.Inboxes.get_account_primary_inbox_id(account_id)
+           }),
+         {:ok, %{body: data}} <-
+           Slack.Client.send_message(
+             %{
+               "channel" => Map.get(params, "channel", channel),
+               "text" => text
+             },
+             access_token
+           ) do
+      json(conn, %{data: data})
+    else
+      _ -> json(conn, %{data: nil})
+    end
+  end
 
   @spec oauth(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def oauth(conn, %{"code" => code} = params) do
@@ -38,31 +60,46 @@ defmodule ChatApiWeb.SlackController do
            "url" => webhook_url
          } <- incoming_webhook,
          integration_type <- Map.get(params, "type", "reply"),
+         inbox_id <- Map.get(params, "inbox_id"),
          :ok <-
            Slack.Validation.validate_authorization_channel_id(
              channel_id,
              account_id,
              integration_type
            ) do
+      filters =
+        case params do
+          %{"type" => "support", "inbox_id" => inbox_id} ->
+            %{type: "support", team_id: team_id, inbox_id: inbox_id}
+
+          %{"inbox_id" => inbox_id} ->
+            %{type: integration_type, inbox_id: inbox_id}
+
+          _ ->
+            %{type: integration_type}
+        end
+
       # TODO: after creating, check if connected channel is private;
       # If yes, use webhook_url to send notification that Papercups app needs
       # to be added manually, along with instructions for how to do so
-      SlackAuthorizations.create_or_update(account_id, %{
-        account_id: account_id,
-        access_token: access_token,
-        app_id: app_id,
-        authed_user_id: authed_user_id,
-        bot_user_id: bot_user_id,
-        scope: scope,
-        token_type: token_type,
-        channel: channel,
-        channel_id: channel_id,
-        configuration_url: configuration_url,
-        team_id: team_id,
-        team_name: team_name,
-        webhook_url: webhook_url,
-        type: integration_type
-      })
+      {:ok, _} =
+        SlackAuthorizations.create_or_update(account_id, filters, %{
+          account_id: account_id,
+          inbox_id: inbox_id,
+          access_token: access_token,
+          app_id: app_id,
+          authed_user_id: authed_user_id,
+          bot_user_id: bot_user_id,
+          scope: scope,
+          token_type: token_type,
+          channel: channel,
+          channel_id: channel_id,
+          configuration_url: configuration_url,
+          team_id: team_id,
+          team_name: team_name,
+          webhook_url: webhook_url,
+          type: integration_type
+        })
 
       cond do
         integration_type == "reply" ->
@@ -110,7 +147,12 @@ defmodule ChatApiWeb.SlackController do
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def authorization(conn, payload) do
-    filters = %{type: Map.get(payload, "type", "reply")}
+    filters =
+      payload
+      |> Map.new(fn {key, value} -> {String.to_atom(key), value} end)
+      |> Map.merge(%{
+        type: Map.get(payload, "type", "reply")
+      })
 
     conn
     |> Pow.Plug.current_user()
@@ -121,15 +163,39 @@ defmodule ChatApiWeb.SlackController do
         json(conn, %{data: nil})
 
       auth ->
-        json(conn, %{
-          data: %{
-            id: auth.id,
-            created_at: auth.inserted_at,
-            channel: auth.channel,
-            configuration_url: auth.configuration_url,
-            team_name: auth.team_name
-          }
-        })
+        conn
+        |> put_view(SlackAuthorizationView)
+        |> render("show.json", slack_authorization: auth)
+    end
+  end
+
+  @spec authorizations(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def authorizations(conn, payload) do
+    filters =
+      payload
+      |> Map.new(fn {key, value} -> {String.to_atom(key), value} end)
+      |> Map.merge(%{
+        type: Map.get(payload, "type", "support")
+      })
+
+    account_id = conn.assigns.current_user.account_id
+    authorizations = SlackAuthorizations.list_slack_authorizations_by_account(account_id, filters)
+
+    conn
+    |> put_view(SlackAuthorizationView)
+    |> render("index.json", slack_authorizations: authorizations)
+  end
+
+  @spec update_settings(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def update_settings(conn, %{"id" => id, "settings" => settings}) do
+    with %{account_id: _account_id} <- conn.assigns.current_user,
+         %SlackAuthorization{} = auth <-
+           SlackAuthorizations.get_slack_authorization!(id),
+         {:ok, %SlackAuthorization{} = authorization} <-
+           SlackAuthorizations.update_slack_authorization(auth, %{settings: settings}) do
+      conn
+      |> put_view(SlackAuthorizationView)
+      |> render("show.json", slack_authorization: authorization)
     end
   end
 
@@ -148,12 +214,8 @@ defmodule ChatApiWeb.SlackController do
     Logger.debug("Payload from Slack webhook: #{inspect(payload)}")
 
     case payload do
-      %{"event" => _event, "is_ext_shared_channel" => true} ->
-        Slack.Event.handle_payload(payload)
-        send_resp(conn, 200, "")
-
-      %{"event" => event} ->
-        Slack.Event.handle_event(event)
+      %{"event" => _event} ->
+        handle_webhook_payload(payload)
         send_resp(conn, 200, "")
 
       %{"challenge" => challenge} ->
@@ -183,12 +245,30 @@ defmodule ChatApiWeb.SlackController do
 
   @spec channels(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def channels(conn, payload) do
+    account_id = conn.assigns.current_user.account_id
+
+    filters =
+      payload
+      |> Map.new(fn {key, value} -> {String.to_atom(key), value} end)
+      |> Map.merge(%{
+        type: Map.get(payload, "type", "support")
+      })
+
+    auth =
+      case payload do
+        %{"authorization_id" => id} ->
+          SlackAuthorizations.get_slack_authorization!(id)
+
+        %{"slack_authorization_id" => id} ->
+          SlackAuthorizations.get_slack_authorization!(id)
+
+        _ ->
+          SlackAuthorizations.get_authorization_by_account(account_id, filters)
+      end
+
     # TODO: figure out the best way to handle errors here... should we just return
     # an empty list of channels if the call fails, or indicate that an error occurred?
-    with %{account_id: account_id} <- conn.assigns.current_user,
-         filters <- %{type: Map.get(payload, "type", "support")},
-         %{access_token: access_token} <-
-           SlackAuthorizations.get_authorization_by_account(account_id, filters),
+    with %SlackAuthorization{access_token: access_token} <- auth,
          {:ok, result} <- Slack.Client.list_channels(access_token),
          %{body: %{"ok" => true, "channels" => channels}} <- result do
       json(conn, %{data: channels})
@@ -233,6 +313,15 @@ defmodule ChatApiWeb.SlackController do
 
       _ ->
         nil
+    end
+  end
+
+  @spec handle_webhook_payload(map()) :: any()
+  defp handle_webhook_payload(payload) do
+    # TODO: figure out a better way to handle this in tests
+    case Application.get_env(:chat_api, :environment) do
+      :test -> Slack.Event.handle_payload(payload)
+      _ -> Task.start(fn -> Slack.Event.handle_payload(payload) end)
     end
   end
 

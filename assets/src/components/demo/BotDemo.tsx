@@ -21,6 +21,7 @@ import logger from '../../logger';
 import {getBotDemoFaqs, setBotDemoFaqs} from '../../storage';
 // Import widget from separate package
 import ChatWidget from '@papercups-io/chat-widget';
+import {formatUserExternalId} from '../../utils';
 
 const {
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
@@ -102,12 +103,12 @@ class Demo extends React.Component<Props, State> {
       return {};
     }
 
-    const {id, email} = currentUser;
+    const {email} = currentUser;
 
     return {
       email: email,
       // TODO: use special external_id here for bot demo?
-      external_id: [id, email].join('|'),
+      external_id: formatUserExternalId(currentUser),
       metadata: {
         ts: +new Date(),
       },
@@ -285,10 +286,11 @@ class Demo extends React.Component<Props, State> {
         </Flex>
 
         <ChatWidget
+          token={REACT_APP_ADMIN_ACCOUNT_ID}
+          accountId={REACT_APP_ADMIN_ACCOUNT_ID}
           title="Welcome to Papercups!"
           subtitle="Test out our bot in the chat window below 💭"
           primaryColor={colors.primary}
-          accountId={REACT_APP_ADMIN_ACCOUNT_ID}
           greeting="Hey there! Try asking a question similar to the FAQs to your left :)"
           customer={customer}
           baseUrl={BASE_URL}

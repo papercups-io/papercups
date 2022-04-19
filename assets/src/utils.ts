@@ -1,19 +1,42 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import {range} from 'lodash';
 import qs from 'query-string';
 import {env} from './config';
-import {Message} from './types';
+import {Message, User} from './types';
 
 dayjs.extend(utc);
 
 const {REACT_APP_STRIPE_PUBLIC_KEY} = env;
 
+export const DASHBOARD_COLLAPSED_SIDER_WIDTH = 80;
+export const INBOXES_DASHBOARD_SIDER_WIDTH = 220;
+export const CONVERSATIONS_DASHBOARD_SIDER_WIDTH = 280;
+export const CONVERSATIONS_DASHBOARD_SIDER_OFFSET =
+  DASHBOARD_COLLAPSED_SIDER_WIDTH + INBOXES_DASHBOARD_SIDER_WIDTH;
+export const CONVERSATIONS_DASHBOARD_OFFSET =
+  INBOXES_DASHBOARD_SIDER_WIDTH + CONVERSATIONS_DASHBOARD_SIDER_WIDTH;
+
 export const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+export const noop = () => {};
 
 export const hasValidStripeKey = () => {
   const key = REACT_APP_STRIPE_PUBLIC_KEY;
 
   return key && key.startsWith('pk_');
+};
+
+export const isValidEmail = (email?: string | null) => {
+  if (!email) {
+    return false;
+  }
+  // Super basic validation: https://stackoverflow.com/a/4964763
+  return /(.+)@(.+){2,}\.(.+){2,}/.test(email);
+};
+
+export const formatUserExternalId = ({id, email}: User) => {
+  return [id, email].join('|');
 };
 
 export const formatRelativeTime = (date: dayjs.Dayjs) => {
@@ -99,6 +122,17 @@ export const isValidUuid = (id: any) => {
   return regex.test(id);
 };
 
+export const generateDateRange = (
+  start: dayjs.Dayjs,
+  finish: dayjs.Dayjs
+): Array<dayjs.Dayjs> => {
+  const diff = finish.endOf('day').diff(start.startOf('day'), 'day');
+
+  return range(diff + 1).map((n) => {
+    return start.add(n, 'day');
+  });
+};
+
 export const sortConversationMessages = (messages: Array<Message>) => {
   return messages.sort((a: Message, b: Message) => {
     // NB: `created_at` is stored as UTC implicitly, whereas `sent_at` is stored
@@ -131,6 +165,41 @@ export const updateQueryParams = (query: Record<any, any>) => {
     );
   } else {
     console.warn('`window.history.pushState` is not available!');
+  }
+};
+
+export const formatServerError = (err: any) => {
+  try {
+    const error = err?.response?.body?.error ?? {};
+    const {errors = {}, message, status} = error;
+
+    if (status === 422 && Object.keys(errors).length > 0) {
+      const messages = Object.keys(errors)
+        .map((field) => {
+          const description = errors[field];
+
+          if (description) {
+            return `${field} ${description}`;
+          } else {
+            return `invalid ${field}`;
+          }
+        })
+        .join(', ');
+
+      return `Error: ${messages}.`;
+    } else {
+      return (
+        message ||
+        err?.message ||
+        'Something went wrong. Please contact us or try again in a few minutes.'
+      );
+    }
+  } catch {
+    return (
+      err?.response?.body?.error?.message ||
+      err?.message ||
+      'Something went wrong. Please contact us or try again in a few minutes.'
+    );
   }
 };
 
@@ -183,6 +252,18 @@ export const addVisibilityEventListener = (
   document.addEventListener(event, handler, false);
 
   return () => document.removeEventListener(event, handler);
+};
+
+export const isScrolledIntoView = (el: any) => {
+  if (!el) {
+    return false;
+  }
+
+  const rect = el.getBoundingClientRect();
+  const {top, bottom} = rect;
+  const isVisible = top >= 0 && bottom <= window.innerHeight;
+
+  return isVisible;
 };
 
 export const download = (data = {}, name = 'data') => {

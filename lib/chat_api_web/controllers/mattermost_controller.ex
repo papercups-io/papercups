@@ -12,24 +12,21 @@ defmodule ChatApiWeb.MattermostController do
   def auth(conn, %{"authorization" => authorization}) do
     Logger.info("Params from Mattermost auth: #{inspect(authorization)}")
 
+    # TODO: verify that auth info works with Mattermost API before creating?
     with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
          params <- Map.merge(authorization, %{"account_id" => account_id, "user_id" => user_id}),
          {:ok, result} <- Mattermost.create_or_update_authorization!(params) do
       json(conn, %{data: %{ok: true, id: result.id}})
-    else
-      _ -> json(conn, %{data: %{ok: false}})
     end
   end
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def authorization(conn, _payload) do
-    authorization =
-      conn
-      |> Pow.Plug.current_user()
-      |> Map.get(:account_id)
-      |> Mattermost.get_authorization_by_account()
+  def authorization(conn, params) do
+    current_user = Pow.Plug.current_user(conn)
+    account_id = current_user.account_id
+    filters = Map.new(params, fn {key, value} -> {String.to_atom(key), value} end)
 
-    case authorization do
+    case Mattermost.get_authorization_by_account(account_id, filters) do
       nil ->
         json(conn, %{data: nil})
 
@@ -39,7 +36,11 @@ defmodule ChatApiWeb.MattermostController do
             id: auth.id,
             created_at: auth.inserted_at,
             channel: auth.channel_name,
-            team_name: auth.team_domain
+            team_name: auth.team_domain,
+            # Custom fields
+            mattermost_url: auth.mattermost_url,
+            access_token: auth.access_token,
+            verification_token: auth.verification_token
           }
         })
     end
@@ -47,18 +48,35 @@ defmodule ChatApiWeb.MattermostController do
 
   @spec channels(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def channels(conn, %{"mattermost_url" => mattermost_url, "access_token" => access_token}) do
-    authorization = %MattermostAuthorization{
-      access_token: access_token,
-      mattermost_url: mattermost_url,
-      account_id: conn.assigns.current_user.account_id,
-      user_id: conn.assigns.current_user.id
-    }
+    if is_valid_uri?(mattermost_url) do
+      authorization = %MattermostAuthorization{
+        access_token: access_token,
+        mattermost_url: mattermost_url,
+        account_id: conn.assigns.current_user.account_id,
+        user_id: conn.assigns.current_user.id
+      }
 
-    # TODO: figure out the best way to handle errors here... should we just return
-    # an empty list of channels if the call fails, or indicate that an error occurred?
-    case Mattermost.Client.list_channels(authorization) do
-      {:ok, %{body: channels}} -> json(conn, %{data: channels})
-      _ -> json(conn, %{data: []})
+      # TODO: figure out the best way to handle errors here... should we just return
+      # an empty list of channels if the call fails, or indicate that an error occurred?
+      case Mattermost.Client.list_channels(authorization) do
+        {:ok, %{body: [_ | _] = channels}} ->
+          json(conn, %{data: channels})
+
+        {:ok, %{body: %{"status_code" => status, "message" => message}}} ->
+          conn
+          |> put_status(status)
+          |> json(%{
+            error: %{
+              status: status,
+              message: message
+            }
+          })
+
+        _ ->
+          json(conn, %{data: []})
+      end
+    else
+      json(conn, %{data: []})
     end
   end
 
@@ -124,11 +142,25 @@ defmodule ChatApiWeb.MattermostController do
       |> Messages.Notification.notify(:webhooks)
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:conversation_reply_email)
-      |> Messages.Helpers.handle_post_creation_conversation_updates()
+      |> Messages.Notification.notify(:gmail)
+      |> Messages.Notification.notify(:sms)
+      |> Messages.Notification.notify(:ses)
+      |> Messages.Helpers.handle_post_creation_hooks()
     end
   end
 
   defp handle_event(payload) do
     Logger.info("Unexpected payload from Mattermost: #{inspect(payload)}")
+  end
+
+  @spec is_valid_uri?(binary() | URI.t() | nil) :: boolean()
+  defp is_valid_uri?(nil), do: false
+
+  defp is_valid_uri?(str) do
+    case URI.parse(str) do
+      %URI{scheme: nil} -> false
+      %URI{host: nil} -> false
+      _uri -> true
+    end
   end
 end

@@ -1,24 +1,25 @@
 import React from 'react';
+import {Link} from 'react-router-dom';
 import dayjs from 'dayjs';
 import {Box, Flex} from 'theme-ui';
-import {colors, Button, Popconfirm, Table, Tag, Text, Tooltip} from '../common';
-import {IntegrationType, getSlackAuthUrl, getGoogleAuthUrl} from './support';
-import {MattermostAuthorizationButton} from './MattermostAuthorizationModal';
+import {colors, Button, Table, Tag, Text} from '../common';
+import {PlusOutlined, SettingOutlined} from '../icons';
+import {IntegrationType} from './support';
+import {Papercups} from '@papercups-io/chat-widget';
 
 const IntegrationsTable = ({
   loading,
   integrations,
-  onDisconnectSlack,
-  onUpdateIntegration,
 }: {
   loading?: boolean;
   integrations: Array<IntegrationType>;
-  onDisconnectSlack: (id: string) => void;
-  onUpdateIntegration: (data?: any) => void;
 }) => {
+  const isChatAvailable = !!document.querySelector(
+    '.Papercups-chatWindowContainer'
+  );
   const columns = [
     {
-      title: 'Integration',
+      title: 'Name',
       dataIndex: 'integration',
       key: 'integration',
       render: (value: string, record: IntegrationType) => {
@@ -27,7 +28,11 @@ const IntegrationsTable = ({
         return (
           <Box>
             <Flex sx={{alignItems: 'center'}}>
-              <img src={icon} alt={value} style={{height: 20}} />
+              <img
+                src={icon}
+                alt={value}
+                style={{maxHeight: 20, maxWidth: 20}}
+              />
               <Text strong style={{marginLeft: 8}}>
                 {value}
               </Text>
@@ -55,14 +60,14 @@ const IntegrationsTable = ({
     },
     {
       title: 'Connected since',
-      dataIndex: 'created_at',
-      key: 'created_at',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       render: (value: string) => {
         if (!value) {
           return '--';
         }
 
-        return dayjs(value).format('MMMM DD, YYYY');
+        return dayjs(value).format('MMM DD, YYYY');
       },
     },
     {
@@ -70,109 +75,61 @@ const IntegrationsTable = ({
       dataIndex: 'action',
       key: 'action',
       render: (action: any, record: IntegrationType) => {
-        const {key, status, authorization_id: authorizationId} = record;
+        const {key, status} = record;
         const isConnected = status === 'connected';
 
+        // TODO: DRY this up!
         switch (key) {
-          case 'slack':
-            if (isConnected && authorizationId) {
-              return (
-                <Flex mx={-1}>
-                  <Box mx={1}>
-                    <a href={getSlackAuthUrl('reply')}>
-                      <Button>Reconnect</Button>
-                    </a>
-                  </Box>
-                  <Box mx={1}>
-                    <Popconfirm
-                      title="Are you sure you want to disconnect from Slack?"
-                      okText="Yes"
-                      cancelText="No"
-                      placement="topLeft"
-                      onConfirm={() => onDisconnectSlack(authorizationId)}
-                    >
-                      <Button danger>Disconnect</Button>
-                    </Popconfirm>
-                  </Box>
-                </Flex>
-              );
-            }
-
-            return (
-              <a href={getSlackAuthUrl('reply')}>
-                <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-              </a>
-            );
-          case 'mattermost':
-            return (
-              <MattermostAuthorizationButton
-                integration={record}
-                onUpdate={onUpdateIntegration}
-              />
-            );
-          case 'gmail':
-            return (
-              <Tooltip
-                title={
-                  <Box>
-                    Our verification with the Google API is pending, but you can
-                    still link your Gmail account to opt into new features.
-                  </Box>
-                }
-              >
-                <a href={getGoogleAuthUrl('gmail')}>
-                  <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-                </a>
-              </Tooltip>
-            );
           case 'sheets':
             return (
-              <Tooltip
-                title={
-                  <Box>
-                    Our verification with the Google API is pending, but you can
-                    still link your Google Sheets account to opt into new
-                    features.
-                  </Box>
-                }
-              >
-                <a href={getGoogleAuthUrl('sheets')}>
-                  <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-                </a>
-              </Tooltip>
+              <Link to="/integrations/google/sheets">
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
+              </Link>
             );
-          // TODO: deprecate
-          case 'slack:sync':
-            if (isConnected && authorizationId) {
-              return (
-                <Flex mx={-1}>
-                  <Box mx={1}>
-                    <a href={getSlackAuthUrl('support')}>
-                      <Button>Reconnect</Button>
-                    </a>
-                  </Box>
-                  <Box mx={1}>
-                    <Popconfirm
-                      title="Are you sure you want to disconnect from Slack?"
-                      okText="Yes"
-                      cancelText="No"
-                      placement="topLeft"
-                      onConfirm={() => onDisconnectSlack(authorizationId)}
-                    >
-                      <Button danger>Disconnect</Button>
-                    </Popconfirm>
-                  </Box>
-                </Flex>
-              );
-            }
 
+          case 'github':
             return (
-              <a href={getSlackAuthUrl('support')}>
-                <Button>{isConnected ? 'Reconnect' : 'Connect'}</Button>
-              </a>
+              <Link to="/integrations/github">
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
+              </Link>
             );
+
+          case 'hubspot':
+            return (
+              <Link to="/integrations/hubspot">
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
+              </Link>
+            );
+
+          case 'intercom':
+            return (
+              <Link to="/integrations/intercom">
+                {isConnected ? (
+                  <Button icon={<SettingOutlined />}>Configure</Button>
+                ) : (
+                  <Button icon={<PlusOutlined />}>Add</Button>
+                )}
+              </Link>
+            );
+
           default:
-            return <Button disabled>Coming soon!</Button>;
+            return isChatAvailable ? (
+              <Button onClick={Papercups.toggle}>Chat with us!</Button>
+            ) : (
+              <Button disabled>Coming soon!</Button>
+            );
         }
       },
     },

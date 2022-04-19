@@ -6,8 +6,8 @@ defmodule ChatApi.Slack.Helpers do
   require Logger
 
   alias ChatApi.{
+    Accounts,
     Companies,
-    Conversations,
     Customers,
     Slack,
     SlackAuthorizations,
@@ -316,18 +316,28 @@ defmodule ChatApi.Slack.Helpers do
 
   def find_matching_user(_authorization, _slack_user_id), do: nil
 
-  @spec find_matching_bot_customer(any(), binary()) :: Customer.t() | nil
+  @spec find_matching_bot_customer(SlackAuthorization.t(), binary()) :: Customer.t() | nil
   def find_matching_bot_customer(%SlackAuthorization{account_id: account_id}, slack_bot_id) do
     Customers.find_by_external_id(slack_bot_id, account_id)
   end
 
   def find_matching_bot_customer(_authorization, _slack_bot_id), do: nil
 
-  @spec get_admin_sender_id(any(), binary(), binary()) :: binary()
-  def get_admin_sender_id(authorization, slack_user_id, fallback) do
+  @spec get_admin_sender_id(SlackAuthorization.t(), binary(), binary() | nil) :: binary()
+  def get_admin_sender_id(
+        %SlackAuthorization{account_id: account_id} = authorization,
+        slack_user_id,
+        fallback
+      ) do
     case find_matching_user(authorization, slack_user_id) do
-      %{id: id} -> id
-      _ -> fallback
+      %User{id: id} ->
+        id
+
+      _ ->
+        case fallback do
+          nil -> account_id |> Accounts.get_primary_user() |> Map.get(:id)
+          fallback_user_id -> fallback_user_id
+        end
     end
   end
 
@@ -494,62 +504,22 @@ defmodule ChatApi.Slack.Helpers do
     end
   end
 
-  @spec create_new_slack_conversation_thread(binary(), map()) ::
+  @spec create_new_slack_conversation_thread(Conversation.t(), SlackAuthorization.t(), map()) ::
           {:ok, SlackConversationThread.t()} | {:error, Ecto.Changeset.t()}
-  def create_new_slack_conversation_thread(conversation_id, response) do
-    with conversation <- Conversations.get_conversation_with!(conversation_id, account: :users),
-         primary_user_id <- get_conversation_primary_user_id(conversation) do
-      # TODO: This is just a temporary workaround to handle having a user_id
-      # in the message when an agent responds on Slack. At the moment, if anyone
-      # responds to a thread on Slack, we just assume it's the assignee.
-      assign_and_broadcast_conversation_updated(conversation, primary_user_id)
-
-      response
-      |> Slack.Extractor.extract_slack_conversation_thread_info!()
-      |> Map.merge(%{
-        conversation_id: conversation_id,
-        account_id: conversation.account_id
-      })
-      |> SlackConversationThreads.create_slack_conversation_thread()
-    end
+  def create_new_slack_conversation_thread(
+        %Conversation{id: conversation_id, account_id: account_id},
+        %SlackAuthorization{team_id: slack_team_id},
+        response
+      ) do
+    response
+    |> Slack.Extractor.extract_slack_conversation_thread_info!()
+    |> Map.merge(%{
+      slack_team: slack_team_id,
+      conversation_id: conversation_id,
+      account_id: account_id
+    })
+    |> SlackConversationThreads.create_slack_conversation_thread()
   end
-
-  @spec assign_and_broadcast_conversation_updated(Conversation.t(), binary()) :: Conversation.t()
-  def assign_and_broadcast_conversation_updated(conversation, primary_user_id) do
-    # TODO: how should we handle errors here?
-    {:ok, conversation} =
-      Conversations.update_conversation(conversation, %{assignee_id: primary_user_id})
-
-    conversation
-    |> Conversations.Notification.broadcast_conversation_update_to_admin!()
-    |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
-  end
-
-  @spec get_conversation_primary_user_id(Conversation.t()) :: binary()
-  def get_conversation_primary_user_id(conversation) do
-    # TODO: do a round robin here instead of just getting the first user every time?
-    conversation
-    |> Map.get(:account)
-    |> Map.get(:users)
-    |> fetch_valid_user()
-  end
-
-  @spec fetch_valid_user(list()) :: binary()
-  def fetch_valid_user([]),
-    do: raise("No users associated with the conversation's account")
-
-  def fetch_valid_user(users) do
-    users
-    |> Enum.reject(& &1.disabled_at)
-    |> Enum.sort_by(& &1.inserted_at)
-    |> List.first()
-    |> Map.get(:id)
-  end
-
-  @spec get_message_type(Message.t()) :: atom()
-  def get_message_type(%Message{customer_id: nil}), do: :agent
-  def get_message_type(%Message{user_id: nil}), do: :customer
-  def get_message_type(_message), do: :unknown
 
   @spec is_bot_message?(map()) :: boolean()
   def is_bot_message?(%{"bot_id" => bot_id}) when not is_nil(bot_id), do: true
@@ -739,14 +709,75 @@ defmodule ChatApi.Slack.Helpers do
         "https://" <> url
       end
 
-    "#{base}/conversations/all?cid=#{conversation_id}"
+    "#{base}/conversations/all/#{conversation_id}"
   end
 
   @spec format_message_body(Message.t()) :: binary()
   def format_message_body(%Message{body: nil}), do: ""
   def format_message_body(%Message{private: true, type: "note", body: nil}), do: "\\\\ _Note_"
   def format_message_body(%Message{private: true, type: "note", body: body}), do: "\\\\ _#{body}_"
-  def format_message_body(%Message{body: body}), do: body
+
+  def format_message_body(%Message{private: true, type: "bot", body: body}),
+    do: "\\\\ _ #{body} _"
+
+  # TODO: handle messages that are too long better (rather than just slicing them)
+  def format_message_body(%Message{body: body}) do
+    case String.length(body) do
+      n when n > 2500 -> String.slice(body, 0..2500) <> "..."
+      _ -> body
+    end
+  end
+
+  @markdown_em_regex ~r/\*\*(.*?)\*\*/
+  @markdown_link_regex ~r/\[(.*?)\]\((.*?)\)/
+  @markdown_list_item_regex ~r/\n-\s+/
+
+  @spec format_slack_links(binary()) :: binary()
+  def format_slack_links(text) do
+    case Regex.scan(@markdown_link_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match, text, url], acc ->
+          String.replace(acc, match, "<#{url}|#{text}>")
+        end)
+    end
+  end
+
+  @spec format_slack_bold(binary()) :: binary()
+  def format_slack_bold(text) do
+    case Regex.scan(@markdown_em_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match, str], acc ->
+          String.replace(acc, match, "*#{str}*")
+        end)
+    end
+  end
+
+  @spec format_slack_lists(binary()) :: binary()
+  def format_slack_lists(text) do
+    case Regex.scan(@markdown_list_item_regex, text) do
+      [] ->
+        text
+
+      results ->
+        Enum.reduce(results, text, fn [match], acc ->
+          String.replace(acc, match, "\n • ")
+        end)
+    end
+  end
+
+  @spec format_slack_markdown(binary()) :: binary()
+  def format_slack_markdown(text) do
+    text
+    |> format_slack_bold()
+    |> format_slack_links()
+    |> format_slack_lists()
+  end
 
   @spec prepend_sender_prefix(binary(), Message.t()) :: binary()
   def prepend_sender_prefix(text, %Message{} = message) do
@@ -803,6 +834,36 @@ defmodule ChatApi.Slack.Helpers do
 
   @spec get_message_text(map()) :: binary()
   def get_message_text(%{
+        conversation:
+          %Conversation{
+            source: "email",
+            subject: email_subject_line,
+            customer: %Customer{email: customer_email}
+          } = conversation,
+        message: %Message{source: "email"} = message,
+        authorization: _,
+        thread: nil
+      }) do
+    dashboard_link = "<#{get_dashboard_conversation_url(conversation.id)}|dashboard>"
+
+    content =
+      message
+      |> format_message_body()
+      |> format_slack_markdown()
+      |> append_attachments_text(message)
+
+    """
+    > :email: From: *#{customer_email}*
+    > Subject: *#{email_subject_line}*
+
+    #{content}
+
+    > Reply to this thread to respond to this email, or view in the #{dashboard_link} :rocket:
+    > (Start a message with `;;` or `\\\\` to send an <https://github.com/papercups-io/papercups/pull/562|internal note>.)
+    """
+  end
+
+  def get_message_text(%{
         conversation: %Conversation{customer: %Customer{}} = conversation,
         message: %Message{} = message,
         authorization: _authorization,
@@ -813,6 +874,7 @@ defmodule ChatApi.Slack.Helpers do
     formatted_text =
       message
       |> format_message_body()
+      |> format_slack_markdown()
       |> prepend_sender_prefix(message, conversation)
       |> append_attachments_text(message)
 
@@ -839,12 +901,125 @@ defmodule ChatApi.Slack.Helpers do
        ) do
       message
       |> format_message_body()
+      |> format_slack_markdown()
       |> append_attachments_text(message)
     else
       message
       |> format_message_body()
+      |> format_slack_markdown()
       |> prepend_sender_prefix(message, conversation)
       |> append_attachments_text(message)
+    end
+  end
+
+  @spec format_customer_device(Customer.t()) :: binary()
+  def format_customer_device(%Customer{browser: nil, os: nil}), do: "N/A"
+
+  def format_customer_device(%Customer{browser: browser, os: os}),
+    do: [os, browser] |> Enum.reject(&is_nil/1) |> Enum.join(" · ")
+
+  @spec format_message_source(Message.t()) :: binary()
+  def format_message_source(%Message{source: "email", metadata: %{"gmail_subject" => subject}})
+      when is_binary(subject),
+      do: ":email: Email (#{subject})"
+
+  def format_message_source(%Message{source: "email"}), do: ":email: Email"
+  def format_message_source(%Message{source: "chat"}), do: ":speech_balloon: Chat"
+  def format_message_source(%Message{source: "slack"}), do: ":slack: Slack"
+  def format_message_source(%Message{source: "sms"}), do: ":phone: SMS"
+  def format_message_source(%Message{source: "api"}), do: ":robot_face: API"
+  def format_message_source(%Message{source: "mattermost"}), do: "Mattermost"
+  def format_message_source(%Message{source: "sandbox"}), do: "Sandbox"
+  def format_message_source(%Message{source: nil}), do: "N/A"
+  def format_message_source(%Message{source: source}), do: source
+
+  @spec initial_message_fields(%{
+          conversation: Conversation.t(),
+          customer: Customer.t(),
+          message: Message.t()
+        }) :: list(map())
+  def initial_message_fields(%{
+        conversation: conversation,
+        message: message,
+        customer:
+          %Customer{
+            name: name,
+            email: email,
+            current_url: current_url,
+            time_zone: time_zone
+          } = customer
+      }) do
+    default_fields = [
+      %{
+        "type" => "mrkdwn",
+        "text" => "*Name:*\n#{name || "Anonymous User"}"
+      },
+      %{
+        "type" => "mrkdwn",
+        "text" => "*Email:*\n#{email || "N/A"}"
+      },
+      %{
+        "type" => "mrkdwn",
+        "text" => "*Source:*\n#{format_message_source(message)}"
+      }
+    ]
+
+    case message.source do
+      "chat" ->
+        Enum.concat(default_fields, [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Last seen URL:*\n#{current_url || "N/A"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Device:*\n#{format_customer_device(customer)}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Timezone:*\n#{time_zone || "N/A"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
+          }
+        ])
+
+      "email" ->
+        [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Name:*\n#{name || "Anonymous User"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Email:*\n#{email || "N/A"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
+          }
+        ]
+
+      source when source in ["slack", "mattermost"] ->
+        Enum.concat(default_fields, [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Timezone:*\n#{time_zone || "N/A"}"
+          },
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
+          }
+        ])
+
+      _ ->
+        Enum.concat(default_fields, [
+          %{
+            "type" => "mrkdwn",
+            "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
+          }
+        ])
     end
   end
 
@@ -852,18 +1027,15 @@ defmodule ChatApi.Slack.Helpers do
   def get_message_payload(text, %{
         channel: channel,
         conversation: conversation,
-        customer: %Customer{
-          name: name,
-          email: email,
-          current_url: current_url,
-          browser: browser,
-          os: os,
-          time_zone: time_zone
-        },
+        message: message,
+        customer: customer,
         thread: nil
       }) do
     %{
       "channel" => channel,
+      "unfurl_links" => false,
+      "unfurl_media" => false,
+      "text" => text,
       "blocks" => [
         %{
           "type" => "section",
@@ -874,36 +1046,12 @@ defmodule ChatApi.Slack.Helpers do
         },
         %{
           "type" => "section",
-          "fields" => [
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Name:*\n#{name || "Anonymous User"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Email:*\n#{email || "N/A"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*URL:*\n#{current_url || "N/A"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Browser:*\n#{browser || "N/A"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*OS:*\n#{os || "N/A"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Timezone:*\n#{time_zone || "N/A"}"
-            },
-            %{
-              "type" => "mrkdwn",
-              "text" => "*Status:*\n#{get_slack_conversation_status(conversation)}"
-            }
-          ]
+          "fields" =>
+            initial_message_fields(%{
+              conversation: conversation,
+              message: message,
+              customer: customer
+            })
         },
         %{
           "type" => "divider"

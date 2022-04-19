@@ -4,7 +4,7 @@ import {Box, Flex} from 'theme-ui';
 import {Button, Input, Select, Title} from '../common';
 import {ArrowLeftOutlined} from '../icons';
 import * as API from '../../api';
-import {Company} from '../../types';
+import {Company, SlackAuthorization} from '../../types';
 import logger from '../../logger';
 
 type Props = RouteComponentProps<{id: string}>;
@@ -17,6 +17,9 @@ type State = {
   websiteUrl: string;
   slackChannelId: string;
   slackChannelName: string;
+  slackTeamId: string;
+  slackTeamName: string;
+  authorizations: Array<any>;
   channels: Array<any>;
 };
 
@@ -30,12 +33,14 @@ class UpdateCompanyPage extends React.Component<Props, State> {
     websiteUrl: '',
     slackChannelId: '',
     slackChannelName: '',
+    slackTeamId: '',
+    slackTeamName: '',
+    authorizations: [],
     channels: [],
   };
 
   async componentDidMount() {
     try {
-      const shouldFetchSlackChannels = await this.hasSlackAuthorization();
       const {id: companyId} = this.props.match.params;
       const company = await API.fetchCompany(companyId);
       const {
@@ -44,10 +49,16 @@ class UpdateCompanyPage extends React.Component<Props, State> {
         website_url: websiteUrl,
         slack_channel_id: slackChannelId,
         slack_channel_name: slackChannelName,
+        slack_team_id: slackTeamId,
+        slack_team_name: slackTeamName,
       } = company;
 
-      if (shouldFetchSlackChannels) {
-        const channels = await API.fetchSlackChannels();
+      const authorizations = await API.listSlackAuthorizations('support');
+
+      if (slackTeamId) {
+        const channels = await API.fetchSlackChannels({
+          team_id: slackTeamId,
+        });
 
         this.setState({channels});
       }
@@ -59,6 +70,9 @@ class UpdateCompanyPage extends React.Component<Props, State> {
         websiteUrl,
         slackChannelId,
         slackChannelName,
+        slackTeamId,
+        slackTeamName,
+        authorizations,
         loading: false,
       });
     } catch (err) {
@@ -93,15 +107,33 @@ class UpdateCompanyPage extends React.Component<Props, State> {
     }
   };
 
-  hasSlackAuthorization = async () => {
-    try {
-      const auth = await API.fetchSlackAuthorization('support');
+  handleChangeSlackTeam = async (value: string, record: any) => {
+    const {company, slackTeamId} = this.state;
 
-      return !!auth;
-    } catch (err) {
-      logger.error('Error fetching Slack authorization:', err);
+    if (value !== slackTeamId) {
+      const currentSlackTeamId = company?.slack_team_id;
+      const currentSlackChannelId = company?.slack_channel_id ?? '';
+      const currentSlackChannelName = company?.slack_channel_name ?? '';
 
-      return false;
+      this.setState({
+        slackTeamId: value || '',
+        slackTeamName: record?.label || '',
+        slackChannelId:
+          currentSlackTeamId === value ? currentSlackChannelId : '',
+        slackChannelName:
+          currentSlackTeamId === value ? currentSlackChannelName : '',
+      });
+
+      const channels = await API.fetchSlackChannels({
+        team_id: value,
+      });
+
+      this.setState({channels});
+    } else {
+      this.setState({
+        slackTeamId: value || '',
+        slackTeamName: record?.label || '',
+      });
     }
   };
 
@@ -116,6 +148,8 @@ class UpdateCompanyPage extends React.Component<Props, State> {
         websiteUrl,
         slackChannelId,
         slackChannelName,
+        slackTeamId,
+        slackTeamName,
       } = this.state;
       const company = await API.updateCompany(companyId, {
         name,
@@ -123,6 +157,8 @@ class UpdateCompanyPage extends React.Component<Props, State> {
         website_url: websiteUrl,
         slack_channel_id: slackChannelId,
         slack_channel_name: slackChannelName,
+        slack_team_id: slackTeamId,
+        slack_team_name: slackTeamName,
       });
 
       this.setState({company});
@@ -134,21 +170,24 @@ class UpdateCompanyPage extends React.Component<Props, State> {
   };
 
   render() {
+    const {id: companyId} = this.props.match.params;
     const {
       loading,
       name,
       description,
       websiteUrl,
       slackChannelId,
+      slackTeamId,
       channels = [],
+      authorizations = [],
       saving,
     } = this.state;
 
     return (
       <Box p={4} sx={{maxWidth: 720}}>
         <Box mb={4}>
-          <Link to="/companies">
-            <Button icon={<ArrowLeftOutlined />}>Back to companies</Button>
+          <Link to={`/companies/${companyId}`}>
+            <Button icon={<ArrowLeftOutlined />}>Back to company</Button>
           </Link>
         </Box>
 
@@ -190,6 +229,32 @@ class UpdateCompanyPage extends React.Component<Props, State> {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   this.setState({websiteUrl: e.target.value})
                 }
+              />
+            </Box>
+
+            <Box mb={3}>
+              <label htmlFor="slack_channel_id">Company Slack workspace</label>
+
+              <Select
+                style={{width: '100%'}}
+                placeholder="Select Slack workspace"
+                showSearch
+                allowClear
+                disabled={loading}
+                value={slackTeamId || undefined}
+                onChange={this.handleChangeSlackTeam}
+                options={authorizations.map((auth: SlackAuthorization) => {
+                  const {team_id: id, team_name: name} = auth;
+
+                  return {id, key: id, label: name, value: id};
+                })}
+                filterOption={(input: string, option: any) => {
+                  const {label = ''} = option;
+
+                  return (
+                    label.toLowerCase().indexOf(input.toLowerCase()) !== -1
+                  );
+                }}
               />
             </Box>
 

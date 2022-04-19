@@ -48,6 +48,16 @@ defmodule ChatApi.Slack.Client do
     )
   end
 
+  def read_file(url, access_token) do
+    [
+      {Tesla.Middleware.Headers, [{"Authorization", "Bearer " <> access_token}]},
+      Tesla.Middleware.JSON,
+      Tesla.Middleware.Logger
+    ]
+    |> Tesla.client()
+    |> Tesla.get(url, query: [])
+  end
+
   @spec send_message(map(), binary()) :: Tesla.Env.result() | {:ok, nil}
   @doc """
   `message` looks like:
@@ -69,6 +79,23 @@ defmodule ChatApi.Slack.Client do
     else
       # Inspect what would've been sent for debugging
       Logger.info("Would have sent to Slack: #{inspect(message)}")
+
+      {:ok, nil}
+    end
+  end
+
+  @spec list_messages(binary(), binary()) :: {:ok, nil} | Tesla.Env.result()
+  def list_messages(channel, access_token) do
+    if should_execute?(access_token) do
+      get("/conversations.history",
+        query: [channel: channel],
+        headers: [
+          {"Authorization", "Bearer " <> access_token}
+        ]
+      )
+    else
+      # Inspect what would've been sent for debugging
+      Logger.info("Would have retrieved messages from channel #{inspect(channel)}")
 
       {:ok, nil}
     end

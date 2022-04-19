@@ -1,11 +1,12 @@
 import React from 'react';
-import {Link} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {colors, Button, Divider, Result} from '../common';
-import {SmileOutlined, UpOutlined} from '../icons';
+import {UpOutlined} from '../icons';
 import Spinner from '../Spinner';
 import ChatMessage from './ChatMessage';
-import {Conversation, Message, User} from '../../types';
+import {Account, Conversation, Message, User} from '../../types';
+import {sortConversationMessages} from '../../utils';
+import {isBotMessage} from './support';
 
 const noop = () => {};
 
@@ -21,50 +22,33 @@ const EmptyMessagesPlaceholder = () => {
   );
 };
 
-const GettingStartedRedirect = () => {
-  return (
-    <Box my={4}>
-      <Result
-        icon={<SmileOutlined />}
-        title="No messages"
-        subTitle="It looks like your widget hasn't been set up yet!"
-        extra={
-          <Link to="/account/getting-started">
-            <Button type="primary">Get Started</Button>
-          </Link>
-        }
-      />
-    </Box>
-  );
-};
-
 const ConversationMessages = ({
   conversationId,
   messages,
+  account,
   currentUser,
   loading,
   isClosing,
-  showGetStarted,
   isLoadingPreviousConversation,
   hasPreviousConversations,
   history = [],
   sx = {},
   setScrollRef,
-  isAgentMessage,
+  isCurrentUserMessage,
   onLoadPreviousConversation = noop,
 }: {
   conversationId?: string | null;
   messages: Array<Message>;
+  account?: Account | null;
   currentUser?: User | null;
   loading?: boolean;
   isClosing?: boolean;
-  showGetStarted?: boolean;
   isLoadingPreviousConversation?: boolean;
   hasPreviousConversations?: boolean;
   history?: Array<Conversation>;
   sx?: any;
-  setScrollRef: (el: any) => void;
-  isAgentMessage?: (message: Message) => boolean;
+  setScrollRef: any; // (el: any) => void;
+  isCurrentUserMessage?: (message: Message) => boolean;
   onLoadPreviousConversation?: (conversationId: string) => void;
 }) => {
   const [historyRefs, setHistoryRefs] = React.useState<Array<any>>([]);
@@ -72,12 +56,20 @@ const ConversationMessages = ({
   // any message with a `user_id` (as opposed to `customer_id`) as an agent
   // (Note that this will require an update to the <ChatMessage /> UI component
   // in order to distinguish between different agents by e.g. profile photo)
-  const isAgentMessageDefaultFn = (msg: Message) =>
-    !!msg.user_id && !!currentUser && msg.user_id === currentUser.id;
-  const isAgentMsg =
-    typeof isAgentMessage === 'function'
-      ? isAgentMessage
-      : isAgentMessageDefaultFn;
+  const isCurrentUserMessageDefaultFn = (message: Message) => {
+    const {user_id: userId} = message;
+
+    if (!userId || !currentUser || isBotMessage(message)) {
+      return false;
+    }
+
+    return userId === currentUser.id;
+  };
+
+  const isCurrentUserMsg =
+    typeof isCurrentUserMessage === 'function'
+      ? isCurrentUserMessage
+      : isCurrentUserMessageDefaultFn;
 
   const addToHistoryRefs = (el: any) => {
     if (el && el.id) {
@@ -165,29 +157,32 @@ const ConversationMessages = ({
                 return (
                   <React.Fragment key={conversationId}>
                     <Box sx={{opacity: 0.6}}>
-                      {messages.map((message: Message, key: number) => {
-                        // Slight hack
-                        const next = messages[key + 1];
-                        const {
-                          id: messageId,
-                          customer_id: customerId,
-                        } = message;
-                        const isMe = isAgentMsg(message);
-                        const isLastInGroup = next
-                          ? customerId !== next.customer_id
-                          : true;
+                      {sortConversationMessages(messages).map(
+                        (message: Message, key: number) => {
+                          // Slight hack
+                          const next = messages[key + 1];
+                          const {
+                            id: messageId,
+                            customer_id: customerId,
+                          } = message;
+                          const isMe = isCurrentUserMsg(message);
+                          const isLastInGroup = next
+                            ? customerId !== next.customer_id
+                            : true;
 
-                        // TODO: fix `isMe` logic for multiple agents
-                        return (
-                          <ChatMessage
-                            key={messageId}
-                            message={message}
-                            isMe={isMe}
-                            isLastInGroup={isLastInGroup}
-                            shouldDisplayTimestamp={isLastInGroup}
-                          />
-                        );
-                      })}
+                          // TODO: fix `isMe` logic for multiple agents
+                          return (
+                            <ChatMessage
+                              key={messageId}
+                              account={account}
+                              message={message}
+                              isMe={isMe}
+                              isLastInGroup={isLastInGroup}
+                              shouldDisplayTimestamp={isLastInGroup}
+                            />
+                          );
+                        }
+                      )}
                     </Box>
                     <div
                       id={`ConversationMessages-history--${conversationId}`}
@@ -204,7 +199,7 @@ const ConversationMessages = ({
               // Slight hack
               const next = messages[key + 1];
               const {id: messageId, customer_id: customerId} = message;
-              const isMe = isAgentMsg(message);
+              const isMe = isCurrentUserMsg(message);
               const isLastInGroup = next
                 ? customerId !== next.customer_id
                 : true;
@@ -213,6 +208,7 @@ const ConversationMessages = ({
               return (
                 <ChatMessage
                   key={messageId}
+                  account={account}
                   message={message}
                   isMe={isMe}
                   isLastInGroup={isLastInGroup}
@@ -220,8 +216,6 @@ const ConversationMessages = ({
                 />
               );
             })
-          ) : showGetStarted ? (
-            <GettingStartedRedirect />
           ) : (
             <EmptyMessagesPlaceholder />
           )}

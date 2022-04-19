@@ -1,65 +1,42 @@
 import React from 'react';
-import {Box, Flex} from 'theme-ui';
+import {Box, Flex, SxStyleProp} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {colors, Text, Tooltip} from '../common';
 import {UserOutlined} from '../icons';
 import {formatRelativeTime} from '../../utils';
-import {Customer, Message, User} from '../../types';
-import {getColorByUuid} from './support';
+import {Account, Message} from '../../types';
+import {
+  getColorByUuid,
+  getSenderIdentifier,
+  getSenderProfilePhoto,
+  isAgentMessage,
+} from './support';
 import ChatMessageBox from './ChatMessageBox';
 
 dayjs.extend(utc);
 
-export const getSenderIdentifier = (
-  customer?: Customer | null,
-  user?: User
-) => {
-  if (user) {
-    const {display_name, full_name, email} = user;
-
-    return display_name || full_name || email || 'Agent';
-  } else if (customer) {
-    const {name, email} = customer;
-
-    return name || email || 'Anonymous User';
-  } else {
-    return 'Anonymous User';
-  }
-};
-
-export const getSenderProfilePhoto = (
-  customer?: Customer | null,
-  user?: User
-) => {
-  if (user) {
-    return user.profile_photo_url || null;
-  } else if (customer) {
-    return customer.profile_photo_url || null;
-  } else {
-    return null;
-  }
-};
-
 export const SenderAvatar = ({
   isAgent,
   name,
-  profilePhotoUrl,
+  avatarPhotoUrl,
   size = 32,
   color = colors.gold,
+  sx = {},
 }: {
   isAgent: boolean;
   name: string;
-  profilePhotoUrl?: string | null;
+  avatarPhotoUrl?: string | null;
   size?: number;
   color?: string;
+  sx?: SxStyleProp;
 }) => {
-  if (profilePhotoUrl) {
+  if (avatarPhotoUrl) {
     return (
       <Tooltip title={name}>
         <Box
-          mr={2}
-          style={{
+          sx={{
+            mr: 2,
             height: size,
             width: size,
             borderRadius: '50%',
@@ -68,7 +45,9 @@ export const SenderAvatar = ({
 
             backgroundPosition: 'center',
             backgroundSize: 'cover',
-            backgroundImage: `url(${profilePhotoUrl})`,
+            backgroundImage: `url(${avatarPhotoUrl})`,
+
+            ...sx,
           }}
         />
       </Tooltip>
@@ -78,8 +57,8 @@ export const SenderAvatar = ({
   return (
     <Tooltip title={name}>
       <Flex
-        mr={2}
         sx={{
+          mr: 2,
           bg: isAgent ? colors.primary : color,
           height: size,
           width: size,
@@ -88,6 +67,7 @@ export const SenderAvatar = ({
           justifyContent: 'center',
           alignItems: 'center',
           color: '#fff',
+          ...sx,
         }}
       >
         {isAgent ? (
@@ -104,6 +84,7 @@ export const SenderAvatar = ({
 
 type Props = {
   message: Message;
+  account?: Account | null;
   isMe?: boolean;
   isLastInGroup?: boolean;
   shouldDisplayTimestamp?: boolean;
@@ -111,43 +92,38 @@ type Props = {
 
 const ChatMessage = ({
   message,
+  account,
   isMe,
   isLastInGroup,
   shouldDisplayTimestamp,
 }: Props) => {
   const {
-    body,
     sent_at,
     created_at,
-    customer,
-    user,
     seen_at,
+    customer_id: customerId,
     private: isPrivate,
     attachments = [],
   } = message;
-  const isAgent = !!user;
-  const tooltip = getSenderIdentifier(customer, user);
+  const isAgent = isAgentMessage(message);
   const sentAt = dayjs.utc(sent_at || created_at);
   const formattedSentAt = formatRelativeTime(sentAt);
   const seenAt = seen_at ? dayjs.utc(seen_at) : null;
   const formattedSeenAt = seenAt ? formatRelativeTime(seenAt) : null;
-  const customerId = customer && customer.id;
+  const tooltip = getSenderIdentifier(message, account);
   const color = getColorByUuid(customerId);
-  const profilePhotoUrl = getSenderProfilePhoto(customer, user);
+  const avatarPhotoUrl = getSenderProfilePhoto(message, account);
 
-  // TODO: might be nice to push the boolean logic related to color down to the ChatMessageBox
-  // Maybe have PrivateChatMessageBox, ChatMessageBox, OtherCustomerMessageBox
   if (isMe) {
     return (
       <Box pr={0} pl={4} pb={isLastInGroup ? 3 : 2}>
-        <Flex sx={{justifyContent: 'flex-end'}}>
+        <Flex sx={{justifyContent: 'flex-end', alignItems: 'flex-end'}}>
           <ChatMessageBox
             className={isPrivate ? '' : 'Text--white'}
-            content={body}
+            message={message}
             sx={{
-              px: 3,
-              py: 2,
               background: isPrivate ? colors.note : colors.primary,
+              maxWidth: '80%',
             }}
             attachmentTextColor={isPrivate ? colors.text : colors.white}
             attachments={attachments}
@@ -168,18 +144,30 @@ const ChatMessage = ({
 
   return (
     <Box pr={4} pl={0} pb={isLastInGroup ? 3 : 2}>
-      <Flex sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
-        <SenderAvatar
-          name={tooltip}
-          profilePhotoUrl={profilePhotoUrl}
-          isAgent={isAgent}
-          color={color}
-        />
+      <Flex sx={{justifyContent: 'flex-start', alignItems: 'flex-end'}}>
+        {isLastInGroup ? (
+          <SenderAvatar
+            sx={{mb: '2px'}}
+            name={tooltip}
+            avatarPhotoUrl={avatarPhotoUrl}
+            isAgent={isAgent}
+            color={color}
+          />
+        ) : (
+          <Box
+            mr={2}
+            style={{
+              height: 32,
+              width: 32,
+              borderRadius: '50%',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          />
+        )}
         <ChatMessageBox
-          content={body}
+          message={message}
           sx={{
-            px: 3,
-            py: 2,
             background: isPrivate ? colors.note : 'rgb(245, 245, 245)',
             maxWidth: '80%',
           }}

@@ -8,11 +8,6 @@ defmodule ChatApi.CannedResponses do
 
   alias ChatApi.CannedResponses.CannedResponse
 
-  @spec list_canned_responses() :: [CannedResponse.t()]
-  def list_canned_responses do
-    Repo.all(CannedResponse)
-  end
-
   @spec list_canned_responses(binary()) :: [CannedResponse.t()]
   def list_canned_responses(account_id) do
     CannedResponse |> where(account_id: ^account_id) |> Repo.all()

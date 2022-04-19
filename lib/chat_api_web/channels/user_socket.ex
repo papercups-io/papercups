@@ -6,6 +6,7 @@ defmodule ChatApiWeb.UserSocket do
   channel("conversation:*", ChatApiWeb.ConversationChannel)
   channel("notification:*", ChatApiWeb.NotificationChannel)
   channel("events:*", ChatApiWeb.EventChannel)
+  channel("issue:*", ChatApiWeb.IssueChannel)
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After
@@ -50,6 +51,12 @@ defmodule ChatApiWeb.UserSocket do
 
     with {:ok, token} <- Pow.Plug.verify_token(conn, salt, signed_token, config),
          {user, _metadata} <- Pow.Store.CredentialsCache.get(store_config, token) do
+      Sentry.Context.set_user_context(%{
+        id: user.id,
+        email: user.email,
+        account_id: user.account_id
+      })
+
       user
     else
       _any -> nil

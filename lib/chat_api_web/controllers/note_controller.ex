@@ -4,9 +4,9 @@ defmodule ChatApiWeb.NoteController do
   alias ChatApi.Notes
   alias ChatApi.Notes.Note
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
 
-  plug :authorize when action in [:show, :update, :delete]
+  plug(:authorize when action in [:show, :update, :delete])
 
   def authorize(conn, _) do
     id = conn.path_params["id"]

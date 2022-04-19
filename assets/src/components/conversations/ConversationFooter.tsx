@@ -3,15 +3,22 @@ import {Box, Flex} from 'theme-ui';
 import {
   colors,
   Button,
+  Mentions,
   Menu,
-  TextArea,
   Upload,
   UploadChangeParam,
   UploadFile,
+  Text,
+  Tooltip,
 } from '../common';
 import {Message, MessageType, User} from '../../types';
-import {PaperClipOutlined} from '../icons';
+import {InfoCircleOutlined, PaperClipOutlined} from '../icons';
 import {env} from '../../config';
+import * as API from '../../api';
+import * as Storage from '../../storage';
+import {DashboardShortcutsRenderer} from './DashboardShortcutsModal';
+import {formatServerError} from '../../utils';
+import logger from '../../logger';
 
 const {REACT_APP_FILE_UPLOADS_ENABLED} = env;
 
@@ -59,26 +66,100 @@ const AttachFileButton = ({
 
 const ConversationFooter = ({
   sx = {},
-  onSendMessage,
   currentUser,
+  conversationId,
+  onSendMessage,
 }: {
   sx?: any;
-  onSendMessage: (message: Partial<Message>) => void;
   currentUser?: User | null;
+  conversationId: string;
+  onSendMessage?: (message: Message) => void;
 }) => {
-  const [message, setMessage] = React.useState<string>('');
+  const textAreaEl = React.useRef<any>(null);
+  const [message, setMessage] = React.useState<string>(
+    Storage.getMessageDraft(conversationId) || ''
+  );
   const [fileList, setFileList] = React.useState<Array<UploadFile>>([]);
   const [messageType, setMessageType] = React.useState<MessageType>('reply');
+  const [cannedResponses, setCannedResponses] = React.useState<Array<any>>([]);
+  const [mentions, setMentions] = React.useState<Array<string>>([]);
+  const [mentionableUsers, setMentionableUsers] = React.useState<Array<User>>(
+    []
+  );
+  const [prefix, setMentionPrefix] = React.useState<string>('@');
   const [isSendDisabled, setSendDisabled] = React.useState<boolean>(false);
+  const [error, setErrorMessage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const el = textAreaEl.current?.textarea;
+
+    if (el && Storage.getMessageDraft(conversationId)) {
+      el.selectionStart = Storage.getMessageDraft(conversationId).length;
+    }
+
+    Promise.all([API.fetchAccountUsers(), API.fetchCannedResponses()]).then(
+      ([users, responses]) => {
+        setMentionableUsers(users);
+        setCannedResponses(responses);
+      }
+    );
+  }, [conversationId]);
 
   const isPrivateNote = messageType === 'note';
   const accountId = currentUser?.account_id;
   const shouldDisplayUploadButton = fileUploadsEnabled(accountId);
 
-  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
-    setMessage(e.target.value);
-
   const handleSetMessageType = ({key}: any) => setMessageType(key);
+
+  const handleChangeMessage = (text: string) => {
+    setMessage(text);
+    Storage.setMessageDraft(conversationId, text);
+  };
+
+  const getPrefixIndex = (index: number) => {
+    for (let i = index; i >= 0; i--) {
+      if (message[i] === '/' || message[i] === '#') {
+        return i;
+      }
+    }
+
+    return -1;
+  };
+
+  const handleSelectMentionOption = (option: any, prefix: string) => {
+    switch (prefix) {
+      case '@':
+        return setMentions([...new Set([...mentions, option.value])]);
+      case '#':
+      case '/':
+        const el = textAreaEl.current?.textarea;
+        const y = el?.selectionStart ?? -1;
+        const x = getPrefixIndex(y);
+        const response = cannedResponses.find((r) => r.name === option.value);
+
+        if (el && x !== -1 && y !== -1 && response && response.content) {
+          const update = [
+            message.slice(0, x),
+            response.content,
+            message.slice(y),
+          ].join('');
+          const newCursorIndex = x + response.content.length;
+
+          setMessage(update);
+          // Slight hack to get the cursor to move to the correct spot
+          setTimeout(() => {
+            el.selectionStart = newCursorIndex;
+          }, 0);
+        }
+
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const handleSearchMentions = (str: string, prefix: string) =>
+    setMentionPrefix(prefix);
 
   const handleKeyDown = (e: any) => {
     const {key, metaKey} = e;
@@ -89,18 +170,60 @@ const ConversationFooter = ({
     }
   };
 
-  const handleSendMessage = (e?: any) => {
+  const findUserByMentionValue = (mention: string) => {
+    return mentionableUsers.find((user) => {
+      const {email, display_name, full_name} = user;
+      const value = display_name || full_name || email;
+
+      return mention === value;
+    });
+  };
+
+  const handleSendMessage = async (e?: any) => {
     e && e.preventDefault();
 
-    onSendMessage({
-      body: message,
-      type: messageType,
-      private: isPrivateNote,
-      file_ids: fileList.map((f) => f.response?.data?.id),
-    });
+    const formattedMessageBody = mentions.reduce((result, mention) => {
+      return result.replaceAll(`@${mention}`, `**@${mention}**`);
+    }, message);
+    const mentionedUsers = mentions
+      .filter((mention) => message.includes(`@${mention}`))
+      .map((mention) => findUserByMentionValue(mention))
+      .filter((user: User | undefined): user is User => !!user);
 
-    setFileList([]);
-    setMessage('');
+    const fileIds = fileList
+      .map((f) => f.response?.data?.id)
+      .filter((id) => !!id);
+    const hasEmptyBody =
+      !formattedMessageBody || formattedMessageBody.trim().length === 0;
+    const hasNoAttachments = !fileIds || fileIds.length === 0;
+
+    if (hasEmptyBody && hasNoAttachments) {
+      return null;
+    }
+
+    try {
+      const message = await API.createNewMessage({
+        body: formattedMessageBody,
+        type: messageType,
+        private: isPrivateNote,
+        conversation_id: conversationId,
+        file_ids: fileIds,
+        mentioned_user_ids: mentionedUsers.map((user) => user.id),
+        metadata: {
+          mentions: mentionedUsers,
+        },
+      });
+
+      setFileList([]);
+      setMessage('');
+      setErrorMessage(null);
+      Storage.removeMessageDraft(conversationId);
+      onSendMessage && onSendMessage(message);
+    } catch (err) {
+      logger.error('Error sending message!', err);
+
+      setErrorMessage(formatServerError(err));
+    }
   };
 
   const onUpdateFileList = ({file, fileList, event}: UploadChangeParam) => {
@@ -114,6 +237,42 @@ const ConversationFooter = ({
     // Enable send button again when the server has responded
     if (file && file.response) {
       setSendDisabled(false);
+    }
+  };
+
+  const getMentionOptions = () => {
+    switch (prefix) {
+      case '@':
+        return mentionableUsers.map(({id, email, display_name, full_name}) => {
+          const value = display_name || full_name || email;
+
+          return (
+            <Mentions.Option key={id} value={value}>
+              <Box>
+                <Text>{value}</Text>
+              </Box>
+              <Box>
+                <Text type="secondary">{email}</Text>
+              </Box>
+            </Mentions.Option>
+          );
+        });
+      case '#':
+      case '/':
+        return cannedResponses.map(({name, content}) => {
+          return (
+            <Mentions.Option key={name} value={name}>
+              <Box>
+                <Text>{name}</Text>
+              </Box>
+              <Box>
+                <Text type="secondary">{content}</Text>
+              </Box>
+            </Mentions.Option>
+          );
+        });
+      default:
+        return [];
     }
   };
 
@@ -133,14 +292,14 @@ const ConversationFooter = ({
           pb={2}
           pt={1}
           sx={{
-            background: isPrivateNote ? 'rgba(254,237,175,.4)' : colors.white,
+            background: isPrivateNote ? colors.noteSecondary : colors.white,
             border: '1px solid #f5f5f5',
             borderRadius: 4,
             boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 8px',
           }}
         >
           <form onSubmit={handleSendMessage}>
-            <Box px={2} mb={2}>
+            <Box px={2} mb={2} sx={{position: 'relative'}}>
               <Menu
                 mode="horizontal"
                 style={{
@@ -167,24 +326,64 @@ const ConversationFooter = ({
                   Note
                 </Menu.Item>
               </Menu>
+
+              <Box sx={{position: 'absolute', right: 0, top: 0, opacity: 0.8}}>
+                <DashboardShortcutsRenderer>
+                  {(handleOpenModal) => (
+                    <Tooltip placement="top" title="View keyboard shortcuts">
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<InfoCircleOutlined />}
+                        onClick={handleOpenModal}
+                      />
+                    </Tooltip>
+                  )}
+                </DashboardShortcutsRenderer>
+              </Box>
             </Box>
 
             <Box mb={2}>
               {/* NB: we use the `key` prop to auto-focus the textarea when toggling `messageType` */}
-              <TextArea
+              <Mentions
                 key={messageType}
+                ref={textAreaEl}
                 className="TextArea--transparent"
                 placeholder={
                   isPrivateNote
-                    ? 'Type a private note here'
-                    : 'Type your reply here'
+                    ? 'Type @ to mention a teammate and they will be notified.'
+                    : 'Type / to use a saved reply.'
                 }
                 autoSize={{minRows: 2, maxRows: 4}}
                 autoFocus
+                prefix={['@', '#', '/']}
                 value={message}
-                onKeyDown={handleKeyDown}
-                onChange={handleMessageChange}
-              />
+                notFoundContent={
+                  <Box py={1}>
+                    {prefix === '@' ? (
+                      <Text type="secondary">Teammate not found.</Text>
+                    ) : (
+                      <Text type="secondary">
+                        Not found. Create a new saved reply{' '}
+                        <a
+                          href="/saved-replies"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          here
+                        </a>
+                        .
+                      </Text>
+                    )}
+                  </Box>
+                }
+                onPressEnter={handleKeyDown}
+                onChange={handleChangeMessage}
+                onSelect={handleSelectMentionOption}
+                onSearch={handleSearchMentions}
+              >
+                {getMentionOptions()}
+              </Mentions>
             </Box>
             {shouldDisplayUploadButton ? (
               <Flex
@@ -200,13 +399,25 @@ const ConversationFooter = ({
                     onUpdateFileList={onUpdateFileList}
                   />
                 )}
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  disabled={isSendDisabled}
-                >
-                  Send
-                </Button>
+                <Flex sx={{alignItems: 'flex-end'}}>
+                  {error && (
+                    <Box mx={3}>
+                      <Text type="danger">
+                        {error.length < 60
+                          ? `Failed to send: ${error}`
+                          : 'Message failed to send. Try again?'}
+                      </Text>
+                    </Box>
+                  )}
+
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    disabled={isSendDisabled}
+                  >
+                    Send
+                  </Button>
+                </Flex>
               </Flex>
             ) : (
               <Flex sx={{justifyContent: 'flex-end'}}>

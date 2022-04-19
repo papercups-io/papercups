@@ -7,13 +7,13 @@ defmodule ChatApiWeb.MessageController do
 
   action_fallback(ChatApiWeb.FallbackController)
 
-  plug :authorize when action in [:show, :update, :delete]
+  plug(:authorize when action in [:show, :update, :delete])
 
   defp authorize(conn, _) do
     id = conn.path_params["id"]
 
-    with %{id: user_id, account_id: account_id} <- conn.assigns.current_user,
-         message = %{account_id: ^account_id, user_id: ^user_id} <- Messages.get_message!(id) do
+    with %{id: _user_id, account_id: account_id} <- conn.assigns.current_user,
+         message = %{account_id: ^account_id} <- Messages.get_message!(id) do
       assign(conn, :current_message, message)
     else
       _ -> ChatApiWeb.FallbackController.call(conn, {:error, :not_found}) |> halt()
@@ -92,13 +92,10 @@ defmodule ChatApiWeb.MessageController do
 
   @spec create(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def create(conn, %{"message" => message_params}) do
-    with %{id: user_id, account_id: account_id} <- conn.assigns.current_user,
-         {:ok, %Message{} = msg} <-
-           message_params
-           |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
-           |> Messages.create_message(),
-         message <-
-           Messages.get_message!(msg.id) do
+    with {:ok, params} <- sanitize_new_message_params(conn, message_params),
+         {:ok, %Message{} = msg} <- Messages.create_message(params),
+         {_, nil} <- handle_message_attachments(msg, params) do
+      message = Messages.get_message!(msg.id)
       broadcast_new_message(message)
 
       conn
@@ -146,6 +143,46 @@ defmodule ChatApiWeb.MessageController do
     end
   end
 
+  @spec sanitize_new_message_params(Plug.Conn.t(), map()) ::
+          {:ok, map()} | {:error, atom(), binary()}
+  defp sanitize_new_message_params(
+         _conn,
+         %{"customer_id" => customer_id, "user_id" => user_id}
+       )
+       when is_binary(customer_id) and not is_nil(user_id) do
+    {:error, :unprocessable_entity,
+     "A message should not have both a `user_id` and `customer_id`"}
+  end
+
+  defp sanitize_new_message_params(conn, %{"customer_id" => customer_id} = params)
+       when is_binary(customer_id) do
+    account_id = conn.assigns.current_user.account_id
+    customer = ChatApi.Customers.get_customer!(customer_id, [])
+
+    case customer do
+      %{account_id: ^account_id} ->
+        {:ok, Map.merge(params, %{"account_id" => account_id})}
+
+      _ ->
+        {:error, :forbidden, "Forbidden: invalid `customer_id`"}
+    end
+  end
+
+  defp sanitize_new_message_params(conn, params) do
+    case conn.assigns.current_user do
+      %{id: user_id, account_id: account_id} ->
+        {:ok, Map.merge(params, %{"user_id" => user_id, "account_id" => account_id})}
+
+      _ ->
+        {:error, :unauthorized, "Access denied"}
+    end
+  end
+
+  defp handle_message_attachments(message, %{"file_ids" => [_ | _] = file_ids}),
+    do: Messages.create_attachments(message, file_ids)
+
+  defp handle_message_attachments(_, _), do: {0, nil}
+
   defp broadcast_new_message(message) do
     message
     |> Messages.Notification.broadcast_to_customer!()
@@ -155,5 +192,12 @@ defmodule ChatApiWeb.MessageController do
     |> Messages.Notification.notify(:slack_company_channel)
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
+    |> Messages.Notification.notify(:push)
+    |> Messages.Notification.notify(:new_message_email)
+    |> Messages.Notification.notify(:conversation_reply_email)
+    |> Messages.Notification.notify(:gmail)
+    |> Messages.Notification.notify(:sms)
+    |> Messages.Notification.notify(:ses)
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 end

@@ -26,25 +26,10 @@
     <title>Papercups</title>
 
     <% if (process.env.NODE_ENV === 'production') { %>
-      <script>
-        window.__ENV__ = __SERVER_ENV_DATA__;
-      </script>
-    <% } %>
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <!-- TODO: move Google Analytics id to environment variable -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=%REACT_APP_GOOGLE_ANALYTICS_ID%"
-    ></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-      gtag('config', '%REACT_APP_GOOGLE_ANALYTICS_ID%');
+      window.__ENV__ = __SERVER_ENV_DATA__;
     </script>
+    <% } %>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

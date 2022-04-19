@@ -1,754 +1,491 @@
 import React, {useContext} from 'react';
-import {Channel, Socket} from 'phoenix';
-import {debounce, throttle} from 'lodash';
+
 import * as API from '../../api';
+import {Conversation, Message} from '../../types';
+import {mapConversationsById, mapMessagesByConversationId} from './support';
 import {notification} from '../common';
-import {Account, Conversation, Message, User} from '../../types';
-import {
-  isWindowHidden,
-  sortConversationMessages,
-  updateQueryParams,
-} from '../../utils';
-import {SOCKET_URL} from '../../socket';
 import logger from '../../logger';
 
+const defaultFilterCallback = () => true;
+
+type Unread = {
+  conversations: {
+    open: number;
+    assigned: number;
+    priority: number;
+    unread: number;
+    unassigned: number;
+    closed: number;
+    mentioned: number;
+  };
+  inboxes: {
+    [id: string]: number;
+  };
+};
+
 export const ConversationsContext = React.createContext<{
-  loading: boolean;
-  account: Account | null;
-  currentUser: User | null;
-  isNewUser: boolean;
-
-  all: Array<string>;
-  mine: Array<string>;
-  priority: Array<string>;
-  closed: Array<string>;
-  unreadByCategory: any;
-  conversationsById: {[key: string]: any};
-  messagesByConversation: {[key: string]: any};
-  currentlyOnline: {[key: string]: any};
-
-  isCustomerOnline: (customerId: string) => boolean;
-
-  onSelectConversation: (id: string | null) => any;
-  onUpdateConversation: (id: string, params: any) => Promise<any>;
-  onDeleteConversation: (id: string) => Promise<any>;
-  onSendMessage: (message: Partial<Message>, cb?: () => void) => any;
-
-  fetchAllConversations: () => Promise<Array<string>>;
-  fetchMyConversations: () => Promise<Array<string>>;
-  fetchPriorityConversations: () => Promise<Array<string>>;
-  fetchClosedConversations: () => Promise<Array<string>>;
-  // TODO: should this be different?
-  fetchConversationById: (conversationId: string) => Promise<Array<string>>;
+  loading?: boolean;
+  unread: Unread;
+  getValidConversations: (
+    filter?: (conversation: Conversation) => boolean
+  ) => Array<Conversation>;
+  getValidConversationsByIds: (
+    conversationIds: Array<string>,
+    filter?: (conversation: Conversation) => boolean
+  ) => Array<Conversation>;
+  fetchConversations: (
+    query?: Record<string, any>
+  ) => Promise<API.ConversationsListResponse>;
+  fetchConversationById: (id: string) => Promise<Conversation | null>;
+  updateConversationById: (
+    id: string,
+    updates: Record<any, any>
+  ) => Promise<Conversation | null>;
+  updateConversationAssignee: (
+    id: string,
+    userId: string | null
+  ) => Promise<Conversation | null>;
+  markConversationPriority: (id: string) => Promise<Conversation | null>;
+  removeConversationPriority: (id: string) => Promise<Conversation | null>;
+  closeConversation: (id: string) => Promise<Conversation | null>;
+  reopenConversation: (id: string) => Promise<Conversation | null>;
+  archiveConversationById: (id: string) => Promise<void>;
+  getConversationById: (id: string | null) => Conversation | null;
+  getMessagesByConversationId: (id: string | null) => Array<Message>;
+  onNewMessage: (message: Message) => void;
+  onNewConversation: (conversationId: string) => void;
+  onConversationUpdated: (
+    conversationId: string,
+    updates: Record<string, any>
+  ) => void;
 }>({
-  loading: true,
-  account: null,
-  currentUser: null,
-  isNewUser: false,
-
-  all: [],
-  mine: [],
-  priority: [],
-  closed: [],
-  unreadByCategory: {},
-  conversationsById: {},
-  messagesByConversation: {},
-  currentlyOnline: {},
-
-  isCustomerOnline: () => false,
-  onSelectConversation: () => {},
-  onSendMessage: () => {},
-  onUpdateConversation: () => Promise.resolve(),
-  onDeleteConversation: () => Promise.resolve(),
-  fetchAllConversations: () => Promise.resolve([]),
-  fetchMyConversations: () => Promise.resolve([]),
-  fetchPriorityConversations: () => Promise.resolve([]),
-  fetchClosedConversations: () => Promise.resolve([]),
-  fetchConversationById: () => Promise.resolve([]),
+  loading: false,
+  unread: {
+    conversations: {
+      open: 0,
+      assigned: 0,
+      priority: 0,
+      unread: 0,
+      unassigned: 0,
+      closed: 0,
+      mentioned: 0,
+    },
+    inboxes: {},
+  },
+  getValidConversations: () => [],
+  getValidConversationsByIds: () => [],
+  fetchConversations: () =>
+    Promise.resolve({
+      data: [],
+      next: null,
+      previous: null,
+      limit: null,
+      total: null,
+    }),
+  fetchConversationById: () => Promise.resolve(null),
+  updateConversationById: () => Promise.resolve(null),
+  updateConversationAssignee: () => Promise.resolve(null),
+  markConversationPriority: () => Promise.resolve(null),
+  removeConversationPriority: () => Promise.resolve(null),
+  closeConversation: () => Promise.resolve(null),
+  reopenConversation: () => Promise.resolve(null),
+  archiveConversationById: () => Promise.resolve(),
+  getConversationById: () => null,
+  getMessagesByConversationId: () => [],
+  onNewMessage: () => {},
+  onNewConversation: () => {},
+  onConversationUpdated: () => {},
 });
 
 export const useConversations = () => useContext(ConversationsContext);
 
-type ConversationBucket = 'all' | 'mine' | 'priority' | 'closed';
-
-type PresenceMetadata = {online_at?: string; phx_ref: string};
-type PhoenixPresence = {
-  [key: string]: {
-    metas: Array<PresenceMetadata>;
-  } | null;
-};
-type PresenceDiff = {
-  joins: PhoenixPresence;
-  leaves: PhoenixPresence;
-};
-
-export const updatePresenceWithJoiners = (
-  joiners: PhoenixPresence,
-  currentState: PhoenixPresence
-): PhoenixPresence => {
-  // Update our presence state by adding all the joiners, represented by
-  // keys like "customer:1a2b3c", "user:123", etc.
-  // The `metas` represent the metadata of each presence. A single user/customer
-  // can have multiple `metas` if logged into multiple devices/windows.
-  let result = {...currentState};
-
-  Object.keys(joiners).forEach((key) => {
-    const existing = result[key];
-    const update = joiners[key];
-
-    // `metas` is how Phoenix tracks each individual presence
-    if (!update || !update.metas) {
-      throw new Error(`Unexpected join state: ${update}`);
-    }
-
-    if (existing && existing.metas) {
-      result[key] = {metas: [...existing.metas, ...update.metas]};
-    } else {
-      result[key] = {metas: update.metas};
-    }
-  });
-
-  return result;
-};
-
-export const updatePresenceWithExiters = (
-  exiters: PhoenixPresence,
-  currentState: PhoenixPresence
-): PhoenixPresence => {
-  // Update our presence state by removing all the exiters, represented by
-  // keys like "customer:1a2b3c", "user:123", etc. We currently indicate an
-  // "exit" by setting their key to `null`.
-  // The `metas` represent the metadata of each presence. A single user/customer
-  // can have multiple `metas` if logged into multiple devices/windows.
-  let result = {...currentState};
-
-  Object.keys(exiters).forEach((key) => {
-    const existing = result[key];
-    const update = exiters[key];
-
-    // `metas` is how Phoenix tracks each individual presence
-    if (!update || !update.metas) {
-      throw new Error(`Unexpected leave state: ${update}`);
-    }
-
-    if (existing && existing.metas) {
-      const remaining = existing.metas.filter((meta: PresenceMetadata) => {
-        return update.metas.some(
-          (m: PresenceMetadata) => meta.phx_ref !== m.phx_ref
-        );
-      });
-
-      result[key] = remaining.length ? {metas: remaining} : null;
-    } else {
-      result[key] = null;
-    }
-  });
-
-  return result;
-};
-
 type Props = React.PropsWithChildren<{}>;
 type State = {
   loading: boolean;
-  account: Account | null;
-  currentUser: User | null;
-  isNewUser: boolean;
-
-  selectedConversationId: string | null;
-  conversationsById: {[key: string]: any};
-  messagesByConversation: {[key: string]: any};
-  presence: PhoenixPresence;
-
-  all: Array<string>;
-  mine: Array<string>;
-  priority: Array<string>;
-  closed: Array<string>;
+  connecting: boolean;
+  conversationIds: Array<string>;
+  conversationsById: {[id: string]: Conversation};
+  messagesByConversationId: {[id: string]: Array<Message>};
+  unread: Unread;
+  pagination: API.PaginationOptions;
 };
 
 export class ConversationsProvider extends React.Component<Props, State> {
-  state: State = {
-    loading: true,
-    account: null,
-    currentUser: null,
-    isNewUser: false,
+  constructor(props: Props) {
+    super(props);
 
-    selectedConversationId: null,
-    conversationsById: {},
-    messagesByConversation: {},
-    presence: {},
+    this.state = {
+      loading: true,
+      connecting: false,
 
-    all: [],
-    mine: [],
-    priority: [],
-    closed: [],
-  };
-
-  socket: Socket | null = null;
-  channel: Channel | null = null;
+      conversationIds: [],
+      conversationsById: {},
+      messagesByConversationId: {},
+      unread: {
+        conversations: {
+          open: 0,
+          assigned: 0,
+          priority: 0,
+          unread: 0,
+          unassigned: 0,
+          closed: 0,
+          mentioned: 0,
+        },
+        inboxes: {},
+      },
+      pagination: {
+        previous: null,
+        next: null,
+        limit: undefined,
+        total: undefined,
+      },
+    };
+  }
 
   async componentDidMount() {
-    const [currentUser, account, numTotalMessages] = await Promise.all([
-      API.me(),
-      API.fetchAccountInfo(),
-      API.countMessages().then((r) => r.count),
-    ]);
+    await this.fetchConversations({status: 'open'});
+
+    this.setState({loading: false});
+  }
+
+  // TODO: distinguish between partial updates (i.e. just updating some conversation fields)
+  // versus full update (i.e. complete refresh of conversation/customer/messages data)?
+  updateConversationState = (conversation: Conversation) => {
+    const {id, messages = []} = conversation;
+    const {
+      conversationIds = [],
+      conversationsById = {},
+      messagesByConversationId = {},
+    } = this.state;
+    const cachedConversation = conversationsById[id] || {};
+    const cachedMessages = messagesByConversationId[id] || [];
+
     this.setState({
-      currentUser,
-      account,
-      isNewUser: numTotalMessages === 0,
-    });
-    const {id: accountId} = account;
-
-    this.joinNotificationChannel(accountId);
-  }
-
-  componentWillUnmount() {
-    if (this.channel && this.channel.leave) {
-      this.channel.leave();
-    }
-
-    if (this.socket && this.socket.disconnect) {
-      this.socket.disconnect();
-    }
-  }
-
-  joinNotificationChannel = (accountId: string) => {
-    if (this.socket && this.socket.disconnect) {
-      logger.debug('Existing socket:', this.socket);
-      this.socket.disconnect();
-    }
-
-    this.socket = new Socket(SOCKET_URL, {
-      params: {token: API.getAccessToken()},
-    });
-
-    this.socket.connect();
-    // TODO: attempt refreshing access token?
-    this.socket.onError(
-      throttle(
-        () =>
-          logger.error('Error connecting to socket. Try refreshing the page.'),
-        30 * 1000 // throttle every 30 secs
-      )
-    );
-
-    if (this.channel && this.channel.leave) {
-      logger.debug('Existing channel:', this.channel);
-      this.channel.leave(); // TODO: what's the best practice here?
-    }
-
-    // TODO: If no conversations exist, should we create a conversation with us
-    // so new users can play around with the chat right away and give us feedback?
-    this.channel = this.socket.channel(`notification:${accountId}`, {});
-
-    // TODO: rename to message:created?
-    this.channel.on('shout', (message) => {
-      // Handle new message
-      this.handleNewMessage(message);
-    });
-
-    // TODO: fix race condition between this event and `shout` above
-    this.channel.on('conversation:created', ({id, conversation}) => {
-      // Handle conversation created
-      this.handleNewConversation(id);
-    });
-
-    // TODO: can probably use this for more things
-    this.channel.on('conversation:updated', ({id, updates}) => {
-      // Handle conversation updated
-      this.debouncedConversationUpdate(id, updates);
-    });
-
-    this.channel.on('presence_state', (state) => {
-      this.handlePresenceState(state);
-    });
-
-    this.channel.on('presence_diff', (diff) => {
-      this.handlePresenceDiff(diff);
-    });
-
-    this.channel
-      .join()
-      .receive('ok', (res) => {
-        logger.debug('Joined channel successfully', res);
-      })
-      .receive('error', (err) => {
-        logger.error('Unable to join', err);
-        // TODO: double check that this works (retries after 10s)
-        setTimeout(() => this.joinNotificationChannel(accountId), 10000);
-      });
-  };
-
-  handlePresenceState = (state: PhoenixPresence) => {
-    this.setState({presence: state});
-  };
-
-  handlePresenceDiff = (diff: PresenceDiff) => {
-    const {joins, leaves} = diff;
-    const {presence} = this.state;
-
-    const withJoins = updatePresenceWithJoiners(joins, presence);
-    const withLeaves = updatePresenceWithExiters(leaves, presence);
-    const combined = {...withJoins, ...withLeaves};
-    const latest = Object.keys(combined).reduce((acc, key: string) => {
-      if (!combined[key]) {
-        return acc;
-      }
-
-      return {...acc, [key]: combined[key]};
-    }, {} as PhoenixPresence);
-
-    this.setState({presence: latest});
-  };
-
-  isCustomerOnline = (customerId: string) => {
-    if (!customerId) {
-      return false;
-    }
-
-    const {presence = {}} = this.state;
-    const key = `customer:${customerId}`;
-
-    return !!(presence && presence[key]);
-  };
-
-  playNotificationSound = async (volume: number) => {
-    try {
-      const file = '/alert-v2.mp3';
-      const audio = new Audio(file);
-      audio.volume = volume;
-
-      await audio?.play();
-    } catch (err) {
-      logger.error('Failed to play notification sound:', err);
-    }
-  };
-
-  throttledNotificationSound = throttle(
-    (volume = 0.2) => this.playNotificationSound(volume),
-    10 * 1000, // throttle every 10 secs so we don't get spammed with sounds
-    {trailing: false}
-  );
-
-  handleNewMessage = async (message: Message) => {
-    logger.debug('New message!', message);
-
-    const {messagesByConversation} = this.state;
-    const {conversation_id: conversationId} = message;
-    const existingMessages = messagesByConversation[conversationId] || [];
-    const updatedMessagesByConversation = {
-      ...messagesByConversation,
-      [conversationId]: [...existingMessages, message],
-    };
-
-    this.setState(
-      {
-        messagesByConversation: updatedMessagesByConversation,
+      conversationIds: [...new Set([...conversationIds, id])],
+      conversationsById: {
+        ...conversationsById,
+        [id]: {...cachedConversation, ...conversation},
       },
-      () =>
-        this.debouncedNewMessagesCallback(message, {
-          isFirstMessage: existingMessages.length === 0,
-        })
-    );
+      messagesByConversationId: {
+        ...messagesByConversationId,
+        [id]:
+          messages.length > cachedMessages.length ? messages : cachedMessages,
+      },
+    });
   };
 
-  debouncedNewMessagesCallback = debounce(
-    (message: Message, {isFirstMessage}: {isFirstMessage: boolean}) => {
-      const {selectedConversationId, conversationsById} = this.state;
+  fetchConversations = async (
+    query: Record<string, any> = {status: 'open'}
+  ) => {
+    try {
+      const result = await API.fetchConversations(query);
+      const {data: conversations = []} = result;
       const {
-        conversation_id: conversationId,
-        customer_id: customerId,
-      } = message;
-
-      if (isWindowHidden(document || window.document)) {
-        // Play a slightly louder sound if this is the first message
-        const volume = isFirstMessage ? 0.2 : 0.1;
-
-        this.throttledNotificationSound(volume);
-      }
-      // TODO: this is a bit hacky... there's probably a better way to
-      // handle listening for changes on conversation records...
-      if (selectedConversationId === conversationId) {
-        // If the new message matches the id of the selected conversation,
-        // mark it as read right away and scroll to the latest message
-        this.handleConversationRead(selectedConversationId);
-      } else {
-        // Otherwise, find the updated conversation and mark it as unread
-        const conversation = conversationsById[conversationId];
-        const shouldDisplayAlert =
-          !!customerId && conversation && conversation.status === 'open';
-
-        this.setState({
-          conversationsById: {
-            ...conversationsById,
-            [conversationId]: {...conversation, read: false},
-          },
-        });
-
-        if (shouldDisplayAlert) {
-          notification.open({
-            message: 'New message',
-            description: (
-              <a href={`/conversations/all?cid=${conversationId}`}>
-                {message.body}
-              </a>
-            ),
-          });
-        }
-      }
-    },
-    1000
-  );
-
-  handleConversationRead = (conversationId: string | null) => {
-    if (!this.channel || !conversationId) {
-      return;
-    }
-
-    this.channel
-      .push('read', {
-        conversation_id: conversationId,
-      })
-      .receive('ok', (res) => {
-        logger.debug('Marked as read!', {res, conversationId});
-
-        const {conversationsById} = this.state;
-        const current = conversationsById[conversationId];
-
-        // Optimistic update
-        this.setState({
-          conversationsById: {
-            ...conversationsById,
-            [conversationId]: {...current, read: true},
-          },
-        });
-      });
-  };
-
-  handleNewConversation = async (conversationId?: string) => {
-    logger.debug('Listening to new conversation:', conversationId);
-
-    await this.fetchAllConversations();
-    await this.throttledNotificationSound();
-  };
-
-  // TODO: double check that there's no logic we need to add here
-  handleJoinMultipleConversations = (conversationIds: Array<string>) => {
-    logger.debug('Listening to multiple new conversations:', conversationIds);
-  };
-
-  debouncedConversationUpdate = debounce(
-    (id: string, updates: Partial<Conversation>) => {
-      const {conversationsById} = this.state;
-      const conversation = conversationsById[id];
+        conversationIds = [],
+        conversationsById = {},
+        messagesByConversationId = {},
+      } = this.state;
 
       this.setState({
+        conversationIds: [
+          ...new Set([...conversationIds, ...conversations.map((c) => c.id)]),
+        ],
         conversationsById: {
           ...conversationsById,
-          [id]: {...conversation, ...updates},
+          ...mapConversationsById(conversations),
+        },
+        messagesByConversationId: {
+          ...messagesByConversationId,
+          ...mapMessagesByConversationId(conversations),
         },
       });
 
-      return this.fetchAllConversations();
-    },
-    400
-  );
+      await this.updateUnreadNotifications();
 
-  handleSelectConversation = (id: string | null) => {
-    this.setState({selectedConversationId: id}, () => {
-      if (!id) {
-        return;
-      }
-
-      const conversation = this.state.conversationsById[id];
-
-      if (conversation && !conversation.read) {
-        this.handleConversationRead(id);
-      }
-
-      updateQueryParams({cid: id});
-    });
-  };
-
-  handleSendMessage = (message: Partial<Message>, cb?: () => void) => {
-    if (!message || !message.conversation_id) {
-      throw new Error(
-        `Invalid message ${message} - a \`conversation_id\` is required.`
-      );
-    }
-
-    const {body, file_ids} = message;
-    const hasEmptyBody = !body || body.trim().length === 0;
-    const hasNoAttachments = !file_ids || file_ids.length === 0;
-
-    if (!this.channel || (hasEmptyBody && hasNoAttachments)) {
-      return;
-    }
-
-    this.channel.push('shout', {
-      ...message,
-      sent_at: new Date().toISOString(),
-    });
-
-    if (cb && typeof cb === 'function') {
-      cb();
-    }
-  };
-
-  handleUpdateConversation = async (conversationId: string, params: any) => {
-    const {conversationsById} = this.state;
-    const existing = conversationsById[conversationId];
-
-    // Optimistic update
-    this.setState({
-      conversationsById: {
-        ...conversationsById,
-        [conversationId]: {...existing, ...params},
-      },
-    });
-
-    try {
-      await API.updateConversation(conversationId, {
-        conversation: params,
-      });
+      return result;
     } catch (err) {
-      // Revert state if there's an error
-      this.setState({
-        conversationsById: conversationsById,
-      });
+      logger.error('Failed to fetch conversations:', err);
+
+      throw err;
     }
   };
 
-  handleDeleteConversation = async (conversationId: string) => {
-    const {conversationsById} = this.state;
-
+  fetchConversationById = async (conversationId: string) => {
     try {
-      await API.deleteConversation(conversationId);
+      const conversation = await API.fetchConversation(conversationId);
+      this.updateConversationState(conversation);
+      await this.updateUnreadNotifications();
+
+      return conversation;
     } catch (err) {
-      // Revert state if there's an error
-      this.setState({
-        conversationsById: conversationsById,
-      });
+      logger.error('Failed to fetch conversation:', conversationId, err);
+
+      throw err;
     }
   };
 
-  formatConversationState = (conversations: Array<Conversation>) => {
-    const conversationsById = conversations.reduce(
-      (acc: any, conv: Conversation) => {
-        return {...acc, [conv.id]: conv};
-      },
-      {}
-    );
-    const messagesByConversation = conversations.reduce(
-      (acc: any, conv: Conversation) => {
-        const {messages = []} = conv;
-
-        return {
-          ...acc,
-          [conv.id]: sortConversationMessages(messages),
-        };
-      },
-      {}
-    );
-    const sortedConversationIds = Object.keys(conversationsById).sort(
-      (a: string, b: string) => {
-        const messagesA = messagesByConversation[a];
-        const messagesB = messagesByConversation[b];
-        const x = messagesA[messagesA.length - 1];
-        const y = messagesB[messagesB.length - 1];
-
-        return +new Date(y?.created_at) - +new Date(x?.created_at);
-      }
-    );
-
-    return {
-      conversationsById,
-      messagesByConversation,
-      conversationIds: sortedConversationIds,
-    };
-  };
-
-  updateConversationState = (
-    conversations: Array<Conversation>,
-    type: ConversationBucket
+  updateConversationById = async (
+    conversationId: string,
+    updates: Record<any, any>
   ) => {
-    const {currentUser, conversationsById, messagesByConversation} = this.state;
-    const currentUserId = currentUser ? currentUser.id : null;
-    const state = this.formatConversationState(conversations);
-    const updatedConversationsById = {
-      ...conversationsById,
-      ...state.conversationsById,
-    };
-    const updatedMessagesByConversation = {
-      ...messagesByConversation,
-      ...state.messagesByConversation,
-    };
+    try {
+      const conversation = await API.updateConversation(conversationId, {
+        conversation: updates,
+      });
+      this.updateConversationState(conversation);
 
-    const updates = {
-      loading: false,
-      conversationsById: updatedConversationsById,
-      messagesByConversation: updatedMessagesByConversation,
-    };
+      return conversation;
+    } catch (err) {
+      logger.error(
+        'Failed to update conversation:',
+        conversationId,
+        updates,
+        err
+      );
 
-    switch (type) {
-      case 'all':
-        const conversations = state.conversationIds
-          .map((id) => updates.conversationsById[id])
-          .filter((c) => c.status === 'open');
-        const all = conversations.map((c) => c.id);
-        const mine = conversations
-          .filter((c) => c.assignee_id === currentUserId && c.status === 'open')
-          .map((c) => c.id);
-        const priority = conversations
-          .filter((c) => c.priority === 'priority' && c.status === 'open')
-          .map((c) => c.id);
-
-        return this.setState({
-          ...updates,
-          all,
-          mine,
-          priority,
-        });
-      case 'mine':
-        return this.setState({
-          ...updates,
-          mine: state.conversationIds,
-        });
-      case 'priority':
-        return this.setState({
-          ...updates,
-          priority: state.conversationIds,
-        });
-      case 'closed':
-        return this.setState({
-          ...updates,
-          closed: state.conversationIds,
-        });
+      throw err;
     }
   };
 
-  fetchAllConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchAllConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
+  updateConversationAssignee = async (
+    conversationId: string,
+    userId: string | null
+  ) => this.updateConversationById(conversationId, {assignee_id: userId});
 
-    this.updateConversationState(conversations, 'all');
+  markConversationPriority = async (conversationId: string) =>
+    this.updateConversationById(conversationId, {priority: 'priority'});
 
-    return conversationIds;
+  removeConversationPriority = async (conversationId: string) =>
+    this.updateConversationById(conversationId, {priority: 'not_priority'});
+
+  closeConversation = async (conversationId: string) =>
+    this.updateConversationById(conversationId, {status: 'closed'});
+
+  reopenConversation = async (conversationId: string) =>
+    this.updateConversationById(conversationId, {status: 'open'});
+
+  archiveConversationById = async (conversationId: string) => {
+    try {
+      await API.archiveConversation(conversationId);
+
+      delete this.state.conversationsById[conversationId];
+    } catch (err) {
+      logger.error('Failed to archive conversation:', conversationId, err);
+
+      throw err;
+    }
   };
 
-  fetchConversationById = async (
-    conversationId: string
-  ): Promise<Array<string>> => {
-    const conversation = await API.fetchConversation(conversationId);
-    const conversations = [conversation];
-    const {conversationIds} = this.formatConversationState(conversations);
-    const isClosed = conversation && conversation.status === 'closed';
-
-    if (isClosed) {
-      this.updateConversationState(conversations, 'closed');
-      this.handleJoinMultipleConversations(conversationIds);
-    } else {
-      this.updateConversationState(conversations, 'all');
+  getConversationById = (
+    conversationId: string | null
+  ): Conversation | null => {
+    if (!conversationId) {
+      return null;
     }
 
-    return conversationIds;
+    const conversation = this.state.conversationsById[conversationId];
+
+    if (!conversation) {
+      // TODO: figure out the best way to avoid this... probably needs to be
+      // handled on the server where we handle emitting events via channels)
+      logger.debug(
+        `[Warning] Missing conversation in cache for id: ${conversationId}`
+      );
+
+      return null;
+    }
+
+    const messages = this.getMessagesByConversationId(conversationId);
+
+    return {...conversation, messages};
   };
 
-  fetchMyConversations = async (): Promise<Array<string>> => {
-    const {currentUser} = this.state;
+  getValidConversationsByIds = (
+    conversationIds: Array<string>,
+    filter: (conversation: Conversation) => boolean = defaultFilterCallback
+  ) => {
+    return (
+      conversationIds
+        .map((id) => this.getConversationById(id))
+        .filter(
+          (conversation: Conversation | null): conversation is Conversation =>
+            !!conversation
+        )
+        .map((conversation: Conversation) => {
+          const messages = this.getMessagesByConversationId(conversation.id);
 
-    if (!currentUser) {
+          return {...conversation, messages};
+        })
+        // TODO: figure out why some conversations get created without messages
+        // .filter(({messages = []}) => messages && messages.length > 0)
+        .sort((a: Conversation, b: Conversation) => {
+          const x = a.last_activity_at || a.updated_at;
+          const y = b.last_activity_at || b.updated_at;
+
+          return +new Date(y) - +new Date(x);
+        })
+        .filter((conversation: Conversation) => filter(conversation))
+    );
+  };
+
+  getValidConversations = (
+    filter: (conversation: Conversation) => boolean = defaultFilterCallback
+  ): Array<Conversation> => {
+    const {conversationIds = []} = this.state;
+
+    return this.getValidConversationsByIds(conversationIds, filter);
+  };
+
+  getMessagesByConversationId = (conversationId: string | null) => {
+    if (!conversationId) {
       return [];
     }
 
-    const {id: currentUserId} = currentUser;
-    const conversations = await API.fetchMyConversations(currentUserId);
-    const {conversationIds} = this.formatConversationState(conversations);
+    const messages = this.state.messagesByConversationId[conversationId];
 
-    this.updateConversationState(conversations, 'mine');
+    if (!messages) {
+      // TODO: figure out the best way to avoid this... probably needs to be
+      // handled on the server where we handle emitting events via channels)
+      logger.debug(
+        `[Warning] Missing messages in cache for conversation: ${conversationId}`
+      );
 
-    return conversationIds;
+      return [];
+    }
+
+    return messages;
   };
 
-  fetchPriorityConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchPriorityConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
-
-    this.updateConversationState(conversations, 'priority');
-
-    return conversationIds;
-  };
-
-  fetchClosedConversations = async (): Promise<Array<string>> => {
-    const conversations = await API.fetchClosedConversations();
-    const {conversationIds} = this.formatConversationState(conversations);
-
-    this.updateConversationState(conversations, 'closed');
-    this.handleJoinMultipleConversations(conversationIds);
-
-    return conversationIds;
-  };
-
-  getUnreadByCategory = () => {
-    const {all, mine, priority, conversationsById} = this.state;
-
+  addMessagesByConversationId = (
+    conversationId: string,
+    messages: Array<Message>
+  ) => {
     return {
-      all: all
-        .map((id) => conversationsById[id])
-        .filter((conv) => conv && !conv.read).length,
-      mine: mine
-        .map((id) => conversationsById[id])
-        .filter((conv) => conv && !conv.read).length,
-      priority: priority
-        .map((id) => conversationsById[id])
-        .filter((conv) => conv && !conv.read).length,
+      ...this.state.messagesByConversationId,
+      [conversationId]: [
+        ...this.getMessagesByConversationId(conversationId),
+        ...messages,
+      ],
     };
   };
 
+  handleNewMessage = (message: Message) => {
+    const {id: messageId, conversation_id: conversationId} = message;
+    const messages = this.getMessagesByConversationId(conversationId);
+    // This may happen for the first message of a new conversation
+    const isAlreadyCached = messages.some((msg) => msg.id === messageId);
+
+    if (!isAlreadyCached) {
+      this.setState({
+        messagesByConversationId: {
+          ...this.state.messagesByConversationId,
+          [conversationId]: [...messages, message],
+        },
+      });
+    }
+
+    this.handleNewMessageNotification(message);
+    this.updateUnreadNotifications();
+  };
+
+  handleNewMessageNotification = (message: Message) => {
+    const {conversation_id: conversationId, customer_id: customerId} = message;
+    const conversation = this.getConversationById(conversationId);
+    const isClosed = conversation?.status === 'closed';
+    const pathname = window.location.pathname || '';
+    const isViewing =
+      pathname.includes('conversations') && pathname.includes(conversationId);
+
+    if (isViewing || !customerId || isClosed) {
+      return;
+    }
+
+    const inboxId = conversation?.inbox_id ?? null;
+    const url = inboxId
+      ? `/inboxes/${inboxId}/conversations/${conversationId}`
+      : `/conversations/all/${conversationId}`;
+
+    notification.open({
+      key: conversationId,
+      message: 'New message',
+      description: <a href={url}>{message.body}</a>,
+    });
+  };
+
+  updateUnreadNotifications = async () => {
+    // TODO: don't invoke this as aggressively
+    const unread = await API.countUnreadConversations();
+
+    this.setState({unread});
+  };
+
+  handleNewConversation = async (conversationId: string) => {
+    const conversation = await this.fetchConversationById(conversationId);
+
+    this.setState({
+      conversationsById: {
+        ...this.state.conversationsById,
+        [conversationId]: conversation,
+      },
+    });
+
+    this.updateUnreadNotifications();
+  };
+
+  handleConversationUpdated = async (
+    conversationId: string,
+    updates: Record<any, any>
+  ) => {
+    const existing = this.getConversationById(conversationId);
+
+    if (existing) {
+      this.setState({
+        conversationsById: {
+          ...this.state.conversationsById,
+          [conversationId]: {
+            ...existing,
+            ...updates,
+          },
+        },
+      });
+    } else {
+      const conversation = await this.fetchConversationById(conversationId);
+
+      this.setState({
+        conversationsById: {
+          ...this.state.conversationsById,
+          [conversationId]: conversation,
+        },
+      });
+    }
+
+    this.updateUnreadNotifications();
+  };
+
   render() {
-    const {
-      loading,
-      account,
-      currentUser,
-      isNewUser,
-      all,
-      mine,
-      priority,
-      closed,
-      conversationsById,
-      messagesByConversation,
-      presence,
-    } = this.state;
-    const unreadByCategory = this.getUnreadByCategory();
+    const {loading, unread} = this.state;
 
     return (
       <ConversationsContext.Provider
         value={{
           loading,
-          account,
-          currentUser,
-          isNewUser,
-          all,
-          mine,
-          priority,
-          closed,
-          unreadByCategory,
-          conversationsById,
-          messagesByConversation,
-          currentlyOnline: presence,
-
-          isCustomerOnline: this.isCustomerOnline,
-
-          onSelectConversation: this.handleSelectConversation,
-          onUpdateConversation: this.handleUpdateConversation,
-          onDeleteConversation: this.handleDeleteConversation,
-          onSendMessage: this.handleSendMessage,
-
-          fetchAllConversations: this.fetchAllConversations,
+          unread,
+          getValidConversations: this.getValidConversations,
+          getValidConversationsByIds: this.getValidConversationsByIds,
+          fetchConversations: this.fetchConversations,
           fetchConversationById: this.fetchConversationById,
-          fetchMyConversations: this.fetchMyConversations,
-          fetchPriorityConversations: this.fetchPriorityConversations,
-          fetchClosedConversations: this.fetchClosedConversations,
+          updateConversationById: this.updateConversationById,
+          updateConversationAssignee: this.updateConversationAssignee,
+          markConversationPriority: this.markConversationPriority,
+          removeConversationPriority: this.removeConversationPriority,
+          closeConversation: this.closeConversation,
+          reopenConversation: this.reopenConversation,
+          archiveConversationById: this.archiveConversationById,
+          getConversationById: this.getConversationById,
+          getMessagesByConversationId: this.getMessagesByConversationId,
+          onNewMessage: this.handleNewMessage,
+          onNewConversation: this.handleNewConversation,
+          onConversationUpdated: this.handleConversationUpdated,
         }}
       >
         {this.props.children}

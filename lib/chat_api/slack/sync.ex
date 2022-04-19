@@ -96,7 +96,11 @@ defmodule ChatApi.Slack.Sync do
           any()
   def sync_slack_message_thread(
         syncable_message_items,
-        %SlackAuthorization{account_id: account_id} = authorization,
+        %SlackAuthorization{
+          account_id: account_id,
+          inbox_id: inbox_id,
+          team_id: slack_team_id
+        } = authorization,
         %{
           "type" => "message",
           "thread_ts" => thread_ts,
@@ -114,12 +118,14 @@ defmodule ChatApi.Slack.Sync do
          {:ok, conversation} <-
            Conversations.create_conversation(%{
              account_id: account_id,
+             inbox_id: inbox_id,
              customer_id: customer.id,
              source: "slack"
            }),
          {:ok, _slack_conversation_thread} <-
            SlackConversationThreads.create_slack_conversation_thread(%{
              slack_channel: slack_channel_id,
+             slack_team: slack_team_id,
              slack_thread_ts: thread_ts,
              account_id: account_id,
              conversation_id: conversation.id
@@ -163,7 +169,7 @@ defmodule ChatApi.Slack.Sync do
           # NB: we need to make sure the messages are created in the correct order, so we set async: false
           |> Messages.Notification.notify(:slack, async: false)
           # TODO: not sure we need to do this on every message
-          |> Messages.Helpers.handle_post_creation_conversation_updates()
+          |> Messages.Helpers.handle_post_creation_hooks()
 
         _ ->
           nil

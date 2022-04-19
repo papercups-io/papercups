@@ -8,6 +8,8 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   require Logger
 
   alias ChatApi.{Accounts, Conversations, Messages, Repo, Users}
+  alias ChatApi.Customers.Customer
+  alias ChatApi.Messages.Message
 
   @impl Oban.Worker
   @spec perform(Oban.Job.t()) :: :ok
@@ -43,10 +45,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
           user: Users.get_user_info(user_id),
           customer: Conversations.get_conversation_customer!(conversation_id),
           account: Accounts.get_account!(account_id),
-          messages:
-            conversation_id
-            |> Messages.list_by_conversation(account_id, limit: 5)
-            |> Enum.reverse()
+          messages: get_recent_messages(conversation_id, account_id)
         )
 
       case email do
@@ -67,6 +66,19 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   end
 
   def send_email(_params), do: :error
+
+  @spec get_recent_messages(binary(), binary()) :: [Message.t()]
+  def get_recent_messages(conversation_id, account_id) do
+    conversation_id
+    |> Messages.list_by_conversation(
+      %{
+        "account_id" => account_id,
+        "private" => false
+      },
+      limit: 5
+    )
+    |> Enum.reverse()
+  end
 
   @spec get_pending_job_ids(binary()) :: [integer()]
   def get_pending_job_ids(conversation_id) do
@@ -92,8 +104,12 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
   @spec should_send_email?(binary()) :: boolean()
   def should_send_email?(conversation_id) do
     case Conversations.get_conversation!(conversation_id) do
-      %{source: "chat"} -> Conversations.has_unseen_messages?(conversation_id)
-      _ -> false
+      %{source: "chat", customer: %Customer{email: email}} when is_binary(email) ->
+        ChatApi.Emails.Helpers.valid_format?(email) &&
+          Conversations.has_unseen_messages?(conversation_id)
+
+      _ ->
+        false
     end
   end
 
@@ -104,7 +120,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
       account_reply_emails_enabled?(account_id)
   end
 
-  def enabled(_), do: false
+  def enabled?(_), do: false
 
   @spec account_reply_emails_enabled?(binary()) :: boolean()
   def account_reply_emails_enabled?(account_id) do

@@ -6,21 +6,24 @@ import {
   Input,
   Modal,
   Paragraph,
+  Popconfirm,
   Select,
   Text,
 } from '../common';
 import * as API from '../../api';
 import {MattermostAuthorization, MattermostChannel} from '../../types';
 import logger from '../../logger';
-import {IntegrationType} from './support';
+import {formatServerError} from '../../utils';
 
 const MattermostAuthorizationModal = ({
   visible,
+  inboxId,
   authorizationId,
   onSuccess,
   onCancel,
 }: {
   visible: boolean;
+  inboxId?: string | null;
   authorizationId?: string | null;
   onSuccess: (authorization: MattermostAuthorization) => void;
   onCancel: () => void;
@@ -32,7 +35,19 @@ const MattermostAuthorizationModal = ({
     Array<MattermostChannel>
   >([]);
   const [isSaving, setSaving] = React.useState(false);
+  const [error, setErrorMessage] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    API.fetchMattermostAuthorization({inbox_id: inboxId}).then((auth) => {
+      if (!auth) {
+        return;
+      }
+
+      setAuthorization(auth);
+    });
+  }, [visible, inboxId, authorizationId]);
+
+  // TODO: debounce this
   const handleRefreshChannels = async (query: MattermostAuthorization) => {
     if (!query.access_token || !query.mattermost_url) {
       return;
@@ -42,8 +57,11 @@ const MattermostAuthorizationModal = ({
       const channels = await API.fetchMattermostChannels(query);
 
       setMattermostChannels(channels);
+      setErrorMessage(null);
     } catch (err) {
-      logger.error('Error fetching Mattermost channels!', err);
+      const e = formatServerError(err);
+      logger.error('Error fetching Mattermost channels!', e);
+      setErrorMessage(`Mattermost error: ${e}`);
     }
   };
 
@@ -52,13 +70,16 @@ const MattermostAuthorizationModal = ({
 
     try {
       const params = authorizationId
-        ? {...authorization, id: authorizationId}
-        : authorization;
+        ? {...authorization, id: authorizationId, inbox_id: inboxId}
+        : {...authorization, inbox_id: inboxId};
       const result = await API.createMattermostAuthorization(params);
+      setErrorMessage(null);
 
       return onSuccess(result);
     } catch (err) {
-      logger.error('Error creating Mattermost authorization!', err);
+      const e = formatServerError(err);
+      logger.error('Error creating Mattermost authorization!', e);
+      setErrorMessage(e);
     } finally {
       setSaving(false);
     }
@@ -90,6 +111,13 @@ const MattermostAuthorizationModal = ({
     setAuthorization({...authorization, verification_token: e.target.value});
 
   const handleChangeMattermostChannel = (value: string, record: any) => {
+    if (!record) {
+      return setAuthorization({
+        ...authorization,
+        channel_id: value,
+      });
+    }
+
     const {channel = {} as MattermostChannel} = record;
     const {name, team_id, team_name} = channel;
 
@@ -170,7 +198,7 @@ const MattermostAuthorizationModal = ({
 
         <Box mb={3}>
           <label htmlFor="bot_access_token">
-            <Text strong>Bot token</Text>
+            <Text strong>Bot access token</Text>
           </label>
 
           <Input
@@ -223,63 +251,79 @@ const MattermostAuthorizationModal = ({
             onChange={handleChangeWebhookToken}
           />
         </Box>
+
+        {error && (
+          <Box mb={-3}>
+            <Text type="danger">{error}</Text>
+          </Box>
+        )}
       </Box>
     </Modal>
   );
 };
 
 export const MattermostAuthorizationButton = ({
-  integration,
+  isConnected,
+  inboxId,
+  authorizationId,
   onUpdate,
+  onDisconnect,
 }: {
-  integration: IntegrationType;
+  isConnected?: boolean;
+  inboxId?: string | null;
+  authorizationId?: string | null;
   onUpdate: () => void;
+  onDisconnect: (id: string) => void;
 }) => {
   const [isOpen, setOpen] = React.useState(false);
 
-  const {status, authorization_id: authorizationId} = integration;
-  const isConnected = status === 'connected' && !!authorizationId;
-
   const handleOpenModal = () => setOpen(true);
-  const handlCloseModal = () => setOpen(false);
+  const handleCloseModal = () => setOpen(false);
+
   const handleSuccess = () => {
     onUpdate();
-    handlCloseModal();
+    handleCloseModal();
   };
 
-  const handleDisconnect = async () => {
-    if (!authorizationId) {
-      return;
-    }
-
-    return API.deleteMattermostAuthorization(authorizationId)
-      .then(() => onUpdate())
-      .catch((err) =>
-        logger.error('Error deleting Mattermost authorization!', err)
-      );
-  };
+  if (isConnected && authorizationId) {
+    return (
+      <Flex mx={-1}>
+        <Box mx={1}>
+          <Button onClick={handleOpenModal}>Update</Button>
+          <MattermostAuthorizationModal
+            visible={isOpen}
+            inboxId={inboxId}
+            authorizationId={authorizationId}
+            onCancel={handleCloseModal}
+            onSuccess={handleSuccess}
+          />
+        </Box>
+        <Box mx={1}>
+          <Popconfirm
+            title="Are you sure you want to disconnect from Mattermost?"
+            okText="Yes"
+            cancelText="No"
+            placement="topLeft"
+            onConfirm={() => onDisconnect(authorizationId)}
+          >
+            <Button danger>Disconnect</Button>
+          </Popconfirm>
+        </Box>
+      </Flex>
+    );
+  }
 
   return (
     <>
-      {isConnected ? (
-        <Flex mx={-1}>
-          <Box mx={1}>
-            <Button onClick={handleOpenModal}>Update</Button>
-          </Box>
-          <Box mx={1}>
-            <Button danger onClick={handleDisconnect}>
-              Disconnect
-            </Button>
-          </Box>
-        </Flex>
-      ) : (
-        <Button onClick={handleOpenModal}>Connect</Button>
-      )}
+      <Button onClick={handleOpenModal}>
+        {isConnected ? 'Reconnect' : 'Connect'}
+      </Button>
       <MattermostAuthorizationModal
         visible={isOpen}
+        inboxId={inboxId}
         authorizationId={authorizationId}
+        onCancel={handleCloseModal}
         onSuccess={handleSuccess}
-        onCancel={handlCloseModal}
       />
     </>
   );

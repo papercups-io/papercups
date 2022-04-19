@@ -4,6 +4,7 @@ defmodule ChatApiWeb.GoogleController do
   require Logger
 
   alias ChatApi.Google
+  alias ChatApi.Google.GoogleAuthorization
 
   @spec callback(Plug.Conn.t(), map()) :: Plug.Conn.t()
   @doc """
@@ -13,12 +14,19 @@ defmodule ChatApiWeb.GoogleController do
   access protected resources on behalf of the user.
   """
   def callback(conn, %{"code" => code} = params) do
-    with %{account_id: account_id, id: user_id} <- conn.assigns.current_user,
-         client <- Google.Auth.get_token!(code: code) do
+    with %{account_id: account_id, id: user_id} <- conn.assigns.current_user do
+      type =
+        case Map.get(params, "state") do
+          state when state in ["personal", "support", "sheets"] -> state
+          _ -> nil
+        end
+
+      client = Google.Auth.get_access_token!(code: code, redirect_uri: get_redirect_uri(type))
       Logger.debug("Gmail access token: #{inspect(client.token)}")
       scope = client.token.other_params["scope"] || params["scope"] || ""
+      inbox_id = Map.get(params, "inbox_id")
 
-      type =
+      client_type =
         cond do
           String.contains?(scope, "spreadsheets") -> "sheets"
           String.contains?(scope, "gmail") -> "gmail"
@@ -27,15 +35,20 @@ defmodule ChatApiWeb.GoogleController do
 
       case Google.create_or_update_authorization(account_id, %{
              account_id: account_id,
+             inbox_id: inbox_id,
              user_id: user_id,
              access_token: client.token.access_token,
              refresh_token: client.token.refresh_token,
              token_type: client.token.token_type,
              expires_at: client.token.expires_at,
              scope: scope,
-             client: type
+             client: client_type,
+             type: type
            }) do
-        {:ok, _result} ->
+        {:ok, auth} ->
+          if should_enable_gmail_sync?(auth),
+            do: enqueue_enabling_gmail_sync(account_id)
+
           json(conn, %{data: %{ok: true}})
 
         error ->
@@ -47,17 +60,30 @@ defmodule ChatApiWeb.GoogleController do
   end
 
   @spec authorization(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def authorization(conn, %{"client" => client}) do
+  def authorization(conn, %{"client" => _} = params) do
     with %{account_id: account_id} <- conn.assigns.current_user do
-      case Google.get_authorization_by_account(account_id, %{client: client}) do
+      filters = Map.new(params, fn {key, value} -> {String.to_atom(key), value} end)
+
+      # filters =
+      #   case Map.get(formatted, :type) do
+      #     "personal" -> %{client: client, type: "personal"}
+      #     "support" -> %{client: client, type: "support"}
+      #     "sheets" -> %{client: client, type: "sheets"}
+      #     _ -> %{client: client}
+      #   end
+
+      case Google.get_authorization_by_account(account_id, filters) do
         nil ->
           json(conn, %{data: nil})
 
         auth ->
           json(conn, %{
             data: %{
+              id: auth.id,
               created_at: auth.inserted_at,
+              updated_at: auth.updated_at,
               account_id: auth.account_id,
+              inbox_id: auth.inbox_id,
               user_id: auth.user_id,
               scope: auth.scope
             }
@@ -67,7 +93,7 @@ defmodule ChatApiWeb.GoogleController do
   end
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def index(conn, %{"client" => client}) do
+  def index(conn, %{"client" => client} = params) do
     scope =
       case client do
         "sheets" -> "https://www.googleapis.com/auth/spreadsheets"
@@ -77,12 +103,18 @@ defmodule ChatApiWeb.GoogleController do
 
     redirect(conn,
       external:
-        Google.Auth.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
+        Google.Auth.authorize_url!(
+          scope: scope,
+          prompt: "consent",
+          access_type: "offline",
+          state: get_auth_state(params),
+          redirect_uri: get_redirect_uri(params)
+        )
     )
   end
 
   @spec auth(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def auth(conn, %{"client" => client}) do
+  def auth(conn, %{"client" => client} = params) do
     scope =
       case client do
         "sheets" -> "https://www.googleapis.com/auth/spreadsheets"
@@ -90,8 +122,74 @@ defmodule ChatApiWeb.GoogleController do
         _ -> raise "Unrecognized client: #{client}"
       end
 
-    url = Google.Auth.authorize_url!(scope: scope, prompt: "consent", access_type: "offline")
+    url =
+      Google.Auth.authorize_url!(
+        scope: scope,
+        prompt: "consent",
+        access_type: "offline",
+        state: get_auth_state(params),
+        redirect_uri: get_redirect_uri(params)
+      )
 
     json(conn, %{data: %{url: url}})
+  end
+
+  @spec delete(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def delete(conn, %{"id" => id}) do
+    with %{account_id: _account_id} <- conn.assigns.current_user,
+         %GoogleAuthorization{} = auth <-
+           Google.get_google_authorization!(id),
+         {:ok, %GoogleAuthorization{}} <- Google.delete_google_authorization(auth) do
+      send_resp(conn, :no_content, "")
+    end
+  end
+
+  defp get_auth_state(params) do
+    case params do
+      %{"state" => state} ->
+        state
+
+      %{"type" => type, "inbox_id" => inbox_id} when is_binary(type) and is_binary(inbox_id) ->
+        "#{type}:#{inbox_id}"
+
+      %{"type" => type} ->
+        type
+
+      _ ->
+        nil
+    end
+  end
+
+  @spec get_redirect_uri(map() | binary()) :: String.t() | nil
+  defp get_redirect_uri(type) when is_binary(type) do
+    default_redirect_uri = System.get_env("PAPERCUPS_GOOGLE_REDIRECT_URI")
+
+    case type do
+      "support" ->
+        System.get_env("PAPERCUPS_SUPPORT_GMAIL_REDIRECT_URI", default_redirect_uri)
+
+      "personal" ->
+        System.get_env("PAPERCUPS_PERSONAL_GMAIL_REDIRECT_URI", default_redirect_uri)
+
+      _ ->
+        default_redirect_uri
+    end
+  end
+
+  defp get_redirect_uri(params) when is_map(params),
+    do: params |> Map.get("type") |> get_redirect_uri()
+
+  defp get_redirect_uri(_), do: System.get_env("PAPERCUPS_GOOGLE_REDIRECT_URI")
+
+  @spec should_enable_gmail_sync?(GoogleAuthorization.t()) :: boolean()
+  defp should_enable_gmail_sync?(%GoogleAuthorization{client: "gmail", type: "support"}), do: true
+  defp should_enable_gmail_sync?(_), do: false
+
+  @spec enqueue_enabling_gmail_sync(binary()) ::
+          {:ok, Oban.Job.t()} | {:error, Ecto.Changeset.t()}
+  defp enqueue_enabling_gmail_sync(account_id) do
+    %{account_id: account_id}
+    |> ChatApi.Workers.EnableGmailInboxSync.new()
+    |> Oban.insert()
   end
 end

@@ -2,15 +2,15 @@ defmodule ChatApiWeb.ConversationController do
   use ChatApiWeb, :controller
   use PhoenixSwagger
 
-  alias ChatApi.{Conversations, Messages}
+  alias ChatApi.{Conversations, Inboxes, Messages}
   alias ChatApi.Conversations.{Conversation, Helpers}
 
   action_fallback(ChatApiWeb.FallbackController)
 
-  plug :authorize when action in [:show, :update, :delete]
+  plug(:authorize when action in [:show, :update, :delete, :archive])
 
   defp authorize(conn, _) do
-    id = conn.path_params["id"]
+    id = conn.path_params["id"] || conn.params["conversation_id"]
 
     with %{account_id: account_id} <- conn.assigns.current_user,
          conversation = %{account_id: ^account_id} <- Conversations.get_conversation!(id) do
@@ -73,17 +73,103 @@ defmodule ChatApiWeb.ConversationController do
 
   @spec index(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def index(conn, params) do
-    with %{account_id: account_id} <- conn.assigns.current_user do
-      conversations = Conversations.list_conversations_by_account(account_id, params)
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         filters <- format_filter_options(params, conn.assigns.current_user),
+         pagination_options <- format_pagination_options(params),
+         %{entries: conversations, metadata: pagination} <-
+           Conversations.list_conversations_by_account_paginated(
+             account_id,
+             filters,
+             pagination_options
+           ) do
+      render(conn, "index.json", conversations: conversations, pagination: pagination)
+    end
+  end
 
-      render(conn, "index.json", conversations: conversations)
+  @spec count(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def count(conn, filters) do
+    with %{account_id: account_id} <- conn.assigns.current_user do
+      count = Conversations.count_conversations_where(account_id, filters)
+
+      json(conn, %{data: %{count: count}})
+    end
+  end
+
+  @spec unread(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def unread(conn, _params) do
+    with %{id: user_id, account_id: account_id} <- conn.assigns.current_user do
+      inboxes = Inboxes.list_inboxes(account_id)
+
+      unread_by_inbox =
+        Map.new(inboxes, fn inbox ->
+          {inbox.id,
+           Conversations.count_conversations_where(account_id, %{
+             "status" => "open",
+             "read" => false,
+             "inbox_id" => inbox.id
+           })}
+        end)
+
+      unread_conversations = %{
+        open:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false
+          }),
+        assigned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false,
+            "assignee_id" => user_id
+          }),
+        priority:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false,
+            "priority" => "priority"
+          }),
+        unread:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "read" => false
+          }),
+        unassigned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "assignee_id" => nil,
+            "read" => false
+          }),
+        closed:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "closed",
+            "read" => false
+          }),
+        mentioned:
+          Conversations.count_conversations_where(account_id, %{
+            "status" => "open",
+            "has_seen_mention" => false,
+            "mentioning" => user_id
+          })
+      }
+
+      json(conn, %{
+        data:
+          %{
+            conversations: unread_conversations,
+            inboxes: unread_by_inbox
+          }
+          # TODO: deprecate
+          |> Map.merge(unread_conversations)
+          |> Map.merge(unread_by_inbox)
+      })
     end
   end
 
   # TODO: figure out a better way to handle this
   @spec find_by_customer(Plug.Conn.t(), map()) :: Plug.Conn.t()
-  def find_by_customer(conn, %{"customer_id" => customer_id, "account_id" => account_id}) do
-    conversations = Conversations.find_by_customer(customer_id, account_id)
+  def find_by_customer(conn, %{"customer_id" => customer_id, "account_id" => account_id} = params) do
+    filters = Map.drop(params, ["account_id", "customer_id"])
+    conversations = Conversations.find_by_customer(customer_id, account_id, filters)
 
     render(conn, "index.json", conversations: conversations)
   end
@@ -159,6 +245,7 @@ defmodule ChatApiWeb.ConversationController do
     with {:ok, %Conversation{} = conversation} <-
            params
            |> Map.merge(%{"account_id" => account_id})
+           |> maybe_set_default_inbox(account_id)
            |> Conversations.create_conversation(),
          :ok <- maybe_create_message(conn, conversation, params) do
       conversation
@@ -176,7 +263,7 @@ defmodule ChatApiWeb.ConversationController do
   def create(conn, %{"conversation" => conversation_params}) do
     # TODO: add support for creating a conversation with an initial message here as well?
     with {:ok, %Conversation{} = conversation} <-
-           Conversations.create_conversation(conversation_params) do
+           conversation_params |> maybe_set_default_inbox() |> Conversations.create_conversation() do
       conversation
       |> Conversations.Notification.broadcast_new_conversation_to_admin!()
       |> Conversations.Notification.broadcast_new_conversation_to_customer!()
@@ -227,6 +314,7 @@ defmodule ChatApiWeb.ConversationController do
            Conversations.update_conversation(conversation, conversation_params) do
       # Broadcast updates asynchronously if these channels have been configured
       conversation
+      |> Conversations.Notification.broadcast_conversation_update_to_admin!()
       |> Conversations.Notification.notify(:slack)
       |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
 
@@ -244,6 +332,15 @@ defmodule ChatApiWeb.ConversationController do
            Helpers.send_conversation_state_update(conversation, %{"state" => "deleted"}),
          {:ok, %Conversation{}} <- Conversations.delete_conversation(conversation) do
       send_resp(conn, :no_content, "")
+    end
+  end
+
+  @spec archive(Plug.Conn.t(), map()) :: Plug.Conn.t()
+  def archive(conn, _params) do
+    conversation = conn.assigns.current_conversation
+
+    with {:ok, %Conversation{} = conversation} <- Conversations.archive_conversation(conversation) do
+      render(conn, "update.json", conversation: conversation)
     end
   end
 
@@ -265,10 +362,47 @@ defmodule ChatApiWeb.ConversationController do
     end
   end
 
+  @spec maybe_set_default_inbox(map(), binary()) :: map()
+  defp maybe_set_default_inbox(params, account_id) do
+    case params do
+      %{"inbox_id" => inbox_id} when is_binary(inbox_id) ->
+        params
+
+      _ ->
+        Map.merge(params, %{"inbox_id" => Inboxes.get_account_primary_inbox_id(account_id)})
+    end
+  end
+
+  @spec maybe_set_default_inbox(map()) :: map()
+  defp maybe_set_default_inbox(%{"account_id" => account_id} = params) do
+    case params do
+      %{"inbox_id" => inbox_id} when is_binary(inbox_id) ->
+        params
+
+      _ ->
+        Map.merge(params, %{"inbox_id" => Inboxes.get_account_primary_inbox_id(account_id)})
+    end
+  end
+
+  defp maybe_set_default_inbox(params), do: params
+
   @spec maybe_create_message(Plug.Conn.t(), Conversation.t(), map()) :: any()
   defp maybe_create_message(
          conn,
-         conversation,
+         %Conversation{source: "email"} = conversation,
+         %{"message" => %{"body" => body} = _message_params}
+       ) do
+    with %{id: user_id} <- conn.assigns.current_user do
+      case ChatApi.Google.InitializeGmailThread.send(body, conversation, user_id) do
+        %Messages.Message{} -> :ok
+        {:error, message} -> {:error, :unprocessable_entity, message}
+      end
+    end
+  end
+
+  defp maybe_create_message(
+         conn,
+         %Conversation{id: conversation_id},
          %{"message" => %{"body" => _body} = message_params}
        ) do
     with %{id: user_id, account_id: account_id} <- conn.assigns.current_user,
@@ -277,7 +411,7 @@ defmodule ChatApiWeb.ConversationController do
            |> Map.merge(%{
              "user_id" => user_id,
              "account_id" => account_id,
-             "conversation_id" => conversation.id
+             "conversation_id" => conversation_id
            })
            |> Messages.create_message() do
       Messages.get_message!(msg.id)
@@ -286,10 +420,63 @@ defmodule ChatApiWeb.ConversationController do
       |> Messages.Notification.notify(:slack)
       |> Messages.Notification.notify(:mattermost)
       |> Messages.Notification.notify(:webhooks)
+      |> Messages.Notification.notify(:push)
 
       :ok
     end
   end
 
   defp maybe_create_message(_conn, _conversation, _), do: :ok
+
+  defp format_filter_options(params, current_user) do
+    Enum.reduce(
+      params,
+      %{},
+      fn
+        {"assignee_id", missing}, acc when missing in [nil, ""] ->
+          Map.merge(acc, %{"assignee_id" => nil})
+
+        {"assignee_id", "me"}, acc ->
+          Map.merge(acc, %{"assignee_id" => current_user.id})
+
+        {"mentioning", "me"}, acc ->
+          Map.merge(acc, %{"mentioning" => current_user.id})
+
+        {"assignee_id", value}, acc when is_binary(value) ->
+          case Integer.parse(value) do
+            {parsed, ""} -> Map.merge(acc, %{"assignee_id" => parsed})
+            _ -> acc
+          end
+
+        {"mentioning", value}, acc ->
+          case Integer.parse(value) do
+            {parsed, ""} -> Map.merge(acc, %{"mentioning" => parsed})
+            _ -> acc
+          end
+
+        {k, v}, acc ->
+          Map.merge(acc, %{k => v})
+      end
+    )
+  end
+
+  defp format_pagination_options(params) do
+    Enum.reduce(
+      params,
+      [],
+      fn
+        {"limit", value}, acc ->
+          case Integer.parse(value) do
+            {limit, ""} -> acc ++ [limit: limit]
+            _ -> acc
+          end
+
+        {"after", value}, acc ->
+          acc ++ [after: value]
+
+        _, acc ->
+          acc
+      end
+    )
+  end
 end

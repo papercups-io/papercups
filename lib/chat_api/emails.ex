@@ -3,18 +3,29 @@ defmodule ChatApi.Emails do
 
   require Logger
 
-  alias ChatApi.Repo
+  alias ChatApi.{Accounts, Conversations, Repo, Users}
   alias ChatApi.Emails.Email
   alias ChatApi.Messages.Message
-  alias ChatApi.Users.{User, UserSettings}
+  alias ChatApi.Users.User
   alias ChatApi.Accounts.Account
 
   @type deliver_result() :: {:ok, term()} | {:error, binary()} | {:warning, binary()}
 
+  @spec send_ad_hoc_email(keyword()) :: deliver_result()
+  def send_ad_hoc_email(to: to, from: from, subject: subject, text: text, html: html) do
+    Email.generic(
+      to: to,
+      from: from,
+      subject: subject,
+      text: text,
+      html: html
+    )
+    |> deliver()
+  end
+
   @spec send_new_message_alerts(Message.t()) :: [deliver_result()]
-  def send_new_message_alerts(message) do
+  def send_new_message_alerts(%Message{} = message) do
     message
-    |> Map.get(:account_id)
     |> get_users_to_email()
     |> Enum.map(fn email ->
       email |> Email.new_message_alert(message) |> deliver()
@@ -31,13 +42,22 @@ defmodule ChatApi.Emails do
     user |> Email.password_reset() |> deliver()
   end
 
-  @spec format_sender_name(User.t(), Account.t()) :: binary
-  def format_sender_name(user, account) do
+  @spec format_sender_name(User.t() | binary(), Account.t() | binary()) :: binary()
+  def format_sender_name(%User{} = user, %Account{} = account) do
     case user.profile do
       %{display_name: display_name} when not is_nil(display_name) -> display_name
       %{full_name: full_name} when not is_nil(full_name) -> full_name
-      _ -> account.company_name
+      _ -> "#{account.company_name} Team"
     end
+  end
+
+  def format_sender_name(user_id, account_id)
+      when is_integer(user_id) and is_binary(account_id) do
+    account = Accounts.get_account!(account_id)
+
+    user_id
+    |> Users.get_user_info()
+    |> format_sender_name(account)
   end
 
   @spec send_conversation_reply_email(keyword()) :: deliver_result()
@@ -58,6 +78,36 @@ defmodule ChatApi.Emails do
     |> deliver()
   end
 
+  @spec send_mention_notification_email(keyword()) :: deliver_result()
+  def send_mention_notification_email(
+        sender: sender,
+        recipient: recipient,
+        account: account,
+        messages: messages
+      ) do
+    Email.mention_notification(
+      to: recipient.email,
+      from: format_sender_name(sender, account),
+      reply_to: sender.email,
+      company: account.company_name,
+      messages: messages,
+      user: recipient
+    )
+    |> deliver()
+  end
+
+  @spec send_user_invitation_email(User.t(), Account.t(), binary(), binary()) :: deliver_result()
+  def send_user_invitation_email(user, account, to_address, invitation_token) do
+    Email.user_invitation(%{
+      company: account.company_name,
+      from_address: user.email,
+      from_name: format_sender_name(user, account),
+      invitation_token: invitation_token,
+      to_address: to_address
+    })
+    |> deliver()
+  end
+
   @spec send_via_gmail(binary(), map()) :: deliver_result()
   def send_via_gmail(
         access_token,
@@ -73,17 +123,27 @@ defmodule ChatApi.Emails do
     |> deliver(access_token: access_token)
   end
 
-  @spec get_users_to_email(binary()) :: [User.t()]
-  def get_users_to_email(account_id) do
-    query =
-      from(u in User,
-        join: s in UserSettings,
-        on: s.user_id == u.id,
-        where: u.account_id == ^account_id and s.email_alert_on_new_message == true,
-        select: u.email
-      )
+  @spec get_users_to_email(Message.t()) :: [User.t()]
+  def get_users_to_email(%Message{account_id: account_id} = message) do
+    User
+    |> join(:left, [u], s in assoc(u, :settings), as: :settings)
+    |> where([u], u.account_id == ^account_id)
+    |> where([u], is_nil(u.disabled_at) and is_nil(u.archived_at))
+    |> where_alerts_enabled(is_first_message: Conversations.is_first_message?(message))
+    |> select([u], u.email)
+    |> Repo.all()
+  end
 
-    Repo.all(query)
+  def where_alerts_enabled(query, is_first_message: true) do
+    query
+    |> where(
+      [_u, settings: s],
+      s.email_alert_on_new_message == true or s.email_alert_on_new_conversation == true
+    )
+  end
+
+  def where_alerts_enabled(query, _) do
+    query |> where([_u, settings: s], s.email_alert_on_new_message == true)
   end
 
   @spec has_valid_to_addresses?(Email.t()) :: boolean()
@@ -99,11 +159,9 @@ defmodule ChatApi.Emails do
 
   @spec deliver(Email.t()) :: deliver_result()
   def deliver(email) do
-    # Using try catch here because if someone is self hosting and doesn't need the email service it would error out
-    # TODO: Find a better solution besides try catch probably in config.exs setup an empty mailer that doesn't do anything
     try do
       if has_valid_to_addresses?(email) do
-        ChatApi.Mailers.Mailgun.deliver(email)
+        ChatApi.Mailers.deliver(email)
       else
         {:warning, "Skipped sending to potentially invalid email: #{inspect(email.to)}"}
       end

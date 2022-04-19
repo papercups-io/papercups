@@ -69,8 +69,9 @@ defmodule ChatApiWeb.Router do
     post("/slack/webhook", SlackController, :webhook)
     post("/slack/actions", SlackController, :actions)
     post("/mattermost/webhook", MattermostController, :webhook)
-    # TODO: move to protected route after testing?
-    get("/hubspot/oauth", HubspotController, :oauth)
+    post("/twilio/webhook", TwilioController, :webhook)
+    post("/github/webhook", GithubController, :webhook)
+    post("/ses/webhook", SesController, :webhook)
 
     post("/newsletters/:newsletter/subscribe", NewsletterController, :subscribe)
   end
@@ -81,37 +82,70 @@ defmodule ChatApiWeb.Router do
 
     get("/me", SessionController, :me)
     get("/accounts/me", AccountController, :me)
+    get("/conversations/count", ConversationController, :count)
     get("/messages/count", MessageController, :count)
     get("/billing", BillingController, :show)
     post("/billing", BillingController, :create)
     put("/billing", BillingController, :update)
+    delete("/billing", BillingController, :delete)
     get("/reporting", ReportingController, :index)
+    get("/onboarding_status", OnboardingStatusController, :index)
 
     get("/slack/oauth", SlackController, :oauth)
+    post("/slack/notify", SlackController, :notify)
     get("/slack/authorization", SlackController, :authorization)
+    get("/slack/authorizations", SlackController, :authorizations)
+    post("/slack/authorizations/:id/settings", SlackController, :update_settings)
     delete("/slack/authorizations/:id", SlackController, :delete)
     get("/slack/channels", SlackController, :channels)
     post("/mattermost/auth", MattermostController, :auth)
     get("/mattermost/channels", MattermostController, :channels)
     get("/mattermost/authorization", MattermostController, :authorization)
     delete("/mattermost/authorizations/:id", MattermostController, :delete)
+    post("/twilio/send", TwilioController, :send)
+    post("/twilio/auth", TwilioController, :auth)
+    get("/twilio/authorization", TwilioController, :authorization)
+    delete("/twilio/authorizations/:id", TwilioController, :delete)
+    get("/github/oauth", GithubController, :oauth)
+    get("/github/authorization", GithubController, :authorization)
+    delete("/github/authorizations/:id", GithubController, :delete)
+    get("/github/repos", GithubController, :list_repos)
+    get("/github/issues", GithubController, :list_issues)
+    post("/github/issues", GithubController, :create_issue)
     get("/google/auth", GoogleController, :auth)
     get("/google/oauth", GoogleController, :callback)
     get("/google/authorization", GoogleController, :authorization)
+    delete("/google/authorizations/:id", GoogleController, :delete)
+    get("/gmail/profile", GmailController, :profile)
     post("/gmail/send", GmailController, :send)
+    get("/hubspot/oauth", HubspotController, :oauth)
+    get("/hubspot/authorization", HubspotController, :authorization)
+    get("/hubspot/contacts", HubspotController, :list_contacts)
+    post("/hubspot/contacts", HubspotController, :create_contact)
+    delete("/hubspot/authorizations/:id", HubspotController, :delete)
+    get("/intercom/callback", IntercomController, :callback)
+    get("/intercom/authorization", IntercomController, :authorization)
+    get("/intercom/contacts", IntercomController, :list_contacts)
+    post("/intercom/contacts", IntercomController, :create_contact)
+    delete("/intercom/authorizations/:id", IntercomController, :delete)
     put("/widget_settings", WidgetSettingsController, :update)
     get("/profile", UserProfileController, :show)
     put("/profile", UserProfileController, :update)
     get("/user_settings", UserSettingsController, :show)
     put("/user_settings", UserSettingsController, :update)
-    delete("/users/:id", UserController, :delete)
     post("/users/:id/disable", UserController, :disable)
     post("/users/:id/enable", UserController, :enable)
+    post("/users/:id/archive", UserController, :archive)
+    put("/users/:id/role", UserController, :update_role)
     post("/payment_methods", PaymentMethodController, :create)
     get("/payment_methods", PaymentMethodController, :show)
     get("/browser_sessions/count", BrowserSessionController, :count)
+    get("/conversations/unread", ConversationController, :unread)
+    get("/inboxes/primary", InboxController, :primary)
 
+    resources("/users", UserController, only: [:index, :show, :delete])
     resources("/user_invitations", UserInvitationController, except: [:new, :edit])
+    resources("/user_invitation_emails", UserInvitationEmailController, only: [:create])
     resources("/accounts", AccountController, only: [:update, :delete])
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit, :create])
@@ -120,11 +154,18 @@ defmodule ChatApiWeb.Router do
     resources("/notes", NoteController, except: [:new, :edit])
     resources("/event_subscriptions", EventSubscriptionController, except: [:new, :edit])
     resources("/tags", TagController, except: [:new, :edit])
+    resources("/issues", IssueController, except: [:new, :edit])
     resources("/browser_sessions", BrowserSessionController, except: [:create, :new, :edit])
     resources("/personal_api_keys", PersonalApiKeyController, except: [:new, :edit, :update])
     resources("/canned_responses", CannedResponseController, except: [:new, :edit])
+    resources("/lambdas", LambdaController, except: [:new, :edit])
+    resources("/forwarding_addresses", ForwardingAddressController, except: [:new, :edit])
+    resources("/inboxes", InboxController, except: [:new, :edit])
 
+    post("/lambdas/:id/deploy", LambdaController, :deploy)
+    post("/lambdas/:id/invoke", LambdaController, :invoke)
     get("/slack_conversation_threads", SlackConversationThreadController, :index)
+    post("/conversations/:conversation_id/archive", ConversationController, :archive)
     get("/conversations/:conversation_id/previous", ConversationController, :previous)
     get("/conversations/:conversation_id/related", ConversationController, :related)
     post("/conversations/:conversation_id/share", ConversationController, :share)
@@ -132,7 +173,11 @@ defmodule ChatApiWeb.Router do
     delete("/conversations/:conversation_id/tags/:tag_id", ConversationController, :remove_tag)
     post("/customers/:customer_id/tags", CustomerController, :add_tag)
     delete("/customers/:customer_id/tags/:tag_id", CustomerController, :remove_tag)
+    post("/customers/:customer_id/issues", CustomerController, :link_issue)
+    delete("/customers/:customer_id/issues/:issue_id", CustomerController, :unlink_issue)
     post("/event_subscriptions/verify", EventSubscriptionController, :verify)
+
+    post("/admin/notifications", AdminNotificationController, :create)
   end
 
   scope "/api/v1", ChatApiWeb do
@@ -140,9 +185,25 @@ defmodule ChatApiWeb.Router do
 
     get("/me", SessionController, :me)
 
+    resources("/profile", UserProfileController, only: [:show, :update])
+    resources("/user_settings", UserSettingsController, only: [:show, :update])
     resources("/messages", MessageController, except: [:new, :edit])
     resources("/conversations", ConversationController, except: [:new, :edit])
     resources("/customers", CustomerController, except: [:new, :edit])
+    resources("/users", UserController, only: [:index, :show])
+    resources("/tags", TagController, except: [:new, :edit])
+    resources("/issues", IssueController, except: [:new, :edit])
+    resources("/notes", NoteController, except: [:new, :edit])
+    resources("/companies", CompanyController, except: [:new, :edit])
+
+    get("/reporting", ReportingController, :index)
+    post("/slack/notify", SlackController, :notify)
+    post("/twilio/send", TwilioController, :send)
+    post("/gmail/send", GmailController, :send)
+
+    get("/github/repos", GithubController, :list_repos)
+    get("/github/issues", GithubController, :list_issues)
+    post("/github/issues", GithubController, :create_issue)
   end
 
   # Enables LiveDashboard only for development
@@ -161,12 +222,21 @@ defmodule ChatApiWeb.Router do
     end
   end
 
+  if Mix.env() == :dev do
+    scope "/" do
+      pipe_through([:browser])
+
+      forward("/mailbox", Plug.Swoosh.MailboxPreview)
+    end
+  end
+
   scope "/", ChatApiWeb do
     pipe_through(:browser)
 
     get("/", PageController, :index)
     # TODO: move somewhere else?
     get("/google/auth", GoogleController, :index)
+    get("/deps", LambdaController, :deps)
 
     # Fallback to index, which renders React app
     get("/*path", PageController, :index)

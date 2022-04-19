@@ -2,9 +2,10 @@ import React from 'react';
 import {Box, Flex} from 'theme-ui';
 import {colors, Button, Input, Modal, Select, Text, TextArea} from '../common';
 import * as API from '../../api';
+import {formatServerError} from '../../utils';
 import {Tag} from '../../types';
 import logger from '../../logger';
-import {TAG_COLORS, formatTagErrors} from './support';
+import {TAG_COLORS} from './support';
 
 const UpdateTagModal = ({
   tag,
@@ -54,7 +55,7 @@ const UpdateTagModal = ({
       .then((result) => onSuccess(result))
       .catch((err) => {
         logger.error('Error updating tag:', err);
-        const errorMessage = formatTagErrors(err);
+        const errorMessage = formatServerError(err);
         setErrorMessage(errorMessage);
       })
       .finally(() => setIsSaving(false));

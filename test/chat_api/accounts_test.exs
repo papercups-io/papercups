@@ -28,10 +28,34 @@ defmodule ChatApi.AccountsTest do
       assert found_account.company_name === account.company_name
     end
 
+    test "get_account!/1 returns the account with its users",
+         %{account: account} do
+      found_account = Accounts.get_account!(account.id)
+
+      assert [] = found_account.users
+
+      foo = insert(:user, account: account, email: "foo@test.com")
+      bar = insert(:user, account: account, email: "bar@test.com")
+
+      another_account = insert(:account, company_name: "Another Account")
+
+      insert(:user, account: another_account, email: "baz@another.com")
+
+      found_account = Accounts.get_account!(account.id)
+
+      assert [bar.email, foo.email] ==
+               found_account.users |> Enum.map(& &1.email) |> Enum.sort()
+
+      Users.archive_user(foo)
+
+      assert [bar.email] ==
+               account.id |> Accounts.get_account!() |> Map.get(:users) |> Enum.map(& &1.email)
+    end
+
     test "create_account/1 with valid data creates a account and widget_setting" do
       assert {:ok, %Account{} = account} = Accounts.create_account(@valid_attrs)
       assert account.company_name != nil
-      assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account(account.id)
+      assert %WidgetSettings.WidgetSetting{} = WidgetSettings.get_settings_by_account!(account.id)
     end
 
     test "create_account/1 with invalid data returns error changeset" do
@@ -56,10 +80,18 @@ defmodule ChatApi.AccountsTest do
          %{account: account} do
       assert {:ok, %Account{} = account} =
                Accounts.update_account(account, %{
-                 settings: %{disable_automated_reply_emails: true}
+                 settings: %{
+                   disable_automated_reply_emails: true,
+                   conversation_reminders_enabled: true,
+                   conversation_reminder_hours_interval: 48
+                 }
                })
 
-      assert %Accounts.Settings{disable_automated_reply_emails: true} = account.settings
+      assert %Accounts.Settings{
+               disable_automated_reply_emails: true,
+               conversation_reminders_enabled: true,
+               conversation_reminder_hours_interval: 48
+             } = account.settings
     end
 
     test "update_account/2 with invalid data returns error changeset",

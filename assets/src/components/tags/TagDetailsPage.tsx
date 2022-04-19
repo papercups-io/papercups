@@ -2,9 +2,9 @@ import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
 import {
-  colors,
-  shadows,
   Button,
+  Card,
+  Empty,
   Popconfirm,
   Result,
   Tag,
@@ -14,27 +14,16 @@ import {
 import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
 import * as T from '../../types';
-import {sleep} from '../../utils';
+import {sleep, sortConversationMessages} from '../../utils';
 import Spinner from '../Spinner';
 import logger from '../../logger';
-import CustomersTable from '../customers/CustomersTable';
+import {getColorByUuid} from '../conversations/support';
 import UpdateTagModal from './UpdateTagModal';
+import ConversationItem from '../conversations/ConversationItem';
+import CustomersTableContainer from '../customers/CustomersTableContainer';
 
 const DetailsSectionCard = ({children}: {children: any}) => {
-  return (
-    <Box
-      p={3}
-      mb={3}
-      sx={{
-        bg: colors.white,
-        border: '1px solid rgba(0,0,0,.06)',
-        borderRadius: 4,
-        boxShadow: shadows.medium,
-      }}
-    >
-      {children}
-    </Box>
-  );
+  return <Card sx={{p: 3, mb: 3}}>{children}</Card>;
 };
 
 type Props = RouteComponentProps<{id: string}>;
@@ -44,7 +33,7 @@ type State = {
   refreshing: boolean;
   isUpdateModalVisible: boolean;
   tag: T.Tag | null;
-  customers: Array<T.Customer>;
+  conversations: Array<T.Conversation>;
 };
 
 class TagDetailsPage extends React.Component<Props, State> {
@@ -54,16 +43,22 @@ class TagDetailsPage extends React.Component<Props, State> {
     refreshing: false,
     isUpdateModalVisible: false,
     tag: null,
-    customers: [],
+    conversations: [],
   };
 
   async componentDidMount() {
     try {
-      const {id: tagId} = this.props.match.params;
-      const tag = await API.fetchTagById(tagId);
-      const customers = await API.fetchCustomers({tag_id: tagId});
+      const tagId = this.getTagId();
+      const [tag, {data: conversations}] = await Promise.all([
+        API.fetchTagById(tagId),
+        API.fetchConversations({tag_id: tagId}),
+      ]);
 
-      this.setState({tag, customers, loading: false});
+      this.setState({
+        tag,
+        conversations,
+        loading: false,
+      });
     } catch (err) {
       logger.error('Error loading tag!', err);
 
@@ -71,31 +66,20 @@ class TagDetailsPage extends React.Component<Props, State> {
     }
   }
 
-  handleRefreshCustomers = async () => {
-    this.setState({refreshing: true});
-
-    try {
-      const {id: tagId} = this.props.match.params;
-      const customers = await API.fetchCustomers({tag_id: tagId});
-
-      this.setState({customers, refreshing: false});
-    } catch (err) {
-      logger.error('Error refreshing customers!', err);
-
-      this.setState({refreshing: false});
-    }
+  getTagId = () => {
+    return this.props.match.params.id;
   };
 
   handleRefreshTag = async () => {
     this.setState({refreshing: true});
 
     try {
-      const {id: tagId} = this.props.match.params;
+      const tagId = this.getTagId();
       const tag = await API.fetchTagById(tagId);
 
       this.setState({tag, refreshing: false});
     } catch (err) {
-      logger.error('Error refreshing customers!', err);
+      logger.error('Error refreshing tags!', err);
 
       this.setState({refreshing: false});
     }
@@ -104,7 +88,8 @@ class TagDetailsPage extends React.Component<Props, State> {
   handleDeleteTag = async () => {
     try {
       this.setState({deleting: true});
-      const {id: tagId} = this.props.match.params;
+      const tagId = this.getTagId();
+
       await API.deleteTag(tagId);
       await sleep(1000);
 
@@ -129,14 +114,25 @@ class TagDetailsPage extends React.Component<Props, State> {
     this.handleRefreshTag();
   };
 
+  handleSelectConversation = (conversationId: string) => {
+    const conversation = this.state.conversations.find(
+      (conversation) => conversation.id === conversationId
+    );
+    const isClosed = conversation && conversation.status === 'closed';
+    const url = isClosed
+      ? `/conversations/closed/${conversationId}`
+      : `/conversations/all/${conversationId}`;
+
+    this.props.history.push(url);
+  };
+
   render() {
     const {
       loading,
       deleting,
-      refreshing,
       isUpdateModalVisible,
       tag,
-      customers = [],
+      conversations = [],
     } = this.state;
 
     if (loading) {
@@ -164,7 +160,7 @@ class TagDetailsPage extends React.Component<Props, State> {
         sx={{
           flexDirection: 'column',
           flex: 1,
-          bg: 'rgb(245, 245, 245)',
+          bg: 'rgb(250, 250, 250)',
         }}
       >
         <Flex
@@ -243,12 +239,39 @@ class TagDetailsPage extends React.Component<Props, State> {
                 <Title level={4}>People</Title>
               </Box>
 
-              <CustomersTable
-                loading={loading || refreshing}
-                customers={customers}
-                currentlyOnline={{}}
-                onUpdate={this.handleRefreshCustomers}
+              <CustomersTableContainer
+                defaultFilters={{tag_id: this.getTagId()}}
               />
+            </DetailsSectionCard>
+
+            <DetailsSectionCard>
+              <Box pb={2} sx={{borderBottom: '1px solid rgba(0,0,0,.06)'}}>
+                <Title level={4}>Conversations</Title>
+              </Box>
+
+              {conversations.length > 0 ? (
+                conversations.map((conversation) => {
+                  const {
+                    id: conversationId,
+                    customer_id: customerId,
+                    messages = [],
+                  } = conversation;
+                  const color = getColorByUuid(customerId);
+                  const sorted = sortConversationMessages(messages);
+
+                  return (
+                    <ConversationItem
+                      key={conversationId}
+                      conversation={conversation}
+                      messages={sorted}
+                      color={color}
+                      onSelectConversation={this.handleSelectConversation}
+                    />
+                  );
+                })
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
             </DetailsSectionCard>
           </Box>
         </Flex>

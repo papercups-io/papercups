@@ -1,11 +1,28 @@
 export type Account = {
   id: string;
   company_name: string;
+  company_logo_url?: string;
   time_zone?: string;
   subscription_plan?: string;
   users?: Array<User>;
-  widget_settings: WidgetSettings;
+  widget_settings: Array<WidgetSettings>;
   working_hours: Array<any>;
+  settings?: AccountSettings | null;
+};
+
+export type AccountSettings = {
+  disable_automated_reply_emails?: boolean | null;
+  conversation_reminders_enabled?: boolean | null;
+  conversation_reminder_hours_interval?: number | null;
+  max_num_conversation_reminders?: number | null;
+};
+
+export type CannedResponse = {
+  id: string;
+  name: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
 };
 
 export type User = {
@@ -14,10 +31,19 @@ export type User = {
   display_name?: string;
   full_name?: string;
   profile_photo_url?: string;
-  created_at?: string;
+  created_at: string;
   disabled_at?: string;
-  role?: 'user' | 'admin';
-  account_id?: string;
+  role: 'user' | 'admin';
+  account_id: string;
+};
+
+export type UserSettings = {
+  id: string;
+  object: 'user_settings';
+  user_id: number;
+  email_alert_on_new_message: boolean;
+  email_alert_on_new_conversation: boolean;
+  expo_push_token?: string | null;
 };
 
 export type Customer = {
@@ -32,14 +58,19 @@ export type Customer = {
   first_seen?: any;
   host?: string;
   ip?: string;
-  last_seen?: string;
+  // Datetime
+  last_seen_at: string;
   metadata?: any;
   os?: string;
   pathname?: string;
-  phone?: number;
+  phone?: string | number;
   tags?: Array<Tag>;
   time_zone?: string;
   updated_at?: string;
+  title: string;
+  // Associations
+  company?: Company;
+  conversations?: Array<Conversation>;
 };
 
 export type Company = {
@@ -50,15 +81,26 @@ export type Company = {
   external_id?: string;
   slack_channel_id?: string;
   slack_channel_name?: string;
+  slack_team_id?: string;
+  slack_team_name?: string;
   updated_at: string;
 };
 
-export type MessageType = 'reply' | 'note';
+export type MessageType = 'reply' | 'note' | 'bot';
+export type MessageSource =
+  | 'chat'
+  | 'slack'
+  | 'mattermost'
+  | 'email'
+  | 'sms'
+  | 'api'
+  | 'sandbox';
 
 export type Message = {
   id: string;
   body: string;
-  type?: 'reply' | 'note';
+  type?: MessageType;
+  source?: MessageSource;
   private?: boolean;
   created_at: string;
   sent_at?: string;
@@ -68,8 +110,11 @@ export type Message = {
   conversation_id: string;
   user_id?: number;
   user?: User;
-  file_ids?: string[];
-  attachments?: Attachment[];
+  file_ids?: Array<string>;
+  attachments?: Array<Attachment>;
+  mentioned_user_ids?: Array<number>;
+  mentions?: Array<any>;
+  metadata?: any;
 };
 
 export type FileUpload = {
@@ -79,16 +124,35 @@ export type FileUpload = {
   content_type: string;
 };
 
+export type ForwardingAddress = {
+  id: string;
+  forwarding_email_address: string;
+  source_email_address?: string;
+  description?: string;
+  state?: string;
+  created_at: string;
+  updated_at: string;
+  account_id: string;
+  inbox_id?: string | null;
+};
+
 // Alias
 export type Attachment = FileUpload;
 
+export type ConversationSource = 'chat' | 'email' | 'slack' | 'sms';
+
 export type Conversation = {
   id: string;
-  source?: string;
+  source?: ConversationSource;
+  subject?: string;
   account_id: string;
   customer_id: string;
   customer: Customer;
-  created_at?: string;
+  created_at: string;
+  updated_at: string;
+  closed_at?: string | null;
+  archived_at?: string | null;
+  last_activity_at?: string;
   date: string;
   preview: string;
   messages?: Array<Message>;
@@ -96,7 +160,9 @@ export type Conversation = {
   read?: boolean;
   status?: string;
   assignee_id?: number;
+  inbox_id?: string;
   tags?: Array<Tag>;
+  mentions?: Array<any>;
 };
 
 export type CustomerNote = {
@@ -106,6 +172,8 @@ export type CustomerNote = {
   author_id: number;
   created_at: string;
   updated_at: string;
+  author?: User;
+  customer?: Customer;
 };
 
 export type Tag = {
@@ -114,6 +182,55 @@ export type Tag = {
   description?: string;
   color?: string;
   updated_at: string;
+};
+
+export type Inbox = {
+  id: string;
+  object: 'inbox';
+  name: string;
+  description?: string | null;
+  slug?: string | null;
+  account_id: string;
+  is_primary?: boolean;
+  is_private?: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type IssueState =
+  | 'unstarted'
+  | 'in_progress'
+  | 'in_review'
+  | 'done'
+  | 'closed';
+
+export type Issue = {
+  id: string;
+  title: string;
+  body?: string;
+  state: IssueState;
+  github_issue_url?: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type LambdaStatus = 'pending' | 'active' | 'inactive';
+
+export type Lambda = {
+  id: string;
+  object: 'lambda';
+  account_id: string;
+  name: string;
+  description?: string;
+  code?: string;
+  language?: string;
+  runtime?: string;
+  status: LambdaStatus;
+  last_deployed_at?: string;
+  last_executed_at?: string;
+  created_at: string;
+  updated_at: string;
+  metadata?: string;
 };
 
 export type BrowserSession = {
@@ -161,10 +278,19 @@ export type MattermostChannel = {
   team_name: string;
 };
 
+export type TwilioAuthorization = {
+  id?: string;
+  twilio_auth_token?: string;
+  twilio_account_sid?: string;
+  from_phone_number?: string;
+};
+
 export type WidgetIconVariant = 'outlined' | 'filled';
 
 export type WidgetSettings = {
-  id?: string;
+  id: string | null;
+  inbox_id?: string | null;
+  acccount_id?: string | null;
   title?: string;
   subtitle?: string;
   color?: string;
@@ -186,7 +312,7 @@ export type WidgetSettings = {
   pathname?: string;
   last_seen_at: string | null;
   account_id: string;
-  inserted_at: string | null;
+  created_at: string | null;
   updated_at: string | null;
 };
 
@@ -195,3 +321,54 @@ export enum Alignment {
   Left = 'left',
   Center = 'center',
 }
+
+export type Pagination = {
+  page_size: number;
+  page_number: number;
+  total_pages?: number;
+  total_entries?: number;
+};
+
+export type GoogleIntegrationClient = 'gmail' | 'sheets';
+export type GoogleIntegrationType = 'personal' | 'support';
+export type GoogleIntegrationParams = {
+  client: GoogleIntegrationClient;
+  type?: GoogleIntegrationType;
+  inbox_id?: string | null;
+};
+
+export type GoogleAuthParams = {
+  code: string;
+  state?: string | null;
+  scope?: string | null;
+  inbox_id?: string | null;
+};
+
+export type SlackAuthorizationSettings = {
+  sync_all_incoming_threads: boolean;
+  sync_by_emoji_tagging: boolean;
+  sync_trigger_emoji: string;
+  forward_synced_messages_to_reply_channel: boolean;
+};
+
+export type SlackAuthorization = {
+  id: string;
+  created_at: string;
+  channel: string;
+  channel_id: string;
+  configuration_url: string;
+  team_id: string;
+  team_name: string;
+  settings: SlackAuthorizationSettings | null;
+};
+
+export type OnboardingStatus = {
+  has_configured_inbox?: boolean;
+  has_configured_profile?: boolean;
+  has_configured_storytime?: boolean;
+  has_email_forwarding?: boolean;
+  has_integrations?: boolean;
+  is_chat_widget_installed?: boolean;
+  has_invited_teammates?: boolean;
+  has_upgraded_subscription?: boolean;
+};

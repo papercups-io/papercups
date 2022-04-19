@@ -109,14 +109,9 @@ const st = Storytime.init({
     }
 
     return (
-      <Box
-        p={4}
-        sx={{
-          maxWidth: 720,
-        }}
-      >
+      <Box px={5} py={4} sx={{maxWidth: 800}}>
         <Box mb={4}>
-          <Title>Set up Storytime</Title>
+          <Title level={3}>Set up Storytime</Title>
           <Paragraph>
             <Text>
               Before you can start viewing your customers' sessions, you'll need
@@ -130,7 +125,7 @@ const st = Storytime.init({
         </Box>
 
         <Box mb={4}>
-          <Title level={3}>Installing the plugin</Title>
+          <Title level={4}>Installing the plugin</Title>
           <Paragraph>
             <Text>
               There are two ways you can install the plugin: in HTML, or via
@@ -140,7 +135,7 @@ const st = Storytime.init({
         </Box>
 
         <Box mb={4}>
-          <Title level={3}>Usage in HTML</Title>
+          <Title level={4}>Usage in HTML</Title>
           <Paragraph>
             <Text>
               Paste the code below between your <Text code>{'<head>'}</Text> and{' '}
@@ -165,7 +160,7 @@ const st = Storytime.init({
         </Box>
 
         <Box mb={4}>
-          <Title level={3}>Usage with NPM module</Title>
+          <Title level={4}>Usage with NPM module</Title>
           <Paragraph>
             <Text>
               First, install the <Text code>@papercups-io/storytime</Text>{' '}
@@ -198,7 +193,7 @@ const st = Storytime.init({
           </SyntaxHighlighter>
         </Box>
 
-        <Title level={3}>Learn more</Title>
+        <Title level={4}>Learn more</Title>
         <Paragraph>
           <Text>
             See the code and star our{' '}

@@ -3,6 +3,8 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
   import Ecto.Changeset
 
   alias ChatApi.Accounts.Account
+  alias ChatApi.Inboxes.Inbox
+  alias ChatApi.SlackAuthorizations.Settings
 
   @type t :: %__MODULE__{
           access_token: String.t(),
@@ -19,9 +21,12 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
           token_type: String.t() | nil,
           webhook_url: String.t() | nil,
           metadata: any(),
+          settings: any(),
           # Relations
           account_id: any(),
           account: any(),
+          inbox_id: any(),
+          inbox: any(),
           # Timestamps
           inserted_at: any(),
           updated_at: any()
@@ -45,7 +50,10 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
     field(:webhook_url, :string)
     field(:metadata, :map)
 
+    embeds_one(:settings, Settings, on_replace: :delete)
+
     belongs_to(:account, Account)
+    belongs_to(:inbox, Inbox)
 
     timestamps()
   end
@@ -55,6 +63,7 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
     slack_authorization
     |> cast(attrs, [
       :account_id,
+      :inbox_id,
       :type,
       :access_token,
       :app_id,
@@ -70,7 +79,17 @@ defmodule ChatApi.SlackAuthorizations.SlackAuthorization do
       :token_type,
       :metadata
     ])
+    |> cast_embed(:settings, with: &settings_changeset/2)
     |> validate_required([:account_id, :access_token])
     |> validate_inclusion(:type, ["reply", "support"])
+  end
+
+  @spec settings_changeset(any(), map()) :: Ecto.Changeset.t()
+  def settings_changeset(schema, params) do
+    schema
+    |> cast(params, [
+      :sync_all_incoming_threads,
+      :sync_by_emoji_tagging
+    ])
   end
 end

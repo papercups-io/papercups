@@ -48,12 +48,16 @@ defmodule ChatApiWeb.EventSubscriptionController do
   @spec update(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def update(conn, %{"id" => id, "event_subscription" => event_subscription_params}) do
     event_subscription = EventSubscriptions.get_event_subscription!(id)
+    # Not sure the most appropriate place to handle this verification :shrug:
+    verified =
+      event_subscription_params
+      |> Map.get("webhook_url")
+      |> EventSubscriptions.is_valid_webhook_url?()
+
+    params = Map.merge(event_subscription_params, %{"verified" => verified})
 
     with {:ok, %EventSubscription{} = event_subscription} <-
-           EventSubscriptions.update_event_subscription(
-             event_subscription,
-             event_subscription_params
-           ) do
+           EventSubscriptions.update_event_subscription(event_subscription, params) do
       render(conn, "show.json", event_subscription: event_subscription)
     end
   end

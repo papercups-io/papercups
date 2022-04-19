@@ -1,16 +1,16 @@
 import React from 'react';
 import {Flex} from 'theme-ui';
 import {colors} from '../common';
-import {useConversations} from '../conversations/ConversationsProvider';
 import ConversationMessages from '../conversations/ConversationMessages';
 import ConversationFooter from '../conversations/ConversationFooter';
 import {Conversation, Message, User} from '../../types';
+import {useConversations} from '../conversations/ConversationsProvider';
+import {useAuth} from '../auth/AuthProvider';
 
 type Props = {
   conversation: Conversation;
   currentUser: User | null;
   messages: Array<Message>;
-  onSendMessage: (message: Partial<Message>, cb: () => void) => void;
 };
 
 class ConversationSidebar extends React.Component<Props, any> {
@@ -33,23 +33,8 @@ class ConversationSidebar extends React.Component<Props, any> {
     this.scrollToEl && this.scrollToEl.scrollIntoView();
   };
 
-  handleSendMessage = (message: Partial<Message>) => {
-    const {id: conversationId} = this.props.conversation;
-
-    if (!conversationId) {
-      return null;
-    }
-
-    this.props.onSendMessage(
-      {...message, conversation_id: conversationId},
-      () => {
-        this.scrollIntoView();
-      }
-    );
-  };
-
   render() {
-    const {currentUser, messages = []} = this.props;
+    const {currentUser, conversation, messages = []} = this.props;
 
     return (
       <Flex
@@ -68,37 +53,33 @@ class ConversationSidebar extends React.Component<Props, any> {
           sx={{p: 3}}
           messages={messages}
           currentUser={currentUser}
-          setScrollRef={(el) => (this.scrollToEl = el)}
+          setScrollRef={(el: any) => (this.scrollToEl = el)}
         />
 
         <ConversationFooter
           sx={{px: 3, pb: 3}}
-          onSendMessage={this.handleSendMessage}
+          conversationId={conversation.id}
+          onSendMessage={this.scrollIntoView}
         />
       </Flex>
     );
   }
 }
 
-const ConversationsSidebarWrapper = ({
+const ConversationSidebarWrapper = ({
   conversationId,
 }: {
   conversationId: string;
 }) => {
+  const {currentUser} = useAuth();
   const {
     loading,
-    currentUser,
-    conversationsById = {},
-    messagesByConversation = {},
     fetchConversationById,
-    onSendMessage,
-    onSelectConversation,
+    getConversationById,
   } = useConversations();
 
   React.useEffect(() => {
-    fetchConversationById(conversationId).then(() =>
-      onSelectConversation(conversationId)
-    );
+    Promise.all([fetchConversationById(conversationId)]);
     // eslint-disable-next-line
   }, [conversationId]);
 
@@ -106,22 +87,21 @@ const ConversationsSidebarWrapper = ({
     return null;
   }
 
-  // TODO: fix case where conversation is closed!
-  const conversation = conversationsById[conversationId] || null;
-  const messages = messagesByConversation[conversationId] || null;
+  const conversation = getConversationById(conversationId);
 
-  if (!conversation || !messages) {
+  if (!conversation) {
     return null;
   }
+
+  const {messages = []} = conversation;
 
   return (
     <ConversationSidebar
       conversation={conversation}
       messages={messages}
       currentUser={currentUser}
-      onSendMessage={onSendMessage}
     />
   );
 };
 
-export default ConversationsSidebarWrapper;
+export default ConversationSidebarWrapper;

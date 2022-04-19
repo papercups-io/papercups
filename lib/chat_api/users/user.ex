@@ -5,6 +5,7 @@ defmodule ChatApi.Users.User do
 
   alias ChatApi.Conversations.Conversation
   alias ChatApi.Messages.Message
+  alias ChatApi.Mentions.Mention
   alias ChatApi.Accounts.Account
   alias ChatApi.Users.{UserProfile, UserSettings}
 
@@ -41,6 +42,10 @@ defmodule ChatApi.Users.User do
     belongs_to(:account, Account, type: :binary_id)
     has_one(:profile, UserProfile)
     has_one(:settings, UserSettings)
+
+    has_many(:mentions, Mention)
+    has_many(:mentioned_conversations, through: [:mentions, :conversation])
+    has_many(:mentioned_messages, through: [:mentions, :message])
 
     pow_user_fields()
 

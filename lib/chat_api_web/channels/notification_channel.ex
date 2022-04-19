@@ -1,5 +1,6 @@
 defmodule ChatApiWeb.NotificationChannel do
   use ChatApiWeb, :channel
+  use Appsignal.Instrumentation.Decorators
 
   alias ChatApiWeb.Presence
   alias Phoenix.Socket.Broadcast
@@ -26,13 +27,29 @@ defmodule ChatApiWeb.NotificationChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  @decorate channel_action()
   def handle_in("read", %{"conversation_id" => id}, socket) do
-    {:ok, conversation} = Conversations.mark_conversation_read(id)
-    Conversations.Notification.notify(conversation, :webhooks, event: "conversation:updated")
+    # TODO: the logic around marking conversations read may have to change with mentions,
+    #       because we need to track who has actually seen the message and who hasn't...
+    # TODO: we should probably handle the logic around counting unread messages on the server?
 
-    {:reply, :ok, socket}
+    case Conversations.mark_conversation_read(id) do
+      {:ok, conversation} ->
+        {_, nil} = Conversations.mark_mentions_seen(id, socket.assigns.current_user.id)
+
+        conversation
+        |> Conversations.Notification.broadcast_conversation_update_to_admin!()
+        |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
+        |> Conversations.Notification.notify(:mobile_badge_count)
+
+        {:reply, :ok, socket}
+
+      {:error, error} ->
+        {:reply, {:error, error}, socket}
+    end
   end
 
+  @decorate channel_action()
   def handle_in("shout", payload, socket) do
     with %{current_user: current_user} <- socket.assigns,
          %{id: user_id, account_id: account_id} <- current_user do
@@ -41,16 +58,23 @@ defmodule ChatApiWeb.NotificationChannel do
         |> Map.merge(%{"user_id" => user_id, "account_id" => account_id})
         |> Messages.create_message()
 
+      case Map.get(payload, "mentioned_user_ids") do
+        mentioned_user_ids when is_list(mentioned_user_ids) ->
+          Messages.add_mentioned_users(message, mentioned_user_ids)
+
+        _ ->
+          nil
+      end
+
       case Map.get(payload, "file_ids") do
         file_ids when is_list(file_ids) -> Messages.create_attachments(message, file_ids)
         _ -> nil
       end
 
-      message
-      |> Map.get(:id)
+      message.id
       |> Messages.get_message!()
       |> broadcast_new_message(socket)
-      |> Messages.Helpers.handle_post_creation_conversation_updates()
+      |> Messages.Helpers.handle_post_creation_hooks()
     end
 
     {:reply, :ok, socket}
@@ -104,6 +128,8 @@ defmodule ChatApiWeb.NotificationChannel do
     message
     |> Messages.Notification.notify(:slack)
     |> Messages.Notification.notify(:webhooks)
+    |> Messages.Notification.notify(:mentions)
+    |> Messages.Notification.notify(:push)
   end
 
   defp broadcast_new_message(message, socket) do
@@ -116,14 +142,25 @@ defmodule ChatApiWeb.NotificationChannel do
     |> Messages.Notification.notify(:slack_company_channel)
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:webhooks)
+    |> Messages.Notification.notify(:mentions)
+    |> Messages.Notification.notify(:push)
     |> Messages.Notification.notify(:conversation_reply_email)
+    |> Messages.Notification.notify(:gmail)
+    |> Messages.Notification.notify(:sms)
+    |> Messages.Notification.notify(:ses)
   end
 
   @spec authorized?(any(), binary()) :: boolean()
   defp authorized?(socket, account_id) do
     with %{current_user: current_user} <- socket.assigns,
-         %{account_id: acct} <- current_user do
-      acct == account_id
+         %{id: user_id, account_id: current_account_id, email: email} <- current_user do
+      Sentry.Context.set_user_context(%{
+        id: user_id,
+        email: email,
+        account_id: current_account_id
+      })
+
+      current_account_id == account_id
     else
       _ -> false
     end

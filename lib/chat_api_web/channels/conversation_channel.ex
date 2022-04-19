@@ -1,5 +1,6 @@
 defmodule ChatApiWeb.ConversationChannel do
   use ChatApiWeb, :channel
+  use Appsignal.Instrumentation.Decorators
 
   alias ChatApiWeb.Presence
   alias ChatApi.{Messages, Conversations}
@@ -75,6 +76,7 @@ defmodule ChatApiWeb.ConversationChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  @decorate channel_action()
   def handle_in("shout", payload, socket) do
     with %{conversation: conversation} <- socket.assigns,
          %{id: conversation_id, account_id: account_id} <- conversation,
@@ -98,6 +100,7 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
+  @decorate channel_action()
   def handle_in("messages:seen", _payload, socket) do
     with %{conversation: conversation} <- socket.assigns,
          %{id: conversation_id} <- conversation do
@@ -107,40 +110,12 @@ defmodule ChatApiWeb.ConversationChannel do
     {:noreply, socket}
   end
 
-  @spec broadcast_conversation_update!(Message.t()) :: Message.t()
-  defp broadcast_conversation_update!(%Message{conversation_id: conversation_id} = message) do
-    # Mark as unread and ensure the conversation is open, since we want to
-    # reopen a conversation if it received a new message after being closed.
-    {:ok, conversation} =
-      conversation_id
-      |> Conversations.get_conversation!()
-      |> Conversations.update_conversation(%{status: "open", read: false})
-
-    conversation
-    |> Conversations.Notification.broadcast_conversation_update_to_admin!()
-    |> Conversations.Notification.notify(:webhooks, event: "conversation:updated")
-
-    message
-  end
-
-  @spec broadcast_to_admin_channel!(Message.t()) :: Message.t()
-  defp broadcast_to_admin_channel!(%Message{account_id: account_id} = message) do
-    ChatApiWeb.Endpoint.broadcast!(
-      "notification:" <> account_id,
-      "shout",
-      Messages.Helpers.format(message)
-    )
-
-    message
-  end
-
   @spec broadcast_new_message(any(), Message.t()) :: Message.t()
   defp broadcast_new_message(socket, message) do
-    broadcast_conversation_update!(message)
     broadcast(socket, "shout", Messages.Helpers.format(message))
-    broadcast_to_admin_channel!(message)
 
     message
+    |> Messages.Notification.broadcast_to_admin!()
     |> Messages.Notification.notify(:slack)
     # TODO: check if :slack_support_channel and :slack_company_channel are relevant
     |> Messages.Notification.notify(:slack_support_channel)
@@ -148,6 +123,8 @@ defmodule ChatApiWeb.ConversationChannel do
     |> Messages.Notification.notify(:mattermost)
     |> Messages.Notification.notify(:new_message_email)
     |> Messages.Notification.notify(:webhooks)
+    |> Messages.Notification.notify(:push)
+    |> Messages.Helpers.handle_post_creation_hooks()
   end
 
   # Add authorization logic here as required.

@@ -6,15 +6,15 @@ defmodule ChatApiWeb.CustomerControllerTest do
 
   @update_attrs %{
     first_seen: ~D[2020-01-01],
-    last_seen: ~D[2020-01-02],
     name: "Test User",
     email: "user@test.com",
     phone: "+16501235555",
-    time_zone: "America/New_York"
+    time_zone: "America/New_York",
+    metadata: %{"foo" => "bar"}
   }
 
   @invalid_attrs %{
-    last_seen: 3
+    last_seen_at: 3
   }
 
   setup %{conn: conn} do
@@ -56,13 +56,13 @@ defmodule ChatApiWeb.CustomerControllerTest do
       [headers, row1] = String.split(csv, "\r\n")
 
       assert headers ==
-               "id,name,email,created_at,updated_at,first_seen,last_seen,phone," <>
+               "id,name,email,created_at,updated_at,first_seen,last_seen_at,phone," <>
                  "external_id,host,pathname,current_url,browser,os,ip,time_zone"
 
       assert row1 ==
                "\"#{customer.id}\",\"#{customer.name}\",\"#{customer.email}\"," <>
                  "\"#{customer.inserted_at}\",\"#{customer.updated_at}\",\"#{customer.first_seen}\"," <>
-                 "\"#{customer.last_seen}\",\"#{customer.phone}\",\"#{customer.external_id}\"," <>
+                 "\"#{customer.last_seen_at}\",\"#{customer.phone}\",\"#{customer.external_id}\"," <>
                  "\"#{customer.host}\",\"#{customer.pathname}\",\"#{customer.current_url}\"," <>
                  "\"#{customer.browser}\",\"#{customer.os}\",\"#{customer.ip}\"," <>
                  "\"#{customer.time_zone}\""
@@ -121,7 +121,11 @@ defmodule ChatApiWeb.CustomerControllerTest do
          %{authed_conn: authed_conn, customer: %Customer{id: id} = customer} do
       resp =
         put(authed_conn, Routes.customer_path(authed_conn, :update, customer),
-          customer: @update_attrs
+          customer: %{
+            email: "updated@example.com",
+            name: "Updated Name",
+            metadata: %{"bar" => "baz"}
+          }
         )
 
       assert %{"id" => ^id} = json_response(resp, 200)["data"]
@@ -129,7 +133,10 @@ defmodule ChatApiWeb.CustomerControllerTest do
       resp = get(authed_conn, Routes.customer_path(authed_conn, :show, id))
 
       assert %{
-               "id" => _id
+               "id" => _id,
+               "email" => "updated@example.com",
+               "name" => "Updated Name",
+               "metadata" => %{"bar" => "baz"}
              } = json_response(resp, 200)["data"]
     end
 
@@ -216,12 +223,14 @@ defmodule ChatApiWeb.CustomerControllerTest do
       assert %{
                "email" => email,
                "name" => name,
-               "time_zone" => time_zone
+               "time_zone" => time_zone,
+               "metadata" => metadata
              } = json_response(resp, 200)["data"]
 
       assert email == @update_attrs.email
       assert name == @update_attrs.name
       assert time_zone == @update_attrs.time_zone
+      assert metadata == @update_attrs.metadata
     end
 
     test "ensures external_id is a string",
@@ -281,6 +290,31 @@ defmodule ChatApiWeb.CustomerControllerTest do
       assert %{
                "customer_id" => ^customer_id
              } = json_response(resp, 200)["data"]
+    end
+
+    test "errors when external_id is null or undefined", %{conn: conn, account: account} do
+      email = "customer@test.com"
+      host = "app.test.com"
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account.id,
+          external_id: "null",
+          email: email,
+          host: host
+        )
+
+      assert json_response(resp, 422)["error"]
+
+      resp =
+        get(conn, Routes.customer_path(conn, :identify),
+          account_id: account.id,
+          external_id: "undefined",
+          email: email,
+          host: host
+        )
+
+      assert json_response(resp, 422)["error"]
     end
 
     test "ignoring nil/null filters", %{conn: conn, account: account} do

@@ -1,15 +1,15 @@
+**:warning: Maintenance Mode**
+
+> _Papercups is in maintenance mode. This means there won't be any major new features in the near future. We will still accept pull requests and conduct major bug fixes. Read more [here](https://papercups.io/blog/papercups-maintenance)_
+
 # Papercups
 
-Papercups is an open source live customer chat web app written in Elixir. We offer a hosted version at [app.papercups.io](https://app.papercups.io/).
+Papercups is an open source live customer support tool web app written in Elixir. We offer a hosted version at [app.papercups.io](https://app.papercups.io/).
 
 You can check out how our chat widget looks and play around with customizing it on our [demo page](https://app.papercups.io/demo/). The chat widget component is also open sourced at [github.com/papercups-io/chat-widget](https://github.com/papercups-io/chat-widget).
 
 _Watch how easy it is to get set up with our Slack integration 🚀 :_
 ![slack-setup](https://user-images.githubusercontent.com/4218509/88716918-a0583180-d0d4-11ea-93b3-12437ac51138.gif)
-
-## Join our Slack channel!
-
-Come say hi to us on [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)! :wave:
 
 ## One click Heroku deployment
 
@@ -19,17 +19,18 @@ The fastest way to get started is one click deploy on Heroku with:
 
 ## Philosophy
 
-We wanted to make a self-hosted version of tools like Intercom and Drift for companies that have privacy and security concerns about having customer data going to third party services. We’re starting with chat right now but we want to expand into all forms of customer communication like email campaigns and push notifications.
-
-Stay tuned! We'll be posting a more detailed roadmap soon 🤓
+We wanted to make a self-hosted customer support tool like Zendesk and Intercom for companies that have privacy and security concerns about having customer data going to third party services.
 
 ## Features
 
+- **Reply from email** - use Papercups to answer support tickets via email
+- **Reply from SMS** - forward Twilio conversations and respond to SMS requests from Papercups
 - **Custom chat widget** - a customizable chat widget you can embed on your website to talk to your customers
 - **React support** - embed the chat widget as a [React component](https://github.com/papercups-io/chat-widget#using-in-react), or a simple [HTML snippet](https://github.com/papercups-io/chat-widget#using-in-html)
-- **React Native support (alpha)** - embed the chat widget in your [React Native](https://github.com/papercups-io/chat-widget-native#papercups-iochat-widget-native) app
-- **Flutter support (alpha)** - embed the chat widget in your [Flutter](https://github.com/papercups-io/papercups_flutter) app (courtesy of @aguilaair :heart:)
+- **React Native support** - embed the chat widget in your [React Native](https://github.com/papercups-io/chat-widget-native#papercups-iochat-widget-native) app
+- **Flutter support** - embed the chat widget in your [Flutter](https://github.com/papercups-io/papercups_flutter) app (courtesy of @aguilaair :heart:)
 - **Slack integration** - connect with Slack, so you can view and reply to messages directly from a Slack channel
+- **Mattermost integration** - connect with [Mattermost](https://docs.papercups.io/reply-from-mattermost), so you can view and reply to messages directly from Mattermost
 - **Markdown and emoji support** - use markdown and emoji to add character to your messages!
 - **Invite your team** - send invite links to your teammates to join your account
 - **Conversation management** - close, assign, and prioritize conversations

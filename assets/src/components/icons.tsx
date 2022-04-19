@@ -1,12 +1,15 @@
 import ApiOutlined from '@ant-design/icons/ApiOutlined';
 import ArrowLeftOutlined from '@ant-design/icons/ArrowLeftOutlined';
 import CalendarOutlined from '@ant-design/icons/CalendarOutlined';
+import CheckCircleOutlined from '@ant-design/icons/CheckCircleOutlined';
 import CheckCircleTwoTone from '@ant-design/icons/CheckCircleTwoTone';
 import CheckOutlined from '@ant-design/icons/CheckOutlined';
+import CodeOutlined from '@ant-design/icons/CodeOutlined';
 import CreditCardOutlined from '@ant-design/icons/CreditCardOutlined';
 import CreditCardTwoTone from '@ant-design/icons/CreditCardTwoTone';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 import DeleteTwoTone from '@ant-design/icons/DeleteTwoTone';
+import DesktopOutlined from '@ant-design/icons/DesktopOutlined';
 import DownOutlined from '@ant-design/icons/DownOutlined';
 import GlobalOutlined from '@ant-design/icons/GlobalOutlined';
 import InfoCircleOutlined from '@ant-design/icons/InfoCircleOutlined';
@@ -32,17 +35,21 @@ import UpOutlined from '@ant-design/icons/UpOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import VideoCameraOutlined from '@ant-design/icons/VideoCameraOutlined';
 import WarningTwoTone from '@ant-design/icons/WarningTwoTone';
+import WindowsOutlined from '@ant-design/icons/WindowsOutlined';
 
 export {
   ApiOutlined,
   ArrowLeftOutlined,
   CalendarOutlined,
+  CheckCircleOutlined,
   CheckCircleTwoTone,
   CheckOutlined,
+  CodeOutlined,
   CreditCardOutlined,
   CreditCardTwoTone,
   DeleteOutlined,
   DeleteTwoTone,
+  DesktopOutlined,
   DownOutlined,
   GlobalOutlined,
   InfoCircleOutlined,
@@ -68,4 +75,5 @@ export {
   UserOutlined,
   VideoCameraOutlined,
   WarningTwoTone,
+  WindowsOutlined,
 };

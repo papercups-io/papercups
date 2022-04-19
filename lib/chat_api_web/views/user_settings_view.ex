@@ -15,7 +15,9 @@ defmodule ChatApiWeb.UserSettingsView do
       id: user_settings.id,
       object: "user_settings",
       user_id: user_settings.user_id,
-      email_alert_on_new_message: user_settings.email_alert_on_new_message
+      email_alert_on_new_message: user_settings.email_alert_on_new_message,
+      email_alert_on_new_conversation: user_settings.email_alert_on_new_conversation,
+      expo_push_token: user_settings.expo_push_token
     }
   end
 end

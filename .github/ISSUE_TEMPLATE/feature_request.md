@@ -23,6 +23,4 @@ Add any other context, screenshots, or related issues about the feature request 
 Describe how this should be tested.
 
 **Questions, or need help getting started?**
-Feel free to ask below, or [ping us on Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg) :)
-
 (You can also check out our [CONTRIBUTING.md](https://github.com/papercups-io/papercups/blob/master/CONTRIBUTING.md))

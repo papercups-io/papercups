@@ -1,5 +1,6 @@
 defmodule ChatApiWeb.EventChannel do
   use ChatApiWeb, :channel
+  use Appsignal.Instrumentation.Decorators
 
   alias ChatApiWeb.Presence
 
@@ -33,9 +34,9 @@ defmodule ChatApiWeb.EventChannel do
   end
 
   def join("events:" <> keys, _payload, socket) do
-    case String.split(keys, ":") do
+    case {String.split(keys, ":"), storytime_enabled?()} do
       # TODO: check that these IDs are valid (i.e. exist in DB)
-      [account_id, browser_session_id] ->
+      {[account_id, browser_session_id], true} ->
         send(self(), :after_join_customer_session)
 
         {:ok,
@@ -99,6 +100,7 @@ defmodule ChatApiWeb.EventChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  @decorate channel_action()
   def handle_in("replay:event:emitted", payload, socket) do
     enqueue_process_browser_replay_event(payload, socket)
     broadcast_to_admin(socket, "replay:event:emitted", payload)
@@ -106,6 +108,7 @@ defmodule ChatApiWeb.EventChannel do
     {:noreply, socket}
   end
 
+  @decorate channel_action()
   def handle_in("session:active", _payload, socket) do
     topic = get_admin_all_topic(socket)
     key = "session:" <> socket.assigns.browser_session_id
@@ -120,6 +123,7 @@ defmodule ChatApiWeb.EventChannel do
     {:noreply, socket}
   end
 
+  @decorate channel_action()
   def handle_in("session:inactive", _payload, socket) do
     topic = get_admin_all_topic(socket)
     key = "session:" <> socket.assigns.browser_session_id
@@ -186,9 +190,17 @@ defmodule ChatApiWeb.EventChannel do
     end
   end
 
+  defp storytime_enabled?() do
+    case System.get_env("PAPERCUPS_STORYTIME_ENABLED", "true") do
+      enabled when enabled == "1" or enabled == "true" -> true
+      _ -> false
+    end
+  end
+
   defp authorized?(socket, account_id) do
     with %{current_user: current_user} <- socket.assigns,
-         %{account_id: acct} <- current_user do
+         %{account_id: acct} <- current_user,
+         true <- storytime_enabled?() do
       acct == account_id
     else
       _ -> false

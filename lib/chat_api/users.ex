@@ -20,10 +20,12 @@ defmodule ChatApi.Users do
     User |> where(account_id: ^account_id, email: ^email) |> Repo.one()
   end
 
-  @spec list_users_by_account(binary()) :: [User.t()]
-  def list_users_by_account(account_id) do
+  @spec list_users_by_account(binary(), map()) :: [User.t()]
+  def list_users_by_account(account_id, filters \\ %{}) do
     User
     |> where(account_id: ^account_id)
+    |> where([u], is_nil(u.disabled_at))
+    |> where(^filter_where(filters))
     |> Repo.all()
     |> Repo.preload([:profile, :settings])
   end
@@ -173,17 +175,6 @@ defmodule ChatApi.Users do
   end
 
   @spec get_user_profile(integer()) :: UserProfile.t() | nil
-  @doc """
-  Gets a single user_profile.
-
-  creates new UserProfile if the User profile does not exist.
-
-  ## Examples
-
-      iex> get_user_profile(123)
-      %UserProfile{}
-
-  """
   def get_user_profile(user_id) do
     UserProfile
     |> where(user_id: ^user_id)
@@ -220,20 +211,16 @@ defmodule ChatApi.Users do
     |> Repo.preload([:profile, :settings])
   end
 
+  @spec get_user_info(binary(), integer()) :: User.t() | nil
+  def get_user_info(account_id, user_id) do
+    User
+    |> where(id: ^user_id, account_id: ^account_id)
+    |> Repo.one()
+    |> Repo.preload([:profile, :settings])
+  end
+
   @spec update_user_profile(integer(), map()) ::
           {:ok, UserProfile.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Updates a user_profile.
-
-  ## Examples
-
-      iex> update_user_profile(user_id, %{field: new_value})
-      {:ok, %UserProfile{}}
-
-      iex> update_user_profile(user_id, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
-  """
   def update_user_profile(user_id, attrs) do
     get_user_profile(user_id)
     |> UserProfile.changeset(attrs)
@@ -242,48 +229,15 @@ defmodule ChatApi.Users do
 
   @spec delete_user_profile(UserProfile.t()) ::
           {:ok, UserProfile.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Deletes a user_profile.
-
-  ## Examples
-
-      iex> delete_user_profile(user_profile)
-      {:ok, %UserProfile{}}
-
-      iex> delete_user_profile(user_profile)
-      {:error, %Ecto.Changeset{}}
-
-  """
   def delete_user_profile(%UserProfile{} = user_profile) do
     Repo.delete(user_profile)
   end
 
   @spec change_user_profile(UserProfile.t(), map()) :: Ecto.Changeset.t()
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking user_profile changes.
-
-  ## Examples
-
-      iex> change_user_profile(user_profile)
-      %Ecto.Changeset{data: %UserProfile{}}
-
-  """
   def change_user_profile(%UserProfile{} = user_profile, attrs \\ %{}) do
     UserProfile.changeset(user_profile, attrs)
   end
 
-  @spec get_user_settings(integer()) :: UserSettings.t() | nil
-  @doc """
-  Gets a single user_settings.
-
-  creates new UserSettings if the User settings does not exist.
-
-  ## Examples
-
-      iex> get_user_settings(123)
-      %UserSettings{}
-
-  """
   def get_user_settings(user_id) do
     UserSettings
     |> where(user_id: ^user_id)
@@ -329,33 +283,51 @@ defmodule ChatApi.Users do
 
   @spec delete_user_settings(UserSettings.t()) ::
           {:ok, UserSettings.t()} | {:error, Ecto.Changeset.t()}
-  @doc """
-  Deletes a user_settings.
-
-  ## Examples
-
-      iex> delete_user_settings(user_settings)
-      {:ok, %UserSettings{}}
-
-      iex> delete_user_settings(user_settings)
-      {:error, %Ecto.Changeset{}}
-
-  """
   def delete_user_settings(%UserSettings{} = user_settings) do
     Repo.delete(user_settings)
   end
 
   @spec change_user_settings(UserSettings.t(), map()) :: Ecto.Changeset.t()
-  @doc """
-  Returns an `%Ecto.Changeset{}` for tracking user_settings changes.
-
-  ## Examples
-
-      iex> change_user_settings(user_settings)
-      %Ecto.Changeset{data: %UserSettings{}}
-
-  """
   def change_user_settings(%UserSettings{} = user_settings, attrs \\ %{}) do
     UserSettings.changeset(user_settings, attrs)
+  end
+
+  @spec list_users_for_push_notification(binary(), integer() | nil) :: [User.t()]
+  def list_users_for_push_notification(account_id, excluded_user_id \\ nil) do
+    User
+    |> join(:left, [u], s in assoc(u, :settings))
+    |> where([u], u.account_id == ^account_id)
+    |> excluding_user_id(excluded_user_id)
+    |> where([u], is_nil(u.disabled_at) and is_nil(u.archived_at))
+    |> where([_u, s], not is_nil(s.expo_push_token))
+    |> preload([_u, s], settings: s)
+    |> Repo.all()
+  end
+
+  def excluding_user_id(query, nil), do: query
+  def excluding_user_id(query, user_id), do: query |> where([u], u.id != ^user_id)
+
+  @spec filter_where(map) :: %Ecto.Query.DynamicExpr{}
+  def filter_where(params) do
+    Enum.reduce(params, dynamic(true), fn
+      {"email", value}, dynamic ->
+        dynamic([u], ^dynamic and u.email == ^value)
+
+      {"role", value}, dynamic ->
+        dynamic([u], ^dynamic and u.role == ^value)
+
+      {"has_valid_email", value}, dynamic ->
+        dynamic([u], ^dynamic and u.has_valid_email == ^value)
+
+      {"active", "true"}, dynamic ->
+        dynamic([u], ^dynamic and is_nil(u.disabled_at) and is_nil(u.archived_at))
+
+      {"active", "false"}, dynamic ->
+        dynamic([u], ^dynamic and (not is_nil(u.disabled_at) or not is_nil(u.archived_at)))
+
+      {_, _}, dynamic ->
+        # Not a where parameter
+        dynamic
+    end)
   end
 end

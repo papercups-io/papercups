@@ -1,123 +1,29 @@
 import React from 'react';
-import {Box, Flex} from 'theme-ui';
-import {Alert, Paragraph, Text, Title} from '../common';
-import {useConversations} from '../conversations/ConversationsProvider';
-import * as API from '../../api';
-import Spinner from '../Spinner';
-import CustomersTable from './CustomersTable';
-import logger from '../../logger';
+import {Box} from 'theme-ui';
+import {Container, Paragraph, Title} from '../common';
+import {NewCustomerButton} from './NewCustomerModal';
+import CustomersTableContainer from './CustomersTableContainer';
 
-type Props = {
-  currentlyOnline?: any;
-};
-type State = {
-  loading: boolean;
-  refreshing: boolean;
-  selectedCustomerId: string | null;
-  customers: Array<any>;
-};
+const CustomersPage = () => {
+  return (
+    <Container>
+      <Box mb={5}>
+        <Title level={3}>Customers</Title>
 
-class CustomersPage extends React.Component<Props, State> {
-  state: State = {
-    loading: true,
-    refreshing: false,
-    selectedCustomerId: null,
-    customers: [],
-  };
-
-  async componentDidMount() {
-    try {
-      const customers = await API.fetchCustomers();
-
-      this.setState({customers, loading: false});
-    } catch (err) {
-      logger.error('Error loading customers!', err);
-
-      this.setState({loading: false});
-    }
-  }
-
-  handleRefreshCustomers = async () => {
-    this.setState({refreshing: true});
-
-    try {
-      const customers = await API.fetchCustomers();
-
-      this.setState({customers, refreshing: false});
-    } catch (err) {
-      logger.error('Error refreshing customers!', err);
-
-      this.setState({refreshing: false});
-    }
-  };
-
-  render() {
-    const {currentlyOnline} = this.props;
-    const {loading, refreshing, customers = []} = this.state;
-
-    if (loading) {
-      return (
-        <Flex
-          sx={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100%',
-          }}
-        >
-          <Spinner size={40} />
-        </Flex>
-      );
-    }
-
-    return (
-      <Box p={4} sx={{maxWidth: 1080}}>
-        <Box mb={5}>
-          <Title level={3}>Customers (beta)</Title>
-
-          <Box mb={4}>
-            <Paragraph>
-              View the people that have interacted with you most recently and
-              have provided an email address.
-            </Paragraph>
-
-            <Alert
-              message={
-                <Text>
-                  This page is still a work in progress &mdash; more features
-                  coming soon!
-                </Text>
-              }
-              type="info"
-              showIcon
-            />
-          </Box>
-
-          <CustomersTable
-            loading={refreshing}
-            customers={customers}
-            currentlyOnline={currentlyOnline}
-            onUpdate={this.handleRefreshCustomers}
-          />
+        <Box mb={4}>
+          <Paragraph>
+            View the people that have interacted with you most recently and have
+            provided an email address.
+          </Paragraph>
         </Box>
+
+        <CustomersTableContainer
+          includeTagFilterInput
+          actions={(onSuccess) => <NewCustomerButton onSuccess={onSuccess} />}
+        />
       </Box>
-    );
-  }
-}
-
-const CustomersPageWrapper = () => {
-  const {currentlyOnline = {}} = useConversations();
-  const online = Object.keys(currentlyOnline).reduce((acc, key: string) => {
-    const [prefix, id] = key.split(':');
-
-    if (prefix === 'customer' && !!id) {
-      return {...acc, [id]: true};
-    }
-
-    return acc;
-  }, {} as {[key: string]: boolean});
-
-  return <CustomersPage currentlyOnline={online} />;
+    </Container>
+  );
 };
 
-export default CustomersPageWrapper;
+export default CustomersPage;

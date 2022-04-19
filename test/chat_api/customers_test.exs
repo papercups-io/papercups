@@ -9,7 +9,7 @@ defmodule ChatApi.CustomersTest do
 
     @update_attrs %{
       first_seen: ~D[2020-01-01],
-      last_seen: ~D[2020-01-02],
+      last_seen_at: ~U[2020-01-05 00:00:00Z],
       name: "Test User",
       email: "user@test.com",
       phone: "+16501235555",
@@ -18,7 +18,8 @@ defmodule ChatApi.CustomersTest do
       current_url:
         "http://test.com/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe",
       pathname:
-        "/test/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe"
+        "/test/ls2bPjyYDELWL6VRpDKs9K6MrRv3O7E3F4XNZs7z4_A9gyLwBXsBZprWanwpRRNamQNFRCz9zWkixYgBPRq4mb79RF_153UHxpMg1Ct-uDfQ6SwnEGiwheWI8SraUwuEjs_GD8Cm85ziMEdFkrzNfj9NqpFOQch91YSq3wTq-7PDV4nbNd2z-IGW4CpQgXKS7DNWvrA6yKOgCSmI2OXqFNX_-PLrCseuWNJH6aYXPBKrlVZxzwOtobFV1vgWafoe",
+      metadata: %{"foo" => "bar"}
     }
     @invalid_attrs %{
       first_seen: 3
@@ -50,6 +51,43 @@ defmodule ChatApi.CustomersTest do
       assert customer_ids == [new_customer.id]
     end
 
+    test "list_customers/2 can filter by customer tags", %{account: account} do
+      customer_1 = insert(:customer, account: account, company: nil)
+      customer_2 = insert(:customer, account: account, company: nil)
+      tag_1 = insert(:tag, account: account)
+      tag_2 = insert(:tag, account: account)
+      tag_3 = insert(:tag, account: account)
+
+      # customer_1 has two tags: tag_1 and tag_2
+      insert(:customer_tag, customer: customer_1, tag: tag_1)
+      insert(:customer_tag, customer: customer_1, tag: tag_2)
+
+      # customer_2 has two tags: tag_1 and tag_3
+      insert(:customer_tag, customer: customer_2, tag: tag_1)
+      insert(:customer_tag, customer: customer_2, tag: tag_3)
+
+      # Filtering with a tag that multiple customers have
+      customer_ids =
+        Customers.list_customers(account.id, %{"tag_ids" => [tag_1.id]})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(customer_ids) == Enum.sort([customer_1.id, customer_2.id])
+
+      # Filtering with multiple tags only returns customers who have all of them
+      customer_ids =
+        Customers.list_customers(account.id, %{"tag_ids" => [tag_1.id, tag_2.id]})
+        |> Enum.map(& &1.id)
+
+      assert customer_ids == [customer_1.id]
+
+      # Filtering with a single tag that only one customer has
+      customer_ids =
+        Customers.list_customers(account.id, %{"tag_ids" => [tag_3.id]})
+        |> Enum.map(& &1.id)
+
+      assert customer_ids == [customer_2.id]
+    end
+
     test "list_customers/2 can search by name/email", %{account: account} do
       alex = insert(:customer, account: account, name: "Alex Reichert")
       alexis = insert(:customer, account: account, name: "Alexis O'Hare")
@@ -67,6 +105,67 @@ defmodule ChatApi.CustomersTest do
 
       assert Enum.sort(alex_ids) == Enum.sort([alex.id, alexis.id])
       assert kam_ids == [kam.id]
+    end
+
+    test "list_customers/2 can search by name/email with the `q` query param", %{account: account} do
+      alex = insert(:customer, account: account, name: "Alex Reichert")
+      alexis = insert(:customer, account: account, name: "Alexis O'Hare")
+      kam = insert(:customer, account: account, email: "kam@kam.com")
+
+      alex_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "alex"})
+        |> Enum.map(& &1.id)
+
+      kam_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "kam"})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(alex_ids) == Enum.sort([alex.id, alexis.id])
+      assert kam_ids == [kam.id]
+    end
+
+    test "list_customers/2 can search customer metadata within the `q` query param", %{
+      account: account
+    } do
+      premium_dev =
+        insert(:customer,
+          account: account,
+          metadata: %{plan: "premium", role: "dev"}
+        )
+
+      starter_dev =
+        insert(:customer,
+          account: account,
+          metadata: %{plan: "starter", role: "dev"}
+        )
+
+      premium_pm =
+        insert(:customer,
+          account: account,
+          metadata: %{plan: "premium", role: "pm"}
+        )
+
+      dev_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "role:dev"})
+        |> Enum.map(& &1.id)
+
+      premium_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "plan:premium"})
+        |> Enum.map(& &1.id)
+
+      starter_dev_ids =
+        account.id
+        |> Customers.list_customers(%{"q" => "role:dev plan:starter"})
+        |> Enum.map(& &1.id)
+
+      assert Enum.sort(dev_ids) == Enum.sort([premium_dev.id, starter_dev.id])
+      assert Enum.sort(premium_ids) == Enum.sort([premium_dev.id, premium_pm.id])
+      assert starter_dev_ids == [starter_dev.id]
+      assert [] == Customers.list_customers(account.id, %{"q" => "role:ceo plan:starter"})
     end
 
     test "list_customers/3 returns paginated customers" do
@@ -101,7 +200,7 @@ defmodule ChatApi.CustomersTest do
       assert {:ok,
               %Customer{
                 first_seen: ~D[2020-01-01],
-                last_seen: ~D[2020-01-01]
+                last_seen_at: ~U[2020-01-05 00:00:00Z]
               } = _customer} = Customers.create_customer(attrs)
     end
 
@@ -133,6 +232,7 @@ defmodule ChatApi.CustomersTest do
       assert customer.name == @update_attrs.name
       assert customer.phone == @update_attrs.phone
       assert customer.time_zone == @update_attrs.time_zone
+      assert customer.metadata == @update_attrs.metadata
 
       # `account_id` should not be customizable through this API
       assert customer.account_id != new_account.id
@@ -144,6 +244,21 @@ defmodule ChatApi.CustomersTest do
       assert %{"external_id" => "123"} = Customers.sanitize_metadata(%{"external_id" => 123})
     end
 
+    test "sanitize_metadata/1 omits strings of null or undefined" do
+      assert %{"email" => nil} = Customers.sanitize_metadata(%{"email" => "null"})
+      assert %{"email" => nil} = Customers.sanitize_metadata(%{"email" => "undefined"})
+
+      assert %{"email" => "test@test.com"} =
+               Customers.sanitize_metadata(%{"email" => "test@test.com"})
+
+      assert %{"external_id" => nil} = Customers.sanitize_metadata(%{"external_id" => "null"})
+
+      assert %{"external_id" => nil} =
+               Customers.sanitize_metadata(%{"external_id" => "undefined"})
+
+      assert %{"external_id" => "123"} = Customers.sanitize_metadata(%{"external_id" => "123"})
+    end
+
     test "sanitize_metadata/1 truncates the current_url if it is too long" do
       current_url =
         "http://example.com/login?next=/insights%3Finsight%3DTRENDS%26interval%3Dday%26events%3D%255B%257B%2522id%2522%253A%2522%2524pageview%2522%252C%2522name%2522%253A%2522%2524pageview%2522%252C%2522type%2522%253A%2522events%2522%252C%2522order%2522%253A0%252C%2522math%2522%253A%2522total%2522%257D%255D%26display%3DActionsTable%26actions%3D%255B%255D%26new_entity%3D%255B%255D%26breakdown%3D%2524browser%26breakdown_type%3Devent%26properties%3D%255B%255D"
@@ -152,6 +267,13 @@ defmodule ChatApi.CustomersTest do
                Customers.sanitize_metadata(%{"current_url" => current_url})
 
       assert String.length(truncated) <= 255
+    end
+
+    test "sanitize_metadata/1 supports ad hoc metadata" do
+      assert %{} = Customers.sanitize_metadata(%{"metadata" => nil})
+
+      assert %{"metadata" => %{"foo" => "bar"}} =
+               Customers.sanitize_metadata(%{"metadata" => %{"foo" => "bar"}})
     end
 
     test "update_customer/2 with invalid data returns error changeset", %{customer: customer} do

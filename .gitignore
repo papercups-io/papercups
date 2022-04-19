@@ -40,3 +40,5 @@ chat_api-*.tar
 .DS_Store
 
 fly.toml
+
+**/node_modules

@@ -12,6 +12,8 @@ defmodule ChatApi.Conversations.Notification do
   def broadcast_new_conversation_to_admin!(
         %Conversation{id: conversation_id, account_id: account_id} = conversation
       ) do
+    Logger.info("Sending conversation notification: broadcast_new_conversation_to_admin!")
+
     ChatApiWeb.Endpoint.broadcast!("notification:" <> account_id, "conversation:created", %{
       "id" => conversation_id
     })
@@ -23,6 +25,8 @@ defmodule ChatApi.Conversations.Notification do
   def broadcast_new_conversation_to_customer!(
         %Conversation{id: conversation_id, customer_id: customer_id} = conversation
       ) do
+    Logger.info("Sending conversation notification: broadcast_new_conversation_to_customer!")
+
     ChatApiWeb.Endpoint.broadcast!(
       "conversation:lobby:" <> customer_id,
       "conversation:created",
@@ -38,6 +42,8 @@ defmodule ChatApi.Conversations.Notification do
   def broadcast_conversation_update_to_admin!(
         %Conversation{id: conversation_id, account_id: account_id} = conversation
       ) do
+    Logger.info("Sending conversation notification: broadcast_conversation_update_to_admin!")
+
     ChatApiWeb.Endpoint.broadcast!(
       "notification:" <> account_id,
       "conversation:updated",
@@ -72,6 +78,16 @@ defmodule ChatApi.Conversations.Notification do
     Task.start(fn ->
       Helpers.broadcast_conversation_updates_to_slack(conversation)
     end)
+
+    conversation
+  end
+
+  def notify(%Conversation{account_id: account_id} = conversation, :mobile_badge_count, _opts) do
+    Logger.info("Sending conversation notification: :mobile_badge_count")
+
+    %{account_id: account_id}
+    |> ChatApi.Workers.SendPushNotifications.new()
+    |> Oban.insert()
 
     conversation
   end

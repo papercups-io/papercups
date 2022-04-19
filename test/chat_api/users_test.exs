@@ -115,7 +115,8 @@ defmodule ChatApi.UsersTest do
       user = Users.get_user_info(user.id)
 
       refute user.profile
-      assert "Test Inc" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Test Inc Team" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Test Inc Team" = ChatApi.Emails.format_sender_name(user.id, account.id)
     end
 
     test "Emails.format_sender_name/1 returns the company name when no display_name or full_name are set",
@@ -125,7 +126,8 @@ defmodule ChatApi.UsersTest do
 
       user = Users.get_user_info(user.id)
 
-      assert "Test Inc" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Test Inc Team" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Test Inc Team" = ChatApi.Emails.format_sender_name(user.id, account.id)
     end
 
     test "Emails.format_sender_name/1 prioritizes the display_name if both display_name and full_name are set",
@@ -136,6 +138,7 @@ defmodule ChatApi.UsersTest do
       user = Users.get_user_info(user.id)
 
       assert "Alex" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Alex" = ChatApi.Emails.format_sender_name(user.id, account.id)
 
       assert {:ok, %UserProfile{}} =
                Users.update_user_profile(user.id, %{display_name: nil, full_name: "Alex R"})
@@ -143,6 +146,7 @@ defmodule ChatApi.UsersTest do
       user = Users.get_user_info(user.id)
 
       assert "Alex R" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Alex R" = ChatApi.Emails.format_sender_name(user.id, account.id)
 
       assert {:ok, %UserProfile{}} =
                Users.update_user_profile(user.id, %{display_name: "Alex", full_name: nil})
@@ -150,6 +154,7 @@ defmodule ChatApi.UsersTest do
       user = Users.get_user_info(user.id)
 
       assert "Alex" = ChatApi.Emails.format_sender_name(user, account)
+      assert "Alex" = ChatApi.Emails.format_sender_name(user.id, account.id)
     end
   end
 
@@ -158,7 +163,10 @@ defmodule ChatApi.UsersTest do
     @update_attrs %{email_alert_on_new_message: false}
 
     setup do
-      {:ok, user: insert(:user)}
+      account = insert(:account)
+      user = insert(:user, account: account)
+
+      {:ok, account: account, user: user}
     end
 
     test "get_user_settings/1 returns the user_settings with given valid user id", %{user: user} do
@@ -178,6 +186,31 @@ defmodule ChatApi.UsersTest do
                Users.update_user_settings(user.id, @update_attrs)
 
       assert user_settings.email_alert_on_new_message == false
+    end
+
+    test "list_users_for_push_notification/2 lists users who can receive mobile push notifications",
+         %{account: account, user: user} do
+      teammate = insert(:user, account: account)
+
+      assert {:ok, %UserSettings{}} =
+               Users.update_user_settings(user.id, %{expo_push_token: "ExponentPushToken[xxxxx]"})
+
+      assert [user.id] ==
+               account.id
+               |> Users.list_users_for_push_notification()
+               |> Enum.map(& &1.id)
+
+      assert [] == Users.list_users_for_push_notification(account.id, user.id)
+
+      assert {:ok, %UserSettings{}} =
+               Users.update_user_settings(teammate.id, %{
+                 expo_push_token: "ExponentPushToken[xxxxx]"
+               })
+
+      assert [teammate.id] ==
+               account.id
+               |> Users.list_users_for_push_notification(user.id)
+               |> Enum.map(& &1.id)
     end
   end
 end

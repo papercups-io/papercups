@@ -1,42 +1,22 @@
 import React from 'react';
 import {Link, RouteComponentProps} from 'react-router-dom';
 import {Box, Flex} from 'theme-ui';
-import {
-  colors,
-  shadows,
-  Button,
-  Popconfirm,
-  Result,
-  Text,
-  Title,
-} from '../common';
+import {Button, Card, Popconfirm, Result, Text, Title} from '../common';
 import {ArrowLeftOutlined, DeleteOutlined} from '../icons';
 import * as API from '../../api';
 import {Company, Customer} from '../../types';
 import {sleep} from '../../utils';
 import Spinner from '../Spinner';
+import CustomersTableContainer from '../customers/CustomersTableContainer';
 import logger from '../../logger';
-import CustomersTable from '../customers/CustomersTable';
+import {generateSlackChannelUrl} from './support';
 
 const formatSlackChannel = (name: string) => {
   return name.startsWith('#') ? name : `#${name}`;
 };
 
 const DetailsSectionCard = ({children}: {children: any}) => {
-  return (
-    <Box
-      p={3}
-      mb={3}
-      sx={{
-        bg: colors.white,
-        border: '1px solid rgba(0,0,0,.06)',
-        borderRadius: 4,
-        boxShadow: shadows.medium,
-      }}
-    >
-      {children}
-    </Box>
-  );
+  return <Card sx={{p: 3, mb: 3}}>{children}</Card>;
 };
 
 type Props = RouteComponentProps<{id: string}>;
@@ -59,9 +39,11 @@ class CompanyDetailsPage extends React.Component<Props, State> {
 
   async componentDidMount() {
     try {
-      const {id: companyId} = this.props.match.params;
+      const companyId = this.getCompanyId();
       const company = await API.fetchCompany(companyId);
-      const customers = await API.fetchCustomers({company_id: companyId});
+      const {data: customers} = await API.fetchCustomers({
+        company_id: companyId,
+      });
 
       this.setState({company, customers, loading: false});
     } catch (err) {
@@ -71,25 +53,15 @@ class CompanyDetailsPage extends React.Component<Props, State> {
     }
   }
 
-  handleRefreshCustomers = async () => {
-    this.setState({refreshing: true});
-
-    try {
-      const {id: companyId} = this.props.match.params;
-      const customers = await API.fetchCustomers({company_id: companyId});
-
-      this.setState({customers, refreshing: false});
-    } catch (err) {
-      logger.error('Error refreshing customers!', err);
-
-      this.setState({refreshing: false});
-    }
+  getCompanyId = () => {
+    return this.props.match.params.id;
   };
 
   handleDeleteCompany = async () => {
     try {
       this.setState({deleting: true});
-      const {id: companyId} = this.props.match.params;
+      const companyId = this.getCompanyId();
+
       await API.deleteCompany(companyId);
       await sleep(1000);
 
@@ -102,7 +74,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
   };
 
   render() {
-    const {loading, deleting, refreshing, company, customers = []} = this.state;
+    const {loading, deleting, company, customers = []} = this.state;
 
     if (loading) {
       return (
@@ -126,10 +98,11 @@ class CompanyDetailsPage extends React.Component<Props, State> {
       description,
       website_url: websiteUrl,
       external_id: externalId,
-      slack_channel_id: slackChannelId,
       slack_channel_name: slackChannelName,
+      slack_team_name: slackTeamName,
       id: companyId,
     } = company;
+    const slackChannelUrl = generateSlackChannelUrl(company);
 
     return (
       <Flex
@@ -137,7 +110,7 @@ class CompanyDetailsPage extends React.Component<Props, State> {
         sx={{
           flexDirection: 'column',
           flex: 1,
-          bg: 'rgb(245, 245, 245)',
+          bg: 'rgb(250, 250, 250)',
         }}
       >
         <Flex
@@ -211,22 +184,34 @@ class CompanyDetailsPage extends React.Component<Props, State> {
               </Box>
             </DetailsSectionCard>
 
-            {slackChannelId && slackChannelName && (
+            {slackChannelUrl && slackChannelName && (
               <DetailsSectionCard>
                 <Box>
                   <Text strong>Connected Slack Channel</Text>
                 </Box>
 
-                <Text>
-                  {/* TODO: include Slack team ID if necessary */}
-                  <a
-                    href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {formatSlackChannel(slackChannelName)}
-                  </a>
-                </Text>
+                {slackTeamName ? (
+                  <Text>
+                    <a
+                      href={slackChannelUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {formatSlackChannel(slackChannelName)}
+                    </a>{' '}
+                    in {slackTeamName}
+                  </Text>
+                ) : (
+                  <Text>
+                    <a
+                      href={slackChannelUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {formatSlackChannel(slackChannelName)}
+                    </a>
+                  </Text>
+                )}
               </DetailsSectionCard>
             )}
 
@@ -245,11 +230,8 @@ class CompanyDetailsPage extends React.Component<Props, State> {
                 <Title level={4}>People</Title>
               </Box>
 
-              <CustomersTable
-                loading={loading || refreshing}
-                customers={customers}
-                currentlyOnline={{}}
-                onUpdate={this.handleRefreshCustomers}
+              <CustomersTableContainer
+                defaultFilters={{company_id: this.getCompanyId()}}
               />
             </DetailsSectionCard>
           </Box>

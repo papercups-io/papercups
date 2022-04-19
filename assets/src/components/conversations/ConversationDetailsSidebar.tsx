@@ -1,6 +1,5 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
-import {Image} from 'theme-ui';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {Box, Flex} from 'theme-ui';
@@ -10,6 +9,7 @@ import {
   notification,
   Badge,
   Button,
+  Card,
   Input,
   Paragraph,
   Tag,
@@ -21,136 +21,35 @@ import {
   CalendarOutlined,
   GlobalOutlined,
   InfoCircleOutlined,
-  LinkOutlined,
   MailOutlined,
   PhoneOutlined,
-  TeamOutlined,
   UserOutlined,
-  VideoCameraOutlined,
 } from '../icons';
 import {
   SidebarCustomerTags,
   SidebarConversationTags,
 } from './SidebarTagSection';
 import SidebarCustomerNotes from './SidebarCustomerNotes';
+import SidebarCustomerIssues from './SidebarCustomerIssues';
 import RelatedCustomerConversations from './RelatedCustomerConversations';
 import SlackConversationThreads from './SlackConversationThreads';
+import CustomerActiveSessions from '../customers/CustomerActiveSessions';
+import CustomerHubspotInfo from '../customers/CustomerHubspotInfo';
+import CustomerIntercomInfo from '../customers/CustomerIntercomInfo';
+import CustomerCompanyDetails from '../customers/CustomerCompanyDetails';
 import * as API from '../../api';
-import {Company, Conversation, Customer} from '../../types';
+import {Conversation, Customer} from '../../types';
 import {download} from '../../utils';
 import logger from '../../logger';
 
 // TODO: create date utility methods so we don't have to do this everywhere
 dayjs.extend(utc);
 
-const DetailsSectionCard = ({children}: {children: any}) => {
-  return (
-    <Box
-      my={2}
-      p={2}
-      sx={{
-        bg: colors.white,
-        border: '1px solid rgba(0,0,0,.06)',
-        borderRadius: 4,
-      }}
-    >
-      {children}
-    </Box>
-  );
+export const DetailsSectionCard = ({children}: {children: any}) => {
+  return <Card sx={{p: 2, my: 2}}>{children}</Card>;
 };
 
-const CustomerActiveSessions = ({customerId}: {customerId: string}) => {
-  const [loading, setLoading] = React.useState(false);
-  const [session, setLiveSession] = React.useState<any>();
-
-  React.useEffect(() => {
-    setLoading(true);
-
-    API.fetchBrowserSessions({customerId, isActive: true, limit: 5})
-      .then(([session]) => setLiveSession(session))
-      .catch((err) => logger.error('Error retrieving sessions:', err))
-      .then(() => setLoading(false));
-  }, [customerId]);
-
-  const sessionId = session && session.id;
-
-  return (
-    <Link to={sessionId ? `/sessions/live/${sessionId}` : '/sessions'}>
-      <Button
-        type="primary"
-        icon={<VideoCameraOutlined />}
-        block
-        ghost
-        loading={loading}
-      >
-        View live
-      </Button>
-    </Link>
-  );
-};
-
-const CustomerCompanyDetails = ({customerId}: {customerId: string}) => {
-  const [loading, setLoading] = React.useState(false);
-  const [company, setCompany] = React.useState<Company | null>(null);
-
-  React.useEffect(() => {
-    setLoading(true);
-
-    API.fetchCustomer(customerId, {expand: ['company']})
-      .then((customer) => {
-        const {company} = customer;
-
-        setCompany(company);
-      })
-      .catch((err) => logger.error('Error retrieving company:', err))
-      .then(() => setLoading(false));
-  }, [customerId]);
-
-  if (loading || !company) {
-    return null;
-  }
-
-  const {
-    id: companyId,
-    name = 'Unknown',
-    website_url: websiteUrl,
-    slack_channel_id: slackChannelId,
-    slack_channel_name: slackChannelName,
-  } = company;
-
-  return (
-    <DetailsSectionCard>
-      <Flex mb={2} sx={{alignItems: 'center', justifyContent: 'space-between'}}>
-        <Text strong>Company</Text>
-        <Link to={`/companies/${companyId}`}>
-          <Button size="small">View</Button>
-        </Link>
-      </Flex>
-      <Box mb={1}>
-        <TeamOutlined /> {name}
-      </Box>
-      {websiteUrl && (
-        <Box mb={1}>
-          <LinkOutlined /> {websiteUrl || 'Unknown'}
-        </Box>
-      )}
-      {slackChannelId && slackChannelName && (
-        <Box mb={1}>
-          <Image src="/slack.svg" alt="Slack" sx={{height: 16, mr: 1}} />
-          <a
-            href={`https://slack.com/app_redirect?channel=${slackChannelId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {slackChannelName}
-          </a>
-        </Box>
-      )}
-    </DetailsSectionCard>
-  );
-};
-
-const CustomerDetails = ({
+export const CustomerDetails = ({
   customer,
   isOnline,
 }: {
@@ -190,17 +89,15 @@ const CustomerDetails = ({
   };
 
   return (
-    <Box px={2} py={3}>
-      <Box px={2} mb={3}>
-        <Text strong>Customer details</Text>
-      </Box>
-
+    <Box>
       <DetailsSectionCard>
         <Flex
           mb={2}
           sx={{justifyContent: 'space-between', alignItems: 'baseline'}}
         >
-          <Text strong>{name || 'Anonymous User'}</Text>
+          <Link to={`/customers/${customer.id}`}>
+            <Text strong>{name || 'Anonymous User'}</Text>
+          </Link>
 
           <Popover
             placement="left"
@@ -227,7 +124,19 @@ const CustomerDetails = ({
 
         <Flex mb={1} sx={{alignItems: 'center'}}>
           <MailOutlined style={{color: colors.primary}} />
-          <Box ml={2}>{email || 'Unknown'}</Box>
+          <Box
+            ml={2}
+            sx={{
+              maxWidth: '100%',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            <Tooltip title={email} placement="left">
+              <Text>{email || 'Unknown'}</Text>
+            </Tooltip>
+          </Box>
         </Flex>
         <Flex mb={1} sx={{alignItems: 'center'}}>
           <PhoneOutlined style={{color: colors.primary}} />
@@ -344,10 +253,23 @@ const CustomerDetails = ({
       </DetailsSectionCard>
 
       <CustomerCompanyDetails customerId={customerId} />
+      <CustomerHubspotInfo customer={customer} />
+      <CustomerIntercomInfo customer={customer} />
 
       <DetailsSectionCard>
         <Box mb={2}>
-          <Text strong>Customer Notes</Text>
+          <Link to={`/customers/${customer.id}?tab=issues`}>
+            <Text strong>Linked issues</Text>
+          </Link>
+        </Box>
+        <SidebarCustomerIssues customerId={customerId} />
+      </DetailsSectionCard>
+
+      <DetailsSectionCard>
+        <Box mb={2}>
+          <Link to={`/customers/${customer.id}?tab=notes`}>
+            <Text strong>Customer notes</Text>
+          </Link>
         </Box>
 
         <SidebarCustomerNotes customerId={customerId} />
@@ -355,10 +277,28 @@ const CustomerDetails = ({
 
       <DetailsSectionCard>
         <Box mb={2}>
-          <Text strong>Customer Tags</Text>
+          <Text strong>Customer tags</Text>
         </Box>
         <SidebarCustomerTags customerId={customerId} />
       </DetailsSectionCard>
+    </Box>
+  );
+};
+
+export const CustomerDetailsSection = ({
+  customer,
+  isOnline,
+}: {
+  customer: Customer;
+  isOnline?: boolean;
+}) => {
+  return (
+    <Box px={2} py={3}>
+      <Box px={2} mb={3}>
+        <Text strong>Customer details</Text>
+      </Box>
+
+      <CustomerDetails customer={customer} isOnline={isOnline} />
     </Box>
   );
 };
@@ -442,7 +382,7 @@ const ConversationDetails = ({conversation}: {conversation: Conversation}) => {
 
       <DetailsSectionCard>
         <Box mb={2}>
-          <Text strong>Conversation Tags</Text>
+          <Text strong>Conversation tags</Text>
         </Box>
         <SidebarConversationTags conversationId={conversationId} />
       </DetailsSectionCard>
@@ -488,13 +428,13 @@ const ConversationDetailsSidebar = ({
       sx={{
         width: '100%',
         minHeight: '100%',
-        bg: 'rgb(245, 245, 245)',
+        bg: 'rgb(250, 250, 250)',
         border: `1px solid rgba(0,0,0,.06)`,
         boxShadow: 'inset rgba(0, 0, 0, 0.1) 0px 0px 4px',
         flex: 1,
       }}
     >
-      <CustomerDetails customer={customer} isOnline={isOnline} />
+      <CustomerDetailsSection customer={customer} isOnline={isOnline} />
       {conversation && <ConversationDetails conversation={conversation} />}
     </Box>
   );

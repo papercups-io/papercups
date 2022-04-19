@@ -12,6 +12,7 @@ defmodule ChatApi.Accounts.Account do
 
   @type t :: %__MODULE__{
           company_name: String.t(),
+          company_logo_url: String.t() | nil,
           time_zone: String.t() | nil,
           subscription_plan: String.t() | nil,
           # Stripe fields
@@ -37,6 +38,7 @@ defmodule ChatApi.Accounts.Account do
   @foreign_key_type :binary_id
   schema "accounts" do
     field(:company_name, :string)
+    field(:company_logo_url, :string)
     field(:time_zone, :string)
     field(:subscription_plan, :string, default: "starter")
 
@@ -49,7 +51,7 @@ defmodule ChatApi.Accounts.Account do
     has_many(:conversations, Conversation)
     has_many(:messages, Message)
     has_many(:users, User)
-    has_one(:widget_settings, WidgetSetting)
+    has_many(:widget_settings, WidgetSetting)
     has_many(:canned_responses, CannedResponse)
 
     embeds_one(:settings, Settings, on_replace: :delete)
@@ -64,6 +66,7 @@ defmodule ChatApi.Accounts.Account do
     account
     |> cast(attrs, [
       :company_name,
+      :company_logo_url,
       :time_zone
     ])
     |> cast_embed(:working_hours, with: &working_hours_changeset/2)
@@ -93,6 +96,11 @@ defmodule ChatApi.Accounts.Account do
   @spec account_settings_changeset(any(), map()) :: Ecto.Changeset.t()
   def account_settings_changeset(schema, params) do
     schema
-    |> cast(params, [:disable_automated_reply_emails])
+    |> cast(params, [
+      :disable_automated_reply_emails,
+      :conversation_reminders_enabled,
+      :conversation_reminder_hours_interval,
+      :max_num_conversation_reminders
+    ])
   end
 end

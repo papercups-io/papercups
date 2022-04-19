@@ -15,8 +15,8 @@ jobs:
       - name: Initial setup
         uses: erlef/setup-elixir@v1
         with:
-          elixir-version: "1.10.4"
-          otp-version: "22.2.6"
+          elixir-version: "1.11.4"
+          otp-version: "23.0.3"
 
       - name: Install dependencies
         run: mix deps.get
@@ -95,4 +95,4 @@ jobs:
         run: mix deps.get
 
       - name: Run tests
-        run: mix test
+        run: mix test --exclude lambda_development

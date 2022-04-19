@@ -5,7 +5,9 @@
   "license": "MIT",
   "repository": "https://github.com/papercups-io/papercups",
   "dependencies": {
-    "@papercups-io/chat-widget": "^1.1.9",
+    "@monaco-editor/react": "^4.2.1",
+    "@papercups-io/chat-builder": "0.0.12",
+    "@papercups-io/chat-widget": "^1.3.1",
     "@papercups-io/storytime": "^1.0.6",
     "@sentry/react": "^5.20.1",
     "@stripe/react-stripe-js": "^1.1.2",
@@ -14,6 +16,7 @@
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "@types/jest": "^24.0.0",
+    "@types/jszip": "^3.4.1",
     "@types/lodash": "^4.14.159",
     "@types/node": "^12.0.0",
     "@types/phoenix": "^1.4.4",
@@ -25,12 +28,15 @@
     "@types/react-router-dom": "^5.1.5",
     "@types/react-syntax-highlighter": "^11.0.4",
     "@types/recharts": "^1.8.15",
+    "@types/sanitize-html": "^2.3.2",
     "@types/superagent": "^4.1.8",
     "@types/theme-ui": "^0.3.4",
     "antd": "^4.3.5",
     "cpx": "^1.5.0",
     "dayjs": "^1.9.1",
-    "lodash": "^4.17.20",
+    "jszip": "^3.7.1",
+    "jszip-utils": "^0.1.0",
+    "lodash": "^4.17.21",
     "logrocket": "^1.0.10",
     "mkdirp": "^1.0.4",
     "phoenix": "^1.5.3",
@@ -49,6 +55,7 @@
     "remark-breaks": "^2.0.0",
     "rrweb": "^0.9.7",
     "rrweb-player": "^0.6.2",
+    "sanitize-html": "^2.4.0",
     "superagent": "^5.3.1",
     "theme-ui": "^0.3.1",
     "typescript": "~3.9.7"
@@ -85,7 +92,11 @@
     "development": [
       "last 1 chrome version",
       "last 1 firefox version",
-      "last 1 safari version"
+      "last 1 safari version",
+      ">0.3%",
+      "not ie 11",
+      "not dead",
+      "not op_mini all"
     ]
   },
   "proxy": "http://localhost:4000",

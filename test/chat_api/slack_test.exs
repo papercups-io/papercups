@@ -6,11 +6,9 @@ defmodule ChatApi.SlackTest do
   import Mock
 
   alias ChatApi.{
-    Conversations,
     Messages,
     Slack,
-    SlackConversationThreads,
-    Users
+    SlackConversationThreads
   }
 
   describe "Slack.Token" do
@@ -52,8 +50,8 @@ defmodule ChatApi.SlackTest do
                  "reply"
                )
 
-      # :ok if the account is different
-      assert :ok =
+      # :error if connecting to a channel that another account has already linked
+      assert {:error, :duplicate_channel_id} =
                Slack.Validation.validate_authorization_channel_id(
                  @slack_channel_id,
                  other_account_id,
@@ -73,9 +71,10 @@ defmodule ChatApi.SlackTest do
   describe "Slack.Notification" do
     setup do
       account = insert(:account)
-      auth = insert(:slack_authorization, account: account, type: "support")
+      inbox = insert(:inbox, account: account, is_primary: true)
+      auth = insert(:slack_authorization, account: account, inbox: inbox, type: "support")
       customer = insert(:customer, account: account)
-      conversation = insert(:conversation, account: account, customer: customer)
+      conversation = insert(:conversation, account: account, customer: customer, inbox: inbox)
 
       thread =
         insert(:slack_conversation_thread,
@@ -85,9 +84,10 @@ defmodule ChatApi.SlackTest do
         )
 
       {:ok,
-       conversation: conversation,
        auth: auth,
        account: account,
+       inbox: inbox,
+       conversation: conversation,
        customer: customer,
        thread: thread}
     end
@@ -273,7 +273,7 @@ defmodule ChatApi.SlackTest do
     end
 
     test "Notification.validate_send_to_primary_channel/2 returns :error if the message when the message is not an initial message and a thread does not exist" do
-      assert :error =
+      assert {:error, :conversation_exists_without_thread} =
                Slack.Notification.validate_send_to_primary_channel(nil, is_first_message: false)
     end
   end
@@ -347,12 +347,50 @@ defmodule ChatApi.SlackTest do
              end) =~ "Unrecognized message format"
     end
 
+    test "Helpers.get_message_text/1 handles email messages differently",
+         %{
+           account: account,
+           authorization: authorization,
+           customer: customer
+         } do
+      conversation =
+        insert(:conversation,
+          account: account,
+          customer: customer,
+          source: "email",
+          subject: "Test subject line"
+        )
+
+      message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer,
+          source: "email",
+          body: "Test email message"
+        )
+
+      assert Slack.Helpers.get_message_text(%{
+               conversation: conversation,
+               message: message,
+               authorization: authorization,
+               thread: nil
+             }) =~
+               """
+               > :email: From: *#{customer.email}*
+               > Subject: *Test subject line*
+
+               Test email message
+               """
+    end
+
     test "Helpers.get_message_payload/2 returns payload for initial slack thread",
          %{customer: customer, conversation: conversation, thread: thread} do
       text = "Hello world"
       customer_email = "*Email:*\n#{customer.email}"
       conversation_id = conversation.id
       channel = thread.slack_channel
+      message = insert(:message, customer: customer, user: nil)
 
       assert %{
                "blocks" => [
@@ -370,13 +408,13 @@ defmodule ChatApi.SlackTest do
                        "text" => ^customer_email
                      },
                      %{
-                       "text" => "*URL:*\nN/A"
+                       "text" => "*Source:*\n:speech_balloon: Chat"
                      },
                      %{
-                       "text" => "*Browser:*\nN/A"
+                       "text" => "*Last seen URL:*\nN/A"
                      },
                      %{
-                       "text" => "*OS:*\nN/A"
+                       "text" => "*Device:*\nN/A"
                      },
                      %{
                        "text" => "*Timezone:*\nN/A"
@@ -404,6 +442,7 @@ defmodule ChatApi.SlackTest do
                  channel: channel,
                  conversation: conversation,
                  customer: customer,
+                 message: message,
                  thread: nil
                })
     end
@@ -465,7 +504,7 @@ defmodule ChatApi.SlackTest do
       email = "test@test.com"
       response = %{body: %{"ok" => true, "user" => %{"profile" => %{"email" => email}}}}
 
-      assert email = Slack.Extractor.extract_slack_user_email!(response)
+      assert email == Slack.Extractor.extract_slack_user_email!(response)
     end
 
     test "Extractor.extract_slack_user_email!/1 raises if the slack response has ok=false" do
@@ -478,63 +517,25 @@ defmodule ChatApi.SlackTest do
              end) =~ "Error retrieving user info"
     end
 
-    test "Helpers.create_new_slack_conversation_thread/2 creates a new thread and assigns the primary user",
-         %{conversation: conversation, account: account} do
-      %{account_id: account_id, id: id} = conversation
-      primary_user = insert(:user, account: account)
+    test "Helpers.create_new_slack_conversation_thread/3 creates a new thread", %{
+      authorization: authorization,
+      conversation: conversation
+    } do
+      %{account_id: account_id, id: conversation_id} = conversation
+      %{team_id: slack_team_id} = authorization
       channel = "bots"
       ts = "1234.56789"
       response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
 
-      {:ok, thread} = Slack.Helpers.create_new_slack_conversation_thread(id, response)
-
-      assert %SlackConversationThreads.SlackConversationThread{
-               slack_channel: ^channel,
-               slack_thread_ts: ^ts,
-               account_id: ^account_id,
-               conversation_id: ^id
-             } = thread
-
-      conversation = Conversations.get_conversation!(id)
-
-      assert conversation.assignee_id == primary_user.id
-    end
-
-    test "Helpers.create_new_slack_conversation_thread/2 raises if no primary user exists",
-         %{conversation: conversation} do
-      channel = "bots"
-      ts = "1234.56789"
-      response = %{body: %{"ok" => true, "channel" => channel, "ts" => ts}}
-
-      assert_raise RuntimeError, fn ->
-        Slack.Helpers.create_new_slack_conversation_thread(conversation.id, response)
-      end
-    end
-
-    test "Helpers.get_conversation_primary_user_id/2 gets the primary user of the associated account" do
-      account = insert(:account)
-      user = insert(:user, account: account)
-      customer = insert(:customer, account: account)
-      conversation = insert(:conversation, account: account, customer: customer)
-      conversation = Conversations.get_conversation_with!(conversation.id, account: :users)
-
-      assert Slack.Helpers.get_conversation_primary_user_id(conversation) == user.id
-    end
-
-    test "Helpers.fetch_valid_user/1 reject disabled users and fetch the oldest user.",
-         %{account: account} do
-      {:ok, disabled_user} =
-        insert(:user, account: account)
-        |> Users.disable_user()
-
-      primary_user = insert(:user, account: account)
-
-      # Make sure that secondary_user is inserted later.
-      :timer.sleep(1000)
-      secondary_user = insert(:user, account: account)
-
-      users = [disabled_user, secondary_user, primary_user]
-      assert primary_user.id === Slack.Helpers.fetch_valid_user(users)
+      {:ok,
+       %SlackConversationThreads.SlackConversationThread{
+         slack_channel: ^channel,
+         slack_team: ^slack_team_id,
+         slack_thread_ts: ^ts,
+         account_id: ^account_id,
+         conversation_id: ^conversation_id
+       }} =
+        Slack.Helpers.create_new_slack_conversation_thread(conversation, authorization, response)
     end
 
     test "Helpers.identify_customer/1 returns the message sender type", %{account: account} do
@@ -547,14 +548,6 @@ defmodule ChatApi.SlackTest do
       assert Slack.Helpers.identify_customer(bob) == "bob@bob.com"
       assert Slack.Helpers.identify_customer(test) == "Test User"
       assert Slack.Helpers.identify_customer(anon) == "Anonymous User"
-    end
-
-    test "Helpers.get_message_type/1 returns the message sender type" do
-      customer_message = insert(:message, user: nil)
-      user_message = insert(:message, customer: nil)
-
-      assert :customer = Slack.Helpers.get_message_type(customer_message)
-      assert :agent = Slack.Helpers.get_message_type(user_message)
     end
 
     test "Helpers.format_sender_id!/3 gets an existing user_id", %{account: account} do
@@ -1188,6 +1181,41 @@ defmodule ChatApi.SlackTest do
                %{"text" => "*Timezone:*\nNew York"},
                %{"text" => "*Status:*\n:white_check_mark: Closed"}
              ] = latest_fields
+    end
+
+    test "Helpers.format_slack_markdown/1 formats vanilla markdown into Slack-flavored markdown" do
+      assert "Hi _there_ this is *bold*!" =
+               Slack.Helpers.format_slack_markdown("Hi _there_ this is **bold**!")
+
+      assert "This <url|text> should be the same" =
+               Slack.Helpers.format_slack_markdown("This <url|text> should be the same")
+
+      assert "This <url|text> should be formatted" =
+               Slack.Helpers.format_slack_markdown("This [text](url) should be formatted")
+
+      assert "This [text] (url) with a space between should be ignored" =
+               Slack.Helpers.format_slack_markdown(
+                 "This [text] (url) with a space between should be ignored"
+               )
+
+      assert """
+             This is a list in Slack:
+
+              • foo
+              • bar
+              • baz
+
+             Done!
+             """ =
+               Slack.Helpers.format_slack_markdown("""
+               This is a list in Slack:
+
+               - foo
+               - bar
+               - baz
+
+               Done!
+               """)
     end
   end
 end

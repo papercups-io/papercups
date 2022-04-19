@@ -16,8 +16,9 @@ defmodule ChatApi.ConversationsTest do
     account = insert(:account)
     customer = insert(:customer, account: account)
     conversation = insert(:conversation, account: account, customer: customer)
+    user = insert(:user, account: account)
 
-    {:ok, account: account, conversation: conversation, customer: customer}
+    {:ok, account: account, conversation: conversation, customer: customer, user: user}
   end
 
   describe "list_conversations_by_account/1" do
@@ -36,12 +37,14 @@ defmodule ChatApi.ConversationsTest do
       insert(:message,
         account: account,
         conversation: conversation_2,
+        body: "least recent",
         inserted_at: ~N[2020-11-02 20:00:00]
       )
 
       insert(:message,
         account: account,
         conversation: conversation_3,
+        body: "second most recent",
         inserted_at: ~N[2020-11-03 20:00:00]
       )
 
@@ -79,6 +82,253 @@ defmodule ChatApi.ConversationsTest do
       Conversations.remove_tag(conversation, tag.id)
 
       assert [] = Conversations.list_conversations_by_account(account.id, %{"tag_id" => tag.id})
+    end
+
+    test "filters conversations for an account by mentioned user", %{
+      account: account,
+      conversation: conversation_x,
+      customer: customer,
+      user: user
+    } do
+      conversation_y = insert(:conversation, account: account, customer: customer)
+      conversation_z = insert(:conversation, account: account, customer: customer)
+
+      insert(:message,
+        account: account,
+        conversation: conversation_y,
+        body: "least recent",
+        inserted_at: ~N[2020-11-02 20:00:00]
+      )
+
+      insert(:message,
+        account: account,
+        conversation: conversation_z,
+        body: "second most recent",
+        inserted_at: ~N[2020-11-03 20:00:00]
+      )
+
+      another_user = insert(:user, account: account)
+
+      _mention_another_x =
+        insert(:mention, conversation: conversation_x, account: account, user: another_user)
+
+      mention_x = insert(:mention, conversation: conversation_x, account: account, user: user)
+      mention_xx = insert(:mention, conversation: conversation_x, account: account, user: user)
+
+      _mention_another_xx =
+        insert(:mention, conversation: conversation_x, account: account, user: another_user)
+
+      _mention_y = insert(:mention, conversation: conversation_y, account: account, user: user)
+
+      assert [conversation_x.id, conversation_y.id] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
+               |> Enum.map(& &1.id)
+
+      assert [conversation_x.id] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{"mentioning" => another_user.id})
+               |> Enum.map(& &1.id)
+
+      ChatApi.Mentions.delete_mention(mention_x)
+      ChatApi.Mentions.delete_mention(mention_xx)
+
+      assert [conversation_x.id] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{"mentioning" => another_user.id})
+               |> Enum.map(& &1.id)
+
+      assert [conversation_y.id] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{"mentioning" => user.id})
+               |> Enum.map(& &1.id)
+
+      assert [
+               conversation_x.id,
+               conversation_z.id,
+               conversation_y.id
+             ] ==
+               account.id
+               |> Conversations.list_conversations_by_account(%{})
+               |> Enum.map(& &1.id)
+    end
+
+    test "filters conversations for an account by text query", %{
+      account: account,
+      conversation: conversation
+    } do
+      insert(:message, body: "hello world", account: account, conversation: conversation)
+
+      assert [] = Conversations.list_conversations_by_account(account.id, %{"q" => "test"})
+
+      insert(:message, body: "testing 123", account: account, conversation: conversation)
+
+      result_ids =
+        account.id
+        |> Conversations.list_conversations_by_account(%{"q" => "test"})
+        |> Enum.map(& &1.id)
+
+      assert result_ids == [conversation.id]
+    end
+  end
+
+  describe "list_forgotten_conversations/2" do
+    test "finds no conversations if no messages", %{
+      account: account,
+      customer: customer
+    } do
+      insert(:conversation, account: account, customer: customer, source: "chat")
+
+      assert [] = Conversations.list_forgotten_conversations(account.id)
+    end
+
+    test "finds conversation only if last message was from customer sent more than 24 (default) hours ago",
+         %{
+           account: account,
+           customer: customer,
+           user: user
+         } do
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(27)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      insert(:message,
+        body: "Hello customer, I am a user",
+        account: account,
+        conversation: conversation,
+        customer: nil,
+        user: user,
+        inserted_at: hours_ago(26)
+      )
+
+      # Conversation should not appear after an agent/user has replied
+      assert [] = Conversations.list_forgotten_conversations(account.id)
+
+      insert(:message,
+        body: "Hello user, customer here.",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        seen_at: nil,
+        inserted_at: hours_ago(10)
+      )
+
+      # Conversation should not appear since customer message was sent less than 24 hours ago
+      assert [] = Conversations.list_forgotten_conversations(account.id)
+      # Conversation appears again when we explicitly pass in 9 hours as the threshold
+      Conversations.list_forgotten_conversations(account.id, 9)
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id, 9) |> Enum.map(& &1.id)
+    end
+
+    test "finds conversation only if last message was from customer sent more than N hours ago",
+         %{
+           account: account,
+           customer: customer
+         } do
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(12)
+      )
+
+      assert [] == Conversations.list_forgotten_conversations(account.id, 20)
+      assert [] == Conversations.list_forgotten_conversations(account.id, 15)
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id, 10) |> Enum.map(& &1.id)
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id, 2) |> Enum.map(& &1.id)
+    end
+
+    test "ignores recent reminder messages",
+         %{
+           account: account,
+           customer: customer
+         } do
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(26)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      insert(:message,
+        body: "Hello customer, this is a reminder messages from a bot",
+        account: account,
+        conversation: conversation,
+        customer: nil,
+        type: "bot",
+        metadata: %{is_reminder: true},
+        inserted_at: hours_ago(25)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      insert(:message,
+        body: "Hello customer, this is a more recent reminder messages from a bot",
+        account: account,
+        conversation: conversation,
+        customer: nil,
+        type: "bot",
+        metadata: %{is_reminder: true},
+        inserted_at: hours_ago(10)
+      )
+
+      assert [] == Conversations.list_forgotten_conversations(account.id)
+    end
+
+    test "only finds conversations from the specified account",
+         %{
+           account: account,
+           customer: customer
+         } do
+      other_account = insert(:account)
+      conversation = insert(:conversation, account: account, customer: customer, source: "chat")
+
+      insert(:message,
+        body: "I am a customer",
+        account: account,
+        conversation: conversation,
+        customer: customer,
+        user: nil,
+        inserted_at: hours_ago(30)
+      )
+
+      assert [conversation.id] ==
+               Conversations.list_forgotten_conversations(account.id) |> Enum.map(& &1.id)
+
+      assert [] == Conversations.list_forgotten_conversations(other_account.id)
+    end
+
+    defp hours_ago(hours) do
+      DateTime.add(DateTime.utc_now(), -:timer.hours(hours), :millisecond)
     end
   end
 
@@ -197,9 +447,29 @@ defmodule ChatApi.ConversationsTest do
       assert %DateTime{} = closed_conversation.closed_at
 
       assert {:ok, %Conversation{} = open_conversation} =
-               Conversations.update_conversation(conversation, %{status: "open"})
+               Conversations.update_conversation(closed_conversation, %{status: "open"})
 
       assert open_conversation.closed_at == nil
+    end
+
+    test "sets last_activity_at field based on updated status", %{
+      conversation: conversation
+    } do
+      initial_last_activity_at = DateTime.add(DateTime.utc_now(), -:timer.hours(1), :millisecond)
+
+      assert {:ok, %Conversation{} = closed_conversation} =
+               Conversations.update_conversation(conversation, %{
+                 status: "closed",
+                 updated_at: initial_last_activity_at,
+                 last_activity_at: initial_last_activity_at
+               })
+
+      assert {:ok, %Conversation{} = open_conversation} =
+               Conversations.update_conversation(closed_conversation, %{status: "open"})
+
+      updated_last_activity_at = open_conversation.last_activity_at
+
+      assert initial_last_activity_at < updated_last_activity_at
     end
   end
 
@@ -216,6 +486,7 @@ defmodule ChatApi.ConversationsTest do
 
       slack_conversation_thread_attrs = %{
         slack_channel: "some slack_channel",
+        slack_team: "some slack_team",
         slack_thread_ts: "some slack_thread_ts",
         conversation_id: conversation.id,
         account_id: conversation.account_id
@@ -309,7 +580,7 @@ defmodule ChatApi.ConversationsTest do
 
   describe "archive_conversations/1" do
     test "archives conversations which have been closed for more than 14 days" do
-      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336))
+      past = DateTime.add(DateTime.utc_now(), -:timer.hours(336), :millisecond)
 
       closed_conversation = insert(:conversation, status: "closed")
 
@@ -768,6 +1039,86 @@ defmodule ChatApi.ConversationsTest do
       assert Enum.map(entries3, & &1.id) == Enum.map(third_batch, & &1.id)
 
       assert metadata3.after == nil
+    end
+  end
+
+  describe "get_previous_message/2" do
+    test "gets the previous message from the same conversation",
+         %{account: account, conversation: conversation, customer: customer, user: user} do
+      customer_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer,
+          user: nil,
+          inserted_at: ~N[2021-08-01 20:00:00]
+        )
+
+      refute Conversations.get_previous_message(customer_message)
+
+      user_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: nil,
+          user: user,
+          inserted_at: ~N[2021-08-02 20:00:00]
+        )
+
+      previous_message = Conversations.get_previous_message(user_message)
+
+      assert previous_message.id == customer_message.id
+      assert previous_message.body == customer_message.body
+    end
+
+    test "gets the previous message with filters applied",
+         %{account: account, conversation: conversation, customer: customer, user: user} do
+      customer_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: customer,
+          user: nil,
+          inserted_at: ~N[2021-08-01 20:00:00]
+        )
+
+      refute Conversations.get_previous_message(customer_message)
+
+      user_private_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: nil,
+          user: user,
+          type: "note",
+          private: true,
+          inserted_at: ~N[2021-08-02 20:00:00]
+        )
+
+      user_public_message =
+        insert(:message,
+          account: account,
+          conversation: conversation,
+          customer: nil,
+          user: user,
+          type: "reply",
+          private: false,
+          inserted_at: ~N[2021-08-03 20:00:00]
+        )
+
+      previous_message = Conversations.get_previous_message(user_public_message)
+
+      assert previous_message.id == user_private_message.id
+      assert previous_message.body == user_private_message.body
+
+      previous_public_message =
+        Conversations.get_previous_message(user_public_message, %{
+          "private" => false,
+          "type" => "reply"
+        })
+
+      assert previous_public_message.id == customer_message.id
+      assert previous_public_message.body == customer_message.body
     end
   end
 

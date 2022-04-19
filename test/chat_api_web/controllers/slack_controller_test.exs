@@ -9,13 +9,15 @@ defmodule ChatApiWeb.SlackControllerTest do
 
   @email "customer@test.com"
   @slack_channel "#test"
+  @slack_team "demo"
 
   setup %{conn: conn} do
     account = insert(:account)
-    user = insert(:user, account: account)
+    user = insert(:user, account: account, role: "admin")
     customer = insert(:customer, account: account, email: @email)
-    conversation = insert(:conversation, account: account, customer: customer)
-    auth = insert(:slack_authorization, account: account, channel: @slack_channel)
+    inbox = insert(:inbox, account: account, is_primary: true)
+    conversation = insert(:conversation, account: account, customer: customer, inbox: inbox)
+    auth = insert(:slack_authorization, account: account, inbox: inbox, channel: @slack_channel)
 
     thread =
       insert(:slack_conversation_thread,
@@ -33,6 +35,7 @@ defmodule ChatApiWeb.SlackControllerTest do
      thread: thread,
      auth: auth,
      account: account,
+     inbox: inbox,
      conversation: conversation,
      customer: customer,
      user: user}
@@ -66,8 +69,8 @@ defmodule ChatApiWeb.SlackControllerTest do
 
       # First verify that it exists
       assert %{
-               "channel" => channel,
-               "team_name" => team_name
+               "channel" => _channel,
+               "team_name" => _team_name
              } = json_response(resp, 200)["data"]
 
       # Then, delete and verify it no longer exists
@@ -95,6 +98,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => @slack_channel,
+        "team" => @slack_team,
         "user" => auth.authed_user_id
       }
 
@@ -121,6 +125,7 @@ defmodule ChatApiWeb.SlackControllerTest do
           "ts" => "12345",
           "thread_ts" => thread.slack_thread_ts,
           "channel" => @slack_channel,
+          "team" => @slack_team,
           "user" => auth.authed_user_id
         }
       })
@@ -146,6 +151,7 @@ defmodule ChatApiWeb.SlackControllerTest do
           "ts" => "12345",
           "thread_ts" => thread.slack_thread_ts,
           "channel" => @slack_channel,
+          "team" => @slack_team,
           "user" => auth.authed_user_id
         }
       })
@@ -170,6 +176,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => @slack_channel,
+        "team" => @slack_team,
         "user" => auth.authed_user_id
       }
 
@@ -213,6 +220,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "ts" => "12345",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => slack_channel,
+        "team" => @slack_team,
         "user" => auth.authed_user_id
       }
 
@@ -227,13 +235,21 @@ defmodule ChatApiWeb.SlackControllerTest do
          %{
            conn: conn,
            account: account,
+           inbox: inbox,
            conversation: conversation,
            customer: customer
          } do
       slack_channel = "#test-support-channel"
+      slack_team_id = "T123TEST"
 
       auth =
-        insert(:slack_authorization, account: account, channel: slack_channel, type: "support")
+        insert(:slack_authorization,
+          account: account,
+          inbox: inbox,
+          channel: slack_channel,
+          team_id: slack_team_id,
+          type: "support"
+        )
 
       thread =
         insert(:slack_conversation_thread,
@@ -249,6 +265,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "ts" => "1609459200.0000",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => slack_channel,
+        "team" => slack_team_id,
         "user" => auth.authed_user_id
       }
 
@@ -290,6 +307,7 @@ defmodule ChatApiWeb.SlackControllerTest do
         "text" => "hello world #{System.unique_integer([:positive])}",
         "thread_ts" => thread.slack_thread_ts,
         "channel" => "C123UNKNOWN",
+        "team" => @slack_team,
         "user" => auth.authed_user_id
       }
 
@@ -555,6 +573,43 @@ defmodule ChatApiWeb.SlackControllerTest do
         assert %{source: "slack"} = conversation
         assert body == event_params["text"]
         assert company_id == company.id
+      end
+    end
+
+    test "uses the payload team_id when the event is missing a team field", %{
+      conn: conn,
+      account: account,
+      auth: auth,
+      thread: thread
+    } do
+      event_params = %{
+        "type" => "message",
+        "text" => "hello world #{System.unique_integer([:positive])}",
+        "channel" => @slack_channel,
+        "user" => auth.authed_user_id,
+        "thread_ts" => thread.slack_thread_ts,
+        "ts" => "1234.56789"
+      }
+
+      slack_user = %{
+        "real_name" => "Test User",
+        "tz" => "America/New_York",
+        "profile" => %{"email" => @email}
+      }
+
+      with_mock ChatApi.Slack.Client,
+        retrieve_user_info: fn _, _ ->
+          {:ok, %{body: %{"ok" => true, "user" => slack_user}}}
+        end,
+        send_message: fn _, _ -> {:ok, nil} end do
+        post(conn, Routes.slack_path(conn, :webhook), %{
+          "event" => event_params,
+          "is_ext_shared_channel" => false,
+          "team_id" => @slack_team
+        })
+
+        assert [%{body: body, source: "slack"}] = Messages.list_messages(account.id)
+        assert body == event_params["text"]
       end
     end
 

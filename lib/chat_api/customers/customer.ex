@@ -6,6 +6,7 @@ defmodule ChatApi.Customers.Customer do
     Accounts.Account,
     Companies.Company,
     Conversations.Conversation,
+    Issues.CustomerIssue,
     Messages.Message,
     Notes.Note,
     Tags.CustomerTag
@@ -13,7 +14,6 @@ defmodule ChatApi.Customers.Customer do
 
   @type t :: %__MODULE__{
           first_seen: any(),
-          last_seen: any(),
           email: String.t() | nil,
           name: String.t() | nil,
           phone: String.t() | nil,
@@ -48,7 +48,6 @@ defmodule ChatApi.Customers.Customer do
   @foreign_key_type :binary_id
   schema "customers" do
     field(:first_seen, :date)
-    field(:last_seen, :date)
     field(:email, :string)
     field(:name, :string)
     field(:phone, :string)
@@ -81,6 +80,8 @@ defmodule ChatApi.Customers.Customer do
 
     has_many(:customer_tags, CustomerTag)
     has_many(:tags, through: [:customer_tags, :tag])
+    has_many(:customer_issues, CustomerIssue)
+    has_many(:issues, through: [:customer_issues, :issue])
 
     timestamps()
   end
@@ -91,7 +92,6 @@ defmodule ChatApi.Customers.Customer do
     customer
     |> cast(attrs, [
       :first_seen,
-      :last_seen,
       :account_id,
       :company_id,
       :email,
@@ -111,9 +111,10 @@ defmodule ChatApi.Customers.Customer do
       :screen_height,
       :screen_width,
       :lib,
-      :time_zone
+      :time_zone,
+      :metadata
     ])
-    |> validate_required([:first_seen, :last_seen, :account_id])
+    |> validate_required([:first_seen, :last_seen_at, :account_id])
     |> foreign_key_constraint(:account_id)
     |> foreign_key_constraint(:company_id)
   end

@@ -126,7 +126,7 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
       conn = get(authed_conn, Routes.canned_response_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => ^id,
                "content" => "some content",
                "name" => "some name"
              } = json_response(conn, 200)["data"]
@@ -188,7 +188,7 @@ defmodule ChatApiWeb.CannedResponseControllerTest do
       conn = get(authed_conn, Routes.canned_response_path(authed_conn, :show, id))
 
       assert %{
-               "id" => id,
+               "id" => ^id,
                "content" => "some updated content",
                "name" => "some updated name"
              } = json_response(conn, 200)["data"]

@@ -1,3 +1,96 @@
+### Friday, 23 July
+- [**Papercups Functions**](https://functions.papercups.io/) is now in beta :rocket: [0]
+- [[#916](https://github.com/papercups-io/papercups/pull/916)] Notify teammates with **@ mentions** in the dashboard 🔊 [1]
+- [[#919](https://github.com/papercups-io/papercups/pull/919)] Use **canned responses/saved replies** in the dashboard [2]
+- [[#908](https://github.com/papercups-io/papercups/pull/908)] Send files to customers **directly from Slack**
+- [[#917](https://github.com/papercups-io/papercups/pull/917)] Dashboard messages are now enhanced with more metadata 🔥 [3]
+
+_[0] Papercups Functions_
+> <img width="800" src="https://user-images.githubusercontent.com/5264279/126827126-c99ec771-6543-4de5-b7d0-3b583383a80a.png" />
+
+_[1] @ mentions_
+> <img width="480" src="https://user-images.githubusercontent.com/5264279/126420797-cdcbd439-a5fe-4b38-beec-fb895c41ff17.gif" />
+
+_[2] Saved replies_
+> <img width="480" src="https://user-images.githubusercontent.com/5264279/126712981-0a4585fe-ce89-4918-8b88-f2949b1270a1.gif" />
+
+_[3] Enhanced message UI_
+| Email | Slack |  
+|---|---|
+| <img alt="Email" src="https://user-images.githubusercontent.com/5264279/126564253-0a5a33bf-ccb3-4b33-8eb0-4f52bb51687f.png"> | <img alt="Slack" src="https://user-images.githubusercontent.com/5264279/126564260-97341660-f597-4b54-834a-9f7bbd4c2fc9.png"> |
+
+### Friday, 11 June
+- [[#826](https://github.com/papercups-io/papercups/pull/826)] Implement v1 of **conversation nudges/reminders** [0]
+- [[#841](https://github.com/papercups-io/papercups/pull/841)] **Automatically link GitHub issue** to customer when URL is shared in conversation [1]
+- [[#789](https://github.com/papercups-io/papercups/pull/789)] Send messages to customers **directly from customer view** [2]
+- [[#833](https://github.com/papercups-io/papercups/pull/833)] Add a modal with information on **keyboard shortcuts**
+- [[#831](https://github.com/papercups-io/papercups/pull/831)] Fix how attachments are synced with the Gmail integration
+- [[#856](https://github.com/papercups-io/papercups/pull/856)] Support unassigning someone from a conversation
+- [[#790](https://github.com/papercups-io/papercups/pull/790)] Add **inboxes per channel** (chat, Slack, email) [3]
+- [[#815](https://github.com/papercups-io/papercups/pull/815), [#811](https://github.com/papercups-io/papercups/pull/811)] Search improvements to customers view
+
+_[0] Conversation reminders v1_
+> <img width="800" src="https://user-images.githubusercontent.com/5264279/119059541-8444ba00-b99e-11eb-9576-a70a896ba038.png" />
+
+_[1] Automatically link GitHub issues_
+> <img width="800" src="https://user-images.githubusercontent.com/5264279/118854627-efa96180-b8a2-11eb-88ce-cc8dbf2a8403.png" />
+
+_[2] Send messages from customer view_
+> <img width="800" src="https://user-images.githubusercontent.com/5264279/116152358-d0f4e800-a6b3-11eb-8b9f-0fe9dd1e3981.gif" />
+
+_[3] Inboxes per channel_
+> <video width=800 src="https://user-images.githubusercontent.com/1361509/115447331-61c85100-a1e6-11eb-8a6b-b862a4f2be5a.mp4" />
+
+
+### Friday, 23 April
+- [[#759](https://github.com/papercups-io/papercups/pull/759)] **GitHub integration** v1 (associate GitHub issues with customers) [0] :octocat:
+- [[#755](https://github.com/papercups-io/papercups/pull/755)] Add ability to **view and create notes** from the customer details page [1]
+- [[#743](https://github.com/papercups-io/papercups/pull/743)] Add basic search to customers page [2]
+- [[#736](https://github.com/papercups-io/papercups/pull/736)] Add ability to edit customer details page [3]
+- [[#726](https://github.com/papercups-io/papercups/pull/726)] Support **markdown images** in chat messages :rocket: [4]
+- [[#733](https://github.com/papercups-io/papercups/pull/733)] Add default **company logo image** for chat bubble [5]
+- [[#723](https://github.com/papercups-io/papercups/pull/723)] Support specifying customer in `POST /api/v1/messages` endpoint
+- [[#716](https://github.com/papercups-io/papercups/pull/716)] Reopen conversation when new reply comes in via Gmail integration
+- [[#715](https://github.com/papercups-io/papercups/pull/715)] Improve customer details page UX by reducing number of clicks
+- [[#703](https://github.com/papercups-io/papercups/pull/703)] Add ability to **send user invitation emails** from Account Overview ✉️
+
+
+_[0] Github integration v1_
+> <img height=800 src="https://user-images.githubusercontent.com/5264279/115761917-e0e99080-a370-11eb-9db9-823e605a673e.gif" />
+
+_[1] View and create notes from customer details page_
+> <video width=800 src="https://user-images.githubusercontent.com/1361509/115447331-61c85100-a1e6-11eb-8a6b-b862a4f2be5a.mp4" />
+
+_[2] Customer search_
+> <img width=800 src="https://user-images.githubusercontent.com/5264279/115046460-78e50700-9ea5-11eb-8ef0-930f6a4cd82e.gif" />
+
+
+### Friday, 2 April
+
+- [[#697](https://github.com/papercups-io/papercups/pull/697)] The **Gmail integration** is now ready for beta users :rocket: [0]
+- [[#680](https://github.com/papercups-io/papercups/pull/680)] Set up v1 of our **Twilio integration** 📱 [1]
+- [[#682](https://github.com/papercups-io/papercups/pull/682)] Added **search functionality** for tags and customers
+- [[#686](https://github.com/papercups-io/papercups/pull/686)] The dashboard is now **cookie free** 🙅 🍪
+- [[#670](https://github.com/papercups-io/papercups/pull/670)] Set up a **customer details page** [2]
+- [[#669](https://github.com/papercups-io/papercups/pull/669)] You can now **view conversations by tag** [3]
+- [[#687](https://github.com/papercups-io/papercups/pull/687)] Upgraded Elixir to **v1.11** 
+
+_[0] Sync with Gmail_
+| Gmail  | Dashboard | Slack |
+| ------------- | ------------- | ------------- |
+| <img width="800" alt="Screen Shot 2021-04-02 at 10 19 25 AM" src="https://user-images.githubusercontent.com/5264279/113204349-367fc100-923b-11eb-9079-6232ee2ef6aa.png"> | <img width="800" alt="Screen Shot 2021-04-02 at 10 19 24 AM" src="https://user-images.githubusercontent.com/5264279/113204347-35e72a80-923b-11eb-876c-5c50e93cd61a.png"> | <img width="400" alt="Screen Shot 2021-04-02 at 10 19 33 AM" src="https://user-images.githubusercontent.com/5264279/113352452-461a0b00-930a-11eb-83d4-796fa5d47984.png"> |
+
+_[1] Twilio integration v1_
+| Phone  | Dashboard | Slack |
+| ------------- | ------------- | ------------- |
+| <img width="400" alt="Screen Shot 2021-04-02 at 10 19 25 AM" src="https://user-images.githubusercontent.com/5264279/113424025-78287d00-939d-11eb-8139-38f3552a5163.jpg"> | <img width="800" alt="Screen Shot 2021-04-02 at 10 19 24 AM" src="https://user-images.githubusercontent.com/5264279/113424008-72cb3280-939d-11eb-8b9f-fa23b0ce808b.png"> | <img width="400" alt="Screen Shot 2021-04-02 at 10 19 33 AM" src="https://user-images.githubusercontent.com/5264279/113424005-72cb3280-939d-11eb-864b-4a361c6dcc0c.png"> |
+
+_[2] Customer details page_
+> <img width="800" alt="Customer details page" src="https://user-images.githubusercontent.com/5264279/112028851-020b5700-8b0f-11eb-967f-3b2b9b10089b.png">
+
+_[3] Conversations by tag_
+> <img width="800" alt="Conversations by tag" src="https://user-images.githubusercontent.com/5264279/112002685-8ac9c900-8af6-11eb-9715-c3a7f45c39c0.png">
+
 ### Monday, 22 February
 
 - [[#575](https://github.com/papercups-io/papercups/pull/575)] Added a page to manage your tags and **group customers by tag**

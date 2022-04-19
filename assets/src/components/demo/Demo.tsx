@@ -13,17 +13,18 @@ import {
   Title,
 } from '../common';
 import {RightCircleOutlined} from '../icons';
-import {BASE_URL, env, isDev} from '../../config';
+import {BASE_URL, env, isDev, isStorytimeEnabled} from '../../config';
 import * as API from '../../api';
 import logger from '../../logger';
 // Testing widget in separate package
 // import {Storytime} from '../../lib/storytime'; // For testing
 import {Storytime} from '@papercups-io/storytime';
 import ChatWidget from '@papercups-io/chat-widget';
+import {formatUserExternalId} from '../../utils';
 
 const {
-  REACT_APP_STORYTIME_ENABLED,
   REACT_APP_ADMIN_ACCOUNT_ID = 'eb504736-0f20-4978-98ff-1a82ae60b266',
+  REACT_APP_ADMIN_INBOX_ID = '1c792b5e-4be9-4e51-98a9-5648311eb398',
 } = env;
 
 type Props = RouteComponentProps & {};
@@ -32,6 +33,7 @@ type State = {
   title: string;
   subtitle: string;
   accountId: string;
+  inboxId: string;
   currentUser?: any;
 };
 
@@ -51,6 +53,7 @@ class Demo extends React.Component<Props, State> {
       title: defaultTitle || 'Welcome to Papercups!',
       subtitle: defaultSubtitle || 'Ask us anything using the chat window 💭',
       accountId: REACT_APP_ADMIN_ACCOUNT_ID,
+      inboxId: REACT_APP_ADMIN_INBOX_ID,
       currentUser: null,
     };
   }
@@ -62,7 +65,7 @@ class Demo extends React.Component<Props, State> {
         // Not logged in, no big deal
       })
       .then(() => {
-        if (REACT_APP_STORYTIME_ENABLED) {
+        if (isStorytimeEnabled) {
           this.storytime = Storytime.init({
             accountId: this.state.accountId,
             baseUrl: BASE_URL,
@@ -99,12 +102,12 @@ class Demo extends React.Component<Props, State> {
       return {};
     }
 
-    const {id, email} = currentUser;
+    const {email} = currentUser;
 
     // TODO: include name if available
     return {
       email: email,
-      external_id: [id, email].join('|'),
+      external_id: formatUserExternalId(currentUser),
       metadata: {
         // Just testing that ad hoc metadata works :)
         ts: +new Date(),
@@ -113,7 +116,7 @@ class Demo extends React.Component<Props, State> {
   };
 
   render() {
-    const {color, title, subtitle, accountId} = this.state;
+    const {color, title, subtitle, accountId, inboxId} = this.state;
     const customer = this.getCustomerMetadata();
     const defaultColors = [
       colors.primary,
@@ -187,11 +190,13 @@ class Demo extends React.Component<Props, State> {
         </Flex>
 
         <ChatWidget
+          token={accountId}
+          accountId={accountId}
+          inbox={inboxId}
           title={title || 'Welcome!'}
           subtitle={subtitle}
           primaryColor={color}
-          accountId={accountId}
-          greeting="Hello :) have any questions or feedback? Alex or Kam will reply as soon as they can! In the meantime, come join our community [Slack](https://join.slack.com/t/papercups-io/shared_invite/zt-h0c3fxmd-hZi1Zp8~D61S6GD16aMqmg)."
+          greeting="Hi try chatting here and changing the colors on the chat widget!"
           customer={customer}
           baseUrl={BASE_URL}
           iconVariant="filled"

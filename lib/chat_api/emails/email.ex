@@ -2,10 +2,14 @@ defmodule ChatApi.Emails.Email do
   import Swoosh.Email
   import Ecto.Changeset
 
+  alias ChatApi.Customers.Customer
+  alias ChatApi.Messages.Message
+  alias ChatApi.Users.UserProfile
+
   @type t :: Swoosh.Email.t()
 
   @from_address System.get_env("FROM_ADDRESS") || ""
-  @backend_url System.get_env("BACKEND_URL") || ""
+  @backend_url System.get_env("BACKEND_URL", "app.papercups.io")
 
   defstruct to_address: nil, message: nil
 
@@ -23,45 +27,81 @@ defmodule ChatApi.Emails.Email do
     |> to(to)
     |> from(from)
     |> subject(subject)
+    |> cc(Map.get(params, :cc, []))
     |> bcc(Map.get(params, :bcc, []))
+    |> prepare_gmail_headers(params)
     |> text_body(text)
     |> html_body(Map.get(params, :html))
+    |> prepare_gmail_attachments(Map.get(params, :attachments, []))
   end
+
+  def prepare_gmail_headers(message, %{in_reply_to: in_reply_to, references: references}) do
+    message
+    |> header("In-Reply-To", in_reply_to)
+    |> header("References", references)
+  end
+
+  def prepare_gmail_headers(message, _), do: message
+
+  # Attachment should look like:
+  #
+  #   Swoosh.Attachment.new({:data, binary},
+  #     content_type: "image/png",
+  #     filename: filename,
+  #     type: :inline
+  #   )
+  #
+  # Docs: https://hexdocs.pm/swoosh/Swoosh.Attachment.html
+  def prepare_gmail_attachments(message, [attachment | rest]) do
+    message
+    |> attachment(attachment)
+    |> prepare_gmail_attachments(rest)
+  end
+
+  def prepare_gmail_attachments(message, _), do: message
 
   # TODO: Add some recent messages for context, rather than just a single message
   # (See the `conversation_reply` method for an example of this)
-  def new_message_alert(to_address, message) do
-    conversation_id = Map.get(message, :conversation_id)
+  def new_message_alert(
+        to_address,
+        %Message{
+          body: body,
+          conversation_id: conversation_id,
+          customer_id: customer_id
+        } = _message
+      ) do
+    customer =
+      case customer_id do
+        id when is_binary(id) -> ChatApi.Customers.get_customer!(id)
+        _ -> nil
+      end
+
+    {subject, intro} =
+      case customer do
+        %Customer{email: email, name: name} when is_binary(email) and is_binary(name) ->
+          {"#{name} (#{email}) has sent you a message", "New message from #{name} (#{email}):"}
+
+        %Customer{email: email} when is_binary(email) ->
+          {"#{email} has sent you a message", "New message from #{email}:"}
+
+        %Customer{name: name} when is_binary(name) ->
+          {"#{name} has sent you a message", "New message from #{name}:"}
+
+        _ ->
+          {"A customer has sent you a message (conversation #{conversation_id})",
+           "New message from an anonymous user:"}
+      end
 
     link =
       "<a href=\"https://#{@backend_url}/conversations/#{conversation_id}\">View in dashboard</a>"
 
-    msg = Map.get(message, :body)
-    customer_id = Map.get(message, :customer_id, nil)
-
-    customer_email_string =
-      if customer_id do
-        customer_id
-        |> ChatApi.Customers.get_customer!()
-        |> Map.get(:email)
-        |> case do
-          nil -> ""
-          email -> " from #{email}"
-        end
-      else
-        ""
-      end
-
-    html =
-      "A new message has arrived" <>
-        customer_email_string <> ":<br />" <> "<b>#{msg}</b>" <> "<br /><br />" <> link
-
-    text = "A new message has arrived" <> customer_email_string <> ": #{msg}"
+    html = intro <> "<br />" <> "<b>#{body}</b>" <> "<br /><br />" <> link
+    text = intro <> " " <> body
 
     new()
     |> to(to_address)
     |> from({"Papercups", @from_address})
-    |> subject("A customer has sent you a message")
+    |> subject(subject)
     |> html_body(html)
     |> text_body(text)
   end
@@ -106,7 +146,7 @@ defmodule ChatApi.Emails.Email do
       %{email: email, profile: nil} ->
         company || email
 
-      %{email: email, profile: profile} ->
+      %{email: email, profile: %UserProfile{} = profile} ->
         profile.display_name || profile.full_name || company || email
 
       _ ->
@@ -127,12 +167,87 @@ defmodule ChatApi.Emails.Email do
     <p>You've received a new message from your chat with
     <a href="#{customer.current_url}">#{company}</a>:</p>
     <hr />
+    #{Enum.map(messages, fn msg -> format_message_html(msg, company) end)}
+    <hr />
+    <p>
+    Best,<br />
+    #{from}
+    </p>
+    """
+  end
+
+  defp format_message_html(message, company) do
+    markdown = """
+    **#{format_sender(message, company)}**\s\s
+    #{message.body}
+    """
+
+    fallback = """
+    <p>
+      <strong>#{format_sender(message, company)}</strong><br />
+      #{message.body}
+    </p>
+    """
+
+    case Earmark.as_html(markdown) do
+      {:ok, html, _} -> html
+      _ -> fallback
+    end
+  end
+
+  def mention_notification(
+        to: to,
+        from: from,
+        reply_to: reply_to,
+        company: company,
+        messages: messages,
+        user: user
+      ) do
+    new()
+    |> to(to)
+    |> from({from, @from_address})
+    |> reply_to(reply_to)
+    |> subject("You were mentioned in a message on Papercups!")
+    |> html_body(mention_notification_html(messages, from: from, to: user, company: company))
+    |> text_body(mention_notification_text(messages, from: from, to: user, company: company))
+  end
+
+  # TODO: figure out a better way to create templates for these
+  defp mention_notification_text(messages, from: from, to: _user, company: company) do
+    conversation_id = messages |> List.first() |> Map.get(:conversation_id)
+    dashboard_link = "#{get_app_domain()}/conversations/mentions/#{conversation_id}"
+
+    """
+    Hi there!
+
+    You were mentioned in a message on Papercups:
+
     #{
       Enum.map(messages, fn msg ->
-        "<p><strong>#{format_sender(msg, company)}</strong><br />#{msg.body}</p>"
+        format_sender(msg, company) <> ": " <> msg.body <> "\n"
       end)
     }
+
+    View in the dashboard at #{dashboard_link}
+
+    Best,
+    #{from}
+    """
+  end
+
+  defp mention_notification_html(messages, from: from, to: _user, company: company) do
+    conversation_id = messages |> List.first() |> Map.get(:conversation_id)
+    dashboard_link = "#{get_app_domain()}/conversations/mentions/#{conversation_id}"
+
+    """
+    <p>Hi there!</p>
+    <p>You were mentioned in a message on Papercups:</p>
     <hr />
+    #{Enum.map(messages, fn msg -> format_message_html(msg, company) end)}
+    <hr />
+    <p>
+    (View in the <a href="#{dashboard_link}">dashboard</a>)
+    </p>
     <p>
     Best,<br />
     #{from}
@@ -193,6 +308,90 @@ defmodule ChatApi.Emails.Email do
     <p>
     PS: We also have a Slack channel if you'd like to see what we're up to :) <br/>
     https://github.com/papercups-io/papercups#get-in-touch
+    </p>
+    """
+  end
+
+  def user_invitation(
+        %{
+          company: company,
+          from_address: from_address,
+          from_name: from_name,
+          invitation_token: invitation_token,
+          to_address: to_address
+        } = _params
+      ) do
+    subject =
+      if from_name == company,
+        do: "You've been invited to join #{company} on Papercups!",
+        else: "#{from_name} has invited you to join #{company} on Papercups!"
+
+    intro_line =
+      if from_name == company,
+        do: "#{from_address} has invited you to join #{company} on Papercups!",
+        else: "#{from_name} (#{from_address}) has invited you to join #{company} on Papercups!"
+
+    invitation_url =
+      "#{get_app_domain()}/register/#{invitation_token}?#{URI.encode_query(%{email: to_address})}"
+
+    new()
+    |> to(to_address)
+    |> from({"Alex", @from_address})
+    |> reply_to("alex@papercups.io")
+    |> subject(subject)
+    |> html_body(
+      user_invitation_email_html(%{
+        intro_line: intro_line,
+        invitation_url: invitation_url
+      })
+    )
+    |> text_body(
+      user_invitation_email_text(%{
+        intro_line: intro_line,
+        invitation_url: invitation_url
+      })
+    )
+  end
+
+  defp user_invitation_email_text(
+         %{
+           invitation_url: invitation_url,
+           intro_line: intro_line
+         } = _params
+       ) do
+    """
+    Hi there!
+
+    #{intro_line}
+
+    Click the link below to sign up:
+
+    #{invitation_url}
+
+    Best,
+    Alex & Kam @ Papercups
+    """
+  end
+
+  # TODO: figure out a better way to create templates for these
+  defp user_invitation_email_html(
+         %{
+           invitation_url: invitation_url,
+           intro_line: intro_line
+         } = _params
+       ) do
+    """
+    <p>Hi there!</p>
+
+    <p>#{intro_line}</p>
+
+    <p>Click the link below to sign up:</p>
+
+    <a href="#{invitation_url}">#{invitation_url}</a>
+
+    <p>
+    Best,<br />
+    Alex & Kam @ Papercups
     </p>
     """
   end

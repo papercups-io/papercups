@@ -15,20 +15,50 @@ defmodule ChatApi.Slack.Event do
   alias ChatApi.SlackAuthorizations.SlackAuthorization
 
   @spec handle_payload(map()) :: any()
-  def handle_payload(
-        %{
-          "event" => event,
-          "team_id" => team,
-          "is_ext_shared_channel" => true
-        } = _payload
-      ) do
+
+  def handle_payload(%{
+        "event" => event,
+        "team_id" => team,
+        "is_ext_shared_channel" => true
+      }) do
     # NB: this is a bit of a hack -- we override the "team" id in the "event" payload
-    # to match the "team" where the Papercups app is installed
+    # to match the "team" where the Papercups app is installed (rather than the "team"
+    # of the external workspace, where messages may also originate from)
     event
     |> Map.merge(%{"team" => team})
     |> handle_event()
   end
 
+  def handle_payload(
+        %{
+          "event" => %{"team" => team} = event,
+          "team_id" => payload_team_id,
+          "is_ext_shared_channel" => false
+        } = payload
+      ) do
+    if payload_team_id != team do
+      Logger.error(
+        "Team IDs on Slack event payload do not match: #{inspect(payload_team_id)} #{
+          inspect(team)
+        } (#{inspect(payload)})"
+      )
+    end
+
+    handle_event(event)
+  end
+
+  def handle_payload(%{
+        "event" => event,
+        "team_id" => team,
+        "is_ext_shared_channel" => false
+      }) do
+    # If the "team" field is missing from the "event", add the payload "team_id"
+    event
+    |> Map.merge(%{"team" => team})
+    |> handle_event()
+  end
+
+  def handle_payload(%{"event" => event}), do: handle_event(event)
   def handle_payload(_), do: nil
 
   @spec handle_event(map()) :: any()
@@ -37,16 +67,11 @@ defmodule ChatApi.Slack.Event do
     nil
   end
 
-  def handle_event(%{"type" => "message", "text" => ""} = _event) do
-    # Don't do anything for blank messages (e.g. when only an attachment is sent)
-    # TODO: add better support for image/file attachments
-    nil
-  end
-
   def handle_event(
         %{
           "type" => "message",
           "text" => text,
+          "team" => team,
           "thread_ts" => thread_ts,
           "channel" => slack_channel_id,
           "user" => slack_user_id
@@ -55,9 +80,13 @@ defmodule ChatApi.Slack.Event do
     Logger.debug("Handling Slack message reply event: #{inspect(event)}")
 
     with {:ok, conversation} <- find_thread_conversation(thread_ts, slack_channel_id),
-         %{account_id: account_id, id: conversation_id} <- conversation,
+         %{account_id: account_id, id: conversation_id, inbox_id: inbox_id} <- conversation,
          primary_reply_authorization <-
-           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "reply"}) do
+           SlackAuthorizations.get_authorization_by_account(account_id, %{
+             type: "reply",
+             inbox_id: inbox_id
+           }),
+         files <- Map.get(event, "files", []) do
       if Slack.Helpers.is_primary_channel?(primary_reply_authorization, slack_channel_id) do
         text
         |> Slack.Helpers.parse_message_type_params()
@@ -74,17 +103,24 @@ defmodule ChatApi.Slack.Event do
               conversation.assignee_id
             )
         })
-        |> Messages.create_and_fetch!()
+        |> create_and_fetch_message_with_attachments!(files, primary_reply_authorization)
         |> Messages.Notification.broadcast_to_customer!()
         |> Messages.Notification.broadcast_to_admin!()
         |> Messages.Notification.notify(:webhooks)
         |> Messages.Notification.notify(:slack_support_channel)
         |> Messages.Notification.notify(:slack_company_channel)
         |> Messages.Notification.notify(:conversation_reply_email)
+        |> Messages.Notification.notify(:gmail)
+        |> Messages.Notification.notify(:sms)
+        |> Messages.Notification.notify(:ses)
         |> Messages.Notification.notify(:mattermost)
-        |> Messages.Helpers.handle_post_creation_conversation_updates()
+        |> Messages.Helpers.handle_post_creation_hooks()
       else
-        case SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}) do
+        case SlackAuthorizations.get_authorization_by_account(account_id, %{
+               team_id: team,
+               inbox_id: inbox_id,
+               type: "support"
+             }) do
           nil ->
             nil
 
@@ -98,12 +134,12 @@ defmodule ChatApi.Slack.Event do
               "sent_at" => event |> Map.get("ts") |> Slack.Helpers.slack_ts_to_utc(),
               "source" => "slack"
             })
-            |> Messages.create_and_fetch!()
+            |> create_and_fetch_message_with_attachments!(files, authorization)
             |> Messages.Notification.broadcast_to_customer!()
             |> Messages.Notification.broadcast_to_admin!()
             |> Messages.Notification.notify(:webhooks)
             |> Messages.Notification.notify(:slack)
-            |> Messages.Helpers.handle_post_creation_conversation_updates()
+            |> Messages.Helpers.handle_post_creation_hooks()
         end
       end
     else
@@ -118,8 +154,6 @@ defmodule ChatApi.Slack.Event do
   end
 
   # NB: this currently listens for the Papercups app being added to a Slack channel.
-  # At the moment, it doesn't do anything. But in the future, we may auto-create a
-  # `company` record based on the Slack channel info (if this use case is common enough)
   def handle_event(
         %{
           "type" => "message",
@@ -134,7 +168,13 @@ defmodule ChatApi.Slack.Event do
     Logger.info("Slack channel_join/group_join event detected:")
     Logger.info(inspect(event))
 
-    with %{account_id: account_id, access_token: access_token, channel_id: channel_id} <-
+    with %{
+           account_id: account_id,
+           access_token: access_token,
+           channel_id: channel_id,
+           team_id: team_id,
+           team_name: team_name
+         } <-
            SlackAuthorizations.find_slack_authorization(%{
              bot_user_id: slack_user_id,
              type: "support"
@@ -146,26 +186,38 @@ defmodule ChatApi.Slack.Event do
          {:ok, response} <- Slack.Client.retrieve_channel_info(slack_channel_id, access_token),
          {:ok, channel} <- Slack.Extractor.extract_slack_channel(response),
          %{"name" => name, "purpose" => purpose, "topic" => topic} <- channel do
-      company = %{
-        # Set default company name to Slack channel name
-        name: name,
-        description: purpose["value"] || topic["value"],
-        account_id: account_id,
-        slack_channel_name: "##{name}",
-        slack_channel_id: slack_channel_id
-      }
-
       Slack.Helpers.send_internal_notification(
         "Papercups app was added to Slack channel `##{name}` for account `#{account_id}`"
       )
 
       # TODO: should we do this? might make onboarding a bit easier, but would also set up
       # companies with "weird" names (i.e. in the format of a Slack channel name)
-      {:ok, result} = Companies.create_company(company)
+      {:ok, result} =
+        Companies.create_company(%{
+          # Set default company name to Slack channel name
+          name: name,
+          description: purpose["value"] || topic["value"],
+          account_id: account_id,
+          slack_channel_name: "##{name}",
+          slack_channel_id: slack_channel_id,
+          slack_team_name: team_name,
+          slack_team_id: team_id
+        })
+
       Logger.info("Successfully auto-created company:")
       Logger.info(inspect(result))
     end
   end
+
+  def handle_event(%{
+        "type" => "message",
+        "subtype" => subtype,
+        "user" => _,
+        "channel" => _
+      })
+      # Public channels use prefix "channel_*", while private channels use "group_*"
+      when subtype in ["channel_join", "group_join", "channel_leave", "group_leave"],
+      do: nil
 
   # TODO: ignore message if it's from a bot?
   def handle_event(
@@ -180,11 +232,10 @@ defmodule ChatApi.Slack.Event do
       ) do
     Logger.debug("Handling Slack new message event: #{inspect(event)}")
 
-    with authorization <-
-           SlackAuthorizations.find_slack_authorization(%{
-             team_id: team,
-             type: "support"
-           }),
+    with %SlackAuthorization{} = authorization <-
+           SlackAuthorizations.find_slack_authorization(%{team_id: team, type: "support"}),
+         %{sync_all_incoming_threads: true} <-
+           SlackAuthorizations.get_authorization_settings(authorization),
          # TODO: remove after debugging!
          :ok <- Logger.info("Handling Slack new message event: #{inspect(event)}"),
          :ok <- Slack.Validation.validate_channel_supported(authorization, slack_channel_id),
@@ -208,9 +259,10 @@ defmodule ChatApi.Slack.Event do
     Logger.info("Handling Slack reaction event: #{inspect(event)}")
 
     with :ok <- Slack.Validation.validate_no_existing_thread(channel, ts),
-         {:ok, account_id} <- find_account_id_by_support_channel(channel),
-         %{access_token: access_token} <-
-           SlackAuthorizations.get_authorization_by_account(account_id, %{type: "support"}),
+         %SlackAuthorization{access_token: access_token} = authorization <-
+           SlackAuthorizations.find_support_authorization_by_channel(channel),
+         %{sync_by_emoji_tagging: true} <-
+           SlackAuthorizations.get_authorization_settings(authorization),
          {:ok, response} <- Slack.Client.retrieve_message(channel, ts, access_token),
          {:ok, message} <- Slack.Extractor.extract_slack_message(response) do
       Logger.info("Slack emoji reaction detected:")
@@ -239,10 +291,7 @@ defmodule ChatApi.Slack.Event do
         } = event
       ) do
     with authorization <-
-           SlackAuthorizations.find_slack_authorization(%{
-             team_id: team,
-             type: "support"
-           }),
+           SlackAuthorizations.find_slack_authorization(%{team_id: team, type: "support"}),
          :ok <- Slack.Validation.validate_channel_supported(authorization, slack_channel_id) do
       # TODO: sync whole message thread if there are multiple messages already
       # (See `Slack.Sync.sync_slack_message_thread(messages, authorization, event)`)
@@ -264,10 +313,7 @@ defmodule ChatApi.Slack.Event do
         } = event
       ) do
     with %SlackAuthorization{} = authorization <-
-           SlackAuthorizations.find_slack_authorization(%{
-             team_id: team,
-             type: "support"
-           }),
+           SlackAuthorizations.find_slack_authorization(%{team_id: team, type: "support"}),
          [_ | _] = messages <- Slack.Sync.get_syncable_slack_messages(authorization, event),
          true <- Slack.Sync.should_sync_slack_messages?(messages) do
       Slack.Sync.sync_slack_message_thread(messages, authorization, event)
@@ -275,6 +321,60 @@ defmodule ChatApi.Slack.Event do
   end
 
   def handle_reply_to_unknown_thread(_event), do: nil
+
+  @spec create_and_fetch_message_with_attachments!(map(), list(), SlackAuthorization.t()) ::
+          Message.t()
+  def create_and_fetch_message_with_attachments!(
+        payload,
+        files,
+        %SlackAuthorization{} = authorization
+      ) do
+    file_ids = files |> process_message_attachments(authorization) |> Enum.map(& &1.id)
+    {:ok, message} = Messages.create_message(payload)
+    {_, nil} = Messages.create_attachments(message, file_ids)
+
+    Messages.get_message!(message.id)
+  end
+
+  def process_message_attachments(nil, _authorization), do: []
+  def process_message_attachments([], _authorization), do: []
+
+  def process_message_attachments(
+        [_ | _] = files,
+        %SlackAuthorization{
+          account_id: account_id,
+          access_token: access_token
+        } = _authorization
+      ) do
+    files
+    |> Enum.map(fn %{
+                     "title" => filename,
+                     "mimetype" => content_type,
+                     "url_private_download" => url
+                   } = file ->
+      unique_filename = ChatApi.Aws.generate_unique_filename(filename)
+
+      with {:ok, %{status: 200, body: body}} when is_binary(body) <-
+             ChatApi.Slack.Client.read_file(url, access_token),
+           {:ok, %{status_code: 200}} <- ChatApi.Aws.upload_binary(body, unique_filename),
+           {:ok, file} <-
+             ChatApi.Files.create_file(%{
+               "filename" => filename,
+               "unique_filename" => unique_filename,
+               "file_url" => ChatApi.Aws.get_file_url(unique_filename),
+               "content_type" => content_type,
+               "account_id" => account_id
+             }) do
+        file
+      else
+        error ->
+          Logger.error("Failed to process file #{inspect(file)}: #{inspect(error)}")
+
+          nil
+      end
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
 
   # TODO: move to Slack.Helpers?
   @spec create_new_conversation_from_slack_message(map(), SlackAuthorization.t()) ::
@@ -286,7 +386,11 @@ defmodule ChatApi.Slack.Event do
           "channel" => slack_channel_id,
           "ts" => ts
         } = event,
-        %SlackAuthorization{account_id: account_id} = authorization
+        %SlackAuthorization{
+          account_id: account_id,
+          inbox_id: inbox_id,
+          team_id: slack_team_id
+        } = authorization
       ) do
     # NB: not ideal, but this may treat an internal/admin user as a "customer",
     # because at the moment all conversations must have a customer associated with them
@@ -298,6 +402,7 @@ defmodule ChatApi.Slack.Event do
          {:ok, conversation} <-
            Conversations.create_conversation(%{
              account_id: account_id,
+             inbox_id: inbox_id,
              customer_id: customer.id,
              source: "slack"
            }),
@@ -313,6 +418,7 @@ defmodule ChatApi.Slack.Event do
          {:ok, _slack_conversation_thread} <-
            SlackConversationThreads.create_slack_conversation_thread(%{
              slack_channel: slack_channel_id,
+             slack_team: slack_team_id,
              slack_thread_ts: ts,
              account_id: account_id,
              conversation_id: conversation.id
@@ -339,23 +445,6 @@ defmodule ChatApi.Slack.Event do
     case SlackConversationThreads.get_by_slack_thread_ts(thread_ts, channel) do
       %{conversation: conversation} -> {:ok, conversation}
       _ -> {:error, :not_found}
-    end
-  end
-
-  @spec find_account_id_by_support_channel(binary()) :: {:ok, binary()} | {:error, :not_found}
-  defp find_account_id_by_support_channel(slack_channel_id) do
-    case ChatApi.Companies.find_by_slack_channel(slack_channel_id) do
-      %{account_id: account_id} ->
-        {:ok, account_id}
-
-      _ ->
-        case SlackAuthorizations.find_slack_authorization(%{
-               channel_id: slack_channel_id,
-               type: "support"
-             }) do
-          %{account_id: account_id} -> {:ok, account_id}
-          _ -> {:error, :not_found}
-        end
     end
   end
 end

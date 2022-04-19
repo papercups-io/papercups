@@ -16,6 +16,7 @@ defmodule ChatApiWeb.PageController do
 
   defp server_env_data() do
     %{
+      # Frontend only
       REACT_APP_SENTRY_DSN: System.get_env("REACT_APP_SENTRY_DSN"),
       REACT_APP_LOGROCKET_ID: System.get_env("REACT_APP_LOGROCKET_ID"),
       REACT_APP_POSTHOG_TOKEN:
@@ -31,7 +32,15 @@ defmodule ChatApiWeb.PageController do
       REACT_APP_FILE_UPLOADS_ENABLED: System.get_env("REACT_APP_FILE_UPLOADS_ENABLED"),
       REACT_APP_STORYTIME_ENABLED: System.get_env("REACT_APP_STORYTIME_ENABLED"),
       REACT_APP_ADMIN_ACCOUNT_ID:
-        System.get_env("REACT_APP_ADMIN_ACCOUNT_ID", "eb504736-0f20-4978-98ff-1a82ae60b266")
+        System.get_env("REACT_APP_ADMIN_ACCOUNT_ID", "eb504736-0f20-4978-98ff-1a82ae60b266"),
+      REACT_APP_ADMIN_INBOX_ID:
+        System.get_env("REACT_APP_ADMIN_INBOX_ID", "1c792b5e-4be9-4e51-98a9-5648311eb398"),
+      REACT_APP_GITHUB_APP_NAME: System.get_env("REACT_APP_GITHUB_APP_NAME", "papercups-io"),
+
+      # Shared with backend (none of these should include API keys/secrets!)
+      # NB: we prefix everything with `REACT_APP_` so we can override these more easily during development
+      # (see https://create-react-app.dev/docs/adding-custom-environment-variables/)
+      REACT_APP_USER_INVITATION_EMAIL_ENABLED: System.get_env("USER_INVITATION_EMAIL_ENABLED")
     }
   end
 end

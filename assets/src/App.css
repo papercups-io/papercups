@@ -21,7 +21,11 @@ body {
 .TextArea--transparent,
 .TextArea--transparent:hover,
 .TextArea--transparent:focus,
-.TextArea--transparent:active {
+.TextArea--transparent:active,
+.TextArea--transparent > textarea,
+.TextArea--transparent > textarea:hover,
+.TextArea--transparent > textarea:focus,
+.TextArea--transparent > textarea:active {
   background: transparent;
   border: none;
   box-shadow: none;
@@ -30,14 +34,23 @@ body {
 
 .Text--markdown {
   overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .Text--markdown a {
   text-decoration: underline;
 }
 
+.Text--markdown p:not(:first-child) {
+  margin-top: 4px;
+}
+
 .Text--white {
   color: #fff;
+}
+
+.Text--white.ant-typography-secondary {
+  color: rgba(250, 250, 250, 0.8);
 }
 
 .Text--white > h1,
@@ -105,4 +118,35 @@ a.RelatedCustomerConversation--link:hover {
 
 .GettingStartedCode .ant-tabs-nav .ant-tabs-tab {
   border-color: #d9d9d9;
+}
+
+.ConversationsSearchInput {
+  border-top: 1px solid rgb(240, 240, 240);
+  border-right: none;
+  border-bottom: none;
+  border-left: none;
+}
+
+.ConversationsSearchInput:hover,
+.ConversationsSearchInput:active,
+.ConversationsSearchInput:focus {
+  border-color: rgb(240, 240, 240);
+}
+
+.ConversationsSearchInput.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused {
+  box-shadow: rgb(0 0 0 / 10%) 0px 0px 4px;
+}
+
+.ConversationsSearchInput .ant-input-search-icon::before {
+  border-left: 1px solid rgb(240, 240, 240);
+}
+
+.Dashboard-Sider {
+  background: #000c17;
+}
+
+.Dashboard-Sider ul.ant-menu.ant-menu-dark,
+.Dashboard-Sider ul.ant-menu.ant-menu-dark .ant-menu-sub {
+  background: transparent;
 }

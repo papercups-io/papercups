@@ -13,6 +13,8 @@ defmodule ChatApi.Companies.Company do
           logo_image_url: String.t() | nil,
           slack_channel_id: String.t() | nil,
           slack_channel_name: String.t() | nil,
+          slack_team_id: String.t() | nil,
+          slack_team_name: String.t() | nil,
           metadata: any(),
           # Relations
           account_id: any(),
@@ -33,6 +35,8 @@ defmodule ChatApi.Companies.Company do
     field(:logo_image_url, :string)
     field(:slack_channel_id, :string)
     field(:slack_channel_name, :string)
+    field(:slack_team_id, :string)
+    field(:slack_team_name, :string)
     field(:metadata, :map)
 
     belongs_to(:account, Account)
@@ -54,6 +58,8 @@ defmodule ChatApi.Companies.Company do
       :industry,
       :slack_channel_id,
       :slack_channel_name,
+      :slack_team_id,
+      :slack_team_name,
       :metadata
     ])
     |> validate_required([

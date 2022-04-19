@@ -8,6 +8,7 @@ defmodule ChatApi.Notes.Note do
 
   @type t :: %__MODULE__{
           body: String.t(),
+          content_type: String.t(),
           # Relations
           account_id: any(),
           account: any(),
@@ -23,7 +24,8 @@ defmodule ChatApi.Notes.Note do
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
   schema "notes" do
-    field :body, :string
+    field(:body, :string)
+    field(:content_type, :string, default: "text")
 
     belongs_to(:account, Account)
     belongs_to(:customer, Customer)
@@ -35,7 +37,7 @@ defmodule ChatApi.Notes.Note do
   @doc false
   def changeset(note, attrs) do
     note
-    |> cast(attrs, [:body, :author_id, :account_id, :customer_id])
+    |> cast(attrs, [:body, :content_type, :author_id, :account_id, :customer_id])
     # partial updates are allowed if required value is already populated: https://hexdocs.pm/ecto/Ecto.Changeset.html#validate_required/3
     |> validate_required([:body, :author_id, :account_id, :customer_id])
   end

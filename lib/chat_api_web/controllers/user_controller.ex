@@ -1,11 +1,29 @@
 defmodule ChatApiWeb.UserController do
   use ChatApiWeb, :controller
   alias ChatApi.Users
+  alias ChatApi.Users.User
   require Logger
 
-  plug ChatApiWeb.EnsureRolePlug, :admin when action in [:disable, :enable]
+  plug(
+    ChatApiWeb.EnsureRolePlug,
+    :admin when action in [:disable, :enable, :archive, :set_role]
+  )
 
-  action_fallback ChatApiWeb.FallbackController
+  action_fallback(ChatApiWeb.FallbackController)
+
+  @spec index(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def index(conn, params) do
+    users = ChatApi.Users.list_users_by_account(conn.assigns.current_user.account_id, params)
+
+    render(conn, "index.json", users: users)
+  end
+
+  @spec show(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def show(conn, %{"id" => id}) do
+    user = ChatApi.Users.get_user_info(conn.assigns.current_user.account_id, id)
+
+    render(conn, "show.json", user: user)
+  end
 
   @spec verify_email(Plug.Conn.t(), map) :: Plug.Conn.t()
   def verify_email(conn, %{"token" => token}) do
@@ -90,6 +108,29 @@ defmodule ChatApiWeb.UserController do
     end
   end
 
+  @spec update_role(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def update_role(conn, %{"id" => user_id, "role" => "user"}) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %User{} = user <- Users.find_by_id(user_id, account_id),
+         {:ok, user} <- Users.set_user_role(user) do
+      render(conn, "show.json", user: user)
+    end
+  end
+
+  def update_role(conn, %{"id" => user_id, "role" => "admin"}) do
+    with %{account_id: account_id} <- conn.assigns.current_user,
+         %User{} = user <- Users.find_by_id(user_id, account_id),
+         {:ok, user} <- Users.set_admin_role(user) do
+      render(conn, "show.json", user: user)
+    end
+  end
+
+  def update_role(conn, _params) do
+    conn
+    |> put_status(400)
+    |> json(%{error: %{status: 400, message: "Role must be either 'user' or 'admin'"}})
+  end
+
   @spec delete(Plug.Conn.t(), map) :: Plug.Conn.t()
   def delete(conn, %{"id" => user_id}) do
     parsed_id = String.to_integer(user_id)
@@ -97,6 +138,7 @@ defmodule ChatApiWeb.UserController do
     case conn.assigns.current_user do
       %{id: ^parsed_id, account_id: account_id} ->
         {:ok, _user} = user_id |> Users.find_by_id(account_id) |> Users.delete_user()
+
         json(conn, %{data: %{ok: true}})
 
       # TODO: should we support an admin user deleting a non-admin user on the same account?
@@ -104,6 +146,28 @@ defmodule ChatApiWeb.UserController do
         conn
         |> put_status(403)
         |> json(%{error: %{status: 403, message: "You cannot delete another user."}})
+
+      nil ->
+        conn
+        |> put_status(401)
+        |> json(%{error: %{status: 401, message: "Not authenticated"}})
+    end
+  end
+
+  @spec archive(Plug.Conn.t(), map) :: Plug.Conn.t()
+  def archive(conn, %{"id" => user_id}) do
+    parsed_id = String.to_integer(user_id)
+
+    case conn.assigns.current_user do
+      %{id: ^parsed_id} ->
+        conn
+        |> put_status(403)
+        |> json(%{error: %{status: 403, message: "You cannot archive yourself."}})
+
+      %{id: _id, account_id: account_id} ->
+        {:ok, user} = user_id |> Users.find_by_id(account_id) |> Users.archive_user()
+
+        render(conn, "show.json", user: user)
 
       nil ->
         conn
