@@ -208,12 +208,14 @@ defmodule ChatApi.Customers do
     |> sanitize_metadata_external_id()
     |> sanitize_metadata_current_url()
     |> sanitize_ad_hoc_metadata()
-    |> prepare_metadata()
   end
 
-  @spec prepare_metadata(map()) :: map()
-  def prepare_metadata(metadata) when is_map(metadata), do: %{metadata: metadata}
-  def prepare_metadata(metadata), do: metadata
+  @spec merge_custom_metadata(map()) :: map()
+  def merge_custom_metadata(%{"custom_metadata" => custom_metadata} = metadata)
+      when is_map(custom_metadata),
+      do: Map.merge(metadata, %{"metadata" => custom_metadata})
+
+  def merge_custom_metadata(metadata), do: metadata
 
   @spec sanitize_metadata_external_id(map()) :: map()
   def sanitize_metadata_external_id(%{"external_id" => external_id} = metadata)

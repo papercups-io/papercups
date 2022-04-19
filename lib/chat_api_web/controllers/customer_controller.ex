@@ -142,6 +142,7 @@ defmodule ChatApiWeb.CustomerController do
         "last_seen_at" => DateTime.utc_now()
       })
       |> Customers.sanitize_metadata()
+      |> Customers.merge_custom_metadata()
 
     with {:ok, %Customer{} = customer} <- Customers.update_customer_metadata(customer, updates) do
       render(conn, "show.json", customer: customer)
