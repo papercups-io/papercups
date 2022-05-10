@@ -245,6 +245,25 @@ defmodule ChatApiWeb.CustomerControllerTest do
                "external_id" => "123"
              } = json_response(resp, 200)["data"]
     end
+
+    test "handles customer metadata",
+         %{conn: conn, customer: %Customer{id: id} = customer} do
+      resp =
+        put(conn, Routes.customer_path(conn, :update_metadata, customer),
+          metadata: %{
+            metadata: %{
+              "random" => "test"
+            }
+          }
+        )
+
+      assert %{
+               "id" => ^id,
+               "metadata" => %{
+                 "random" => "test"
+               }
+             } = json_response(resp, 200)["data"]
+    end
   end
 
   describe "identifies a customer by external_id" do
