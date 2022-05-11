@@ -55,7 +55,7 @@ if config_env() === :prod do
     http: [
       port: port,
       compress: true,
-      transport_options: [socket_opts: [:inet6]]
+      transport_options: [socket_options: [:inet6]]
     ],
     url: [host: backend_url],
     pubsub_server: ChatApi.PubSub,
