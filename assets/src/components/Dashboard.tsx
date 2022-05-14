@@ -12,7 +12,7 @@ import {Box, Flex} from 'theme-ui';
 import {ChatWidget, Papercups} from '@papercups-io/chat-widget';
 // import {Storytime} from '../lib/storytime'; // For testing
 import {Storytime} from '@papercups-io/storytime';
-import {colors, Layout, Menu, Sider} from './common';
+import {colors, Menu, Sider, Text} from './common';
 import {
   ApiOutlined,
   CodeOutlined,
@@ -42,7 +42,7 @@ import {
   hasValidStripeKey,
   isWindowHidden,
 } from '../utils';
-import {Account, User} from '../types';
+import {Account, AccountFeatures, User} from '../types';
 import {useAuth} from './auth/AuthProvider';
 import {SocketProvider, SocketContext} from './auth/SocketProvider';
 import AccountOverview from './settings/AccountOverview';
@@ -99,10 +99,6 @@ const {
 } = env;
 
 const TITLE_FLASH_INTERVAL = 2000;
-
-const shouldDisplayChat = (pathname: string) => {
-  return isHostedProd && pathname !== '/settings/chat-widget';
-};
 
 const getSectionKey = (pathname: string) => {
   if (pathname.startsWith('/companies')) {
@@ -195,6 +191,42 @@ const ChatWithUs = ({
   );
 };
 
+const TRIAL_BANNER_HEIGHT = 32;
+
+const TrialBanner = ({days}: {days: number}) => {
+  return (
+    <Flex
+      sx={{
+        position: 'fixed',
+        zIndex: 99999,
+        top: 0,
+        left: 0,
+        right: 0,
+        height: TRIAL_BANNER_HEIGHT,
+        letterSpacing: 0.2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        bg: colors.note,
+        color: colors.white,
+      }}
+    >
+      {days > 0 ? (
+        <Text strong>
+          Your trial will expire in {days} days. Go to the{' '}
+          <Link to="/settings/billing">billing page</Link> to manage your
+          subscription.
+        </Text>
+      ) : (
+        <Text strong>
+          Your free trial has expired. Go to the{' '}
+          <Link to="/settings/billing">billing page</Link> to manage your
+          subscription.
+        </Text>
+      )}
+    </Flex>
+  );
+};
+
 // TODO: not sure if this is the best way to handle this, but the goal
 // of this component is to flash the number of unread messages in the
 // tab (i.e. HTML title) so users can see when new messages arrive
@@ -249,6 +281,12 @@ const Dashboard = (props: RouteComponentProps) => {
 
   const [section, key] = getSectionKey(pathname);
   const totalNumUnread = unread.conversations.open || 0;
+
+  const features = account?.features || ({} as AccountFeatures);
+  const shouldDisplayChat =
+    isHostedProd &&
+    pathname !== '/settings/chat-widget' &&
+    features.can_contact_support;
   const shouldDisplayBilling = hasValidStripeKey();
   const shouldHighlightInbox =
     totalNumUnread > 0 && section !== 'conversations';
@@ -281,17 +319,29 @@ const Dashboard = (props: RouteComponentProps) => {
   }, [currentUser]);
 
   return (
-    <Layout>
+    <Flex
+      sx={{
+        position: 'relative',
+        flex: 'auto',
+        flexDirection: 'column',
+        minHeight: 0,
+        marginTop: TRIAL_BANNER_HEIGHT,
+      }}
+    >
       <DashboardHtmlHead totalNumUnread={totalNumUnread} />
+
+      <TrialBanner days={14} />
 
       <Sider
         width={DASHBOARD_COLLAPSED_SIDER_WIDTH}
         collapsed={true}
         style={{
           overflow: 'auto',
-          height: '100vh',
-          position: 'fixed',
+          height: '100%',
+          position: 'absolute',
+
           left: 0,
+          bottom: 0,
           color: colors.white,
         }}
       >
@@ -438,7 +488,7 @@ const Dashboard = (props: RouteComponentProps) => {
 
           <Box py={3}>
             <Menu mode="inline" theme="dark" selectable={false}>
-              {shouldDisplayChat(pathname) && (
+              {shouldDisplayChat && (
                 <Menu.Item
                   title="Chat with us!"
                   icon={<SmileOutlined />}
@@ -461,8 +511,11 @@ const Dashboard = (props: RouteComponentProps) => {
         </Flex>
       </Sider>
 
-      <Layout
-        style={{
+      <Flex
+        sx={{
+          flex: 'auto',
+          flexDirection: 'column',
+          minHeight: 0,
           marginLeft: DASHBOARD_COLLAPSED_SIDER_WIDTH,
           background: colors.white,
         }}
@@ -580,12 +633,12 @@ const Dashboard = (props: RouteComponentProps) => {
           <Route path="/inboxes*" component={InboxesDashboard} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
-      </Layout>
+      </Flex>
 
-      {currentUser && shouldDisplayChat(pathname) && (
+      {currentUser && shouldDisplayChat && (
         <ChatWithUs currentUser={currentUser} account={account} />
       )}
-    </Layout>
+    </Flex>
   );
 };
 

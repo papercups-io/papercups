@@ -10,7 +10,7 @@ import {
 import {Box, Flex} from 'theme-ui';
 import {MenuItemProps} from 'antd/lib/menu/MenuItem';
 
-import {colors, Badge, Layout, Menu, Sider} from '../common';
+import {colors, Badge, Menu, Sider} from '../common';
 import {PlusOutlined, SettingOutlined} from '../icons';
 import {INBOXES_DASHBOARD_SIDER_WIDTH} from '../../utils';
 import * as API from '../../api';
@@ -93,14 +93,25 @@ const InboxesDashboard = (props: RouteComponentProps) => {
   };
 
   return (
-    <Layout style={{background: colors.white}}>
+    <Flex
+      sx={{
+        position: 'relative',
+        flex: 'auto',
+        flexDirection: 'column',
+        minHeight: 0,
+        background: colors.white,
+      }}
+    >
       <Sider
         className="Dashboard-Sider"
         width={INBOXES_DASHBOARD_SIDER_WIDTH}
         style={{
           overflow: 'auto',
-          height: '100vh',
-          position: 'fixed',
+          height: '100%',
+          position: 'absolute',
+
+          left: 0,
+          bottom: 0,
           color: colors.white,
         }}
       >
@@ -265,10 +276,13 @@ const InboxesDashboard = (props: RouteComponentProps) => {
         </Flex>
       </Sider>
 
-      <Layout
-        style={{
-          background: colors.white,
+      <Flex
+        sx={{
+          flex: 'auto',
+          flexDirection: 'column',
+          minHeight: 0,
           marginLeft: INBOXES_DASHBOARD_SIDER_WIDTH,
+          background: colors.white,
         }}
       >
         <Switch>
@@ -332,8 +346,8 @@ const InboxesDashboard = (props: RouteComponentProps) => {
           <Route path="/inboxes" component={InboxesOverview} />
           <Route path="*" render={() => <Redirect to="/conversations/all" />} />
         </Switch>
-      </Layout>
-    </Layout>
+      </Flex>
+    </Flex>
   );
 };
 

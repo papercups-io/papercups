@@ -2,6 +2,7 @@ import React, {useContext} from 'react';
 import {getAuthTokens, setAuthTokens, removeAuthTokens} from '../../storage';
 import * as API from '../../api';
 import logger from '../../logger';
+import {inspect} from '../../utils';
 import {Account, User} from '../../types';
 
 export const AuthContext = React.createContext<{
@@ -115,7 +116,7 @@ export class AuthProvider extends React.Component<Props, State> {
 
   fetchCurrentAccount = async () => {
     return API.fetchAccountInfo()
-      .then((account) => account)
+      .then((account) => inspect(account))
       .catch((err) => {
         logger.error('Could not retrieve current account:', err);
 
