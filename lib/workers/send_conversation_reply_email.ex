@@ -7,7 +7,7 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
 
   require Logger
 
-  alias ChatApi.{Accounts, Conversations, Messages, Repo, Users}
+  alias ChatApi.{Accounts, Conversations, Messages, Users}
   alias ChatApi.Customers.Customer
   alias ChatApi.Messages.Message
 
@@ -78,23 +78,6 @@ defmodule ChatApi.Workers.SendConversationReplyEmail do
       limit: 5
     )
     |> Enum.reverse()
-  end
-
-  @spec get_pending_job_ids(binary()) :: [integer()]
-  def get_pending_job_ids(conversation_id) do
-    # TODO: double check this logic
-    Oban.Job
-    |> where(worker: "ChatApi.Workers.SendConversationReplyEmail")
-    |> where([j], j.state != "discarded")
-    |> Repo.all()
-    |> Enum.filter(fn job -> job.args["message"]["conversation_id"] == conversation_id end)
-    |> Enum.map(fn job -> job.id end)
-  end
-
-  def cancel_pending_jobs(%{conversation_id: conversation_id}) do
-    conversation_id
-    |> get_pending_job_ids()
-    |> Enum.map(fn id -> Oban.cancel_job(id) end)
   end
 
   @doc """

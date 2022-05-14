@@ -3,43 +3,214 @@ defmodule ChatApi.Emails do
 
   require Logger
 
-  alias ChatApi.{Accounts, Conversations, Repo, Users}
+  alias ChatApi.{
+    Accounts,
+    Conversations,
+    Mailbox,
+    Repo,
+    Users
+  }
+
+  alias ChatApi.Customers.Customer
   alias ChatApi.Emails.Email
   alias ChatApi.Messages.Message
   alias ChatApi.Users.User
   alias ChatApi.Accounts.Account
 
-  @type deliver_result() :: {:ok, term()} | {:error, binary()} | {:warning, binary()}
+  @from_address System.get_env("FROM_ADDRESS") || "noreply@mail.heypapercups.io"
 
-  @spec send_ad_hoc_email(keyword()) :: deliver_result()
+  @spec send_ad_hoc_email(keyword()) :: {:error, any()} | {:ok, Tesla.Env.t()}
   def send_ad_hoc_email(to: to, from: from, subject: subject, text: text, html: html) do
-    Email.generic(
+    Mailbox.send_email(%Mailbox.Email{
       to: to,
       from: from,
       subject: subject,
-      text: text,
-      html: html
-    )
-    |> deliver()
+      text_body: text,
+      html_body: html
+    })
   end
 
-  @spec send_new_message_alerts(Message.t()) :: [deliver_result()]
+  @spec send_new_message_alerts(Message.t()) :: [{:error, any()} | {:ok, Tesla.Env.t()}]
   def send_new_message_alerts(%Message{} = message) do
     message
     |> get_users_to_email()
-    |> Enum.map(fn email ->
-      email |> Email.new_message_alert(message) |> deliver()
-    end)
+    |> Enum.map(fn email -> send_new_message_alert(email, message) end)
   end
 
-  @spec send_welcome_email(binary()) :: deliver_result()
+  # TODO: Add some recent messages for context, rather than just a single message
+  # (See the `conversation_reply` method for an example of this)
+  @spec send_new_message_alert(binary(), Message.t()) :: {:error, any} | {:ok, Tesla.Env.t()}
+  def send_new_message_alert(email, %Message{
+        body: body,
+        conversation_id: conversation_id,
+        customer_id: customer_id
+      }) do
+    customer = format_customer_name(customer_id)
+    dashboard_url = "#{app_domain()}/conversations/#{conversation_id}"
+
+    Mailbox.send_email(%Mailbox.Email{
+      to: email,
+      from: "alex@papercups.io",
+      subject: "#{customer} has sent you a message",
+      template: :new_message_alert,
+      data: %{
+        sender: customer,
+        content: body,
+        dashboard_url: dashboard_url
+      }
+    })
+  end
+
+  @spec send_welcome_email(binary()) :: {:error, any} | {:ok, Tesla.Env.t()}
   def send_welcome_email(address) do
-    address |> Email.welcome() |> deliver()
+    Mailbox.send_email(%Mailbox.Email{
+      to: address,
+      from: "alex@papercups.io",
+      subject: "Welcome to Papercups!",
+      template: :welcome
+    })
   end
 
-  @spec send_password_reset_email(User.t()) :: deliver_result()
-  def send_password_reset_email(user) do
-    user |> Email.password_reset() |> deliver()
+  @spec send_password_reset_email(User.t()) :: {:error, any} | {:ok, Tesla.Env.t()}
+  def send_password_reset_email(%User{email: email, password_reset_token: token}) do
+    Mailbox.send_email(%Mailbox.Email{
+      to: email,
+      from: @from_address,
+      subject: "Link to reset your Papercups password",
+      template: :password_reset,
+      data: %{
+        password_reset_url: "#{app_domain()}/reset?token=#{token}"
+      }
+    })
+  end
+
+  @spec send_user_invitation_email(User.t(), Account.t(), binary(), binary()) ::
+          {:error, any} | {:ok, Tesla.Env.t()}
+  def send_user_invitation_email(user, account, to_address, invitation_token) do
+    company = account.company_name
+    from_name = format_sender_name(user, account)
+    from_address = user.email
+    inviter = if from_name == company, do: from_address, else: "#{from_name} (#{from_address})"
+
+    invitation_url =
+      "#{app_domain()}/register/#{invitation_token}?#{URI.encode_query(%{email: to_address})}"
+
+    subject =
+      if from_name == company,
+        do: "You've been invited to join #{company} on Papercups!",
+        else: "#{from_name} has invited you to join #{company} on Papercups!"
+
+    Mailbox.send_email(%Mailbox.Email{
+      to: to_address,
+      from: from_address,
+      subject: subject,
+      template: :user_invitation,
+      data: %{
+        inviter: inviter,
+        company: company,
+        invitation_url: invitation_url
+      }
+    })
+  end
+
+  @spec send_conversation_reply_email(keyword()) :: {:error, any} | {:ok, Tesla.Env.t()}
+  def send_conversation_reply_email(
+        user: user,
+        customer: customer,
+        account: account,
+        messages: messages
+      ) do
+    Mailbox.send_email(%Mailbox.Email{
+      to: customer.email,
+      from: @from_address,
+      subject: "New message from #{account.company_name}!",
+      template: :conversation_reply,
+      data: %{
+        recipient: customer.name,
+        sender: format_sender_name(user, account),
+        company: account.company_name,
+        messages:
+          Enum.map(messages, fn message ->
+            %{
+              sender: format_message_sender(message, account),
+              content: message.body
+            }
+          end)
+      },
+      # 20 minutes
+      schedule_in: 20 * 60,
+      idempotency_period: 20 * 60,
+      # Ensures uniqueness for these fields within the `idempotency_period`
+      idempotency_key:
+        :crypto.hash(:sha256, [
+          "conversation_reply",
+          customer.email,
+          user.email,
+          account.id
+        ])
+        |> Base.encode16()
+    })
+  end
+
+  @spec send_mention_notification_email(keyword()) :: {:error, any} | {:ok, Tesla.Env.t()}
+  def send_mention_notification_email(
+        sender: sender,
+        recipient: recipient,
+        account: account,
+        messages: messages
+      ) do
+    conversation_id = messages |> List.first() |> Map.get(:conversation_id)
+    dashboard_url = "#{app_domain()}/conversations/#{conversation_id}"
+
+    Mailbox.send_email(%Mailbox.Email{
+      to: recipient.email,
+      from: @from_address,
+      reply_to: sender.email,
+      subject: "You were mentioned in a message on Papercups!",
+      template: :mention_notification,
+      data: %{
+        recipient: format_sender_name(recipient),
+        sender: format_sender_name(sender, account),
+        dashboard_url: dashboard_url,
+        messages:
+          Enum.map(messages, fn message ->
+            %{
+              sender: format_message_sender(message, account),
+              content: message.body
+            }
+          end)
+      }
+    })
+  end
+
+  defp format_message_sender(%Message{} = message, %Account{} = account) do
+    case message do
+      %{user: %User{} = user, customer_id: nil} -> format_sender_name(user, account)
+      _ -> "You"
+    end
+  end
+
+  @spec format_customer_name(nil | binary() | Customer.t()) :: binary()
+  def format_customer_name(nil), do: "Anonymous User"
+
+  def format_customer_name(customer_id) when is_binary(customer_id) do
+    customer_id |> ChatApi.Customers.get_customer!() |> format_customer_name()
+  end
+
+  def format_customer_name(%Customer{} = customer) do
+    case customer do
+      %Customer{email: email, name: name} when is_binary(email) and is_binary(name) ->
+        "#{name} (#{email})"
+
+      %Customer{email: email} when is_binary(email) ->
+        email
+
+      %Customer{name: name} when is_binary(name) ->
+        name
+
+      _ ->
+        "Anonymous User"
+    end
   end
 
   @spec format_sender_name(User.t() | binary(), Account.t() | binary()) :: binary()
@@ -60,67 +231,19 @@ defmodule ChatApi.Emails do
     |> format_sender_name(account)
   end
 
-  @spec send_conversation_reply_email(keyword()) :: deliver_result()
-  def send_conversation_reply_email(
-        user: user,
-        customer: customer,
-        account: account,
-        messages: messages
-      ) do
-    Email.conversation_reply(
-      to: customer.email,
-      from: format_sender_name(user, account),
-      reply_to: user.email,
-      company: account.company_name,
-      messages: messages,
-      customer: customer
-    )
-    |> deliver()
+  @spec format_sender_name(User.t() | binary()) :: binary() | nil
+  def format_sender_name(%User{} = user) do
+    case user.profile do
+      %{display_name: display_name} when not is_nil(display_name) -> display_name
+      %{full_name: full_name} when not is_nil(full_name) -> full_name
+      _ -> nil
+    end
   end
 
-  @spec send_mention_notification_email(keyword()) :: deliver_result()
-  def send_mention_notification_email(
-        sender: sender,
-        recipient: recipient,
-        account: account,
-        messages: messages
-      ) do
-    Email.mention_notification(
-      to: recipient.email,
-      from: format_sender_name(sender, account),
-      reply_to: sender.email,
-      company: account.company_name,
-      messages: messages,
-      user: recipient
-    )
-    |> deliver()
-  end
-
-  @spec send_user_invitation_email(User.t(), Account.t(), binary(), binary()) :: deliver_result()
-  def send_user_invitation_email(user, account, to_address, invitation_token) do
-    Email.user_invitation(%{
-      company: account.company_name,
-      from_address: user.email,
-      from_name: format_sender_name(user, account),
-      invitation_token: invitation_token,
-      to_address: to_address
-    })
-    |> deliver()
-  end
-
-  @spec send_via_gmail(binary(), map()) :: deliver_result()
-  def send_via_gmail(
-        access_token,
-        %{
-          to: _to,
-          from: _from,
-          subject: _subject,
-          text: _text
-        } = params
-      ) do
-    params
-    |> Email.gmail()
-    |> deliver(access_token: access_token)
+  def format_sender_name(user_id) when is_integer(user_id) do
+    user_id
+    |> Users.get_user_info()
+    |> format_sender_name()
   end
 
   @spec get_users_to_email(Message.t()) :: [User.t()]
@@ -157,38 +280,10 @@ defmodule ChatApi.Emails do
     end
   end
 
-  @spec deliver(Email.t()) :: deliver_result()
-  def deliver(email) do
-    try do
-      if has_valid_to_addresses?(email) do
-        ChatApi.Mailers.deliver(email)
-      else
-        {:warning, "Skipped sending to potentially invalid email: #{inspect(email.to)}"}
-      end
-    rescue
-      e ->
-        IO.puts(
-          "Email config environment variable may not have been setup properly: #{e.message}"
-        )
-
-        {:error, e.message}
-    end
-  end
-
-  # TODO: figure out how to clean this up
-  @spec deliver(Email.t(), keyword()) :: deliver_result()
-  def deliver(email, access_token: access_token) do
-    try do
-      if has_valid_to_addresses?(email) do
-        ChatApi.Mailers.Gmail.deliver(email, access_token: access_token)
-      else
-        {:warning, "Skipped sending to potentially invalid email: #{inspect(email.to)}"}
-      end
-    rescue
-      e ->
-        IO.puts("Error sending via Gmail: #{e.message}")
-
-        {:error, e.message}
+  defp app_domain() do
+    case Application.get_env(:chat_api, :environment) do
+      :dev -> "http://localhost:3000"
+      _ -> "https://" <> System.get_env("BACKEND_URL", "app.papercups.io")
     end
   end
 

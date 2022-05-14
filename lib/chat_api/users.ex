@@ -206,16 +206,15 @@ defmodule ChatApi.Users do
   @spec get_user_info(integer()) :: User.t() | nil
   def get_user_info(user_id) do
     User
-    |> where(id: ^user_id)
-    |> Repo.one()
+    |> Repo.get(user_id)
     |> Repo.preload([:profile, :settings])
   end
 
   @spec get_user_info(binary(), integer()) :: User.t() | nil
   def get_user_info(account_id, user_id) do
     User
-    |> where(id: ^user_id, account_id: ^account_id)
-    |> Repo.one()
+    |> where(account_id: ^account_id)
+    |> Repo.get(user_id)
     |> Repo.preload([:profile, :settings])
   end
 
