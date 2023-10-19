@@ -11,11 +11,16 @@ You can check out how our chat widget looks and play around with customizing it 
 _Watch how easy it is to get set up with our Slack integration 🚀 :_
 ![slack-setup](https://user-images.githubusercontent.com/4218509/88716918-a0583180-d0d4-11ea-93b3-12437ac51138.gif)
 
-## One click Heroku deployment
+## One click deployments
 
 The fastest way to get started is one click deploy on Heroku with:
 
 <a href="https://heroku.com/deploy?template=https://github.com/papercups-io/papercups"><img src="https://www.herokucdn.com/deploy/button.svg" width="200px" /></a>
+
+Deploy a fully managed instance of Papercups easily on Elestio:
+
+<a href="https://elest.io/open-source/papercups"><img src="https://pub-da36157c854648669813f3f76c526c2b.r2.dev/deploy-on-elestio-black.png" width="200px" /></a>
+
 
 ## Philosophy
 
