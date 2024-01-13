@@ -1,7 +1,7 @@
 {
   "name": "Papercups",
   "description": "An open source customer chat messaging service",
-  "repository": "https://github.com/papercups-io/papercups",
+  "repository": "https://github.com/kwamena98/papercups",
   "keywords": ["elixir", "phoenix", "chat"],
   "env": {
     "SECRET_KEY_BASE": {
