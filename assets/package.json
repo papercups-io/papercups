@@ -45,7 +45,7 @@
     "react": "^16.13.1",
     "react-color": "^2.18.1",
     "react-dom": "^16.13.1",
-    "react-emoji-render": "^1.2.4",
+    "react-emoji-render": "^2.0.1",
     "react-helmet": "^6.1.0",
     "react-markdown": "^4.3.1",
     "react-router-dom": "^5.2.0",
