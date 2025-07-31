@@ -51,7 +51,7 @@
   "scripts": {
     "postdeploy": "POOL_SIZE=2 mix ecto.migrate"
   },
-  "stack": "heroku-18",
+  "stack": "heroku-22",
   "buildpacks": [
     {
       "url": "https://buildpack-registry.s3.amazonaws.com/buildpacks/hashnuke/elixir.tgz"
