@@ -39,6 +39,8 @@ defmodule ChatApi.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # Override ssl_verify_fun for OTP 27 compatibility
+      {:ssl_verify_fun, "~> 1.1.7", override: true},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_machina, "~> 2.4", only: [:test]},

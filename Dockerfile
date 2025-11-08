@@ -40,7 +40,7 @@ COPY priv priv
 COPY assets assets
 RUN npm run build --prefix=assets
 
-COPY mix.exs mix.lock ./
+COPY mix.exs ./
 COPY config config
 
 RUN mix local.hex --force && \
