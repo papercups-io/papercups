@@ -1,4 +1,4 @@
-FROM elixir:1.11.3-alpine as builder
+FROM elixir:1.17.3-alpine as builder
 
 # build step
 ARG MIX_ENV=prod
@@ -53,7 +53,7 @@ WORKDIR /app
 COPY rel rel
 RUN mix release papercups
 
-FROM alpine:3.13 AS app
+FROM alpine:3.21 AS app
 RUN apk add --no-cache openssl ncurses-libs
 ENV LANG=C.UTF-8
 EXPOSE 4000
