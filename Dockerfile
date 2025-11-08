@@ -33,6 +33,7 @@ RUN npm install --prefix=assets
 
 # fix because of https://github.com/facebook/create-react-app/issues/8413
 ENV GENERATE_SOURCEMAP=false
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 COPY priv priv
 COPY assets assets
