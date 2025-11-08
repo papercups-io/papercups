@@ -29,11 +29,10 @@ RUN apk add --no-cache git nodejs yarn python3 npm ca-certificates wget gnupg ma
 
 # Client side
 COPY assets/package.json assets/package-lock.json ./assets/
-RUN npm install --prefix=assets
+RUN npm install --legacy-peer-deps --prefix=assets
 
 # fix because of https://github.com/facebook/create-react-app/issues/8413
 ENV GENERATE_SOURCEMAP=false
-ENV NODE_OPTIONS=--openssl-legacy-provider
 
 COPY priv priv
 COPY assets assets
