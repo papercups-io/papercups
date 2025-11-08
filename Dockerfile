@@ -1,4 +1,4 @@
-FROM elixir:1.11.3-alpine as builder
+FROM elixir:1.17.3-alpine as builder
 
 # build step
 ARG MIX_ENV=prod
@@ -25,12 +25,13 @@ ENV PAPERCUPS_STRIPE_SECRET=$PAPERCUPS_STRIPE_SECRET
 RUN mkdir /app
 WORKDIR /app
 
-RUN apk add --no-cache git nodejs yarn python3 npm ca-certificates wget gnupg make erlang gcc libc-dev && \
-    npm install npm@latest -g
+RUN apk add --no-cache \
+    build-base git nodejs yarn python3 npm \
+    ca-certificates wget gnupg
 
 # Client side
 COPY assets/package.json assets/package-lock.json ./assets/
-RUN npm install --prefix=assets
+RUN npm install --legacy-peer-deps --prefix=assets
 
 # fix because of https://github.com/facebook/create-react-app/issues/8413
 ENV GENERATE_SOURCEMAP=false
@@ -39,7 +40,7 @@ COPY priv priv
 COPY assets assets
 RUN npm run build --prefix=assets
 
-COPY mix.exs mix.lock ./
+COPY mix.exs ./
 COPY config config
 
 RUN mix local.hex --force && \
@@ -54,7 +55,7 @@ WORKDIR /app
 COPY rel rel
 RUN mix release papercups
 
-FROM alpine:3.13 AS app
+FROM alpine:3.21 AS app
 RUN apk add --no-cache openssl ncurses-libs
 ENV LANG=C.UTF-8
 EXPOSE 4000

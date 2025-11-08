@@ -5,7 +5,7 @@ defmodule ChatApi.MixProject do
     [
       app: :chat_api,
       version: "0.1.0",
-      elixir: "~> 1.10",
+      elixir: "~> 1.17",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: [:phoenix, :gettext] ++ Mix.compilers() ++ [:phoenix_swagger],
       start_permanent: Mix.env() == :prod,
@@ -26,7 +26,7 @@ defmodule ChatApi.MixProject do
   def application do
     [
       mod: {ChatApi.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :public_key]
     ]
   end
 
@@ -39,6 +39,8 @@ defmodule ChatApi.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      # Override ssl_verify_fun for OTP 27 compatibility
+      {:ssl_verify_fun, "~> 1.1.7", override: true},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ex_machina, "~> 2.4", only: [:test]},

@@ -77,7 +77,7 @@ const ChatMessageBox = ({
   // TODO: add a `content_type` field to messages, which can be `text` or `html`
   const rawEmailHtml = metadata?.ses_html;
   const [formattedSource, sourceIcon] = getMessageSourceDetails(source);
-  const parsedSx = Object.assign(sx, {
+  const parsedSx = Object.assign(sx || {}, {
     px: 3,
     py: 2,
     borderRadius: 4,

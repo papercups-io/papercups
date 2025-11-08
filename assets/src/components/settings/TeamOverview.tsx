@@ -31,7 +31,7 @@ type State = {
 };
 
 class TeamOverview extends React.Component<Props, State> {
-  input: Input | null = null;
+  input: any = null;
 
   state: State = {
     account: null,
@@ -71,11 +71,14 @@ class TeamOverview extends React.Component<Props, State> {
         () => this.focusAndHighlightInput()
       );
     } catch (err) {
-      const hasServerErrorMessage = !!err?.response?.body?.error?.message;
+      const hasServerErrorMessage = !!(err as any)?.response?.body?.error
+        ?.message;
       const shouldDisplayBillingLink =
         hasServerErrorMessage && hasValidStripeKey();
       const description =
-        err?.response?.body?.error?.message || err?.message || String(err);
+        (err as any)?.response?.body?.error?.message ||
+        (err as any)?.message ||
+        String(err);
 
       notification.error({
         message: hasServerErrorMessage
@@ -114,11 +117,14 @@ class TeamOverview extends React.Component<Props, State> {
       this.setState({inviteUserEmail: ''});
     } catch (err) {
       // TODO: consolidate error logic with handleGenerateInviteUrl
-      const hasServerErrorMessage = !!err?.response?.body?.error?.message;
+      const hasServerErrorMessage = !!(err as any)?.response?.body?.error
+        ?.message;
       const shouldDisplayBillingLink =
         hasServerErrorMessage && hasValidStripeKey();
       const description =
-        err?.response?.body?.error?.message || err?.message || String(err);
+        (err as any)?.response?.body?.error?.message ||
+        (err as any)?.message ||
+        String(err);
 
       notification.error({
         message: hasServerErrorMessage
@@ -148,8 +154,8 @@ class TeamOverview extends React.Component<Props, State> {
       return;
     }
 
-    this.input.focus();
-    this.input.select();
+    this.input.focus?.();
+    this.input.select?.();
 
     if (document.queryCommandSupported('copy')) {
       document.execCommand('copy');

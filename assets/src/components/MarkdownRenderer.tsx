@@ -1,14 +1,50 @@
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
-import breaks from 'remark-breaks';
+import Markdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
+import rehypeSanitize from 'rehype-sanitize';
 import {Twemoji} from 'react-emoji-render';
-import {allowedNodeTypes} from './common';
 
-const renderers = {
-  text: (props: any) => {
-    return <Twemoji text={props.children} />;
+// Allowed HTML elements (converted from markdown node types to HTML tags)
+const allowedElements = [
+  'p',
+  'em',
+  'strong',
+  'blockquote',
+  'del',
+  'a',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'code',
+  'pre',
+  'img',
+  'br',
+];
+
+const components = {
+  // Custom text renderer with emoji support
+  p: ({children, ...props}: any) => {
+    // Extract text content and wrap with Twemoji
+    const textContent = React.Children.toArray(children)
+      .map((child) => (typeof child === 'string' ? child : ''))
+      .join('');
+
+    if (textContent) {
+      return (
+        <p {...props}>
+          <Twemoji text={textContent} />
+        </p>
+      );
+    }
+    return <p {...props}>{children}</p>;
   },
-  image: (props: any) => {
+  img: (props: any) => {
     // TODO: fix scroll behavior after image loads
     return (
       <img
@@ -28,13 +64,15 @@ type Props = {
 
 const MarkdownRenderer = ({className, source}: Props) => {
   return (
-    <ReactMarkdown
+    <Markdown
       className={`Text--markdown ${className}`}
-      source={source}
-      allowedTypes={allowedNodeTypes}
-      renderers={renderers}
-      plugins={[breaks]}
-    />
+      allowedElements={allowedElements}
+      components={components}
+      remarkPlugins={[remarkBreaks as any]}
+      rehypePlugins={[rehypeSanitize as any]}
+    >
+      {source}
+    </Markdown>
   );
 };
 

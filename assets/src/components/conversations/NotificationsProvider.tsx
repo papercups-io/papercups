@@ -176,7 +176,7 @@ export class NotificationsProvider extends React.Component<Props, State> {
     const {presence} = this.state;
 
     if (!presence) {
-      return null;
+      return;
     }
 
     const updated = updatePresenceWithDiff(presence, diff);

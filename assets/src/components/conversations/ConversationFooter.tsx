@@ -247,7 +247,7 @@ const ConversationFooter = ({
           const value = display_name || full_name || email;
 
           return (
-            <Mentions.Option key={id} value={value}>
+            <Mentions.Option key={String(id)} value={value}>
               <Box>
                 <Text>{value}</Text>
               </Box>
