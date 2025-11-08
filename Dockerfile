@@ -25,7 +25,10 @@ ENV PAPERCUPS_STRIPE_SECRET=$PAPERCUPS_STRIPE_SECRET
 RUN mkdir /app
 WORKDIR /app
 
-RUN apk add --no-cache git nodejs yarn python3 npm ca-certificates wget gnupg make erlang gcc libc-dev
+RUN apk add --no-cache \
+    build-base git nodejs yarn python3 npm \
+    ca-certificates wget gnupg \
+    erlang-dev
 
 # Client side
 COPY assets/package.json assets/package-lock.json ./assets/
