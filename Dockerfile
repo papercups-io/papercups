@@ -28,7 +28,7 @@ WORKDIR /app
 RUN apk add --no-cache \
     build-base git nodejs yarn python3 npm \
     ca-certificates wget gnupg \
-    erlang-dev
+    erlang27-dev
 
 # Client side
 COPY assets/package.json assets/package-lock.json ./assets/
