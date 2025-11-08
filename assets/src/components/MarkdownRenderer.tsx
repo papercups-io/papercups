@@ -68,8 +68,8 @@ const MarkdownRenderer = ({className, source}: Props) => {
       className={`Text--markdown ${className}`}
       allowedElements={allowedElements}
       components={components}
-      remarkPlugins={[remarkBreaks]}
-      rehypePlugins={[rehypeSanitize]}
+      remarkPlugins={[remarkBreaks as any]}
+      rehypePlugins={[rehypeSanitize as any]}
     >
       {source}
     </Markdown>

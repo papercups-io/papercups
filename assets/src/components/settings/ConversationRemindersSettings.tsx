@@ -21,12 +21,10 @@ const ConversationRemindersSettings = ({
     settings?.max_num_conversation_reminders ?? DEFAULT_MAX_NUM_REMINDERS;
 
   const [isEditing, setEditing] = React.useState(false);
-  const [areRemindersEnabled, setRemindersEnabled] = React.useState(
-    defaultIsEnabled
-  );
-  const [reminderHoursInterval, setReminderHoursInterval] = React.useState(
-    defaultHoursInterval
-  );
+  const [areRemindersEnabled, setRemindersEnabled] =
+    React.useState(defaultIsEnabled);
+  const [reminderHoursInterval, setReminderHoursInterval] =
+    React.useState(defaultHoursInterval);
   const [maxNumReminders, setMaxNumReminders] = React.useState(defaultMaxNum);
 
   const handleStartEditing = () => setEditing(true);
@@ -58,14 +56,14 @@ const ConversationRemindersSettings = ({
     return onSave(updates).then(() => setEditing(false));
   };
 
-  const handleChangeHoursInterval = (value: string | number | undefined) => {
-    if (Number.isInteger(value)) {
+  const handleChangeHoursInterval = (value: number | null) => {
+    if (value !== null && Number.isInteger(value)) {
       setReminderHoursInterval(Number(value));
     }
   };
 
-  const handleChangeMaxReminders = (value: string | number | undefined) => {
-    if (Number.isInteger(value)) {
+  const handleChangeMaxReminders = (value: number | null) => {
+    if (value !== null && Number.isInteger(value)) {
       setMaxNumReminders(Number(value));
     }
   };

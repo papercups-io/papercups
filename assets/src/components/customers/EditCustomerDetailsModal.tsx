@@ -60,7 +60,7 @@ const EditCustomerDetailsModal = ({
     } catch (err) {
       logger.error('Failed to update customer', err);
       const error =
-        err.response?.body?.error?.message ||
+        (err as any).response?.body?.error?.message ||
         'Failed to update customer. Please try again later.';
 
       setError(error);
@@ -86,7 +86,7 @@ const EditCustomerDetailsModal = ({
     } catch (err) {
       logger.error('Failed to delete customer', err);
       const error =
-        err.response?.body?.error?.message ||
+        (err as any).response?.body?.error?.message ||
         'Failed to delete customer. Please try again later.';
 
       setError(error);

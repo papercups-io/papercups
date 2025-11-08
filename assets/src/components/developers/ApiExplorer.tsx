@@ -70,7 +70,7 @@ class ApiExplorer extends React.Component<Props, State> {
       this.handleRunKitOutput({
         ok: false,
         error: {
-          ...error,
+          ...(error as any),
           message: [
             `Something went wrong! You may have a syntax error.`,
             `Try opening up ${url} in a new tab`,
