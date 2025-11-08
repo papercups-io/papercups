@@ -26,7 +26,7 @@ defmodule ChatApi.MixProject do
   def application do
     [
       mod: {ChatApi.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :public_key]
     ]
   end
 
