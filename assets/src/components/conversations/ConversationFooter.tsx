@@ -411,6 +411,7 @@ const ConversationFooter = ({
                   )}
 
                   <Button
+                    className="SendMessageButton"
                     type="primary"
                     htmlType="submit"
                     disabled={isSendDisabled}
@@ -422,6 +423,7 @@ const ConversationFooter = ({
             ) : (
               <Flex sx={{justifyContent: 'flex-end'}}>
                 <Button
+                  className="SendMessageButton"
                   type="primary"
                   htmlType="submit"
                   disabled={isSendDisabled}

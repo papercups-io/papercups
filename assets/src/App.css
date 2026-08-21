@@ -32,6 +32,11 @@ body {
   resize: none;
 }
 
+.SendMessageButton:focus-visible {
+  outline: 2px solid #1890ff;
+  outline-offset: 2px;
+}
+
 .Text--markdown {
   overflow-wrap: break-word;
   word-break: break-word;
