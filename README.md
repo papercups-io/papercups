@@ -17,6 +17,10 @@ The fastest way to get started is one click deploy on Heroku with:
 
 <a href="https://heroku.com/deploy?template=https://github.com/papercups-io/papercups"><img src="https://www.herokucdn.com/deploy/button.svg" width="200px" /></a>
 
+Or run the official Docker image with ZopDay, on ZopCloud or in your own AWS or GCP account. Papercups needs a Postgres database, so set `DATABASE_URL` and `SECRET_KEY_BASE` on the deploy screen:
+
+<a href="https://zop.dev/zopday/app/deploy?image=papercups/papercups:latest&port=3000&name=papercups&utm_source=github&utm_medium=one_click&utm_content=papercups"><img src="https://zop.dev/deploytozopday-inkhard.svg" width="200px" /></a>
+
 ## Philosophy
 
 We wanted to make a self-hosted customer support tool like Zendesk and Intercom for companies that have privacy and security concerns about having customer data going to third party services.
